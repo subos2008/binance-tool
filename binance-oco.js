@@ -323,9 +323,9 @@ const binance = new Binance().options(
 
 				if (buyOrderId) {
 					if (!cancelPrice) {
-						console.log(`${symbol} trade update. price: ${price} buy: ${buyPrice}`);
+						// console.log(`${symbol} trade update. price: ${price} buy: ${buyPrice}`);
 					} else {
-						console.log(`${symbol} trade update. price: ${price} buy: ${buyPrice} cancel: ${cancelPrice}`);
+						// console.log(`${symbol} trade update. price: ${price} buy: ${buyPrice} cancel: ${cancelPrice}`);
 
 						if (
 							((isStopEntry && price <= cancelPrice) || (isLimitEntry && price >= cancelPrice)) &&
@@ -345,7 +345,7 @@ const binance = new Binance().options(
 						}
 					}
 				} else if (stopOrderId || targetOrderId) {
-					console.log(`${symbol} trade update. price: ${price} stop: ${stopPrice} target: ${targetPrice}`);
+					// console.log(`${symbol} trade update. price: ${price} stop: ${stopPrice} target: ${targetPrice}`);
 
 					if (stopOrderId && !targetOrderId && price >= targetPrice && !isCancelling) {
 						isCancelling = true;

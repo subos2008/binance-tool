@@ -16,27 +16,27 @@ const { argv } = require('yargs')
 	.describe('p', 'Set trading pair eg. BNBBTC')
 	// '-a <amount>'
 	.demand('amount')
-	.number('a')
+	.string('a')
 	.alias('a', 'amount')
 	.describe('a', 'Set amount to buy/sell')
 	// '-b <buyPrice>'
-	.number('b')
+	.string('b')
 	.alias('b', 'buy')
 	.alias('b', 'e')
 	.alias('b', 'entry')
 	.describe('b', 'Set buy price (0 for market buy)')
 	// '-B <buyLimitPrice>'
-	.number('B')
+	.string('B')
 	.alias('B', 'buy-limit')
 	.alias('B', 'E')
 	.alias('B', 'entry-limit')
 	.describe('B', 'Set buy stop-limit order limit price (if different from buy price)')
 	// '-s <stopPrice>'
-	.number('s')
+	.string('s')
 	.alias('s', 'stop')
 	.describe('s', 'Set stop-limit order stop price')
 	// '-l <limitPrice>'
-	.number('l')
+	.string('l')
 	.alias('l', 'limit')
 	.describe('l', 'Set sell stop-limit order limit price (if different from stop price)')
 	// '-t <targetPrice>'
@@ -44,11 +44,11 @@ const { argv } = require('yargs')
 	.alias('t', 'target')
 	.describe('t', 'Set target limit order sell price')
 	// '-c <cancelPrice>'
-	.number('c')
+	.string('c')
 	.alias('c', 'cancel')
 	.describe('c', 'Set price at which to cancel buy order')
 	// '-S <scaleOutAmount>'
-	.number('S')
+	.string('S')
 	.alias('S', 'scaleOutAmount')
 	.describe('S', 'Set amount to sell (scale out) at target price (if different from amount)')
 	// '--non-bnb-fees'
@@ -101,35 +101,35 @@ const binance = new Binance().options(
 			const { tickSize, minPrice } = filters.find((eis) => eis.filterType === 'PRICE_FILTER');
 			const { minNotional } = filters.find((eis) => eis.filterType === 'MIN_NOTIONAL');
 
-			amount = binance.roundStep(amount, stepSize);
+			amount = BigNumber(binance.roundStep(amount, stepSize));
 
-			if (amount < minQty) {
+			if (amount.isLessThan(minQty)) {
 				console.error(`Amount ${amount} does not meet minimum order amount ${minQty}.`);
 				process.exit(1);
 			}
 
 			if (scaleOutAmount) {
-				scaleOutAmount = binance.roundStep(scaleOutAmount, stepSize);
+				scaleOutAmount = BigNumber(binance.roundStep(scaleOutAmount, stepSize));
 
-				if (scaleOutAmount < minQty) {
+				if (scaleOutAmount.isLessThan(minQty)) {
 					console.error(`Scale out amount ${scaleOutAmount} does not meet minimum order amount ${minQty}.`);
 					process.exit(1);
 				}
 			}
 
 			if (buyPrice) {
-				buyPrice = binance.roundTicks(buyPrice, tickSize);
+				buyPrice = BigNumber(binance.roundTicks(buyPrice, tickSize));
 
 				if (buyLimitPrice) {
-					buyLimitPrice = binance.roundTicks(buyLimitPrice, tickSize);
+					buyLimitPrice = BigNumber(binance.roundTicks(buyLimitPrice, tickSize));
 				}
 
-				if (buyPrice < minPrice) {
+				if (buyPrice.isLessThan(minPrice)) {
 					console.error(`Buy price ${buyPrice} does not meet minimum order price ${minPrice}.`);
 					process.exit(1);
 				}
 
-				if (buyPrice * amount < minNotional) {
+				if (buyPrice.times(amount).isLessThan(minNotional)) {
 					console.error(`Buy order does not meet minimum order value ${minNotional}.`);
 					process.exit(1);
 				}
@@ -138,28 +138,27 @@ const binance = new Binance().options(
 			let stopSellAmount = amount;
 
 			if (stopPrice) {
-				stopPrice = binance.roundTicks(stopPrice, tickSize);
-				console.log(`Rounded stop price ${stopPrice}`);
+				stopPrice = BigNumber(binance.roundTicks(stopPrice, tickSize));
 
 				if (limitPrice) {
-					limitPrice = binance.roundTicks(limitPrice, tickSize);
+					limitPrice = BigNumber(binance.roundTicks(limitPrice, tickSize));
 
-					if (limitPrice < minPrice) {
+					if (limitPrice.isLessThan(minPrice)) {
 						console.error(`Limit price ${limitPrice} does not meet minimum order price ${minPrice}.`);
 						process.exit(1);
 					}
 
-					if (limitPrice * stopSellAmount < minNotional) {
+					if (limitPrice.times(stopSellAmount).isLessThan(minNotional)) {
 						console.error(`Stop order does not meet minimum order value ${minNotional}.`);
 						process.exit(1);
 					}
 				} else {
-					if (stopPrice < minPrice) {
+					if (stopPrice.isLessThan(minPrice)) {
 						console.error(`Stop price ${stopPrice} does not meet minimum order price ${minPrice}.`);
 						process.exit(1);
 					}
 
-					if (stopPrice * stopSellAmount < minNotional) {
+					if (stopPrice.times(stopSellAmount).isLessThan(minNotional)) {
 						console.error(`Stop order does not meet minimum order value ${minNotional}.`);
 						process.exit(1);
 					}
@@ -177,23 +176,23 @@ const binance = new Binance().options(
 					process.exit(1);
 				}
 
-				console.log(`targetSellAmount: ${JSON.stringify(targetSellAmount)}, ${typeof targetSellAmount}`);
-				console.log(`minNotional: ${JSON.stringify(minNotional)}, ${typeof minNotional}`);
 				if (targetPrice.times(targetSellAmount).isLessThan(minNotional)) {
 					console.error(`Target order does not meet minimum order value ${minNotional}.`);
 					process.exit(1);
 				}
 
-				const remainingAmount = amount - targetSellAmount;
+				const remainingAmount = amount.minus(targetSellAmount);
+				// TODO: update to check isNotZero on remainingAmount
+				// TODO: is this checking for zero or definededness?
 				if (remainingAmount && stopPrice) {
-					if (remainingAmount < minQty) {
+					if (remainingAmount.isLessThan(minQty)) {
 						console.error(
 							`Stop amount after scale out (${remainingAmount}) will not meet minimum order amount ${minQty}.`
 						);
 						process.exit(1);
 					}
 
-					if (stopPrice * remainingAmount < minNotional) {
+					if (stopPrice.times(remainingAmount).isLessThan(minNotional)) {
 						console.error(`Stop order after scale out will not meet minimum order value ${minNotional}.`);
 						process.exit(1);
 					}
@@ -201,14 +200,16 @@ const binance = new Binance().options(
 			}
 
 			if (cancelPrice) {
-				cancelPrice = binance.roundTicks(cancelPrice, tickSize);
+				cancelPrice = BigNumber(binance.roundTicks(cancelPrice, tickSize));
 			}
 
-			const NON_BNB_TRADING_FEE = 0.001;
+			const NON_BNB_TRADING_FEE = BigNumber('0.001');
 
 			const calculateSellAmount = function(commissionAsset, sellAmount) {
 				// Adjust sell amount if BNB not used for trading fee
-				return commissionAsset === 'BNB' && !nonBnbFees ? sellAmount : sellAmount * (1 - NON_BNB_TRADING_FEE);
+				return commissionAsset === 'BNB' && !nonBnbFees
+					? sellAmount
+					: sellAmount.times(BigNumber(1).minus(NON_BNB_TRADING_FEE));
 			};
 
 			const calculateStopAndTargetAmounts = function(commissionAsset) {
@@ -228,6 +229,7 @@ const binance = new Binance().options(
 				console.log('Sell response', response);
 				console.log(`order id: ${response.orderId}`);
 
+				// TODO: is this checking for zero or definededness?
 				if (!(stopPrice && targetPrice)) {
 					process.exit();
 				}
@@ -242,9 +244,9 @@ const binance = new Binance().options(
 			const placeStopOrder = function() {
 				binance.sell(
 					pair,
-					stopSellAmount,
+					stopSellAmount.toString(),
 					limitPrice || stopPrice,
-					{ stopPrice, type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
+					{ stopPrice: stopPrice.toString(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
 					sellComplete
 				);
 			};
@@ -252,13 +254,14 @@ const binance = new Binance().options(
 			const placeTargetOrder = function() {
 				binance.sell(
 					pair,
-					targetSellAmount,
+					targetSellAmount.toString(),
 					targetPrice.toString(),
 					{ type: 'LIMIT', newOrderRespType: 'FULL' },
 					sellComplete
 				);
-				if (stopPrice && targetSellAmount !== stopSellAmount) {
-					stopSellAmount -= targetSellAmount;
+				// TODO: is this checking for zero or definededness?
+				if (stopPrice && !targetSellAmount.isEqualTo(stopSellAmount)) {
+					stopSellAmount = stopSellAmount.minus(targetSellAmount);
 					placeStopOrder();
 				}
 			};
@@ -295,25 +298,31 @@ const binance = new Binance().options(
 			let isLimitEntry = false;
 			let isStopEntry = false;
 
-			if (buyPrice === 0) {
-				binance.marketBuy(pair, amount, { type: 'MARKET', newOrderRespType: 'FULL' }, buyComplete);
-			} else if (buyPrice > 0) {
+			if (buyPrice.isZero()) {
+				binance.marketBuy(pair, amount.toString(), { type: 'MARKET', newOrderRespType: 'FULL' }, buyComplete);
+			} else if (buyPrice.isGreaterThan(0)) {
 				binance.prices(pair, (error, ticker) => {
 					const currentPrice = ticker[pair];
 					console.log(`${pair} price: ${currentPrice}`);
 
-					if (buyPrice > currentPrice) {
+					if (buyPrice.isGreaterThan(currentPrice)) {
 						isStopEntry = true;
 						binance.buy(
 							pair,
-							amount,
+							amount.toString(),
 							buyLimitPrice || buyPrice,
-							{ stopPrice: buyPrice, type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
+							{ stopPrice: buyPrice.toString(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
 							buyComplete
 						);
 					} else {
 						isLimitEntry = true;
-						binance.buy(pair, amount, buyPrice, { type: 'LIMIT', newOrderRespType: 'FULL' }, buyComplete);
+						binance.buy(
+							pair,
+							amount.toString(),
+							buyPrice.toString(),
+							{ type: 'LIMIT', newOrderRespType: 'FULL' },
+							buyComplete
+						);
 					}
 				});
 			} else {
@@ -324,6 +333,7 @@ const binance = new Binance().options(
 
 			binance.websockets.trades([ pair ], (trades) => {
 				const { s: symbol, p: price } = trades;
+				price = BigNumber(price);
 
 				if (buyOrderId) {
 					if (!cancelPrice) {
@@ -332,7 +342,8 @@ const binance = new Binance().options(
 						// console.log(`${symbol} trade update. price: ${price} buy: ${buyPrice} cancel: ${cancelPrice}`);
 
 						if (
-							((isStopEntry && price <= cancelPrice) || (isLimitEntry && price >= cancelPrice)) &&
+							((isStopEntry && price.isLessThanOrEqualTo(cancelPrice)) ||
+								(isLimitEntry && price.isGreaterThanOrEqualTo(cancelPrice))) &&
 							!isCancelling
 						) {
 							isCancelling = true;
@@ -350,14 +361,7 @@ const binance = new Binance().options(
 					}
 				} else if (stopOrderId || targetOrderId) {
 					console.log(`${symbol} trade update. price: ${price} stop: ${stopPrice} target: ${targetPrice}`);
-
-					console.log(`price: ${JSON.stringify(price)}, ${typeof price}`);
-					if (
-						stopOrderId &&
-						!targetOrderId &&
-						BigNumber(price).isGreaterThanOrEqualTo(targetPrice) &&
-						!isCancelling
-					) {
+					if (stopOrderId && !targetOrderId && price.isGreaterThanOrEqualTo(targetPrice) && !isCancelling) {
 						console.log(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
 						isCancelling = true;
 						binance.cancel(symbol, stopOrderId, (error, response) => {
@@ -371,7 +375,7 @@ const binance = new Binance().options(
 							console.log(`${symbol} cancel response:`, response);
 							placeTargetOrder();
 						});
-					} else if (targetOrderId && !stopOrderId && price <= stopPrice && !isCancelling) {
+					} else if (targetOrderId && !stopOrderId && price.isLessThanOrEqualTo(stopPrice) && !isCancelling) {
 						isCancelling = true;
 						binance.cancel(symbol, targetOrderId, (error, response) => {
 							isCancelling = false;
@@ -382,8 +386,8 @@ const binance = new Binance().options(
 
 							targetOrderId = 0;
 							console.log(`${symbol} cancel response:`, response);
-							if (targetSellAmount !== stopSellAmount) {
-								stopSellAmount += targetSellAmount;
+							if (!targetSellAmount.isEqualTo(stopSellAmount)) {
+								stopSellAmount = stopSellAmount.plus(targetSellAmount);
 							}
 							placeStopOrder();
 						});

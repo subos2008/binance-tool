@@ -101,103 +101,74 @@ const binance = new Binance().options(
 			const { tickSize, minPrice } = filters.find((eis) => eis.filterType === 'PRICE_FILTER');
 			const { minNotional } = filters.find((eis) => eis.filterType === 'MIN_NOTIONAL');
 
-			amount = BigNumber(binance.roundStep(BigNumber(amount), stepSize));
-
-			if (amount.isLessThan(minQty)) {
-				console.error(`Amount ${amount} does not meet minimum order amount ${minQty}.`);
-				process.exit(1);
-			}
-
-			if (scaleOutAmount) {
-				scaleOutAmount = BigNumber(binance.roundStep(BigNumber(scaleOutAmount), stepSize));
-
-				if (scaleOutAmount.isLessThan(minQty)) {
-					console.error(`Scale out amount ${scaleOutAmount} does not meet minimum order amount ${minQty}.`);
+			function munge_and_check_quantity(name, volume) {
+				volume = BigNumber(binance.roundStep(BigNumber(volume), stepSize));
+				if (volume.isLessThan(minQty)) {
+					console.error(`${name} ${volume} does not meet minimum order amount ${minQty}.`);
 					process.exit(1);
 				}
+				return volume;
+			}
+
+			function munge_and_check_price(name, price) {
+				price = BigNumber(binance.roundTicks(BigNumber(price), tickSize));
+				if (price.isLessThan(minPrice)) {
+					console.error(`${name} ${price} does not meet minimum order price ${minPrice}.`);
+					process.exit(1);
+				}
+				return price;
+			}
+
+			function check_notional(name, price, volume) {
+				if (price.times(volume).isLessThan(minNotional)) {
+					console.error(`${name} does not meet minimum order value ${minNotional}.`);
+					process.exit(1);
+				}
+			}
+
+			amount = munge_and_check_quantity('Amount', amount);
+
+			if (scaleOutAmount) {
+				scaleOutAmount = munge_and_check_quantity('Scale out amount', scaleOutAmount);
 			}
 
 			if (buyPrice) {
-				buyPrice = BigNumber(binance.roundTicks(BigNumber(buyPrice), tickSize));
+				buyPrice = munge_and_check_price('Buy price', buyPrice);
+				check_notional('Buy order', buyPrice, amount);
 
 				if (buyLimitPrice) {
-					buyLimitPrice = BigNumber(binance.roundTicks(BigNumber(buyLimitPrice), tickSize));
-				}
-
-				if (buyPrice.isLessThan(minPrice)) {
-					console.error(`Buy price ${buyPrice} does not meet minimum order price ${minPrice}.`);
-					process.exit(1);
-				}
-
-				if (buyPrice.times(amount).isLessThan(minNotional)) {
-					console.error(`Buy order does not meet minimum order value ${minNotional}.`);
-					process.exit(1);
+					buyLimitPrice = munge_and_check_price('Buy limit price', buyLimitPrice);
 				}
 			}
 
 			let stopSellAmount = amount;
 
 			if (stopPrice) {
-				stopPrice = BigNumber(binance.roundTicks(BigNumber(stopPrice), tickSize));
+				stopPrice = munge_and_check_price('Stop price', stopPrice);
 
 				if (limitPrice) {
-					limitPrice = BigNumber(binance.roundTicks(BigNumber(limitPrice), tickSize));
-
-					if (limitPrice.isLessThan(minPrice)) {
-						console.error(`Limit price ${limitPrice} does not meet minimum order price ${minPrice}.`);
-						process.exit(1);
-					}
-
-					if (limitPrice.times(stopSellAmount).isLessThan(minNotional)) {
-						console.error(`Stop order does not meet minimum order value ${minNotional}.`);
-						process.exit(1);
-					}
+					limitPrice = munge_and_check_price('Limit price', limitPrice);
+					check_notional('Stop order', limitPrice, stopSellAmount);
 				} else {
-					if (stopPrice.isLessThan(minPrice)) {
-						console.error(`Stop price ${stopPrice} does not meet minimum order price ${minPrice}.`);
-						process.exit(1);
-					}
-
-					if (stopPrice.times(stopSellAmount).isLessThan(minNotional)) {
-						console.error(`Stop order does not meet minimum order value ${minNotional}.`);
-						process.exit(1);
-					}
+					check_notional('Stop order', stopPrice, stopSellAmount);
 				}
 			}
 
 			let targetSellAmount = scaleOutAmount || amount;
 
 			if (targetPrice) {
-				targetPrice = BigNumber(binance.roundTicks(BigNumber(targetPrice), tickSize));
-
-				if (targetPrice.isLessThan(minPrice)) {
-					console.error(`Target price ${targetPrice} does not meet minimum order price ${minPrice}.`);
-					process.exit(1);
-				}
-
-				if (targetPrice.times(targetSellAmount).isLessThan(minNotional)) {
-					console.error(`Target order does not meet minimum order value ${minNotional}.`);
-					process.exit(1);
-				}
+				targetPrice = munge_and_check_price('Target price', targetPrice);
+				check_notional('Target order', targetPrice, targetSellAmount);
 
 				const remainingAmount = amount.minus(targetSellAmount);
 				if (!remainingAmount.isZero() && stopPrice) {
-					if (remainingAmount.isLessThan(minQty)) {
-						console.error(
-							`Stop amount after scale out (${remainingAmount}) will not meet minimum order amount ${minQty}.`
-						);
-						process.exit(1);
-					}
-
-					if (stopPrice.times(remainingAmount).isLessThan(minNotional)) {
-						console.error(`Stop order after scale out will not meet minimum order value ${minNotional}.`);
-						process.exit(1);
-					}
+					munge_and_check_quantity(`Stop amount after scale out (${remainingAmount})`, remainingAmount);
+					check_notional('Stop order after scale out', stopPrice, remainingAmount);
 				}
 			}
 
 			if (cancelPrice) {
-				cancelPrice = BigNumber(binance.roundTicks(BigNumber(cancelPrice), tickSize));
+				cancelPrice = munge_and_check_price('cancelPrice', cancelPrice);
 			}
 
 			const NON_BNB_TRADING_FEE = BigNumber('0.001');

@@ -349,8 +349,8 @@ const binance = new Binance().options(
 
 					if (stopOrderId && !targetOrderId && price >= targetPrice && !isCancelling) {
 						console.log(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
-						console.log(`price: ${JSON.stringify(price)}`);
-						console.log(`targetPrice: ${JSON.stringify(targetPrice)}`);
+						console.log(`price: ${JSON.stringify(price)}, ${typeof price}`);
+						console.log(`targetPrice: ${JSON.stringify(targetPrice)}, ${typeof targetPrice}`);
 						isCancelling = true;
 						binance.cancel(symbol, stopOrderId, (error, response) => {
 							isCancelling = false;

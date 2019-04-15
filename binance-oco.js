@@ -60,7 +60,6 @@ const { argv } = require('yargs')
 let {
 	p: pair,
 	a: amount,
-	aq: amountquote,
 	b: buyPrice,
 	B: buyLimitPrice,
 	s: stopPrice,

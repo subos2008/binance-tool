@@ -328,7 +328,7 @@ const binance = new Binance().options(
 			let isCancelling = false;
 
 			binance.websockets.trades([ pair ], (trades) => {
-				const { s: symbol, p: price } = trades;
+				var { s: symbol, p: price } = trades;
 				price = BigNumber(price);
 
 				if (buyOrderId) {

@@ -168,7 +168,9 @@ const binance = new Binance().options(
 			let targetSellAmount = scaleOutAmount || amount;
 
 			if (targetPrice) {
+				console.log(`before roundTicks: targetPrice: ${JSON.stringify(targetPrice)}, ${typeof targetPrice}`);
 				targetPrice = binance.roundTicks(targetPrice, tickSize);
+				console.log(`after roundTicks: targetPrice: ${JSON.stringify(targetPrice)}, ${typeof targetPrice}`);
 
 				if (targetPrice < minPrice) {
 					console.error(`Target price ${targetPrice} does not meet minimum order price ${minPrice}.`);

@@ -101,7 +101,7 @@ const binance = new Binance().options(
 			const { tickSize, minPrice } = filters.find((eis) => eis.filterType === 'PRICE_FILTER');
 			const { minNotional } = filters.find((eis) => eis.filterType === 'MIN_NOTIONAL');
 
-			amount = BigNumber(binance.roundStep(amount, stepSize));
+			amount = BigNumber(binance.roundStep(BigNumber(amount), stepSize));
 
 			if (amount.isLessThan(minQty)) {
 				console.error(`Amount ${amount} does not meet minimum order amount ${minQty}.`);
@@ -109,7 +109,7 @@ const binance = new Binance().options(
 			}
 
 			if (scaleOutAmount) {
-				scaleOutAmount = BigNumber(binance.roundStep(scaleOutAmount, stepSize));
+				scaleOutAmount = BigNumber(binance.roundStep(BigNumber(scaleOutAmount), stepSize));
 
 				if (scaleOutAmount.isLessThan(minQty)) {
 					console.error(`Scale out amount ${scaleOutAmount} does not meet minimum order amount ${minQty}.`);
@@ -118,10 +118,10 @@ const binance = new Binance().options(
 			}
 
 			if (buyPrice) {
-				buyPrice = BigNumber(binance.roundTicks(buyPrice, tickSize));
+				buyPrice = BigNumber(binance.roundTicks(BigNumber(buyPrice), tickSize));
 
 				if (buyLimitPrice) {
-					buyLimitPrice = BigNumber(binance.roundTicks(buyLimitPrice, tickSize));
+					buyLimitPrice = BigNumber(binance.roundTicks(BigNumber(buyLimitPrice), tickSize));
 				}
 
 				if (buyPrice.isLessThan(minPrice)) {
@@ -138,10 +138,10 @@ const binance = new Binance().options(
 			let stopSellAmount = amount;
 
 			if (stopPrice) {
-				stopPrice = BigNumber(binance.roundTicks(stopPrice, tickSize));
+				stopPrice = BigNumber(binance.roundTicks(BigNumber(stopPrice), tickSize));
 
 				if (limitPrice) {
-					limitPrice = BigNumber(binance.roundTicks(limitPrice, tickSize));
+					limitPrice = BigNumber(binance.roundTicks(BigNumber(limitPrice), tickSize));
 
 					if (limitPrice.isLessThan(minPrice)) {
 						console.error(`Limit price ${limitPrice} does not meet minimum order price ${minPrice}.`);
@@ -168,7 +168,7 @@ const binance = new Binance().options(
 			let targetSellAmount = scaleOutAmount || amount;
 
 			if (targetPrice) {
-				targetPrice = BigNumber(binance.roundTicks(targetPrice, tickSize));
+				targetPrice = BigNumber(binance.roundTicks(BigNumber(targetPrice), tickSize));
 
 				console.log(`minPrice: ${JSON.stringify(minPrice)}, ${typeof minPrice}`);
 				if (targetPrice.isLessThan(minPrice)) {
@@ -198,7 +198,7 @@ const binance = new Binance().options(
 			}
 
 			if (cancelPrice) {
-				cancelPrice = BigNumber(binance.roundTicks(cancelPrice, tickSize));
+				cancelPrice = BigNumber(binance.roundTicks(BigNumber(cancelPrice), tickSize));
 			}
 
 			const NON_BNB_TRADING_FEE = BigNumber('0.001');
@@ -241,9 +241,9 @@ const binance = new Binance().options(
 			const placeStopOrder = function() {
 				binance.sell(
 					pair,
-					stopSellAmount.toString(),
+					stopSellAmount.toFixed(),
 					limitPrice || stopPrice,
-					{ stopPrice: stopPrice.toString(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
+					{ stopPrice: stopPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
 					sellComplete
 				);
 			};
@@ -251,8 +251,8 @@ const binance = new Binance().options(
 			const placeTargetOrder = function() {
 				binance.sell(
 					pair,
-					targetSellAmount.toString(),
-					targetPrice.toString(),
+					targetSellAmount.toFixed(),
+					targetPrice.toFixed(),
 					{ type: 'LIMIT', newOrderRespType: 'FULL' },
 					sellComplete
 				);
@@ -295,7 +295,7 @@ const binance = new Binance().options(
 			let isStopEntry = false;
 
 			if (buyPrice.isZero()) {
-				binance.marketBuy(pair, amount.toString(), { type: 'MARKET', newOrderRespType: 'FULL' }, buyComplete);
+				binance.marketBuy(pair, amount.toFixed(), { type: 'MARKET', newOrderRespType: 'FULL' }, buyComplete);
 			} else if (buyPrice.isGreaterThan(0)) {
 				binance.prices(pair, (error, ticker) => {
 					const currentPrice = ticker[pair];
@@ -305,17 +305,17 @@ const binance = new Binance().options(
 						isStopEntry = true;
 						binance.buy(
 							pair,
-							amount.toString(),
+							amount.toFixed(),
 							buyLimitPrice || buyPrice,
-							{ stopPrice: buyPrice.toString(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
+							{ stopPrice: buyPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
 							buyComplete
 						);
 					} else {
 						isLimitEntry = true;
 						binance.buy(
 							pair,
-							amount.toString(),
-							buyPrice.toString(),
+							amount.toFixed(),
+							buyPrice.toFixed(),
 							{ type: 'LIMIT', newOrderRespType: 'FULL' },
 							buyComplete
 						);

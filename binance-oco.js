@@ -242,7 +242,7 @@ const binance = new Binance().options(
 				binance.sell(
 					pair,
 					stopSellAmount.toFixed(),
-					limitPrice || stopPrice,
+					(limitPrice || stopPrice).toFixed(),
 					{ stopPrice: stopPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
 					sellComplete
 				);
@@ -306,7 +306,7 @@ const binance = new Binance().options(
 						binance.buy(
 							pair,
 							amount.toFixed(),
-							buyLimitPrice || buyPrice,
+							(buyLimitPrice || buyPrice).toFixed(),
 							{ stopPrice: buyPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
 							buyComplete
 						);

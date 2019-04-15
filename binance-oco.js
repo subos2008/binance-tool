@@ -170,7 +170,6 @@ const binance = new Binance().options(
 			if (targetPrice) {
 				targetPrice = BigNumber(binance.roundTicks(BigNumber(targetPrice), tickSize));
 
-				console.log(`minPrice: ${JSON.stringify(minPrice)}, ${typeof minPrice}`);
 				if (targetPrice.isLessThan(minPrice)) {
 					console.error(`Target price ${targetPrice} does not meet minimum order price ${minPrice}.`);
 					process.exit(1);

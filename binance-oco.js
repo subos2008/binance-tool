@@ -40,7 +40,7 @@ const { argv } = require('yargs')
 	.alias('l', 'limit')
 	.describe('l', 'Set sell stop-limit order limit price (if different from stop price)')
 	// '-t <targetPrice>'
-	.number('t')
+	.string('t')
 	.alias('t', 'target')
 	.describe('t', 'Set target limit order sell price')
 	// '-c <cancelPrice>'
@@ -74,6 +74,7 @@ const { F: nonBnbFees } = argv;
 pair = pair.toUpperCase();
 
 const Binance = require('node-binance-api');
+const BigNumber = require('bignumber.js');
 
 const binance = new Binance().options(
 	{
@@ -168,16 +169,17 @@ const binance = new Binance().options(
 			let targetSellAmount = scaleOutAmount || amount;
 
 			if (targetPrice) {
-				console.log(`before roundTicks: targetPrice: ${JSON.stringify(targetPrice)}, ${typeof targetPrice}`);
-				targetPrice = binance.roundTicks(targetPrice, tickSize);
-				console.log(`after roundTicks: targetPrice: ${JSON.stringify(targetPrice)}, ${typeof targetPrice}`);
+				targetPrice = BigNumber(binance.roundTicks(targetPrice, tickSize));
 
-				if (targetPrice < minPrice) {
+				console.log(`minPrice: ${JSON.stringify(minPrice)}, ${typeof minPrice}`);
+				if (targetPrice.isLessThan(minPrice)) {
 					console.error(`Target price ${targetPrice} does not meet minimum order price ${minPrice}.`);
 					process.exit(1);
 				}
 
-				if (targetPrice * targetSellAmount < minNotional) {
+				console.log(`targetSellAmount: ${JSON.stringify(targetSellAmount)}, ${typeof targetSellAmount}`);
+				console.log(`minNotional: ${JSON.stringify(minNotional)}, ${typeof minNotional}`);
+				if (targetPrice.times(targetSellAmount).isLessThan(minNotional)) {
 					console.error(`Target order does not meet minimum order value ${minNotional}.`);
 					process.exit(1);
 				}
@@ -251,7 +253,7 @@ const binance = new Binance().options(
 				binance.sell(
 					pair,
 					targetSellAmount,
-					targetPrice,
+					targetPrice.toString(),
 					{ type: 'LIMIT', newOrderRespType: 'FULL' },
 					sellComplete
 				);
@@ -349,10 +351,14 @@ const binance = new Binance().options(
 				} else if (stopOrderId || targetOrderId) {
 					console.log(`${symbol} trade update. price: ${price} stop: ${stopPrice} target: ${targetPrice}`);
 
-					if (stopOrderId && !targetOrderId && price >= targetPrice && !isCancelling) {
+					console.log(`price: ${JSON.stringify(price)}, ${typeof price}`);
+					if (
+						stopOrderId &&
+						!targetOrderId &&
+						BigNumber(price).isGreaterThanOrEqualTo(targetPrice) &&
+						!isCancelling
+					) {
 						console.log(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
-						console.log(`price: ${JSON.stringify(price)}, ${typeof price}`);
-						console.log(`targetPrice: ${JSON.stringify(targetPrice)}, ${typeof targetPrice}`);
 						isCancelling = true;
 						binance.cancel(symbol, stopOrderId, (error, response) => {
 							isCancelling = false;

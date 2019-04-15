@@ -356,7 +356,7 @@ const binance = new Binance().options(
 						}
 					}
 				} else if (stopOrderId || targetOrderId) {
-					console.log(`${symbol} trade update. price: ${price} stop: ${stopPrice} target: ${targetPrice}`);
+					// console.log(`${symbol} trade update. price: ${price} stop: ${stopPrice} target: ${targetPrice}`);
 					if (stopOrderId && !targetOrderId && price.isGreaterThanOrEqualTo(targetPrice) && !isCancelling) {
 						console.log(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
 						isCancelling = true;

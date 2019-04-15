@@ -182,9 +182,7 @@ const binance = new Binance().options(
 				}
 
 				const remainingAmount = amount.minus(targetSellAmount);
-				// TODO: update to check isNotZero on remainingAmount
-				// TODO: is this checking for zero or definededness?
-				if (remainingAmount && stopPrice) {
+				if (!remainingAmount.isZero() && stopPrice) {
 					if (remainingAmount.isLessThan(minQty)) {
 						console.error(
 							`Stop amount after scale out (${remainingAmount}) will not meet minimum order amount ${minQty}.`
@@ -229,7 +227,6 @@ const binance = new Binance().options(
 				console.log('Sell response', response);
 				console.log(`order id: ${response.orderId}`);
 
-				// TODO: is this checking for zero or definededness?
 				if (!(stopPrice && targetPrice)) {
 					process.exit();
 				}
@@ -259,7 +256,6 @@ const binance = new Binance().options(
 					{ type: 'LIMIT', newOrderRespType: 'FULL' },
 					sellComplete
 				);
-				// TODO: is this checking for zero or definededness?
 				if (stopPrice && !targetSellAmount.isEqualTo(stopSellAmount)) {
 					stopSellAmount = stopSellAmount.minus(targetSellAmount);
 					placeStopOrder();

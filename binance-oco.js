@@ -2,6 +2,9 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
+const Binance = require('node-binance-api');
+const BigNumber = require('bignumber.js');
+
 require('dotenv').config();
 
 const { argv } = require('yargs')
@@ -15,10 +18,13 @@ const { argv } = require('yargs')
 	.alias('p', 'pair')
 	.describe('p', 'Set trading pair eg. BNBBTC')
 	// '-a <amount>'
-	.demand('amount')
 	.string('a')
 	.alias('a', 'amount')
 	.describe('a', 'Set amount to buy/sell')
+	// '-q <amount in quote coin>'
+	.string('q')
+	.alias('q', 'amountquote')
+	.describe('q', 'Set amount to buy in quote coin (alternative to -a for limit buy orders only)')
 	// '-b <buyPrice>'
 	.string('b')
 	.alias('b', 'buy')
@@ -60,6 +66,7 @@ const { argv } = require('yargs')
 let {
 	p: pair,
 	a: amount,
+	q: quoteAmount,
 	b: buyPrice,
 	B: buyLimitPrice,
 	s: stopPrice,
@@ -69,12 +76,18 @@ let {
 	S: scaleOutAmount
 } = argv;
 
+if (quoteAmount && buyPrice) {
+	amount = BigNumber(quoteAmount).dividedBy(buyPrice);
+}
+
+if (!amount) {
+	console.error('You must specify amount with -a or via -q');
+	process.exit(1);
+}
+
 const { F: nonBnbFees } = argv;
 
 pair = pair.toUpperCase();
-
-const Binance = require('node-binance-api');
-const BigNumber = require('bignumber.js');
 
 const binance = new Binance().options(
 	{

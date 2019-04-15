@@ -294,9 +294,9 @@ const binance = new Binance().options(
 			let isLimitEntry = false;
 			let isStopEntry = false;
 
-			if (buyPrice.isZero()) {
+			if (buyPrice && buyPrice.isZero()) {
 				binance.marketBuy(pair, amount.toFixed(), { type: 'MARKET', newOrderRespType: 'FULL' }, buyComplete);
-			} else if (buyPrice.isGreaterThan(0)) {
+			} else if (buyPrice && buyPrice.isGreaterThan(0)) {
 				binance.prices(pair, (error, ticker) => {
 					const currentPrice = ticker[pair];
 					console.log(`${pair} price: ${currentPrice}`);

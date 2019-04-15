@@ -139,6 +139,7 @@ const binance = new Binance().options(
 
 			if (stopPrice) {
 				stopPrice = binance.roundTicks(stopPrice, tickSize);
+				console.log(`Rounded stop price ${stopPrice}`);
 
 				if (limitPrice) {
 					limitPrice = binance.roundTicks(limitPrice, tickSize);

@@ -1358,7 +1358,7 @@ regexpp@^1.0.1:
   resolved "https://registry.yarnpkg.com/regexpp/-/regexpp-1.1.0.tgz#0e3516dd0b7904f413d2d4193dce4618c3a689ab"
   integrity sha512-LOPw8FpgdQF9etWMaAfG/WRthIdXJGYp4mJ2Jgn/2lpkbod9jPn0t9UqN7AxBOKNfzRbYyVfgc7Vk4t/MpnXgw==
 
-request@^2.85.0:
+request@*, request@^2.85.0:
   version "2.88.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.88.0.tgz#9c2fca4f7d35b592efe57c7f0a55e81052124fef"
   integrity sha512-NAqBSrijGLZdM0WZNsInLJpkJokL72XYjUpnB0iwsRgxh7dB6COrHnTBNwN0E+lHDAJzu7kLAkDeY08z2/A0hg==
@@ -1640,6 +1640,13 @@ table@4.0.2:
     lodash "^4.17.4"
     slice-ansi "1.0.0"
     string-width "^2.1.1"
+
+telegrambot@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/telegrambot/-/telegrambot-0.1.0.tgz#1a71ebb50f256e6e7f66601f80996cc18af43c37"
+  integrity sha1-GnHrtQ8lbm5/ZmAfgJlswYr0PDc=
+  dependencies:
+    request "*"
 
 text-table@~0.2.0:
   version "0.2.0"

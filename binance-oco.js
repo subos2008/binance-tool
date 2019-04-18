@@ -2,10 +2,11 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
+require('dotenv').config();
+
 const Binance = require('node-binance-api');
 const BigNumber = require('bignumber.js');
-
-require('dotenv').config();
+const send_message = require('./telegram.js');
 
 const { argv } = require('yargs')
 	.usage('Usage: $0')
@@ -215,8 +216,10 @@ const binance = new Binance().options(
 				}
 
 				if (response.type === 'STOP_LOSS_LIMIT') {
+					send_message(`${pair} stopped out`);
 					stopOrderId = response.orderId;
 				} else if (response.type === 'LIMIT') {
+					send_message(`${pair} hit target price`);
 					targetOrderId = response.orderId;
 				}
 			};
@@ -267,6 +270,7 @@ const binance = new Binance().options(
 				console.log(`order id: ${response.orderId}`);
 
 				if (response.status === 'FILLED') {
+					send_message(`${pair} filled buy order`);
 					calculateStopAndTargetAmounts(response.fills[0].commissionAsset);
 					placeSellOrder();
 				} else {

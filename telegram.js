@@ -1,23 +1,35 @@
 'use strict';
 
-if (process.env.TELEGRAM_KEY && process.env.TELEGRAM_CHAT_ID) {
-	var TelegramBot = require('telegrambot');
-	var api = new TelegramBot(process.env.TELEGRAM_KEY);
+const fetch = require('node-fetch');
 
-	module.exports = function(message) {
+const getURL = async (url) => {
+	try {
+		const response = await fetch(url);
+		const json = await response.json();
+		console.log(json);
+	} catch (error) {
+		console.log(error);
+	}
+};
+
+if (process.env.TELEGRAM_KEY && process.env.TELEGRAM_CHAT_ID) {
+	module.exports = async function(message) {
 		console.log(message);
-		api.invoke('sendMessage', { chat_id: process.env.TELEGRAM_CHAT_ID, text: `binance-oco: ${message}` }, function(
-			err,
-			result
-		) {
-			if (err) console.log(err);
-			// console.log(result);
-		});
+		try {
+			const url = new URL(`https://api.telegram.org/bot${process.env.TELEGRAM_KEY}/sendMessage`);
+			url.searchParams.append('chat_id', process.env.TELEGRAM_CHAT_ID);
+			url.searchParams.append('text', `binance-oco: ${message}`);
+			const response = await fetch(url);
+			// const json = await response.json();
+			// console.log(json);
+		} catch (e) {
+			console.log(e);
+		}
 	};
 } else {
 	console.log('Telegram message delivery not configured.');
 
-	module.exports = function(message) {
+	module.exports = async function(message) {
 		console.log(message);
 	};
 }

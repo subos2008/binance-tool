@@ -4,7 +4,8 @@
 
 require('dotenv').config();
 
-const Binance = require('node-binance-api');
+const Binance = require('binance-api-node');
+const OldBinance = require('node-binance-api');
 const BigNumber = require('bignumber.js');
 const send_message = require('./telegram.js');
 
@@ -90,340 +91,357 @@ const { F: nonBnbFees } = argv;
 
 pair = pair.toUpperCase();
 
-const binance = new Binance().options(
-	{
-		APIKEY: process.env.APIKEY,
-		APISECRET: process.env.APISECRET,
-		useServerTime: true,
-		reconnect: true
-	},
-	() => {
-		binance.exchangeInfo((exchangeInfoError, exchangeInfoData) => {
-			if (exchangeInfoError) {
-				console.error('Could not pull exchange info', exchangeInfoError.body);
-				process.exit(1);
-			}
+// TODO: Note that for all authenticated endpoints, you can pass an extra parameter useServerTime
+// TODO: set to true in order to fetch the server time before making the request.
 
-			const symbolData = exchangeInfoData.symbols.find((ei) => ei.symbol === pair);
-			if (!symbolData) {
-				console.error(`Could not pull exchange info for ${pair}`);
-				process.exit(1);
-			}
+const binance_client = Binance({
+	apiKey: process.env.APIKEY,
+	apiSecret: process.env.APISECRET
+	// getTime: xxx // time generator function, optional, defaults to () => Date.now()
+});
 
-			const { filters } = symbolData;
-			const { stepSize, minQty } = filters.find((eis) => eis.filterType === 'LOT_SIZE');
-			const { tickSize, minPrice } = filters.find((eis) => eis.filterType === 'PRICE_FILTER');
-			const { minNotional } = filters.find((eis) => eis.filterType === 'MIN_NOTIONAL');
+const old_binance = new OldBinance().options({
+	APIKEY: process.env.APIKEY,
+	APISECRET: process.env.APISECRET,
+	useServerTime: true,
+	reconnect: true
+});
 
-			function munge_and_check_quantity(name, volume) {
-				volume = BigNumber(binance.roundStep(BigNumber(volume), stepSize));
-				if (volume.isLessThan(minQty)) {
-					console.error(`${name} ${volume} does not meet minimum order amount ${minQty}.`);
-					process.exit(1);
-				}
-				return volume;
-			}
-
-			function munge_and_check_price(name, price) {
-				price = BigNumber(binance.roundTicks(BigNumber(price), tickSize));
-				if (price.isLessThan(minPrice)) {
-					console.error(`${name} ${price} does not meet minimum order price ${minPrice}.`);
-					process.exit(1);
-				}
-				return price;
-			}
-
-			function check_notional(name, price, volume) {
-				if (price.times(volume).isLessThan(minNotional)) {
-					console.error(`${name} does not meet minimum order value ${minNotional}.`);
-					process.exit(1);
-				}
-			}
-
-			amount = munge_and_check_quantity('Amount', amount);
-
-			if (scaleOutAmount) {
-				scaleOutAmount = munge_and_check_quantity('Scale out amount', scaleOutAmount);
-			}
-
-			if (buyPrice) {
-				buyPrice = munge_and_check_price('Buy price', buyPrice);
-				check_notional('Buy order', buyPrice, amount);
-
-				if (buyLimitPrice) {
-					buyLimitPrice = munge_and_check_price('Buy limit price', buyLimitPrice);
-				}
-			}
-
-			let stopSellAmount = amount;
-
-			if (stopPrice) {
-				stopPrice = munge_and_check_price('Stop price', stopPrice);
-
-				if (limitPrice) {
-					limitPrice = munge_and_check_price('Limit price', limitPrice);
-					check_notional('Stop order', limitPrice, stopSellAmount);
-				} else {
-					check_notional('Stop order', stopPrice, stopSellAmount);
-				}
-			}
-
-			let targetSellAmount = scaleOutAmount || amount;
-
-			if (targetPrice) {
-				targetPrice = munge_and_check_price('Target price', targetPrice);
-				check_notional('Target order', targetPrice, targetSellAmount);
-
-				const remainingAmount = amount.minus(targetSellAmount);
-				if (!remainingAmount.isZero() && stopPrice) {
-					munge_and_check_quantity(`Stop amount after scale out (${remainingAmount})`, remainingAmount);
-					check_notional('Stop order after scale out', stopPrice, remainingAmount);
-				}
-			}
-
-			if (cancelPrice) {
-				cancelPrice = munge_and_check_price('cancelPrice', cancelPrice);
-			}
-
-			const NON_BNB_TRADING_FEE = BigNumber('0.001');
-
-			const calculateSellAmount = function(commissionAsset, sellAmount) {
-				// Adjust sell amount if BNB not used for trading fee
-				return commissionAsset === 'BNB' && !nonBnbFees
-					? sellAmount
-					: sellAmount.times(BigNumber(1).minus(NON_BNB_TRADING_FEE));
-			};
-
-			const calculateStopAndTargetAmounts = function(commissionAsset) {
-				stopSellAmount = calculateSellAmount(commissionAsset, stopSellAmount);
-				targetSellAmount = calculateSellAmount(commissionAsset, targetSellAmount);
-			};
-
-			let stopOrderId = 0;
-			let targetOrderId = 0;
-
-			const sellComplete = function(error, response) {
-				if (error) {
-					console.error('Sell error', error.body);
-					process.exit(1);
-				}
-
-				console.log('Sell response', response);
-				console.log(`order id: ${response.orderId}`);
-
-				if (!(stopPrice && targetPrice)) {
-					process.exit();
-				}
-
-				if (response.type === 'STOP_LOSS_LIMIT') {
-					send_message(`${pair} stopped out`);
-					stopOrderId = response.orderId;
-				} else if (response.type === 'LIMIT') {
-					send_message(`${pair} hit target price`);
-					targetOrderId = response.orderId;
-				}
-			};
-
-			const placeStopOrder = function() {
-				binance.sell(
-					pair,
-					stopSellAmount.toFixed(),
-					(limitPrice || stopPrice).toFixed(),
-					{ stopPrice: stopPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
-					sellComplete
-				);
-			};
-
-			const placeTargetOrder = function() {
-				binance.sell(
-					pair,
-					targetSellAmount.toFixed(),
-					targetPrice.toFixed(),
-					{ type: 'LIMIT', newOrderRespType: 'FULL' },
-					sellComplete
-				);
-				if (stopPrice && !targetSellAmount.isEqualTo(stopSellAmount)) {
-					stopSellAmount = stopSellAmount.minus(targetSellAmount);
-					placeStopOrder();
-				}
-			};
-
-			const placeSellOrder = function() {
-				if (stopPrice) {
-					placeStopOrder();
-				} else if (targetPrice) {
-					placeTargetOrder();
-				} else {
-					process.exit();
-				}
-			};
-
-			let buyOrderId = 0;
-
-			const buyComplete = function(error, response) {
-				if (error) {
-					console.error('Buy error', error.body);
-					process.exit(1);
-				}
-
-				console.log('Buy response', response);
-				console.log(`order id: ${response.orderId}`);
-
-				if (response.status === 'FILLED') {
-					send_message(`${pair} filled buy order`);
-					calculateStopAndTargetAmounts(response.fills[0].commissionAsset);
-					placeSellOrder();
-				} else {
-					buyOrderId = response.orderId;
-				}
-			};
-
-			let isLimitEntry = false;
-			let isStopEntry = false;
-
-			if (buyPrice && buyPrice.isZero()) {
-				binance.marketBuy(pair, amount.toFixed(), { type: 'MARKET', newOrderRespType: 'FULL' }, buyComplete);
-			} else if (buyPrice && buyPrice.isGreaterThan(0)) {
-				binance.prices(pair, (error, ticker) => {
-					const currentPrice = ticker[pair];
-					console.log(`${pair} price: ${currentPrice}`);
-
-					if (buyPrice.isGreaterThan(currentPrice)) {
-						isStopEntry = true;
-						binance.buy(
-							pair,
-							amount.toFixed(),
-							(buyLimitPrice || buyPrice).toFixed(),
-							{ stopPrice: buyPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
-							buyComplete
-						);
-					} else {
-						isLimitEntry = true;
-						binance.buy(
-							pair,
-							amount.toFixed(),
-							buyPrice.toFixed(),
-							{ type: 'LIMIT', newOrderRespType: 'FULL' },
-							buyComplete
-						);
-					}
-				});
-			} else {
-				placeSellOrder();
-			}
-
-			let isCancelling = false;
-
-			binance.websockets.trades([ pair ], (trades) => {
-				var { s: symbol, p: price } = trades;
-				price = BigNumber(price);
-
-				if (buyOrderId) {
-					if (!cancelPrice) {
-						// console.log(`${symbol} trade update. price: ${price} buy: ${buyPrice}`);
-					} else {
-						// console.log(`${symbol} trade update. price: ${price} buy: ${buyPrice} cancel: ${cancelPrice}`);
-
-						if (
-							((isStopEntry && price.isLessThanOrEqualTo(cancelPrice)) ||
-								(isLimitEntry && price.isGreaterThanOrEqualTo(cancelPrice))) &&
-							!isCancelling
-						) {
-							isCancelling = true;
-							binance.cancel(symbol, buyOrderId, (error, response) => {
-								isCancelling = false;
-								if (error) {
-									console.error(`${symbol} cancel error:`, error.body);
-									return;
-								}
-
-								console.log(`${symbol} cancel response:`, response);
-								process.exit(0);
-							});
-						}
-					}
-				} else if (stopOrderId || targetOrderId) {
-					// console.log(`${symbol} trade update. price: ${price} stop: ${stopPrice} target: ${targetPrice}`);
-					if (stopOrderId && !targetOrderId && price.isGreaterThanOrEqualTo(targetPrice) && !isCancelling) {
-						console.log(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
-						isCancelling = true;
-						binance.cancel(symbol, stopOrderId, (error, response) => {
-							isCancelling = false;
-							if (error) {
-								console.error(`${symbol} cancel error:`, error.body);
-								return;
-							}
-
-							stopOrderId = 0;
-							console.log(`${symbol} cancel response:`, response);
-							placeTargetOrder();
-						});
-					} else if (targetOrderId && !stopOrderId && price.isLessThanOrEqualTo(stopPrice) && !isCancelling) {
-						isCancelling = true;
-						binance.cancel(symbol, targetOrderId, (error, response) => {
-							isCancelling = false;
-							if (error) {
-								console.error(`${symbol} cancel error:`, error.body);
-								return;
-							}
-
-							targetOrderId = 0;
-							console.log(`${symbol} cancel response:`, response);
-							if (!targetSellAmount.isEqualTo(stopSellAmount)) {
-								stopSellAmount = stopSellAmount.plus(targetSellAmount);
-							}
-							placeStopOrder();
-						});
-					}
-				}
-			});
-
-			const checkOrderFilled = function(data, orderFilled) {
-				const { s: symbol, p: price, q: quantity, S: side, o: orderType, i: orderId, X: orderStatus } = data;
-
-				console.log(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`);
-				console.log(`..price: ${price}, quantity: ${quantity}`);
-
-				if (orderStatus === 'NEW' || orderStatus === 'PARTIALLY_FILLED') {
-					return;
-				}
-
-				if (orderStatus !== 'FILLED') {
-					console.log(`Order ${orderStatus}. Reason: ${data.r}`);
-					process.exit(1);
-				}
-
-				orderFilled(data);
-			};
-
-			binance.websockets.userData(
-				() => {},
-				(data) => {
-					const { i: orderId } = data;
-
-					if (orderId === buyOrderId) {
-						checkOrderFilled(data, () => {
-							const { N: commissionAsset } = data;
-							buyOrderId = 0;
-							calculateStopAndTargetAmounts(commissionAsset);
-							placeSellOrder();
-						});
-					} else if (orderId === stopOrderId) {
-						checkOrderFilled(data, () => {
-							process.exit();
-						});
-					} else if (orderId === targetOrderId) {
-						checkOrderFilled(data, () => {
-							process.exit();
-						});
-					}
-				}
-			);
-		});
+async function main() {
+	try {
+		const exchangeInfoData = await binance_client.exchangeInfo();
+	} catch (e) {
+		console.error('Error could not pull exchange info');
+		console.error(e);
+		process.exit(1);
 	}
-);
+
+	const symbolData = exchangeInfoData.symbols.find((ei) => ei.symbol === pair);
+	if (!symbolData) {
+		console.error(`Could not pull exchange info for ${pair}`);
+		process.exit(1);
+	}
+
+	const { filters } = symbolData;
+	const { stepSize, minQty } = filters.find((eis) => eis.filterType === 'LOT_SIZE');
+	const { tickSize, minPrice } = filters.find((eis) => eis.filterType === 'PRICE_FILTER');
+	const { minNotional } = filters.find((eis) => eis.filterType === 'MIN_NOTIONAL');
+
+	function munge_and_check_quantity(name, volume) {
+		volume = BigNumber(old_binance.roundStep(BigNumber(volume), stepSize));
+		if (volume.isLessThan(minQty)) {
+			console.error(`${name} ${volume} does not meet minimum order amount ${minQty}.`);
+			process.exit(1);
+		}
+		return volume;
+	}
+
+	function munge_and_check_price(name, price) {
+		price = BigNumber(old_binance.roundTicks(BigNumber(price), tickSize));
+		if (price.isLessThan(minPrice)) {
+			console.error(`${name} ${price} does not meet minimum order price ${minPrice}.`);
+			process.exit(1);
+		}
+		return price;
+	}
+
+	function check_notional(name, price, volume) {
+		if (price.times(volume).isLessThan(minNotional)) {
+			console.error(`${name} does not meet minimum order value ${minNotional}.`);
+			process.exit(1);
+		}
+	}
+
+	amount = munge_and_check_quantity('Amount', amount);
+
+	if (scaleOutAmount) {
+		scaleOutAmount = munge_and_check_quantity('Scale out amount', scaleOutAmount);
+	}
+
+	if (buyPrice) {
+		buyPrice = munge_and_check_price('Buy price', buyPrice);
+		check_notional('Buy order', buyPrice, amount);
+
+		if (buyLimitPrice) {
+			buyLimitPrice = munge_and_check_price('Buy limit price', buyLimitPrice);
+		}
+	}
+
+	let stopSellAmount = amount;
+
+	if (stopPrice) {
+		stopPrice = munge_and_check_price('Stop price', stopPrice);
+
+		if (limitPrice) {
+			limitPrice = munge_and_check_price('Limit price', limitPrice);
+			check_notional('Stop order', limitPrice, stopSellAmount);
+		} else {
+			check_notional('Stop order', stopPrice, stopSellAmount);
+		}
+	}
+
+	let targetSellAmount = scaleOutAmount || amount;
+
+	if (targetPrice) {
+		targetPrice = munge_and_check_price('Target price', targetPrice);
+		check_notional('Target order', targetPrice, targetSellAmount);
+
+		const remainingAmount = amount.minus(targetSellAmount);
+		if (!remainingAmount.isZero() && stopPrice) {
+			munge_and_check_quantity(`Stop amount after scale out (${remainingAmount})`, remainingAmount);
+			check_notional('Stop order after scale out', stopPrice, remainingAmount);
+		}
+	}
+
+	if (cancelPrice) {
+		cancelPrice = munge_and_check_price('cancelPrice', cancelPrice);
+	}
+
+	const NON_BNB_TRADING_FEE = BigNumber('0.001');
+
+	const calculateSellAmount = function(commissionAsset, sellAmount) {
+		// Adjust sell amount if BNB not used for trading fee
+		return commissionAsset === 'BNB' && !nonBnbFees
+			? sellAmount
+			: sellAmount.times(BigNumber(1).minus(NON_BNB_TRADING_FEE));
+	};
+
+	const calculateStopAndTargetAmounts = function(commissionAsset) {
+		stopSellAmount = calculateSellAmount(commissionAsset, stopSellAmount);
+		targetSellAmount = calculateSellAmount(commissionAsset, targetSellAmount);
+	};
+
+	let stopOrderId = 0;
+	let targetOrderId = 0;
+
+	const sellComplete = function(error, response) {
+		if (error) {
+			console.error('Sell error', error.body);
+			process.exit(1);
+		}
+
+		console.log('Sell response', response);
+		console.log(`order id: ${response.orderId}`);
+
+		if (!(stopPrice && targetPrice)) {
+			process.exit();
+		}
+
+		if (response.type === 'STOP_LOSS_LIMIT') {
+			send_message(`${pair} stopped out`);
+			stopOrderId = response.orderId;
+		} else if (response.type === 'LIMIT') {
+			send_message(`${pair} hit target price`);
+			targetOrderId = response.orderId;
+		}
+	};
+
+	const placeStopOrder = function() {
+		old_binance.sell(
+			pair,
+			stopSellAmount.toFixed(),
+			(limitPrice || stopPrice).toFixed(),
+			{ stopPrice: stopPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
+			sellComplete
+		);
+	};
+
+	const placeTargetOrder = function() {
+		old_binance.sell(
+			pair,
+			targetSellAmount.toFixed(),
+			targetPrice.toFixed(),
+			{ type: 'LIMIT', newOrderRespType: 'FULL' },
+			sellComplete
+		);
+		if (stopPrice && !targetSellAmount.isEqualTo(stopSellAmount)) {
+			stopSellAmount = stopSellAmount.minus(targetSellAmount);
+			placeStopOrder();
+		}
+	};
+
+	const placeSellOrder = function() {
+		if (stopPrice) {
+			placeStopOrder();
+		} else if (targetPrice) {
+			placeTargetOrder();
+		} else {
+			process.exit();
+		}
+	};
+
+	let buyOrderId = 0;
+
+	const buyComplete = function(error, response) {
+		if (error) {
+			console.error('Buy error', error.body);
+			process.exit(1);
+		}
+
+		console.log('Buy response', response);
+		console.log(`order id: ${response.orderId}`);
+
+		if (response.status === 'FILLED') {
+			send_message(`${pair} filled buy order`);
+			calculateStopAndTargetAmounts(response.fills[0].commissionAsset);
+			placeSellOrder();
+		} else {
+			buyOrderId = response.orderId;
+		}
+	};
+
+	let isLimitEntry = false;
+	let isStopEntry = false;
+
+	if (buyPrice && buyPrice.isZero()) {
+		old_binance.marketBuy(pair, amount.toFixed(), { type: 'MARKET', newOrderRespType: 'FULL' }, buyComplete);
+	} else if (buyPrice && buyPrice.isGreaterThan(0)) {
+		old_binance.prices(pair, (error, ticker) => {
+			const currentPrice = ticker[pair];
+			console.log(`${pair} price: ${currentPrice}`);
+
+			if (buyPrice.isGreaterThan(currentPrice)) {
+				isStopEntry = true;
+				old_binance.buy(
+					pair,
+					amount.toFixed(),
+					(buyLimitPrice || buyPrice).toFixed(),
+					{ stopPrice: buyPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
+					buyComplete
+				);
+			} else {
+				isLimitEntry = true;
+				old_binance.buy(
+					pair,
+					amount.toFixed(),
+					buyPrice.toFixed(),
+					{ type: 'LIMIT', newOrderRespType: 'FULL' },
+					buyComplete
+				);
+			}
+		});
+	} else {
+		placeSellOrder();
+	}
+
+	let isCancelling = false;
+
+	old_binance.websockets.trades([ pair ], (trades) => {
+		var { s: symbol, p: price } = trades;
+		price = BigNumber(price);
+
+		if (buyOrderId) {
+			if (!cancelPrice) {
+				// console.log(`${symbol} trade update. price: ${price} buy: ${buyPrice}`);
+			} else {
+				// console.log(`${symbol} trade update. price: ${price} buy: ${buyPrice} cancel: ${cancelPrice}`);
+
+				if (
+					((isStopEntry && price.isLessThanOrEqualTo(cancelPrice)) ||
+						(isLimitEntry && price.isGreaterThanOrEqualTo(cancelPrice))) &&
+					!isCancelling
+				) {
+					isCancelling = true;
+					old_binance.cancel(symbol, buyOrderId, (error, response) => {
+						isCancelling = false;
+						if (error) {
+							console.error(`${symbol} cancel error:`, error.body);
+							return;
+						}
+
+						console.log(`${symbol} cancel response:`, response);
+						process.exit(0);
+					});
+				}
+			}
+		} else if (stopOrderId || targetOrderId) {
+			// console.log(`${symbol} trade update. price: ${price} stop: ${stopPrice} target: ${targetPrice}`);
+			if (stopOrderId && !targetOrderId && price.isGreaterThanOrEqualTo(targetPrice) && !isCancelling) {
+				console.log(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
+				isCancelling = true;
+				old_binance.cancel(symbol, stopOrderId, (error, response) => {
+					isCancelling = false;
+					if (error) {
+						console.error(`${symbol} cancel error:`, error.body);
+						return;
+					}
+
+					stopOrderId = 0;
+					console.log(`${symbol} cancel response:`, response);
+					placeTargetOrder();
+				});
+			} else if (targetOrderId && !stopOrderId && price.isLessThanOrEqualTo(stopPrice) && !isCancelling) {
+				isCancelling = true;
+				old_binance.cancel(symbol, targetOrderId, (error, response) => {
+					isCancelling = false;
+					if (error) {
+						console.error(`${symbol} cancel error:`, error.body);
+						return;
+					}
+
+					targetOrderId = 0;
+					console.log(`${symbol} cancel response:`, response);
+					if (!targetSellAmount.isEqualTo(stopSellAmount)) {
+						stopSellAmount = stopSellAmount.plus(targetSellAmount);
+					}
+					placeStopOrder();
+				});
+			}
+		}
+	});
+
+	const checkOrderFilled = function(data, orderFilled) {
+		const { s: symbol, p: price, q: quantity, S: side, o: orderType, i: orderId, X: orderStatus } = data;
+
+		console.log(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`);
+		console.log(`..price: ${price}, quantity: ${quantity}`);
+
+		if (orderStatus === 'NEW' || orderStatus === 'PARTIALLY_FILLED') {
+			return;
+		}
+
+		if (orderStatus !== 'FILLED') {
+			console.log(`Order ${orderStatus}. Reason: ${data.r}`);
+			process.exit(1);
+		}
+
+		orderFilled(data);
+	};
+
+	old_binance.websockets.userData(
+		() => {},
+		(data) => {
+			const { i: orderId } = data;
+
+			if (orderId === buyOrderId) {
+				checkOrderFilled(data, () => {
+					const { N: commissionAsset } = data;
+					buyOrderId = 0;
+					calculateStopAndTargetAmounts(commissionAsset);
+					placeSellOrder();
+				});
+			} else if (orderId === stopOrderId) {
+				checkOrderFilled(data, () => {
+					process.exit();
+				});
+			} else if (orderId === targetOrderId) {
+				checkOrderFilled(data, () => {
+					process.exit();
+				});
+			}
+		}
+	);
+}
+
+main()
+	.then(() => {
+		console.log('main loop complete');
+	})
+	.catch((error) => console.log(`Error in main loop: ${error}`));
+
+const exchangeInfoData = binance_client;
 
 process.on('exit', () => {
-	const endpoints = binance.websockets.subscriptions();
-	binance.websockets.terminate(Object.entries(endpoints));
+	const endpoints = old_binance.websockets.subscriptions();
+	old_binance.websockets.terminate(Object.entries(endpoints));
 });

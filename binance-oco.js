@@ -140,7 +140,7 @@ function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-var closeUserWebsocket;
+var closeUserWebsocket, closeTradesWebSocket;
 
 async function main() {
 	closeUserWebsocket = await binance_client.ws.user((data) => {
@@ -392,7 +392,8 @@ async function main() {
 
 	let isCancelling = false;
 
-	old_binance.websockets.trades([ pair ], (trades) => {
+	// TODO: rename trades to trade
+	closeTradesWebSocket = await binance_client.ws.trades([ 'ETHBTC', 'BNBBTC' ], (trades) => {
 		var { s: symbol, p: price } = trades;
 		price = BigNumber(price);
 
@@ -511,10 +512,7 @@ function soft_exit(exit_code) {
 
 function shutdown_streams() {
 	if (closeUserWebsocket) closeUserWebsocket();
-	let endpoints = old_binance.websockets.subscriptions();
-	for (let endpoint in endpoints) {
-		old_binance.websockets.terminate(endpoint);
-	}
+	if (closeTradesWebSocket) closeTradesWebSocket();
 }
 
 process.on('exit', () => {

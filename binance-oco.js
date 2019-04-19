@@ -164,13 +164,9 @@ async function main() {
 		}
 	});
 
-	// await sleep(2000);
-	// console.log('hey');
-	// let endpoints = old_binance.websockets.subscriptions();
-	// console.log(endpoints);
-
+	var exchangeInfoData;
 	try {
-		const exchangeInfoData = await binance_client.exchangeInfo();
+		exchangeInfoData = await binance_client.exchangeInfo();
 	} catch (e) {
 		console.error('Error could not pull exchange info');
 		console.error(e);
@@ -490,6 +486,7 @@ main()
 	})
 	.catch((error) => {
 		console.log(`Error in main loop: ${error}`);
+		console.log(`Error in main loop: ${error.stack}`);
 		send_message(`${pair}: Error in main loop: ${error}`);
 		soft_exit();
 	});

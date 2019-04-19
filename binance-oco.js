@@ -4,7 +4,9 @@
 
 require('dotenv').config();
 
-const Binance = require('binance-api-node');
+// TODO: convert all the process.exit calls to be exceptions
+
+const Binance = require('binance-api-node').default;
 const OldBinance = require('node-binance-api');
 const BigNumber = require('bignumber.js');
 const send_message = require('./telegram.js');
@@ -107,7 +109,66 @@ const old_binance = new OldBinance().options({
 	reconnect: true
 });
 
+// We watch the websockets stream to see when our orders have filled.
+// Potential race condition - is the socket ensured to be open before we
+// place any trades?
+// let res = old_binance.websockets.userData(
+// 	() => {},
+// 	(data) => {
+// 		const { i: orderId } = data;
+
+// 		if (orderId === buyOrderId) {
+// 			checkOrderFilled(data, () => {
+// 				const { N: commissionAsset } = data;
+// 				buyOrderId = 0;
+// 				calculateStopAndTargetAmounts(commissionAsset);
+// 				placeSellOrder();
+// 			});
+// 		} else if (orderId === stopOrderId) {
+// 			checkOrderFilled(data, () => {
+// 				process.exit();
+// 			});
+// 		} else if (orderId === targetOrderId) {
+// 			checkOrderFilled(data, () => {
+// 				process.exit();
+// 			});
+// 		}
+// 	}
+// );
+
+function sleep(ms) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+var closeUserWebsocket;
+
 async function main() {
+	closeUserWebsocket = await binance_client.ws.user((data) => {
+		const { i: orderId } = data;
+
+		if (orderId === buyOrderId) {
+			checkOrderFilled(data, () => {
+				const { N: commissionAsset } = data;
+				buyOrderId = 0;
+				calculateStopAndTargetAmounts(commissionAsset);
+				placeSellOrder();
+			});
+		} else if (orderId === stopOrderId) {
+			checkOrderFilled(data, () => {
+				process.exit();
+			});
+		} else if (orderId === targetOrderId) {
+			checkOrderFilled(data, () => {
+				process.exit();
+			});
+		}
+	});
+
+	// await sleep(2000);
+	// console.log('hey');
+	// let endpoints = old_binance.websockets.subscriptions();
+	// console.log(endpoints);
+
 	try {
 		const exchangeInfoData = await binance_client.exchangeInfo();
 	} catch (e) {
@@ -273,11 +334,6 @@ async function main() {
 	let buyOrderId = 0;
 
 	const buyComplete = function(error, response) {
-		if (error) {
-			console.error('Buy error', error.body);
-			process.exit(1);
-		}
-
 		console.log('Buy response', response);
 		console.log(`order id: ${response.orderId}`);
 
@@ -294,6 +350,20 @@ async function main() {
 	let isStopEntry = false;
 
 	if (buyPrice && buyPrice.isZero()) {
+		try {
+			const response = await binance_client.order({
+				side: 'BUY',
+				symbol: pair,
+				type: 'MARKET',
+				quantity: amount.toFixed()
+			});
+		} catch (error) {
+			console.error('Buy error', error.body);
+			process.exit(1);
+		}
+		// TODO: hmm fuck, the other API takes a callback that gets called when
+		// the trade completes. I don;t have that.
+		buyComplete(response);
 		old_binance.marketBuy(pair, amount.toFixed(), { type: 'MARKET', newOrderRespType: 'FULL' }, buyComplete);
 	} else if (buyPrice && buyPrice.isGreaterThan(0)) {
 		old_binance.prices(pair, (error, ticker) => {
@@ -390,6 +460,11 @@ async function main() {
 		}
 	});
 
+	await sleep(2000);
+	console.log('hey - trades active');
+	endpoints = old_binance.websockets.subscriptions();
+	console.log(endpoints);
+
 	const checkOrderFilled = function(data, orderFilled) {
 		const { s: symbol, p: price, q: quantity, S: side, o: orderType, i: orderId, X: orderStatus } = data;
 
@@ -407,41 +482,44 @@ async function main() {
 
 		orderFilled(data);
 	};
-
-	old_binance.websockets.userData(
-		() => {},
-		(data) => {
-			const { i: orderId } = data;
-
-			if (orderId === buyOrderId) {
-				checkOrderFilled(data, () => {
-					const { N: commissionAsset } = data;
-					buyOrderId = 0;
-					calculateStopAndTargetAmounts(commissionAsset);
-					placeSellOrder();
-				});
-			} else if (orderId === stopOrderId) {
-				checkOrderFilled(data, () => {
-					process.exit();
-				});
-			} else if (orderId === targetOrderId) {
-				checkOrderFilled(data, () => {
-					process.exit();
-				});
-			}
-		}
-	);
 }
 
 main()
 	.then(() => {
 		console.log('main loop complete');
 	})
-	.catch((error) => console.log(`Error in main loop: ${error}`));
+	.catch((error) => {
+		console.log(`Error in main loop: ${error}`);
+		send_message(`${pair}: Error in main loop: ${error}`);
+		soft_exit();
+	});
 
 const exchangeInfoData = binance_client;
 
+function dump_keepalive() {
+	console.log(process._getActiveHandles());
+	console.log(process._getActiveRequests());
+	let endpoints = old_binance.websockets.subscriptions();
+	console.log(endpoints);
+	// setTimeout(dump_keepalive, 10000);
+}
+
+// Note this method returns!
+// Shuts down everything that's keeping us alive so we exit
+function soft_exit(exit_code) {
+	shutdown_streams();
+	if (exit_code) process.exitCode = exit_code;
+	// setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
+}
+
+function shutdown_streams() {
+	if (closeUserWebsocket) closeUserWebsocket();
+	let endpoints = old_binance.websockets.subscriptions();
+	for (let endpoint in endpoints) {
+		old_binance.websockets.terminate(endpoint);
+	}
+}
+
 process.on('exit', () => {
-	const endpoints = old_binance.websockets.subscriptions();
-	old_binance.websockets.terminate(Object.entries(endpoints));
+	shutdown_streams();
 });

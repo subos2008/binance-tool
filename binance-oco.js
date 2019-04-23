@@ -5,6 +5,8 @@
 require('dotenv').config();
 
 // TODO: convert all the process.exit calls to be exceptions
+// TODO: add watchdog on trades stream - it can stop responding without realising
+// TODO: - in the original implementations
 
 const Binance = require('binance-api-node').default;
 const OldBinance = require('node-binance-api');
@@ -82,6 +84,7 @@ let {
 
 if (quoteAmount && buyPrice) {
 	amount = BigNumber(quoteAmount).dividedBy(buyPrice);
+	console.log(`Calculated buy amount ${amount.toFixed()}`);
 }
 
 if (!amount) {

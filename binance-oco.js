@@ -3,6 +3,8 @@
 /* eslint func-names: ["warn", "as-needed"] */
 
 require('dotenv').config();
+const async_error_handler = require('./lib/async_error_handler');
+const { ExitNow, ExecutionComplete } = require('./lib/errors');
 
 // TODO: convert all the process.exit calls to be exceptions
 // TODO: add watchdog on trades stream - it can stop responding without realising
@@ -131,11 +133,11 @@ async function main() {
 			});
 		} else if (orderId === stopOrderId) {
 			checkOrderFilled(data, () => {
-				process.exit();
+				throw new ExecutionComplete(`Stop hit`);
 			});
 		} else if (orderId === targetOrderId) {
 			checkOrderFilled(data, () => {
-				process.exit();
+				throw new ExecutionComplete(`Target hit`);
 			});
 		}
 	});
@@ -146,13 +148,12 @@ async function main() {
 	} catch (e) {
 		console.error('Error could not pull exchange info');
 		console.error(e);
-		process.exit(1);
+		throw new Error('Error could not pull exchange info');
 	}
 
 	const symbolData = exchangeInfoData.symbols.find((ei) => ei.symbol === pair);
 	if (!symbolData) {
-		console.error(`Could not pull exchange info for ${pair}`);
-		process.exit(1);
+		throw new Error(`Could not pull exchange info for ${pair}`);
 	}
 
 	const { filters } = symbolData;
@@ -163,8 +164,7 @@ async function main() {
 	function munge_and_check_quantity(name, volume) {
 		volume = BigNumber(old_binance.roundStep(BigNumber(volume), stepSize));
 		if (volume.isLessThan(minQty)) {
-			console.error(`${name} ${volume} does not meet minimum order amount ${minQty}.`);
-			process.exit(1);
+			throw new Error(`${name} ${volume} does not meet minimum order amount ${minQty}.`);
 		}
 		return volume;
 	}
@@ -172,16 +172,14 @@ async function main() {
 	function munge_and_check_price(name, price) {
 		price = BigNumber(old_binance.roundTicks(BigNumber(price), tickSize));
 		if (price.isLessThan(minPrice)) {
-			console.error(`${name} ${price} does not meet minimum order price ${minPrice}.`);
-			process.exit(1);
+			throw new Error(`${name} ${price} does not meet minimum order price ${minPrice}.`);
 		}
 		return price;
 	}
 
 	function check_notional(name, price, volume) {
 		if (price.times(volume).isLessThan(minNotional)) {
-			console.error(`${name} does not meet minimum order value ${minNotional}.`);
-			process.exit(1);
+			throw new Error(`${name} does not meet minimum order value ${minNotional}.`);
 		}
 	}
 
@@ -249,15 +247,14 @@ async function main() {
 
 	const sellComplete = function(error, response) {
 		if (error) {
-			console.error('Sell error', error.body);
-			process.exit(1);
+			throw new Error('Sell error', error.body);
 		}
 
 		console.log('Sell response', response);
 		console.log(`order id: ${response.orderId}`);
 
 		if (!(stopPrice && targetPrice)) {
-			process.exit();
+			throw new ExecutionComplete();
 		}
 
 		if (response.type === 'STOP_LOSS_LIMIT') {
@@ -299,18 +296,18 @@ async function main() {
 		} else if (targetPrice) {
 			placeTargetOrder();
 		} else {
-			process.exit();
+			throw new ExecutionComplete();
 		}
 	};
 
 	let buyOrderId = 0;
 
-	const buyComplete = function(error, response) {
+	const buyComplete = function(response) {
 		console.log('Buy response', response);
 		console.log(`order id: ${response.orderId}`);
 
 		if (response.status === 'FILLED') {
-			send_message(`${pair} filled buy order`);
+			send_message(`Immediate fill on ${pair} buy order`);
 			calculateStopAndTargetAmounts(response.fills[0].commissionAsset);
 			placeSellOrder();
 		} else {
@@ -321,22 +318,20 @@ async function main() {
 	let isLimitEntry = false;
 	let isStopEntry = false;
 
-	if (buyPrice && buyPrice.isZero()) {
+	console.log(`BuyPrice: ${buyPrice}, ${buyPrice.isZero}`);
+	if (typeof buyPrice !== 'undefined' && buyPrice.isZero) {
 		try {
-			const response = await binance_client.order({
+			let response = await binance_client.order({
 				side: 'BUY',
 				symbol: pair,
 				type: 'MARKET',
 				quantity: amount.toFixed()
 			});
+			console.log(response);
+			buyComplete(response);
 		} catch (error) {
-			console.error('Buy error', error.body);
-			process.exit(1);
+			async_error_handler(console, `Buy error: ${error.body}`, error);
 		}
-		// TODO: hmm fuck, the other API takes a callback that gets called when
-		// the trade completes. I don;t have that.
-		buyComplete(response);
-		old_binance.marketBuy(pair, amount.toFixed(), { type: 'MARKET', newOrderRespType: 'FULL' }, buyComplete);
 	} else if (buyPrice && buyPrice.isGreaterThan(0)) {
 		old_binance.prices(pair, (error, ticker) => {
 			const currentPrice = ticker[pair];
@@ -353,13 +348,32 @@ async function main() {
 				);
 			} else {
 				isLimitEntry = true;
-				old_binance.buy(
-					pair,
-					amount.toFixed(),
-					buyPrice.toFixed(),
-					{ type: 'LIMIT', newOrderRespType: 'FULL' },
-					buyComplete
-				);
+				console.error('needs implementing');
+				throw new Error('backtrace me');
+
+				// try {
+				// 	let response = await binance_client.order({
+				// 		side: 'BUY',
+				// 		symbol: pair,
+				// 		type: 'LIMIT',
+				// 		price: buyPrice.toFixed(),
+				// 		newOrderRespType: 'FULL',
+				// 		timeInForce: 'GTC',
+				// 		quantity: amount.toFixed()
+				// 	});
+				// 	console.log(response);
+				// 	buyComplete(response);
+				// } catch (error) {
+				// 	async_error_handler(console, `Buy error: ${error.body}`, error);
+				// }
+				// old code
+				// old_binance.buy(
+				// 	pair,
+				// 	amount.toFixed(),
+				// 	buyPrice.toFixed(),
+				// 	{ type: 'LIMIT', newOrderRespType: 'FULL' },
+				// 	buyComplete
+				// );
 			}
 		});
 	} else {
@@ -393,7 +407,7 @@ async function main() {
 						}
 
 						console.log(`${symbol} cancel response:`, response);
-						process.exit(0);
+						throw new ExecutionComplete();
 					});
 				}
 			}
@@ -449,8 +463,7 @@ async function main() {
 		}
 
 		if (orderStatus !== 'FILLED') {
-			console.log(`Order ${orderStatus}. Reason: ${data.r}`);
-			process.exit(1);
+			throw new Error(`Order ${orderStatus}. Reason: ${data.r}`);
 		}
 
 		orderFilled(data);

@@ -84,6 +84,13 @@ let {
 	S: scaleOutAmount
 } = argv;
 
+if (buyPrice === '') {
+	buyPrice = '0';
+}
+
+console.log(buyPrice);
+console.log(typeof buyPrice);
+
 if (quoteAmount && buyPrice) {
 	amount = BigNumber(quoteAmount).dividedBy(buyPrice);
 	console.log(`Calculated buy amount ${amount.toFixed()}`);
@@ -171,6 +178,9 @@ async function main() {
 
 	function munge_and_check_price(name, price) {
 		price = BigNumber(old_binance.roundTicks(BigNumber(price), tickSize));
+		if (price.isZero) {
+			price = BigNumber(minPrice);
+		}
 		if (price.isLessThan(minPrice)) {
 			throw new Error(`${name} ${price} does not meet minimum order price ${minPrice}.`);
 		}

@@ -112,33 +112,6 @@ const old_binance = new OldBinance().options({
 	reconnect: true
 });
 
-// We watch the websockets stream to see when our orders have filled.
-// Potential race condition - is the socket ensured to be open before we
-// place any trades?
-// let res = old_binance.websockets.userData(
-// 	() => {},
-// 	(data) => {
-// 		const { i: orderId } = data;
-
-// 		if (orderId === buyOrderId) {
-// 			checkOrderFilled(data, () => {
-// 				const { N: commissionAsset } = data;
-// 				buyOrderId = 0;
-// 				calculateStopAndTargetAmounts(commissionAsset);
-// 				placeSellOrder();
-// 			});
-// 		} else if (orderId === stopOrderId) {
-// 			checkOrderFilled(data, () => {
-// 				process.exit();
-// 			});
-// 		} else if (orderId === targetOrderId) {
-// 			checkOrderFilled(data, () => {
-// 				process.exit();
-// 			});
-// 		}
-// 	}
-// );
-
 function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }

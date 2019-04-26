@@ -312,80 +312,61 @@ async function main() {
 
 	let buyOrderId = 0;
 
-	const buyComplete = function(response) {
-		console.log('Buy response', response);
-		console.log(`order id: ${response.orderId}`);
-
-		if (response.status === 'FILLED') {
-			send_message(`Immediate fill on ${pair} buy order`);
-			calculateStopAndTargetAmounts(response.fills[0].commissionAsset);
-			placeSellOrder();
-		} else {
-			buyOrderId = response.orderId;
-		}
-	};
-
 	let isLimitEntry = false;
 	let isStopEntry = false;
 
-	console.log(`BuyPrice: ${buyPrice}, ${buyPrice.isZero}`);
-	if (typeof buyPrice !== 'undefined' && buyPrice.isZero) {
+	async function create_market_buy_order() {
 		try {
 			let response = await binance_client.order({
 				side: 'BUY',
 				symbol: pair,
 				type: 'MARKET',
 				quantity: amount.toFixed()
+				// TODO: more args here, server time and use FULL response body
 			});
-			console.log(response);
-			buyComplete(response);
+			console.log('Buy response', response);
+			console.log(`order id: ${response.orderId}`);
+
+			// This would be an order that filled immediately as it was created. I'm not sure
+			// if that is possible or likely
+			if (response.status === 'FILLED') {
+				send_message(`Immediate fill on ${pair} buy order`);
+				calculateStopAndTargetAmounts(response.fills[0].commissionAsset);
+				placeSellOrder();
+			} else {
+				buyOrderId = response.orderId;
+			}
 		} catch (error) {
 			async_error_handler(console, `Buy error: ${error.body}`, error);
 		}
-	} else if (buyPrice && buyPrice.isGreaterThan(0)) {
-		old_binance.prices(pair, (error, ticker) => {
-			const currentPrice = ticker[pair];
-			console.log(`${pair} price: ${currentPrice}`);
+	}
 
-			if (buyPrice.isGreaterThan(currentPrice)) {
-				isStopEntry = true;
-				old_binance.buy(
-					pair,
-					amount.toFixed(),
-					(buyLimitPrice || buyPrice).toFixed(),
-					{ stopPrice: buyPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
-					buyComplete
-				);
-			} else {
-				isLimitEntry = true;
-				console.error('needs implementing');
-				throw new Error('backtrace me');
+	console.log(`BuyPrice: ${buyPrice}, isZero: ${buyPrice.isZero}`);
+	if (typeof buyPrice !== 'undefined') {
+		if (buyPrice.isZero) {
+			create_market_buy_order();
+			// TODO: ok so this now needs to set the order id and realise when the order is completed.
+		} else if (buyPrice.isGreaterThan(0)) {
+			old_binance.prices(pair, (error, ticker) => {
+				const currentPrice = ticker[pair];
+				console.log(`${pair} price: ${currentPrice}`);
 
-				// try {
-				// 	let response = await binance_client.order({
-				// 		side: 'BUY',
-				// 		symbol: pair,
-				// 		type: 'LIMIT',
-				// 		price: buyPrice.toFixed(),
-				// 		newOrderRespType: 'FULL',
-				// 		timeInForce: 'GTC',
-				// 		quantity: amount.toFixed()
-				// 	});
-				// 	console.log(response);
-				// 	buyComplete(response);
-				// } catch (error) {
-				// 	async_error_handler(console, `Buy error: ${error.body}`, error);
-				// }
-				// old code
-				// old_binance.buy(
-				// 	pair,
-				// 	amount.toFixed(),
-				// 	buyPrice.toFixed(),
-				// 	{ type: 'LIMIT', newOrderRespType: 'FULL' },
-				// 	buyComplete
-				// );
-			}
-		});
+				if (buyPrice.isGreaterThan(currentPrice)) {
+					isStopEntry = true;
+					old_binance.buy(
+						pair,
+						amount.toFixed(),
+						(buyLimitPrice || buyPrice).toFixed(),
+						{ stopPrice: buyPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
+						buyComplete
+					);
+				} else {
+					isLimitEntry = true;
+					console.error('needs implementing');
+					throw new Error('backtrace me');
+				}
+			});
+		}
 	} else {
 		placeSellOrder();
 	}

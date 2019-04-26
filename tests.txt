@@ -3,3 +3,7 @@ can make a limit buy order
 but order executing immedately vs execution after. orderid not defined
 sets a stop if one is defined
 turns the stop into a .. market sell when the target price is hit
+
+So this is a stop gap for the next stage - it separates the pair we sell to and the pair we watch for price action
+First we can always use a market order for the sell. 
+node ./binance-oco.js -p ICXUSDT -P ICXBNB -b 0.3516 -s 0.3368 -t 0.52 -q 1000

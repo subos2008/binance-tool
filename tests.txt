@@ -1,0 +1,5 @@
+can make a market buy order
+can make a limit buy order
+but order executing immedately vs execution after. orderid not defined
+sets a stop if one is defined
+turns the stop into a .. market sell when the target price is hit

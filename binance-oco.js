@@ -89,9 +89,6 @@ if (buyPrice === '') {
 	buyPrice = '0';
 }
 
-console.log(buyPrice);
-console.log(typeof buyPrice);
-
 if (quoteAmount && buyPrice && buyPrice != 0) {
 	amount = BigNumber(quoteAmount).dividedBy(buyPrice);
 	console.log(`Calculated buy amount ${amount.toFixed()}`);
@@ -178,10 +175,9 @@ async function main() {
 	}
 
 	function munge_and_check_price(name, price) {
-		price = BigNumber(old_binance.roundTicks(BigNumber(price), tickSize));
-		if (price.isZero) {
-			price = BigNumber(minPrice);
-		}
+		price = BigNumber(price);
+		if (price.isZero) return price; // don't munge zero, special case for market buys
+		price = BigNumber(old_binance.roundTicks(price, tickSize));
 		if (price.isLessThan(minPrice)) {
 			throw new Error(`${name} ${price} does not meet minimum order price ${minPrice}.`);
 		}
@@ -189,9 +185,12 @@ async function main() {
 	}
 
 	function check_notional(name, price, volume) {
+		if (price.isZero) return; // don't check zero, special case for market buys
 		let quote_volume = price.times(volume);
 		if (quote_volume.isLessThan(minNotional)) {
-			throw new Error(`${name} does not meet minimum order value ${minNotional} (${quote_volume}).`);
+			throw new Error(
+				`${name} does not meet minimum order value ${minNotional} (Buy of ${volume} at ${price} = ${quote_volume}).`
+			);
 		}
 	}
 
@@ -201,7 +200,7 @@ async function main() {
 		scaleOutAmount = munge_and_check_quantity('Scale out amount', scaleOutAmount);
 	}
 
-	if (buyPrice) {
+	if (buyPrice && buyPrice !== 0) {
 		buyPrice = munge_and_check_price('Buy price', buyPrice);
 		check_notional('Buy order', buyPrice, amount);
 
@@ -274,8 +273,7 @@ async function main() {
 
 	if (typeof buyPrice !== 'undefined') {
 		if (buyPrice.isZero) {
-			create_market_buy_order();
-			// TODO: ok so this now needs to set the order id and realise when the order is completed.
+			buyOrderId = await create_market_buy_order();
 		} else {
 			fsm.wait_for_entry_price();
 		}
@@ -343,7 +341,7 @@ async function main() {
 		}
 	};
 
-	let buyOrderId = 0;
+	var buyOrderId = 0;
 
 	let isLimitEntry = false;
 	let isStopEntry = false;
@@ -360,10 +358,11 @@ async function main() {
 			console.log(`Creating MARKET BUY ORDER:`);
 			console.log(args);
 			let response = await binance_client.order(args);
-			fsm.buy_order_created();
+			fsm.buyOrderCreated();
 			console.log('Buy response', response);
 			console.log(`order id: ${response.orderId}`);
-			buyOrderId = response.orderId;
+
+			return response.orderId;
 		} catch (error) {
 			async_error_handler(console, `Buy error: ${error.body}`, error);
 		}
@@ -372,7 +371,7 @@ async function main() {
 	console.log(`BuyPrice: ${buyPrice}, isZero: ${buyPrice.isZero}`);
 	if (typeof buyPrice !== 'undefined') {
 		if (buyPrice.isZero) {
-			create_market_buy_order();
+			buyOrderId = await create_market_buy_order();
 		} else if (buyPrice.isGreaterThan(0)) {
 			old_binance.prices(pair, (error, ticker) => {
 				const currentPrice = ticker[pair];

@@ -189,8 +189,9 @@ async function main() {
 	}
 
 	function check_notional(name, price, volume) {
-		if (price.times(volume).isLessThan(minNotional)) {
-			throw new Error(`${name} does not meet minimum order value ${minNotional}.`);
+		let quote_volume = price.times(volume);
+		if (quote_volume.isLessThan(minNotional)) {
+			throw new Error(`${name} does not meet minimum order value ${minNotional} (${quote_volume}).`);
 		}
 	}
 
@@ -349,27 +350,20 @@ async function main() {
 
 	async function create_market_buy_order() {
 		try {
-			let response = await binance_client.order({
+			let args = {
 				side: 'BUY',
 				symbol: pair,
 				type: 'MARKET',
 				quantity: amount.toFixed()
 				// TODO: more args here, server time and use FULL response body
-			});
+			};
+			console.log(`Creating MARKET BUY ORDER:`);
+			console.log(args);
+			let response = await binance_client.order(args);
 			fsm.buy_order_created();
 			console.log('Buy response', response);
 			console.log(`order id: ${response.orderId}`);
-
-			// This would be an order that filled immediately as it was created. I'm not sure
-			// if that is possible or likely. Note this code is currently duplicated.
-			if (response.status === 'FILLED') {
-				send_message(`Immediate fill on ${pair} buy order`);
-				// TODO: move this to the state transition handlers
-				calculateStopAndTargetAmounts(response.fills[0].commissionAsset);
-				placeSellOrder();
-			} else {
-				buyOrderId = response.orderId;
-			}
+			buyOrderId = response.orderId;
 		} catch (error) {
 			async_error_handler(console, `Buy error: ${error.body}`, error);
 		}
@@ -379,7 +373,6 @@ async function main() {
 	if (typeof buyPrice !== 'undefined') {
 		if (buyPrice.isZero) {
 			create_market_buy_order();
-			// TODO: ok so this now needs to set the order id and realise when the order is completed.
 		} else if (buyPrice.isGreaterThan(0)) {
 			old_binance.prices(pair, (error, ticker) => {
 				const currentPrice = ticker[pair];

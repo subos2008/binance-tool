@@ -91,7 +91,7 @@ if (buyPrice === '') {
 console.log(buyPrice);
 console.log(typeof buyPrice);
 
-if (quoteAmount && buyPrice) {
+if (quoteAmount && buyPrice && buyPrice != 0) {
 	amount = BigNumber(quoteAmount).dividedBy(buyPrice);
 	console.log(`Calculated buy amount ${amount.toFixed()}`);
 }

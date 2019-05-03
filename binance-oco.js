@@ -14,6 +14,7 @@ const Binance = require('binance-api-node').default;
 const OldBinance = require('node-binance-api');
 const BigNumber = require('bignumber.js');
 const send_message = require('./telegram.js');
+const StateMachine = require('javascript-state-machine');
 
 const { argv } = require('yargs')
 	.usage('Usage: $0')
@@ -255,6 +256,37 @@ async function main() {
 	let stopOrderId = 0;
 	let targetOrderId = 0;
 
+	var fsm = new StateMachine({
+		init: 'initialising',
+		transitions: [
+			{ name: 'buy_order_created', from: 'initialising', to: 'buy_order_open' }, // A
+			{ name: 'wait_for_entry_price', from: 'initialising', to: 'waiting_for_entry_price' }, // B
+			{ name: 'buy_filled', from: 'buy_order_open', to: 'waiting_for_exit_price' }, // C
+			{ name: 'buy_order_created', from: 'waiting_for_entry_price', to: 'buy_order_open' }
+		]
+		// methods: {
+		// 	onCondense: function() {
+		// 		console.log('I condensed');
+		// 	}
+		// }
+	});
+
+	if (typeof buyPrice !== 'undefined') {
+		if (buyPrice.isZero) {
+			create_market_buy_order();
+			// TODO: ok so this now needs to set the order id and realise when the order is completed.
+		} else {
+			fsm.wait_for_entry_price();
+		}
+	}
+
+	// TODO: I guess it would be good to check how much the balance is on the exchange
+	// against 'amount' if there is no buy stage
+
+	if (fsm.is('initialising')) {
+		throw new Error(`Unable to determine intial state`);
+	}
+
 	const sellComplete = function(error, response) {
 		if (error) {
 			throw new Error('Sell error', error.body);
@@ -324,13 +356,15 @@ async function main() {
 				quantity: amount.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			});
+			fsm.buy_order_created();
 			console.log('Buy response', response);
 			console.log(`order id: ${response.orderId}`);
 
 			// This would be an order that filled immediately as it was created. I'm not sure
-			// if that is possible or likely
+			// if that is possible or likely. Note this code is currently duplicated.
 			if (response.status === 'FILLED') {
 				send_message(`Immediate fill on ${pair} buy order`);
+				// TODO: move this to the state transition handlers
 				calculateStopAndTargetAmounts(response.fills[0].commissionAsset);
 				placeSellOrder();
 			} else {

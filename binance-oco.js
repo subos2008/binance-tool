@@ -256,36 +256,6 @@ async function main() {
 	let stopOrderId = 0;
 	let targetOrderId = 0;
 
-	var fsm = new StateMachine({
-		init: 'initialising',
-		transitions: [
-			{ name: 'buy_order_created', from: 'initialising', to: 'buy_order_open' }, // A
-			{ name: 'wait_for_entry_price', from: 'initialising', to: 'waiting_for_entry_price' }, // B
-			{ name: 'buy_filled', from: 'buy_order_open', to: 'waiting_for_exit_price' }, // C
-			{ name: 'buy_order_created', from: 'waiting_for_entry_price', to: 'buy_order_open' }
-		]
-		// methods: {
-		// 	onCondense: function() {
-		// 		console.log('I condensed');
-		// 	}
-		// }
-	});
-
-	if (typeof buyPrice !== 'undefined') {
-		if (buyPrice.isZero()) {
-			buyOrderId = await create_market_buy_order();
-		} else {
-			fsm.waitForEntryPrice();
-		}
-	}
-
-	// TODO: I guess it would be good to check how much the balance is on the exchange
-	// against 'amount' if there is no buy stage
-
-	if (fsm.is('initialising')) {
-		throw new Error(`Unable to determine intial state`);
-	}
-
 	const sellComplete = function(error, response) {
 		if (error) {
 			throw new Error('Sell error', error.body);
@@ -341,11 +311,6 @@ async function main() {
 		}
 	};
 
-	var buyOrderId = 0;
-
-	let isLimitEntry = false;
-	let isStopEntry = false;
-
 	async function create_market_buy_order() {
 		try {
 			let args = {
@@ -355,7 +320,30 @@ async function main() {
 				quantity: amount.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
-			console.log(`Creating MARKET BUY ORDER:`);
+			console.log(`Creating MARKET BUY ORDER`);
+			// console.log(args);
+			let response = await binance_client.order(args);
+			fsm.buyOrderCreated();
+			console.log('Buy response', response);
+			console.log(`order id: ${response.orderId}`);
+
+			return response.orderId;
+		} catch (error) {
+			async_error_handler(console, `Buy error: ${error.body}`, error);
+		}
+	}
+
+	async function create_limit_buy_order() {
+		try {
+			let args = {
+				side: 'BUY',
+				symbol: pair,
+				type: 'LIMIT',
+				quantity: amount.toFixed(),
+				price: buyPrice.toFixed()
+				// TODO: more args here, server time and use FULL response body
+			};
+			console.log(`Creating LIMIT BUY ORDER`);
 			console.log(args);
 			let response = await binance_client.order(args);
 			fsm.buyOrderCreated();
@@ -368,34 +356,71 @@ async function main() {
 		}
 	}
 
-	console.log(`BuyPrice: ${buyPrice}, isZero(): ${buyPrice.isZero()}`);
+	var buyOrderId = 0;
+	let isLimitEntry = false;
+	let isStopEntry = false;
+
+	var fsm = new StateMachine({
+		init: 'initialising',
+		transitions: [
+			{ name: 'buy_order_created', from: 'initialising', to: 'buy_order_open' }, // A
+			{ name: 'wait_for_entry_price', from: 'initialising', to: 'waiting_for_entry_price' }, // B
+			{ name: 'buy_filled', from: 'buy_order_open', to: 'waiting_for_exit_price' }, // C
+			{ name: 'buy_order_created', from: 'waiting_for_entry_price', to: 'buy_order_open' }
+		],
+		methods: {
+			onWaitingForEntryPrice: function() {
+				console.log('Entering: waiting_for_exit_price');
+				console.error('Needs to be implemented in trades watching code?');
+			}
+		}
+	});
+
 	if (typeof buyPrice !== 'undefined') {
 		if (buyPrice.isZero()) {
 			buyOrderId = await create_market_buy_order();
-		} else if (buyPrice.isGreaterThan(0)) {
-			old_binance.prices(pair, (error, ticker) => {
-				const currentPrice = ticker[pair];
-				console.log(`${pair} price: ${currentPrice}`);
-
-				if (buyPrice.isGreaterThan(currentPrice)) {
-					isStopEntry = true;
-					old_binance.buy(
-						pair,
-						amount.toFixed(),
-						(buyLimitPrice || buyPrice).toFixed(),
-						{ stopPrice: buyPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
-						buyComplete
-					);
-				} else {
-					isLimitEntry = true;
-					console.error('needs implementing');
-					throw new Error('backtrace me');
-				}
-			});
+			fsm.buyOrderCreated();
+		} else {
+			buyOrderId = await create_limit_buy_order();
+			fsm.buyOrderCreated();
 		}
-	} else {
-		placeSellOrder();
 	}
+
+	// TODO: I guess it would be good to check how much the balance is on the exchange
+	// against 'amount' if there is no buy stage
+
+	if (fsm.is('initialising')) {
+		throw new Error(`Unable to determine intial state`);
+	}
+
+	// console.log(`BuyPrice: ${buyPrice}, isZero(): ${buyPrice.isZero()}`);
+	// if (typeof buyPrice !== 'undefined') {
+	// 	if (buyPrice.isZero()) {
+	// 		buyOrderId = await create_market_buy_order();
+	// 	} else if (buyPrice.isGreaterThan(0)) {
+	// 		old_binance.prices(pair, (error, ticker) => {
+	// 			const currentPrice = ticker[pair];
+	// 			console.log(`${pair} price: ${currentPrice}`);
+
+	// 			if (buyPrice.isGreaterThan(currentPrice)) {
+	// 				isStopEntry = true;
+	// 				old_binance.buy(
+	// 					pair,
+	// 					amount.toFixed(),
+	// 					(buyLimitPrice || buyPrice).toFixed(),
+	// 					{ stopPrice: buyPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
+	// 					buyComplete
+	// 				);
+	// 			} else {
+	// 				isLimitEntry = true;
+	// 				console.error('needs implementing');
+	// 				throw new Error('backtrace me');
+	// 			}
+	// 		});
+	// 	}
+	// } else {
+	// 	placeSellOrder();
+	// }
 
 	let isCancelling = false;
 
@@ -501,8 +526,12 @@ main()
 const exchangeInfoData = binance_client;
 
 function dump_keepalive() {
-	console.log(process._getActiveHandles());
-	console.log(process._getActiveRequests());
+	let handles = process._getActiveHandles();
+	console.log('Handles:');
+	console.log(handles.filter((handle) => handle._isStdio != true));
+	let requests = process._getActiveRequests();
+	console.log('Requests:');
+	console.log(requests);
 	let endpoints = old_binance.websockets.subscriptions();
 	console.log(endpoints);
 	// setTimeout(dump_keepalive, 10000);

@@ -416,9 +416,8 @@ async function main() {
 
 	let isCancelling = false;
 
-	// TODO: rename trades to trade
-	closeTradesWebSocket = await binance_client.ws.trades([ 'ETHBTC', 'BNBBTC' ], (trades) => {
-		var { s: symbol, p: price } = trades;
+	closeTradesWebSocket = await binance_client.ws.aggTrades([ pair ], (trade) => {
+		var { s: symbol, p: price } = trade;
 		price = BigNumber(price);
 
 		if (buyOrderId) {

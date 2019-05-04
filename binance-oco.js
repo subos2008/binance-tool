@@ -416,6 +416,7 @@ async function main() {
 
 	let isCancelling = false;
 
+	// TODO: we don't always need this - only if we have cancel/stop/target orders the need monitoring
 	closeTradesWebSocket = await binance_client.ws.aggTrades([ pair ], (trade) => {
 		var { s: symbol, p: price } = trade;
 		price = BigNumber(price);

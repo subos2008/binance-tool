@@ -276,30 +276,54 @@ async function main() {
 		}
 	};
 
-	const placeStopOrder = function() {
-		old_binance.sell(
-			pair,
-			stopSellAmount.toFixed(),
-			(limitPrice || stopPrice).toFixed(),
-			{ stopPrice: stopPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
-			// TODO: mode sell complete code to user.ws and port this code to new binance api
-			sellComplete
-		);
-	};
+	async function placeStopOrder() {
+		try {
+			let args = {
+				side: 'SELL',
+				symbol: pair,
+				type: 'STOP_LOSS_LIMIT',
+				quantity: targetSellAmount.toFixed(),
+				price: (limitPrice || stopPrice).toFixed(), // TODO: what's this limitPrice bit?
+				stopPrice: stopPrice.toFixed()
+				// TODO: more args here, server time and use FULL response body
+			};
+			console.log(`Creating STOP_LOSS_LIMIT SELL ORDER`);
+			console.log(args);
+			let response = await binance_client.order(args);
+			console.log('Buy response', response);
+			console.log(`order id: ${response.orderId}`);
+			return response.orderId;
+		} catch (error) {
+			async_error_handler(console, `error placing order: ${error.body}`, error);
+		}
+	}
 
-	const placeTargetOrder = function() {
-		old_binance.sell(
-			pair,
-			targetSellAmount.toFixed(),
-			targetPrice.toFixed(),
-			{ type: 'LIMIT', newOrderRespType: 'FULL' },
-			sellComplete
-		);
+	async function placeTargetOrder() {
+		try {
+			let args = {
+				side: 'SELL',
+				symbol: pair,
+				type: 'LIMIT',
+				quantity: targetSellAmount.toFixed(),
+				price: targetPrice.toFixed()
+				// TODO: more args here, server time and use FULL response body
+			};
+			console.log(`Creating LIMIT SELL ORDER`);
+			console.log(args);
+			let response = await binance_client.order(args);
+			console.log('Buy response', response);
+			console.log(`order id: ${response.orderId}`);
+			return response.orderId;
+		} catch (error) {
+			async_error_handler(console, `error placing order: ${error.body}`, error);
+		}
+
+		// TODO: what is this code? it's unreachable here
 		if (stopPrice && !targetSellAmount.isEqualTo(stopSellAmount)) {
 			stopSellAmount = stopSellAmount.minus(targetSellAmount);
 			placeStopOrder();
 		}
-	};
+	}
 
 	const placeSellOrder = function() {
 		if (stopPrice) {
@@ -326,7 +350,6 @@ async function main() {
 			fsm.buyOrderCreated();
 			console.log('Buy response', response);
 			console.log(`order id: ${response.orderId}`);
-
 			return response.orderId;
 		} catch (error) {
 			async_error_handler(console, `Buy error: ${error.body}`, error);
@@ -368,6 +391,7 @@ async function main() {
 			// { name: 'buy_order_created', from: 'waiting_for_entry_price', to: 'buy_order_open' }
 		],
 		methods: {
+			// TODO: async?
 			onWaitingForExitPrice: function() {
 				console.log('Entering: waiting_for_exit_price');
 				calculateStopAndTargetAmounts(commissionAsset);
@@ -395,6 +419,7 @@ async function main() {
 	// if (typeof buyPrice !== 'undefined') {
 	// 	if (buyPrice.isZero()) {
 	// 		buyOrderId = await create_market_buy_order();
+	// TODO: move this code
 	// 	} else if (buyPrice.isGreaterThan(0)) {
 	// 		old_binance.prices(pair, (error, ticker) => {
 	// 			const currentPrice = ticker[pair];

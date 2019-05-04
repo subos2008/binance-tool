@@ -62,10 +62,6 @@ const { argv } = require('yargs')
 	.string('c')
 	.alias('c', 'cancel')
 	.describe('c', 'Set price at which to cancel buy order')
-	// '-S <scaleOutAmount>'
-	.string('S')
-	.alias('S', 'scaleOutAmount')
-	.describe('S', 'Set amount to sell (scale out) at target price (if different from amount)')
 	// '--non-bnb-fees'
 	.boolean('F')
 	.alias('F', 'non-bnb-fees')
@@ -81,8 +77,7 @@ let {
 	s: stopPrice,
 	l: limitPrice,
 	t: targetPrice,
-	c: cancelPrice,
-	S: scaleOutAmount
+	c: cancelPrice
 } = argv;
 
 if (buyPrice === '') {
@@ -195,10 +190,6 @@ async function main() {
 
 	amount = munge_and_check_quantity('Amount', amount);
 
-	if (scaleOutAmount) {
-		scaleOutAmount = munge_and_check_quantity('Scale out amount', scaleOutAmount);
-	}
-
 	if (buyPrice && buyPrice !== 0) {
 		buyPrice = munge_and_check_price('Buy price', buyPrice);
 		check_notional('Buy order', buyPrice, amount);
@@ -208,30 +199,20 @@ async function main() {
 		}
 	}
 
-	let stopSellAmount = amount;
-
 	if (stopPrice) {
 		stopPrice = munge_and_check_price('Stop price', stopPrice);
 
 		if (limitPrice) {
 			limitPrice = munge_and_check_price('Limit price', limitPrice);
-			check_notional('Stop order', limitPrice, stopSellAmount);
+			check_notional('Stop order', limitPrice, amount);
 		} else {
-			check_notional('Stop order', stopPrice, stopSellAmount);
+			check_notional('Stop order', stopPrice, amount);
 		}
 	}
 
-	let targetSellAmount = scaleOutAmount || amount;
-
 	if (targetPrice) {
 		targetPrice = munge_and_check_price('Target price', targetPrice);
-		check_notional('Target order', targetPrice, targetSellAmount);
-
-		const remainingAmount = amount.minus(targetSellAmount);
-		if (!remainingAmount.isZero()() && stopPrice) {
-			munge_and_check_quantity(`Stop amount after scale out (${remainingAmount})`, remainingAmount);
-			check_notional('Stop order after scale out', stopPrice, remainingAmount);
-		}
+		check_notional('Target order', targetPrice, amount);
 	}
 
 	if (cancelPrice) {
@@ -245,11 +226,6 @@ async function main() {
 		return commissionAsset === 'BNB' && !nonBnbFees
 			? sellAmount
 			: sellAmount.times(BigNumber(1).minus(NON_BNB_TRADING_FEE));
-	};
-
-	const calculateStopAndTargetAmounts = function(commissionAsset) {
-		stopSellAmount = calculateSellAmount(commissionAsset, stopSellAmount);
-		targetSellAmount = calculateSellAmount(commissionAsset, targetSellAmount);
 	};
 
 	let stopOrderId = 0;
@@ -282,7 +258,7 @@ async function main() {
 				side: 'SELL',
 				symbol: pair,
 				type: 'STOP_LOSS_LIMIT',
-				quantity: targetSellAmount.toFixed(),
+				quantity: amount.toFixed(),
 				price: (limitPrice || stopPrice).toFixed(), // TODO: what's this limitPrice bit?
 				stopPrice: stopPrice.toFixed()
 				// TODO: more args here, server time and use FULL response body
@@ -304,7 +280,7 @@ async function main() {
 				side: 'SELL',
 				symbol: pair,
 				type: 'LIMIT',
-				quantity: targetSellAmount.toFixed(),
+				quantity: amount.toFixed(),
 				price: targetPrice.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
@@ -316,12 +292,6 @@ async function main() {
 			return response.orderId;
 		} catch (error) {
 			async_error_handler(console, `error placing order: ${error.body}`, error);
-		}
-
-		// TODO: what is this code? it's unreachable here
-		if (stopPrice && !targetSellAmount.isEqualTo(stopSellAmount)) {
-			stopSellAmount = stopSellAmount.minus(targetSellAmount);
-			placeStopOrder();
 		}
 	}
 
@@ -394,7 +364,6 @@ async function main() {
 			// TODO: async?
 			onWaitingForExitPrice: function() {
 				console.log('Entering: waiting_for_exit_price');
-				calculateStopAndTargetAmounts(commissionAsset);
 				placeSellOrder();
 			}
 		}
@@ -503,9 +472,6 @@ async function main() {
 
 					targetOrderId = 0;
 					console.log(`${symbol} cancel response:`, response);
-					if (!targetSellAmount.isEqualTo(stopSellAmount)) {
-						stopSellAmount = stopSellAmount.plus(targetSellAmount);
-					}
 					placeStopOrder();
 				});
 			}

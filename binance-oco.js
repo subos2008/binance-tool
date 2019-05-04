@@ -133,8 +133,7 @@ async function main() {
 			checkOrderFilled(data, () => {
 				const { N: commissionAsset } = data;
 				buyOrderId = 0;
-				calculateStopAndTargetAmounts(commissionAsset);
-				placeSellOrder();
+				fsm.buyOrderFilled();
 			});
 		} else if (orderId === stopOrderId) {
 			checkOrderFilled(data, () => {
@@ -283,6 +282,7 @@ async function main() {
 			stopSellAmount.toFixed(),
 			(limitPrice || stopPrice).toFixed(),
 			{ stopPrice: stopPrice.toFixed(), type: 'STOP_LOSS_LIMIT', newOrderRespType: 'FULL' },
+			// TODO: mode sell complete code to user.ws and port this code to new binance api
 			sellComplete
 		);
 	};
@@ -364,13 +364,14 @@ async function main() {
 		transitions: [
 			{ name: 'buy_order_created', from: 'initialising', to: 'buy_order_open' }, // A
 			// { name: 'wait_for_entry_price', from: 'initialising', to: 'waiting_for_entry_price' }, // B
-			{ name: 'buy_filled', from: 'buy_order_open', to: 'waiting_for_exit_price' } // C
+			{ name: 'buy_order_filled', from: 'buy_order_open', to: 'waiting_for_exit_price' } // C
 			// { name: 'buy_order_created', from: 'waiting_for_entry_price', to: 'buy_order_open' }
 		],
 		methods: {
-			onWaitingForEntryPrice: function() {
+			onWaitingForExitPrice: function() {
 				console.log('Entering: waiting_for_exit_price');
-				console.error('Needs to be implemented in trades watching code?');
+				calculateStopAndTargetAmounts(commissionAsset);
+				placeSellOrder();
 			}
 		}
 	});

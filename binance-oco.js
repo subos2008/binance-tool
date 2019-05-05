@@ -513,8 +513,6 @@ main()
 		soft_exit();
 	});
 
-const exchangeInfoData = binance_client;
-
 function dump_keepalive() {
 	let handles = process._getActiveHandles();
 	console.log('Handles:');

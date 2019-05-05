@@ -4,6 +4,10 @@ but order executing immedately vs execution after. orderid not defined
 sets a stop if one is defined
 turns the stop into a .. market sell when the target price is hit
 
+When only -b is given it should immediately create a markey_buy order
+when -b with an entry_price is given it should enter state waiting_for_entry_price
+when -b and -s or -t are given it should enter state 
+
 So this is a stop gap for the next stage - it separates the pair we sell to and the pair we watch for price action
 First we can:
 * always use a market order for the sell. 

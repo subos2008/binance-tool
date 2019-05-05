@@ -15,6 +15,12 @@ const utils = require('../lib/utils');
 const logger = new Logger({ silent: false });
 const null_logger = new Logger({ silent: true });
 
+// Tests needed:
+// .exchangeInfo
+// .order(args)
+// .ws.aggTrades([ pair ], (trade) => {
+// .ws.user((data) => {
+
 describe('ExchangeEmulator', function() {
 	describe('constructor', function() {
 		it('sets quote_coin_balance_not_in_orders to starting_quote_balance', function() {

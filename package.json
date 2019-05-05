@@ -1,31 +1,24 @@
 {
-  "name": "binance-oco",
-  "version": "1.5.2",
-  "description": "A command line tool for placing conditional stop-limit, limit, and OCO (One-Cancels-the-Other) sell orders on Binance",
-  "main": "binance-oco.js",
-  "bin": "binance-oco.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/tony-ho/binance-oco.git"
-  },
-  "author": "Tony Ho",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/tony-ho/binance-oco/issues"
-  },
-  "homepage": "https://github.com/tony-ho/binance-oco#readme",
-  "dependencies": {
-    "bignumber.js": "^8.1.1",
-    "binance-api-node": "^0.9.0",
-    "dotenv": "^6.0.0",
-    "javascript-state-machine": "^3.1.0",
-    "node-binance-api": "0.9.0",
-    "node-fetch": "^2.3.0",
-    "yargs": "^11.0.0"
-  },
-  "devDependencies": {
-    "eslint": "^4.19.1",
-    "eslint-config-airbnb-base": "^13.0.0",
-    "eslint-plugin-import": "^2.12.0"
-  }
+	"main": "binance.js",
+	"bin": "binance.js",
+	"scripts": {
+		"test": "./node_modules/.bin/mocha"
+	},
+	"dependencies": {
+		"bignumber.js": "^8.1.1",
+		"binance-api-node": "^0.9.0",
+		"dotenv": "^6.0.0",
+		"javascript-state-machine": "^3.1.0",
+		"node-binance-api": "0.9.0",
+		"node-fetch": "^2.3.0",
+		"yargs": "^11.0.0"
+	},
+	"devDependencies": {
+		"chai": "^4.2.0",
+		"chai-bignumber": "^3.0.0",
+		"eslint": "^4.19.1",
+		"eslint-config-airbnb-base": "^13.0.0",
+		"eslint-plugin-import": "^2.12.0",
+		"mocha": "^6.1.4"
+	}
 }

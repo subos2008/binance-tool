@@ -209,6 +209,25 @@ describe('ExchangeEmulator', function() {
 	});
 
 	describe('binance-api-node API', function() {
+		async function do_limit_buy_order({ ee, price, amount } = {}) {
+			return await ee.order({
+				side: 'BUY',
+				symbol: default_pair,
+				type: 'LIMIT',
+				quantity: amount.toFixed(),
+				price: price.toFixed()
+			});
+		}
+		async function do_limit_sell_order({ ee, price, amount } = {}) {
+			return await ee.order({
+				side: 'SELL',
+				symbol: default_pair,
+				type: 'LIMIT',
+				quantity: amount.toFixed(),
+				price: price.toFixed()
+			});
+		}
+
 		describe('exchangeInfo', function() {
 			it('returns the object passed in to the constructor', async function() {
 				const starting_quote_balance = BigNumber(1);
@@ -218,20 +237,11 @@ describe('ExchangeEmulator', function() {
 			});
 		});
 		describe('limit buy order', async function() {
-			async function do_limit_buy_order({ ee, price, amount } = {}) {
-				return await ee.order({
-					side: 'BUY',
-					symbol: default_pair,
-					type: 'LIMIT',
-					quantity: amount.toFixed(),
-					price: price.toFixed()
-				});
-			}
 			it('adds a limit_buy_order to open_orders', async function() {
 				const ee = new ExchangeEmulator({ logger, exchange_info, starting_quote_balance: BigNumber(1) });
 				const base_volume = BigNumber('1.2');
 				const limit_price = BigNumber('0.1');
-				await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
+				let response = await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
 				expect(ee.open_orders.length).to.equal(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('BUY');
@@ -239,7 +249,46 @@ describe('ExchangeEmulator', function() {
 				expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
 				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
 			});
-			it.skip('returns the expected response object with orderID');
+			it('returns the expected response object with orderID', async function() {
+				const ee = new ExchangeEmulator({ logger, exchange_info, starting_quote_balance: BigNumber(1) });
+				const base_volume = BigNumber('1.2');
+				const limit_price = BigNumber('0.1');
+				let response = await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
+				expect(response).to.have.property('orderId');
+				expect(response.orderId).to.equal(1);
+			});
+		});
+		describe('limit sell order', async function() {
+			it('adds a limit_sell_order to open_orders', async function() {
+				const ee = new ExchangeEmulator({
+					logger,
+					exchange_info,
+					starting_quote_balance: BigNumber(0),
+					starting_base_balance: BigNumber(1)
+				});
+				const base_volume = BigNumber('0.8');
+				const limit_price = BigNumber('0.1');
+				let response = await do_limit_sell_order({ ee, amount: base_volume, price: limit_price });
+				expect(ee.open_orders.length).to.equal(1);
+				expect(ee.open_orders[0].type).to.equal('LIMIT');
+				expect(ee.open_orders[0].side).to.equal('SELL');
+				expect(ee.open_orders[0].orderId).to.equal(1);
+				expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
+				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
+			});
+			it('returns the expected response object with orderID', async function() {
+				const ee = new ExchangeEmulator({
+					logger,
+					exchange_info,
+					starting_quote_balance: BigNumber(0),
+					starting_base_balance: BigNumber(1)
+				});
+				const base_volume = BigNumber('0.8');
+				const limit_price = BigNumber('0.1');
+				let response = await do_limit_sell_order({ ee, amount: base_volume, price: limit_price });
+				expect(response).to.have.property('orderId');
+				expect(response.orderId).to.equal(1);
+			});
 		});
 	});
 });

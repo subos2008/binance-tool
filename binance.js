@@ -15,38 +15,6 @@ const BigNumber = require('bignumber.js');
 const send_message = require('./telegram.js');
 const StateMachine = require('javascript-state-machine');
 
-/**
-        * rounds number with given step
-        * @param {float} qty - quantity to round
-        * @param {float} stepSize - stepSize as specified by exchangeInfo
-        * @return {float} - number
-        */
-function roundStep(qty, stepSize) {
-	// Integers do not require rounding
-	if (Number.isInteger(qty)) return qty;
-	const qtyString = qty.toFixed(16);
-	const desiredDecimals = Math.max(stepSize.indexOf('1') - 1, 0);
-	const decimalIndex = qtyString.indexOf('.');
-	return parseFloat(qtyString.slice(0, decimalIndex + desiredDecimals + 1));
-}
-
-/**
-	* rounds price to required precision
-	* @param {float} price - price to round
-	* @param {float} tickSize - tickSize as specified by exchangeInfo
-	* @return {float} - number
-	*/
-function roundTicks(price, tickSize) {
-	const formatter = new Intl.NumberFormat('en-US', {
-		style: 'decimal',
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 8
-	});
-	const precision = formatter.format(tickSize).split('.')[1].length || 0;
-	if (typeof price === 'string') price = parseFloat(price);
-	return price.toFixed(precision);
-}
-
 const { argv } = require('yargs')
 	.usage('Usage: $0')
 	.example(
@@ -180,7 +148,7 @@ async function main() {
 	const { minNotional } = filters.find((eis) => eis.filterType === 'MIN_NOTIONAL');
 
 	function munge_and_check_quantity(name, volume) {
-		volume = BigNumber(roundStep(BigNumber(volume), stepSize));
+		volume = BigNumber(utils.roundStep(BigNumber(volume), stepSize));
 		if (volume.isLessThan(minQty)) {
 			throw new Error(`${name} ${volume} does not meet minimum order amount ${minQty}.`);
 		}
@@ -190,7 +158,7 @@ async function main() {
 	function munge_and_check_price(name, price) {
 		price = BigNumber(price);
 		if (price.isZero()) return price; // don't munge zero, special case for market buys
-		price = BigNumber(roundTicks(price, tickSize));
+		price = BigNumber(utils.roundTicks(price, tickSize));
 		if (price.isLessThan(minPrice)) {
 			throw new Error(`${name} ${price} does not meet minimum order price ${minPrice}.`);
 		}

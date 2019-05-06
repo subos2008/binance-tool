@@ -29,6 +29,7 @@ describe('Algo', function() {
 	function setup({ algo_config } = {}) {
 		let starting_quote_balance = BigNumber(1);
 		let ee = new ExchangeEmulator({ logger, exchange_info, starting_quote_balance });
+		algo_config = Object.assign({ send_message: (msg) => console.log(`send_message: ${msg}`) }, algo_config);
 		let algo = new Algo(Object.assign(algo_config, { ee }));
 		return { algo, ee };
 	}

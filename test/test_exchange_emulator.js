@@ -257,30 +257,30 @@ describe('ExchangeEmulator', function() {
 				let response = await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
 				expect(response).to.have.property('orderId');
 				expect(response.orderId).to.equal(1);
-				describe('when hit', async function() {
-					it('sends an executionReport to .ws.user', async function() {
-						const ee = new ExchangeEmulator({
-							logger,
-							exchange_info,
-							starting_quote_balance: BigNumber(1)
-						});
-						const base_volume = BigNumber('1.2');
-						const limit_price = BigNumber('0.1');
-						let order_executed_event;
-						let clean = await ee.ws.user((msg) => {
-							order_executed_event = msg;
-						});
-						let response = await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
-						await ee.set_current_price({ price: limit_price });
-						expect(order_executed_event).to.be.an('object');
-						expect(order_executed_event).to.include({
-							eventType: 'executionReport',
-							symbol: default_pair,
-							orderId: 1,
-							orderType: 'LIMIT',
-							side: 'BUY',
-							orderStatus: 'FILLED'
-						});
+			});
+			describe('when hit', async function() {
+				it('sends an executionReport to .ws.user', async function() {
+					const ee = new ExchangeEmulator({
+						logger,
+						exchange_info,
+						starting_quote_balance: BigNumber(1)
+					});
+					const base_volume = BigNumber('1.2');
+					const limit_price = BigNumber('0.1');
+					let order_executed_event;
+					let clean = await ee.ws.user((msg) => {
+						order_executed_event = msg;
+					});
+					let response = await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
+					await ee.set_current_price({ price: limit_price });
+					expect(order_executed_event).to.be.an('object');
+					expect(order_executed_event).to.include({
+						eventType: 'executionReport',
+						symbol: default_pair,
+						orderId: 1,
+						orderType: 'LIMIT',
+						side: 'BUY',
+						orderStatus: 'FILLED'
 					});
 				});
 			});
@@ -317,31 +317,31 @@ describe('ExchangeEmulator', function() {
 				expect(response).to.have.property('orderId');
 				expect(response.orderId).to.equal(1);
 			});
-		});
-		describe('when hit', async function() {
-			it('sends an executionReport to .ws.user', async function() {
-				const ee = new ExchangeEmulator({
-					logger,
-					exchange_info,
-					starting_quote_balance: BigNumber(0),
-					starting_base_balance: BigNumber(1)
-				});
-				const base_volume = BigNumber('0.8');
-				const limit_price = BigNumber('0.1');
-				let order_executed_event;
-				let clean = await ee.ws.user((msg) => {
-					order_executed_event = msg;
-				});
-				let response = await do_limit_sell_order({ ee, amount: base_volume, price: limit_price });
-				await ee.set_current_price({ price: limit_price });
-				expect(order_executed_event).to.be.an('object');
-				expect(order_executed_event).to.include({
-					eventType: 'executionReport',
-					symbol: default_pair,
-					orderId: 1,
-					orderType: 'LIMIT',
-					side: 'SELL',
-					orderStatus: 'FILLED'
+			describe('when hit', async function() {
+				it('sends an executionReport to .ws.user', async function() {
+					const ee = new ExchangeEmulator({
+						logger,
+						exchange_info,
+						starting_quote_balance: BigNumber(0),
+						starting_base_balance: BigNumber(1)
+					});
+					const base_volume = BigNumber('0.8');
+					const limit_price = BigNumber('0.1');
+					let order_executed_event;
+					let clean = await ee.ws.user((msg) => {
+						order_executed_event = msg;
+					});
+					let response = await do_limit_sell_order({ ee, amount: base_volume, price: limit_price });
+					await ee.set_current_price({ price: limit_price });
+					expect(order_executed_event).to.be.an('object');
+					expect(order_executed_event).to.include({
+						eventType: 'executionReport',
+						symbol: default_pair,
+						orderId: 1,
+						orderType: 'LIMIT',
+						side: 'SELL',
+						orderStatus: 'FILLED'
+					});
 				});
 			});
 		});

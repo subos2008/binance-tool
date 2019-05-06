@@ -42,20 +42,27 @@ describe('Algo', function() {
 
 	describe('when only a buyPrice is present', function() {
 		it('creates a buy order and exits', async function() {
-			let { algo } = setup({
+			const base_volume = BigNumber(1);
+			const limit_price = BigNumber(1);
+			let { ee, algo } = setup({
 				algo_config: {
 					pair: default_pair,
-					amount: '1',
-					buyPrice: '1'
+					amount: base_volume,
+					buyPrice: limit_price
 				}
 			});
 			try {
 				await algo.main();
-				expect.fail('should not get here: expected call to throw');
 			} catch (e) {
 				console.log(e);
-				expect(e.name).to.equal('ExecutionComplete');
+				expect.fail('should not get here: expected call not to throw');
 			}
+			expect(ee.open_orders.length).to.equal(1);
+			expect(ee.open_orders[0].type).to.equal('LIMIT');
+			expect(ee.open_orders[0].side).to.equal('BUY');
+			expect(ee.open_orders[0].orderId).to.equal(1);
+			expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
+			expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
 		});
 	});
 });

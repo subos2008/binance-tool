@@ -54,6 +54,7 @@ const { argv } = require('yargs')
 	.default('F', false);
 
 let { p: pair, a: amount, q: quoteAmount, b: buyPrice, s: stopPrice, l: limitPrice, t: targetPrice } = argv;
+const { F: nonBnbFees } = argv;
 
 // TODO: Note that for all authenticated endpoints, you can pass an extra parameter useServerTime
 // TODO: set to true in order to fetch the server time before making the request.
@@ -64,12 +65,6 @@ const binance_client = Binance({
 	// getTime: xxx // time generator function, optional, defaults to () => Date.now()
 });
 
-// function sleep(ms) {
-// 	return new Promise((resolve) => setTimeout(resolve, ms));
-// }
-
-var closeUserWebsocket, closeTradesWebSocket;
-
 const algo = new Algo({
 	ee: binance_client,
 	send_message,
@@ -79,7 +74,8 @@ const algo = new Algo({
 	buyPrice,
 	stopPrice,
 	limitPrice,
-	targetPrice
+	targetPrice,
+	nonBnbFees
 });
 algo
 	.main()

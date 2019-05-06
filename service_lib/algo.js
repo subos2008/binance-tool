@@ -15,7 +15,8 @@ class Algo {
 			buyPrice,
 			stopPrice,
 			limitPrice,
-			targetPrice
+			targetPrice,
+			nonBnbFees
 		} = {}
 	) {
 		this.ee = ee;
@@ -27,6 +28,7 @@ class Algo {
 		this.stopPrice = stopPrice;
 		this.limitPrice = limitPrice;
 		this.targetPrice = targetPrice;
+		this.nonBnbFees = nonBnbFees;
 
 		if (this.buyPrice === '') {
 			this.buyPrice = '0';
@@ -38,11 +40,10 @@ class Algo {
 		}
 
 		if (!this.amount) {
-			console.error('You must specify amount with -a or via -q');
-			process.exit(1);
+			let msg = 'You must specify amount with -a or via -q';
+			console.error();
+			throw new Error(msg);
 		}
-
-		const { F: nonBnbFees } = argv;
 
 		this.pair = this.pair.toUpperCase();
 	}
@@ -147,7 +148,7 @@ class Algo {
 
 		const calculateSellAmount = function(commissionAsset, sellAmount) {
 			// Adjust sell amount if BNB not used for trading fee
-			return commissionAsset === 'BNB' && !nonBnbFees
+			return commissionAsset === 'BNB' && !this.nonBnbFees
 				? sellAmount
 				: sellAmount.times(BigNumber(1).minus(NON_BNB_TRADING_FEE));
 		};

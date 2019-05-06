@@ -11,10 +11,41 @@ const { ExitNow, ExecutionComplete } = require('./lib/errors');
 // TODO: - in the original implementations
 
 const Binance = require('binance-api-node').default;
-const OldBinance = require('node-binance-api');
 const BigNumber = require('bignumber.js');
 const send_message = require('./telegram.js');
 const StateMachine = require('javascript-state-machine');
+
+/**
+        * rounds number with given step
+        * @param {float} qty - quantity to round
+        * @param {float} stepSize - stepSize as specified by exchangeInfo
+        * @return {float} - number
+        */
+function roundStep(qty, stepSize) {
+	// Integers do not require rounding
+	if (Number.isInteger(qty)) return qty;
+	const qtyString = qty.toFixed(16);
+	const desiredDecimals = Math.max(stepSize.indexOf('1') - 1, 0);
+	const decimalIndex = qtyString.indexOf('.');
+	return parseFloat(qtyString.slice(0, decimalIndex + desiredDecimals + 1));
+}
+
+/**
+	* rounds price to required precision
+	* @param {float} price - price to round
+	* @param {float} tickSize - tickSize as specified by exchangeInfo
+	* @return {float} - number
+	*/
+function roundTicks(price, tickSize) {
+	const formatter = new Intl.NumberFormat('en-US', {
+		style: 'decimal',
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 8
+	});
+	const precision = formatter.format(tickSize).split('.')[1].length || 0;
+	if (typeof price === 'string') price = parseFloat(price);
+	return price.toFixed(precision);
+}
 
 const { argv } = require('yargs')
 	.usage('Usage: $0')
@@ -102,13 +133,6 @@ const binance_client = Binance({
 	// getTime: xxx // time generator function, optional, defaults to () => Date.now()
 });
 
-const old_binance = new OldBinance().options({
-	APIKEY: process.env.APIKEY,
-	APISECRET: process.env.APISECRET,
-	useServerTime: true,
-	reconnect: true
-});
-
 function sleep(ms) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -156,7 +180,7 @@ async function main() {
 	const { minNotional } = filters.find((eis) => eis.filterType === 'MIN_NOTIONAL');
 
 	function munge_and_check_quantity(name, volume) {
-		volume = BigNumber(old_binance.roundStep(BigNumber(volume), stepSize));
+		volume = BigNumber(roundStep(BigNumber(volume), stepSize));
 		if (volume.isLessThan(minQty)) {
 			throw new Error(`${name} ${volume} does not meet minimum order amount ${minQty}.`);
 		}
@@ -166,7 +190,7 @@ async function main() {
 	function munge_and_check_price(name, price) {
 		price = BigNumber(price);
 		if (price.isZero()) return price; // don't munge zero, special case for market buys
-		price = BigNumber(old_binance.roundTicks(price, tickSize));
+		price = BigNumber(roundTicks(price, tickSize));
 		if (price.isLessThan(minPrice)) {
 			throw new Error(`${name} ${price} does not meet minimum order price ${minPrice}.`);
 		}
@@ -447,8 +471,6 @@ async function main() {
 
 	await sleep(2000);
 	console.log('hey - trades active');
-	endpoints = old_binance.websockets.subscriptions();
-	console.log(endpoints);
 
 	const checkOrderFilled = function(data, orderFilled) {
 		const { s: symbol, p: price, q: quantity, S: side, o: orderType, i: orderId, X: orderStatus } = data;
@@ -487,8 +509,6 @@ function dump_keepalive() {
 	let requests = process._getActiveRequests();
 	console.log('Requests:');
 	console.log(requests);
-	let endpoints = old_binance.websockets.subscriptions();
-	console.log(endpoints);
 	// setTimeout(dump_keepalive, 10000);
 }
 

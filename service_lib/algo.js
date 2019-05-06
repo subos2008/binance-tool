@@ -1,7 +1,8 @@
-const async_error_handler = require('./lib/async_error_handler');
-const { ExitNow, ExecutionComplete } = require('./lib/errors');
+const async_error_handler = require('../lib/async_error_handler');
+const { ExitNow, ExecutionComplete } = require('../lib/errors');
 const StateMachine = require('javascript-state-machine');
 const BigNumber = require('bignumber.js');
+const utils = require('../lib/utils');
 
 class Algo {
 	// All numbers are expected to be passed in as strings
@@ -58,7 +59,7 @@ class Algo {
 	}
 
 	async main() {
-		this.closeUserWebsocket = await binance_client.ws.user((data) => {
+		this.closeUserWebsocket = await this.ee.ws.user((data) => {
 			const { i: orderId } = data;
 
 			if (orderId === this.buyOrderId) {
@@ -80,7 +81,7 @@ class Algo {
 
 		var exchangeInfoData;
 		try {
-			exchangeInfoData = await binance_client.exchangeInfo();
+			exchangeInfoData = await this.ee.exchangeInfo();
 		} catch (e) {
 			console.error('Error could not pull exchange info');
 			console.error(e);
@@ -191,7 +192,7 @@ class Algo {
 				};
 				console.log(`Creating STOP_LOSS_LIMIT SELL ORDER`);
 				console.log(args);
-				let response = await binance_client.order(args);
+				let response = await this.ee.order(args);
 				console.log('Buy response', response);
 				console.log(`order id: ${response.orderId}`);
 				return response.orderId;
@@ -212,7 +213,7 @@ class Algo {
 				};
 				console.log(`Creating LIMIT SELL ORDER`);
 				console.log(args);
-				let response = await binance_client.order(args);
+				let response = await this.ee.order(args);
 				console.log('Buy response', response);
 				console.log(`order id: ${response.orderId}`);
 				return response.orderId;
@@ -242,7 +243,7 @@ class Algo {
 				};
 				console.log(`Creating MARKET BUY ORDER`);
 				// console.log(args);
-				let response = await binance_client.order(args);
+				let response = await this.ee.order(args);
 				fsm.buyOrderCreated();
 				console.log('Buy response', response);
 				console.log(`order id: ${response.orderId}`);
@@ -264,7 +265,7 @@ class Algo {
 				};
 				console.log(`Creating LIMIT BUY ORDER`);
 				console.log(args);
-				let response = await binance_client.order(args);
+				let response = await this.ee.order(args);
 				fsm.buyOrderCreated();
 				console.log('Buy response', response);
 				console.log(`order id: ${response.orderId}`);
@@ -331,7 +332,7 @@ class Algo {
 		let isCancelling = false;
 
 		// TODO: we don't always need this - only if we have cancel/stop/target orders the need monitoring
-		this.closeTradesWebSocket = await binance_client.ws.aggTrades([ this.pair ], async function(trade) {
+		this.closeTradesWebSocket = await this.ee.ws.aggTrades([ this.pair ], async function(trade) {
 			var { s: symbol, p: price } = trade;
 			price = BigNumber(price);
 
@@ -348,7 +349,7 @@ class Algo {
 					console.log(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
 					isCancelling = true;
 					try {
-						await binance_client.cancelOrder({ symbol, orderId: this.stopOrderId });
+						await this.ee.cancelOrder({ symbol, orderId: this.stopOrderId });
 						isCancelling = false;
 					} catch (error) {
 						console.error(`${symbol} cancel error:`, error.body);
@@ -365,7 +366,7 @@ class Algo {
 				) {
 					isCancelling = true;
 					try {
-						await binance_client.cancelOrder({ symbol, orderId: this.targetOrderId });
+						await this.ee.cancelOrder({ symbol, orderId: this.targetOrderId });
 						isCancelling = false;
 					} catch (error) {
 						console.error(`${symbol} cancel error:`, error.body);

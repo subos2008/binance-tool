@@ -215,6 +215,59 @@ class Algo {
 		}
 	}
 
+	async placeStopOrder() {
+		try {
+			let args = {
+				side: 'SELL',
+				symbol: this.pair,
+				type: 'STOP_LOSS_LIMIT',
+				quantity: this.amount.toFixed(),
+				price: (this.limitPrice || this.stopPrice).toFixed(),
+				stopPrice: this.stopPrice.toFixed()
+				// TODO: more args here, server time and use FULL response body
+			};
+			console.log(`Creating STOP_LOSS_LIMIT SELL ORDER`);
+			console.log(args);
+			let response = await this.ee.order(args);
+			console.log('Buy response', response);
+			console.log(`order id: ${response.orderId}`);
+			return response.orderId;
+		} catch (error) {
+			async_error_handler(console, `error placing order: ${error.body}`, error);
+		}
+	}
+
+	async placeTargetOrder() {
+		try {
+			let args = {
+				side: 'SELL',
+				symbol: this.pair,
+				type: 'LIMIT',
+				quantity: this.amount.toFixed(),
+				price: this.targetPrice.toFixed()
+				// TODO: more args here, server time and use FULL response body
+			};
+			console.log(`Creating LIMIT SELL ORDER`);
+			console.log(args);
+			let response = await this.ee.order(args);
+			console.log('Buy response', response);
+			console.log(`order id: ${response.orderId}`);
+			return response.orderId;
+		} catch (error) {
+			async_error_handler(console, `error placing order: ${error.body}`, error);
+		}
+	}
+
+	async placeSellOrder() {
+		if (this.stopPrice) {
+			this.placeStopOrder();
+		} else if (this.targetPrice) {
+			this.placeTargetOrder();
+		} else {
+			throw new ExecutionComplete();
+		}
+	}
+
 	async main() {
 		try {
 			await this.monitor_user_stream();
@@ -222,90 +275,38 @@ class Algo {
 
 			const NON_BNB_TRADING_FEE = BigNumber('0.001');
 
-			const calculateSellAmount = function(commissionAsset, sellAmount) {
-				// Adjust sell amount if BNB not used for trading fee
-				return commissionAsset === 'BNB' && !this.nonBnbFees
-					? sellAmount
-					: sellAmount.times(BigNumber(1).minus(NON_BNB_TRADING_FEE));
-			};
+			// const calculateSellAmount = function(commissionAsset, sellAmount) {
+			// 	// Adjust sell amount if BNB not used for trading fee
+			// 	return commissionAsset === 'BNB' && !this.nonBnbFees
+			// 		? sellAmount
+			// 		: sellAmount.times(BigNumber(1).minus(NON_BNB_TRADING_FEE));
+			// };
 
-			const sellComplete = function(error, response) {
-				if (error) {
-					throw new Error('Sell error', error.body);
-				}
+			// const sellComplete = function(error, response) {
+			// 	if (error) {
+			// 		throw new Error('Sell error', error.body);
+			// 	}
 
-				console.log('Sell response', response);
-				console.log(`order id: ${response.orderId}`);
+			// 	console.log('Sell response', response);
+			// 	console.log(`order id: ${response.orderId}`);
 
-				if (!(this.stopPrice && this.targetPrice)) {
-					throw new ExecutionComplete();
-				}
+			// 	if (!(this.stopPrice && this.targetPrice)) {
+			// 		throw new ExecutionComplete();
+			// 	}
 
-				if (response.type === 'STOP_LOSS_LIMIT') {
-					this.send_message(`${this.pair} stopped out`);
-					this.stopOrderId = response.orderId;
-				} else if (response.type === 'LIMIT') {
-					this.send_message(`${this.pair} hit target price`);
-					this.targetOrderId = response.orderId;
-				}
-			};
-
-			async function placeStopOrder() {
-				try {
-					let args = {
-						side: 'SELL',
-						symbol: this.pair,
-						type: 'STOP_LOSS_LIMIT',
-						quantity: this.amount.toFixed(),
-						price: (this.limitPrice || this.stopPrice).toFixed(),
-						stopPrice: this.stopPrice.toFixed()
-						// TODO: more args here, server time and use FULL response body
-					};
-					console.log(`Creating STOP_LOSS_LIMIT SELL ORDER`);
-					console.log(args);
-					let response = await this.ee.order(args);
-					console.log('Buy response', response);
-					console.log(`order id: ${response.orderId}`);
-					return response.orderId;
-				} catch (error) {
-					async_error_handler(console, `error placing order: ${error.body}`, error);
-				}
-			}
-
-			async function placeTargetOrder() {
-				try {
-					let args = {
-						side: 'SELL',
-						symbol: this.pair,
-						type: 'LIMIT',
-						quantity: this.amount.toFixed(),
-						price: this.targetPrice.toFixed()
-						// TODO: more args here, server time and use FULL response body
-					};
-					console.log(`Creating LIMIT SELL ORDER`);
-					console.log(args);
-					let response = await this.ee.order(args);
-					console.log('Buy response', response);
-					console.log(`order id: ${response.orderId}`);
-					return response.orderId;
-				} catch (error) {
-					async_error_handler(console, `error placing order: ${error.body}`, error);
-				}
-			}
-
-			async function placeSellOrder() {
-				if (this.stopPrice) {
-					placeStopOrder();
-				} else if (this.targetPrice) {
-					placeTargetOrder();
-				} else {
-					throw new ExecutionComplete();
-				}
-			}
+			// 	if (response.type === 'STOP_LOSS_LIMIT') {
+			// 		this.send_message(`${this.pair} stopped out`);
+			// 		this.stopOrderId = response.orderId;
+			// 	} else if (response.type === 'LIMIT') {
+			// 		this.send_message(`${this.pair} hit target price`);
+			// 		this.targetOrderId = response.orderId;
+			// 	}
+			// };
 
 			let isLimitEntry = false;
 			let isStopEntry = false;
 
+			let obj = this;
 			this.fsm = new StateMachine({
 				init: 'initialising',
 				transitions: [
@@ -318,7 +319,7 @@ class Algo {
 					// TODO: async?
 					onWaitingForExitPrice: function() {
 						console.log('Entering: waiting_for_exit_price');
-						placeSellOrder();
+						obj.placeSellOrder();
 					}
 				}
 			});

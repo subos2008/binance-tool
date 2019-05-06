@@ -58,10 +58,6 @@ const { argv } = require('yargs')
 	.string('t')
 	.alias('t', 'target')
 	.describe('t', 'Set target limit order sell price')
-	// '-c <cancelPrice>'
-	.string('c')
-	.alias('c', 'cancel')
-	.describe('c', 'Set price at which to cancel buy order')
 	// '--non-bnb-fees'
 	.boolean('F')
 	.alias('F', 'non-bnb-fees')
@@ -76,8 +72,7 @@ let {
 	B: buyLimitPrice,
 	s: stopPrice,
 	l: limitPrice,
-	t: targetPrice,
-	c: cancelPrice
+	t: targetPrice
 } = argv;
 
 if (buyPrice === '') {
@@ -213,10 +208,6 @@ async function main() {
 	if (targetPrice) {
 		targetPrice = munge_and_check_price('Target price', targetPrice);
 		check_notional('Target order', targetPrice, amount);
-	}
-
-	if (cancelPrice) {
-		cancelPrice = munge_and_check_price('cancelPrice', cancelPrice);
 	}
 
 	const NON_BNB_TRADING_FEE = BigNumber('0.001');
@@ -417,63 +408,39 @@ async function main() {
 	let isCancelling = false;
 
 	// TODO: we don't always need this - only if we have cancel/stop/target orders the need monitoring
-	closeTradesWebSocket = await binance_client.ws.aggTrades([ pair ], (trade) => {
+	closeTradesWebSocket = await binance_client.ws.aggTrades([ pair ], async function(trade) {
 		var { s: symbol, p: price } = trade;
 		price = BigNumber(price);
 
 		if (buyOrderId) {
-			if (!cancelPrice) {
-				// console.log(`${symbol} trade update. price: ${price} buy: ${buyPrice}`);
-			} else {
-				// console.log(`${symbol} trade update. price: ${price} buy: ${buyPrice} cancel: ${cancelPrice}`);
-
-				if (
-					((isStopEntry && price.isLessThanOrEqualTo(cancelPrice)) ||
-						(isLimitEntry && price.isGreaterThanOrEqualTo(cancelPrice))) &&
-					!isCancelling
-				) {
-					isCancelling = true;
-					old_binance.cancel(symbol, buyOrderId, (error, response) => {
-						isCancelling = false;
-						if (error) {
-							console.error(`${symbol} cancel error:`, error.body);
-							return;
-						}
-
-						console.log(`${symbol} cancel response:`, response);
-						throw new ExecutionComplete();
-					});
-				}
-			}
+			// console.log(`${symbol} trade update. price: ${price} buy: ${buyPrice}`);
 		} else if (stopOrderId || targetOrderId) {
 			// console.log(`${symbol} trade update. price: ${price} stop: ${stopPrice} target: ${targetPrice}`);
 			if (stopOrderId && !targetOrderId && price.isGreaterThanOrEqualTo(targetPrice) && !isCancelling) {
 				console.log(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
 				isCancelling = true;
-				old_binance.cancel(symbol, stopOrderId, (error, response) => {
+				try {
+					await binance_client.cancelOrder({ symbol, orderId: stopOrderId });
 					isCancelling = false;
-					if (error) {
-						console.error(`${symbol} cancel error:`, error.body);
-						return;
-					}
-
-					stopOrderId = 0;
-					console.log(`${symbol} cancel response:`, response);
-					placeTargetOrder();
-				});
+				} catch (error) {
+					console.error(`${symbol} cancel error:`, error.body);
+					return;
+				}
+				stopOrderId = 0;
+				console.log(`${symbol} cancel response:`, response);
+				placeTargetOrder();
 			} else if (targetOrderId && !stopOrderId && price.isLessThanOrEqualTo(stopPrice) && !isCancelling) {
 				isCancelling = true;
-				old_binance.cancel(symbol, targetOrderId, (error, response) => {
+				try {
+					await binance_client.cancelOrder({ symbol, orderId: targetOrderId });
 					isCancelling = false;
-					if (error) {
-						console.error(`${symbol} cancel error:`, error.body);
-						return;
-					}
-
-					targetOrderId = 0;
-					console.log(`${symbol} cancel response:`, response);
-					placeStopOrder();
-				});
+				} catch (error) {
+					console.error(`${symbol} cancel error:`, error.body);
+					return;
+				}
+				targetOrderId = 0;
+				console.log(`${symbol} cancel response:`, response);
+				placeStopOrder();
 			}
 		}
 	});

@@ -46,6 +46,10 @@ class Algo {
 		}
 
 		this.pair = this.pair.toUpperCase();
+
+		this.buyOrderId = 0;
+		this.stopOrderId = 0;
+		this.targetOrderId = 0;
 	}
 
 	shutdown_streams() {
@@ -57,17 +61,17 @@ class Algo {
 		this.closeUserWebsocket = await binance_client.ws.user((data) => {
 			const { i: orderId } = data;
 
-			if (orderId === buyOrderId) {
+			if (orderId === this.buyOrderId) {
 				checkOrderFilled(data, () => {
 					const { N: commissionAsset } = data;
-					buyOrderId = 0;
+					this.buyOrderId = 0;
 					fsm.buyOrderFilled();
 				});
-			} else if (orderId === stopOrderId) {
+			} else if (orderId === this.stopOrderId) {
 				checkOrderFilled(data, () => {
 					throw new ExecutionComplete(`Stop hit`);
 				});
-			} else if (orderId === targetOrderId) {
+			} else if (orderId === this.targetOrderId) {
 				checkOrderFilled(data, () => {
 					throw new ExecutionComplete(`Target hit`);
 				});
@@ -153,9 +157,6 @@ class Algo {
 				: sellAmount.times(BigNumber(1).minus(NON_BNB_TRADING_FEE));
 		};
 
-		let stopOrderId = 0;
-		let targetOrderId = 0;
-
 		const sellComplete = function(error, response) {
 			if (error) {
 				throw new Error('Sell error', error.body);
@@ -170,10 +171,10 @@ class Algo {
 
 			if (response.type === 'STOP_LOSS_LIMIT') {
 				this.send_message(`${this.pair} stopped out`);
-				stopOrderId = response.orderId;
+				this.stopOrderId = response.orderId;
 			} else if (response.type === 'LIMIT') {
 				this.send_message(`${this.pair} hit target price`);
-				targetOrderId = response.orderId;
+				this.targetOrderId = response.orderId;
 			}
 		};
 
@@ -273,7 +274,6 @@ class Algo {
 			}
 		}
 
-		var buyOrderId = 0;
 		let isLimitEntry = false;
 		let isStopEntry = false;
 
@@ -296,9 +296,9 @@ class Algo {
 
 		if (typeof this.buyPrice !== 'undefined') {
 			if (this.buyPrice.isZero()) {
-				buyOrderId = await create_market_buy_order();
+				this.buyOrderId = await create_market_buy_order();
 			} else {
-				buyOrderId = await create_limit_buy_order();
+				this.buyOrderId = await create_limit_buy_order();
 			}
 		}
 
@@ -312,7 +312,7 @@ class Algo {
 		// console.log(`BuyPrice: ${this.buyPrice}, isZero(): ${this.buyPrice.isZero()}`);
 		// if (typeof this.buyPrice !== 'undefined') {
 		// 	if (this.buyPrice.isZero()) {
-		// 		buyOrderId = await create_market_buy_order();
+		// 		this.buyOrderId = await create_market_buy_order();
 		// TODO: move this code
 		// 	} else if (this.buyPrice.isGreaterThan(0)) {
 		// 		old_binance.prices(this.pair, (error, ticker) => {
@@ -335,38 +335,43 @@ class Algo {
 			var { s: symbol, p: price } = trade;
 			price = BigNumber(price);
 
-			if (buyOrderId) {
+			if (this.buyOrderId) {
 				// console.log(`${symbol} trade update. price: ${price} buy: ${this.buyPrice}`);
-			} else if (stopOrderId || targetOrderId) {
+			} else if (this.stopOrderId || this.targetOrderId) {
 				// console.log(`${symbol} trade update. price: ${price} stop: ${this.stopPrice} target: ${this.targetPrice}`);
-				if (stopOrderId && !targetOrderId && price.isGreaterThanOrEqualTo(this.targetPrice) && !isCancelling) {
+				if (
+					this.stopOrderId &&
+					!this.targetOrderId &&
+					price.isGreaterThanOrEqualTo(this.targetPrice) &&
+					!isCancelling
+				) {
 					console.log(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
 					isCancelling = true;
 					try {
-						await binance_client.cancelOrder({ symbol, orderId: stopOrderId });
+						await binance_client.cancelOrder({ symbol, orderId: this.stopOrderId });
 						isCancelling = false;
 					} catch (error) {
 						console.error(`${symbol} cancel error:`, error.body);
 						return;
 					}
-					stopOrderId = 0;
+					this.stopOrderId = 0;
 					console.log(`${symbol} cancel response:`, response);
 					placeTargetOrder();
 				} else if (
-					targetOrderId &&
-					!stopOrderId &&
+					this.targetOrderId &&
+					!this.stopOrderId &&
 					price.isLessThanOrEqualTo(this.stopPrice) &&
 					!isCancelling
 				) {
 					isCancelling = true;
 					try {
-						await binance_client.cancelOrder({ symbol, orderId: targetOrderId });
+						await binance_client.cancelOrder({ symbol, orderId: this.targetOrderId });
 						isCancelling = false;
 					} catch (error) {
 						console.error(`${symbol} cancel error:`, error.body);
 						return;
 					}
-					targetOrderId = 0;
+					this.targetOrderId = 0;
 					console.log(`${symbol} cancel response:`, response);
 					placeStopOrder();
 				}

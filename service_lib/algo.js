@@ -102,8 +102,8 @@ class Algo {
 	}
 
 	async monitor_user_stream() {
-		const checkOrderFilled = function(data, orderFilled) {
-			const { s: symbol, p: price, q: quantity, S: side, o: orderType, i: orderId, X: orderStatus } = data;
+		function checkOrderFilled(data, orderFilled) {
+			const { symbol, price, quantity, side, orderType, orderId, orderStatus } = data;
 
 			console.log(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`);
 			console.log(`..price: ${price}, quantity: ${quantity}`);
@@ -117,15 +117,17 @@ class Algo {
 			}
 
 			orderFilled(data);
-		};
+		}
 
 		let obj = this;
 		this.closeUserWebsocket = await this.ee.ws.user((data) => {
-			const { i: orderId } = data;
+			const { orderId } = data;
+
+			console.log(`.ws.user recieved:`);
+			console.log(data);
 
 			if (orderId === obj.buyOrderId) {
 				checkOrderFilled(data, () => {
-					const { N: commissionAsset } = data;
 					obj.buyOrderId = 0;
 					obj.fsm.buyOrderFilled();
 				});

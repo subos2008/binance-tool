@@ -41,7 +41,7 @@ describe('Algo', function() {
 	});
 
 	describe('when only a buyPrice is present', function() {
-		it('creates a buy order and exits', async function() {
+		it('creates a buy order and returns', async function() {
 			const base_volume = BigNumber(1);
 			const limit_price = BigNumber(1);
 			let { ee, algo } = setup({
@@ -57,12 +57,41 @@ describe('Algo', function() {
 				console.log(e);
 				expect.fail('should not get here: expected call not to throw');
 			}
-			expect(ee.open_orders.length).to.equal(1);
+			expect(ee.open_orders).to.have.lengthOf(1);
 			expect(ee.open_orders[0].type).to.equal('LIMIT');
 			expect(ee.open_orders[0].side).to.equal('BUY');
 			expect(ee.open_orders[0].orderId).to.equal(1);
 			expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
 			expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
+		});
+	});
+
+	describe('when only a buyPrice and a stopPrice present', function() {
+		it('creates a buy order and returns', async function() {
+			const amount = BigNumber(1);
+			const buyPrice = BigNumber(1);
+			const stopPrice = buyPrice.div(2);
+			let { ee, algo } = setup({
+				algo_config: {
+					pair: default_pair,
+					amount,
+					buyPrice,
+					stopPrice
+				}
+			});
+			try {
+				await algo.main();
+				await ee.set_current_price({ price: buyPrice });
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+			expect(ee.open_orders).to.have.lengthOf(1);
+			expect(ee.open_orders[0].type).to.equal('LIMIT');
+			expect(ee.open_orders[0].side).to.equal('BUY');
+			expect(ee.open_orders[0].orderId).to.equal(1);
+			expect(ee.open_orders[0].price.isEqualTo(buyPrice)).to.equal(true);
+			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 		});
 	});
 });

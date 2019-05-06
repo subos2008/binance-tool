@@ -228,6 +228,17 @@ describe('ExchangeEmulator', function() {
 			});
 		}
 
+		async function do_stop_loss_limit_sell_order({ ee, price, amount } = {}) {
+			return await ee.order({
+				side: 'SELL',
+				symbol: default_pair,
+				type: 'STOP_LOSS_LIMIT',
+				quantity: amount.toFixed(),
+				price: price.toFixed(),
+				stopPrice: price.toFixed()
+			});
+		}
+
 		describe('exchangeInfo', function() {
 			it('returns the object passed in to the constructor', async function() {
 				const starting_quote_balance = BigNumber(1);
@@ -339,6 +350,68 @@ describe('ExchangeEmulator', function() {
 						symbol: default_pair,
 						orderId: 1,
 						orderType: 'LIMIT',
+						side: 'SELL',
+						orderStatus: 'FILLED'
+					});
+				});
+			});
+		});
+		describe('STOP_LOSS_LIMIT order', async function() {
+			it('adds a STOP_LOSS_LIMIT to open_orders', async function() {
+				const ee = new ExchangeEmulator({
+					logger,
+					exchange_info,
+					starting_quote_balance: BigNumber(0),
+					starting_base_balance: BigNumber(1)
+				});
+				const base_volume = BigNumber('0.8');
+				const limit_price = BigNumber('0.1');
+				let response = await do_stop_loss_limit_sell_order({ ee, amount: base_volume, price: limit_price });
+				expect(ee.open_orders.length).to.equal(1);
+				expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
+				expect(ee.open_orders[0].side).to.equal('SELL');
+				expect(ee.open_orders[0].symbol).to.equal(default_pair);
+				expect(ee.open_orders[0].orderId).to.equal(1);
+				expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
+				expect(ee.open_orders[0].stopPrice.isEqualTo(limit_price)).to.equal(true);
+				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
+			});
+			it('returns the expected response object with orderID', async function() {
+				const ee = new ExchangeEmulator({
+					logger,
+					exchange_info,
+					starting_quote_balance: BigNumber(0),
+					starting_base_balance: BigNumber(1)
+				});
+				const base_volume = BigNumber('0.8');
+				const limit_price = BigNumber('0.1');
+				let response = await do_stop_loss_limit_sell_order({ ee, amount: base_volume, price: limit_price });
+				expect(response).to.have.property('orderId');
+				expect(response.orderId).to.equal(1);
+			});
+			it.skip('refuses order if insufficient balance');
+			describe('when hit', async function() {
+				it('sends an executionReport to .ws.user', async function() {
+					const ee = new ExchangeEmulator({
+						logger,
+						exchange_info,
+						starting_quote_balance: BigNumber(0),
+						starting_base_balance: BigNumber(1)
+					});
+					const base_volume = BigNumber('0.8');
+					const limit_price = BigNumber('0.1');
+					let order_executed_event;
+					await ee.ws.user((msg) => {
+						order_executed_event = msg;
+					});
+					await do_stop_loss_limit_sell_order({ ee, amount: base_volume, price: limit_price });
+					await ee.set_current_price({ price: limit_price });
+					expect(order_executed_event).to.be.an('object');
+					expect(order_executed_event).to.include({
+						eventType: 'executionReport',
+						symbol: default_pair,
+						orderId: 1,
+						orderType: 'STOP_LOSS_LIMIT',
 						side: 'SELL',
 						orderStatus: 'FILLED'
 					});

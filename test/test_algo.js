@@ -87,10 +87,10 @@ describe('Algo', function() {
 				expect.fail('should not get here: expected call not to throw');
 			}
 			expect(ee.open_orders).to.have.lengthOf(1);
-			expect(ee.open_orders[0].type).to.equal('LIMIT');
-			expect(ee.open_orders[0].side).to.equal('BUY');
-			expect(ee.open_orders[0].orderId).to.equal(1);
-			expect(ee.open_orders[0].price.isEqualTo(buyPrice)).to.equal(true);
+			expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
+			expect(ee.open_orders[0].side).to.equal('SELL');
+			expect(ee.open_orders[0].orderId).to.equal(2);
+			expect(ee.open_orders[0].price.isEqualTo(stopPrice)).to.equal(true);
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 		});
 	});

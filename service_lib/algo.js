@@ -3,6 +3,7 @@ const { ExitNow, ExecutionComplete } = require('../lib/errors');
 const StateMachine = require('javascript-state-machine');
 const BigNumber = require('bignumber.js');
 const utils = require('../lib/utils');
+const assert = require('assert');
 
 class Algo {
 	// All numbers are expected to be passed in as strings
@@ -346,7 +347,9 @@ class Algo {
 			if (this.stopPrice && this.targetPrice) {
 				let obj = this;
 				this.closeTradesWebSocket = await this.ee.ws.aggTrades([ this.pair ], async function(trade) {
-					var { s: symbol, p: price } = trade;
+					var { symbol, price } = trade;
+					assert(symbol);
+					assert(price);
 
 					console.log('------------');
 					console.log(`.ws.aggTrades recieved:`);

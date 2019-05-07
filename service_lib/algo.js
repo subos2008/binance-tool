@@ -66,7 +66,7 @@ class Algo {
 			console.log(`Creating MARKET BUY ORDER`);
 			// console.log(args);
 			let response = await this.ee.order(args);
-			console.log('Buy response', response);
+			console.log('MARKET BUY response', response);
 			console.log(`order id: ${response.orderId}`);
 			return response.orderId;
 		} catch (error) {
@@ -87,7 +87,7 @@ class Algo {
 			console.log(`Creating LIMIT BUY ORDER`);
 			console.log(args);
 			let response = await this.ee.order(args);
-			console.log('Buy response', response);
+			console.log('LIMIT BUY response', response);
 			console.log(`order id: ${response.orderId}`);
 			return response.orderId;
 		} catch (error) {
@@ -224,7 +224,7 @@ class Algo {
 			console.log(`Creating STOP_LOSS_LIMIT SELL ORDER`);
 			console.log(args);
 			let response = await this.ee.order(args);
-			console.log('Buy response', response);
+			console.log('STOP_LOSS_LIMIT sell response', response);
 			console.log(`order id: ${response.orderId}`);
 			return response.orderId;
 		} catch (error) {
@@ -242,10 +242,10 @@ class Algo {
 				price: this.targetPrice.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
-			console.log(`Creating LIMIT SELL ORDER`);
+			console.log(`Creating Target LIMIT SELL ORDER`);
 			console.log(args);
 			let response = await this.ee.order(args);
-			console.log('Buy response', response);
+			console.log('Target LIMIT SELL response', response);
 			console.log(`order id: ${response.orderId}`);
 			return response.orderId;
 		} catch (error) {

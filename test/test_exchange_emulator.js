@@ -194,7 +194,7 @@ describe('ExchangeEmulator', function() {
 			const starting_base_balance = BigNumber(3);
 			const limit_price = BigNumber(1);
 			const ee = new ExchangeEmulator({ logger: null_logger, starting_quote_balance, starting_base_balance });
-			await ee.set_current_price({ symbol: default_pair, ce: limit_price.minus(1) }); // start lower than limit price
+			await ee.set_current_price({ symbol: default_pair, price: limit_price.minus(1) }); // start lower than limit price
 			await ee.add_limit_sell_order({ base_volume: BigNumber(3), limit_price, pair: default_pair });
 			expect(ee.open_orders.length).to.equal(1);
 			await ee.set_current_price({ symbol: default_pair, price: limit_price });

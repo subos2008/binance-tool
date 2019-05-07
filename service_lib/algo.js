@@ -374,15 +374,19 @@ class Algo {
 							isCancelling = true;
 							try {
 								await obj.ee.cancelOrder({ symbol, orderId: obj.stopOrderId });
+								obj.stopOrderId = 0;
 								isCancelling = false;
 							} catch (error) {
 								console.error(`${symbol} cancel error:`, error.body);
 								console.error(error);
 								return;
 							}
-							obj.stopOrderId = 0;
-							console.log(`${symbol} cancel response:`, response);
-							placeTargetOrder(); // TODO: add await and async_error_handler
+							try {
+								obj.targetOrderId = await obj.placeTargetOrder();
+								console.log(`Set targetOrderId: ${obj.targetOrderId}`);
+							} catch (error) {
+								async_error_handler(console, `error placing order: ${error.body}`, error);
+							}
 						} else if (
 							obj.targetOrderId &&
 							!obj.stopOrderId &&
@@ -399,7 +403,12 @@ class Algo {
 							}
 							obj.targetOrderId = 0;
 							console.log(`${symbol} cancel response:`, response);
-							placeStopOrder();
+							try {
+								obj.stopOrderId = await obj.placeStopOrder();
+								console.log(`Set stopOrderId: ${obj.stopOrderId}`);
+							} catch (error) {
+								async_error_handler(console, `error placing order: ${error.body}`, error);
+							}
 						}
 					}
 				});

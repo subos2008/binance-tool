@@ -70,7 +70,6 @@ class Algo {
 			console.log(`Creating MARKET BUY ORDER`);
 			// console.log(args);
 			let response = await this.ee.order(args);
-			this.fsm.buyOrderCreated();
 			console.log('Buy response', response);
 			console.log(`order id: ${response.orderId}`);
 			return response.orderId;
@@ -92,7 +91,6 @@ class Algo {
 			console.log(`Creating LIMIT BUY ORDER`);
 			console.log(args);
 			let response = await this.ee.order(args);
-			this.fsm.buyOrderCreated();
 			console.log('Buy response', response);
 			console.log(`order id: ${response.orderId}`);
 			return response.orderId;
@@ -129,10 +127,11 @@ class Algo {
 			if (orderId === obj.buyOrderId) {
 				checkOrderFilled(data, () => {
 					obj.buyOrderId = 0;
-					obj.fsm.buyOrderFilled();
+					obj.placeSellOrder();
 				});
 			} else if (orderId === obj.stopOrderId) {
 				checkOrderFilled(data, () => {
+					// TODO: handle these exceptions. Msg user, call softexit?
 					throw new ExecutionComplete(`Stop hit`);
 				});
 			} else if (orderId === obj.targetOrderId) {
@@ -260,9 +259,17 @@ class Algo {
 
 	async placeSellOrder() {
 		if (this.stopPrice) {
-			this.placeStopOrder();
+			try {
+				await this.placeStopOrder();
+			} catch (error) {
+				async_error_handler(console, `error placing order: ${error.body}`, error);
+			}
 		} else if (this.targetPrice) {
-			this.placeTargetOrder();
+			try {
+				await this.placeTargetOrder();
+			} catch (error) {
+				async_error_handler(console, `error placing order: ${error.body}`, error);
+			}
 		} else {
 			throw new ExecutionComplete();
 		}
@@ -303,41 +310,18 @@ class Algo {
 			// 	}
 			// };
 
-			let isLimitEntry = false;
-			let isStopEntry = false;
-
-			let obj = this;
-			this.fsm = new StateMachine({
-				init: 'initialising',
-				transitions: [
-					{ name: 'buy_order_created', from: 'initialising', to: 'buy_order_open' }, // A
-					// { name: 'wait_for_entry_price', from: 'initialising', to: 'waiting_for_entry_price' }, // B
-					{ name: 'buy_order_filled', from: 'buy_order_open', to: 'waiting_for_exit_price' } // C
-					// { name: 'buy_order_created', from: 'waiting_for_entry_price', to: 'buy_order_open' }
-				],
-				methods: {
-					// TODO: async?
-					onWaitingForExitPrice: function() {
-						console.log('Entering: waiting_for_exit_price');
-						obj.placeSellOrder();
-					}
-				}
-			});
-
 			if (typeof this.buyPrice !== 'undefined') {
 				if (this.buyPrice.isZero()) {
 					this.buyOrderId = await this._create_market_buy_order();
 				} else {
 					this.buyOrderId = await this._create_limit_buy_order();
 				}
+			} else {
+				await this.placeSellOrder();
 			}
 
 			// TODO: I guess it would be good to check how much the balance is on the exchange
 			// against 'amount' if there is no buy stage
-
-			if (this.fsm.is('initialising')) {
-				throw new Error(`Unable to determine intial state`);
-			}
 
 			// console.log(`BuyPrice: ${this.buyPrice}, isZero(): ${this.buyPrice.isZero()}`);
 			// if (typeof this.buyPrice !== 'undefined') {

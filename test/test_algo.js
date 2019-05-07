@@ -7,7 +7,7 @@ const BigNumber = require('bignumber.js');
 
 const ExchangeEmulator = require('../lib/exchange_emulator');
 const Logger = require('../lib/faux_logger');
-const { NotImplementedError, InsufficientQuoteBalanceError } = require('../lib/errors');
+const { NotImplementedError, InsufficientBalanceError } = require('../lib/errors');
 // const async_error_handler = require('../lib/async_error_handler');
 const utils = require('../lib/utils');
 const fs = require('fs');
@@ -91,6 +91,31 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 			expect(ee.open_orders[0].side).to.equal('SELL');
 			expect(ee.open_orders[0].orderId).to.equal(2);
+			expect(ee.open_orders[0].price.isEqualTo(stopPrice)).to.equal(true);
+			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
+		});
+	});
+	describe('when only a stopPrice present', function() {
+		it('creates a stop order and returns', async function() {
+			const amount = BigNumber(1);
+			const stopPrice = BigNumber('0.5');
+			let { ee, algo } = setup({
+				algo_config: {
+					pair: default_pair,
+					amount,
+					stopPrice
+				}
+			});
+			try {
+				await algo.main();
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+			expect(ee.open_orders).to.have.lengthOf(1);
+			expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
+			expect(ee.open_orders[0].side).to.equal('SELL');
+			expect(ee.open_orders[0].orderId).to.equal(1);
 			expect(ee.open_orders[0].price.isEqualTo(stopPrice)).to.equal(true);
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 		});

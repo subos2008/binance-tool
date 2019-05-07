@@ -7,7 +7,7 @@ const BigNumber = require('bignumber.js');
 
 const ExchangeEmulator = require('../lib/exchange_emulator');
 const Logger = require('../lib/faux_logger');
-const { NotImplementedError, InsufficientQuoteBalanceError } = require('../lib/errors');
+const { NotImplementedError, InsufficientBalanceError } = require('../lib/errors');
 const async_error_handler = require('../lib/async_error_handler');
 const utils = require('../lib/utils');
 const fs = require('fs');
@@ -61,7 +61,7 @@ describe('ExchangeEmulator', function() {
 
 	describe('add_limit_buy_order', function() {
 		it.skip(
-			'raises an async InsufficientQuoteBalanceError if quote_coin_balance_not_in_orders is insufficient',
+			'raises an async InsufficientBalanceError if quote_coin_balance_not_in_orders is insufficient',
 			async function() {
 				const starting_quote_balance = BigNumber(1);
 				const ee = new ExchangeEmulator({ logger: null_logger, starting_quote_balance });
@@ -73,7 +73,7 @@ describe('ExchangeEmulator', function() {
 					});
 				} catch (e) {
 					expect(e).to.be.instanceOf(Error);
-					expect(e).to.have.property('original_name', 'InsufficientQuoteBalanceError');
+					expect(e).to.have.property('original_name', 'InsufficientBalanceError');
 					return;
 				}
 				expect.fail('should not get here: expected call to throw');
@@ -210,33 +210,45 @@ describe('ExchangeEmulator', function() {
 
 	describe('binance-api-node API', function() {
 		async function do_limit_buy_order({ ee, price, amount } = {}) {
-			return await ee.order({
-				side: 'BUY',
-				symbol: default_pair,
-				type: 'LIMIT',
-				quantity: amount.toFixed(),
-				price: price.toFixed()
-			});
+			try {
+				return await ee.order({
+					side: 'BUY',
+					symbol: default_pair,
+					type: 'LIMIT',
+					quantity: amount.toFixed(),
+					price: price.toFixed()
+				});
+			} catch (e) {
+				async_error_handler(null, null, e);
+			}
 		}
 		async function do_limit_sell_order({ ee, price, amount } = {}) {
-			return await ee.order({
-				side: 'SELL',
-				symbol: default_pair,
-				type: 'LIMIT',
-				quantity: amount.toFixed(),
-				price: price.toFixed()
-			});
+			try {
+				return await ee.order({
+					side: 'SELL',
+					symbol: default_pair,
+					type: 'LIMIT',
+					quantity: amount.toFixed(),
+					price: price.toFixed()
+				});
+			} catch (e) {
+				async_error_handler(null, null, e);
+			}
 		}
 
 		async function do_stop_loss_limit_sell_order({ ee, price, amount } = {}) {
-			return await ee.order({
-				side: 'SELL',
-				symbol: default_pair,
-				type: 'STOP_LOSS_LIMIT',
-				quantity: amount.toFixed(),
-				price: price.toFixed(),
-				stopPrice: price.toFixed()
-			});
+			try {
+				return await ee.order({
+					side: 'SELL',
+					symbol: default_pair,
+					type: 'STOP_LOSS_LIMIT',
+					quantity: amount.toFixed(),
+					price: price.toFixed(),
+					stopPrice: price.toFixed()
+				});
+			} catch (e) {
+				async_error_handler(null, null, e);
+			}
 		}
 
 		describe('exchangeInfo', function() {
@@ -248,6 +260,7 @@ describe('ExchangeEmulator', function() {
 			});
 		});
 		describe('limit buy order', async function() {
+			it.skip('refuses order if insufficient balance');
 			it('adds a limit_buy_order to open_orders', async function() {
 				const ee = new ExchangeEmulator({ logger, exchange_info, starting_quote_balance: BigNumber(1) });
 				const base_volume = BigNumber('1.2');
@@ -297,6 +310,8 @@ describe('ExchangeEmulator', function() {
 			});
 		});
 		describe('limit sell order', async function() {
+			it.skip('refuses order if insufficient balance');
+
 			it('adds a limit_sell_order to open_orders', async function() {
 				const ee = new ExchangeEmulator({
 					logger,
@@ -389,7 +404,22 @@ describe('ExchangeEmulator', function() {
 				expect(response).to.have.property('orderId');
 				expect(response.orderId).to.equal(1);
 			});
-			it.skip('refuses order if insufficient balance');
+			it('refuses order if insufficient balance', async function() {
+				const ee = new ExchangeEmulator({
+					logger,
+					exchange_info,
+					starting_quote_balance: BigNumber(0),
+					starting_base_balance: BigNumber(0)
+				});
+				const base_volume = BigNumber('0.8');
+				const limit_price = BigNumber('0.1');
+				try {
+					await do_stop_loss_limit_sell_order({ ee, amount: base_volume, price: limit_price });
+					expect.fail('Expected call to throw');
+				} catch (e) {
+					expect(e.name).to.equal('InsufficientBalanceError');
+				}
+			});
 			describe('when hit', async function() {
 				it('sends an executionReport to .ws.user', async function() {
 					const ee = new ExchangeEmulator({

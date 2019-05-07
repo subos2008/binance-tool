@@ -232,6 +232,8 @@ describe('Algo', function() {
 			try {
 				await algo.main();
 				await ee.set_current_price({ symbol: default_pair, price: buyPrice });
+				// Note that as part of hitting the targetPrice the algo will cancel the stopOrder,
+				// which involves an await
 				await ee.set_current_price({ symbol: default_pair, price: targetPrice });
 			} catch (e) {
 				console.log(e);
@@ -240,7 +242,7 @@ describe('Algo', function() {
 			expect(ee.open_orders).to.have.lengthOf(1);
 			expect(ee.open_orders[0].type).to.equal('LIMIT');
 			expect(ee.open_orders[0].side).to.equal('SELL');
-			expect(ee.open_orders[0].orderId).to.equal(2);
+			expect(ee.open_orders[0].orderId).to.equal(3);
 			expect(ee.open_orders[0].price.isEqualTo(targetPrice)).to.equal(true);
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 		});

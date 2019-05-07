@@ -110,7 +110,7 @@ describe('Algo', function() {
 			});
 			try {
 				await algo.main();
-				await ee.set_current_price({ price: buyPrice });
+				await ee.set_current_price({ symbol: default_pair, price: buyPrice });
 			} catch (e) {
 				console.log(e);
 				expect.fail('should not get here: expected call not to throw');

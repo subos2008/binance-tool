@@ -330,6 +330,7 @@ describe('ExchangeEmulator', function() {
 						orderStatus: 'FILLED'
 					});
 				});
+				it.skip('defines price and quantity in these .ws.user events');
 			});
 		});
 		describe('limit sell order', async function() {

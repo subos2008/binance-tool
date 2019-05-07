@@ -210,6 +210,8 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].price.isEqualTo(stopPrice)).to.equal(true);
 			expect(ee.open_orders[0].stopPrice.isEqualTo(stopPrice)).to.equal(true);
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
+			// Peek into algo... naughty
+			expect(algo.stopOrderId).to.equal(2);
 		});
 		it('creates a limit sell order at the targetPrice when that price is hit', async function() {
 			// TODO: also check that it cancels the stop order?

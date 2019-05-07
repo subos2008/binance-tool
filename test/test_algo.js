@@ -26,9 +26,9 @@ const default_pair = 'ETHBTC';
 const exchange_info = JSON.parse(fs.readFileSync('./test/exchange_info.json', 'utf8'));
 
 describe('Algo', function() {
-	function setup({ algo_config } = {}) {
-		let starting_quote_balance = BigNumber(1);
-		let ee = new ExchangeEmulator({ logger, exchange_info, starting_quote_balance });
+	function setup({ algo_config, ee_config } = {}) {
+		ee_config = Object.assign({ logger, exchange_info, starting_quote_balance: BigNumber(1) }, ee_config);
+		let ee = new ExchangeEmulator(ee_config);
 		algo_config = Object.assign({ send_message: (msg) => console.log(`send_message: ${msg}`) }, algo_config);
 		let algo = new Algo(Object.assign(algo_config, { ee }));
 		return { algo, ee };
@@ -100,6 +100,9 @@ describe('Algo', function() {
 			const amount = BigNumber(1);
 			const stopPrice = BigNumber('0.5');
 			let { ee, algo } = setup({
+				ee_config: {
+					starting_base_balance: BigNumber(1)
+				},
 				algo_config: {
 					pair: default_pair,
 					amount,

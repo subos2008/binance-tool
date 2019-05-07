@@ -348,12 +348,18 @@ class Algo {
 			if (this.stopPrice && this.targetPrice) {
 				this.closeTradesWebSocket = await this.ee.ws.aggTrades([ this.pair ], async function(trade) {
 					var { s: symbol, p: price } = trade;
+					console.log('------------');
+					console.log(trade);
+					console.log('------------');
 					price = BigNumber(price);
 
 					if (this.buyOrderId) {
-						// console.log(`${symbol} trade update. price: ${price} buy: ${this.buyPrice}`);
+						console.log(`${symbol} trade update. price: ${price} buy: ${this.buyPrice}`);
 					} else if (this.stopOrderId || this.targetOrderId) {
-						// console.log(`${symbol} trade update. price: ${price} stop: ${this.stopPrice} target: ${this.targetPrice}`);
+						console.log(
+							`${symbol} trade update. price: ${price} stop: ${this.stopPrice} target: ${this
+								.targetPrice}`
+						);
 						if (
 							this.stopOrderId &&
 							!this.targetOrderId &&

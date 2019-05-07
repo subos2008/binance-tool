@@ -371,7 +371,7 @@ class Algo {
 							}
 							this.stopOrderId = 0;
 							console.log(`${symbol} cancel response:`, response);
-							placeTargetOrder();
+							placeTargetOrder(); // TODO: add await and async_error_handler
 						} else if (
 							this.targetOrderId &&
 							!this.stopOrderId &&

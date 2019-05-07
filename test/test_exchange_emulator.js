@@ -259,6 +259,26 @@ describe('ExchangeEmulator', function() {
 				expect(returned_ei).to.equal(exchange_info);
 			});
 		});
+		describe('set_current_price', function() {
+			it('sends an event to .ws.aggTrades', async function() {
+				const ee = new ExchangeEmulator({
+					logger,
+					exchange_info,
+					starting_quote_balance: BigNumber(1)
+				});
+				let price_target = BigNumber('0.8');
+				let event;
+				let clean = await ee.ws.aggTrades((msg) => {
+					event = msg;
+				});
+				await ee.set_current_price({ price: price_target });
+				expect(event).to.be.an('object');
+				expect(event).to.include({
+					symbol: default_pair,
+					price: price_target
+				});
+			});
+		});
 		describe('limit buy order', async function() {
 			it.skip('refuses order if insufficient balance');
 			it('adds a limit_buy_order to open_orders', async function() {

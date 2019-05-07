@@ -174,15 +174,16 @@ describe('ExchangeEmulator', function() {
 	});
 
 	describe('check_for_completed_limit_orders', function() {
+		it.skip('checks for the correct symbol. ISSUE');
 		it('executes a limit buy order', async function() {
 			const starting_quote_balance = BigNumber(3);
 			const starting_base_balance = BigNumber(0);
 			const limit_price = BigNumber(1);
 			const ee = new ExchangeEmulator({ logger: null_logger, starting_quote_balance, starting_base_balance });
-			await ee.set_current_price({ price: limit_price.plus(1) }); // start higher than limit price
+			await ee.set_current_price({ symbol: default_pair, price: limit_price.plus(1) }); // start higher than limit price
 			await ee.add_limit_buy_order({ base_volume: BigNumber(3), limit_price, pair: default_pair });
 			expect(ee.open_orders.length).to.equal(1);
-			await ee.set_current_price({ price: limit_price });
+			await ee.set_current_price({ symbol: default_pair, price: limit_price });
 			expect(ee.open_orders.length).to.equal(0);
 			expect(ee.base_coin_balance_not_in_orders).to.be.bignumber.equal(3);
 			expect(ee.quote_coin_balance_not_in_orders).to.be.bignumber.equal(0);
@@ -193,10 +194,10 @@ describe('ExchangeEmulator', function() {
 			const starting_base_balance = BigNumber(3);
 			const limit_price = BigNumber(1);
 			const ee = new ExchangeEmulator({ logger: null_logger, starting_quote_balance, starting_base_balance });
-			await ee.set_current_price({ price: limit_price.minus(1) }); // start lower than limit price
+			await ee.set_current_price({ symbol: default_pair, ce: limit_price.minus(1) }); // start lower than limit price
 			await ee.add_limit_sell_order({ base_volume: BigNumber(3), limit_price, pair: default_pair });
 			expect(ee.open_orders.length).to.equal(1);
-			await ee.set_current_price({ price: limit_price });
+			await ee.set_current_price({ symbol: default_pair, price: limit_price });
 			expect(ee.open_orders.length).to.equal(0);
 			expect(ee.base_coin_balance_not_in_orders).to.be.bignumber.equal(0);
 			expect(ee.quote_coin_balance_not_in_orders).to.be.bignumber.equal(3);
@@ -260,7 +261,7 @@ describe('ExchangeEmulator', function() {
 			});
 		});
 		describe('set_current_price', function() {
-			it('sends an event to .ws.aggTrades', async function() {
+			it('sends an event to .ws.aggTrades if it is a watched pair', async function() {
 				const ee = new ExchangeEmulator({
 					logger,
 					exchange_info,
@@ -268,16 +269,18 @@ describe('ExchangeEmulator', function() {
 				});
 				let price_target = BigNumber('0.8');
 				let event;
-				let clean = await ee.ws.aggTrades((msg) => {
+				let clean = await ee.ws.aggTrades([ default_pair ], (msg) => {
 					event = msg;
 				});
-				await ee.set_current_price({ price: price_target });
+				await ee.set_current_price({ symbol: default_pair, price: price_target });
 				expect(event).to.be.an('object');
+				console.log(event);
 				expect(event).to.include({
 					symbol: default_pair,
 					price: price_target
 				});
 			});
+			it.skip('doesnt send an event to .ws.aggTrades if it NOT is a watched pair');
 		});
 		describe('limit buy order', async function() {
 			it.skip('refuses order if insufficient balance');
@@ -316,7 +319,7 @@ describe('ExchangeEmulator', function() {
 						order_executed_event = msg;
 					});
 					let response = await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
-					await ee.set_current_price({ price: limit_price });
+					await ee.set_current_price({ symbol: default_pair, price: limit_price });
 					expect(order_executed_event).to.be.an('object');
 					expect(order_executed_event).to.include({
 						eventType: 'executionReport',
@@ -378,7 +381,7 @@ describe('ExchangeEmulator', function() {
 						order_executed_event = msg;
 					});
 					let response = await do_limit_sell_order({ ee, amount: base_volume, price: limit_price });
-					await ee.set_current_price({ price: limit_price });
+					await ee.set_current_price({ symbol: default_pair, price: limit_price });
 					expect(order_executed_event).to.be.an('object');
 					expect(order_executed_event).to.include({
 						eventType: 'executionReport',
@@ -455,7 +458,7 @@ describe('ExchangeEmulator', function() {
 						order_executed_event = msg;
 					});
 					await do_stop_loss_limit_sell_order({ ee, amount: base_volume, price: limit_price });
-					await ee.set_current_price({ price: limit_price });
+					await ee.set_current_price({ symbol: default_pair, price: limit_price });
 					expect(order_executed_event).to.be.an('object');
 					expect(order_executed_event).to.include({
 						eventType: 'executionReport',

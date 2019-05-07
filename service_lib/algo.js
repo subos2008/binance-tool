@@ -344,53 +344,56 @@ class Algo {
 
 			// TODO: we don't always need this - only if we have stop and target orders that need monitoring
 			if (this.stopPrice && this.targetPrice) {
+				let obj = this;
 				this.closeTradesWebSocket = await this.ee.ws.aggTrades([ this.pair ], async function(trade) {
 					var { s: symbol, p: price } = trade;
+
 					console.log('------------');
+					console.log(`.ws.aggTrades recieved:`);
 					console.log(trade);
+					console.log(`stopOrderId: ${obj.stopOrderId}`);
 					console.log('------------');
 					price = BigNumber(price);
 
-					if (this.buyOrderId) {
-						console.log(`${symbol} trade update. price: ${price} buy: ${this.buyPrice}`);
-					} else if (this.stopOrderId || this.targetOrderId) {
+					if (obj.buyOrderId) {
+						console.log(`${symbol} trade update. price: ${price} buy: ${obj.buyPrice}`);
+					} else if (obj.stopOrderId || obj.targetOrderId) {
 						console.log(
-							`${symbol} trade update. price: ${price} stop: ${this.stopPrice} target: ${this
-								.targetPrice}`
+							`${symbol} trade update. price: ${price} stop: ${obj.stopPrice} target: ${obj.targetPrice}`
 						);
 						if (
-							this.stopOrderId &&
-							!this.targetOrderId &&
-							price.isGreaterThanOrEqualTo(this.targetPrice) &&
+							obj.stopOrderId &&
+							!obj.targetOrderId &&
+							price.isGreaterThanOrEqualTo(obj.targetPrice) &&
 							!isCancelling
 						) {
 							console.log(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
 							isCancelling = true;
 							try {
-								await this.ee.cancelOrder({ symbol, orderId: this.stopOrderId });
+								await obj.ee.cancelOrder({ symbol, orderId: obj.stopOrderId });
 								isCancelling = false;
 							} catch (error) {
 								console.error(`${symbol} cancel error:`, error.body);
 								return;
 							}
-							this.stopOrderId = 0;
+							obj.stopOrderId = 0;
 							console.log(`${symbol} cancel response:`, response);
 							placeTargetOrder(); // TODO: add await and async_error_handler
 						} else if (
-							this.targetOrderId &&
-							!this.stopOrderId &&
-							price.isLessThanOrEqualTo(this.stopPrice) &&
+							obj.targetOrderId &&
+							!obj.stopOrderId &&
+							price.isLessThanOrEqualTo(obj.stopPrice) &&
 							!isCancelling
 						) {
 							isCancelling = true;
 							try {
-								await this.ee.cancelOrder({ symbol, orderId: this.targetOrderId });
+								await obj.ee.cancelOrder({ symbol, orderId: obj.targetOrderId });
 								isCancelling = false;
 							} catch (error) {
 								console.error(`${symbol} cancel error:`, error.body);
 								return;
 							}
-							this.targetOrderId = 0;
+							obj.targetOrderId = 0;
 							console.log(`${symbol} cancel response:`, response);
 							placeStopOrder();
 						}

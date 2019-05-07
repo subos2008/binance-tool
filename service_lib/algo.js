@@ -256,13 +256,15 @@ class Algo {
 	async placeSellOrder() {
 		if (this.stopPrice) {
 			try {
-				await this.placeStopOrder();
+				this.stopOrderId = await this.placeStopOrder();
+				console.log(`Set stopOrderId: ${this.stopOrderId}`);
 			} catch (error) {
 				async_error_handler(console, `error placing order: ${error.body}`, error);
 			}
 		} else if (this.targetPrice) {
 			try {
-				await this.placeTargetOrder();
+				this.targetOrderId = await this.placeTargetOrder();
+				console.log(`Set targetOrderId: ${this.targetOrderId}`);
 			} catch (error) {
 				async_error_handler(console, `error placing order: ${error.body}`, error);
 			}

@@ -47,10 +47,6 @@ class Algo {
 		}
 
 		this.pair = this.pair.toUpperCase();
-
-		this.buyOrderId = 0;
-		this.stopOrderId = 0;
-		this.targetOrderId = 0;
 	}
 
 	shutdown_streams() {

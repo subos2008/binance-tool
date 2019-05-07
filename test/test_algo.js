@@ -218,13 +218,15 @@ describe('Algo', function() {
 			// TODO: what if the targetPrice limit order gets partially filled and then we retrace to the stop price?
 			const amount = BigNumber(1);
 			const buyPrice = BigNumber(1);
+			const stopPrice = buyPrice.times('0.5');
 			const targetPrice = buyPrice.times(2);
 			let { ee, algo } = setup({
 				algo_config: {
 					pair: default_pair,
 					amount,
 					buyPrice,
-					targetPrice
+					targetPrice,
+					stopPrice
 				}
 			});
 			try {

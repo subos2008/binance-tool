@@ -123,4 +123,32 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 		});
 	});
+	describe('when only a targetPrice present', function() {
+		it('creates a limit sell order and returns', async function() {
+			const amount = BigNumber(1);
+			const targetPrice = BigNumber('2');
+			let { ee, algo } = setup({
+				ee_config: {
+					starting_base_balance: amount
+				},
+				algo_config: {
+					pair: default_pair,
+					amount,
+					targetPrice
+				}
+			});
+			try {
+				await algo.main();
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+			expect(ee.open_orders).to.have.lengthOf(1);
+			expect(ee.open_orders[0].type).to.equal('LIMIT');
+			expect(ee.open_orders[0].side).to.equal('SELL');
+			expect(ee.open_orders[0].orderId).to.equal(1);
+			expect(ee.open_orders[0].price.isEqualTo(targetPrice)).to.equal(true);
+			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
+		});
+	});
 });

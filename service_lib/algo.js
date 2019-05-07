@@ -377,6 +377,7 @@ class Algo {
 								isCancelling = false;
 							} catch (error) {
 								console.error(`${symbol} cancel error:`, error.body);
+								console.error(error);
 								return;
 							}
 							obj.stopOrderId = 0;

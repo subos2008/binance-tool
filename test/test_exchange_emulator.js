@@ -282,6 +282,20 @@ describe('ExchangeEmulator', function() {
 			});
 			it.skip('doesnt send an event to .ws.aggTrades if it NOT is a watched pair');
 		});
+		describe('.cancelOrder()', async function() {
+			it('removes the open order from the exchange', async function() {
+				const ee = new ExchangeEmulator({ logger, exchange_info, starting_quote_balance: BigNumber(1) });
+				const base_volume = BigNumber('1.2');
+				const limit_price = BigNumber('0.1');
+				await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
+				await ee.cancelOrder({
+					symbol: default_pair,
+					orderId: 1
+				});
+				expect(ee.open_orders).to.have.lengthOf(0);
+			});
+			it.skip('sends a CANCELLED order message to .ws.user');
+		});
 		describe('limit buy order', async function() {
 			it.skip('refuses order if insufficient balance');
 			it('adds a limit_buy_order to open_orders', async function() {

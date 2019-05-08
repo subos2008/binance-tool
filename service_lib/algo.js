@@ -121,8 +121,10 @@ class Algo {
 		}
 
 		this.closeUserWebsocket = await this.ee.ws.user((data) => {
-			const { orderId } = data;
-
+			const { orderId, eventType } = data;
+			if (eventType !== 'executionReport') {
+				return;
+			}
 			obj.logger.info(`.ws.user recieved:`);
 			obj.logger.info(data);
 

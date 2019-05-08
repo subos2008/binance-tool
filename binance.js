@@ -102,10 +102,14 @@ algo
 		console.log('main loop complete');
 	})
 	.catch((error) => {
-		console.log(`Error in main loop: ${error}`);
-		console.log(error);
-		console.log(`Error in main loop: ${error.stack}`);
-		send_message(`${pair}: Error in main loop: ${error}`);
+		if (error.name && error.name === 'FetchError') {
+			logger.error(`${error.name}: Likely unable to connect to Binance and/or Telegram: ${error}`);
+		} else {
+			logger.error(`Error in main loop: ${error}`);
+			logger.error(error);
+			logger.error(`Error in main loop: ${error.stack}`);
+			send_message(`${pair}: Error in main loop: ${error}`);
+		}
 		soft_exit();
 	});
 

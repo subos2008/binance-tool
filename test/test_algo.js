@@ -324,6 +324,45 @@ describe('Algo', function() {
 			});
 		});
 		describe('with soft entry', function() {
+			it('creates a limit buy order only after the buy price hits', async function() {
+				const amount = BigNumber(1);
+				const buyPrice = BigNumber(1);
+				const stopPrice = buyPrice.times('0.5');
+				const targetPrice = buyPrice.times(2);
+				let { ee, algo } = setup({
+					algo_config: {
+						pair: default_pair,
+						amount,
+						buyPrice,
+						targetPrice,
+						stopPrice,
+						soft_entry: true
+					}
+				});
+				try {
+					await algo.main();
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				expect(ee.open_orders).to.have.lengthOf(0);
+
+				try {
+					await ee.set_current_price({ symbol: default_pair, price: buyPrice }); // once to trigger soft entry
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				expect(ee.open_orders).to.have.lengthOf(1);
+				expect(ee.open_orders[0].type).to.equal('LIMIT');
+				expect(ee.open_orders[0].side).to.equal('BUY');
+				expect(ee.open_orders[0].orderId).to.equal(1);
+				expect(ee.open_orders[0].price.isEqualTo(buyPrice)).to.equal(true);
+				expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
+				expect(most_recent_message()).to.be.an('string');
+				expect(most_recent_message()).to.equal(`${default_pair} soft entry buy price hit`);
+			});
+
 			it('creates a stop limit sell order after the buy order hits', async function() {
 				const amount = BigNumber(1);
 				const buyPrice = BigNumber(1);

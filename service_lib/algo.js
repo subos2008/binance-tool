@@ -343,6 +343,7 @@ class Algo {
 					if (waiting_for_soft_entry_price) {
 						if (price.isLessThanOrEqualTo(obj.buyPrice)) {
 							waiting_for_soft_entry_price = false;
+							obj.send_message(`${symbol} soft entry buy price hit`);
 							obj.buyOrderId = await obj._create_limit_buy_order();
 						}
 					} else if (obj.buyOrderId) {

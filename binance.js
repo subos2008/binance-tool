@@ -51,13 +51,26 @@ const { argv } = require('yargs')
 	.string('t')
 	.alias('t', 'target')
 	.describe('t', 'Set target limit order sell price')
+	// '--soft-entry'
+	.boolean('soft-entry')
+	.describe('soft-entry', 'Wait until the buy price is hit before creating the limit buy order')
+	.default('soft-entry', false)
 	// '--non-bnb-fees'
 	.boolean('F')
 	.alias('F', 'non-bnb-fees')
 	.describe('F', 'Calculate stop/target sell amounts assuming not paying fees using BNB')
 	.default('F', false);
 
-let { p: pair, a: amount, q: quoteAmount, b: buyPrice, s: stopPrice, l: limitPrice, t: targetPrice } = argv;
+let {
+	p: pair,
+	a: amount,
+	q: quoteAmount,
+	b: buyPrice,
+	s: stopPrice,
+	l: limitPrice,
+	t: targetPrice,
+	'soft-entry': soft_entry
+} = argv;
 const { F: nonBnbFees } = argv;
 
 // TODO: Note that for all authenticated endpoints, you can pass an extra parameter useServerTime
@@ -80,7 +93,8 @@ const algo = new Algo({
 	stopPrice,
 	limitPrice,
 	targetPrice,
-	nonBnbFees
+	nonBnbFees,
+	soft_entry
 });
 algo
 	.main()

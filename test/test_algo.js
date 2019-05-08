@@ -247,7 +247,7 @@ describe('Algo', function() {
 				// Note that as part of hitting the targetPrice the algo will cancel the stopOrder,
 				// which involves an await
 				await ee.set_current_price({ symbol: default_pair, price: targetPrice });
-				await ee.set_current_price({ symbol: default_pair, price: targetPrice }); // a second time to trigger the LIMIT SELL
+				// await ee.set_current_price({ symbol: default_pair, price: targetPrice }); // a second time to trigger the LIMIT SELL
 			} catch (e) {
 				console.log(e);
 				expect.fail('should not get here: expected call not to throw');

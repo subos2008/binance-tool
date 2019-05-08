@@ -63,6 +63,7 @@ class Algo {
 	async _create_market_buy_order() {
 		try {
 			let args = {
+				useServerTime: true,
 				side: 'BUY',
 				symbol: this.pair,
 				type: 'MARKET',
@@ -83,6 +84,7 @@ class Algo {
 	async _create_limit_buy_order() {
 		try {
 			let args = {
+				useServerTime: true,
 				side: 'BUY',
 				symbol: this.pair,
 				type: 'LIMIT',
@@ -228,6 +230,7 @@ class Algo {
 	async placeStopOrder() {
 		try {
 			let args = {
+				useServerTime: true,
 				side: 'SELL',
 				symbol: this.pair,
 				type: 'STOP_LOSS_LIMIT',
@@ -250,6 +253,7 @@ class Algo {
 	async placeTargetOrder() {
 		try {
 			let args = {
+				useServerTime: true,
 				side: 'SELL',
 				symbol: this.pair,
 				type: 'LIMIT',

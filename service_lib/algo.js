@@ -300,34 +300,6 @@ class Algo {
 
 			const NON_BNB_TRADING_FEE = BigNumber('0.001');
 
-			// const calculateSellAmount = function(commissionAsset, sellAmount) {
-			// 	// Adjust sell amount if BNB not used for trading fee
-			// 	return commissionAsset === 'BNB' && !this.nonBnbFees
-			// 		? sellAmount
-			// 		: sellAmount.times(BigNumber(1).minus(NON_BNB_TRADING_FEE));
-			// };
-
-			// const sellComplete = function(error, response) {
-			// 	if (error) {
-			// 		throw new Error('Sell error', error.body);
-			// 	}
-
-			// 	this.logger.info('Sell response', response);
-			// 	this.logger.info(`order id: ${response.orderId}`);
-
-			// 	if (!(this.stopPrice && this.targetPrice)) {
-			// 		throw new ExecutionComplete();
-			// 	}
-
-			// 	if (response.type === 'STOP_LOSS_LIMIT') {
-			// 		this.send_message(`${this.pair} stopped out`);
-			// 		this.stopOrderId = response.orderId;
-			// 	} else if (response.type === 'LIMIT') {
-			// 		this.send_message(`${this.pair} hit target price`);
-			// 		this.targetOrderId = response.orderId;
-			// 	}
-			// };
-
 			if (typeof this.buyPrice !== 'undefined') {
 				if (this.buyPrice.isZero()) {
 					this.buyOrderId = await this._create_market_buy_order();
@@ -337,28 +309,6 @@ class Algo {
 			} else {
 				await this.placeSellOrder();
 			}
-
-			// TODO: I guess it would be good to check how much the balance is on the exchange
-			// against 'amount' if there is no buy stage
-
-			// this.logger.info(`BuyPrice: ${this.buyPrice}, isZero(): ${this.buyPrice.isZero()}`);
-			// if (typeof this.buyPrice !== 'undefined') {
-			// 	if (this.buyPrice.isZero()) {
-			// 		this.buyOrderId = await this._create_market_buy_order();
-			// TODO: move this code
-			// 	} else if (this.buyPrice.isGreaterThan(0)) {
-			// 		old_binance.prices(this.pair, (error, ticker) => {
-			// 			const currentPrice = ticker[this.pair];
-			// 			this.logger.info(`${this.pair} price: ${currentPrice}`);
-
-			// 				isLimitEntry = true;
-			// 				console.error('needs implementing');
-			// 				throw new Error('backtrace me');
-			// 		});
-			// 	}
-			// } else {
-			// 	placeSellOrder();
-			// }
 
 			let isCancelling = false;
 

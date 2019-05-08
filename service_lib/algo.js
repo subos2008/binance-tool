@@ -55,6 +55,31 @@ class Algo {
 		}
 
 		this.pair = this.pair.toUpperCase();
+		this.calculate_percentages();
+
+		this.send_message(
+			`${this.pair} New trade buy: ${this.buyPrice}, stop: ${this.stopPrice}, target: ${this.targetPrice}`
+		);
+	}
+
+	calculate_percentages() {
+		let stop_percentage, target_percentage;
+		if (this.buyPrice && this.stopPrice) {
+			stop_percentage = BigNumber(this.buyPrice).minus(this.stopPrice).dividedBy(this.buyPrice).times(100);
+			this.logger.info(`Stop percentage: ${stop_percentage.toFixed(2)}%`);
+		}
+		if (this.buyPrice && this.targetPrice) {
+			target_percentage = BigNumber(this.targetPrice).minus(this.buyPrice).dividedBy(this.buyPrice).times(100);
+			this.logger.info(`Target percentage: ${target_percentage.toFixed(2)}%`);
+		}
+		if (stop_percentage && target_percentage) {
+			let risk_reward_ratio = target_percentage.dividedBy(stop_percentage);
+			this.logger.info(`Risk/reward ratio: ${risk_reward_ratio.toFixed(1)}`);
+		}
+		if (stop_percentage) {
+			let max_portfolio_percentage_allowed = BigNumber(1).dividedBy(stop_percentage).times(100);
+			this.logger.info(`Max portfolio % allowed in trade: ${max_portfolio_percentage_allowed.toFixed(1)}%`);
+		}
 	}
 
 	shutdown_streams() {

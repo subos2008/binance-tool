@@ -57,28 +57,63 @@ describe('Algo', function() {
 	});
 
 	describe('when only a buyPrice is present', function() {
-		it('creates a buy order and returns', async function() {
-			const base_volume = BigNumber(1);
-			const limit_price = BigNumber(1);
-			let { ee, algo } = setup({
-				algo_config: {
-					pair: default_pair,
-					amount: base_volume,
-					buyPrice: limit_price
+		describe('without soft_entry', function() {
+			it('creates a buy order and returns', async function() {
+				const base_volume = BigNumber(1);
+				const limit_price = BigNumber(1);
+				let { ee, algo } = setup({
+					algo_config: {
+						pair: default_pair,
+						amount: base_volume,
+						buyPrice: limit_price
+					}
+				});
+				try {
+					await algo.main();
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
 				}
+				expect(ee.open_orders).to.have.lengthOf(1);
+				expect(ee.open_orders[0].type).to.equal('LIMIT');
+				expect(ee.open_orders[0].side).to.equal('BUY');
+				expect(ee.open_orders[0].orderId).to.equal(1);
+				expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
+				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
 			});
-			try {
-				await algo.main();
-			} catch (e) {
-				console.log(e);
-				expect.fail('should not get here: expected call not to throw');
-			}
-			expect(ee.open_orders).to.have.lengthOf(1);
-			expect(ee.open_orders[0].type).to.equal('LIMIT');
-			expect(ee.open_orders[0].side).to.equal('BUY');
-			expect(ee.open_orders[0].orderId).to.equal(1);
-			expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
-			expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
+		});
+		describe('with soft_entry', function() {
+			it('only creates a buy order when entry price is hit', async function() {
+				const base_volume = BigNumber(1);
+				const buyPrice = BigNumber(1);
+				let { ee, algo } = setup({
+					algo_config: {
+						pair: default_pair,
+						amount: base_volume,
+						buyPrice,
+						soft_entry: true
+					}
+				});
+				try {
+					await algo.main();
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				expect(ee.open_orders).to.have.lengthOf(0);
+				try {
+					await ee.set_current_price({ symbol: default_pair, price: buyPrice });
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				expect(ee.open_orders).to.have.lengthOf(1);
+				expect(ee.open_orders[0].type).to.equal('LIMIT');
+				expect(ee.open_orders[0].side).to.equal('BUY');
+				expect(ee.open_orders[0].orderId).to.equal(1);
+				expect(ee.open_orders[0].price.isEqualTo(buyPrice)).to.equal(true);
+				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
+			});
 		});
 	});
 
@@ -290,5 +325,5 @@ describe('Algo', function() {
 	/// i.e. when stacking commands to emulate a range trading bot
 	// if the first commend got stopped out I don't want to be immediately ordering a buy
 	// at the next level. Can make a stop out exit with a non-zero code
-	it('invalidates a trade if the price is below the stop price before the buy order is created');
+	it('maybe: invalidates a trade if the price is below the stop price before the buy order is created');
 });

@@ -342,6 +342,7 @@ class Algo {
 
 					if (waiting_for_soft_entry_price) {
 						if (price.isLessThanOrEqualTo(obj.buyPrice)) {
+							waiting_for_soft_entry_price = false;
 							obj.buyOrderId = await obj._create_limit_buy_order();
 						}
 					} else if (obj.buyOrderId) {

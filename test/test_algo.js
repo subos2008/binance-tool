@@ -232,94 +232,191 @@ describe('Algo', function() {
 		});
 	});
 	describe('when a buyPrice, stopPrice and targetPrice present', function() {
-		it('creates a stop limit sell order after the buy order hits', async function() {
-			const amount = BigNumber(1);
-			const buyPrice = BigNumber(1);
-			const stopPrice = buyPrice.times('0.5');
-			const targetPrice = buyPrice.times(2);
-			let { ee, algo } = setup({
-				algo_config: {
-					pair: default_pair,
-					amount,
-					buyPrice,
-					targetPrice,
-					stopPrice
+		describe('without soft entry', function() {
+			it('creates a stop limit sell order after the buy order hits', async function() {
+				const amount = BigNumber(1);
+				const buyPrice = BigNumber(1);
+				const stopPrice = buyPrice.times('0.5');
+				const targetPrice = buyPrice.times(2);
+				let { ee, algo } = setup({
+					algo_config: {
+						pair: default_pair,
+						amount,
+						buyPrice,
+						targetPrice,
+						stopPrice
+					}
+				});
+				try {
+					await algo.main();
+					await ee.set_current_price({ symbol: default_pair, price: buyPrice });
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
 				}
-			});
-			try {
-				await algo.main();
-				await ee.set_current_price({ symbol: default_pair, price: buyPrice });
-			} catch (e) {
-				console.log(e);
-				expect.fail('should not get here: expected call not to throw');
-			}
-			expect(ee.open_orders).to.have.lengthOf(1);
-			expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
-			expect(ee.open_orders[0].side).to.equal('SELL');
-			expect(ee.open_orders[0].orderId).to.equal(2);
-			expect(ee.open_orders[0].price.isEqualTo(stopPrice)).to.equal(true);
-			expect(ee.open_orders[0].stopPrice.isEqualTo(stopPrice)).to.equal(true);
-			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
+				expect(ee.open_orders).to.have.lengthOf(1);
+				expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
+				expect(ee.open_orders[0].side).to.equal('SELL');
+				expect(ee.open_orders[0].orderId).to.equal(2);
+				expect(ee.open_orders[0].price.isEqualTo(stopPrice)).to.equal(true);
+				expect(ee.open_orders[0].stopPrice.isEqualTo(stopPrice)).to.equal(true);
+				expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 
-			try {
-				await ee.set_current_price({ symbol: default_pair, price: stopPrice });
-			} catch (e) {
-				console.log(e);
-				expect.fail('should not get here: expected call not to throw');
-			}
-			expect(most_recent_message()).to.be.an('string');
-			expect(most_recent_message()).to.equal(`${default_pair} stop loss order filled`);
+				try {
+					await ee.set_current_price({ symbol: default_pair, price: stopPrice });
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				expect(most_recent_message()).to.be.an('string');
+				expect(most_recent_message()).to.equal(`${default_pair} stop loss order filled`);
+			});
+			it('creates a limit sell order at the targetPrice when that price is hit', async function() {
+				// TODO: also check that it cancels the stop order?
+				// TODO: Sends a message?
+				// TODO: what if we retrace to the stop price before the order is filled?
+				// TODO: what if the targetPrice limit order gets partially filled and then we retrace to the stop price?
+				const amount = BigNumber(1);
+				const buyPrice = BigNumber(1);
+				const stopPrice = buyPrice.times('0.5');
+				const targetPrice = buyPrice.times(2);
+				let { ee, algo } = setup({
+					algo_config: {
+						pair: default_pair,
+						amount,
+						buyPrice,
+						targetPrice,
+						stopPrice
+					}
+				});
+				try {
+					await algo.main();
+					await ee.set_current_price({ symbol: default_pair, price: buyPrice });
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				expect(most_recent_message()).to.be.an('string');
+				expect(most_recent_message()).to.equal(`${default_pair} buy order filled`);
+
+				try {
+					// Note that as part of hitting the targetPrice the algo will cancel the stopOrder,
+					// which involves an await, hence why we await on set_current_price
+					await ee.set_current_price({ symbol: default_pair, price: targetPrice });
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				expect(ee.open_orders).to.have.lengthOf(1);
+				expect(ee.open_orders[0].type).to.equal('LIMIT');
+				expect(ee.open_orders[0].side).to.equal('SELL');
+				expect(ee.open_orders[0].orderId).to.equal(3);
+				expect(ee.open_orders[0].price.isEqualTo(targetPrice)).to.equal(true);
+				expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
+
+				try {
+					await ee.set_current_price({ symbol: default_pair, price: targetPrice }); // a second time to trigger the LIMIT SELL
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				expect(most_recent_message()).to.equal(`${default_pair} target sell order filled`);
+			});
 		});
-		it('creates a limit sell order at the targetPrice when that price is hit', async function() {
-			// TODO: also check that it cancels the stop order?
-			// TODO: Sends a message?
-			// TODO: what if we retrace to the stop price before the order is filled?
-			// TODO: what if the targetPrice limit order gets partially filled and then we retrace to the stop price?
-			const amount = BigNumber(1);
-			const buyPrice = BigNumber(1);
-			const stopPrice = buyPrice.times('0.5');
-			const targetPrice = buyPrice.times(2);
-			let { ee, algo } = setup({
-				algo_config: {
-					pair: default_pair,
-					amount,
-					buyPrice,
-					targetPrice,
-					stopPrice
+		describe('with soft entry', function() {
+			it('creates a stop limit sell order after the buy order hits', async function() {
+				const amount = BigNumber(1);
+				const buyPrice = BigNumber(1);
+				const stopPrice = buyPrice.times('0.5');
+				const targetPrice = buyPrice.times(2);
+				let { ee, algo } = setup({
+					algo_config: {
+						pair: default_pair,
+						amount,
+						buyPrice,
+						targetPrice,
+						stopPrice,
+						soft_entry: true
+					}
+				});
+				try {
+					await algo.main();
+					await ee.set_current_price({ symbol: default_pair, price: buyPrice }); // once to trigger soft entry
+					await ee.set_current_price({ symbol: default_pair, price: buyPrice }); // twice to fill order
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
 				}
+				expect(ee.open_orders).to.have.lengthOf(1);
+				expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
+				expect(ee.open_orders[0].side).to.equal('SELL');
+				expect(ee.open_orders[0].orderId).to.equal(2);
+				expect(ee.open_orders[0].price.isEqualTo(stopPrice)).to.equal(true);
+				expect(ee.open_orders[0].stopPrice.isEqualTo(stopPrice)).to.equal(true);
+				expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
+
+				try {
+					await ee.set_current_price({ symbol: default_pair, price: stopPrice });
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				expect(most_recent_message()).to.be.an('string');
+				expect(most_recent_message()).to.equal(`${default_pair} stop loss order filled`);
 			});
-			try {
-				await algo.main();
-				await ee.set_current_price({ symbol: default_pair, price: buyPrice });
-			} catch (e) {
-				console.log(e);
-				expect.fail('should not get here: expected call not to throw');
-			}
-			expect(most_recent_message()).to.be.an('string');
-			expect(most_recent_message()).to.equal(`${default_pair} buy order filled`);
+			it('creates a limit sell order at the targetPrice when that price is hit', async function() {
+				// TODO: also check that it cancels the stop order?
+				// TODO: Sends a message?
+				// TODO: what if we retrace to the stop price before the order is filled?
+				// TODO: what if the targetPrice limit order gets partially filled and then we retrace to the stop price?
+				const amount = BigNumber(1);
+				const buyPrice = BigNumber(1);
+				const stopPrice = buyPrice.times('0.5');
+				const targetPrice = buyPrice.times(2);
+				let { ee, algo } = setup({
+					algo_config: {
+						pair: default_pair,
+						amount,
+						buyPrice,
+						targetPrice,
+						stopPrice,
+						soft_entry: true
+					}
+				});
+				try {
+					await algo.main();
+					await ee.set_current_price({ symbol: default_pair, price: buyPrice }); // once to trigger soft entry
+					await ee.set_current_price({ symbol: default_pair, price: buyPrice }); // twice to fill order
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				expect(most_recent_message()).to.be.an('string');
+				expect(most_recent_message()).to.equal(`${default_pair} buy order filled`);
 
-			try {
-				// Note that as part of hitting the targetPrice the algo will cancel the stopOrder,
-				// which involves an await, hence why we await on set_current_price
-				await ee.set_current_price({ symbol: default_pair, price: targetPrice });
-			} catch (e) {
-				console.log(e);
-				expect.fail('should not get here: expected call not to throw');
-			}
-			expect(ee.open_orders).to.have.lengthOf(1);
-			expect(ee.open_orders[0].type).to.equal('LIMIT');
-			expect(ee.open_orders[0].side).to.equal('SELL');
-			expect(ee.open_orders[0].orderId).to.equal(3);
-			expect(ee.open_orders[0].price.isEqualTo(targetPrice)).to.equal(true);
-			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
+				try {
+					// Note that as part of hitting the targetPrice the algo will cancel the stopOrder,
+					// which involves an await, hence why we await on set_current_price
+					await ee.set_current_price({ symbol: default_pair, price: targetPrice });
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				expect(ee.open_orders).to.have.lengthOf(1);
+				expect(ee.open_orders[0].type).to.equal('LIMIT');
+				expect(ee.open_orders[0].side).to.equal('SELL');
+				expect(ee.open_orders[0].orderId).to.equal(3);
+				expect(ee.open_orders[0].price.isEqualTo(targetPrice)).to.equal(true);
+				expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 
-			try {
-				await ee.set_current_price({ symbol: default_pair, price: targetPrice }); // a second time to trigger the LIMIT SELL
-			} catch (e) {
-				console.log(e);
-				expect.fail('should not get here: expected call not to throw');
-			}
-			expect(most_recent_message()).to.equal(`${default_pair} target sell order filled`);
+				try {
+					await ee.set_current_price({ symbol: default_pair, price: targetPrice }); // a second time to trigger the LIMIT SELL
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				expect(most_recent_message()).to.equal(`${default_pair} target sell order filled`);
+			});
 		});
 	});
 	/// i.e. when stacking commands to emulate a range trading bot

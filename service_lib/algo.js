@@ -129,14 +129,17 @@ class Algo {
 			if (orderId === obj.buyOrderId) {
 				checkOrderFilled(data, () => {
 					obj.buyOrderId = 0;
+					this.send_message(`${data.symbol} buy order filled`);
 					obj.placeSellOrder();
 				});
 			} else if (orderId === obj.stopOrderId) {
 				checkOrderFilled(data, () => {
+					this.send_message(`${data.symbol} stop loss order filled`);
 					obj.execution_complete(`Stop hit`);
 				});
 			} else if (orderId === obj.targetOrderId) {
 				checkOrderFilled(data, () => {
+					this.send_message(`${data.symbol} target sell order filled`);
 					obj.execution_complete(`Target hit`);
 				});
 			}

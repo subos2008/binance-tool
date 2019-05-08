@@ -29,9 +29,12 @@ let message_queue = [];
 function fresh_message_queue() {
 	message_queue = [];
 	return (msg) => {
-		console.log(`send_message: ${msg}`);
 		message_queue.push(msg);
 	};
+}
+
+function most_recent_message() {
+	return message_queue[message_queue.length - 1];
 }
 
 describe('Algo', function() {
@@ -222,6 +225,15 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].price.isEqualTo(stopPrice)).to.equal(true);
 			expect(ee.open_orders[0].stopPrice.isEqualTo(stopPrice)).to.equal(true);
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
+
+			try {
+				await ee.set_current_price({ symbol: default_pair, price: stopPrice });
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+			expect(most_recent_message()).to.be.an('string');
+			expect(most_recent_message()).to.equal(`${default_pair} stop loss order filled`);
 		});
 		it('creates a limit sell order at the targetPrice when that price is hit', async function() {
 			// TODO: also check that it cancels the stop order?
@@ -244,10 +256,17 @@ describe('Algo', function() {
 			try {
 				await algo.main();
 				await ee.set_current_price({ symbol: default_pair, price: buyPrice });
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+			expect(most_recent_message()).to.be.an('string');
+			expect(most_recent_message()).to.equal(`${default_pair} buy order filled`);
+
+			try {
 				// Note that as part of hitting the targetPrice the algo will cancel the stopOrder,
-				// which involves an await
+				// which involves an await, hence why we await on set_current_price
 				await ee.set_current_price({ symbol: default_pair, price: targetPrice });
-				// await ee.set_current_price({ symbol: default_pair, price: targetPrice }); // a second time to trigger the LIMIT SELL
 			} catch (e) {
 				console.log(e);
 				expect.fail('should not get here: expected call not to throw');
@@ -258,6 +277,14 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].orderId).to.equal(3);
 			expect(ee.open_orders[0].price.isEqualTo(targetPrice)).to.equal(true);
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
+
+			try {
+				await ee.set_current_price({ symbol: default_pair, price: targetPrice }); // a second time to trigger the LIMIT SELL
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+			expect(most_recent_message()).to.equal(`${default_pair} target sell order filled`);
 		});
 	});
 });

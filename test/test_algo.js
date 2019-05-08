@@ -25,11 +25,23 @@ const null_logger = new Logger({ silent: true });
 const default_pair = 'ETHBTC';
 const exchange_info = JSON.parse(fs.readFileSync('./test/exchange_info.json', 'utf8'));
 
+let message_queue = [];
+function fresh_message_queue() {
+	message_queue = [];
+	return (msg) => {
+		console.log(`send_message: ${msg}`);
+		message_queue.push(msg);
+	};
+}
+
 describe('Algo', function() {
 	function setup({ algo_config, ee_config } = {}) {
-		ee_config = Object.assign({ logger, exchange_info, starting_quote_balance: BigNumber(1) }, ee_config);
+		ee_config = Object.assign(
+			{ logger: null_logger, exchange_info, starting_quote_balance: BigNumber(1) },
+			ee_config
+		);
 		let ee = new ExchangeEmulator(ee_config);
-		algo_config = Object.assign({ send_message: (msg) => console.log(`send_message: ${msg}`) }, algo_config);
+		algo_config = Object.assign({ logger: null_logger, send_message: fresh_message_queue() }, algo_config);
 		let algo = new Algo(Object.assign(algo_config, { ee }));
 		return { algo, ee };
 	}

@@ -11,6 +11,7 @@ class Algo {
 		{
 			ee, // binance-api-node API
 			send_message,
+			logger,
 			pair,
 			amount,
 			quoteAmount,
@@ -31,6 +32,10 @@ class Algo {
 		this.limitPrice = limitPrice;
 		this.targetPrice = targetPrice;
 		this.nonBnbFees = nonBnbFees;
+		this.logger = logger;
+
+		assert(logger);
+		assert(send_message);
 
 		if (this.buyPrice === '') {
 			this.buyPrice = '0';
@@ -38,12 +43,12 @@ class Algo {
 
 		if (this.quoteAmount && this.buyPrice && this.buyPrice != 0) {
 			this.amount = BigNumber(this.quoteAmount).dividedBy(this.buyPrice);
-			console.log(`Calculated buy amount ${this.amount.toFixed()}`);
+			this.logger.info(`Calculated buy amount ${this.amount.toFixed()}`);
 		}
 
 		if (!this.amount) {
 			let msg = 'You must specify amount with -a or via -q';
-			console.error();
+			this.logger.error(msg);
 			throw new Error(msg);
 		}
 
@@ -64,11 +69,11 @@ class Algo {
 				quantity: this.amount.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
-			console.log(`Creating MARKET BUY ORDER`);
-			// console.log(args);
+			this.logger.info(`Creating MARKET BUY ORDER`);
+			// this.logger.info(args);
 			let response = await this.ee.order(args);
-			console.log('MARKET BUY response', response);
-			console.log(`order id: ${response.orderId}`);
+			this.logger.info('MARKET BUY response', response);
+			this.logger.info(`order id: ${response.orderId}`);
 			return response.orderId;
 		} catch (error) {
 			async_error_handler(console, `Buy error: ${error.body}`, error);
@@ -85,11 +90,11 @@ class Algo {
 				price: this.buyPrice.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
-			console.log(`Creating LIMIT BUY ORDER`);
-			console.log(args);
+			this.logger.info(`Creating LIMIT BUY ORDER`);
+			this.logger.info(args);
 			let response = await this.ee.order(args);
-			console.log('LIMIT BUY response', response);
-			console.log(`order id: ${response.orderId}`);
+			this.logger.info('LIMIT BUY response', response);
+			this.logger.info(`order id: ${response.orderId}`);
 			return response.orderId;
 		} catch (error) {
 			async_error_handler(console, `Buy error: ${error.body}`, error);
@@ -97,11 +102,12 @@ class Algo {
 	}
 
 	async monitor_user_stream() {
+		let obj = this;
 		function checkOrderFilled(data, orderFilled) {
 			const { symbol, price, quantity, side, orderType, orderId, orderStatus } = data;
 
-			console.log(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`);
-			console.log(`..price: ${price}, quantity: ${quantity}`);
+			obj.logger.info(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`);
+			obj.logger.info(`..price: ${price}, quantity: ${quantity}`);
 
 			if (orderStatus === 'NEW' || orderStatus === 'PARTIALLY_FILLED') {
 				return;
@@ -114,12 +120,11 @@ class Algo {
 			orderFilled(data);
 		}
 
-		let obj = this;
 		this.closeUserWebsocket = await this.ee.ws.user((data) => {
 			const { orderId } = data;
 
-			console.log(`.ws.user recieved:`);
-			console.log(data);
+			obj.logger.info(`.ws.user recieved:`);
+			obj.logger.info(data);
 
 			if (orderId === obj.buyOrderId) {
 				checkOrderFilled(data, () => {
@@ -222,11 +227,11 @@ class Algo {
 				stopPrice: this.stopPrice.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
-			console.log(`Creating STOP_LOSS_LIMIT SELL ORDER`);
-			console.log(args);
+			this.logger.info(`Creating STOP_LOSS_LIMIT SELL ORDER`);
+			this.logger.info(args);
 			let response = await this.ee.order(args);
-			console.log('STOP_LOSS_LIMIT sell response', response);
-			console.log(`order id: ${response.orderId}`);
+			this.logger.info('STOP_LOSS_LIMIT sell response', response);
+			this.logger.info(`order id: ${response.orderId}`);
 			return response.orderId;
 		} catch (error) {
 			async_error_handler(console, `error placing order: ${error.body}`, error);
@@ -243,11 +248,11 @@ class Algo {
 				price: this.targetPrice.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
-			console.log(`Creating Target LIMIT SELL ORDER`);
-			console.log(args);
+			this.logger.info(`Creating Target LIMIT SELL ORDER`);
+			this.logger.info(args);
 			let response = await this.ee.order(args);
-			console.log('Target LIMIT SELL response', response);
-			console.log(`order id: ${response.orderId}`);
+			this.logger.info('Target LIMIT SELL response', response);
+			this.logger.info(`order id: ${response.orderId}`);
 			return response.orderId;
 		} catch (error) {
 			async_error_handler(console, `error placing order: ${error.body}`, error);
@@ -258,14 +263,14 @@ class Algo {
 		if (this.stopPrice) {
 			try {
 				this.stopOrderId = await this.placeStopOrder();
-				console.log(`Set stopOrderId: ${this.stopOrderId}`);
+				this.logger.info(`Set stopOrderId: ${this.stopOrderId}`);
 			} catch (error) {
 				async_error_handler(console, `error placing order: ${error.body}`, error);
 			}
 		} else if (this.targetPrice) {
 			try {
 				this.targetOrderId = await this.placeTargetOrder();
-				console.log(`Set targetOrderId: ${this.targetOrderId}`);
+				this.logger.info(`Set targetOrderId: ${this.targetOrderId}`);
 			} catch (error) {
 				async_error_handler(console, `error placing order: ${error.body}`, error);
 			}
@@ -293,8 +298,8 @@ class Algo {
 			// 		throw new Error('Sell error', error.body);
 			// 	}
 
-			// 	console.log('Sell response', response);
-			// 	console.log(`order id: ${response.orderId}`);
+			// 	this.logger.info('Sell response', response);
+			// 	this.logger.info(`order id: ${response.orderId}`);
 
 			// 	if (!(this.stopPrice && this.targetPrice)) {
 			// 		throw new ExecutionComplete();
@@ -322,7 +327,7 @@ class Algo {
 			// TODO: I guess it would be good to check how much the balance is on the exchange
 			// against 'amount' if there is no buy stage
 
-			// console.log(`BuyPrice: ${this.buyPrice}, isZero(): ${this.buyPrice.isZero()}`);
+			// this.logger.info(`BuyPrice: ${this.buyPrice}, isZero(): ${this.buyPrice.isZero()}`);
 			// if (typeof this.buyPrice !== 'undefined') {
 			// 	if (this.buyPrice.isZero()) {
 			// 		this.buyOrderId = await this._create_market_buy_order();
@@ -330,7 +335,7 @@ class Algo {
 			// 	} else if (this.buyPrice.isGreaterThan(0)) {
 			// 		old_binance.prices(this.pair, (error, ticker) => {
 			// 			const currentPrice = ticker[this.pair];
-			// 			console.log(`${this.pair} price: ${currentPrice}`);
+			// 			this.logger.info(`${this.pair} price: ${currentPrice}`);
 
 			// 				isLimitEntry = true;
 			// 				console.error('needs implementing');
@@ -351,17 +356,17 @@ class Algo {
 					assert(symbol);
 					assert(price);
 
-					console.log('------------');
-					console.log(`.ws.aggTrades recieved:`);
-					console.log(trade);
-					console.log(`stopOrderId: ${obj.stopOrderId}`);
-					console.log('------------');
+					obj.logger.info('------------');
+					obj.logger.info(`.ws.aggTrades recieved:`);
+					obj.logger.info(trade);
+					obj.logger.info(`stopOrderId: ${obj.stopOrderId}`);
+					obj.logger.info('------------');
 					price = BigNumber(price);
 
 					if (obj.buyOrderId) {
-						console.log(`${symbol} trade update. price: ${price} buy: ${obj.buyPrice}`);
+						obj.logger.info(`${symbol} trade update. price: ${price} buy: ${obj.buyPrice}`);
 					} else if (obj.stopOrderId || obj.targetOrderId) {
-						console.log(
+						obj.logger.info(
 							`${symbol} trade update. price: ${price} stop: ${obj.stopPrice} target: ${obj.targetPrice}`
 						);
 						if (
@@ -370,7 +375,7 @@ class Algo {
 							price.isGreaterThanOrEqualTo(obj.targetPrice) &&
 							!isCancelling
 						) {
-							console.log(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
+							obj.logger.info(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
 							isCancelling = true;
 							try {
 								await obj.ee.cancelOrder({ symbol, orderId: obj.stopOrderId });
@@ -383,7 +388,7 @@ class Algo {
 							}
 							try {
 								obj.targetOrderId = await obj.placeTargetOrder();
-								console.log(`Set targetOrderId: ${obj.targetOrderId}`);
+								obj.logger.info(`Set targetOrderId: ${obj.targetOrderId}`);
 							} catch (error) {
 								async_error_handler(console, `error placing order: ${error.body}`, error);
 							}
@@ -402,10 +407,10 @@ class Algo {
 								return;
 							}
 							obj.targetOrderId = 0;
-							console.log(`${symbol} cancel response:`, response);
+							obj.logger.info(`${symbol} cancel response:`, response);
 							try {
 								obj.stopOrderId = await obj.placeStopOrder();
-								console.log(`Set stopOrderId: ${obj.stopOrderId}`);
+								obj.logger.info(`Set stopOrderId: ${obj.stopOrderId}`);
 							} catch (error) {
 								async_error_handler(console, `error placing order: ${error.body}`, error);
 							}

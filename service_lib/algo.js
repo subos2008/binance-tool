@@ -144,14 +144,15 @@ class Algo {
 			} else if (orderId === obj.targetOrderId) {
 				checkOrderFilled(data, () => {
 					this.send_message(`${data.symbol} target sell order filled`);
-					obj.execution_complete(`Target hit`);
+					obj.execution_complete(`Target hit`, 1);
 				});
 			}
 		});
 	}
 
-	execution_complete(msg) {
+	execution_complete(msg, exit_code = 0) {
 		this.logger.info(`ExecutionComplete: ${msg}`);
+		if (exit_code) process.exitCode = exit_code;
 		this.shutdown_streams();
 	}
 

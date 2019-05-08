@@ -287,4 +287,8 @@ describe('Algo', function() {
 			expect(most_recent_message()).to.equal(`${default_pair} target sell order filled`);
 		});
 	});
+	/// i.e. when stacking commands to emulate a range trading bot
+	// if the first commend got stopped out I don't want to be immediately ordering a buy
+	// at the next level. Can make a stop out exit with a non-zero code
+	it('invalidates a trade if the price is below the stop price before the buy order is created');
 });

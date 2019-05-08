@@ -1,6 +1,7 @@
 'use strict';
 
 const fetch = require('node-fetch');
+const url = require('url');
 
 const getURL = async (url) => {
 	try {

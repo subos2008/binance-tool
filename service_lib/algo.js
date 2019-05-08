@@ -19,7 +19,8 @@ class Algo {
 			stopPrice,
 			limitPrice,
 			targetPrice,
-			nonBnbFees
+			nonBnbFees,
+			soft_entry
 		} = {}
 	) {
 		this.ee = ee;
@@ -33,6 +34,7 @@ class Algo {
 		this.targetPrice = targetPrice;
 		this.nonBnbFees = nonBnbFees;
 		this.logger = logger;
+		this.soft_entry = soft_entry;
 
 		assert(logger);
 		assert(send_message);
@@ -300,11 +302,22 @@ class Algo {
 
 			const NON_BNB_TRADING_FEE = BigNumber('0.001'); // TODO: err why is this unused
 
+			let waiting_for_soft_entry_price = false;
 			if (typeof this.buyPrice !== 'undefined') {
 				if (this.buyPrice.isZero()) {
+					if (this.soft_entry) {
+						let msg = `Soft entry mode requires specified buy price`;
+						this.logger.error(msg);
+						throw new Error(msg);
+					}
 					this.buyOrderId = await this._create_market_buy_order();
 				} else {
-					this.buyOrderId = await this._create_limit_buy_order();
+					if (this.soft_entry) {
+						this.logger.info(`Soft entry mode`);
+						waiting_for_soft_entry_price = true;
+					} else {
+						this.buyOrderId = await this._create_limit_buy_order();
+					}
 				}
 			} else {
 				await this.placeSellOrder();
@@ -313,7 +326,7 @@ class Algo {
 			let isCancelling = false;
 
 			// TODO: we don't always need this - only if we have stop and target orders that need monitoring
-			if (this.stopPrice && this.targetPrice) {
+			if ((this.stopPrice && this.targetPrice) || this.soft_entry) {
 				let obj = this;
 				this.closeTradesWebSocket = await this.ee.ws.aggTrades([ this.pair ], async function(trade) {
 					var { symbol, price } = trade;
@@ -327,7 +340,11 @@ class Algo {
 					// obj.logger.info('------------');
 					price = BigNumber(price);
 
-					if (obj.buyOrderId) {
+					if (waiting_for_soft_entry_price) {
+						if (price.isLessThanOrEqualTo(obj.buyPrice)) {
+							obj.buyOrderId = await obj._create_limit_buy_order();
+						}
+					} else if (obj.buyOrderId) {
 						// obj.logger.info(`${symbol} trade update. price: ${price} buy: ${obj.buyPrice}`);
 					} else if (obj.stopOrderId || obj.targetOrderId) {
 						// obj.logger.info(

@@ -145,6 +145,7 @@ class Algo {
 
 	execution_complete(msg) {
 		this.logger.info(`ExecutionComplete: ${msg}`);
+		this.shutdown_streams();
 	}
 
 	async munge_prices_and_amounts() {

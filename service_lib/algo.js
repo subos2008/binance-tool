@@ -1,5 +1,5 @@
 const async_error_handler = require('../lib/async_error_handler');
-const { ExitNow, ExecutionComplete } = require('../lib/errors');
+const { ExitNow } = require('../lib/errors');
 const StateMachine = require('javascript-state-machine');
 const BigNumber = require('bignumber.js');
 const utils = require('../lib/utils');
@@ -133,15 +133,18 @@ class Algo {
 				});
 			} else if (orderId === obj.stopOrderId) {
 				checkOrderFilled(data, () => {
-					// TODO: handle these exceptions. Msg user, call softexit?
-					throw new ExecutionComplete(`Stop hit`);
+					obj.execution_complete(`Stop hit`);
 				});
 			} else if (orderId === obj.targetOrderId) {
 				checkOrderFilled(data, () => {
-					throw new ExecutionComplete(`Target hit`);
+					obj.execution_complete(`Target hit`);
 				});
 			}
 		});
+	}
+
+	execution_complete(msg) {
+		this.logger.info(`ExecutionComplete: ${msg}`);
 	}
 
 	async munge_prices_and_amounts() {
@@ -275,7 +278,7 @@ class Algo {
 				async_error_handler(console, `error placing order: ${error.body}`, error);
 			}
 		} else {
-			throw new ExecutionComplete();
+			this.execution_complete('buy completed and no sell actions defined');
 		}
 	}
 

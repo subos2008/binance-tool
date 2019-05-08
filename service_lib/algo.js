@@ -127,8 +127,8 @@ class Algo {
 			if (eventType !== 'executionReport') {
 				return;
 			}
-			obj.logger.info(`.ws.user recieved:`);
-			obj.logger.info(data);
+			// obj.logger.info(`.ws.user recieved:`);
+			// obj.logger.info(data);
 
 			if (orderId === obj.buyOrderId) {
 				checkOrderFilled(data, () => {

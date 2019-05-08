@@ -10,6 +10,10 @@ require('dotenv').config();
 
 const Binance = require('binance-api-node').default;
 const send_message = require('./telegram.js');
+const Algo = require('./service_lib/algo');
+const Logger = require('./lib/faux_logger');
+
+const logger = new Logger({ silent: false });
 
 const { argv } = require('yargs')
 	.usage('Usage: $0')
@@ -68,6 +72,7 @@ const binance_client = Binance({
 const algo = new Algo({
 	ee: binance_client,
 	send_message,
+	logger,
 	pair,
 	amount,
 	quoteAmount,

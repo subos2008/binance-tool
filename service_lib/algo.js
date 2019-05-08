@@ -369,19 +369,19 @@ class Algo {
 					assert(symbol);
 					assert(price);
 
-					obj.logger.info('------------');
-					obj.logger.info(`.ws.aggTrades recieved:`);
-					obj.logger.info(trade);
-					obj.logger.info(`stopOrderId: ${obj.stopOrderId}`);
-					obj.logger.info('------------');
+					// obj.logger.info('------------');
+					// obj.logger.info(`.ws.aggTrades recieved:`);
+					// obj.logger.info(trade);
+					// obj.logger.info(`stopOrderId: ${obj.stopOrderId}`);
+					// obj.logger.info('------------');
 					price = BigNumber(price);
 
 					if (obj.buyOrderId) {
-						obj.logger.info(`${symbol} trade update. price: ${price} buy: ${obj.buyPrice}`);
+						// obj.logger.info(`${symbol} trade update. price: ${price} buy: ${obj.buyPrice}`);
 					} else if (obj.stopOrderId || obj.targetOrderId) {
-						obj.logger.info(
-							`${symbol} trade update. price: ${price} stop: ${obj.stopPrice} target: ${obj.targetPrice}`
-						);
+						// obj.logger.info(
+						// 	`${symbol} trade update. price: ${price} stop: ${obj.stopPrice} target: ${obj.targetPrice}`
+						// );
 						if (
 							obj.stopOrderId &&
 							!obj.targetOrderId &&

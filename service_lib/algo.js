@@ -298,7 +298,7 @@ class Algo {
 			await this.monitor_user_stream();
 			await this.munge_prices_and_amounts();
 
-			const NON_BNB_TRADING_FEE = BigNumber('0.001');
+			const NON_BNB_TRADING_FEE = BigNumber('0.001'); // TODO: err why is this unused
 
 			if (typeof this.buyPrice !== 'undefined') {
 				if (this.buyPrice.isZero()) {

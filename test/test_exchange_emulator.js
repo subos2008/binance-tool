@@ -538,4 +538,26 @@ describe('ExchangeEmulator', function() {
 		});
 		it('differentiates locked and available funds');
 	});
+	describe('.prices', function() {
+		it('returns all known prices', async function() {
+			const ee = setup({
+				logger,
+				exchange_info
+			});
+			await ee.set_current_price({ symbol: default_pair, price: BigNumber('1.1') });
+			await ee.set_current_price({ symbol: 'FOOBTC', price: BigNumber('3') });
+			let prices = await ee.prices();
+			expect(Object.keys(prices)).to.have.lengthOf(2);
+			expect(prices[default_pair]).to.bignumber.equal('1.1');
+			expect(prices['FOOBTC']).to.bignumber.equal('3');
+		});
+		it('returns an empty object when no prices are known', async function() {
+			const ee = setup({
+				logger,
+				exchange_info
+			});
+			let prices = await ee.prices();
+			expect(Object.keys(prices)).to.have.lengthOf(0);
+		});
+	});
 });

@@ -487,4 +487,16 @@ describe('ExchangeEmulator', function() {
 			});
 		});
 	});
+	describe('get_portfolio_value', function() {
+		it('when only quote currency held: returns the total amount of quote currency held', async function() {
+			const ee = new ExchangeEmulator({
+				logger,
+				exchange_info,
+				starting_quote_balance: BigNumber(200)
+			});
+			expect(await ee.get_portfolio_value({ quote_currency: 'USDT' })).to.bignumber.equal(200);
+		});
+		it('Converts held base currencies to their equavalent in the supplied base currency and adds that in');
+		it('Handles base currencies that dont have a direct pairing to the quote currency');
+	});
 });

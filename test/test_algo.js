@@ -464,6 +464,49 @@ describe('Algo', function() {
 		it('auto calculates the max amount to buy based on portfolio value and stop_percentage');
 		it('buys as much as it can if there are insufficient funds to buy the requested amount');
 	});
+	describe('auto-size', function() {
+		// needs buyPrice, stopPrice
+		it('throws an error at trade creation if it doesnt have the information it needs to auto-size');
+		it('munges the calculated amount to match Binance rules');
+		it('knows something about trading fees and if that affects the amount if there isnt enough BNB');
+		it(
+			'exits if auto-size is specified without soft entry? soft_entry is needed atm I think. have a second test without soft entry'
+		);
+		it('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
+			const amount = BigNumber(1);
+			const buyPrice = BigNumber(1);
+			const stopPrice = buyPrice.times('0.98');
+			const trading_rules = {
+				max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
+			};
+			let { ee, algo } = setup({
+				algo_config: {
+					pair: default_pair,
+					buyPrice,
+					stopPrice,
+					trading_rules,
+					soft_entry: true,
+					auto_size: true
+				},
+				ee_config: {
+					starting_quote_balance: BigNumber(1)
+				}
+			});
+			try {
+				await algo.main();
+				await ee.set_current_price({ symbol: default_pair, price: buyPrice }); // once to trigger soft entry
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+			// check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
+			expect(ee.open_orders).to.have.lengthOf(1);
+			expect(ee.open_orders[0].type).to.equal('LIMIT');
+			expect(ee.open_orders[0].side).to.equal('BUY');
+			expect(ee.open_orders[0].origQty).to.bignumber.equal('0.5');
+		});
+		it('handles attempted trades below the min notional cleanly');
+	});
 
 	/// i.e. when stacking commands to emulate a range trading bot
 	// if the first commend got stopped out I don't want to be immediately ordering a buy

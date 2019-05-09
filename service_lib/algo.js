@@ -20,7 +20,9 @@ class Algo {
 			limitPrice,
 			targetPrice,
 			nonBnbFees,
-			soft_entry
+			soft_entry,
+			trading_rules,
+			auto_size
 		} = {}
 	) {
 		this.ee = ee;
@@ -35,9 +37,14 @@ class Algo {
 		this.nonBnbFees = nonBnbFees;
 		this.logger = logger;
 		this.soft_entry = soft_entry;
+		this.trading_rules = trading_rules;
+		this.auto_size = auto_size;
 
 		assert(logger);
 		assert(send_message);
+		assert(pair);
+
+		this.quote_currency = utils.quote_currency_for_binance_pair(this.pair);
 
 		if (this.buyPrice === '') {
 			this.buyPrice = '0';
@@ -48,8 +55,14 @@ class Algo {
 			this.logger.info(`Calculated buy amount ${this.amount.toFixed()}`);
 		}
 
-		if (!this.amount) {
-			let msg = 'You must specify amount with -a or via -q';
+		if (this.auto_size && !this.soft_entry) {
+			let msg = 'auto-size may not work without soft-entry';
+			this.logger.error(msg);
+			throw new Error(msg);
+		}
+
+		if (!this.amount && !this.auto_size) {
+			let msg = 'You must specify amount with -a, -q or use --auto-size';
 			this.logger.error(msg);
 			throw new Error(msg);
 		}
@@ -76,9 +89,19 @@ class Algo {
 			let risk_reward_ratio = target_percentage.dividedBy(stop_percentage);
 			this.logger.info(`Risk/reward ratio: ${risk_reward_ratio.toFixed(1)}`);
 		}
-		if (stop_percentage) {
-			let max_portfolio_percentage_allowed = BigNumber(1).dividedBy(stop_percentage).times(100);
-			this.logger.info(`Max portfolio % allowed in trade: ${max_portfolio_percentage_allowed.toFixed(1)}%`);
+		if (
+			stop_percentage &&
+			this.trading_rules &&
+			this.trading_rules.max_allowed_portfolio_loss_percentage_per_trade
+		) {
+			this.max_portfolio_percentage_allowed_in_this_trade = BigNumber(
+				this.trading_rules.max_allowed_portfolio_loss_percentage_per_trade
+			)
+				.dividedBy(stop_percentage)
+				.times(100);
+			this.logger.info(
+				`Max portfolio % allowed in trade: ${this.max_portfolio_percentage_allowed_in_this_trade.toFixed(1)}%`
+			);
 		}
 	}
 
@@ -108,7 +131,29 @@ class Algo {
 		}
 	}
 
+	async _calculate_autosized_quote_volume_available() {
+		assert(this.max_portfolio_percentage_allowed_in_this_trade);
+		assert(BigNumber.isBigNumber(this.max_portfolio_percentage_allowed_in_this_trade));
+		let quote_portfolio_value = await this.ee.get_portfolio_value({ quote_currency: this.quote_currency });
+		assert(BigNumber.isBigNumber(quote_portfolio_value));
+		let max_quote_amount_to_invest = quote_portfolio_value
+			.times(this.max_portfolio_percentage_allowed_in_this_trade)
+			.dividedBy(100);
+		// TODO: pass in a specific 'quote' currency
+		// TODO: this should be an async call
+		let available_quote_amount = this.ee.quote_coin_balance_not_in_orders;
+		return BigNumber.minimum(max_quote_amount_to_invest, available_quote_amount);
+	}
+
 	async _create_limit_buy_order() {
+		try {
+			if (this.auto_size) {
+				let quote_volume = await this._calculate_autosized_quote_volume_available();
+				this.amount = utils.quote_volume_at_price_to_base_volume({ quote_volume, price: this.buyPrice });
+			}
+		} catch (error) {
+			async_error_handler(console, `Autosizing error during limit buy order: ${error.body}`, error);
+		}
 		try {
 			let args = {
 				useServerTime: true,

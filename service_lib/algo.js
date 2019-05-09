@@ -136,17 +136,48 @@ class Algo {
 	// TODO: total portfolio in whatever quote currency is supplied
 	async _get_portfolio_value_from_exchange({ quote_currency } = {}) {
 		assert(quote_currency);
+		let balances, prices;
 		try {
 			let response = await this.ee.accountInfo();
-			// TODO: will throw if asset is not present in balances
-			let quote_balance = response.balances.find((obj) => obj.asset === this.quote_currency);
-			return {
-				locked: BigNumber(quote_balance.locked),
-				available: BigNumber(quote_balance.free),
-				total: BigNumber(quote_balance.locked).plus(quote_balance.free)
-			};
+			balances = response.balances;
 		} catch (error) {
 			async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
+		}
+		try {
+			prices = await this.ee.prices();
+		} catch (error) {
+			async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
+		}
+
+		try {
+			let available = BigNumber(0),
+				total = BigNumber(0);
+			balances.forEach((obj) => {
+				if (obj.asset === quote_currency) {
+					available = available.plus(obj.free);
+					total = total.plus(obj.total);
+				} else {
+					// convert coin value to quote_currency if possible, else skip it
+					let pair = `${obj.asset}${quote_currency}`;
+					try {
+						if (pair in prices) {
+							let value = BigNumber(obj.total).times(prices[pair]);
+							total = total.plus(value);
+						} else {
+							this.logger.warn(
+								`Non fatal error: unable to convert ${obj.asset} value to ${quote_currency}, skipping`
+							);
+						}
+					} catch (e) {
+						this.logger.warn(
+							`Non fatal error: unable to convert ${obj.asset} value to ${quote_currency}, skipping`
+						);
+					}
+				}
+			});
+			return { available, total };
+		} catch (error) {
+			async_error_handler(console, `calculating portfolio value`, error);
 		}
 	}
 

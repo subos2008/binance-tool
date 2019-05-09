@@ -468,6 +468,54 @@ describe('Algo', function() {
 			});
 		});
 	});
+
+	describe('_get_portfolio_value_from_exchange', function() {
+		it('when only quote currency held: returns the total amount of quote currency held', async function() {
+			let { ee, algo } = setup({
+				algo_config: {
+					pair: default_pair,
+					soft_entry: true,
+					auto_size: true
+				},
+				ee_config: {
+					starting_quote_balance: BigNumber(200)
+				}
+			});
+			let response = await algo._get_portfolio_value_from_exchange({ quote_currency: default_quote_currency });
+			expect(response).to.have.property('total');
+			expect(response.total).to.bignumber.equal(200);
+			expect(response.available).to.bignumber.equal(200);
+		});
+		it('when only default base currency held: returns the equvalent amount of quote currency held', async function() {
+			let { ee, algo } = setup({
+				algo_config: {
+					pair: default_pair,
+					soft_entry: true,
+					auto_size: true
+				},
+				ee_config: {
+					starting_quote_balance: BigNumber(0),
+					starting_base_balance: BigNumber(201)
+				}
+			});
+			let response;
+			try {
+				await ee.set_current_price({ symbol: default_pair, price: BigNumber('0.5') });
+				response = await algo._get_portfolio_value_from_exchange({
+					quote_currency: default_quote_currency
+				});
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+			expect(response).to.have.property('total');
+			expect(response.total).to.bignumber.equal('100.5');
+			expect(response.available).to.bignumber.equal('100.5');
+		});
+		it('Converts held base currencies to their equavalent in the supplied quote currency and adds that in');
+		it('Handles base currencies that dont have a direct pairing to the quote currency');
+	});
+
 	describe('soft entry', function() {
 		it('sends a message if a soft entry hits the buy price but there are insufficient funds to execute it');
 		it('auto calculates the max amount to buy based on portfolio value and stop_percentage');
@@ -481,63 +529,77 @@ describe('Algo', function() {
 		it(
 			'exits if auto-size is specified without soft entry? soft_entry is needed atm I think. have a second test without soft entry'
 		);
-		it('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
-			const amount = BigNumber(1);
-			const buyPrice = BigNumber(1);
-			const stopPrice = buyPrice.times('0.98');
-			const trading_rules = {
-				max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
-			};
-			let { ee, algo } = setup({
-				algo_config: {
-					pair: default_pair,
-					buyPrice,
-					stopPrice,
-					trading_rules,
-					soft_entry: true,
-					auto_size: true
-				},
-				ee_config: {
-					starting_quote_balance: BigNumber(1)
+		describe('with only quote balance', function() {
+			it('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
+				const buyPrice = BigNumber(1);
+				const stopPrice = buyPrice.times('0.98');
+				const trading_rules = {
+					max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
+				};
+				let { ee, algo } = setup({
+					algo_config: {
+						pair: default_pair,
+						buyPrice,
+						stopPrice,
+						trading_rules,
+						soft_entry: true,
+						auto_size: true
+					},
+					ee_config: {
+						starting_quote_balance: BigNumber(1)
+					}
+				});
+				try {
+					await algo.main();
+					await ee.set_current_price({ symbol: default_pair, price: buyPrice }); // once to trigger soft entry
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
 				}
+				// check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
+				expect(ee.open_orders).to.have.lengthOf(1);
+				expect(ee.open_orders[0].type).to.equal('LIMIT');
+				expect(ee.open_orders[0].side).to.equal('BUY');
+				expect(ee.open_orders[0].origQty).to.bignumber.equal('0.5');
 			});
-			try {
-				await algo.main();
-				await ee.set_current_price({ symbol: default_pair, price: buyPrice }); // once to trigger soft entry
-			} catch (e) {
-				console.log(e);
-				expect.fail('should not get here: expected call not to throw');
-			}
-			// check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
-			expect(ee.open_orders).to.have.lengthOf(1);
-			expect(ee.open_orders[0].type).to.equal('LIMIT');
-			expect(ee.open_orders[0].side).to.equal('BUY');
-			expect(ee.open_orders[0].origQty).to.bignumber.equal('0.5');
+		});
+		describe('with base balances too (hack: using default base currency)', function() {
+			it('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
+				const buyPrice = BigNumber(1);
+				const stopPrice = buyPrice.times('0.98');
+				const trading_rules = {
+					max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
+				};
+				let { ee, algo } = setup({
+					algo_config: {
+						pair: default_pair,
+						buyPrice,
+						stopPrice,
+						trading_rules,
+						soft_entry: true,
+						auto_size: true
+					},
+					ee_config: {
+						starting_quote_balance: BigNumber(1),
+						starting_base_balance: BigNumber(2) // where exchange has an ETHBTC pair
+						// TODO: add another pairing rather than the default_pair. NB needs EE refactor
+					}
+				});
+				try {
+					await algo.main();
+					await ee.set_current_price({ symbol: default_pair, price: buyPrice }); // once to trigger soft entry
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				// check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
+				expect(ee.open_orders).to.have.lengthOf(1);
+				expect(ee.open_orders[0].type).to.equal('LIMIT');
+				expect(ee.open_orders[0].side).to.equal('BUY');
+				expect(ee.open_orders[0].origQty).to.bignumber.equal('1.5');
+			});
 		});
 		it('handles attempted trades below the min notional cleanly');
-	});
-	describe('._get_portfolio_value_from_exchange', function() {
-		it('when only quote currency held: returns the total amount of quote currency held', async function() {
-			let { ee, algo } = setup({
-				algo_config: {
-					pair: default_pair,
-					soft_entry: true,
-					auto_size: true
-				},
-				ee_config: {
-					starting_quote_balance: BigNumber(200)
-				}
-			});
-			let response = await ee.accountInfo();
-			expect(response).to.have.property('balances');
-			let balances = response.balances;
-			expect(balances).to.have.lengthOf(1);
-			expect(balances[0].asset).to.equal(default_quote_currency);
-			expect(balances[0].free).to.bignumber.equal(200);
-			expect(balances[0].locked).to.bignumber.equal(0);
-		});
-		it('Converts held base currencies to their equavalent in the supplied quote currency and adds that in');
-		it('Handles base currencies that dont have a direct pairing to the quote currency');
 	});
 
 	/// i.e. when stacking commands to emulate a range trading bot

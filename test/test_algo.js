@@ -81,6 +81,7 @@ describe('Algo', function() {
 				expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
 				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
 			});
+			it('sends a message when the trade fills/partial fills');
 		});
 		describe('with soft_entry', function() {
 			it('only creates a buy order when entry price is hit', async function() {
@@ -458,19 +459,20 @@ describe('Algo', function() {
 			});
 		});
 	});
+	describe('soft entry', function() {
+		it('sends a message if a soft entry hits the buy price but there are insufficient funds to execute it');
+		it('auto calculates the max amount to buy based on portfolio value and stop_percentage');
+		it('buys as much as it can if there are insufficient funds to buy the requested amount');
+	});
+
 	/// i.e. when stacking commands to emulate a range trading bot
 	// if the first commend got stopped out I don't want to be immediately ordering a buy
 	// at the next level. Can make a stop out exit with a non-zero code
 	it(
 		'maybe: invalidates a trade if the price is below the stop price at startup. Or it waits for the buy price to recover?'
 	);
-	it('sends a message if a soft entry hits the buy price but there are insufficient funds to execute it');
-	it(
-		'buys as much as it can if a soft entry hits the buy price but there are insufficient funds to execute the requested amount'
-	);
 	it('can track multiple trades and move funds into those with the best r/r');
 	it('auto sells a percentage at 5% and 10%');
-	it('auto calculates the max amount to buy based on portfolio value and stop_percentage');
 	it(
 		"has a last-revalidated date that it checks on startup and won't enter trades that haven't been manually re-validated recently"
 	);

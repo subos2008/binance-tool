@@ -25,6 +25,10 @@ class Algo {
 			auto_size
 		} = {}
 	) {
+		assert(logger);
+		assert(send_message);
+		assert(pair);
+
 		this.ee = ee;
 		this.send_message = send_message;
 		this.pair = pair;
@@ -39,10 +43,6 @@ class Algo {
 		this.soft_entry = soft_entry;
 		this.trading_rules = trading_rules;
 		this.auto_size = auto_size;
-
-		assert(logger);
-		assert(send_message);
-		assert(pair);
 
 		this.quote_currency = utils.quote_currency_for_binance_pair(this.pair);
 
@@ -131,17 +131,37 @@ class Algo {
 		}
 	}
 
+	// TODO: only returns the value held in quote currency at the moment.
+	// TODO: this is slowly hacking it's way up to returning the equivalent of the
+	// TODO: total portfolio in whatever quote currency is supplied
+	async _get_portfolio_value_from_exchange({ quote_currency } = {}) {
+		assert(quote_currency);
+		try {
+			let response = await this.ee.accountInfo();
+			// TODO: will throw if asset is not present in balances
+			let quote_balance = response.balances.find((obj) => obj.asset === this.quote_currency);
+			return {
+				locked: BigNumber(quote_balance.locked),
+				available: BigNumber(quote_balance.free),
+				total: BigNumber(quote_balance.locked).plus(quote_balance.free)
+			};
+		} catch (error) {
+			async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
+		}
+	}
+
 	async _calculate_autosized_quote_volume_available() {
 		assert(this.max_portfolio_percentage_allowed_in_this_trade);
 		assert(BigNumber.isBigNumber(this.max_portfolio_percentage_allowed_in_this_trade));
-		let quote_portfolio_value = await this.ee.get_portfolio_value({ quote_currency: this.quote_currency });
+		let info = await this._get_portfolio_value_from_exchange({
+			quote_currency: this.quote_currency
+		});
+		let quote_portfolio_value = info.total;
 		assert(BigNumber.isBigNumber(quote_portfolio_value));
 		let max_quote_amount_to_invest = quote_portfolio_value
 			.times(this.max_portfolio_percentage_allowed_in_this_trade)
 			.dividedBy(100);
-		// TODO: pass in a specific 'quote' currency
-		// TODO: this should be an async call
-		let available_quote_amount = this.ee.quote_coin_balance_not_in_orders;
+		let available_quote_amount = info.available;
 		return BigNumber.minimum(max_quote_amount_to_invest, available_quote_amount);
 	}
 

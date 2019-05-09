@@ -21,40 +21,57 @@ const null_logger = new Logger({ silent: true });
 // .ws.aggTrades([ pair ], (trade) => {
 // .ws.user((data) => {
 
-const default_pair = 'ETHUSDT';
+const default_base_currency = 'ETH';
+const default_quote_currency = 'BTC';
+const default_pair = `${default_base_currency}${default_quote_currency}`;
 const exchange_info = JSON.parse(fs.readFileSync('./test/exchange_info.json', 'utf8'));
 
 describe('ExchangeEmulator', function() {
+	function setup(ee_config = {}) {
+		// { starting_quote_balance, starting_base_balance }
+		ee_config = Object.assign(
+			{
+				logger: null_logger,
+				exchange_info,
+				base_currency: default_base_currency,
+				quote_currency: default_quote_currency,
+				starting_quote_balance: BigNumber(1)
+			},
+			ee_config
+		);
+		return new ExchangeEmulator(ee_config);
+	}
+
 	describe('constructor', function() {
 		it('sets quote_coin_balance_not_in_orders to starting_quote_balance', function() {
 			const starting_quote_balance = BigNumber(1);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance });
+			const ee = setup({ logger, starting_quote_balance });
 			expect(ee.quote_coin_balance_not_in_orders.isEqualTo(starting_quote_balance)).to.equal(true);
 		});
 		it('sets base_coin_balance_not_in_orders to starting_base_balance', function() {
 			const starting_quote_balance = BigNumber(1);
 			const starting_base_balance = BigNumber(4);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance, starting_base_balance });
+			const ee = setup({ logger, starting_quote_balance, starting_base_balance });
 			expect(ee.base_coin_balance_not_in_orders.isEqualTo(starting_base_balance)).to.equal(true);
 		});
 		it('sets balance_in_quote_coin to starting_quote_balance', function() {
 			const starting_quote_balance = BigNumber(1);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance });
+			const ee = setup({ logger, starting_quote_balance });
 			expect(ee.balance_in_quote_coin().isEqualTo(starting_quote_balance)).to.equal(true);
 		});
 		it('sets quote_coin_balance_in_orders to zero', function() {
 			const starting_quote_balance = BigNumber(1);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance });
+			const ee = setup({ logger, starting_quote_balance });
 			expect(ee.quote_coin_balance_in_orders.isEqualTo(0)).to.equal(true);
 		});
 		it('dumps ok', function() {
 			const starting_quote_balance = BigNumber(1);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance });
+			const ee = setup({ logger, starting_quote_balance });
 			ee.dump();
 		});
 		it('balance_in_quote_coin is equal to starting_quote_balance', function() {
 			const starting_quote_balance = BigNumber(1);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance });
+			const ee = setup({ logger, starting_quote_balance });
 			expect(ee.balance_in_quote_coin().isEqualTo(starting_quote_balance)).to.equal(true);
 		});
 	});
@@ -64,7 +81,7 @@ describe('ExchangeEmulator', function() {
 			'raises an async InsufficientBalanceError if quote_coin_balance_not_in_orders is insufficient',
 			async function() {
 				const starting_quote_balance = BigNumber(1);
-				const ee = new ExchangeEmulator({ logger: null_logger, starting_quote_balance });
+				const ee = setup({ logger: null_logger, starting_quote_balance });
 				try {
 					await ee.add_limit_buy_order({
 						base_volume: BigNumber(2),
@@ -82,13 +99,13 @@ describe('ExchangeEmulator', function() {
 
 		it('decreases quote_coin_balance_not_in_orders', async function() {
 			const starting_quote_balance = BigNumber(1);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance });
+			const ee = setup({ logger, starting_quote_balance });
 			await ee.add_limit_buy_order({ base_volume: BigNumber(1), limit_price: BigNumber(1), pair: default_pair });
 			expect(ee.quote_coin_balance_not_in_orders.isEqualTo(0)).to.equal(true);
 		});
 		it('increases quote_coin_balance_in_orders', async function() {
 			const starting_quote_balance = BigNumber(1);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance });
+			const ee = setup({ logger, starting_quote_balance });
 			const base_volume = BigNumber(1);
 			const limit_price = BigNumber(1);
 			await ee.add_limit_buy_order({ base_volume, limit_price, pair: default_pair });
@@ -97,7 +114,7 @@ describe('ExchangeEmulator', function() {
 		});
 		it('adds a limit_buy_order to open_orders', async function() {
 			const starting_quote_balance = BigNumber(1);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance });
+			const ee = setup({ logger, starting_quote_balance });
 			const base_volume = BigNumber(1);
 			const limit_price = BigNumber(1);
 			await ee.add_limit_buy_order({ base_volume, limit_price, pair: default_pair });
@@ -118,7 +135,7 @@ describe('ExchangeEmulator', function() {
 		it('decreases base_coin_balance_not_in_orders', async function() {
 			const starting_quote_balance = BigNumber(1);
 			const starting_base_balance = BigNumber(4);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance, starting_base_balance });
+			const ee = setup({ logger, starting_quote_balance, starting_base_balance });
 			await ee.add_limit_sell_order({ base_volume: BigNumber(1), limit_price: BigNumber(1), pair: default_pair });
 			expect(ee.base_coin_balance_not_in_orders).to.be.bignumber.equal(3);
 		});
@@ -126,7 +143,7 @@ describe('ExchangeEmulator', function() {
 			//should fail
 			const starting_quote_balance = BigNumber(1);
 			const starting_base_balance = BigNumber(4);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance, starting_base_balance });
+			const ee = setup({ logger, starting_quote_balance, starting_base_balance });
 			const base_volume = BigNumber(2);
 			const limit_price = BigNumber(1);
 			await ee.add_limit_sell_order({ base_volume, limit_price, pair: default_pair });
@@ -135,7 +152,7 @@ describe('ExchangeEmulator', function() {
 		it('adds a limit_sell_order to open_orders', async function() {
 			const starting_quote_balance = BigNumber(1);
 			const starting_base_balance = BigNumber(4);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance, starting_base_balance });
+			const ee = setup({ logger, starting_quote_balance, starting_base_balance });
 			const base_volume = BigNumber(1);
 			const limit_price = BigNumber(1);
 			await ee.add_limit_sell_order({ base_volume, limit_price, pair: default_pair });
@@ -151,7 +168,7 @@ describe('ExchangeEmulator', function() {
 		it('correctly cancels both buy and sell orders', async function() {
 			const starting_quote_balance = BigNumber(1.5);
 			const starting_base_balance = BigNumber(4);
-			const ee = new ExchangeEmulator({ logger, starting_quote_balance, starting_base_balance });
+			const ee = setup({ logger, starting_quote_balance, starting_base_balance });
 			const base_volume = BigNumber(1);
 			const limit_price = BigNumber(1);
 			await ee.add_limit_sell_order({ base_volume, limit_price, pair: default_pair });
@@ -179,7 +196,7 @@ describe('ExchangeEmulator', function() {
 			const starting_quote_balance = BigNumber(3);
 			const starting_base_balance = BigNumber(0);
 			const limit_price = BigNumber(1);
-			const ee = new ExchangeEmulator({ logger: null_logger, starting_quote_balance, starting_base_balance });
+			const ee = setup({ logger: null_logger, starting_quote_balance, starting_base_balance });
 			await ee.set_current_price({ symbol: default_pair, price: limit_price.plus(1) }); // start higher than limit price
 			await ee.add_limit_buy_order({ base_volume: BigNumber(3), limit_price, pair: default_pair });
 			expect(ee.open_orders.length).to.equal(1);
@@ -193,7 +210,7 @@ describe('ExchangeEmulator', function() {
 			const starting_quote_balance = BigNumber(0);
 			const starting_base_balance = BigNumber(3);
 			const limit_price = BigNumber(1);
-			const ee = new ExchangeEmulator({ logger: null_logger, starting_quote_balance, starting_base_balance });
+			const ee = setup({ logger: null_logger, starting_quote_balance, starting_base_balance });
 			await ee.set_current_price({ symbol: default_pair, price: limit_price.minus(1) }); // start lower than limit price
 			await ee.add_limit_sell_order({ base_volume: BigNumber(3), limit_price, pair: default_pair });
 			expect(ee.open_orders.length).to.equal(1);
@@ -255,14 +272,14 @@ describe('ExchangeEmulator', function() {
 		describe('exchangeInfo', function() {
 			it('returns the object passed in to the constructor', async function() {
 				const starting_quote_balance = BigNumber(1);
-				const ee = new ExchangeEmulator({ logger, starting_quote_balance, exchange_info });
+				const ee = setup({ logger, starting_quote_balance, exchange_info });
 				const returned_ei = await ee.exchangeInfo();
 				expect(returned_ei).to.equal(exchange_info);
 			});
 		});
 		describe('set_current_price', function() {
 			it('sends an event to .ws.aggTrades if it is a watched pair', async function() {
-				const ee = new ExchangeEmulator({
+				const ee = setup({
 					logger,
 					exchange_info,
 					starting_quote_balance: BigNumber(1)
@@ -284,7 +301,7 @@ describe('ExchangeEmulator', function() {
 		});
 		describe('.cancelOrder()', async function() {
 			it('removes the open order from the exchange', async function() {
-				const ee = new ExchangeEmulator({ logger, exchange_info, starting_quote_balance: BigNumber(1) });
+				const ee = setup({ logger, exchange_info, starting_quote_balance: BigNumber(1) });
 				const base_volume = BigNumber('1.2');
 				const limit_price = BigNumber('0.1');
 				await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
@@ -299,7 +316,7 @@ describe('ExchangeEmulator', function() {
 		describe('limit buy order', async function() {
 			it.skip('refuses order if insufficient balance');
 			it('adds a limit_buy_order to open_orders', async function() {
-				const ee = new ExchangeEmulator({ logger, exchange_info, starting_quote_balance: BigNumber(1) });
+				const ee = setup({ logger, exchange_info, starting_quote_balance: BigNumber(1) });
 				const base_volume = BigNumber('1.2');
 				const limit_price = BigNumber('0.1');
 				let response = await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
@@ -312,7 +329,7 @@ describe('ExchangeEmulator', function() {
 				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
 			});
 			it('returns the expected response object with orderID', async function() {
-				const ee = new ExchangeEmulator({ logger, exchange_info, starting_quote_balance: BigNumber(1) });
+				const ee = setup({ logger, exchange_info, starting_quote_balance: BigNumber(1) });
 				const base_volume = BigNumber('1.2');
 				const limit_price = BigNumber('0.1');
 				let response = await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
@@ -321,7 +338,7 @@ describe('ExchangeEmulator', function() {
 			});
 			describe('when hit', async function() {
 				it('sends an executionReport to .ws.user', async function() {
-					const ee = new ExchangeEmulator({
+					const ee = setup({
 						logger,
 						exchange_info,
 						starting_quote_balance: BigNumber(1)
@@ -351,7 +368,7 @@ describe('ExchangeEmulator', function() {
 			it.skip('refuses order if insufficient balance');
 
 			it('adds a limit_sell_order to open_orders', async function() {
-				const ee = new ExchangeEmulator({
+				const ee = setup({
 					logger,
 					exchange_info,
 					starting_quote_balance: BigNumber(0),
@@ -369,7 +386,7 @@ describe('ExchangeEmulator', function() {
 				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
 			});
 			it('returns the expected response object with orderID', async function() {
-				const ee = new ExchangeEmulator({
+				const ee = setup({
 					logger,
 					exchange_info,
 					starting_quote_balance: BigNumber(0),
@@ -383,7 +400,7 @@ describe('ExchangeEmulator', function() {
 			});
 			describe('when hit', async function() {
 				it('sends an executionReport to .ws.user', async function() {
-					const ee = new ExchangeEmulator({
+					const ee = setup({
 						logger,
 						exchange_info,
 						starting_quote_balance: BigNumber(0),
@@ -411,7 +428,7 @@ describe('ExchangeEmulator', function() {
 		});
 		describe('STOP_LOSS_LIMIT order', async function() {
 			it('adds a STOP_LOSS_LIMIT to open_orders', async function() {
-				const ee = new ExchangeEmulator({
+				const ee = setup({
 					logger,
 					exchange_info,
 					starting_quote_balance: BigNumber(0),
@@ -430,7 +447,7 @@ describe('ExchangeEmulator', function() {
 				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
 			});
 			it('returns the expected response object with orderID', async function() {
-				const ee = new ExchangeEmulator({
+				const ee = setup({
 					logger,
 					exchange_info,
 					starting_quote_balance: BigNumber(0),
@@ -443,7 +460,7 @@ describe('ExchangeEmulator', function() {
 				expect(response.orderId).to.equal(1);
 			});
 			it('refuses order if insufficient balance', async function() {
-				const ee = new ExchangeEmulator({
+				const ee = setup({
 					logger,
 					exchange_info,
 					starting_quote_balance: BigNumber(0),
@@ -460,7 +477,7 @@ describe('ExchangeEmulator', function() {
 			});
 			describe('when hit', async function() {
 				it('sends an executionReport to .ws.user', async function() {
-					const ee = new ExchangeEmulator({
+					const ee = setup({
 						logger,
 						exchange_info,
 						starting_quote_balance: BigNumber(0),
@@ -487,16 +504,38 @@ describe('ExchangeEmulator', function() {
 			});
 		});
 	});
-	describe('get_portfolio_value', function() {
-		it('when only quote currency held: returns the total amount of quote currency held', async function() {
-			const ee = new ExchangeEmulator({
+
+	describe('.accountInfo', function() {
+		it('when quote currency held: details the amount of quote currency held', async function() {
+			const ee = setup({
 				logger,
 				exchange_info,
-				starting_quote_balance: BigNumber(200)
+				starting_quote_balance: BigNumber(200),
+				starting_base_balance: BigNumber(0)
 			});
-			expect(await ee.get_portfolio_value({ quote_currency: 'USDT' })).to.bignumber.equal(200);
+			let response = await ee.accountInfo();
+			expect(response).to.have.property('balances');
+			let balances = response.balances;
+			expect(balances).to.have.lengthOf(1);
+			expect(balances[0].asset).to.equal(default_quote_currency);
+			expect(balances[0].free).to.bignumber.equal(200);
+			expect(balances[0].locked).to.bignumber.equal(0);
 		});
-		it('Converts held base currencies to their equavalent in the supplied base currency and adds that in');
-		it('Handles base currencies that dont have a direct pairing to the quote currency');
+		it('when base currency held: details the amount of base currency held', async function() {
+			const ee = setup({
+				logger,
+				exchange_info,
+				starting_quote_balance: BigNumber(0),
+				starting_base_balance: BigNumber(200)
+			});
+			let response = await ee.accountInfo();
+			expect(response).to.have.property('balances');
+			let balances = response.balances;
+			expect(balances).to.have.lengthOf(1);
+			expect(balances[0].asset).to.equal(default_base_currency);
+			expect(balances[0].free).to.bignumber.equal(200);
+			expect(balances[0].locked).to.bignumber.equal(0);
+		});
+		it('differentiates locked and available funds');
 	});
 });

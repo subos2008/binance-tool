@@ -22,7 +22,9 @@ const null_logger = new Logger({ silent: true });
 // .ws.aggTrades([ pair ], (trade) => {
 // .ws.user((data) => {
 
-const default_pair = 'ETHBTC';
+const default_base_currency = 'ETH';
+const default_quote_currency = 'BTC';
+const default_pair = `${default_base_currency}${default_quote_currency}`;
 const exchange_info = JSON.parse(fs.readFileSync('./test/exchange_info.json', 'utf8'));
 
 let message_queue = [];
@@ -40,12 +42,19 @@ function most_recent_message() {
 describe('Algo', function() {
 	function setup({ algo_config, ee_config } = {}) {
 		ee_config = Object.assign(
-			{ logger: null_logger, exchange_info, starting_quote_balance: BigNumber(1) },
+			{
+				logger: null_logger,
+				exchange_info,
+				pair: default_pair,
+				base_currency: default_base_currency,
+				quote_currency: default_quote_currency,
+				starting_quote_balance: BigNumber(1)
+			},
 			ee_config
 		);
 		let ee = new ExchangeEmulator(ee_config);
-		algo_config = Object.assign({ logger: null_logger, send_message: fresh_message_queue() }, algo_config);
-		let algo = new Algo(Object.assign(algo_config, { ee }));
+		algo_config = Object.assign({ ee, logger: null_logger, send_message: fresh_message_queue() }, algo_config);
+		let algo = new Algo(algo_config);
 		return { algo, ee };
 	}
 
@@ -506,6 +515,29 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].origQty).to.bignumber.equal('0.5');
 		});
 		it('handles attempted trades below the min notional cleanly');
+	});
+	describe('._get_portfolio_value_from_exchange', function() {
+		it('when only quote currency held: returns the total amount of quote currency held', async function() {
+			let { ee, algo } = setup({
+				algo_config: {
+					pair: default_pair,
+					soft_entry: true,
+					auto_size: true
+				},
+				ee_config: {
+					starting_quote_balance: BigNumber(200)
+				}
+			});
+			let response = await ee.accountInfo();
+			expect(response).to.have.property('balances');
+			let balances = response.balances;
+			expect(balances).to.have.lengthOf(1);
+			expect(balances[0].asset).to.equal(default_quote_currency);
+			expect(balances[0].free).to.bignumber.equal(200);
+			expect(balances[0].locked).to.bignumber.equal(0);
+		});
+		it('Converts held base currencies to their equavalent in the supplied quote currency and adds that in');
+		it('Handles base currencies that dont have a direct pairing to the quote currency');
 	});
 
 	/// i.e. when stacking commands to emulate a range trading bot

@@ -192,16 +192,15 @@ class Algo {
 	async _calculate_autosized_quote_volume_available() {
 		assert(this.max_portfolio_percentage_allowed_in_this_trade);
 		assert(BigNumber.isBigNumber(this.max_portfolio_percentage_allowed_in_this_trade));
-		let info = await this._get_portfolio_value_from_exchange({
+		let quote_portfolio = await this._get_portfolio_value_from_exchange({
 			quote_currency: this.quote_currency
 		});
-		let quote_portfolio_value = info.total;
-		assert(BigNumber.isBigNumber(quote_portfolio_value));
-		let max_quote_amount_to_invest = quote_portfolio_value
+		assert(BigNumber.isBigNumber(quote_portfolio.total));
+		assert(BigNumber.isBigNumber(quote_portfolio.available));
+		let max_quote_amount_to_invest = quote_portfolio.total
 			.times(this.max_portfolio_percentage_allowed_in_this_trade)
 			.dividedBy(100);
-		let available_quote_amount = info.available;
-		return BigNumber.minimum(max_quote_amount_to_invest, available_quote_amount);
+		return BigNumber.minimum(max_quote_amount_to_invest, quote_portfolio.available);
 	}
 
 	async _create_limit_buy_order() {

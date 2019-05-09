@@ -169,7 +169,12 @@ class Algo {
 		try {
 			if (this.auto_size) {
 				let quote_volume = await this._calculate_autosized_quote_volume_available();
-				this.amount = utils.quote_volume_at_price_to_base_volume({ quote_volume, price: this.buyPrice });
+				let unmunged_amount = utils.quote_volume_at_price_to_base_volume({
+					quote_volume,
+					price: this.buyPrice
+				});
+				this.amount = this._munge_and_check_quantity('Amount', unmunged_amount);
+				this._check_notional('Buy order', this.buyPrice, this.amount);
 			}
 		} catch (error) {
 			async_error_handler(console, `Autosizing error during limit buy order: ${error.body}`, error);
@@ -248,6 +253,34 @@ class Algo {
 		this.shutdown_streams();
 	}
 
+	// TODO: code dup
+	// TODO: add symbol
+	_munge_and_check_quantity(name, volume) {
+		const { filters } = this.symbolData;
+		const { stepSize, minQty } = filters.find((eis) => eis.filterType === 'LOT_SIZE');
+
+		volume = BigNumber(utils.roundStep(BigNumber(volume), stepSize));
+		if (volume.isLessThan(minQty)) {
+			throw new Error(`${name} ${volume} does not meet minimum order amount ${minQty}.`);
+		}
+		return volume;
+	}
+
+	// TODO: code dup
+	// TODO: add symbol
+	_check_notional(name, price, volume) {
+		const { filters } = this.symbolData;
+		const { minNotional } = filters.find((eis) => eis.filterType === 'MIN_NOTIONAL');
+
+		if (price.isZero()) return; // don't check zero, special case for market buys
+		let quote_volume = price.times(volume);
+		if (quote_volume.isLessThan(minNotional)) {
+			throw new Error(
+				`${name} does not meet minimum order value ${minNotional} (Buy of ${volume} at ${price} = ${quote_volume}).`
+			);
+		}
+	}
+
 	async munge_prices_and_amounts() {
 		var exchangeInfoData;
 		try {
@@ -258,12 +291,12 @@ class Algo {
 			throw new Error('Error could not pull exchange info');
 		}
 
-		const symbolData = exchangeInfoData.symbols.find((ei) => ei.symbol === this.pair);
-		if (!symbolData) {
+		this.symbolData = exchangeInfoData.symbols.find((ei) => ei.symbol === this.pair);
+		if (!this.symbolData) {
 			throw new Error(`Could not pull exchange info for ${this.pair}`);
 		}
 
-		const { filters } = symbolData;
+		const { filters } = this.symbolData;
 		const { stepSize, minQty } = filters.find((eis) => eis.filterType === 'LOT_SIZE');
 		const { tickSize, minPrice } = filters.find((eis) => eis.filterType === 'PRICE_FILTER');
 		const { minNotional } = filters.find((eis) => eis.filterType === 'MIN_NOTIONAL');

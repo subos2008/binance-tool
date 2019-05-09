@@ -12,8 +12,13 @@ const Binance = require('binance-api-node').default;
 const send_message = require('./telegram.js');
 const Algo = require('./service_lib/algo');
 const Logger = require('./lib/faux_logger');
+const BigNumber = require('bignumber.js');
 
 const logger = new Logger({ silent: false });
+
+const trading_rules = {
+	max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
+};
 
 const { argv } = require('yargs')
 	.usage('Usage: $0')
@@ -55,6 +60,10 @@ const { argv } = require('yargs')
 	.boolean('soft-entry')
 	.describe('soft-entry', 'Wait until the buy price is hit before creating the limit buy order')
 	.default('soft-entry', false)
+	// '--auto-size'
+	.boolean('auto-size')
+	.describe('auto-size', 'Automatically size the trade based on stopLoss % and available funds')
+	.default('auto-size', false)
 	// '--non-bnb-fees'
 	.boolean('F')
 	.alias('F', 'non-bnb-fees')
@@ -69,7 +78,8 @@ let {
 	s: stopPrice,
 	l: limitPrice,
 	t: targetPrice,
-	'soft-entry': soft_entry
+	'soft-entry': soft_entry,
+	'auto-size': auto_size
 } = argv;
 const { F: nonBnbFees } = argv;
 
@@ -94,7 +104,9 @@ const algo = new Algo({
 	limitPrice,
 	targetPrice,
 	nonBnbFees,
-	soft_entry
+	soft_entry,
+	trading_rules,
+	auto_size
 });
 algo
 	.main()

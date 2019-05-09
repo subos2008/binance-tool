@@ -474,8 +474,8 @@ describe('Algo', function() {
 		it('buys as much as it can if there are insufficient funds to buy the requested amount');
 	});
 	describe('auto-size', function() {
-		// needs buyPrice, stopPrice
-		it('throws an error at trade creation if it doesnt have the information it needs to auto-size');
+		// needs buyPrice, stopPrice, trading_rules. soft_entry?
+		it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
 		it('munges the calculated amount to match Binance rules');
 		it('knows something about trading fees and if that affects the amount if there isnt enough BNB');
 		it(

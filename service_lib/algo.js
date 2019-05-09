@@ -137,7 +137,6 @@ class Algo {
 		}
 	}
 
-	// TODO: only returns the value held in quote currency at the moment.
 	// TODO: this is slowly hacking it's way up to returning the equivalent of the
 	// TODO: total portfolio in whatever quote currency is supplied
 	async _get_portfolio_value_from_exchange({ quote_currency } = {}) {
@@ -151,7 +150,6 @@ class Algo {
 		}
 		try {
 			prices = await this.ee.prices();
-			console.log(prices);
 		} catch (error) {
 			async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
 		}
@@ -170,7 +168,9 @@ class Algo {
 						if (pair in prices) {
 							let amount_held = BigNumber(balance.free).plus(balance.locked);
 							let value = amount_held.times(prices[pair]);
+							this.logger.info(`Added ${value}`);
 							total = total.plus(value);
+							this.logger.info(`total now ${total}`);
 						} else {
 							this.logger.warn(
 								`Non fatal error: unable to convert ${balance.asset} value to ${quote_currency}, skipping`
@@ -183,6 +183,8 @@ class Algo {
 					}
 				}
 			});
+			this.logger.info(`returning available: ${available} total ${total}`);
+
 			return { available, total };
 		} catch (error) {
 			async_error_handler(console, `calculating portfolio value`, error);
@@ -195,11 +197,13 @@ class Algo {
 		let quote_portfolio = await this._get_portfolio_value_from_exchange({
 			quote_currency: this.quote_currency
 		});
+		this.logger.info(`Available to invest: ${quote_portfolio.available} ${this.quote_currency}`);
 		assert(BigNumber.isBigNumber(quote_portfolio.total));
 		assert(BigNumber.isBigNumber(quote_portfolio.available));
 		let max_quote_amount_to_invest = quote_portfolio.total
 			.times(this.max_portfolio_percentage_allowed_in_this_trade)
 			.dividedBy(100);
+		this.logger.info(`Max allowed to invest: ${max_quote_amount_to_invest} ${this.quote_currency}`);
 		return BigNumber.minimum(max_quote_amount_to_invest, quote_portfolio.available);
 	}
 

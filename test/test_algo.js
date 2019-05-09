@@ -513,8 +513,35 @@ describe('Algo', function() {
 			}
 			expect(response).to.have.property('total');
 			expect(response.total).to.bignumber.equal('100.5');
-			expect(response.available).to.bignumber.equal('100.5');
+			expect(response.available).to.bignumber.equal('0');
 		});
+		it('with a mix of currencies', async function() {
+			let { ee, algo } = setup({
+				algo_config: {
+					pair: default_pair,
+					soft_entry: true,
+					auto_size: true
+				},
+				ee_config: {
+					starting_quote_balance: BigNumber(2),
+					starting_base_balance: BigNumber(201)
+				}
+			});
+			let response;
+			try {
+				await ee.set_current_price({ symbol: default_pair, price: BigNumber('0.5') });
+				response = await algo._get_portfolio_value_from_exchange({
+					quote_currency: default_quote_currency
+				});
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+			expect(response).to.have.property('total');
+			expect(response.total).to.bignumber.equal('102.5');
+			expect(response.available).to.bignumber.equal('2');
+		});
+
 		it('Converts held base currencies to their equavalent in the supplied quote currency and adds that in');
 		it('Handles base currencies that dont have a direct pairing to the quote currency');
 	});
@@ -525,7 +552,7 @@ describe('Algo', function() {
 		it('buys as much as it can if there are insufficient funds to buy the requested amount');
 		it('watches the user stream for freed up capital if between buy-stopPrice and uable to invest fully');
 	});
-	describe('auto-size', function() {
+	describe.skip('auto-size', function() {
 		// needs buyPrice, stopPrice, trading_rules. soft_entry?
 		it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
 		it('munges the calculated amount to match Binance rules');
@@ -547,7 +574,8 @@ describe('Algo', function() {
 						stopPrice,
 						trading_rules,
 						soft_entry: true,
-						auto_size: true
+						auto_size: true,
+						logger
 					},
 					ee_config: {
 						starting_quote_balance: BigNumber(1)
@@ -581,7 +609,8 @@ describe('Algo', function() {
 						stopPrice,
 						trading_rules,
 						soft_entry: true,
-						auto_size: true
+						auto_size: true,
+						logger
 					},
 					ee_config: {
 						starting_quote_balance: BigNumber(1),

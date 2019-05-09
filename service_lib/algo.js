@@ -291,6 +291,7 @@ class Algo {
 			throw new Error('Error could not pull exchange info');
 		}
 
+		// TODO: argh omg this is disgusting hardcoding of the default_pair
 		this.symbolData = exchangeInfoData.symbols.find((ei) => ei.symbol === this.pair);
 		if (!this.symbolData) {
 			throw new Error(`Could not pull exchange info for ${this.pair}`);

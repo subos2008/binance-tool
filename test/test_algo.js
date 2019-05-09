@@ -242,6 +242,9 @@ describe('Algo', function() {
 		});
 	});
 	describe('when a buyPrice, stopPrice and targetPrice present', function() {
+		it(
+			'if it hits target price while buyOrder is still open then it cancels buy and places targetOrder if partially filled'
+		);
 		describe('without soft entry', function() {
 			it('creates a stop limit sell order after the buy order hits', async function() {
 				const amount = BigNumber(1);
@@ -520,6 +523,7 @@ describe('Algo', function() {
 		it('sends a message if a soft entry hits the buy price but there are insufficient funds to execute it');
 		it('auto calculates the max amount to buy based on portfolio value and stop_percentage');
 		it('buys as much as it can if there are insufficient funds to buy the requested amount');
+		it('watches the user stream for freed up capital if between buy-stopPrice and uable to invest fully');
 	});
 	describe('auto-size', function() {
 		// needs buyPrice, stopPrice, trading_rules. soft_entry?

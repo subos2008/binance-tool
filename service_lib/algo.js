@@ -5,6 +5,12 @@ const BigNumber = require('bignumber.js');
 const utils = require('../lib/utils');
 const assert = require('assert');
 
+BigNumber.DEBUG = true; // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function() {
+	throw Error('BigNumber .valueOf called!');
+};
+
 class Algo {
 	// All numbers are expected to be passed in as strings
 	constructor(
@@ -145,32 +151,34 @@ class Algo {
 		}
 		try {
 			prices = await this.ee.prices();
+			console.log(prices);
 		} catch (error) {
 			async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
 		}
 
 		try {
-			let available = BigNumber(0),
-				total = BigNumber(0);
-			balances.forEach((obj) => {
-				if (obj.asset === quote_currency) {
-					available = available.plus(obj.free);
-					total = total.plus(obj.total);
+			let available = BigNumber(0), // only reflects quote_currency
+				total = BigNumber(0); // running total of all calculable asset values converted to quote_currency
+			balances.forEach((balance) => {
+				if (balance.asset === quote_currency) {
+					available = available.plus(balance.free);
+					total = total.plus(balance.free).plus(balance.locked);
 				} else {
 					// convert coin value to quote_currency if possible, else skip it
-					let pair = `${obj.asset}${quote_currency}`;
+					let pair = `${balance.asset}${quote_currency}`;
 					try {
 						if (pair in prices) {
-							let value = BigNumber(obj.total).times(prices[pair]);
+							let amount_held = BigNumber(balance.free).plus(balance.locked);
+							let value = amount_held.times(prices[pair]);
 							total = total.plus(value);
 						} else {
 							this.logger.warn(
-								`Non fatal error: unable to convert ${obj.asset} value to ${quote_currency}, skipping`
+								`Non fatal error: unable to convert ${balance.asset} value to ${quote_currency}, skipping`
 							);
 						}
 					} catch (e) {
 						this.logger.warn(
-							`Non fatal error: unable to convert ${obj.asset} value to ${quote_currency}, skipping`
+							`Non fatal error: unable to convert ${balance.asset} value to ${quote_currency}, skipping`
 						);
 					}
 				}
@@ -334,6 +342,7 @@ class Algo {
 		const { minNotional } = filters.find((eis) => eis.filterType === 'MIN_NOTIONAL');
 
 		function munge_and_check_quantity(name, volume) {
+			assert(typeof volume !== 'undefined');
 			volume = BigNumber(utils.roundStep(BigNumber(volume), stepSize));
 			if (volume.isLessThan(minQty)) {
 				throw new Error(`${name} ${volume} does not meet minimum order amount ${minQty}.`);
@@ -352,6 +361,7 @@ class Algo {
 		}
 
 		function check_notional(name, price, volume) {
+			assert(typeof volume !== 'undefined');
 			if (price.isZero()) return; // don't check zero, special case for market buys
 			let quote_volume = price.times(volume);
 			if (quote_volume.isLessThan(minNotional)) {
@@ -361,11 +371,15 @@ class Algo {
 			}
 		}
 
-		this.amount = munge_and_check_quantity('Amount', this.amount);
+		if (typeof this.amount !== 'undefined') {
+			this.amount = munge_and_check_quantity('Amount', this.amount);
+		}
 
 		if (this.buyPrice && this.buyPrice !== 0) {
 			this.buyPrice = munge_and_check_price('Buy price', this.buyPrice);
-			check_notional('Buy order', this.buyPrice, this.amount);
+			if (typeof this.amount !== 'undefined') {
+				check_notional('Buy order', this.buyPrice, this.amount);
+			}
 		}
 
 		if (this.stopPrice) {
@@ -373,15 +387,22 @@ class Algo {
 
 			if (this.limitPrice) {
 				this.limitPrice = munge_and_check_price('Limit price', this.limitPrice);
-				check_notional('Stop order', this.limitPrice, this.amount);
+				// TODO: guess we need to do this check dynamically when amount is auto-sized
+				if (typeof this.amount !== 'undefined') {
+					check_notional('Stop order', this.limitPrice, this.amount);
+				}
 			} else {
-				check_notional('Stop order', this.stopPrice, this.amount);
+				if (typeof this.amount !== 'undefined') {
+					check_notional('Stop order', this.stopPrice, this.amount);
+				}
 			}
 		}
 
 		if (this.targetPrice) {
 			this.targetPrice = munge_and_check_price('Target price', this.targetPrice);
-			check_notional('Target order', this.targetPrice, this.amount);
+			if (typeof this.amount !== 'undefined') {
+				check_notional('Target order', this.targetPrice, this.amount);
+			}
 		}
 	}
 

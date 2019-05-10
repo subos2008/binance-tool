@@ -314,7 +314,21 @@ describe('ExchangeEmulator', function() {
 			it.skip('sends a CANCELLED order message to .ws.user');
 		});
 		describe('limit buy order', async function() {
+			it('errors if it is passed unmunged values');
 			it.skip('refuses order if insufficient balance');
+			it('throws if it is passed price below MIN_PRICE', async function() {
+				const ee = setup({
+					starting_base_balance: BigNumber(1)
+				});
+				try {
+					await do_limit_buy_order({ ee, amount: BigNumber('1'), price: BigNumber('0.00000001') });
+				} catch (e) {
+					expect(e.message).to.include('PRICE_FILTER');
+					return;
+				}
+				expect.fail('Expected call to throw');
+			});
+
 			it('adds a limit_buy_order to open_orders', async function() {
 				const ee = setup({ logger, exchange_info, starting_quote_balance: BigNumber(1) });
 				const base_volume = BigNumber('1.2');
@@ -365,12 +379,24 @@ describe('ExchangeEmulator', function() {
 			});
 		});
 		describe('limit sell order', async function() {
+			it('throws if it is passed price below MIN_PRICE', async function() {
+				const ee = setup({
+					starting_base_balance: BigNumber(1)
+				});
+				try {
+					await do_limit_sell_order({ ee, amount: BigNumber('1'), price: BigNumber('0.00000001') });
+				} catch (e) {
+					expect(e.message).to.include('PRICE_FILTER');
+					return;
+				}
+				expect.fail('Expected call to throw');
+			});
+
+			it('errors if it is passed unmunged values');
 			it.skip('refuses order if insufficient balance');
 
 			it('adds a limit_sell_order to open_orders', async function() {
 				const ee = setup({
-					logger,
-					exchange_info,
 					starting_quote_balance: BigNumber(0),
 					starting_base_balance: BigNumber(1)
 				});
@@ -387,8 +413,6 @@ describe('ExchangeEmulator', function() {
 			});
 			it('returns the expected response object with orderID', async function() {
 				const ee = setup({
-					logger,
-					exchange_info,
 					starting_quote_balance: BigNumber(0),
 					starting_base_balance: BigNumber(1)
 				});
@@ -401,8 +425,6 @@ describe('ExchangeEmulator', function() {
 			describe('when hit', async function() {
 				it('sends an executionReport to .ws.user', async function() {
 					const ee = setup({
-						logger,
-						exchange_info,
 						starting_quote_balance: BigNumber(0),
 						starting_base_balance: BigNumber(1)
 					});
@@ -427,10 +449,20 @@ describe('ExchangeEmulator', function() {
 			});
 		});
 		describe('STOP_LOSS_LIMIT order', async function() {
+			it('throws if it is passed price below MIN_PRICE', async function() {
+				const ee = setup({
+					starting_base_balance: BigNumber(1)
+				});
+				try {
+					await do_stop_loss_limit_sell_order({ ee, amount: BigNumber('1'), price: BigNumber('0.00000001') });
+				} catch (e) {
+					expect(e.message).to.include('PRICE_FILTER');
+					return;
+				}
+				expect.fail('Expected call to throw');
+			});
 			it('adds a STOP_LOSS_LIMIT to open_orders', async function() {
 				const ee = setup({
-					logger,
-					exchange_info,
 					starting_quote_balance: BigNumber(0),
 					starting_base_balance: BigNumber(1)
 				});
@@ -561,3 +593,5 @@ describe('ExchangeEmulator', function() {
 		});
 	});
 });
+
+it('fails if order gets passed unmunged values Notional, step and lot_size');

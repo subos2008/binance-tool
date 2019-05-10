@@ -60,7 +60,10 @@ describe('Algo', function() {
 			ee_config
 		);
 		let ee = new ExchangeEmulator(ee_config);
-		algo_config = Object.assign({ ee, logger: null_logger, send_message: fresh_message_queue() }, algo_config);
+		algo_config = Object.assign(
+			{ ee, logger: null_logger, send_message: fresh_message_queue(), pair: default_pair },
+			algo_config
+		);
 		// TODO: agitate other prices, like stopPrice
 		if (algo_config.buyPrice) algo_config.buyPrice = aggrivate_price(algo_config.buyPrice);
 		if (algo_config.stopPrice) algo_config.stopPrice = aggrivate_price(algo_config.stopPrice);

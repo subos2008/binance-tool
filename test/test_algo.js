@@ -39,6 +39,13 @@ function most_recent_message() {
 	return message_queue[message_queue.length - 1];
 }
 
+function aggrivate_price(price) {
+	return BigNumber(price).plus('.0000001'); // will trigger the PRICE_FILTER unless prices are munged
+}
+function aggrivate_amount(amount) {
+	return BigNumber(amount).plus('0001'); // will trigger the LOT_SIZE unless amount is munged
+}
+
 describe('Algo', function() {
 	function setup({ algo_config, ee_config } = {}) {
 		ee_config = Object.assign(
@@ -54,6 +61,9 @@ describe('Algo', function() {
 		);
 		let ee = new ExchangeEmulator(ee_config);
 		algo_config = Object.assign({ ee, logger: null_logger, send_message: fresh_message_queue() }, algo_config);
+		// TODO: agitate other prices, like stopPrice
+		if (algo_config.buyPrice) algo_config.buyPrice = aggrivate_price(algo_config.buyPrice);
+		if (algo_config.amount) algo_config.amount = aggrivate_amount(algo_config.amount);
 		let algo = new Algo(algo_config);
 		return { algo, ee };
 	}

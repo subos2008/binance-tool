@@ -552,7 +552,7 @@ describe('Algo', function() {
 		it('buys as much as it can if there are insufficient funds to buy the requested amount');
 		it('watches the user stream for freed up capital if between buy-stopPrice and uable to invest fully');
 	});
-	describe.skip('auto-size', function() {
+	describe('auto-size', function() {
 		// needs buyPrice, stopPrice, trading_rules. soft_entry?
 		it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
 		it('munges the calculated amount to match Binance rules');
@@ -574,8 +574,7 @@ describe('Algo', function() {
 						stopPrice,
 						trading_rules,
 						soft_entry: true,
-						auto_size: true,
-						logger
+						auto_size: true
 					},
 					ee_config: {
 						starting_quote_balance: BigNumber(1)
@@ -597,8 +596,8 @@ describe('Algo', function() {
 		});
 		describe('with base balances too (hack: using default base currency)', function() {
 			it('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
-				const buyPrice = BigNumber(1);
-				const stopPrice = buyPrice.times('0.98');
+				const buyPrice = BigNumber(4);
+				const stopPrice = buyPrice.times('0.96');
 				const trading_rules = {
 					max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
 				};
@@ -609,12 +608,11 @@ describe('Algo', function() {
 						stopPrice,
 						trading_rules,
 						soft_entry: true,
-						auto_size: true,
-						logger
+						auto_size: true
 					},
 					ee_config: {
-						starting_quote_balance: BigNumber(1),
-						starting_base_balance: BigNumber(2) // where exchange has an ETHBTC pair
+						starting_quote_balance: BigNumber(20),
+						starting_base_balance: BigNumber(10) // where exchange has an ETHBTC pair
 						// TODO: add another pairing rather than the default_pair. NB needs EE refactor
 					}
 				});
@@ -625,11 +623,13 @@ describe('Algo', function() {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
 				}
-				// check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
+				// check for a buy order placed at an appropriate size: 4% stop and 1% max loss => 25% of portfolio
+				// Base value is 4 * 10 = 40, plus 20 quote = 60. 25% of 60 is 15. So, less than available quote.
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('BUY');
-				expect(ee.open_orders[0].origQty).to.bignumber.equal('1.5');
+				let base_quantity = BigNumber(15).dividedBy(buyPrice);
+				expect(ee.open_orders[0].origQty).to.bignumber.equal(base_quantity);
 			});
 		});
 		it('handles attempted trades below the min notional cleanly');

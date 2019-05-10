@@ -336,7 +336,16 @@ describe('ExchangeEmulator', function() {
 				}
 				expect.fail('Expected call to throw');
 			});
-
+			it('throws if trade value below MIN_NOTIONAL', async function() {
+				const ee = setup({});
+				try {
+					await do_limit_buy_order({ ee, amount: BigNumber('0.001'), price: BigNumber('0.000001') });
+				} catch (e) {
+					expect(e.message).to.include('MIN_NOTIONAL');
+					return;
+				}
+				expect.fail('Expected call to throw');
+			});
 			it('adds a limit_buy_order to open_orders', async function() {
 				const ee = setup({ logger, exchange_info, starting_quote_balance: BigNumber(1) });
 				const base_volume = BigNumber('1.2');
@@ -411,7 +420,18 @@ describe('ExchangeEmulator', function() {
 				}
 				expect.fail('Expected call to throw');
 			});
-
+			it('throws if trade value below MIN_NOTIONAL', async function() {
+				const ee = setup({
+					starting_base_balance: BigNumber(1)
+				});
+				try {
+					await do_limit_sell_order({ ee, amount: BigNumber('0.001'), price: BigNumber('0.000001') });
+				} catch (e) {
+					expect(e.message).to.include('MIN_NOTIONAL');
+					return;
+				}
+				expect.fail('Expected call to throw');
+			});
 			it('errors if it is passed unmunged values');
 			it.skip('refuses order if insufficient balance');
 
@@ -493,7 +513,23 @@ describe('ExchangeEmulator', function() {
 				}
 				expect.fail('Expected call to throw');
 			});
-
+			it('throws if trade value below MIN_NOTIONAL', async function() {
+				const ee = setup({
+					starting_base_balance: BigNumber(1)
+				});
+				try {
+					await do_stop_loss_limit_sell_order({
+						ee,
+						amount: BigNumber('0.001'),
+						price: BigNumber('0.000001')
+					});
+				} catch (e) {
+					expect(e.message).to.include('MIN_NOTIONAL');
+					return;
+				}
+				expect.fail('Expected call to throw');
+			});
+			it('has tests for stopPrice, including checking PRICE_FILTER and MIN_NOTIONAL');
 			it('adds a STOP_LOSS_LIMIT to open_orders', async function() {
 				const ee = setup({
 					starting_quote_balance: BigNumber(0),

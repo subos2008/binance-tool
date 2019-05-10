@@ -190,9 +190,14 @@ class Algo {
 	async _calculate_autosized_quote_volume_available() {
 		assert(this.max_portfolio_percentage_allowed_in_this_trade);
 		assert(BigNumber.isBigNumber(this.max_portfolio_percentage_allowed_in_this_trade));
-		let quote_portfolio = await this._get_portfolio_value_from_exchange({
-			quote_currency: this.quote_currency
-		});
+		let quote_portfolio;
+		try {
+			quote_portfolio = await this._get_portfolio_value_from_exchange({
+				quote_currency: this.quote_currency
+			});
+		} catch (error) {
+			async_error_handler(console, `Autosizing error during portfolio sizing: ${error.body}`, error);
+		}
 		assert(BigNumber.isBigNumber(quote_portfolio.total));
 		assert(BigNumber.isBigNumber(quote_portfolio.available));
 		let max_quote_amount_to_invest = quote_portfolio.total
@@ -582,4 +587,5 @@ class Algo {
 	}
 }
 
+it('add tests for autosize and setting stop and target orders to verifty munging is happening and being checked for');
 module.exports = Algo;

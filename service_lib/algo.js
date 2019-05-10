@@ -50,36 +50,8 @@ class Algo {
 		this.trading_rules = trading_rules;
 		this.auto_size = auto_size;
 
-		this.quote_currency = utils.quote_currency_for_binance_pair(this.pair);
-
-		BigNumber('');
-		if (this.buyPrice === '') {
-			this.buyPrice = '0';
-		}
-
-		if (this.quoteAmount && this.buyPrice && this.buyPrice != 0) {
-			this.amount = BigNumber(this.quoteAmount).dividedBy(this.buyPrice);
-			this.logger.info(`Calculated buy amount ${this.amount.toFixed()}`);
-		}
-
-		if (this.auto_size && !this.soft_entry) {
-			let msg = 'auto-size may not work without soft-entry';
-			this.logger.error(msg);
-			throw new Error(msg);
-		}
-
-		if (!this.amount && !this.auto_size) {
-			let msg = 'You must specify amount with -a, -q or use --auto-size';
-			this.logger.error(msg);
-			throw new Error(msg);
-		}
-
 		this.pair = this.pair.toUpperCase();
-		this.calculate_percentages();
-
-		this.send_message(
-			`${this.pair} New trade buy: ${this.buyPrice}, stop: ${this.stopPrice}, target: ${this.targetPrice}`
-		);
+		this.quote_currency = utils.quote_currency_for_binance_pair(this.pair);
 	}
 
 	calculate_percentages() {
@@ -478,6 +450,29 @@ class Algo {
 
 	async main() {
 		try {
+			if (this.quoteAmount && this.buyPrice && this.buyPrice != 0) {
+				this.amount = BigNumber(this.quoteAmount).dividedBy(this.buyPrice);
+				this.logger.info(`Calculated buy amount ${this.amount.toFixed()}`);
+			}
+
+			if (this.auto_size && !this.soft_entry) {
+				let msg = 'auto-size may not work without soft-entry';
+				this.logger.error(msg);
+				throw new Error(msg);
+			}
+
+			if (!this.amount && !this.auto_size) {
+				let msg = 'You must specify amount with -a, -q or use --auto-size';
+				this.logger.error(msg);
+				throw new Error(msg);
+			}
+
+			this.calculate_percentages();
+
+			this.send_message(
+				`${this.pair} New trade buy: ${this.buyPrice}, stop: ${this.stopPrice}, target: ${this.targetPrice}`
+			);
+
 			await this.monitor_user_stream();
 			await this.munge_prices_and_amounts();
 

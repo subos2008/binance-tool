@@ -63,6 +63,8 @@ describe('Algo', function() {
 		algo_config = Object.assign({ ee, logger: null_logger, send_message: fresh_message_queue() }, algo_config);
 		// TODO: agitate other prices, like stopPrice
 		if (algo_config.buyPrice) algo_config.buyPrice = aggrivate_price(algo_config.buyPrice);
+		if (algo_config.stopPrice) algo_config.stopPrice = aggrivate_price(algo_config.stopPrice);
+		if (algo_config.targetPrice) algo_config.targetPrice = aggrivate_price(algo_config.targetPrice);
 		if (algo_config.amount) algo_config.amount = aggrivate_amount(algo_config.amount);
 		let algo = new Algo(algo_config);
 		return { algo, ee };

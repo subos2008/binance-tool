@@ -185,12 +185,11 @@ class Algo {
 		try {
 			if (this.auto_size) {
 				let quote_volume = await this._calculate_autosized_quote_volume_available();
-				let unmunged_amount = utils.quote_volume_at_price_to_base_volume({
+				this.amount = utils.quote_volume_at_price_to_base_volume({
 					quote_volume,
 					price: this.buyPrice
 				});
-				this.amount = this._munge_and_check_quantity('Amount', unmunged_amount);
-				this._check_notional('Buy order', this.buyPrice, this.amount);
+				this._munge_amount_and_check_notionals();
 			}
 		} catch (error) {
 			async_error_handler(console, `Autosizing error during limit buy order: ${error.body}`, error);
@@ -269,119 +268,6 @@ class Algo {
 		this.shutdown_streams();
 	}
 
-	// TODO: code dup
-	// TODO: add symbol
-	_munge_and_check_quantity(name, volume) {
-		const { filters } = this.symbolData;
-		const { stepSize, minQty } = filters.find((eis) => eis.filterType === 'LOT_SIZE');
-
-		volume = BigNumber(utils.roundStep(BigNumber(volume), stepSize));
-		if (volume.isLessThan(minQty)) {
-			throw new Error(`${name} ${volume} does not meet minimum order amount ${minQty}.`);
-		}
-		return volume;
-	}
-
-	// TODO: code dup
-	// TODO: add symbol
-	_check_notional(name, price, volume) {
-		const { filters } = this.symbolData;
-		const { minNotional } = filters.find((eis) => eis.filterType === 'MIN_NOTIONAL');
-
-		if (price.isZero()) return; // don't check zero, special case for market buys
-		let quote_volume = price.times(volume);
-		if (quote_volume.isLessThan(minNotional)) {
-			throw new Error(
-				`${name} does not meet minimum order value ${minNotional} (Buy of ${volume} at ${price} = ${quote_volume}).`
-			);
-		}
-	}
-
-	async munge_prices_and_amounts() {
-		try {
-			this.exchange_info = await this.ee.exchangeInfo();
-		} catch (e) {
-			console.error('Error could not pull exchange info');
-			console.error(e);
-			throw new Error('Error could not pull exchange info');
-		}
-
-		// TODO: argh omg this is disgusting hardcoding of the default_pair
-		this.symbolData = this.exchange_info.symbols.find((ei) => ei.symbol === this.pair);
-		if (!this.symbolData) {
-			throw new Error(`Could not pull exchange info for ${this.pair}`);
-		}
-
-		const { filters } = this.symbolData;
-		const { stepSize, minQty } = filters.find((eis) => eis.filterType === 'LOT_SIZE');
-		const { tickSize, minPrice } = filters.find((eis) => eis.filterType === 'PRICE_FILTER');
-		const { minNotional } = filters.find((eis) => eis.filterType === 'MIN_NOTIONAL');
-
-		function munge_and_check_quantity(name, volume) {
-			assert(typeof volume !== 'undefined');
-			volume = BigNumber(utils.roundStep(BigNumber(volume), stepSize));
-			if (volume.isLessThan(minQty)) {
-				throw new Error(`${name} ${volume} does not meet minimum order amount ${minQty}.`);
-			}
-			return volume;
-		}
-
-		function munge_and_check_price(name, price) {
-			price = BigNumber(price);
-			if (price.isZero()) return price; // don't munge zero, special case for market buys
-			price = BigNumber(utils.roundTicks(price, tickSize));
-			if (price.isLessThan(minPrice)) {
-				throw new Error(`${name} ${price} does not meet minimum order price ${minPrice}.`);
-			}
-			return price;
-		}
-
-		function check_notional(name, price, volume) {
-			assert(typeof volume !== 'undefined');
-			if (price.isZero()) return; // don't check zero, special case for market buys
-			let quote_volume = price.times(volume);
-			if (quote_volume.isLessThan(minNotional)) {
-				throw new Error(
-					`${name} does not meet minimum order value ${minNotional} (Buy of ${volume} at ${price} = ${quote_volume}).`
-				);
-			}
-		}
-
-		if (typeof this.amount !== 'undefined') {
-			this.amount = munge_and_check_quantity('Amount', this.amount);
-		}
-
-		if (this.buyPrice && this.buyPrice !== 0) {
-			this.buyPrice = munge_and_check_price('Buy price', this.buyPrice);
-			if (typeof this.amount !== 'undefined') {
-				check_notional('Buy order', this.buyPrice, this.amount);
-			}
-		}
-
-		if (this.stopPrice) {
-			this.stopPrice = munge_and_check_price('Stop price', this.stopPrice);
-
-			if (this.limitPrice) {
-				this.limitPrice = munge_and_check_price('Limit price', this.limitPrice);
-				// TODO: guess we need to do this check dynamically when amount is auto-sized
-				if (typeof this.amount !== 'undefined') {
-					check_notional('Stop order', this.limitPrice, this.amount);
-				}
-			} else {
-				if (typeof this.amount !== 'undefined') {
-					check_notional('Stop order', this.stopPrice, this.amount);
-				}
-			}
-		}
-
-		if (this.targetPrice) {
-			this.targetPrice = munge_and_check_price('Target price', this.targetPrice);
-			if (typeof this.amount !== 'undefined') {
-				check_notional('Target order', this.targetPrice, this.amount);
-			}
-		}
-	}
-
 	_munge_amount_and_check_notionals() {
 		if (typeof this.amount !== 'undefined') {
 			this.amount = utils.munge_and_check_quantity({
@@ -414,6 +300,14 @@ class Algo {
 					symbol: this.pair
 				});
 			}
+		}
+		if (typeof this.limitPrice !== 'undefined') {
+			utils.check_notional({
+				price: this.limitPrice,
+				volume: this.amount,
+				exchange_info: this.exchange_info,
+				symbol: this.pair
+			});
 		}
 	}
 
@@ -537,7 +431,6 @@ class Algo {
 			);
 
 			await this.monitor_user_stream();
-			await this.munge_prices_and_amounts();
 
 			const NON_BNB_TRADING_FEE = BigNumber('0.001'); // TODO: err why is this unused
 

@@ -256,6 +256,7 @@ describe('Algo', function() {
 		it(
 			'if it hits target price while buyOrder is still open then it cancels buy and places targetOrder if partially filled'
 		);
+		it('what happens if I get a partial stop fill then hit target? amount needs to be dynamic, right?');
 		describe('without soft entry', function() {
 			it('creates a stop limit sell order after the buy order hits', async function() {
 				const amount = BigNumber(1);
@@ -566,7 +567,6 @@ describe('Algo', function() {
 	describe('auto-size', function() {
 		// needs buyPrice, stopPrice, trading_rules. soft_entry?
 		it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
-		it('munges the calculated amount to match Binance rules');
 		it('knows something about trading fees and if that affects the amount if there isnt enough BNB');
 		it(
 			'exits if auto-size is specified without soft entry? soft_entry is needed atm I think. have a second test without soft entry'

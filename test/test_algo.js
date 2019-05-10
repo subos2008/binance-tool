@@ -43,7 +43,7 @@ function aggrivate_price(price) {
 	return BigNumber(price).plus('.0000001'); // will trigger the PRICE_FILTER unless prices are munged
 }
 function aggrivate_amount(amount) {
-	return BigNumber(amount).plus('0001'); // will trigger the LOT_SIZE unless amount is munged
+	return BigNumber(amount).plus('.0001'); // will trigger the LOT_SIZE unless amount is munged
 }
 
 describe('Algo', function() {
@@ -65,10 +65,12 @@ describe('Algo', function() {
 			algo_config
 		);
 		// TODO: agitate other prices, like stopPrice
-		// if (algo_config.buyPrice) algo_config.buyPrice = aggrivate_price(algo_config.buyPrice);
-		// if (algo_config.stopPrice) algo_config.stopPrice = aggrivate_price(algo_config.stopPrice);
-		// if (algo_config.targetPrice) algo_config.targetPrice = aggrivate_price(algo_config.targetPrice);
-		// if (algo_config.amount) algo_config.amount = aggrivate_amount(algo_config.amount);
+		if (algo_config.buyPrice) algo_config.buyPrice = aggrivate_price(algo_config.buyPrice);
+		if (algo_config.stopPrice) algo_config.stopPrice = aggrivate_price(algo_config.stopPrice);
+		if (algo_config.targetPrice) algo_config.targetPrice = aggrivate_price(algo_config.targetPrice);
+		// TODO: add some tests with limitPrice
+		if (algo_config.limitPrice) algo_config.limitPrice = aggrivate_price(algo_config.limitPrice);
+		if (algo_config.amount) algo_config.amount = aggrivate_amount(algo_config.amount);
 		let algo = new Algo(algo_config);
 		return { algo, ee };
 	}

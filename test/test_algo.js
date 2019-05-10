@@ -82,7 +82,6 @@ describe('Algo', function() {
 				const limit_price = BigNumber(1);
 				let { ee, algo } = setup({
 					algo_config: {
-						pair: default_pair,
 						amount: base_volume,
 						buyPrice: limit_price
 					}
@@ -108,7 +107,6 @@ describe('Algo', function() {
 				const buyPrice = BigNumber(1);
 				let { ee, algo } = setup({
 					algo_config: {
-						pair: default_pair,
 						amount: base_volume,
 						buyPrice,
 						soft_entry: true
@@ -144,7 +142,6 @@ describe('Algo', function() {
 			const stopPrice = buyPrice.div(2);
 			let { ee, algo } = setup({
 				algo_config: {
-					pair: default_pair,
 					amount,
 					buyPrice,
 					stopPrice
@@ -172,7 +169,6 @@ describe('Algo', function() {
 			const targetPrice = buyPrice.times(2);
 			let { ee, algo } = setup({
 				algo_config: {
-					pair: default_pair,
 					amount,
 					buyPrice,
 					targetPrice
@@ -203,7 +199,6 @@ describe('Algo', function() {
 					starting_base_balance: BigNumber(1)
 				},
 				algo_config: {
-					pair: default_pair,
 					amount,
 					stopPrice
 				}
@@ -232,7 +227,6 @@ describe('Algo', function() {
 					starting_base_balance: amount
 				},
 				algo_config: {
-					pair: default_pair,
 					amount,
 					targetPrice
 				}

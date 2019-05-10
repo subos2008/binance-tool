@@ -298,9 +298,8 @@ class Algo {
 	}
 
 	async munge_prices_and_amounts() {
-		var exchangeInfoData;
 		try {
-			exchangeInfoData = await this.ee.exchangeInfo();
+			this.exchange_info = await this.ee.exchangeInfo();
 		} catch (e) {
 			console.error('Error could not pull exchange info');
 			console.error(e);
@@ -308,7 +307,7 @@ class Algo {
 		}
 
 		// TODO: argh omg this is disgusting hardcoding of the default_pair
-		this.symbolData = exchangeInfoData.symbols.find((ei) => ei.symbol === this.pair);
+		this.symbolData = this.exchange_info.symbols.find((ei) => ei.symbol === this.pair);
 		if (!this.symbolData) {
 			throw new Error(`Could not pull exchange info for ${this.pair}`);
 		}
@@ -383,6 +382,41 @@ class Algo {
 		}
 	}
 
+	_munge_amount_and_check_notionals() {
+		if (typeof this.amount !== 'undefined') {
+			this.amount = utils.munge_and_check_quantity({
+				exchange_info: this.exchange_info,
+				symbol: this.pair,
+				volume: this.amount
+			});
+
+			if (typeof this.buyPrice !== 'undefined') {
+				utils.check_notional({
+					price: this.buyPrice,
+					volume: this.amount,
+					exchange_info: this.exchange_info,
+					symbol: this.pair
+				});
+			}
+			if (typeof this.stopPrice !== 'undefined') {
+				utils.check_notional({
+					price: this.stopPrice,
+					volume: this.amount,
+					exchange_info: this.exchange_info,
+					symbol: this.pair
+				});
+			}
+			if (typeof this.targetPrice !== 'undefined') {
+				utils.check_notional({
+					price: this.targetPrice,
+					volume: this.amount,
+					exchange_info: this.exchange_info,
+					symbol: this.pair
+				});
+			}
+		}
+	}
+
 	async placeStopOrder() {
 		try {
 			let args = {
@@ -450,10 +484,37 @@ class Algo {
 
 	async main() {
 		try {
-			if (this.quoteAmount && this.buyPrice && this.buyPrice != 0) {
-				this.amount = BigNumber(this.quoteAmount).dividedBy(this.buyPrice);
-				this.logger.info(`Calculated buy amount ${this.amount.toFixed()}`);
+			this.exchange_info = await this.ee.exchangeInfo();
+		} catch (error) {
+			async_error_handler(this.logger, 'Error could not pull exchange info', error);
+		}
+
+		try {
+			let exchange_info = this.exchange_info;
+			let symbol = this.pair;
+			// TODO: munge buyPrice here
+			// TODO: if x & x!=0 looks like redundant logic
+			if (typeof this.buyPrice !== 'undefined') {
+				this.buyPrice = BigNumber(this.buyPrice);
+				// buyPrice of zero is special case to denote market buy
+				if (!this.buyPrice.isZero()) {
+					this.buyPrice = utils.munge_and_check_price({ exchange_info, symbol, price: this.buyPrice });
+					if (typeof this.quoteAmount !== 'undefined') {
+						this.amount = BigNumber(this.quoteAmount).dividedBy(this.buyPrice);
+						this.logger.info(`Calculated buy amount ${this.amount.toFixed()} (unmunged)`);
+					}
+				}
 			}
+
+			if (typeof this.stopPrice !== 'undefined') {
+				this.stopPrice = utils.munge_and_check_price({ exchange_info, symbol, price: this.stopPrice });
+			}
+
+			if (typeof this.targetPrice !== 'undefined') {
+				this.targetPrice = utils.munge_and_check_price({ exchange_info, symbol, price: this.targetPrice });
+			}
+
+			// TODO: calculating non soft_entry auto_size amount should go somewhere around here
 
 			if (this.auto_size && !this.soft_entry) {
 				let msg = 'auto-size may not work without soft-entry';
@@ -466,6 +527,8 @@ class Algo {
 				this.logger.error(msg);
 				throw new Error(msg);
 			}
+
+			this._munge_amount_and_check_notionals();
 
 			this.calculate_percentages();
 

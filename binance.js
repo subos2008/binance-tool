@@ -78,13 +78,14 @@ let {
 	s: stopPrice,
 	l: limitPrice,
 	t: targetPrice,
+	F: nonBnbFees,
 	'soft-entry': soft_entry,
 	'auto-size': auto_size
 } = argv;
-const { F: nonBnbFees } = argv;
 
-// TODO: Note that for all authenticated endpoints, you can pass an extra parameter useServerTime
-// TODO: set to true in order to fetch the server time before making the request.
+if (this.buyPrice === '') {
+	this.buyPrice = '0';
+}
 
 const binance_client = Binance({
 	apiKey: process.env.APIKEY,

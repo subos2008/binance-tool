@@ -52,6 +52,7 @@ class Algo {
 
 		this.quote_currency = utils.quote_currency_for_binance_pair(this.pair);
 
+		BigNumber('');
 		if (this.buyPrice === '') {
 			this.buyPrice = '0';
 		}

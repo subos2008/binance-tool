@@ -317,13 +317,21 @@ describe('ExchangeEmulator', function() {
 			it('errors if it is passed unmunged values');
 			it.skip('refuses order if insufficient balance');
 			it('throws if it is passed price below MIN_PRICE', async function() {
-				const ee = setup({
-					starting_base_balance: BigNumber(1)
-				});
+				const ee = setup({});
 				try {
 					await do_limit_buy_order({ ee, amount: BigNumber('1'), price: BigNumber('0.00000001') });
 				} catch (e) {
 					expect(e.message).to.include('PRICE_FILTER');
+					return;
+				}
+				expect.fail('Expected call to throw');
+			});
+			it('throws if it is passed volume below LOT_SIZE', async function() {
+				const ee = setup({});
+				try {
+					await do_limit_buy_order({ ee, amount: BigNumber('0.0001'), price: BigNumber('1') });
+				} catch (e) {
+					expect(e.message).to.include('LOT_SIZE');
 					return;
 				}
 				expect.fail('Expected call to throw');
@@ -387,6 +395,18 @@ describe('ExchangeEmulator', function() {
 					await do_limit_sell_order({ ee, amount: BigNumber('1'), price: BigNumber('0.00000001') });
 				} catch (e) {
 					expect(e.message).to.include('PRICE_FILTER');
+					return;
+				}
+				expect.fail('Expected call to throw');
+			});
+			it('throws if it is passed volume below LOT_SIZE', async function() {
+				const ee = setup({
+					starting_base_balance: BigNumber(1)
+				});
+				try {
+					await do_limit_sell_order({ ee, amount: BigNumber('0.0001'), price: BigNumber('1') });
+				} catch (e) {
+					expect(e.message).to.include('LOT_SIZE');
 					return;
 				}
 				expect.fail('Expected call to throw');
@@ -461,6 +481,19 @@ describe('ExchangeEmulator', function() {
 				}
 				expect.fail('Expected call to throw');
 			});
+			it('throws if it is passed volume below LOT_SIZE', async function() {
+				const ee = setup({
+					starting_base_balance: BigNumber(1)
+				});
+				try {
+					await do_stop_loss_limit_sell_order({ ee, amount: BigNumber('0.0001'), price: BigNumber('1') });
+				} catch (e) {
+					expect(e.message).to.include('LOT_SIZE');
+					return;
+				}
+				expect.fail('Expected call to throw');
+			});
+
 			it('adds a STOP_LOSS_LIMIT to open_orders', async function() {
 				const ee = setup({
 					starting_quote_balance: BigNumber(0),

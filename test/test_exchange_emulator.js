@@ -54,20 +54,20 @@ describe('ExchangeEmulator', function() {
 			const ee = setup({ logger, starting_quote_balance, starting_base_balance });
 			expect(ee.base_coin_balance_not_in_orders.isEqualTo(starting_base_balance)).to.equal(true);
 		});
-		it('sets balance_in_quote_coin to starting_quote_balance', function() {
-			const starting_quote_balance = BigNumber(1);
-			const ee = setup({ logger, starting_quote_balance });
-			expect(ee.balance_in_quote_coin().isEqualTo(starting_quote_balance)).to.equal(true);
-		});
 		it('sets quote_coin_balance_in_orders to zero', function() {
 			const starting_quote_balance = BigNumber(1);
 			const ee = setup({ logger, starting_quote_balance });
 			expect(ee.quote_coin_balance_in_orders.isEqualTo(0)).to.equal(true);
 		});
-		it('balance_in_quote_coin is equal to starting_quote_balance', function() {
-			const starting_quote_balance = BigNumber(1);
+	});
+	describe('portfolio_value_estimated_in_currency', function() {
+		it('MAKE MORE TESTS FOR ME');
+		it('portfolio_value_estimated_in_currency is equal to starting_quote_balance', function() {
+			const starting_quote_balance = BigNumber('77');
 			const ee = setup({ logger, starting_quote_balance });
-			expect(ee.balance_in_quote_coin().isEqualTo(starting_quote_balance)).to.equal(true);
+			expect(
+				ee.portfolio_value_estimated_in_currency(default_quote_currency).isEqualTo(starting_quote_balance)
+			).to.equal(true);
 		});
 	});
 

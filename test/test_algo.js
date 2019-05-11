@@ -660,4 +660,7 @@ describe('Algo', function() {
 	it('tracks state for trades so it can be restarted');
 	it('can handle partial fills range trading');
 	it('can adopt a certain amount of existing base currency into a trade');
+	it(
+		'add tests for autosize and setting stop and target orders to verifty munging is happening and being checked for'
+	);
 });

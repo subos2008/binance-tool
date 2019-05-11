@@ -539,5 +539,4 @@ class Algo {
 	}
 }
 
-it('add tests for autosize and setting stop and target orders to verifty munging is happening and being checked for');
 module.exports = Algo;

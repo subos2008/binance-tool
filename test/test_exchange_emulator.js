@@ -34,8 +34,8 @@ describe('ExchangeEmulator', function() {
 				logger: null_logger,
 				exchange_info,
 				base_currency: default_base_currency,
-				quote_currency: default_quote_currency,
-				starting_quote_balance: BigNumber(1)
+				quote_currency: default_quote_currency
+				// starting_quote_balance: BigNumber(1)
 			},
 			ee_config
 		);
@@ -225,7 +225,23 @@ describe('ExchangeEmulator', function() {
 		// TODO: would execute immediately
 		it('doesnt execute a limit buy if the starting price was lower...some shit like that');
 	});
-
+	describe('multi coin balances', function() {
+		it('takes multicoin balances in constructor and returns them', async function() {
+			const ee = setup({
+				logger: null_logger,
+				starting_base_balance: BigNumber(0),
+				starting_quote_balance: BigNumber(0),
+				starting_balances: {
+					BTC: BigNumber('101'),
+					ETH: BigNumber('202')
+				}
+			});
+			let balances = (await ee.accountInfo()).balances;
+			expect(balances).to.be.an('array').that.has.lengthOf(2);
+			expect(balances).to.include({ asset: 'BTC', free: '101', locked: '0' });
+			expect(balances).to.include({ asset: 'ETH', free: '202', locked: '0' });
+		});
+	});
 	describe('binance-api-node API', function() {
 		async function do_limit_buy_order({ ee, price, amount } = {}) {
 			try {

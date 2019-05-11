@@ -60,16 +60,6 @@ describe('ExchangeEmulator', function() {
 			expect(ee.quote_coin_balance_in_orders.isEqualTo(0)).to.equal(true);
 		});
 	});
-	describe('portfolio_value_estimated_in_currency', function() {
-		it('MAKE MORE TESTS FOR ME');
-		it('portfolio_value_estimated_in_currency is equal to starting_quote_balance', function() {
-			const starting_quote_balance = BigNumber('77');
-			const ee = setup({ logger, starting_quote_balance });
-			expect(
-				ee.portfolio_value_estimated_in_currency(default_quote_currency).isEqualTo(starting_quote_balance)
-			).to.equal(true);
-		});
-	});
 
 	describe('add_limit_buy_order', function() {
 		it.skip(

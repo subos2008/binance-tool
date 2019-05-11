@@ -64,11 +64,6 @@ describe('ExchangeEmulator', function() {
 			const ee = setup({ logger, starting_quote_balance });
 			expect(ee.quote_coin_balance_in_orders.isEqualTo(0)).to.equal(true);
 		});
-		it('dumps ok', function() {
-			const starting_quote_balance = BigNumber(1);
-			const ee = setup({ logger, starting_quote_balance });
-			ee.dump();
-		});
 		it('balance_in_quote_coin is equal to starting_quote_balance', function() {
 			const starting_quote_balance = BigNumber(1);
 			const ee = setup({ logger, starting_quote_balance });

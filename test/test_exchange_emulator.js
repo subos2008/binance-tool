@@ -229,18 +229,14 @@ describe('ExchangeEmulator', function() {
 		it('takes multicoin balances in constructor and returns them', async function() {
 			const ee = setup({
 				logger: null_logger,
-				starting_base_balance: BigNumber(0),
-				starting_quote_balance: BigNumber(0),
-				starting_balances: {
-					BTC: BigNumber('101'),
-					ETH: BigNumber('202')
-				}
+				starting_balances: { BTC: BigNumber('101'), ETH: BigNumber('202') }
 			});
 			let balances = (await ee.accountInfo()).balances;
 			expect(balances).to.be.an('array').that.has.lengthOf(2);
-			expect(balances).to.include({ asset: 'BTC', free: '101', locked: '0' });
-			expect(balances).to.include({ asset: 'ETH', free: '202', locked: '0' });
+			expect(balances).to.deep.include({ asset: 'BTC', free: '101', locked: '0' });
+			expect(balances).to.deep.include({ asset: 'ETH', free: '202', locked: '0' });
 		});
+		it('locks balances of open trades');
 	});
 	describe('binance-api-node API', function() {
 		async function do_limit_buy_order({ ee, price, amount } = {}) {

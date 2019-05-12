@@ -208,7 +208,6 @@ describe('ExchangeEmulator', function() {
 			expect(ee.balance_not_in_orders(default_quote_currency)).to.be.bignumber.equal(3);
 			// TODO: fees
 		});
-		it('correctly handles both buy and sell orders');
 		// TODO: I guess actually the test here is that Binance refuses to take limit orders that
 		// TODO: would execute immediately
 		it('doesnt execute a limit buy if the starting price was lower...some shit like that');
@@ -314,8 +313,6 @@ describe('ExchangeEmulator', function() {
 			it.skip('sends a CANCELLED order message to .ws.user');
 		});
 		describe('limit buy order', async function() {
-			it('errors if it is passed unmunged values');
-			it.skip('refuses order if insufficient balance');
 			it('throws if it is passed price below MIN_PRICE', async function() {
 				const ee = setup({});
 				try {
@@ -432,9 +429,6 @@ describe('ExchangeEmulator', function() {
 				}
 				expect.fail('Expected call to throw');
 			});
-			it('errors if it is passed unmunged values');
-			it.skip('refuses order if insufficient balance');
-
 			it('adds a limit_sell_order to open_orders', async function() {
 				const ee = setup({
 					starting_quote_balance: BigNumber(0),

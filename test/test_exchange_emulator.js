@@ -28,14 +28,17 @@ const exchange_info = JSON.parse(fs.readFileSync('./test/exchange_info.json', 'u
 
 describe('ExchangeEmulator', function() {
 	function setup(ee_config = {}) {
-		// { starting_quote_balance, starting_base_balance }
+		if (ee_config.starting_quote_balance || ee_config.starting_base_balance) {
+			ee_config.starting_balances = {};
+		}
+		if (ee_config.starting_quote_balance)
+			ee_config.starting_balances[default_quote_currency] = ee_config.starting_quote_balance;
+		if (ee_config.starting_base_balance)
+			ee_config.starting_balances[default_base_currency] = ee_config.starting_base_balance;
 		ee_config = Object.assign(
 			{
 				logger: null_logger,
-				exchange_info,
-				base_currency: default_base_currency,
-				quote_currency: default_quote_currency,
-				starting_quote_balance: BigNumber(1)
+				exchange_info
 			},
 			ee_config
 		);
@@ -43,42 +46,27 @@ describe('ExchangeEmulator', function() {
 	}
 
 	describe('constructor', function() {
-		it('sets quote_coin_balance_not_in_orders to starting_quote_balance', function() {
+		it('sets balance_not_in_orders(default_quote_currency) to starting_quote_balance', function() {
 			const starting_quote_balance = BigNumber(1);
 			const ee = setup({ logger, starting_quote_balance });
-			expect(ee.quote_coin_balance_not_in_orders.isEqualTo(starting_quote_balance)).to.equal(true);
+			expect(ee.balance_not_in_orders(default_quote_currency).isEqualTo(starting_quote_balance)).to.equal(true);
 		});
-		it('sets base_coin_balance_not_in_orders to starting_base_balance', function() {
+		it('sets balance_not_in_orders(default_base_currency) to starting_base_balance', function() {
 			const starting_quote_balance = BigNumber(1);
 			const starting_base_balance = BigNumber(4);
 			const ee = setup({ logger, starting_quote_balance, starting_base_balance });
-			expect(ee.base_coin_balance_not_in_orders.isEqualTo(starting_base_balance)).to.equal(true);
+			expect(ee.balance_not_in_orders(default_base_currency).isEqualTo(starting_base_balance)).to.equal(true);
 		});
-		it('sets balance_in_quote_coin to starting_quote_balance', function() {
+		it('sets balance_in_orders(default_quote_currency) to zero', function() {
 			const starting_quote_balance = BigNumber(1);
 			const ee = setup({ logger, starting_quote_balance });
-			expect(ee.balance_in_quote_coin().isEqualTo(starting_quote_balance)).to.equal(true);
-		});
-		it('sets quote_coin_balance_in_orders to zero', function() {
-			const starting_quote_balance = BigNumber(1);
-			const ee = setup({ logger, starting_quote_balance });
-			expect(ee.quote_coin_balance_in_orders.isEqualTo(0)).to.equal(true);
-		});
-		it('dumps ok', function() {
-			const starting_quote_balance = BigNumber(1);
-			const ee = setup({ logger, starting_quote_balance });
-			ee.dump();
-		});
-		it('balance_in_quote_coin is equal to starting_quote_balance', function() {
-			const starting_quote_balance = BigNumber(1);
-			const ee = setup({ logger, starting_quote_balance });
-			expect(ee.balance_in_quote_coin().isEqualTo(starting_quote_balance)).to.equal(true);
+			expect(ee.balance_in_orders(default_quote_currency).isEqualTo(0)).to.equal(true);
 		});
 	});
 
 	describe('add_limit_buy_order', function() {
 		it.skip(
-			'raises an async InsufficientBalanceError if quote_coin_balance_not_in_orders is insufficient',
+			'raises an async InsufficientBalanceError if balance_not_in_orders(default_quote_currency) is insufficient',
 			async function() {
 				const starting_quote_balance = BigNumber(1);
 				const ee = setup({ logger: null_logger, starting_quote_balance });
@@ -97,20 +85,20 @@ describe('ExchangeEmulator', function() {
 			}
 		);
 
-		it('decreases quote_coin_balance_not_in_orders', async function() {
+		it('decreases balance_not_in_orders(default_quote_currency)', async function() {
 			const starting_quote_balance = BigNumber(1);
 			const ee = setup({ logger, starting_quote_balance });
 			await ee.add_limit_buy_order({ base_volume: BigNumber(1), limit_price: BigNumber(1), pair: default_pair });
-			expect(ee.quote_coin_balance_not_in_orders.isEqualTo(0)).to.equal(true);
+			expect(ee.balance_not_in_orders(default_quote_currency).isEqualTo(0)).to.equal(true);
 		});
-		it('increases quote_coin_balance_in_orders', async function() {
+		it('increases balance_in_orders(default_quote_currency)', async function() {
 			const starting_quote_balance = BigNumber(1);
 			const ee = setup({ logger, starting_quote_balance });
 			const base_volume = BigNumber(1);
 			const limit_price = BigNumber(1);
 			await ee.add_limit_buy_order({ base_volume, limit_price, pair: default_pair });
 			const quote_volume = utils.base_volume_at_price_to_quote_volume({ base_volume, price: limit_price });
-			expect(ee.quote_coin_balance_in_orders.isEqualTo(quote_volume)).to.equal(true);
+			expect(ee.balance_in_orders(default_quote_currency).isEqualTo(quote_volume)).to.equal(true);
 		});
 		it('adds a limit_buy_order to open_orders', async function() {
 			const starting_quote_balance = BigNumber(1);
@@ -129,17 +117,17 @@ describe('ExchangeEmulator', function() {
 	});
 
 	describe('add_limit_sell_order', function() {
-		it.skip('fails if base_coin_balance_not_in_orders is insufficient', async function() {
+		it.skip('fails if balance_not_in_orders(default_base_currency) is insufficient', async function() {
 			expect(false).to.equal(true);
 		});
-		it('decreases base_coin_balance_not_in_orders', async function() {
+		it('decreases balance_not_in_orders(default_base_currency)', async function() {
 			const starting_quote_balance = BigNumber(1);
 			const starting_base_balance = BigNumber(4);
 			const ee = setup({ logger, starting_quote_balance, starting_base_balance });
 			await ee.add_limit_sell_order({ base_volume: BigNumber(1), limit_price: BigNumber(1), pair: default_pair });
-			expect(ee.base_coin_balance_not_in_orders).to.be.bignumber.equal(3);
+			expect(ee.balance_not_in_orders(default_base_currency)).to.be.bignumber.equal(3);
 		});
-		it('increases base_coin_balance_in_orders', async function() {
+		it('increases balance_in_orders(default_base_currency)', async function() {
 			//should fail
 			const starting_quote_balance = BigNumber(1);
 			const starting_base_balance = BigNumber(4);
@@ -147,7 +135,7 @@ describe('ExchangeEmulator', function() {
 			const base_volume = BigNumber(2);
 			const limit_price = BigNumber(1);
 			await ee.add_limit_sell_order({ base_volume, limit_price, pair: default_pair });
-			expect(ee.base_coin_balance_in_orders).to.be.bignumber.equal(base_volume);
+			expect(ee.balance_in_orders(default_base_currency)).to.be.bignumber.equal(base_volume);
 		});
 		it('adds a limit_sell_order to open_orders', async function() {
 			const starting_quote_balance = BigNumber(1);
@@ -176,10 +164,10 @@ describe('ExchangeEmulator', function() {
 			expect(ee.open_orders.length).to.equal(2);
 			await ee.cancel_all_open_orders();
 			expect(ee.open_orders.length).to.equal(0);
-			expect(ee.base_coin_balance_in_orders).to.be.bignumber.equal(0);
-			expect(ee.base_coin_balance_not_in_orders).to.be.bignumber.equal(starting_base_balance);
-			expect(ee.quote_coin_balance_in_orders).to.be.bignumber.equal(0);
-			expect(ee.quote_coin_balance_not_in_orders).to.be.bignumber.equal(starting_quote_balance);
+			expect(ee.balance_in_orders(default_base_currency)).to.be.bignumber.equal(0);
+			expect(ee.balance_not_in_orders(default_base_currency)).to.be.bignumber.equal(starting_base_balance);
+			expect(ee.balance_in_orders(default_quote_currency)).to.be.bignumber.equal(0);
+			expect(ee.balance_not_in_orders(default_quote_currency)).to.be.bignumber.equal(starting_quote_balance);
 		});
 	});
 
@@ -202,8 +190,8 @@ describe('ExchangeEmulator', function() {
 			expect(ee.open_orders.length).to.equal(1);
 			await ee.set_current_price({ symbol: default_pair, price: limit_price });
 			expect(ee.open_orders.length).to.equal(0);
-			expect(ee.base_coin_balance_not_in_orders).to.be.bignumber.equal(3);
-			expect(ee.quote_coin_balance_not_in_orders).to.be.bignumber.equal(0);
+			expect(ee.balance_not_in_orders(default_base_currency)).to.be.bignumber.equal(3);
+			expect(ee.balance_not_in_orders(default_quote_currency)).to.be.bignumber.equal(0);
 			// TODO: fees
 		});
 		it('executes a limit sell order', async function() {
@@ -216,16 +204,27 @@ describe('ExchangeEmulator', function() {
 			expect(ee.open_orders.length).to.equal(1);
 			await ee.set_current_price({ symbol: default_pair, price: limit_price });
 			expect(ee.open_orders.length).to.equal(0);
-			expect(ee.base_coin_balance_not_in_orders).to.be.bignumber.equal(0);
-			expect(ee.quote_coin_balance_not_in_orders).to.be.bignumber.equal(3);
+			expect(ee.balance_not_in_orders(default_base_currency)).to.be.bignumber.equal(0);
+			expect(ee.balance_not_in_orders(default_quote_currency)).to.be.bignumber.equal(3);
 			// TODO: fees
 		});
-		it('correctly handles both buy and sell orders');
 		// TODO: I guess actually the test here is that Binance refuses to take limit orders that
 		// TODO: would execute immediately
 		it('doesnt execute a limit buy if the starting price was lower...some shit like that');
 	});
-
+	describe('multi coin balances', function() {
+		it('takes multicoin balances in constructor and returns them', async function() {
+			const ee = setup({
+				logger: null_logger,
+				starting_balances: { BTC: BigNumber('101'), ETH: BigNumber('202') }
+			});
+			let balances = (await ee.accountInfo()).balances;
+			expect(balances).to.be.an('array').that.has.lengthOf(2);
+			expect(balances).to.deep.include({ asset: 'BTC', free: '101', locked: '0' });
+			expect(balances).to.deep.include({ asset: 'ETH', free: '202', locked: '0' });
+		});
+		it('locks balances of open trades');
+	});
 	describe('binance-api-node API', function() {
 		async function do_limit_buy_order({ ee, price, amount } = {}) {
 			try {
@@ -314,8 +313,6 @@ describe('ExchangeEmulator', function() {
 			it.skip('sends a CANCELLED order message to .ws.user');
 		});
 		describe('limit buy order', async function() {
-			it('errors if it is passed unmunged values');
-			it.skip('refuses order if insufficient balance');
 			it('throws if it is passed price below MIN_PRICE', async function() {
 				const ee = setup({});
 				try {
@@ -432,9 +429,6 @@ describe('ExchangeEmulator', function() {
 				}
 				expect.fail('Expected call to throw');
 			});
-			it('errors if it is passed unmunged values');
-			it.skip('refuses order if insufficient balance');
-
 			it('adds a limit_sell_order to open_orders', async function() {
 				const ee = setup({
 					starting_quote_balance: BigNumber(0),

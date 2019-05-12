@@ -28,7 +28,8 @@ class Algo {
 			nonBnbFees,
 			soft_entry,
 			trading_rules,
-			auto_size
+			auto_size,
+			percentages
 		} = {}
 	) {
 		assert(logger);
@@ -49,6 +50,7 @@ class Algo {
 		this.soft_entry = soft_entry;
 		this.trading_rules = trading_rules;
 		this.auto_size = auto_size;
+		this.percentages = percentages;
 
 		this.pair = this.pair.toUpperCase();
 		this.quote_currency = utils.quote_currency_for_binance_pair(this.pair);
@@ -425,6 +427,7 @@ class Algo {
 			this._munge_amount_and_check_notionals();
 
 			this.calculate_percentages();
+			if (this.percentages) process.exit();
 
 			this.send_message(
 				`${this.pair} New trade buy: ${this.buyPrice}, stop: ${this.stopPrice}, target: ${this.targetPrice}`

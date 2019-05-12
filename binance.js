@@ -64,6 +64,10 @@ const { argv } = require('yargs')
 	.boolean('auto-size')
 	.describe('auto-size', 'Automatically size the trade based on stopLoss % and available funds')
 	.default('auto-size', false)
+	// '--percentages'
+	.boolean('percentages')
+	.describe('percentages', 'Print trade stats and exit')
+	.default('percentages', false)
 	// '--non-bnb-fees'
 	.boolean('F')
 	.alias('F', 'non-bnb-fees')
@@ -80,7 +84,8 @@ let {
 	t: targetPrice,
 	F: nonBnbFees,
 	'soft-entry': soft_entry,
-	'auto-size': auto_size
+	'auto-size': auto_size,
+	percentages: percentages
 } = argv;
 
 if (this.buyPrice === '') {
@@ -107,7 +112,8 @@ const algo = new Algo({
 	nonBnbFees,
 	soft_entry,
 	trading_rules,
-	auto_size
+	auto_size,
+	percentages
 });
 algo
 	.main()

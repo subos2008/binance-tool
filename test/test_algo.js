@@ -51,14 +51,22 @@ describe('Algo', function() {
 		ee_config = Object.assign(
 			{
 				logger: null_logger,
-				exchange_info,
-				pair: default_pair,
-				base_currency: default_base_currency,
-				quote_currency: default_quote_currency,
-				starting_quote_balance: BigNumber(1)
+				exchange_info
 			},
 			ee_config
 		);
+		if (ee_config.starting_quote_balance || ee_config.starting_base_balance) {
+			ee_config.starting_balances = {};
+		}
+		if (ee_config.starting_quote_balance) {
+			ee_config.starting_balances[default_quote_currency] = ee_config.starting_quote_balance;
+		} else {
+			if (!ee_config.starting_balances) ee_config.starting_balances = {};
+			ee_config.starting_balances[default_quote_currency] = BigNumber(1);
+		}
+		if (ee_config.starting_base_balance)
+			ee_config.starting_balances[default_base_currency] = ee_config.starting_base_balance;
+
 		let ee = new ExchangeEmulator(ee_config);
 		algo_config = Object.assign(
 			{ ee, logger: null_logger, send_message: fresh_message_queue(), pair: default_pair },

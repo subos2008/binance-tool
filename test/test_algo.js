@@ -61,8 +61,10 @@ describe('Algo', function() {
 		if (ee_config.starting_quote_balance) {
 			ee_config.starting_balances[default_quote_currency] = ee_config.starting_quote_balance;
 		} else {
-			if (!ee_config.starting_balances) ee_config.starting_balances = {};
-			ee_config.starting_balances[default_quote_currency] = BigNumber(1);
+			if (!ee_config.starting_balances) {
+				ee_config.starting_balances = {};
+				ee_config.starting_balances[default_quote_currency] = BigNumber(1);
+			}
 		}
 		if (ee_config.starting_base_balance)
 			ee_config.starting_balances[default_base_currency] = ee_config.starting_base_balance;
@@ -570,11 +572,14 @@ describe('Algo', function() {
 		it('sends a message if a soft entry hits the buy price but there are insufficient funds to execute it');
 		it('auto calculates the max amount to buy based on portfolio value and stop_percentage');
 		it('buys as much as it can if there are insufficient funds to buy the requested amount');
-		it('watches the user stream for freed up capital if between buy-stopPrice and uable to invest fully');
+		it(
+			'watches the user stream for freed up capital and if allocation still available and price between buy-stopPrice it buys more'
+		);
 	});
 	describe('auto-size', function() {
 		// needs buyPrice, stopPrice, trading_rules. soft_entry?
-		it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
+		if ('supports market buys by using the current price')
+			it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
 		it('knows something about trading fees and if that affects the amount if there isnt enough BNB');
 		it(
 			'exits if auto-size is specified without soft entry? soft_entry is needed atm I think. have a second test without soft entry'
@@ -671,4 +676,41 @@ describe('Algo', function() {
 	it(
 		'add tests for autosize and setting stop and target orders to verifty munging is happening and being checked for'
 	);
+
+	describe('virtual/calculated pair trading', function() {
+		it('triggers when the buy price is hit', async function() {
+			const buyPrice = BigNumber('0.162');
+			const amount = BigNumber('3');
+			let { ee, algo } = setup({
+				algo_config: {
+					virtualPair: 'AIONUSDT',
+					intermediateCurrency: 'BTC',
+					buyPrice,
+					amount,
+					soft_entry: true
+				},
+				ee_config: {
+					starting_balances: { USDT: BigNumber(20) }
+				}
+			});
+			try {
+				// set price initially higher than the buyPrice. Probably unused code.
+				// BuyWhen AIONUSDT = 0.162, start at ~0.216. BTCUSDT of 7310, AIONBTC of 0.0000298
+				await ee.set_current_price({ symbol: 'BTCUSDT', price: '7310' });
+				await ee.set_current_price({ symbol: 'AIONBTC', price: '0.0000298' });
+				await algo.main();
+				// now lets move both currencies to hit buyPrice:
+				await ee.set_current_price({ symbol: 'BTCUSDT', price: '7500' });
+				await ee.set_current_price({ symbol: 'AIONBTC', price: '00.0000216' });
+				// test for a market buy... well let's check balances changed
+				let balances = (await ee.accountInfo()).balances;
+				expect(balances).to.be.an('array').that.has.lengthOf(2);
+				expect(balances).to.deep.include({ asset: 'AION', free: amount.toFixed(), locked: '0' });
+				// expect(balances).to.deep.include({ asset: 'ETH', free: '202', locked: '0' });
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+		});
+	});
 });

@@ -704,7 +704,7 @@ describe('Algo', function() {
 				await ee.set_current_price({ symbol: 'AIONBTC', price: '00.0000216' });
 				// test for a market buy... well let's check balances changed
 				let balances = (await ee.accountInfo()).balances;
-				expect(balances).to.be.an('array').that.has.lengthOf(2);
+				// expect(balances).to.be.an('array').that.has.lengthOf(2);
 				expect(balances).to.deep.include({ asset: 'AION', free: amount.toFixed(), locked: '0' });
 				// expect(balances).to.deep.include({ asset: 'ETH', free: '202', locked: '0' });
 			} catch (e) {

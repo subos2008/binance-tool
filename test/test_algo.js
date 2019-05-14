@@ -70,10 +70,10 @@ describe('Algo', function() {
 			ee_config.starting_balances[default_base_currency] = ee_config.starting_base_balance;
 
 		let ee = new ExchangeEmulator(ee_config);
-		algo_config = Object.assign(
-			{ ee, logger: null_logger, send_message: fresh_message_queue(), pair: default_pair },
-			algo_config
-		);
+		algo_config = Object.assign({ ee, logger: null_logger, send_message: fresh_message_queue() }, algo_config);
+		if (!algo_config.pair && !algo_config.virtualPair) {
+			algo_config.pair = default_pair;
+		}
 		// TODO: agitate other prices, like stopPrice
 		if (algo_config.buyPrice) algo_config.buyPrice = aggrivate_price(algo_config.buyPrice);
 		if (algo_config.stopPrice) algo_config.stopPrice = aggrivate_price(algo_config.stopPrice);
@@ -687,10 +687,11 @@ describe('Algo', function() {
 					intermediateCurrency: 'BTC',
 					buyPrice,
 					amount,
-					soft_entry: true
+					logger
 				},
 				ee_config: {
-					starting_balances: { USDT: BigNumber(20) }
+					starting_balances: { USDT: BigNumber(20) },
+					logger
 				}
 			});
 			try {

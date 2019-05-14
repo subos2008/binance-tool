@@ -73,6 +73,33 @@ class AlgoUtils {
 		};
 	}
 
+	calculate_percentages({ buyPrice, stopPrice, targetPrice, trading_rules } = {}) {
+		let stop_percentage, target_percentage, max_portfolio_percentage_allowed_in_this_trade;
+		if (buyPrice && stopPrice) {
+			stop_percentage = BigNumber(buyPrice).minus(stopPrice).dividedBy(buyPrice).times(100);
+			this.logger.info(`Stop percentage: ${stop_percentage.toFixed(2)}%`);
+		}
+		if (buyPrice && targetPrice) {
+			target_percentage = BigNumber(targetPrice).minus(buyPrice).dividedBy(buyPrice).times(100);
+			this.logger.info(`Target percentage: ${target_percentage.toFixed(2)}%`);
+		}
+		if (stop_percentage && target_percentage) {
+			let risk_reward_ratio = target_percentage.dividedBy(stop_percentage);
+			this.logger.info(`Risk/reward ratio: ${risk_reward_ratio.toFixed(1)}`);
+		}
+		if (stop_percentage && trading_rules && trading_rules.max_allowed_portfolio_loss_percentage_per_trade) {
+			max_portfolio_percentage_allowed_in_this_trade = BigNumber(
+				trading_rules.max_allowed_portfolio_loss_percentage_per_trade
+			)
+				.dividedBy(stop_percentage)
+				.times(100);
+			this.logger.info(
+				`Max portfolio % allowed in trade: ${max_portfolio_percentage_allowed_in_this_trade.toFixed(1)}%`
+			);
+		}
+		return max_portfolio_percentage_allowed_in_this_trade;
+	}
+
 	async create_market_buy_order({ pair, base_amount } = {}) {
 		assert(pair);
 		assert(base_amount);

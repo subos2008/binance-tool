@@ -67,36 +67,6 @@ class Algo {
 		this.quote_currency = quote_currency;
 	}
 
-	calculate_percentages() {
-		let stop_percentage, target_percentage;
-		if (this.buyPrice && this.stopPrice) {
-			stop_percentage = BigNumber(this.buyPrice).minus(this.stopPrice).dividedBy(this.buyPrice).times(100);
-			this.logger.info(`Stop percentage: ${stop_percentage.toFixed(2)}%`);
-		}
-		if (this.buyPrice && this.targetPrice) {
-			target_percentage = BigNumber(this.targetPrice).minus(this.buyPrice).dividedBy(this.buyPrice).times(100);
-			this.logger.info(`Target percentage: ${target_percentage.toFixed(2)}%`);
-		}
-		if (stop_percentage && target_percentage) {
-			let risk_reward_ratio = target_percentage.dividedBy(stop_percentage);
-			this.logger.info(`Risk/reward ratio: ${risk_reward_ratio.toFixed(1)}`);
-		}
-		if (
-			stop_percentage &&
-			this.trading_rules &&
-			this.trading_rules.max_allowed_portfolio_loss_percentage_per_trade
-		) {
-			this.max_portfolio_percentage_allowed_in_this_trade = BigNumber(
-				this.trading_rules.max_allowed_portfolio_loss_percentage_per_trade
-			)
-				.dividedBy(stop_percentage)
-				.times(100);
-			this.logger.info(
-				`Max portfolio % allowed in trade: ${this.max_portfolio_percentage_allowed_in_this_trade.toFixed(1)}%`
-			);
-		}
-	}
-
 	shutdown_streams() {
 		if (this.closeUserWebsocket) this.closeUserWebsocket();
 		if (this.closeTradesWebSocket) this.closeTradesWebSocket();
@@ -189,8 +159,13 @@ class Algo {
 				throw new Error(msg);
 			}
 
-			this.calculate_percentages();
-			if (this.percentages) process.exit();
+			this.algo_utils.calculate_percentages({
+				buyPrice: this.buyPrice,
+				stopPrice: this.stopPrice,
+				targetPrice: this.targetPrice,
+				trading_rules: this.trading_rules
+			});
+			if (this.percentages) return;
 
 			this.send_message(
 				`${this.virtualPair} New trade buy: ${this.buyPrice}, stop: ${this.stopPrice}, target: ${this

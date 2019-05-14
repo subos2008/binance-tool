@@ -259,7 +259,7 @@ class Algo {
 	async main() {
 		try {
 			this.exchange_info = await this.ee.exchangeInfo();
-			this.algo_utils = new AlgoUtils({ exchange_info });
+			this.algo_utils = new AlgoUtils({ exchange_info: this.exchange_info });
 		} catch (error) {
 			async_error_handler(this.logger, 'Error could not pull exchange info', error);
 		}

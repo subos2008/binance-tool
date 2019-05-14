@@ -1,4 +1,5 @@
 const utils = require('../lib/utils');
+const assert = require('assert');
 
 class AlgoUtils {
 	constructor({ exchange_info } = {}) {
@@ -50,3 +51,5 @@ class AlgoUtils {
 		}
 	}
 }
+
+module.exports = AlgoUtils;

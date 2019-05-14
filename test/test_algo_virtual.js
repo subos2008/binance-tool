@@ -11,7 +11,7 @@ const { NotImplementedError, InsufficientBalanceError } = require('../lib/errors
 // const async_error_handler = require('../lib/async_error_handler');
 const utils = require('../lib/utils');
 const fs = require('fs');
-const Algo = require('../service_lib/algo');
+const Algo = require('../service_lib/algo-virtual');
 
 const logger = new Logger({ silent: false });
 const null_logger = new Logger({ silent: true });

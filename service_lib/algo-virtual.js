@@ -3,6 +3,7 @@ const { ExitNow } = require('../lib/errors');
 const StateMachine = require('javascript-state-machine');
 const BigNumber = require('bignumber.js');
 const utils = require('../lib/utils');
+const AlgoUtils = require('./algo_utils');
 const assert = require('assert');
 
 BigNumber.DEBUG = true; // Prevent NaN
@@ -26,7 +27,6 @@ class Algo {
 			ee, // binance-api-node API
 			send_message,
 			logger,
-			pair,
 			amount,
 			quoteAmount,
 			buyPrice,
@@ -44,11 +44,10 @@ class Algo {
 	) {
 		assert(logger);
 		assert(send_message);
-		assert(pair || virtualPair);
+		assert(virtualPair);
 
 		this.ee = ee;
 		this.send_message = send_message;
-		this.pair = pair;
 		this.amount = amount;
 		this.quoteAmount = quoteAmount;
 		this.buyPrice = buyPrice;
@@ -66,15 +65,7 @@ class Algo {
 
 		assert(typeof this.logger === 'object', `typeof this.logger: ${typeof this.logger}`);
 
-		if (this.pair) {
-			assert(!this.virtualPair);
-			assert(!this.intermediateCurrency);
-			this.pair = this.pair.toUpperCase();
-			this.quote_currency = utils.quote_currency_for_binance_pair(this.pair);
-		}
-
 		if (this.virtualPair) {
-			assert(!this.pair);
 			assert(this.intermediateCurrency);
 			this.virtualPair = this.virtualPair.toUpperCase();
 			let { quote_currency, base_currency } = split_pair(this.virtualPair);
@@ -119,24 +110,25 @@ class Algo {
 		if (this.closeTradesWebSocket) this.closeTradesWebSocket();
 	}
 
-	async _create_market_buy_order() {
+	async _create_market_buy_order({ pair, base_amount } = {}) {
+		assert(pair);
+		assert(base_amount);
+		assert(BigNumber.isBigNumber(base_amount));
 		try {
 			let args = {
 				useServerTime: true,
 				side: 'BUY',
-				symbol: this.pair,
+				symbol: pair,
 				type: 'MARKET',
-				quantity: this.amount.toFixed()
-				// TODO: more args here, server time and use FULL response body
+				quantity: base_amount.toFixed()
 			};
 			this.logger.info(`Creating MARKET BUY ORDER`);
-			// this.logger.info(args);
+			this.logger.info(args);
 			let response = await this.ee.order(args);
-			this.logger.info('MARKET BUY response', response);
 			this.logger.info(`order id: ${response.orderId}`);
 			return response.orderId;
 		} catch (error) {
-			async_error_handler(console, `Buy error: ${error.body}`, error);
+			async_error_handler(console, `Market buy error: ${error.body}`, error);
 		}
 	}
 
@@ -211,40 +203,6 @@ class Algo {
 		return BigNumber.minimum(max_quote_amount_to_invest, quote_portfolio.available);
 	}
 
-	async _create_limit_buy_order() {
-		try {
-			if (this.auto_size) {
-				let quote_volume = await this._calculate_autosized_quote_volume_available();
-				this.amount = utils.quote_volume_at_price_to_base_volume({
-					quote_volume,
-					price: this.buyPrice
-				});
-				this._munge_amount_and_check_notionals();
-			}
-		} catch (error) {
-			async_error_handler(console, `Autosizing error during limit buy order: ${error.body}`, error);
-		}
-		try {
-			let args = {
-				useServerTime: true,
-				side: 'BUY',
-				symbol: this.pair,
-				type: 'LIMIT',
-				quantity: this.amount.toFixed(),
-				price: this.buyPrice.toFixed()
-				// TODO: more args here, server time and use FULL response body
-			};
-			this.logger.info(`Creating LIMIT BUY ORDER`);
-			this.logger.info(args);
-			let response = await this.ee.order(args);
-			this.logger.info('LIMIT BUY response', response);
-			this.logger.info(`order id: ${response.orderId}`);
-			return response.orderId;
-		} catch (error) {
-			async_error_handler(console, `Buy error: ${error.body}`, error);
-		}
-	}
-
 	async monitor_user_stream() {
 		let obj = this;
 		function checkOrderFilled(data, orderFilled) {
@@ -298,126 +256,15 @@ class Algo {
 		this.shutdown_streams();
 	}
 
-	_munge_amount_and_check_notionals() {
-		if (typeof this.amount !== 'undefined') {
-			this.amount = utils.munge_and_check_quantity({
-				exchange_info: this.exchange_info,
-				symbol: this.pair,
-				volume: this.amount
-			});
-
-			if (typeof this.buyPrice !== 'undefined') {
-				utils.check_notional({
-					price: this.buyPrice,
-					volume: this.amount,
-					exchange_info: this.exchange_info,
-					symbol: this.pair
-				});
-			}
-			if (typeof this.stopPrice !== 'undefined') {
-				utils.check_notional({
-					price: this.stopPrice,
-					volume: this.amount,
-					exchange_info: this.exchange_info,
-					symbol: this.pair
-				});
-			}
-			if (typeof this.targetPrice !== 'undefined') {
-				utils.check_notional({
-					price: this.targetPrice,
-					volume: this.amount,
-					exchange_info: this.exchange_info,
-					symbol: this.pair
-				});
-			}
-		}
-		if (typeof this.limitPrice !== 'undefined') {
-			utils.check_notional({
-				price: this.limitPrice,
-				volume: this.amount,
-				exchange_info: this.exchange_info,
-				symbol: this.pair
-			});
-		}
-	}
-
-	async placeStopOrder() {
-		try {
-			let args = {
-				useServerTime: true,
-				side: 'SELL',
-				symbol: this.pair,
-				type: 'STOP_LOSS_LIMIT',
-				quantity: this.amount.toFixed(),
-				price: (this.limitPrice || this.stopPrice).toFixed(),
-				stopPrice: this.stopPrice.toFixed()
-				// TODO: more args here, server time and use FULL response body
-			};
-			this.logger.info(`Creating STOP_LOSS_LIMIT SELL ORDER`);
-			this.logger.info(args);
-			let response = await this.ee.order(args);
-			this.logger.info('STOP_LOSS_LIMIT sell response', response);
-			this.logger.info(`order id: ${response.orderId}`);
-			return response.orderId;
-		} catch (error) {
-			async_error_handler(console, `error placing order: ${error.body}`, error);
-		}
-	}
-
-	async placeTargetOrder() {
-		try {
-			let args = {
-				useServerTime: true,
-				side: 'SELL',
-				symbol: this.pair,
-				type: 'LIMIT',
-				quantity: this.amount.toFixed(),
-				price: this.targetPrice.toFixed()
-				// TODO: more args here, server time and use FULL response body
-			};
-			this.logger.info(`Creating Target LIMIT SELL ORDER`);
-			this.logger.info(args);
-			let response = await this.ee.order(args);
-			this.logger.info('Target LIMIT SELL response', response);
-			this.logger.info(`order id: ${response.orderId}`);
-			return response.orderId;
-		} catch (error) {
-			async_error_handler(console, `error placing order: ${error.body}`, error);
-		}
-	}
-
-	async placeSellOrder() {
-		if (this.stopPrice) {
-			try {
-				this.stopOrderId = await this.placeStopOrder();
-				this.logger.info(`Set stopOrderId: ${this.stopOrderId}`);
-			} catch (error) {
-				async_error_handler(console, `error placing order: ${error.body}`, error);
-			}
-		} else if (this.targetPrice) {
-			try {
-				this.targetOrderId = await this.placeTargetOrder();
-				this.logger.info(`Set targetOrderId: ${this.targetOrderId}`);
-			} catch (error) {
-				async_error_handler(console, `error placing order: ${error.body}`, error);
-			}
-		} else {
-			this.execution_complete('buy completed and no sell actions defined');
-		}
-	}
-
 	async main() {
 		try {
 			this.exchange_info = await this.ee.exchangeInfo();
+			this.algo_utils = new AlgoUtils({ exchange_info });
 		} catch (error) {
 			async_error_handler(this.logger, 'Error could not pull exchange info', error);
 		}
 
 		try {
-			let exchange_info = this.exchange_info;
-			let symbol = this.pair;
-			// TODO: munge buyPrice here
-			// TODO: if x & x!=0 looks like redundant logic
 			if (typeof this.buyPrice !== 'undefined') {
 				this.buyPrice = BigNumber(this.buyPrice);
 				// buyPrice of zero is special case to denote market buy
@@ -447,7 +294,8 @@ class Algo {
 			if (this.percentages) process.exit();
 
 			this.send_message(
-				`${this.pair} New trade buy: ${this.buyPrice}, stop: ${this.stopPrice}, target: ${this.targetPrice}`
+				`${this.virtualPair} New trade buy: ${this.buyPrice}, stop: ${this.stopPrice}, target: ${this
+					.targetPrice}`
 			);
 
 			await this.monitor_user_stream();

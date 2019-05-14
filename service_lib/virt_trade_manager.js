@@ -137,51 +137,7 @@ class VirtTradeManager {
 
 	async target_price_hit() {}
 
-	async start() {
-		// let obj = this;
-		// function checkOrderFilled(data, orderFilled) {
-		// 	const { symbol, price, quantity, side, orderType, orderId, orderStatus } = data;
-		// 	obj.logger.info(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`);
-		// 	obj.logger.info(`..price: ${price}, quantity: ${quantity}`);
-		// 	if (orderStatus === 'NEW') {
-		// 		return;
-		// 	}
-		// 	if (orderStatus === 'PARTIALLY_FILLED') {
-		// 		obj.logger.info(data);
-		// 		return;
-		// 	}
-		// 	if (orderStatus !== 'FILLED') {
-		// 		throw new Error(`Order ${orderStatus}. Reason: ${data.r}`);
-		// 	}
-		// 	obj.logger.info(data);
-		// 	//orderFilled(data);
-		// }
-		// this.closeUserWebsocket = await this.ee.ws.user((data) => {
-		// 	const { orderId, eventType } = data;
-		// 	if (eventType !== 'executionReport') {
-		// 		return;
-		// 	}
-		// 	// obj.logger.info(`.ws.user recieved:`);
-		// 	// obj.logger.info(data);
-		// 	if (orderId === obj.buyOrderId) {
-		// 		checkOrderFilled(data, () => {
-		// 			obj.buyOrderId = 0;
-		// 			this.send_message(`${data.symbol} buy order filled`);
-		// 			obj.placeSellOrder();
-		// 		});
-		// 	} else if (orderId === obj.stopOrderId) {
-		// 		checkOrderFilled(data, () => {
-		// 			this.send_message(`${data.symbol} stop loss order filled`);
-		// 			obj.execution_complete(`Stop hit`, 1);
-		// 		});
-		// 	} else if (orderId === obj.targetOrderId) {
-		// 		checkOrderFilled(data, () => {
-		// 			this.send_message(`${data.symbol} target sell order filled`);
-		// 			obj.execution_complete(`Target hit`);
-		// 		});
-		// 	}
-		// });
-	}
+	async start() {}
 }
 
 module.exports = VirtTradeManager;

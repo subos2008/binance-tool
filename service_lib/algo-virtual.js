@@ -55,8 +55,24 @@ class Algo {
 		this.virtualPair = virtualPair;
 		this.intermediateCurrency = intermediateCurrency;
 
+		if (this.limitPrice) {
+			throw new Error(`limitPrice probably not implemented`);
+		}
+
 		assert(typeof this.logger === 'object', `typeof this.logger: ${typeof this.logger}`);
 		this.algo_utils = new AlgoUtils({ logger: this.logger, ee });
+
+		if (typeof this.stopPrice !== 'undefined') {
+			this.stopPrice = BigNumber(this.stopPrice);
+		}
+
+		if (typeof this.targetPrice !== 'undefined') {
+			this.targetPrice = BigNumber(this.targetPrice);
+		}
+
+		if (typeof this.buyPrice !== 'undefined') {
+			this.buyPrice = BigNumber(this.buyPrice);
+		}
 
 		assert(this.virtualPair);
 		assert(this.intermediateCurrency);
@@ -135,7 +151,6 @@ class Algo {
 
 		try {
 			if (typeof this.buyPrice !== 'undefined') {
-				this.buyPrice = BigNumber(this.buyPrice);
 				// buyPrice of zero is special case to denote market buy
 				if (!this.buyPrice.isZero()) {
 					if (typeof this.quoteAmount !== 'undefined') {
@@ -143,14 +158,6 @@ class Algo {
 						this.logger.info(`Calculated buy amount ${this.amount.toFixed()} (unmunged)`);
 					}
 				}
-			}
-
-			if (typeof this.stopPrice !== 'undefined') {
-				this.stopPrice = BigNumber(this.stopPrice);
-			}
-
-			if (typeof this.targetPrice !== 'undefined') {
-				this.targetPrice = BigNumber(this.targetPrice);
 			}
 
 			if (!this.amount && !this.auto_size) {

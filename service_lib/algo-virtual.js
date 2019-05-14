@@ -51,9 +51,9 @@ class Algo {
 		this.virtualPair = virtualPair;
 		this.intermediateCurrency = intermediateCurrency;
 
-		if (this.limitPrice) {
-			throw new Error(`limitPrice probably not implemented`);
-		}
+		assert(!this.auto_size); // not implemented
+		assert(!this.limitPrice); // not implemented
+		assert(!this.nonBnbFees); // not implemented
 
 		assert(typeof this.logger === 'object', `typeof this.logger: ${typeof this.logger}`);
 		this.algo_utils = new AlgoUtils({ logger: this.logger, ee });
@@ -88,6 +88,51 @@ class Algo {
 		this.logger.info(`ExecutionComplete: ${msg}`);
 		if (exit_code) process.exitCode = exit_code;
 		this.shutdown_streams();
+	}
+
+	async main() {
+		try {
+			this.exchange_info = await this.ee.exchangeInfo();
+			this.algo_utils.set_exchange_info(this.exchange_info);
+		} catch (error) {
+			async_error_handler(this.logger, 'Error could not pull exchange info', error);
+		}
+
+		try {
+			if (typeof this.buyPrice !== 'undefined') {
+				// buyPrice of zero is special case to denote market buy
+				if (!this.buyPrice.isZero()) {
+					if (typeof this.quoteAmount !== 'undefined') {
+						this.amount = BigNumber(this.quoteAmount).dividedBy(this.buyPrice);
+						this.logger.info(`Calculated buy amount ${this.amount.toFixed()} (unmunged)`);
+					}
+				}
+			}
+
+			if (!this.amount && !this.auto_size) {
+				let msg = 'You must specify amount with -a, -q or use --auto-size';
+				this.logger.error(msg);
+				throw new Error(msg);
+			}
+
+			this.algo_utils.calculate_percentages({
+				buyPrice: this.buyPrice,
+				stopPrice: this.stopPrice,
+				targetPrice: this.targetPrice,
+				trading_rules: this.trading_rules
+			});
+			if (this.percentages) return;
+
+			this.send_message(
+				`${this.virtualPair} New trade buy: ${this.buyPrice}, stop: ${this.stopPrice}, target: ${this
+					.targetPrice}`
+			);
+
+			await this.monitor_user_stream();
+			await this._monitor_trades_virtual();
+		} catch (error) {
+			async_error_handler(console, `exception in main loop (virtual): ${error.body}`, error);
+		}
 	}
 
 	async monitor_user_stream() {
@@ -135,51 +180,6 @@ class Algo {
 				});
 			}
 		});
-	}
-
-	async main() {
-		try {
-			this.exchange_info = await this.ee.exchangeInfo();
-			this.algo_utils.set_exchange_info(this.exchange_info);
-		} catch (error) {
-			async_error_handler(this.logger, 'Error could not pull exchange info', error);
-		}
-
-		try {
-			if (typeof this.buyPrice !== 'undefined') {
-				// buyPrice of zero is special case to denote market buy
-				if (!this.buyPrice.isZero()) {
-					if (typeof this.quoteAmount !== 'undefined') {
-						this.amount = BigNumber(this.quoteAmount).dividedBy(this.buyPrice);
-						this.logger.info(`Calculated buy amount ${this.amount.toFixed()} (unmunged)`);
-					}
-				}
-			}
-
-			if (!this.amount && !this.auto_size) {
-				let msg = 'You must specify amount with -a, -q or use --auto-size';
-				this.logger.error(msg);
-				throw new Error(msg);
-			}
-
-			this.algo_utils.calculate_percentages({
-				buyPrice: this.buyPrice,
-				stopPrice: this.stopPrice,
-				targetPrice: this.targetPrice,
-				trading_rules: this.trading_rules
-			});
-			if (this.percentages) return;
-
-			this.send_message(
-				`${this.virtualPair} New trade buy: ${this.buyPrice}, stop: ${this.stopPrice}, target: ${this
-					.targetPrice}`
-			);
-
-			await this.monitor_user_stream();
-			await this._monitor_trades_virtual();
-		} catch (error) {
-			async_error_handler(console, `exception in main loop (virtual): ${error.body}`, error);
-		}
 	}
 
 	async _monitor_trades_virtual() {

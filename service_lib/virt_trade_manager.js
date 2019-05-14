@@ -1,6 +1,7 @@
 const utils = require('../lib/utils');
 const assert = require('assert');
 const BigNumber = require('bignumber.js');
+const async_error_handler = require('../lib/async_error_handler');
 
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
@@ -9,18 +10,22 @@ BigNumber.prototype.valueOf = function() {
 };
 
 class ExchangeWrapper {
-	constructor({ ee, algo_utils } = {}) {
+	constructor({ ee, algo_utils, logger } = {}) {
 		assert(ee);
 		this.ee = ee;
 		assert(algo_utils);
 		this.algo_utils = algo_utils;
+		assert(logger);
+		this.logger = logger;
 	}
 
 	// trys and returns undefined on any issues
-	async create_immediate_buy_order(pair, limit_price, quote_amount) {
-		base_amount = utils.quote_volume_at_price_to_base_volume({
+	async create_immediate_buy_order({ pair, limit_price, quote_amount } = {}) {
+		assert(quote_amount);
+		assert(BigNumber.isBigNumber(quote_amount));
+		let base_amount = utils.quote_volume_at_price_to_base_volume({
 			quote_volume: quote_amount,
-			price: inner_limit_buy_price
+			price: limit_price
 		});
 		try {
 			base_amount = this.algo_utils.munge_amount_and_check_notionals({
@@ -28,18 +33,18 @@ class ExchangeWrapper {
 				amount: base_amount,
 				buyPrice: limit_price
 			});
-			this.ee.order({});
 		} catch (e) {
+			console.log(e);
 			return undefined;
 		}
 		try {
 			let args = {
 				useServerTime: true,
 				side: 'BUY',
-				symbol: this.pair,
+				symbol: pair,
 				type: 'LIMIT',
-				quantity: this.amount.toFixed(),
-				price: this.buyPrice.toFixed(),
+				quantity: base_amount.toFixed(),
+				price: limit_price.toFixed(),
 				timeInForce: 'IOC',
 				newOrderRespType: 'FULL'
 			};
@@ -62,7 +67,7 @@ class VirtTradeManager {
 		this.logger = logger;
 		assert(ee);
 		this.ee = ee;
-		this.ew = new ExchangeWrapper({ ee, algo_utils });
+		this.ew = new ExchangeWrapper({ ee, algo_utils, logger });
 		assert(innerPair);
 		this.innerPair = innerPair;
 		assert(outerPair);
@@ -70,6 +75,7 @@ class VirtTradeManager {
 		assert(quote_amount);
 		assert(BigNumber.isBigNumber(quote_amount));
 		this.quote_amount = quote_amount; // max we can spend
+		this.logger.info(`${this.quote_amount} to spend`);
 		this.intermediate_amount = BigNumber(0);
 		this.base_amount = BigNumber(0);
 		assert(algo_utils);
@@ -77,6 +83,10 @@ class VirtTradeManager {
 	}
 
 	async in_buy_zone({ inner_limit_buy_price, outer_limit_buy_price }) {
+		console.log(
+			`in vtm in_buy_zone: im(${this.intermediate_amount}) quote(${this.quote_amount}) ooId(${this
+				.outerOrderId}) ioId(${this.innerOrderId})`
+		);
 		if (this.intermediate_amount.isGreaterThan(0)) {
 			// we have some money to spend, first let's try and spend any intermediate we have available
 			if (!this.innerOrderId) {
@@ -88,27 +98,30 @@ class VirtTradeManager {
 						limit_price: inner_limit_buy_price,
 						quote_amount: this.intermediate_amount
 					});
-				} catch (e) {
+				} catch (error) {
 					// TODO: at least check for rate limits
-					console.log(`Error creating buy order on inner: ${e}`);
+					console.log(`Error creating buy order on inner: ${error}`);
+					async_error_handler(console, ` error: ${error.body}`, error);
 				}
 			}
-			// and let's also load up on any extra quote we can convert to intermediate
-			if (this.quote_amount.isGreaterThan(0)) {
-				if (!this.outerOrderId) {
-					try {
-						this.logger.info(`Creating outer buy order`);
-						// returns undef on fails of exchange filters
-						this.outerOrderId = await this.ew.create_immediate_buy_order({
-							pair: this.outerPair,
-							limit_price: outer_limit_buy_price,
-							quote_amount: this.quote_amount
-						});
-					} catch (e) {
-						// this can fail for many reasons, not least that we failed the exchange order filters
-						// TODO: at least check for rate limits
-						console.log(`Error creating buy order on outer`);
-					}
+		}
+		// and let's also load up on any extra quote we can convert to intermediate
+		if (this.quote_amount.isGreaterThan(0)) {
+			if (!this.outerOrderId) {
+				try {
+					this.logger.info(`Creating outer buy order for ${this.quote_amount} quote`);
+					// returns undef on fails of exchange filters
+					this.outerOrderId = await this.ew.create_immediate_buy_order({
+						pair: this.outerPair,
+						limit_price: outer_limit_buy_price,
+						quote_amount: this.quote_amount
+					});
+				} catch (error) {
+					// this can fail for many reasons, not least that we failed the exchange order filters
+					// TODO: at least check for rate limits
+					console.log(`Error creating buy order on outer`);
+					console.log(error);
+					async_error_handler(console, ` error: ${error.body}`, error);
 				}
 			}
 		}

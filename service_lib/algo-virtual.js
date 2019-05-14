@@ -170,7 +170,7 @@ class Algo {
 					try {
 						await obj.trade_manager.stop_price_hit();
 					} catch (error) {
-						async_error_handler(console, `Error during limit buy order: ${error.body}`, error);
+						async_error_handler(obj.logger, `Error during limit buy order: ${error.body}`, error);
 					}
 					return;
 				}
@@ -178,13 +178,13 @@ class Algo {
 				// TODO: holy shit we would buy below the stop price
 				if (typeof obj.buyPrice !== 'undefined' && currentPrice.isLessThanOrEqualTo(obj.buyPrice)) {
 					try {
-						console.log(`in buy zone`);
 						await obj.trade_manager.in_buy_zone({
 							inner_limit_buy_price: innerPrice, // TODO: calculate what would exactly match the buyPrice
 							outer_limit_buy_price: outerPrice // this is liquid so use current price
 						});
 					} catch (error) {
-						async_error_handler(console, `Error during limit buy order: ${error.body}`, error);
+						console.error(error);
+						async_error_handler(obj.logger, `Error during limit buy order: ${error.body}`, error);
 					}
 					return;
 				}

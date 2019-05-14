@@ -9,7 +9,7 @@ require('dotenv').config();
 // TODO: - in the original implementations
 
 const Binance = require('binance-api-node').default;
-const send_message = require('./telegram.js');
+const send_message = console.log; // require('./telegram.js');
 const Algo = require('./service_lib/algo-virtual');
 const Logger = require('./lib/faux_logger');
 const BigNumber = require('bignumber.js');

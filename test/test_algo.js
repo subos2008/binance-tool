@@ -153,6 +153,8 @@ describe('Algo', function() {
 	});
 
 	describe('when only a buyPrice and a stopPrice present', function() {
+		it('doesnt buy if price is below the stopPrice');
+
 		it('creates a stop limit sell order after the buy order hits', async function() {
 			const amount = BigNumber(1);
 			const buyPrice = BigNumber(1);
@@ -359,6 +361,7 @@ describe('Algo', function() {
 			});
 		});
 		describe('with soft entry', function() {
+			it('doesnt buy if price is below the stopPrice');
 			it('creates a limit buy order only after the buy price hits', async function() {
 				const amount = BigNumber(1);
 				const buyPrice = BigNumber(1);
@@ -678,6 +681,7 @@ describe('Algo', function() {
 	);
 
 	describe('virtual/calculated pair trading', function() {
+		it('doent buy if price is below stopPrice');
 		it('triggers when the buy price is hit', async function() {
 			const buyPrice = BigNumber('0.162');
 			const amount = BigNumber('3');

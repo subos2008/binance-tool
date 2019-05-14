@@ -12,14 +12,6 @@ BigNumber.prototype.valueOf = function() {
 	throw Error('BigNumber .valueOf called!');
 };
 
-function split_pair(pair) {
-	const [ total, base_currency, quote_currency ] = utils.break_up_binance_pair(pair);
-	return {
-		quote_currency,
-		base_currency
-	};
-}
-
 class Algo {
 	// All numbers are expected to be passed in as strings
 	constructor(
@@ -68,7 +60,7 @@ class Algo {
 		if (this.virtualPair) {
 			assert(this.intermediateCurrency);
 			this.virtualPair = this.virtualPair.toUpperCase();
-			let { quote_currency, base_currency } = split_pair(this.virtualPair);
+			let { quote_currency, base_currency } = this.algo_utils.split_pair(this.virtualPair);
 			this.innerPair = `${base_currency}${this.intermediateCurrency}`;
 			this.outerPair = `${this.intermediateCurrency}${quote_currency}`;
 			this.quote_currency = quote_currency;

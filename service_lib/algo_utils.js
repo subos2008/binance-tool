@@ -50,6 +50,14 @@ class AlgoUtils {
 			}
 		}
 	}
+
+	split_pair(pair) {
+		const [ total, base_currency, quote_currency ] = utils.break_up_binance_pair(pair);
+		return {
+			quote_currency,
+			base_currency
+		};
+	}
 }
 
 module.exports = AlgoUtils;

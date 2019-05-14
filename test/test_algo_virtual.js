@@ -91,7 +91,45 @@ describe('Virtual pair trading Algo', function() {
 			// expect(ee.quote_coin_balance_not_in_orders.isEqualTo(starting_quote_balance)).to.equal(true);
 		});
 	});
+	describe('when only a buyPrice of 0 is present', function() {
+		it.only('immediately adds a market buy of the outerPair', async function() {
+			const buyPrice = BigNumber('0.162');
+			const amount = BigNumber('3');
+			let { ee, algo } = setup({
+				algo_config: {
+					virtualPair: 'AIONUSDT',
+					intermediateCurrency: 'BTC',
+					buyPrice,
+					amount,
+					logger
+				},
+				ee_config: {
+					starting_balances: { USDT: BigNumber(20) },
+					logger
+				}
+			});
+			try {
+				// set price initially higher than the buyPrice. Probably unused code.
+				// BuyWhen AIONUSDT = 0.162, start at ~0.216. BTCUSDT of 7310, AIONBTC of 0.0000298
+				await ee.set_current_price({ symbol: 'BTCUSDT', price: '7310' });
+				await ee.set_current_price({ symbol: 'AIONBTC', price: '0.0000298' });
+				await algo.main();
+				// now lets move both currencies to hit buyPrice:
+				await ee.set_current_price({ symbol: 'BTCUSDT', price: '7500' });
+				await ee.set_current_price({ symbol: 'AIONBTC', price: '00.0000216' });
+				// test for a market buy... well let's check balances changed
+				let balances = (await ee.accountInfo()).balances;
+				// expect(balances).to.be.an('array').that.has.lengthOf(2);
+				expect(balances).to.deep.include({ asset: 'AION', free: amount.toFixed(), locked: '0' });
+				// expect(balances).to.deep.include({ asset: 'ETH', free: '202', locked: '0' });
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+		});
+		it.only('adds a market buy of the innerPair when the outerPair fills', async function() {
 
+	});
 	describe('when only a buyPrice is present', function() {
 		it.skip('doent buy if price is below stopPrice');
 		it.only('market buys when the buy price is hit', async function() {

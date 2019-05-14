@@ -19,14 +19,12 @@ class Algo {
 			ee, // binance-api-node API
 			send_message,
 			logger,
-			amount,
 			quoteAmount,
 			buyPrice,
 			stopPrice,
 			limitPrice,
 			targetPrice,
 			nonBnbFees,
-			soft_entry,
 			trading_rules,
 			auto_size,
 			percentages,
@@ -40,7 +38,6 @@ class Algo {
 
 		this.ee = ee;
 		this.send_message = send_message;
-		this.amount = amount;
 		this.quoteAmount = quoteAmount;
 		this.buyPrice = buyPrice;
 		this.stopPrice = stopPrice;
@@ -48,7 +45,6 @@ class Algo {
 		this.targetPrice = targetPrice;
 		this.nonBnbFees = nonBnbFees;
 		this.logger = logger;
-		this.soft_entry = soft_entry;
 		this.trading_rules = trading_rules;
 		this.auto_size = auto_size;
 		this.percentages = percentages;

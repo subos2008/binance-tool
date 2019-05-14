@@ -100,7 +100,9 @@ class AlgoUtils {
 		return max_portfolio_percentage_allowed_in_this_trade;
 	}
 
-	async create_market_buy_order({ pair, base_amount } = {}) {
+	async create_market_buy_order_by_quote_amount({ pair, quote_amount } = {}) {}
+
+	async create_market_buy_order_by_base_amount({ pair, base_amount } = {}) {
 		assert(pair);
 		assert(base_amount);
 		assert(BigNumber.isBigNumber(base_amount));

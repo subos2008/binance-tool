@@ -179,8 +179,8 @@ class Algo {
 				if (typeof obj.buyPrice !== 'undefined' && currentPrice.isLessThanOrEqualTo(obj.buyPrice)) {
 					try {
 						await obj.trade_manager.in_buy_zone({
-							inner_limit_buy_price: innerPrice, // TODO: calculate what would exactly match the buyPrice
-							outer_limit_buy_price: outerPrice // this is liquid so use current price
+							inner_pair_current_price: innerPrice, // TODO: calculate what would exactly match the buyPrice
+							outer_pair_current_price: outerPrice // this is liquid so use current price
 						});
 					} catch (error) {
 						console.error(error);

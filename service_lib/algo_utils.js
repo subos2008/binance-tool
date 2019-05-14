@@ -21,6 +21,10 @@ class AlgoUtils {
 		this.exchange_info = exchange_info;
 	}
 
+	munge_and_check_price({ exchange_info, symbol, price } = {}) {
+		return utils.munge_and_check_price({ exchange_info: this.exchange_info, symbol, price });
+	}
+
 	munge_amount_and_check_notionals({ pair, amount, buyPrice, stopPrice, targetPrice, limitPrice } = {}) {
 		assert(this.exchange_info);
 		if (typeof amount !== 'undefined') {

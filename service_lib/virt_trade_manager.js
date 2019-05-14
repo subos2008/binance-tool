@@ -23,11 +23,13 @@ class ExchangeWrapper {
 	async create_immediate_buy_order({ pair, limit_price, quote_amount } = {}) {
 		assert(quote_amount);
 		assert(BigNumber.isBigNumber(quote_amount));
-		let base_amount = utils.quote_volume_at_price_to_base_volume({
-			quote_volume: quote_amount,
-			price: limit_price
-		});
+		let base_amount;
 		try {
+			limit_price = this.algo_utils.munge_and_check_price({ price: limit_price.times('1.005'), symbol: pair });
+			base_amount = utils.quote_volume_at_price_to_base_volume({
+				quote_volume: quote_amount,
+				price: limit_price
+			});
 			base_amount = this.algo_utils.munge_amount_and_check_notionals({
 				pair,
 				amount: base_amount,
@@ -82,7 +84,7 @@ class VirtTradeManager {
 		this.algo_utils = algo_utils;
 	}
 
-	async in_buy_zone({ inner_limit_buy_price, outer_limit_buy_price }) {
+	async in_buy_zone({ inner_pair_current_price, outer_pair_current_price }) {
 		console.log(
 			`in vtm in_buy_zone: im(${this.intermediate_amount}) quote(${this.quote_amount}) ooId(${this
 				.outerOrderId}) ioId(${this.innerOrderId})`
@@ -95,7 +97,7 @@ class VirtTradeManager {
 					// returns undef on fails of exchange filters
 					this.innerOrderId = await this.ew.create_immediate_buy_order({
 						pair: this.innerPair,
-						limit_price: inner_limit_buy_price,
+						limit_price: inner_pair_current_price,
 						quote_amount: this.intermediate_amount
 					});
 				} catch (error) {
@@ -113,7 +115,7 @@ class VirtTradeManager {
 					// returns undef on fails of exchange filters
 					this.outerOrderId = await this.ew.create_immediate_buy_order({
 						pair: this.outerPair,
-						limit_price: outer_limit_buy_price,
+						limit_price: outer_pair_current_price,
 						quote_amount: this.quote_amount
 					});
 				} catch (error) {

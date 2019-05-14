@@ -64,6 +64,14 @@ describe('ExchangeEmulator', function() {
 		});
 	});
 
+	describe('add_market_buy_order', function() {
+		it('raises an async InsufficientBalanceError if balance_not_in_orders(default_quote_currency) is insufficient');
+		it('decreases balance_not_in_orders(default_quote_currency)');
+		it('increases balance_in_orders(default_quote_currency)');
+		it('adds a limit_buy_order to open_orders');
+		it('executes the order when the buy price is hit');
+	});
+
 	describe('add_limit_buy_order', function() {
 		it.skip(
 			'raises an async InsufficientBalanceError if balance_not_in_orders(default_quote_currency) is insufficient',
@@ -425,6 +433,7 @@ describe('ExchangeEmulator', function() {
 					});
 				});
 				it.skip('defines price and quantity in these .ws.user events');
+				it('throws Error(Account has insufficient balance for requested action.)');
 			});
 		});
 		describe('limit sell order', async function() {
@@ -517,6 +526,7 @@ describe('ExchangeEmulator', function() {
 					});
 				});
 			});
+			it('throws Error(Account has insufficient balance for requested action.)');
 		});
 		describe('STOP_LOSS_LIMIT order', async function() {
 			it('asserts pair exists');
@@ -591,6 +601,7 @@ describe('ExchangeEmulator', function() {
 				expect(response).to.have.property('orderId');
 				expect(response.orderId).to.equal(1);
 			});
+			it('throws Error(Account has insufficient balance for requested action.)');
 			it('refuses order if insufficient balance', async function() {
 				const ee = setup({
 					logger,

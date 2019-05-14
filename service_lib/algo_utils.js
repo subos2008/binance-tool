@@ -9,13 +9,16 @@ BigNumber.prototype.valueOf = function() {
 };
 
 class AlgoUtils {
-	constructor({ exchange_info, logger, ee } = {}) {
-		assert(exchange_info);
-		this.exchange_info = exchange_info;
+	constructor({ logger, ee } = {}) {
 		assert(logger);
 		this.logger = logger;
 		assert(ee);
 		this.ee = ee;
+	}
+
+	set_exchange_info(exchange_info) {
+		assert(exchange_info);
+		this.exchange_info = exchange_info;
 	}
 
 	_munge_amount_and_check_notionals({ pair, amount, buyPrice, stopPrice, targetPrice, limitPrice } = {}) {

@@ -56,6 +56,7 @@ class Algo {
 		this.intermediateCurrency = intermediateCurrency;
 
 		assert(typeof this.logger === 'object', `typeof this.logger: ${typeof this.logger}`);
+		this.algo_utils = new AlgoUtils({ logger: this.logger, ee });
 
 		assert(this.virtualPair);
 		assert(this.intermediateCurrency);
@@ -157,7 +158,7 @@ class Algo {
 	async main() {
 		try {
 			this.exchange_info = await this.ee.exchangeInfo();
-			this.algo_utils = new AlgoUtils({ exchange_info: this.exchange_info, logger: this.logger });
+			this.algo_utils.set_exchange_info(this.exchange_info);
 		} catch (error) {
 			async_error_handler(this.logger, 'Error could not pull exchange info', error);
 		}

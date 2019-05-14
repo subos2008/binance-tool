@@ -1,10 +1,21 @@
 const utils = require('../lib/utils');
 const assert = require('assert');
+const BigNumber = require('bignumber.js');
+
+BigNumber.DEBUG = true; // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function() {
+	throw Error('BigNumber .valueOf called!');
+};
 
 class AlgoUtils {
-	constructor({ exchange_info } = {}) {
+	constructor({ exchange_info, logger, ee } = {}) {
 		assert(exchange_info);
 		this.exchange_info = exchange_info;
+		assert(logger);
+		this.logger = logger;
+		assert(ee);
+		this.ee = ee;
 	}
 
 	_munge_amount_and_check_notionals({ pair, amount, buyPrice, stopPrice, targetPrice, limitPrice } = {}) {
@@ -57,6 +68,101 @@ class AlgoUtils {
 			quote_currency,
 			base_currency
 		};
+	}
+
+	async create_market_buy_order({ pair, base_amount } = {}) {
+		assert(pair);
+		assert(base_amount);
+		assert(BigNumber.isBigNumber(base_amount));
+		try {
+			let args = {
+				useServerTime: true,
+				side: 'BUY',
+				symbol: pair,
+				type: 'MARKET',
+				quantity: base_amount.toFixed()
+			};
+			this.logger.info(`Creating MARKET BUY ORDER`);
+			this.logger.info(args);
+			let response = await this.ee.order(args);
+			this.logger.info(`order id: ${response.orderId}`);
+			return response.orderId;
+		} catch (error) {
+			async_error_handler(console, `Market buy error: ${error.body}`, error);
+		}
+	}
+
+	// TODO: this is slowly hacking it's way up to returning the equivalent of the
+	// TODO: total portfolio in whatever quote currency is supplied
+	async _get_portfolio_value_from_exchange({ quote_currency } = {}) {
+		assert(quote_currency);
+		let balances, prices;
+		try {
+			let response = await this.ee.accountInfo();
+			balances = response.balances;
+		} catch (error) {
+			async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
+		}
+		try {
+			prices = await this.ee.prices();
+		} catch (error) {
+			async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
+		}
+
+		try {
+			let available = BigNumber(0), // only reflects quote_currency
+				total = BigNumber(0); // running total of all calculable asset values converted to quote_currency
+			balances.forEach((balance) => {
+				if (balance.asset === quote_currency) {
+					available = available.plus(balance.free);
+					total = total.plus(balance.free).plus(balance.locked);
+				} else {
+					// convert coin value to quote_currency if possible, else skip it
+					let pair = `${balance.asset}${quote_currency}`;
+					try {
+						if (pair in prices) {
+							let amount_held = BigNumber(balance.free).plus(balance.locked);
+							let value = amount_held.times(prices[pair]);
+							total = total.plus(value);
+						} else {
+							this.logger.warn(
+								`Non fatal error: unable to convert ${balance.asset} value to ${quote_currency}, skipping`
+							);
+						}
+					} catch (e) {
+						this.logger.warn(
+							`Non fatal error: unable to convert ${balance.asset} value to ${quote_currency}, skipping`
+						);
+					}
+				}
+			});
+			return { available, total };
+		} catch (error) {
+			async_error_handler(console, `calculating portfolio value`, error);
+		}
+	}
+
+	async _calculate_autosized_quote_volume_available(
+		{ max_portfolio_percentage_allowed_in_this_trade, quote_currency } = {}
+	) {
+		assert(max_portfolio_percentage_allowed_in_this_trade);
+		assert(BigNumber.isBigNumber(max_portfolio_percentage_allowed_in_this_trade));
+		let quote_portfolio;
+		try {
+			quote_portfolio = await this._get_portfolio_value_from_exchange({
+				quote_currency: quote_currency
+			});
+		} catch (error) {
+			async_error_handler(console, `Autosizing error during portfolio sizing: ${error.body}`, error);
+		}
+		assert(BigNumber.isBigNumber(quote_portfolio.total));
+		assert(BigNumber.isBigNumber(quote_portfolio.available));
+		let max_quote_amount_to_invest = quote_portfolio.total
+			.times(max_portfolio_percentage_allowed_in_this_trade)
+			.dividedBy(100);
+		this.logger.info(`Max allowed to invest: ${max_quote_amount_to_invest} ${quote_currency}`);
+		this.logger.info(`Available to invest: ${quote_portfolio.available} ${quote_currency}`);
+		return BigNumber.minimum(max_quote_amount_to_invest, quote_portfolio.available);
 	}
 }
 

@@ -226,11 +226,11 @@ describe('ExchangeEmulator', function() {
 		it('locks balances of open trades');
 	});
 	describe('binance-api-node API', function() {
-		async function do_limit_buy_order({ ee, price, amount } = {}) {
+		async function do_limit_buy_order({ ee, price, amount, symbol } = {}) {
 			try {
 				return await ee.order({
 					side: 'BUY',
-					symbol: default_pair,
+					symbol: symbol || default_pair,
 					type: 'LIMIT',
 					quantity: amount.toFixed(),
 					price: price.toFixed()
@@ -296,6 +296,30 @@ describe('ExchangeEmulator', function() {
 					price: price_target
 				});
 			});
+			it('sends an event to .ws.aggTrades if it is a watched pair (list)', async function() {
+				const ee = setup({
+					logger,
+					exchange_info,
+					starting_quote_balance: BigNumber(1)
+				});
+				let price_target = BigNumber('0.8');
+				let event;
+				await ee.ws.aggTrades([ default_pair, 'AIONBTC' ], (msg) => {
+					event = msg;
+				});
+				await ee.set_current_price({ symbol: default_pair, price: price_target });
+				expect(event).to.be.an('object');
+				expect(event).to.include({
+					symbol: default_pair,
+					price: price_target
+				});
+				await ee.set_current_price({ symbol: 'AIONBTC', price: price_target });
+				expect(event).to.be.an('object');
+				expect(event).to.include({
+					symbol: 'AIONBTC',
+					price: price_target
+				});
+			});
 			it.skip('doesnt send an event to .ws.aggTrades if it NOT is a watched pair');
 		});
 		describe('.cancelOrder()', async function() {
@@ -313,6 +337,17 @@ describe('ExchangeEmulator', function() {
 			it.skip('sends a CANCELLED order message to .ws.user');
 		});
 		describe('limit buy order', async function() {
+			it('asserts pair exists', async function() {
+				const ee = setup({ starting_quote_balance: BigNumber('2') });
+				try {
+					await do_limit_buy_order({ ee, amount: BigNumber('1'), price: BigNumber('1'), symbol: 'FOOBTC' });
+				} catch (e) {
+					expect(e.message).to.include('assert');
+					expect(e.message).to.include('symbol');
+					return;
+				}
+				expect.fail('Expected call to throw');
+			});
 			it('throws if it is passed price below MIN_PRICE', async function() {
 				const ee = setup({});
 				try {
@@ -393,6 +428,7 @@ describe('ExchangeEmulator', function() {
 			});
 		});
 		describe('limit sell order', async function() {
+			it('asserts pair exists');
 			it('throws if it is passed price below MIN_PRICE', async function() {
 				const ee = setup({
 					starting_base_balance: BigNumber(1)
@@ -483,6 +519,7 @@ describe('ExchangeEmulator', function() {
 			});
 		});
 		describe('STOP_LOSS_LIMIT order', async function() {
+			it('asserts pair exists');
 			it('throws if it is passed price below MIN_PRICE', async function() {
 				const ee = setup({
 					starting_base_balance: BigNumber(1)

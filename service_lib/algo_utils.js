@@ -21,7 +21,7 @@ class AlgoUtils {
 		this.exchange_info = exchange_info;
 	}
 
-	_munge_amount_and_check_notionals({ pair, amount, buyPrice, stopPrice, targetPrice, limitPrice } = {}) {
+	munge_amount_and_check_notionals({ pair, amount, buyPrice, stopPrice, targetPrice, limitPrice } = {}) {
 		assert(this.exchange_info);
 		if (typeof amount !== 'undefined') {
 			amount = utils.munge_and_check_quantity({
@@ -62,6 +62,7 @@ class AlgoUtils {
 					symbol: pair
 				});
 			}
+			return amount;
 		}
 	}
 
@@ -100,27 +101,49 @@ class AlgoUtils {
 		return max_portfolio_percentage_allowed_in_this_trade;
 	}
 
-	async create_market_buy_order_by_quote_amount({ pair, quote_amount } = {}) {}
+	// async create_market_buy_order_by_quote_amount({ pair, quote_amount } = {}) {}
 
-	async create_market_buy_order_by_base_amount({ pair, base_amount } = {}) {
-		assert(pair);
-		assert(base_amount);
-		assert(BigNumber.isBigNumber(base_amount));
+	// async create_market_buy_order_by_base_amount({ pair, base_amount } = {}) {
+	// 	assert(pair);
+	// 	assert(base_amount);
+	// 	assert(BigNumber.isBigNumber(base_amount));
+	// 	try {
+	// 		let args = {
+	// 			useServerTime: true,
+	// 			side: 'BUY',
+	// 			symbol: pair,
+	// 			type: 'MARKET',
+	// 			quantity: base_amount.toFixed()
+	// 		};
+	// 		this.logger.info(`Creating MARKET BUY ORDER`);
+	// 		this.logger.info(args);
+	// 		let response = await this.ee.order(args);
+	// 		this.logger.info(`order id: ${response.orderId}`);
+	// 		return response.orderId;
+	// 	} catch (error) {
+	// 		async_error_handler(console, `Market buy error: ${error.body}`, error);
+	// 	}
+	// }
+
+	async _create_limit_buy_order({ pair, base_amount, limit_price } = {}) {
 		try {
 			let args = {
 				useServerTime: true,
 				side: 'BUY',
-				symbol: pair,
-				type: 'MARKET',
-				quantity: base_amount.toFixed()
+				symbol: this.pair,
+				type: 'LIMIT',
+				quantity: this.amount.toFixed(),
+				price: this.buyPrice.toFixed()
+				// TODO: more args here, server time and use FULL response body
 			};
-			this.logger.info(`Creating MARKET BUY ORDER`);
+			this.logger.info(`Creating LIMIT BUY ORDER`);
 			this.logger.info(args);
 			let response = await this.ee.order(args);
+			this.logger.info('LIMIT BUY response', response);
 			this.logger.info(`order id: ${response.orderId}`);
 			return response.orderId;
 		} catch (error) {
-			async_error_handler(console, `Market buy error: ${error.body}`, error);
+			async_error_handler(console, `Buy error: ${error.body}`, error);
 		}
 	}
 

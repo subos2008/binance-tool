@@ -4,6 +4,7 @@ const StateMachine = require('javascript-state-machine');
 const BigNumber = require('bignumber.js');
 const utils = require('../lib/utils');
 const AlgoUtils = require('./algo_utils');
+const VirtualTradeManager = require('./virt_trade_manager');
 const assert = require('assert');
 
 BigNumber.DEBUG = true; // Prevent NaN
@@ -38,7 +39,7 @@ class Algo {
 
 		this.ee = ee;
 		this.send_message = send_message;
-		this.quoteAmount = quoteAmount;
+		this.quoteAmount = BigNumber(quoteAmount);
 		this.buyPrice = buyPrice;
 		this.stopPrice = stopPrice;
 		this.limitPrice = limitPrice;
@@ -68,6 +69,8 @@ class Algo {
 
 		if (typeof this.buyPrice !== 'undefined') {
 			this.buyPrice = BigNumber(this.buyPrice);
+			this.waiting_for_soft_entry_price = true;
+			assert(!this.buyPrice.isZero()); // market buys not implemented
 		}
 
 		assert(this.virtualPair);
@@ -77,6 +80,15 @@ class Algo {
 		this.innerPair = `${base_currency}${this.intermediateCurrency}`;
 		this.outerPair = `${this.intermediateCurrency}${quote_currency}`;
 		this.quote_currency = quote_currency;
+
+		this.trade_manager = new VirtualTradeManager({
+			logger,
+			ee,
+			quote_amount: this.quoteAmount,
+			innerPair: this.innerPair,
+			outerPair: this.outerPair,
+			algo_utils: this.algo_utils
+		});
 	}
 
 	shutdown_streams() {
@@ -99,18 +111,8 @@ class Algo {
 		}
 
 		try {
-			if (typeof this.buyPrice !== 'undefined') {
-				// buyPrice of zero is special case to denote market buy
-				if (!this.buyPrice.isZero()) {
-					if (typeof this.quoteAmount !== 'undefined') {
-						this.amount = BigNumber(this.quoteAmount).dividedBy(this.buyPrice);
-						this.logger.info(`Calculated buy amount ${this.amount.toFixed()} (unmunged)`);
-					}
-				}
-			}
-
-			if (!this.amount && !this.auto_size) {
-				let msg = 'You must specify amount with -a, -q or use --auto-size';
+			if (!this.quoteAmount && !this.auto_size) {
+				let msg = 'You must specify amount with -q or use --auto-size';
 				this.logger.error(msg);
 				throw new Error(msg);
 			}
@@ -128,58 +130,11 @@ class Algo {
 					.targetPrice}`
 			);
 
-			await this.monitor_user_stream();
+			await this.trade_manager.start();
 			await this._monitor_trades_virtual();
 		} catch (error) {
 			async_error_handler(console, `exception in main loop (virtual): ${error.body}`, error);
 		}
-	}
-
-	async monitor_user_stream() {
-		let obj = this;
-		function checkOrderFilled(data, orderFilled) {
-			const { symbol, price, quantity, side, orderType, orderId, orderStatus } = data;
-
-			obj.logger.info(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`);
-			obj.logger.info(`..price: ${price}, quantity: ${quantity}`);
-
-			if (orderStatus === 'NEW' || orderStatus === 'PARTIALLY_FILLED') {
-				return;
-			}
-
-			if (orderStatus !== 'FILLED') {
-				throw new Error(`Order ${orderStatus}. Reason: ${data.r}`);
-			}
-
-			orderFilled(data);
-		}
-
-		this.closeUserWebsocket = await this.ee.ws.user((data) => {
-			const { orderId, eventType } = data;
-			if (eventType !== 'executionReport') {
-				return;
-			}
-			// obj.logger.info(`.ws.user recieved:`);
-			// obj.logger.info(data);
-
-			if (orderId === obj.buyOrderId) {
-				checkOrderFilled(data, () => {
-					obj.buyOrderId = 0;
-					this.send_message(`${data.symbol} buy order filled`);
-					obj.placeSellOrder();
-				});
-			} else if (orderId === obj.stopOrderId) {
-				checkOrderFilled(data, () => {
-					this.send_message(`${data.symbol} stop loss order filled`);
-					obj.execution_complete(`Stop hit`, 1);
-				});
-			} else if (orderId === obj.targetOrderId) {
-				checkOrderFilled(data, () => {
-					this.send_message(`${data.symbol} target sell order filled`);
-					obj.execution_complete(`Target hit`);
-				});
-			}
-		});
 	}
 
 	async _monitor_trades_virtual() {
@@ -191,17 +146,15 @@ class Algo {
 			this.closeTradesWebSocket = await this.ee.ws.aggTrades([ this.innerPair, this.outerPair ], async function(
 				trade
 			) {
-				var { symbol, price } = trade;
+				var { symbol, price: symbol_price } = trade;
 				assert(symbol);
-				assert(price);
-				console.log(`Trade: ${symbol}`);
-
-				price = BigNumber(price);
+				assert(symbol_price);
+				symbol_price = BigNumber(symbol_price);
 
 				if (symbol === obj.outerPair) {
-					outerPrice = price;
+					outerPrice = symbol_price;
 				} else if (symbol === obj.innerPair) {
-					innerPrice = price;
+					innerPrice = symbol_price;
 				} else {
 					console.error(`Unexpected pair in trades stream ${pair}`);
 				}
@@ -213,15 +166,29 @@ class Algo {
 				currentPrice = innerPrice.times(outerPrice);
 				obj.logger.info(`Virtual pair price: ${currentPrice.toFixed()}`);
 
-				// 	if (waiting_for_soft_entry_price) {
+				if (typeof obj.stopPrice !== 'undefined' && currentPrice.isLessThanOrEqualTo(obj.stopPrice)) {
+					try {
+						await obj.trade_manager.stop_price_hit();
+					} catch (error) {
+						async_error_handler(console, `Error during limit buy order: ${error.body}`, error);
+					}
+					return;
+				}
+
 				// TODO: holy shit we would buy below the stop price
-				// 		if (price.isLessThanOrEqualTo(obj.buyPrice)) {
-				// 			waiting_for_soft_entry_price = false;
-				// 			obj.send_message(`${symbol} soft entry buy price hit`);
-				// 			obj.buyOrderId = await obj._create_limit_buy_order();
-				// 		}
-				// 	} else if (obj.buyOrderId) {
-				// 		// obj.logger.info(`${symbol} trade update. price: ${price} buy: ${obj.buyPrice}`);
+				if (typeof obj.buyPrice !== 'undefined' && currentPrice.isLessThanOrEqualTo(obj.buyPrice)) {
+					try {
+						console.log(`in buy zone`);
+						await obj.trade_manager.in_buy_zone({
+							inner_limit_buy_price: innerPrice, // TODO: calculate what would exactly match the buyPrice
+							outer_limit_buy_price: outerPrice // this is liquid so use current price
+						});
+					} catch (error) {
+						async_error_handler(console, `Error during limit buy order: ${error.body}`, error);
+					}
+					return;
+				}
+
 				// 	} else if (obj.stopOrderId || obj.targetOrderId) {
 				// 		// obj.logger.info(
 				// 		// 	`${symbol} trade update. price: ${price} stop: ${obj.stopPrice} target: ${obj.targetPrice}`

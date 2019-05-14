@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function() {
 };
 
 class VirtTradeManager {
-	constructor({ logger, ee, quote_amount, innerPair, outerPair, algo_utils } = {}) {
+	constructor({ logger, ee, quote_amount, innerPair, outerPair, algo_utils, slippage_percent } = {}) {
 		assert(logger);
 		this.logger = logger;
 		assert(ee);
@@ -31,10 +31,15 @@ class VirtTradeManager {
 		assert(algo_utils);
 		this.algo_utils = algo_utils;
 		this.buys_in_progress = {};
+		assert(slippage_percent);
+		assert(BigNumber.isBigNumber(slippage_percent));
+		this.slippage_percent = slippage_percent; // percent i.e. 1
 	}
 
 	async attempt_buy({ name, current_price, quote_amount } = {}) {
 		assert(name);
+		let slippage_factor = this.slippage_percent.div(100).plus(1);
+		current_price = current_price.times(slippage_factor);
 		if (!this.ew.is_tradeable_quote_amount({ pair: this.pairs[name], limit_price: current_price, quote_amount })) {
 			console.log(`${name} too small to trade`);
 			return false;
@@ -68,12 +73,31 @@ class VirtTradeManager {
 	// there's no orders to cancel if this thing goes batshit
 	// there's no rate limiting
 	// doens't close on exit or soft_exit
+
+	// return true if it can't afford to buy any more
 	async in_buy_zone({ inner_pair_current_price, outer_pair_current_price }) {
 		console.log(
 			`in_buy_zone: base(${this.base_amount}) im(${this.intermediate_amount}) quote(${this
 				.quote_amount}) buys: [${Object.keys(this.buys_in_progress).join(', ')}]`
 		);
-		if (this.intermediate_amount.isGreaterThan(0)) {
+
+		let inner_is_a_tradeable_amount = this.ew.is_tradeable_quote_amount({
+			pair: this.pairs['inner'],
+			limit_price: inner_pair_current_price,
+			quote_amount: this.intermediate_amount
+		});
+
+		let outer_is_a_tradeable_amount = this.ew.is_tradeable_quote_amount({
+			pair: this.pairs['outer'],
+			limit_price: outer_pair_current_price,
+			quote_amount: this.quote_amount
+		});
+
+		if (!inner_is_a_tradeable_amount && !outer_is_a_tradeable_amount) {
+			return true; // buy filled
+		}
+
+		if (inner_is_a_tradeable_amount) {
 			try {
 				// we have some money to spend, first let's try and spend any intermediate we have available
 				let response = await this.attempt_buy({
@@ -90,7 +114,7 @@ class VirtTradeManager {
 			}
 		}
 		// and let's also load up on any extra quote we can convert to intermediate
-		if (this.quote_amount.isGreaterThan(0)) {
+		if (outer_is_a_tradeable_amount) {
 			try {
 				// we have some money to spend, first let's try and spend any intermediate we have available
 				let response = await this.attempt_buy({
@@ -106,6 +130,7 @@ class VirtTradeManager {
 				async_error_handler(this.logger, ` error: ${error.body}`, error);
 			}
 		}
+		return false;
 	}
 
 	async stop_price_hit() {}
@@ -113,57 +138,49 @@ class VirtTradeManager {
 	async target_price_hit() {}
 
 	async start() {
-		let obj = this;
-		function checkOrderFilled(data, orderFilled) {
-			const { symbol, price, quantity, side, orderType, orderId, orderStatus } = data;
-
-			obj.logger.info(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`);
-			obj.logger.info(`..price: ${price}, quantity: ${quantity}`);
-
-			if (orderStatus === 'NEW') {
-				return;
-			}
-
-			if (orderStatus === 'PARTIALLY_FILLED') {
-				obj.logger.info(data);
-				return;
-			}
-
-			if (orderStatus !== 'FILLED') {
-				throw new Error(`Order ${orderStatus}. Reason: ${data.r}`);
-			}
-
-			obj.logger.info(data);
-
-			//orderFilled(data);
-		}
-
-		this.closeUserWebsocket = await this.ee.ws.user((data) => {
-			const { orderId, eventType } = data;
-			if (eventType !== 'executionReport') {
-				return;
-			}
-			// obj.logger.info(`.ws.user recieved:`);
-			// obj.logger.info(data);
-
-			if (orderId === obj.buyOrderId) {
-				checkOrderFilled(data, () => {
-					obj.buyOrderId = 0;
-					this.send_message(`${data.symbol} buy order filled`);
-					obj.placeSellOrder();
-				});
-			} else if (orderId === obj.stopOrderId) {
-				checkOrderFilled(data, () => {
-					this.send_message(`${data.symbol} stop loss order filled`);
-					obj.execution_complete(`Stop hit`, 1);
-				});
-			} else if (orderId === obj.targetOrderId) {
-				checkOrderFilled(data, () => {
-					this.send_message(`${data.symbol} target sell order filled`);
-					obj.execution_complete(`Target hit`);
-				});
-			}
-		});
+		// let obj = this;
+		// function checkOrderFilled(data, orderFilled) {
+		// 	const { symbol, price, quantity, side, orderType, orderId, orderStatus } = data;
+		// 	obj.logger.info(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`);
+		// 	obj.logger.info(`..price: ${price}, quantity: ${quantity}`);
+		// 	if (orderStatus === 'NEW') {
+		// 		return;
+		// 	}
+		// 	if (orderStatus === 'PARTIALLY_FILLED') {
+		// 		obj.logger.info(data);
+		// 		return;
+		// 	}
+		// 	if (orderStatus !== 'FILLED') {
+		// 		throw new Error(`Order ${orderStatus}. Reason: ${data.r}`);
+		// 	}
+		// 	obj.logger.info(data);
+		// 	//orderFilled(data);
+		// }
+		// this.closeUserWebsocket = await this.ee.ws.user((data) => {
+		// 	const { orderId, eventType } = data;
+		// 	if (eventType !== 'executionReport') {
+		// 		return;
+		// 	}
+		// 	// obj.logger.info(`.ws.user recieved:`);
+		// 	// obj.logger.info(data);
+		// 	if (orderId === obj.buyOrderId) {
+		// 		checkOrderFilled(data, () => {
+		// 			obj.buyOrderId = 0;
+		// 			this.send_message(`${data.symbol} buy order filled`);
+		// 			obj.placeSellOrder();
+		// 		});
+		// 	} else if (orderId === obj.stopOrderId) {
+		// 		checkOrderFilled(data, () => {
+		// 			this.send_message(`${data.symbol} stop loss order filled`);
+		// 			obj.execution_complete(`Stop hit`, 1);
+		// 		});
+		// 	} else if (orderId === obj.targetOrderId) {
+		// 		checkOrderFilled(data, () => {
+		// 			this.send_message(`${data.symbol} target sell order filled`);
+		// 			obj.execution_complete(`Target hit`);
+		// 		});
+		// 	}
+		// });
 	}
 }
 

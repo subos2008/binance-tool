@@ -30,7 +30,8 @@ class Algo {
 			auto_size,
 			percentages,
 			virtualPair,
-			intermediateCurrency
+			intermediateCurrency,
+			slippage_percent
 		} = {}
 	) {
 		assert(logger);
@@ -81,13 +82,18 @@ class Algo {
 		this.outerPair = `${this.intermediateCurrency}${quote_currency}`;
 		this.quote_currency = quote_currency;
 
+		assert(slippage_percent);
+		assert(BigNumber.isBigNumber(slippage_percent));
+		this.slippage_percent = slippage_percent; // percent i.e. 1
+
 		this.trade_manager = new VirtualTradeManager({
 			logger,
 			ee,
 			quote_amount: this.quoteAmount,
 			innerPair: this.innerPair,
 			outerPair: this.outerPair,
-			algo_utils: this.algo_utils
+			algo_utils: this.algo_utils,
+			slippage_percent
 		});
 	}
 
@@ -142,7 +148,10 @@ class Algo {
 			let obj = this;
 			assert(this.innerPair);
 			assert(this.outerPair);
-			let innerPrice, outerPrice, currentPrice;
+			let innerPrice,
+				outerPrice,
+				currentPrice,
+				buy_complete = false;
 			this.closeTradesWebSocket = await this.ee.ws.aggTrades([ this.innerPair, this.outerPair ], async function(
 				trade
 			) {
@@ -166,6 +175,7 @@ class Algo {
 				currentPrice = innerPrice.times(outerPrice);
 				obj.logger.info(`Virtual pair price: ${currentPrice.toFixed()}`);
 
+				// TODO: finish implementing
 				if (typeof obj.stopPrice !== 'undefined' && currentPrice.isLessThanOrEqualTo(obj.stopPrice)) {
 					try {
 						await obj.trade_manager.stop_price_hit();
@@ -175,13 +185,22 @@ class Algo {
 					return;
 				}
 
-				// TODO: holy shit we would buy below the stop price
-				if (typeof obj.buyPrice !== 'undefined' && currentPrice.isLessThanOrEqualTo(obj.buyPrice)) {
+				if (
+					typeof obj.buyPrice !== 'undefined' &&
+					!buy_complete &&
+					currentPrice.isLessThanOrEqualTo(obj.buyPrice)
+				) {
 					try {
-						await obj.trade_manager.in_buy_zone({
+						buy_complete = await obj.trade_manager.in_buy_zone({
 							inner_pair_current_price: innerPrice, // TODO: calculate what would exactly match the buyPrice
 							outer_pair_current_price: outerPrice // this is liquid so use current price
 						});
+						if (buy_complete) {
+							obj.send_message(`${obj.virtualPair} (virt) buy complete`);
+							if (!obj.stopPrice && !obj.targetPrice) {
+								obj.execution_complete(`exiting buy complete`);
+							}
+						}
 					} catch (error) {
 						console.error(error);
 						async_error_handler(obj.logger, `Error during limit buy order: ${error.body}`, error);

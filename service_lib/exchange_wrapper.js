@@ -21,7 +21,7 @@ class ExchangeWrapper {
 
 	is_tradeable_quote_amount({ pair, limit_price, quote_amount } = {}) {
 		try {
-			limit_price = this.algo_utils.munge_and_check_price({ price: limit_price.times('1.005'), symbol: pair });
+			limit_price = this.algo_utils.munge_and_check_price({ price: limit_price, symbol: pair });
 			let base_amount = utils.quote_volume_at_price_to_base_volume({
 				quote_volume: quote_amount,
 				price: limit_price
@@ -45,7 +45,7 @@ class ExchangeWrapper {
 		assert(BigNumber.isBigNumber(quote_amount));
 		let base_amount;
 		try {
-			limit_price = this.algo_utils.munge_and_check_price({ price: limit_price.times('1.005'), symbol: pair });
+			limit_price = this.algo_utils.munge_and_check_price({ price: limit_price, symbol: pair });
 			base_amount = utils.quote_volume_at_price_to_base_volume({
 				quote_volume: quote_amount,
 				price: limit_price

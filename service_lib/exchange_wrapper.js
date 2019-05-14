@@ -19,6 +19,26 @@ class ExchangeWrapper {
 		this.logger = logger;
 	}
 
+	is_tradeable_quote_amount({ pair, limit_price, quote_amount } = {}) {
+		try {
+			limit_price = this.algo_utils.munge_and_check_price({ price: limit_price.times('1.005'), symbol: pair });
+			let base_amount = utils.quote_volume_at_price_to_base_volume({
+				quote_volume: quote_amount,
+				price: limit_price
+			});
+			base_amount = this.algo_utils.munge_amount_and_check_notionals({
+				pair,
+				amount: base_amount,
+				buyPrice: limit_price
+			});
+			return true;
+		} catch (e) {
+			if (e.toString().includes('MIN_NOTIONAL')) return false;
+			if (e.toString().includes('LOT_SIZE')) return false;
+			throw e;
+		}
+	}
+
 	// trys and returns undefined on any issues
 	async create_immediate_buy_order({ pair, limit_price, quote_amount } = {}) {
 		assert(quote_amount);
@@ -37,7 +57,7 @@ class ExchangeWrapper {
 			});
 		} catch (e) {
 			console.log(e);
-			return undefined;
+			throw e;
 		}
 		try {
 			let args = {
@@ -56,7 +76,7 @@ class ExchangeWrapper {
 			this.logger.info('LIMIT BUY response:');
 			this.logger.info(response);
 			this.logger.info(`order id: ${response.orderId}`);
-			return response.orderId;
+			return response;
 		} catch (error) {
 			async_error_handler(console, `Buy error: ${error.body}`, error);
 		}

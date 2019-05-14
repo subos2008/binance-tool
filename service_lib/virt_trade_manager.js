@@ -17,10 +17,11 @@ class VirtTradeManager {
 		assert(ee);
 		this.ee = ee;
 		this.ew = new ExchangeWrapper({ ee, algo_utils, logger });
+		this.pairs = {};
 		assert(innerPair);
-		this.innerPair = innerPair;
+		this.pairs.inner = innerPair;
 		assert(outerPair);
-		this.outerPair = outerPair;
+		this.pairs.outer = outerPair;
 		assert(quote_amount);
 		assert(BigNumber.isBigNumber(quote_amount));
 		this.quote_amount = quote_amount; // max we can spend
@@ -29,49 +30,80 @@ class VirtTradeManager {
 		this.base_amount = BigNumber(0);
 		assert(algo_utils);
 		this.algo_utils = algo_utils;
+		this.buys_in_progress = {};
 	}
 
+	async attempt_buy({ name, current_price, quote_amount } = {}) {
+		assert(name);
+		if (!this.ew.is_tradeable_quote_amount({ pair: this.pairs[name], limit_price: current_price, quote_amount })) {
+			console.log(`${name} too small to trade`);
+			return false;
+		}
+		if (this.buys_in_progress[name]) {
+			console.log(`${name} buy already in progress`);
+			return false;
+		}
+
+		try {
+			this.logger.info(`Creating ${name} buy order`);
+			// returns undef on fails of exchange filters
+			this.buys_in_progress[name] = true;
+			let response = await this.ew.create_immediate_buy_order({
+				pair: this.pairs[name],
+				limit_price: current_price,
+				quote_amount
+			});
+			assert('cummulativeQuoteQty' in response);
+			assert('executedQty' in response);
+			this.buys_in_progress[name] = false;
+			return response;
+		} catch (error) {
+			// TODO: at least check for rate limits
+			console.log(`Error creating buy order on inner: ${error}`);
+			async_error_handler(console, ` error: ${error.body}`, error);
+		}
+	}
+
+	// TODO: how would it respond if I sell some coin it thinks it is managing?
+	// there's no orders to cancel if this thing goes batshit
+	// there's no rate limiting
+	// doens't close on exit or soft_exit
 	async in_buy_zone({ inner_pair_current_price, outer_pair_current_price }) {
 		console.log(
-			`in vtm in_buy_zone: im(${this.intermediate_amount}) quote(${this.quote_amount}) ooId(${this
-				.outerOrderId}) ioId(${this.innerOrderId})`
+			`in_buy_zone: base(${this.base_amount}) im(${this.intermediate_amount}) quote(${this
+				.quote_amount}) buys: [${Object.keys(this.buys_in_progress).join(', ')}]`
 		);
 		if (this.intermediate_amount.isGreaterThan(0)) {
-			// we have some money to spend, first let's try and spend any intermediate we have available
-			if (!this.innerOrderId) {
-				try {
-					this.logger.info(`Creating inner buy order`);
-					// returns undef on fails of exchange filters
-					this.innerOrderId = await this.ew.create_immediate_buy_order({
-						pair: this.innerPair,
-						limit_price: inner_pair_current_price,
-						quote_amount: this.intermediate_amount
-					});
-				} catch (error) {
-					// TODO: at least check for rate limits
-					console.log(`Error creating buy order on inner: ${error}`);
-					async_error_handler(console, ` error: ${error.body}`, error);
+			try {
+				// we have some money to spend, first let's try and spend any intermediate we have available
+				let response = await this.attempt_buy({
+					current_price: inner_pair_current_price,
+					name: 'inner',
+					quote_amount: this.intermediate_amount
+				});
+				if (response !== false) {
+					this.intermediate_amount = this.intermediate_amount.minus(response.cummulativeQuoteQty);
+					this.base_amount = this.base_amount.plus(response.executedQty);
 				}
+			} catch (error) {
+				async_error_handler(this.logger, ` error: ${error.body}`, error);
 			}
 		}
 		// and let's also load up on any extra quote we can convert to intermediate
 		if (this.quote_amount.isGreaterThan(0)) {
-			if (!this.outerOrderId) {
-				try {
-					this.logger.info(`Creating outer buy order for ${this.quote_amount} quote`);
-					// returns undef on fails of exchange filters
-					this.outerOrderId = await this.ew.create_immediate_buy_order({
-						pair: this.outerPair,
-						limit_price: outer_pair_current_price,
-						quote_amount: this.quote_amount
-					});
-				} catch (error) {
-					// this can fail for many reasons, not least that we failed the exchange order filters
-					// TODO: at least check for rate limits
-					console.log(`Error creating buy order on outer`);
-					console.log(error);
-					async_error_handler(console, ` error: ${error.body}`, error);
+			try {
+				// we have some money to spend, first let's try and spend any intermediate we have available
+				let response = await this.attempt_buy({
+					current_price: outer_pair_current_price,
+					name: 'outer',
+					quote_amount: this.quote_amount
+				});
+				if (response !== false) {
+					this.quote_amount = this.quote_amount.minus(response.cummulativeQuoteQty);
+					this.intermediate_amount = this.intermediate_amount.plus(response.executedQty);
 				}
+			} catch (error) {
+				async_error_handler(this.logger, ` error: ${error.body}`, error);
 			}
 		}
 	}

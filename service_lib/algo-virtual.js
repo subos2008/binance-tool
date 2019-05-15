@@ -40,6 +40,7 @@ class Algo {
 
 		this.ee = ee;
 		this.send_message = send_message;
+		assert(quoteAmount);
 		this.quoteAmount = BigNumber(quoteAmount);
 		this.buyPrice = buyPrice;
 		this.stopPrice = stopPrice;

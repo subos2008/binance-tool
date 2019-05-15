@@ -122,6 +122,10 @@ const algo = new Algo({
 	percentages,
 	slippage_percent: BigNumber('1')
 });
+
+const execSync = require('child_process').execSync;
+code = execSync('date -u >&2');
+
 algo
 	.main()
 	.then(() => {

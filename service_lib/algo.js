@@ -145,14 +145,14 @@ class Algo {
 							let value = amount_held.times(prices[pair]);
 							total = total.plus(value);
 						} else {
-							this.logger.warn(
-								`Non fatal error: unable to convert ${balance.asset} value to ${quote_currency}, skipping`
-							);
+							// this.logger.warn(
+							// 	`Non fatal error: unable to convert ${balance.asset} value to ${quote_currency}, skipping`
+							// );
 						}
 					} catch (e) {
-						this.logger.warn(
-							`Non fatal error: unable to convert ${balance.asset} value to ${quote_currency}, skipping`
-						);
+						// this.logger.warn(
+						// 	`Non fatal error: unable to convert ${balance.asset} value to ${quote_currency}, skipping`
+						// );
 					}
 				}
 			});

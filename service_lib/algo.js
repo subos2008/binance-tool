@@ -488,6 +488,7 @@ class Algo {
 						// 	`${symbol} trade update. price: ${price} stop: ${obj.stopPrice} target: ${obj.targetPrice}`
 						// );
 						if (
+							typeof obj.targetPrice !== 'undefined' &&
 							obj.stopOrderId &&
 							!obj.targetOrderId &&
 							price.isGreaterThanOrEqualTo(obj.targetPrice) &&

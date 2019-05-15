@@ -151,6 +151,11 @@ describe('Algo', function() {
 	});
 
 	describe('when only a buyPrice and a stopPrice present', function() {
+		describe('with soft_entry', function() {
+			// the code assumed if(soft_entry) then targetPrice was assumed to be defined
+			it('doesnt error from assuming a targetPrice is specified');
+		});
+
 		it('creates a stop limit sell order after the buy order hits', async function() {
 			const amount = BigNumber(1);
 			const buyPrice = BigNumber(1);

@@ -436,14 +436,21 @@ class Algo {
 			}
 			if (this.percentages) process.exit();
 
-			this.send_message(
-				`${this.pair} New trade buy: ${this.buyPrice}, stop: ${this.stopPrice}, target: ${this.targetPrice}`
-			);
-
+			let buy_msg = this.buyPrice ? `buy: ${this.buyPrice}` : '';
+			let stop_msg = this.stopPrice ? `stop: ${this.stopPrice}` : '';
+			let target_msg = this.targetPrice ? `target: ${this.targetPrice}` : '';
+			this.send_message(`${this.pair} New trade: ${buy_msg} ${stop_msg} ${target_msg}`);
+			process.exit();
 			await this.monitor_user_stream();
 
 			const NON_BNB_TRADING_FEE = BigNumber('0.001'); // TODO: err why is this unused
+		} catch (error) {
+			this.logger.error(error);
+			throw new Error('exception in setup code');
+			// async_error_handler(undefined, `exception in setup code: ${error.body}`, error);
+		}
 
+		try {
 			let waiting_for_soft_entry_price = false;
 			if (typeof this.buyPrice !== 'undefined') {
 				if (this.buyPrice.isZero()) {

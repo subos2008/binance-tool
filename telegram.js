@@ -19,7 +19,7 @@ if (process.env.TELEGRAM_KEY && process.env.TELEGRAM_CHAT_ID) {
 		try {
 			const url = new URL(`https://api.telegram.org/bot${process.env.TELEGRAM_KEY}/sendMessage`);
 			url.searchParams.append('chat_id', process.env.TELEGRAM_CHAT_ID);
-			url.searchParams.append('text', `binance-oco: ${message}`);
+			url.searchParams.append('text', `binance-tool: ${message}`);
 			const response = await fetch(url);
 			// const json = await response.json();
 			// console.log(json);

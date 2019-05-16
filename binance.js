@@ -128,6 +128,8 @@ algo
 	.catch((error) => {
 		if (error.name && error.name === 'FetchError') {
 			logger.error(`${error.name}: Likely unable to connect to Binance and/or Telegram: ${error}`);
+		} else if (error.message && error.message.includes('exception in setup code')) {
+			logger.error(`Error setting up trade, exiting.`);
 		} else {
 			logger.error(`Error in main loop: ${error}`);
 			logger.error(error);

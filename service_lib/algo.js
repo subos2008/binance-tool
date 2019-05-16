@@ -427,8 +427,13 @@ class Algo {
 			this._munge_amount_and_check_notionals();
 
 			this.calculate_percentages();
-			// trigger printing out the current status
-			await this._calculate_autosized_quote_volume_available();
+			try {
+				// trigger printing out the current status
+				let qv = await this._calculate_autosized_quote_volume_available();
+				console.log(`Would currently invest ${qv} ${this.quote_currency}`);
+			} catch (e) {
+				/* do nothing */
+			}
 			if (this.percentages) process.exit();
 
 			this.send_message(

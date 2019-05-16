@@ -581,16 +581,13 @@ describe('Algo', function() {
 		// needs buyPrice, stopPrice, trading_rules. soft_entry?
 		it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
 		it('knows something about trading fees and if that affects the amount if there isnt enough BNB');
-		it(
-			'exits if auto-size is specified without soft entry? soft_entry is needed atm I think. have a second test without soft entry'
-		);
 		describe('without buyPrice (market buy mode)', function() {
 			it('uses current price');
 			it('throws an assert until implemented');
 		});
 
 		describe('without soft_entry', function() {
-			it('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
+			it('creates buy order for the max amount to buy based on portfolio value and stop_percentage', async function() {
 				const buyPrice = BigNumber(1);
 				const stopPrice = buyPrice.times('0.98');
 				const trading_rules = {
@@ -619,11 +616,12 @@ describe('Algo', function() {
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('BUY');
 				expect(ee.open_orders[0].origQty).to.bignumber.equal('0.5');
+				expect(ee.open_orders[0].price).to.bignumber.equal(buyPrice);
 			});
 		});
 
 		describe('with soft_entry', function() {
-			it('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
+			it('creates buy order for the max amount to buy based on portfolio value and stop_percentage', async function() {
 				const buyPrice = BigNumber(1);
 				const stopPrice = buyPrice.times('0.98');
 				const trading_rules = {

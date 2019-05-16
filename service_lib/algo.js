@@ -427,6 +427,8 @@ class Algo {
 			this._munge_amount_and_check_notionals();
 
 			this.calculate_percentages();
+			// trigger printing out the current status
+			await this._calculate_autosized_quote_volume_available();
 			if (this.percentages) process.exit();
 
 			this.send_message(

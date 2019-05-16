@@ -412,8 +412,8 @@ class Algo {
 
 			// TODO: calculating non soft_entry auto_size amount should go somewhere around here
 
-			if (this.auto_size && !this.soft_entry) {
-				let msg = 'auto-size may not work without soft-entry';
+			if (this.auto_size && (!this.buyPrice || this.buyPrice.isZero())) {
+				let msg = 'auto-size may not work without specifice buyPrice';
 				this.logger.error(msg);
 				throw new Error(msg);
 			}

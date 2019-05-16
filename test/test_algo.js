@@ -584,7 +584,45 @@ describe('Algo', function() {
 		it(
 			'exits if auto-size is specified without soft entry? soft_entry is needed atm I think. have a second test without soft entry'
 		);
-		describe('with only quote balance', function() {
+		describe('without buyPrice (market buy mode)', function() {
+			it('uses current price');
+			it('throws an assert until implemented');
+		});
+
+		describe('without soft_entry', function() {
+			it('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
+				const buyPrice = BigNumber(1);
+				const stopPrice = buyPrice.times('0.98');
+				const trading_rules = {
+					max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
+				};
+				let { ee, algo } = setup({
+					algo_config: {
+						pair: default_pair,
+						buyPrice,
+						stopPrice,
+						trading_rules,
+						auto_size: true
+					},
+					ee_config: {
+						starting_quote_balance: BigNumber(1)
+					}
+				});
+				try {
+					await algo.main();
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				// check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
+				expect(ee.open_orders).to.have.lengthOf(1);
+				expect(ee.open_orders[0].type).to.equal('LIMIT');
+				expect(ee.open_orders[0].side).to.equal('BUY');
+				expect(ee.open_orders[0].origQty).to.bignumber.equal('0.5');
+			});
+		});
+
+		describe('with soft_entry', function() {
 			it('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
 				const buyPrice = BigNumber(1);
 				const stopPrice = buyPrice.times('0.98');
@@ -617,43 +655,43 @@ describe('Algo', function() {
 				expect(ee.open_orders[0].side).to.equal('BUY');
 				expect(ee.open_orders[0].origQty).to.bignumber.equal('0.5');
 			});
-		});
-		describe('with base balances too (hack: using default base currency)', function() {
-			it('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
-				const buyPrice = BigNumber(4);
-				const stopPrice = buyPrice.times('0.96');
-				const trading_rules = {
-					max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
-				};
-				let { ee, algo } = setup({
-					algo_config: {
-						pair: default_pair,
-						buyPrice,
-						stopPrice,
-						trading_rules,
-						soft_entry: true,
-						auto_size: true
-					},
-					ee_config: {
-						starting_quote_balance: BigNumber(20),
-						starting_base_balance: BigNumber(10) // where exchange has an ETHBTC pair
-						// TODO: add another pairing rather than the default_pair. NB needs EE refactor
+			describe('with base balances too (hack: using default base currency)', function() {
+				it('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
+					const buyPrice = BigNumber(4);
+					const stopPrice = buyPrice.times('0.96');
+					const trading_rules = {
+						max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
+					};
+					let { ee, algo } = setup({
+						algo_config: {
+							pair: default_pair,
+							buyPrice,
+							stopPrice,
+							trading_rules,
+							soft_entry: true,
+							auto_size: true
+						},
+						ee_config: {
+							starting_quote_balance: BigNumber(20),
+							starting_base_balance: BigNumber(10) // where exchange has an ETHBTC pair
+							// TODO: add another pairing rather than the default_pair. NB needs EE refactor
+						}
+					});
+					try {
+						await algo.main();
+						await ee.set_current_price({ symbol: default_pair, price: buyPrice }); // once to trigger soft entry
+					} catch (e) {
+						console.log(e);
+						expect.fail('should not get here: expected call not to throw');
 					}
+					// check for a buy order placed at an appropriate size: 4% stop and 1% max loss => 25% of portfolio
+					// Base value is 4 * 10 = 40, plus 20 quote = 60. 25% of 60 is 15. So, less than available quote.
+					expect(ee.open_orders).to.have.lengthOf(1);
+					expect(ee.open_orders[0].type).to.equal('LIMIT');
+					expect(ee.open_orders[0].side).to.equal('BUY');
+					let base_quantity = BigNumber(15).dividedBy(buyPrice);
+					expect(ee.open_orders[0].origQty).to.bignumber.equal(base_quantity);
 				});
-				try {
-					await algo.main();
-					await ee.set_current_price({ symbol: default_pair, price: buyPrice }); // once to trigger soft entry
-				} catch (e) {
-					console.log(e);
-					expect.fail('should not get here: expected call not to throw');
-				}
-				// check for a buy order placed at an appropriate size: 4% stop and 1% max loss => 25% of portfolio
-				// Base value is 4 * 10 = 40, plus 20 quote = 60. 25% of 60 is 15. So, less than available quote.
-				expect(ee.open_orders).to.have.lengthOf(1);
-				expect(ee.open_orders[0].type).to.equal('LIMIT');
-				expect(ee.open_orders[0].side).to.equal('BUY');
-				let base_quantity = BigNumber(15).dividedBy(buyPrice);
-				expect(ee.open_orders[0].origQty).to.bignumber.equal(base_quantity);
 			});
 		});
 		it('handles attempted trades below the min notional cleanly');

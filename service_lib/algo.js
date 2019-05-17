@@ -54,6 +54,9 @@ class Algo {
 
 		this.pair = this.pair.toUpperCase();
 		this.quote_currency = utils.quote_currency_for_binance_pair(this.pair);
+		if (buyPrice && stopPrice) assert(BigNumber(stopPrice).isLessThan(buyPrice));
+		if (targetPrice && buyPrice) assert(BigNumber(targetPrice).isGreaterThan(buyPrice));
+		if (targetPrice && stopPrice) assert(BigNumber(targetPrice).isGreaterThan(stopPrice));
 	}
 
 	calculate_percentages() {

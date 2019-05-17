@@ -20,6 +20,13 @@ const trading_rules = {
 	max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
 };
 
+// either
+// * we buy them at 20-25% in 30m
+// * we stop trading if btc has moved too much in an hour
+// ... what? Se can sell back to usd on upward BTC swings though. and we can buy btc drops... not sure how this would play out
+//   definitely need to be setting limit buy orders on the buy side.
+console.error(`Warning: we must be immune to sudden btc price swings.`);
+
 const { argv } = require('yargs')
 	.usage('Usage: $0')
 	.example(

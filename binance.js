@@ -116,7 +116,6 @@ const algo = new Algo({
 	percentages
 });
 
-console.log('foo');
 const execSync = require('child_process').execSync;
 code = execSync('date -u >&2');
 

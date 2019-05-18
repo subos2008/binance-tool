@@ -49,7 +49,7 @@ const { argv } = require('yargs')
 	.string('q')
 	.alias('q', 'amountquote')
 	.describe('q', 'Set amount to buy in quote coin (alternative to -a for limit buy orders only)')
-	// '-b <buyPrice>'
+	// '-b <buy_price>'
 	.string('b')
 	.alias('b', 'buy')
 	.alias('b', 'e')
@@ -63,7 +63,7 @@ const { argv } = require('yargs')
 	.string('l')
 	.alias('l', 'limit')
 	.describe('l', 'Set sell stop-limit order limit price (if different from stop price)')
-	// '-t <targetPrice>'
+	// '-t <target_price>'
 	.string('t')
 	.alias('t', 'target')
 	.describe('t', 'Set target limit order sell price')
@@ -90,18 +90,18 @@ let {
 	i: intermediateCurrency,
 	a: amount,
 	q: quoteAmount,
-	b: buyPrice,
+	b: buy_price,
 	s: stopPrice,
 	l: limitPrice,
-	t: targetPrice,
+	t: target_price,
 	F: nonBnbFees,
 	'soft-entry': soft_entry,
 	'auto-size': auto_size,
 	percentages: percentages
 } = argv;
 
-if (this.buyPrice === '') {
-	this.buyPrice = '0';
+if (this.buy_price === '') {
+	this.buy_price = '0';
 }
 
 const binance_client = Binance({
@@ -118,10 +118,10 @@ const algo = new Algo({
 	intermediateCurrency,
 	amount,
 	quoteAmount,
-	buyPrice,
+	buy_price,
 	stopPrice,
 	limitPrice,
-	targetPrice,
+	target_price,
 	nonBnbFees,
 	soft_entry,
 	trading_rules,

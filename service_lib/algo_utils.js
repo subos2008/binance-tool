@@ -25,7 +25,7 @@ class AlgoUtils {
 		return utils.munge_and_check_price({ exchange_info: this.exchange_info, symbol, price });
 	}
 
-	munge_amount_and_check_notionals({ pair, amount, buyPrice, stopPrice, targetPrice, limitPrice } = {}) {
+	munge_amount_and_check_notionals({ pair, amount, buy_price, stopPrice, target_price, limitPrice } = {}) {
 		assert(this.exchange_info);
 		assert(pair);
 		if (typeof amount !== 'undefined') {
@@ -35,9 +35,9 @@ class AlgoUtils {
 				volume: amount
 			});
 
-			if (typeof buyPrice !== 'undefined') {
+			if (typeof buy_price !== 'undefined') {
 				utils.check_notional({
-					price: buyPrice,
+					price: buy_price,
 					volume: amount,
 					exchange_info: this.exchange_info,
 					symbol: pair
@@ -51,9 +51,9 @@ class AlgoUtils {
 					symbol: pair
 				});
 			}
-			if (typeof targetPrice !== 'undefined') {
+			if (typeof target_price !== 'undefined') {
 				utils.check_notional({
-					price: targetPrice,
+					price: target_price,
 					volume: amount,
 					exchange_info: this.exchange_info,
 					symbol: pair
@@ -79,15 +79,15 @@ class AlgoUtils {
 		};
 	}
 
-	calculate_percentages({ buyPrice, stopPrice, targetPrice, trading_rules } = {}) {
+	calculate_percentages({ buy_price, stopPrice, target_price, trading_rules } = {}) {
 		let stop_percentage, target_percentage, max_portfolio_percentage_allowed_in_this_trade;
-		if (buyPrice && stopPrice) {
-			stop_percentage = BigNumber(buyPrice).minus(stopPrice).dividedBy(buyPrice).times(100);
+		if (buy_price && stopPrice) {
+			stop_percentage = BigNumber(buy_price).minus(stopPrice).dividedBy(buy_price).times(100);
 			assert(stop_percentage.isFinite());
 			this.logger.info(`Stop percentage: ${stop_percentage.toFixed(2)}%`);
 		}
-		if (buyPrice && targetPrice) {
-			target_percentage = BigNumber(targetPrice).minus(buyPrice).dividedBy(buyPrice).times(100);
+		if (buy_price && target_price) {
+			target_percentage = BigNumber(target_price).minus(buy_price).dividedBy(buy_price).times(100);
 			this.logger.info(`Target percentage: ${target_percentage.toFixed(2)}%`);
 		}
 		if (stop_percentage && target_percentage) {
@@ -139,7 +139,7 @@ class AlgoUtils {
 				symbol: this.pair,
 				type: 'LIMIT',
 				quantity: this.amount.toFixed(),
-				price: this.buyPrice.toFixed()
+				price: this.buy_price.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
 			this.logger.info(`Creating LIMIT BUY ORDER`);

@@ -77,7 +77,7 @@ describe.skip('Virtual pair trading Algo', function() {
 		// TODO: agitate other prices, like stopPrice
 		if (algo_config.buy_price) algo_config.buy_price = aggrivate_price(algo_config.buy_price);
 		if (algo_config.stopPrice) algo_config.stopPrice = aggrivate_price(algo_config.stopPrice);
-		if (algo_config.targetPrice) algo_config.targetPrice = aggrivate_price(algo_config.targetPrice);
+		if (algo_config.target_price) algo_config.target_price = aggrivate_price(algo_config.target_price);
 		// TODO: add some tests with limitPrice
 		if (algo_config.limitPrice) algo_config.limitPrice = aggrivate_price(algo_config.limitPrice);
 		if (algo_config.amount) algo_config.amount = aggrivate_amount(algo_config.amount);
@@ -213,16 +213,16 @@ describe.skip('Virtual pair trading Algo', function() {
 				expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 			});
 		});
-		describe('when only a buy_price and a targetPrice present', function() {
+		describe('when only a buy_price and a target_price present', function() {
 			it.skip('creates a limit sell order after the buy order hits', async function() {
 				const amount = BigNumber(1);
 				const buy_price = BigNumber(1);
-				const targetPrice = buy_price.times(2);
+				const target_price = buy_price.times(2);
 				let { ee, algo } = setup({
 					algo_config: {
 						amount,
 						buy_price,
-						targetPrice
+						target_price
 					}
 				});
 				try {
@@ -236,7 +236,7 @@ describe.skip('Virtual pair trading Algo', function() {
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');
 				expect(ee.open_orders[0].orderId).to.equal(2);
-				expect(ee.open_orders[0].price.isEqualTo(targetPrice)).to.equal(true);
+				expect(ee.open_orders[0].price.isEqualTo(target_price)).to.equal(true);
 				expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 			});
 		});
@@ -269,17 +269,17 @@ describe.skip('Virtual pair trading Algo', function() {
 				expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 			});
 		});
-		describe('when only a targetPrice present', function() {
+		describe('when only a target_price present', function() {
 			it.skip('creates a limit sell order and returns', async function() {
 				const amount = BigNumber(1);
-				const targetPrice = BigNumber('2');
+				const target_price = BigNumber('2');
 				let { ee, algo } = setup({
 					ee_config: {
 						starting_base_balance: amount
 					},
 					algo_config: {
 						amount,
-						targetPrice
+						target_price
 					}
 				});
 				try {
@@ -292,11 +292,11 @@ describe.skip('Virtual pair trading Algo', function() {
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');
 				expect(ee.open_orders[0].orderId).to.equal(1);
-				expect(ee.open_orders[0].price.isEqualTo(targetPrice)).to.equal(true);
+				expect(ee.open_orders[0].price.isEqualTo(target_price)).to.equal(true);
 				expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 			});
 		});
-		describe('when a buy_price, stopPrice and targetPrice present', function() {
+		describe('when a buy_price, stopPrice and target_price present', function() {
 			it.skip(
 				'if it.skip hits target price while buyOrder is still open then it.skip cancels buy and places targetOrder if partially filled'
 			);
@@ -306,13 +306,13 @@ describe.skip('Virtual pair trading Algo', function() {
 					const amount = BigNumber(1);
 					const buy_price = BigNumber(1);
 					const stopPrice = buy_price.times('0.5');
-					const targetPrice = buy_price.times(2);
+					const target_price = buy_price.times(2);
 					let { ee, algo } = setup({
 						algo_config: {
 							pair: default_pair,
 							amount,
 							buy_price,
-							targetPrice,
+							target_price,
 							stopPrice
 						}
 					});
@@ -340,21 +340,21 @@ describe.skip('Virtual pair trading Algo', function() {
 					expect(most_recent_message()).to.be.an('string');
 					expect(most_recent_message()).to.equal(`${default_pair} stop loss order filled`);
 				});
-				it.skip('creates a limit sell order at the targetPrice when that price is hit', async function() {
+				it.skip('creates a limit sell order at the target_price when that price is hit', async function() {
 					// TODO: also check that it.skip cancels the stop order?
 					// TODO: Sends a message?
 					// TODO: what if we retrace to the stop price before the order is filled?
-					// TODO: what if the targetPrice limit order gets partially filled and then we retrace to the stop price?
+					// TODO: what if the target_price limit order gets partially filled and then we retrace to the stop price?
 					const amount = BigNumber(1);
 					const buy_price = BigNumber(1);
 					const stopPrice = buy_price.times('0.5');
-					const targetPrice = buy_price.times(2);
+					const target_price = buy_price.times(2);
 					let { ee, algo } = setup({
 						algo_config: {
 							pair: default_pair,
 							amount,
 							buy_price,
-							targetPrice,
+							target_price,
 							stopPrice
 						}
 					});
@@ -369,9 +369,9 @@ describe.skip('Virtual pair trading Algo', function() {
 					expect(most_recent_message()).to.equal(`${default_pair} buy order filled`);
 
 					try {
-						// Note that as part of hitting the targetPrice the algo will cancel the stopOrder,
+						// Note that as part of hitting the target_price the algo will cancel the stopOrder,
 						// which involves an await, hence why we await on set_current_price
-						await ee.set_current_price({ symbol: default_pair, price: targetPrice });
+						await ee.set_current_price({ symbol: default_pair, price: target_price });
 					} catch (e) {
 						console.log(e);
 						expect.fail('should not get here: expected call not to throw');
@@ -380,11 +380,11 @@ describe.skip('Virtual pair trading Algo', function() {
 					expect(ee.open_orders[0].type).to.equal('LIMIT');
 					expect(ee.open_orders[0].side).to.equal('SELL');
 					expect(ee.open_orders[0].orderId).to.equal(3);
-					expect(ee.open_orders[0].price.isEqualTo(targetPrice)).to.equal(true);
+					expect(ee.open_orders[0].price.isEqualTo(target_price)).to.equal(true);
 					expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 
 					try {
-						await ee.set_current_price({ symbol: default_pair, price: targetPrice }); // a second time to trigger the LIMIT SELL
+						await ee.set_current_price({ symbol: default_pair, price: target_price }); // a second time to trigger the LIMIT SELL
 					} catch (e) {
 						console.log(e);
 						expect.fail('should not get here: expected call not to throw');
@@ -398,13 +398,13 @@ describe.skip('Virtual pair trading Algo', function() {
 					const amount = BigNumber(1);
 					const buy_price = BigNumber(1);
 					const stopPrice = buy_price.times('0.5');
-					const targetPrice = buy_price.times(2);
+					const target_price = buy_price.times(2);
 					let { ee, algo } = setup({
 						algo_config: {
 							pair: default_pair,
 							amount,
 							buy_price,
-							targetPrice,
+							target_price,
 							stopPrice,
 							soft_entry: true
 						}
@@ -437,13 +437,13 @@ describe.skip('Virtual pair trading Algo', function() {
 					const amount = BigNumber(1);
 					const buy_price = BigNumber(1);
 					const stopPrice = buy_price.times('0.5');
-					const targetPrice = buy_price.times(2);
+					const target_price = buy_price.times(2);
 					let { ee, algo } = setup({
 						algo_config: {
 							pair: default_pair,
 							amount,
 							buy_price,
-							targetPrice,
+							target_price,
 							stopPrice,
 							soft_entry: true
 						}
@@ -473,21 +473,21 @@ describe.skip('Virtual pair trading Algo', function() {
 					expect(most_recent_message()).to.be.an('string');
 					expect(most_recent_message()).to.equal(`${default_pair} stop loss order filled`);
 				});
-				it.skip('creates a limit sell order at the targetPrice when that price is hit', async function() {
+				it.skip('creates a limit sell order at the target_price when that price is hit', async function() {
 					// TODO: also check that it.skip cancels the stop order?
 					// TODO: Sends a message?
 					// TODO: what if we retrace to the stop price before the order is filled?
-					// TODO: what if the targetPrice limit order gets partially filled and then we retrace to the stop price?
+					// TODO: what if the target_price limit order gets partially filled and then we retrace to the stop price?
 					const amount = BigNumber(1);
 					const buy_price = BigNumber(1);
 					const stopPrice = buy_price.times('0.5');
-					const targetPrice = buy_price.times(2);
+					const target_price = buy_price.times(2);
 					let { ee, algo } = setup({
 						algo_config: {
 							pair: default_pair,
 							amount,
 							buy_price,
-							targetPrice,
+							target_price,
 							stopPrice,
 							soft_entry: true
 						}
@@ -504,9 +504,9 @@ describe.skip('Virtual pair trading Algo', function() {
 					expect(most_recent_message()).to.equal(`${default_pair} buy order filled`);
 
 					try {
-						// Note that as part of hitting the targetPrice the algo will cancel the stopOrder,
+						// Note that as part of hitting the target_price the algo will cancel the stopOrder,
 						// which involves an await, hence why we await on set_current_price
-						await ee.set_current_price({ symbol: default_pair, price: targetPrice });
+						await ee.set_current_price({ symbol: default_pair, price: target_price });
 					} catch (e) {
 						console.log(e);
 						expect.fail('should not get here: expected call not to throw');
@@ -515,11 +515,11 @@ describe.skip('Virtual pair trading Algo', function() {
 					expect(ee.open_orders[0].type).to.equal('LIMIT');
 					expect(ee.open_orders[0].side).to.equal('SELL');
 					expect(ee.open_orders[0].orderId).to.equal(3);
-					expect(ee.open_orders[0].price.isEqualTo(targetPrice)).to.equal(true);
+					expect(ee.open_orders[0].price.isEqualTo(target_price)).to.equal(true);
 					expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 
 					try {
-						await ee.set_current_price({ symbol: default_pair, price: targetPrice }); // a second time to trigger the LIMIT SELL
+						await ee.set_current_price({ symbol: default_pair, price: target_price }); // a second time to trigger the LIMIT SELL
 					} catch (e) {
 						console.log(e);
 						expect.fail('should not get here: expected call not to throw');

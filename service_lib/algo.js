@@ -23,10 +23,10 @@ class Algo {
 			pair,
 			amount,
 			quoteAmount,
-			buyPrice,
+			buy_price,
 			stopPrice,
 			limitPrice,
-			targetPrice,
+			target_price,
 			nonBnbFees,
 			soft_entry,
 			trading_rules,
@@ -43,10 +43,10 @@ class Algo {
 		this.pair = pair;
 		this.amount = amount;
 		this.quoteAmount = quoteAmount;
-		if (buyPrice) this.buyPrice = BigNumber(buyPrice);
+		if (buy_price) this.buy_price = BigNumber(buy_price);
 		if (stopPrice) this.stopPrice = BigNumber(stopPrice);
 		if (limitPrice) this.limitPrice = BigNumber(limitPrice);
-		if (targetPrice) this.targetPrice = BigNumber(targetPrice);
+		if (target_price) this.target_price = BigNumber(target_price);
 		this.nonBnbFees = nonBnbFees;
 		this.logger = logger;
 		this.soft_entry = soft_entry;
@@ -56,18 +56,18 @@ class Algo {
 
 		this.pair = this.pair.toUpperCase();
 		this.quote_currency = utils.quote_currency_for_binance_pair(this.pair);
-		if (buyPrice && stopPrice && !buyPrice.isZero()) assert(stopPrice.isLessThan(buyPrice));
-		if (targetPrice && buyPrice) assert(targetPrice.isGreaterThan(buyPrice));
-		if (targetPrice && stopPrice) assert(targetPrice.isGreaterThan(stopPrice));
+		if (buy_price && stopPrice && !buy_price.isZero()) assert(stopPrice.isLessThan(buy_price));
+		if (target_price && buy_price) assert(target_price.isGreaterThan(buy_price));
+		if (target_price && stopPrice) assert(target_price.isGreaterThan(stopPrice));
 		this.algo_utils = new AlgoUtils({ logger, ee });
 	}
 
 	calculate_percentages() {
-		let { buyPrice, stopPrice, targetPrice, trading_rules } = this;
+		let { buy_price, stopPrice, target_price, trading_rules } = this;
 		this.max_portfolio_percentage_allowed_in_this_trade = this.algo_utils.calculate_percentages({
-			buyPrice,
+			buy_price,
 			stopPrice,
-			targetPrice,
+			target_price,
 			trading_rules
 		});
 	}
@@ -175,7 +175,7 @@ class Algo {
 				let quote_volume = await this._calculate_autosized_quote_volume_available();
 				this.amount = utils.quote_volume_at_price_to_base_volume({
 					quote_volume,
-					price: this.buyPrice
+					price: this.buy_price
 				});
 				this._munge_amount_and_check_notionals();
 			}
@@ -189,7 +189,7 @@ class Algo {
 				symbol: this.pair,
 				type: 'LIMIT',
 				quantity: this.amount.toFixed(),
-				price: this.buyPrice.toFixed()
+				price: this.buy_price.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
 			this.logger.info(`Creating LIMIT BUY ORDER`);
@@ -257,14 +257,14 @@ class Algo {
 	}
 
 	_munge_amount_and_check_notionals() {
-		let { pair, amount, buyPrice, stopPrice, targetPrice, limitPrice } = this;
-		if (buyPrice && buyPrice.isZero()) buyPrice = undefined;
+		let { pair, amount, buy_price, stopPrice, target_price, limitPrice } = this;
+		if (buy_price && buy_price.isZero()) buy_price = undefined;
 		this.amount = this.algo_utils.munge_amount_and_check_notionals({
 			pair,
 			amount,
-			buyPrice,
+			buy_price,
 			stopPrice,
-			targetPrice,
+			target_price,
 			limitPrice
 		});
 	}
@@ -300,7 +300,7 @@ class Algo {
 				symbol: this.pair,
 				type: 'LIMIT',
 				quantity: this.amount.toFixed(),
-				price: this.targetPrice.toFixed()
+				price: this.target_price.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
 			this.logger.info(`Creating Target LIMIT SELL ORDER`);
@@ -322,7 +322,7 @@ class Algo {
 			} catch (error) {
 				async_error_handler(console, `error placing order: ${error.body}`, error);
 			}
-		} else if (this.targetPrice) {
+		} else if (this.target_price) {
 			try {
 				this.targetOrderId = await this.placeTargetOrder();
 				this.logger.info(`Set targetOrderId: ${this.targetOrderId}`);
@@ -345,15 +345,15 @@ class Algo {
 		try {
 			let exchange_info = this.exchange_info;
 			let symbol = this.pair;
-			// TODO: munge buyPrice here
+			// TODO: munge buy_price here
 			// TODO: if x & x!=0 looks like redundant logic
-			if (typeof this.buyPrice !== 'undefined') {
-				this.buyPrice = BigNumber(this.buyPrice);
-				// buyPrice of zero is special case to denote market buy
-				if (!this.buyPrice.isZero()) {
-					this.buyPrice = utils.munge_and_check_price({ exchange_info, symbol, price: this.buyPrice });
+			if (typeof this.buy_price !== 'undefined') {
+				this.buy_price = BigNumber(this.buy_price);
+				// buy_price of zero is special case to denote market buy
+				if (!this.buy_price.isZero()) {
+					this.buy_price = utils.munge_and_check_price({ exchange_info, symbol, price: this.buy_price });
 					if (typeof this.quoteAmount !== 'undefined') {
-						this.amount = BigNumber(this.quoteAmount).dividedBy(this.buyPrice);
+						this.amount = BigNumber(this.quoteAmount).dividedBy(this.buy_price);
 						assert(this.amount.isFinite());
 						this.logger.info(`Calculated buy amount ${this.amount.toFixed()} (unmunged)`);
 					}
@@ -364,11 +364,11 @@ class Algo {
 				this.stopPrice = utils.munge_and_check_price({ exchange_info, symbol, price: this.stopPrice });
 			}
 
-			if (typeof this.targetPrice !== 'undefined') {
-				this.targetPrice = utils.munge_and_check_price({ exchange_info, symbol, price: this.targetPrice });
+			if (typeof this.target_price !== 'undefined') {
+				this.target_price = utils.munge_and_check_price({ exchange_info, symbol, price: this.target_price });
 			}
 
-			if (this.auto_size && this.buyPrice && this.buyPrice.isZero()) {
+			if (this.auto_size && this.buy_price && this.buy_price.isZero()) {
 				try {
 					this.logger.info(`Autosizing market buy using current price`);
 
@@ -410,9 +410,9 @@ class Algo {
 			}
 			if (this.percentages) process.exit();
 
-			let buy_msg = this.buyPrice ? `buy: ${this.buyPrice}` : '';
+			let buy_msg = this.buy_price ? `buy: ${this.buy_price}` : '';
 			let stop_msg = this.stopPrice ? `stop: ${this.stopPrice}` : '';
-			let target_msg = this.targetPrice ? `target: ${this.targetPrice}` : '';
+			let target_msg = this.target_price ? `target: ${this.target_price}` : '';
 			this.send_message(`${this.pair} New trade: ${buy_msg} ${stop_msg} ${target_msg}`);
 			await this.monitor_user_stream();
 
@@ -425,8 +425,8 @@ class Algo {
 
 		try {
 			let waiting_for_soft_entry_price = false;
-			if (typeof this.buyPrice !== 'undefined') {
-				if (this.buyPrice.isZero()) {
+			if (typeof this.buy_price !== 'undefined') {
+				if (this.buy_price.isZero()) {
 					if (this.soft_entry) {
 						let msg = `Soft entry mode requires specified buy price`;
 						this.logger.error(msg);
@@ -448,7 +448,7 @@ class Algo {
 			let isCancelling = false;
 
 			// TODO: we don't always need this - only if we have stop and target orders that need monitoring
-			if ((this.stopPrice && this.targetPrice) || this.soft_entry) {
+			if ((this.stopPrice && this.target_price) || this.soft_entry) {
 				let obj = this;
 				this.closeTradesWebSocket = await this.ee.ws.aggTrades([ this.pair ], async function(trade) {
 					var { symbol, price } = trade;
@@ -463,25 +463,25 @@ class Algo {
 					price = BigNumber(price);
 
 					if (waiting_for_soft_entry_price) {
-						if (price.isLessThanOrEqualTo(obj.buyPrice)) {
+						if (price.isLessThanOrEqualTo(obj.buy_price)) {
 							waiting_for_soft_entry_price = false;
 							obj.send_message(`${symbol} soft entry buy price hit`);
 							obj.buyOrderId = await obj._create_limit_buy_order();
 						}
 					} else if (obj.buyOrderId) {
-						// obj.logger.info(`${symbol} trade update. price: ${price} buy: ${obj.buyPrice}`);
+						// obj.logger.info(`${symbol} trade update. price: ${price} buy: ${obj.buy_price}`);
 					} else if (obj.stopOrderId || obj.targetOrderId) {
 						// obj.logger.info(
-						// 	`${symbol} trade update. price: ${price} stop: ${obj.stopPrice} target: ${obj.targetPrice}`
+						// 	`${symbol} trade update. price: ${price} stop: ${obj.stopPrice} target: ${obj.target_price}`
 						// );
 						if (
-							typeof obj.targetPrice !== 'undefined' &&
+							typeof obj.target_price !== 'undefined' &&
 							obj.stopOrderId &&
 							!obj.targetOrderId &&
-							price.isGreaterThanOrEqualTo(obj.targetPrice) &&
+							price.isGreaterThanOrEqualTo(obj.target_price) &&
 							!isCancelling
 						) {
-							obj.logger.info(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
+							obj.logger.info(`Event: price >= target_price: cancelling stop and placeTargetOrder()`);
 							isCancelling = true;
 							try {
 								await obj.ee.cancelOrder({ symbol, orderId: obj.stopOrderId });

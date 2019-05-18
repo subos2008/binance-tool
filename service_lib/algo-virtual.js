@@ -21,10 +21,10 @@ class Algo {
 			send_message,
 			logger,
 			quoteAmount,
-			buyPrice,
+			buy_price,
 			stopPrice,
 			limitPrice,
-			targetPrice,
+			target_price,
 			nonBnbFees,
 			trading_rules,
 			auto_size,
@@ -42,10 +42,10 @@ class Algo {
 		this.send_message = send_message;
 		assert(quoteAmount);
 		this.quoteAmount = BigNumber(quoteAmount);
-		this.buyPrice = buyPrice;
+		this.buy_price = buy_price;
 		this.stopPrice = stopPrice;
 		this.limitPrice = limitPrice;
-		this.targetPrice = targetPrice;
+		this.target_price = target_price;
 		this.nonBnbFees = nonBnbFees;
 		this.logger = logger;
 		this.trading_rules = trading_rules;
@@ -65,14 +65,14 @@ class Algo {
 			this.stopPrice = BigNumber(this.stopPrice);
 		}
 
-		if (typeof this.targetPrice !== 'undefined') {
-			this.targetPrice = BigNumber(this.targetPrice);
+		if (typeof this.target_price !== 'undefined') {
+			this.target_price = BigNumber(this.target_price);
 		}
 
-		if (typeof this.buyPrice !== 'undefined') {
-			this.buyPrice = BigNumber(this.buyPrice);
+		if (typeof this.buy_price !== 'undefined') {
+			this.buy_price = BigNumber(this.buy_price);
 			this.waiting_for_soft_entry_price = true;
-			assert(!this.buyPrice.isZero()); // market buys not implemented
+			assert(!this.buy_price.isZero()); // market buys not implemented
 		}
 
 		assert(this.virtualPair);
@@ -125,16 +125,16 @@ class Algo {
 			}
 
 			this.algo_utils.calculate_percentages({
-				buyPrice: this.buyPrice,
+				buy_price: this.buy_price,
 				stopPrice: this.stopPrice,
-				targetPrice: this.targetPrice,
+				target_price: this.target_price,
 				trading_rules: this.trading_rules
 			});
 			if (this.percentages) return;
 
 			this.send_message(
-				`${this.virtualPair} New trade buy: ${this.buyPrice}, stop: ${this.stopPrice}, target: ${this
-					.targetPrice}`
+				`${this.virtualPair} New trade buy: ${this.buy_price}, stop: ${this.stopPrice}, target: ${this
+					.target_price}`
 			);
 
 			await this.trade_manager.start();
@@ -187,18 +187,18 @@ class Algo {
 				}
 
 				if (
-					typeof obj.buyPrice !== 'undefined' &&
+					typeof obj.buy_price !== 'undefined' &&
 					!buy_complete &&
-					currentPrice.isLessThanOrEqualTo(obj.buyPrice)
+					currentPrice.isLessThanOrEqualTo(obj.buy_price)
 				) {
 					try {
 						buy_complete = await obj.trade_manager.in_buy_zone({
-							inner_pair_current_price: innerPrice, // TODO: calculate what would exactly match the buyPrice
+							inner_pair_current_price: innerPrice, // TODO: calculate what would exactly match the buy_price
 							outer_pair_current_price: outerPrice // this is liquid so use current price
 						});
 						if (buy_complete) {
 							obj.send_message(`${obj.virtualPair} (virt) buy complete`);
-							if (!obj.stopPrice && !obj.targetPrice) {
+							if (!obj.stopPrice && !obj.target_price) {
 								obj.execution_complete(`exiting buy complete`);
 							}
 						}
@@ -211,15 +211,15 @@ class Algo {
 
 				// 	} else if (obj.stopOrderId || obj.targetOrderId) {
 				// 		// obj.logger.info(
-				// 		// 	`${symbol} trade update. price: ${price} stop: ${obj.stopPrice} target: ${obj.targetPrice}`
+				// 		// 	`${symbol} trade update. price: ${price} stop: ${obj.stopPrice} target: ${obj.target_price}`
 				// 		// );
 				// 		if (
 				// 			obj.stopOrderId &&
 				// 			!obj.targetOrderId &&
-				// 			price.isGreaterThanOrEqualTo(obj.targetPrice) &&
+				// 			price.isGreaterThanOrEqualTo(obj.target_price) &&
 				// 			!isCancelling
 				// 		) {
-				// 			obj.logger.info(`Event: price >= targetPrice: cancelling stop and placeTargetOrder()`);
+				// 			obj.logger.info(`Event: price >= target_price: cancelling stop and placeTargetOrder()`);
 				// 			isCancelling = true;
 				// 			try {
 				// 				await obj.ee.cancelOrder({ symbol, orderId: obj.stopOrderId });

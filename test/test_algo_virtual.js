@@ -46,7 +46,7 @@ function aggrivate_amount(amount) {
 	return BigNumber(amount).plus('.0001'); // will trigger the LOT_SIZE unless amount is munged
 }
 
-describe('Virtual pair trading Algo', function() {
+describe.skip('Virtual pair trading Algo', function() {
 	function setup({ algo_config, ee_config } = {}) {
 		ee_config = Object.assign(
 			{
@@ -92,7 +92,7 @@ describe('Virtual pair trading Algo', function() {
 		});
 	});
 	describe('when only a buyPrice of 0 is present', function() {
-		it.only('throws and exception - not implemented', async function() {
+		it('throws and exception - not implemented', async function() {
 			const buyPrice = BigNumber('0');
 			const amount = BigNumber('3');
 			let { ee, algo } = setup({
@@ -113,10 +113,10 @@ describe('Virtual pair trading Algo', function() {
 				expect(e.toString()).includes('buyPrice');
 			}
 		});
-		it.only('adds a market buy of the innerPair when the outerPair fills', async function() {});
+		it('adds a market buy of the innerPair when the outerPair fills', async function() {});
 		describe('when only a buyPrice is present', function() {
 			it.skip('doent buy if price is below stopPrice');
-			it.only('market buys when the buy price is hit', async function() {
+			it('market buys when the buy price is hit', async function() {
 				const buyPrice = BigNumber('0.162');
 				const amount = BigNumber('3');
 				let { ee, algo } = setup({

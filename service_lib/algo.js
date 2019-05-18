@@ -5,6 +5,7 @@ const BigNumber = require('bignumber.js');
 const utils = require('../lib/utils');
 const assert = require('assert');
 const PositionSizer = require('./position_sizer');
+const AlgoUtils = require('./algo_utils');
 
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
@@ -58,6 +59,7 @@ class Algo {
 		if (buyPrice && stopPrice && !buyPrice.isZero()) assert(stopPrice.isLessThan(buyPrice));
 		if (targetPrice && buyPrice) assert(targetPrice.isGreaterThan(buyPrice));
 		if (targetPrice && stopPrice) assert(targetPrice.isGreaterThan(stopPrice));
+		this.algo_utils = new AlgoUtils(logger, ee);
 	}
 
 	calculate_percentages() {

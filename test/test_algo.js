@@ -589,7 +589,7 @@ describe('Algo', function() {
 		it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
 		it('knows something about trading fees and if that affects the amount if there isnt enough BNB');
 		describe('works when buying spot (market buy mode)', function() {
-			it('creates buy order for the max amount to buy based on current_price, portfolio value and stop_percentage', async function() {
+			it('creates market buy order for the max amount to buy based on current_price, portfolio value and stop_percentage', async function() {
 				const marketPrice = BigNumber(1);
 				const stopPrice = marketPrice.times('0.98');
 				const trading_rules = {
@@ -619,7 +619,7 @@ describe('Algo', function() {
 				// check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
 				// it's a market buy - are these emulated yet? Not in order book perhaps iirc
 				expect(ee.open_orders).to.have.lengthOf(1);
-				expect(ee.open_orders[0].type).to.equal('LIMIT');
+				expect(ee.open_orders[0].type).to.equal('MARKET');
 				expect(ee.open_orders[0].side).to.equal('BUY');
 				expect(ee.open_orders[0].origQty).to.bignumber.equal('0.5');
 				expect(ee.open_orders[0].price).to.bignumber.equal(buyPrice);

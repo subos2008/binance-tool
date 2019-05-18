@@ -47,7 +47,7 @@ function aggrivate_amount(amount) {
 }
 
 describe('Algo', function() {
-	function setup({ algo_config, ee_config } = {}) {
+	function setup({ algo_config, ee_config, no_agitate } = {}) {
 		ee_config = Object.assign(
 			{
 				logger: null_logger,
@@ -72,13 +72,14 @@ describe('Algo', function() {
 			{ ee, logger: null_logger, send_message: fresh_message_queue(), pair: default_pair },
 			algo_config
 		);
-		// TODO: agitate other prices, like stopPrice
-		if (algo_config.buyPrice) algo_config.buyPrice = aggrivate_price(algo_config.buyPrice);
-		if (algo_config.stopPrice) algo_config.stopPrice = aggrivate_price(algo_config.stopPrice);
-		if (algo_config.targetPrice) algo_config.targetPrice = aggrivate_price(algo_config.targetPrice);
-		// TODO: add some tests with limitPrice
-		if (algo_config.limitPrice) algo_config.limitPrice = aggrivate_price(algo_config.limitPrice);
-		if (algo_config.amount) algo_config.amount = aggrivate_amount(algo_config.amount);
+		if (!no_agitate) {
+			if (algo_config.buyPrice) algo_config.buyPrice = aggrivate_price(algo_config.buyPrice);
+			if (algo_config.stopPrice) algo_config.stopPrice = aggrivate_price(algo_config.stopPrice);
+			if (algo_config.targetPrice) algo_config.targetPrice = aggrivate_price(algo_config.targetPrice);
+			// TODO: add some tests with limitPrice
+			if (algo_config.limitPrice) algo_config.limitPrice = aggrivate_price(algo_config.limitPrice);
+			if (algo_config.amount) algo_config.amount = aggrivate_amount(algo_config.amount);
+		}
 		let algo = new Algo(algo_config);
 		return { algo, ee };
 	}
@@ -581,9 +582,41 @@ describe('Algo', function() {
 		// needs buyPrice, stopPrice, trading_rules. soft_entry?
 		it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
 		it('knows something about trading fees and if that affects the amount if there isnt enough BNB');
-		describe('without buyPrice (market buy mode)', function() {
-			it('uses current price');
-			it('throws an assert until implemented');
+		describe('works when buying spot (market buy mode)', function() {
+			it('creates buy order for the max amount to buy based on current_price, portfolio value and stop_percentage', async function() {
+				const marketPrice = BigNumber(1);
+				const stopPrice = marketPrice.times('0.98');
+				const trading_rules = {
+					max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
+				};
+				let { ee, algo } = setup({
+					algo_config: {
+						pair: default_pair,
+						buyPrice: BigNumber('0'),
+						stopPrice,
+						trading_rules,
+						auto_size: true,
+						logger
+					},
+					ee_config: {
+						starting_quote_balance: BigNumber(1)
+					},
+					no_agitate: true
+				});
+				try {
+					await ee.set_current_price({ symbol: default_pair, price: marketPrice });
+					await algo.main();
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+				// check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
+				expect(ee.open_orders).to.have.lengthOf(1);
+				expect(ee.open_orders[0].type).to.equal('LIMIT');
+				expect(ee.open_orders[0].side).to.equal('BUY');
+				expect(ee.open_orders[0].origQty).to.bignumber.equal('0.5');
+				expect(ee.open_orders[0].price).to.bignumber.equal(buyPrice);
+			});
 		});
 
 		describe('without soft_entry', function() {

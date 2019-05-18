@@ -4,6 +4,7 @@ const StateMachine = require('javascript-state-machine');
 const BigNumber = require('bignumber.js');
 const utils = require('../lib/utils');
 const assert = require('assert');
+const PositionSizer = require('./position_sizer');
 
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
@@ -41,10 +42,10 @@ class Algo {
 		this.pair = pair;
 		this.amount = amount;
 		this.quoteAmount = quoteAmount;
-		this.buyPrice = buyPrice;
-		this.stopPrice = stopPrice;
-		this.limitPrice = limitPrice;
-		this.targetPrice = targetPrice;
+		if (buyPrice) this.buyPrice = BigNumber(buyPrice);
+		if (stopPrice) this.stopPrice = BigNumber(stopPrice);
+		if (limitPrice) this.limitPrice = BigNumber(limitPrice);
+		if (targetPrice) this.targetPrice = BigNumber(targetPrice);
 		this.nonBnbFees = nonBnbFees;
 		this.logger = logger;
 		this.soft_entry = soft_entry;
@@ -54,9 +55,9 @@ class Algo {
 
 		this.pair = this.pair.toUpperCase();
 		this.quote_currency = utils.quote_currency_for_binance_pair(this.pair);
-		if (buyPrice && stopPrice) assert(BigNumber(stopPrice).isLessThan(buyPrice));
-		if (targetPrice && buyPrice) assert(BigNumber(targetPrice).isGreaterThan(buyPrice));
-		if (targetPrice && stopPrice) assert(BigNumber(targetPrice).isGreaterThan(stopPrice));
+		if (buyPrice && stopPrice && !buyPrice.isZero()) assert(stopPrice.isLessThan(buyPrice));
+		if (targetPrice && buyPrice) assert(targetPrice.isGreaterThan(buyPrice));
+		if (targetPrice && stopPrice) assert(targetPrice.isGreaterThan(stopPrice));
 	}
 
 	calculate_percentages() {
@@ -400,6 +401,7 @@ class Algo {
 					this.buyPrice = utils.munge_and_check_price({ exchange_info, symbol, price: this.buyPrice });
 					if (typeof this.quoteAmount !== 'undefined') {
 						this.amount = BigNumber(this.quoteAmount).dividedBy(this.buyPrice);
+						assert(this.amount.isFinite());
 						this.logger.info(`Calculated buy amount ${this.amount.toFixed()} (unmunged)`);
 					}
 				}
@@ -413,12 +415,28 @@ class Algo {
 				this.targetPrice = utils.munge_and_check_price({ exchange_info, symbol, price: this.targetPrice });
 			}
 
-			// TODO: calculating non soft_entry auto_size amount should go somewhere around here
+			if (this.auto_size && this.buyPrice && this.buyPrice.isZero()) {
+				try {
+					this.logger.info(`Autosizing market buy using current price`);
 
-			if (this.auto_size && (!this.buyPrice || this.buyPrice.isZero())) {
-				let msg = 'auto-size may not work without specifice buyPrice';
-				this.logger.error(msg);
-				throw new Error(msg);
+					let position_sizer = new PositionSizer({
+						logger: this.logger,
+						ee: this.ee,
+						trading_rules: this.trading_rules
+					});
+					let current_price = (await this.ee.prices())[this.pair];
+					let quote_volume = await position_sizer.size_position_in_quote_currency({
+						buy_price: current_price,
+						stop_price: this.stopPrice,
+						quote_currency: this.quote_currency
+					});
+					this.logger.info(`Would currently invest ${quote_volume} ${this.quote_currency}`);
+					this.amount = quote_volume.dividedBy(current_price);
+					assert(this.amount.isFinite());
+					this.logger.info(`Calculated buy amount ${this.amount.toFixed()} (unmunged)`);
+				} catch (error) {
+					async_error_handler(this.logger, `Error auto-sizing spot buy:`, error);
+				}
 			}
 
 			if (!this.amount && !this.auto_size) {

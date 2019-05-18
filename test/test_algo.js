@@ -586,8 +586,7 @@ describe('Algo', function() {
 	});
 	describe('auto-size', function() {
 		// needs buyPrice, stopPrice, trading_rules. soft_entry?
-		if ('supports market buys by using the current price')
-			it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
+		it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
 		it('knows something about trading fees and if that affects the amount if there isnt enough BNB');
 		describe('works when buying spot (market buy mode)', function() {
 			it('creates buy order for the max amount to buy based on current_price, portfolio value and stop_percentage', async function() {
@@ -618,6 +617,7 @@ describe('Algo', function() {
 					expect.fail('should not get here: expected call not to throw');
 				}
 				// check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
+				// it's a market buy - are these emulated yet? Not in order book perhaps iirc
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('BUY');
@@ -752,43 +752,4 @@ describe('Algo', function() {
 	it(
 		'add tests for autosize and setting stop and target orders to verifty munging is happening and being checked for'
 	);
-
-	describe('virtual/calculated pair trading', function() {
-		it('doent buy if price is below stopPrice');
-		it('triggers when the buy price is hit', async function() {
-			const buyPrice = BigNumber('0.162');
-			const amount = BigNumber('3');
-			let { ee, algo } = setup({
-				algo_config: {
-					virtualPair: 'AIONUSDT',
-					intermediateCurrency: 'BTC',
-					buyPrice,
-					amount,
-					logger
-				},
-				ee_config: {
-					starting_balances: { USDT: BigNumber(20) },
-					logger
-				}
-			});
-			try {
-				// set price initially higher than the buyPrice. Probably unused code.
-				// BuyWhen AIONUSDT = 0.162, start at ~0.216. BTCUSDT of 7310, AIONBTC of 0.0000298
-				await ee.set_current_price({ symbol: 'BTCUSDT', price: '7310' });
-				await ee.set_current_price({ symbol: 'AIONBTC', price: '0.0000298' });
-				await algo.main();
-				// now lets move both currencies to hit buyPrice:
-				await ee.set_current_price({ symbol: 'BTCUSDT', price: '7500' });
-				await ee.set_current_price({ symbol: 'AIONBTC', price: '00.0000216' });
-				// test for a market buy... well let's check balances changed
-				let balances = (await ee.accountInfo()).balances;
-				// expect(balances).to.be.an('array').that.has.lengthOf(2);
-				expect(balances).to.deep.include({ asset: 'AION', free: amount.toFixed(), locked: '0' });
-				// expect(balances).to.deep.include({ asset: 'ETH', free: '202', locked: '0' });
-			} catch (e) {
-				console.log(e);
-				expect.fail('should not get here: expected call not to throw');
-			}
-		});
-	});
 });

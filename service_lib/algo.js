@@ -25,7 +25,7 @@ class Algo {
 			quoteAmount,
 			buy_price,
 			stopPrice,
-			limitPrice,
+			limit_price,
 			target_price,
 			nonBnbFees,
 			soft_entry,
@@ -45,7 +45,7 @@ class Algo {
 		this.quoteAmount = quoteAmount;
 		if (buy_price) this.buy_price = BigNumber(buy_price);
 		if (stopPrice) this.stopPrice = BigNumber(stopPrice);
-		if (limitPrice) this.limitPrice = BigNumber(limitPrice);
+		if (limit_price) this.limit_price = BigNumber(limit_price);
 		if (target_price) this.target_price = BigNumber(target_price);
 		this.nonBnbFees = nonBnbFees;
 		this.logger = logger;
@@ -257,7 +257,7 @@ class Algo {
 	}
 
 	_munge_amount_and_check_notionals() {
-		let { pair, amount, buy_price, stopPrice, target_price, limitPrice } = this;
+		let { pair, amount, buy_price, stopPrice, target_price, limit_price } = this;
 		if (buy_price && buy_price.isZero()) buy_price = undefined;
 		this.amount = this.algo_utils.munge_amount_and_check_notionals({
 			pair,
@@ -265,7 +265,7 @@ class Algo {
 			buy_price,
 			stopPrice,
 			target_price,
-			limitPrice
+			limit_price
 		});
 	}
 
@@ -277,7 +277,7 @@ class Algo {
 				symbol: this.pair,
 				type: 'STOP_LOSS_LIMIT',
 				quantity: this.amount.toFixed(),
-				price: (this.limitPrice || this.stopPrice).toFixed(),
+				price: (this.limit_price || this.stopPrice).toFixed(),
 				stopPrice: this.stopPrice.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};

@@ -23,7 +23,7 @@ class Algo {
 			quoteAmount,
 			buy_price,
 			stopPrice,
-			limitPrice,
+			limit_price,
 			target_price,
 			nonBnbFees,
 			trading_rules,
@@ -44,7 +44,7 @@ class Algo {
 		this.quoteAmount = BigNumber(quoteAmount);
 		this.buy_price = buy_price;
 		this.stopPrice = stopPrice;
-		this.limitPrice = limitPrice;
+		this.limit_price = limit_price;
 		this.target_price = target_price;
 		this.nonBnbFees = nonBnbFees;
 		this.logger = logger;
@@ -55,7 +55,7 @@ class Algo {
 		this.intermediateCurrency = intermediateCurrency;
 
 		assert(!this.auto_size); // not implemented
-		assert(!this.limitPrice); // not implemented
+		assert(!this.limit_price); // not implemented
 		assert(!this.nonBnbFees); // not implemented
 
 		assert(typeof this.logger === 'object', `typeof this.logger: ${typeof this.logger}`);

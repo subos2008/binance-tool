@@ -48,7 +48,7 @@ const { argv } = require('yargs')
 	.string('s')
 	.alias('s', 'stop')
 	.describe('s', 'Set stop-limit order stop price')
-	// '-l <limitPrice>'
+	// '-l <limit_price>'
 	.string('l')
 	.alias('l', 'limit')
 	.describe('l', 'Set sell stop-limit order limit price (if different from stop price)')
@@ -80,7 +80,7 @@ let {
 	q: quoteAmount,
 	b: buy_price,
 	s: stopPrice,
-	l: limitPrice,
+	l: limit_price,
 	t: target_price,
 	F: nonBnbFees,
 	'soft-entry': soft_entry,
@@ -107,7 +107,7 @@ const algo = new Algo({
 	quoteAmount,
 	buy_price,
 	stopPrice,
-	limitPrice,
+	limit_price,
 	target_price,
 	nonBnbFees,
 	soft_entry,

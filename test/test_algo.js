@@ -78,8 +78,8 @@ describe('Algo', function() {
 			if (algo_config.buy_price) algo_config.buy_price = aggrivate_price(algo_config.buy_price);
 			if (algo_config.stopPrice) algo_config.stopPrice = aggrivate_price(algo_config.stopPrice);
 			if (algo_config.target_price) algo_config.target_price = aggrivate_price(algo_config.target_price);
-			// TODO: add some tests with limitPrice
-			if (algo_config.limitPrice) algo_config.limitPrice = aggrivate_price(algo_config.limitPrice);
+			// TODO: add some tests with limit_price
+			if (algo_config.limit_price) algo_config.limit_price = aggrivate_price(algo_config.limit_price);
 			if (algo_config.amount) algo_config.amount = aggrivate_amount(algo_config.amount);
 		}
 		let algo = new Algo(algo_config);

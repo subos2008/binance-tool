@@ -25,7 +25,7 @@ class AlgoUtils {
 		return utils.munge_and_check_price({ exchange_info: this.exchange_info, symbol, price });
 	}
 
-	munge_amount_and_check_notionals({ pair, amount, buy_price, stopPrice, target_price, limitPrice } = {}) {
+	munge_amount_and_check_notionals({ pair, amount, buy_price, stopPrice, target_price, limit_price } = {}) {
 		assert(this.exchange_info);
 		assert(pair);
 		if (typeof amount !== 'undefined') {
@@ -59,9 +59,9 @@ class AlgoUtils {
 					symbol: pair
 				});
 			}
-			if (typeof limitPrice !== 'undefined') {
+			if (typeof limit_price !== 'undefined') {
 				utils.check_notional({
-					price: limitPrice,
+					price: limit_price,
 					volume: amount,
 					exchange_info: this.exchange_info,
 					symbol: pair

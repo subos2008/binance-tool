@@ -59,7 +59,7 @@ class Algo {
 		if (buyPrice && stopPrice && !buyPrice.isZero()) assert(stopPrice.isLessThan(buyPrice));
 		if (targetPrice && buyPrice) assert(targetPrice.isGreaterThan(buyPrice));
 		if (targetPrice && stopPrice) assert(targetPrice.isGreaterThan(stopPrice));
-		this.algo_utils = new AlgoUtils(logger, ee);
+		this.algo_utils = new AlgoUtils({ logger, ee });
 	}
 
 	calculate_percentages() {
@@ -277,46 +277,15 @@ class Algo {
 	}
 
 	_munge_amount_and_check_notionals() {
-		if (typeof this.amount !== 'undefined') {
-			this.amount = utils.munge_and_check_quantity({
-				exchange_info: this.exchange_info,
-				symbol: this.pair,
-				volume: this.amount
-			});
-
-			if (typeof this.buyPrice !== 'undefined') {
-				utils.check_notional({
-					price: this.buyPrice,
-					volume: this.amount,
-					exchange_info: this.exchange_info,
-					symbol: this.pair
-				});
-			}
-			if (typeof this.stopPrice !== 'undefined') {
-				utils.check_notional({
-					price: this.stopPrice,
-					volume: this.amount,
-					exchange_info: this.exchange_info,
-					symbol: this.pair
-				});
-			}
-			if (typeof this.targetPrice !== 'undefined') {
-				utils.check_notional({
-					price: this.targetPrice,
-					volume: this.amount,
-					exchange_info: this.exchange_info,
-					symbol: this.pair
-				});
-			}
-		}
-		if (typeof this.limitPrice !== 'undefined') {
-			utils.check_notional({
-				price: this.limitPrice,
-				volume: this.amount,
-				exchange_info: this.exchange_info,
-				symbol: this.pair
-			});
-		}
+		let { pair, amount, buyPrice, stopPrice, targetPrice, limitPrice } = this;
+		this.amount = this.algo_utils.munge_amount_and_check_notionals({
+			pair,
+			amount,
+			buyPrice,
+			stopPrice,
+			targetPrice,
+			limitPrice
+		});
 	}
 
 	async placeStopOrder() {
@@ -387,6 +356,7 @@ class Algo {
 	async main() {
 		try {
 			this.exchange_info = await this.ee.exchangeInfo();
+			this.algo_utils.set_exchange_info(this.exchange_info);
 		} catch (error) {
 			async_error_handler(this.logger, 'Error could not pull exchange info', error);
 		}

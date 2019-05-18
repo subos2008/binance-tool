@@ -25,7 +25,7 @@ class AlgoUtils {
 		return utils.munge_and_check_price({ exchange_info: this.exchange_info, symbol, price });
 	}
 
-	munge_amount_and_check_notionals({ pair, amount, buy_price, stopPrice, target_price, limit_price } = {}) {
+	munge_amount_and_check_notionals({ pair, amount, buy_price, stop_price, target_price, limit_price } = {}) {
 		assert(this.exchange_info);
 		assert(pair);
 		if (typeof amount !== 'undefined') {
@@ -43,9 +43,9 @@ class AlgoUtils {
 					symbol: pair
 				});
 			}
-			if (typeof stopPrice !== 'undefined') {
+			if (typeof stop_price !== 'undefined') {
 				utils.check_notional({
-					price: stopPrice,
+					price: stop_price,
 					volume: amount,
 					exchange_info: this.exchange_info,
 					symbol: pair
@@ -79,10 +79,10 @@ class AlgoUtils {
 		};
 	}
 
-	calculate_percentages({ buy_price, stopPrice, target_price, trading_rules } = {}) {
+	calculate_percentages({ buy_price, stop_price, target_price, trading_rules } = {}) {
 		let stop_percentage, target_percentage, max_portfolio_percentage_allowed_in_this_trade;
-		if (buy_price && stopPrice) {
-			stop_percentage = BigNumber(buy_price).minus(stopPrice).dividedBy(buy_price).times(100);
+		if (buy_price && stop_price) {
+			stop_percentage = BigNumber(buy_price).minus(stop_price).dividedBy(buy_price).times(100);
 			assert(stop_percentage.isFinite());
 			this.logger.info(`Stop percentage: ${stop_percentage.toFixed(2)}%`);
 		}

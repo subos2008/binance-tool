@@ -570,7 +570,7 @@ describe('ExchangeEmulator', function() {
 				}
 				expect.fail('Expected call to throw');
 			});
-			it('has tests for stopPrice, including checking PRICE_FILTER and MIN_NOTIONAL');
+			it('has tests for stop_price, including checking PRICE_FILTER and MIN_NOTIONAL');
 			it('adds a STOP_LOSS_LIMIT to open_orders', async function() {
 				const ee = setup({
 					starting_quote_balance: BigNumber(0),

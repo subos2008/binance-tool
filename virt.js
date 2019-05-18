@@ -55,7 +55,7 @@ const { argv } = require('yargs')
 	.alias('b', 'e')
 	.alias('b', 'entry')
 	.describe('b', 'Set buy price (0 for market buy)')
-	// '-s <stopPrice>'
+	// '-s <stop_price>'
 	.string('s')
 	.alias('s', 'stop')
 	.describe('s', 'Set stop-limit order stop price')
@@ -91,7 +91,7 @@ let {
 	a: amount,
 	q: quoteAmount,
 	b: buy_price,
-	s: stopPrice,
+	s: stop_price,
 	l: limit_price,
 	t: target_price,
 	F: nonBnbFees,
@@ -119,7 +119,7 @@ const algo = new Algo({
 	amount,
 	quoteAmount,
 	buy_price,
-	stopPrice,
+	stop_price,
 	limit_price,
 	target_price,
 	nonBnbFees,

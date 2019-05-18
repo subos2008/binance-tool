@@ -74,9 +74,9 @@ describe.skip('Virtual pair trading Algo', function() {
 		if (!algo_config.pair && !algo_config.virtualPair) {
 			algo_config.pair = default_pair;
 		}
-		// TODO: agitate other prices, like stopPrice
+		// TODO: agitate other prices, like stop_price
 		if (algo_config.buy_price) algo_config.buy_price = aggrivate_price(algo_config.buy_price);
-		if (algo_config.stopPrice) algo_config.stopPrice = aggrivate_price(algo_config.stopPrice);
+		if (algo_config.stop_price) algo_config.stop_price = aggrivate_price(algo_config.stop_price);
 		if (algo_config.target_price) algo_config.target_price = aggrivate_price(algo_config.target_price);
 		// TODO: add some tests with limit_price
 		if (algo_config.limit_price) algo_config.limit_price = aggrivate_price(algo_config.limit_price);
@@ -115,7 +115,7 @@ describe.skip('Virtual pair trading Algo', function() {
 		});
 		it('adds a market buy of the innerPair when the outerPair fills', async function() {});
 		describe('when only a buy_price is present', function() {
-			it.skip('doent buy if price is below stopPrice');
+			it.skip('doent buy if price is below stop_price');
 			it('market buys when the buy price is hit', async function() {
 				const buy_price = BigNumber('0.162');
 				const amount = BigNumber('3');
@@ -184,18 +184,18 @@ describe.skip('Virtual pair trading Algo', function() {
 			});
 		});
 
-		describe('when only a buy_price and a stopPrice present', function() {
-			it.skip('doesnt buy if price is below the stopPrice');
+		describe('when only a buy_price and a stop_price present', function() {
+			it.skip('doesnt buy if price is below the stop_price');
 
 			it.skip('creates a stop limit sell order after the buy order hits', async function() {
 				const amount = BigNumber(1);
 				const buy_price = BigNumber(1);
-				const stopPrice = buy_price.div(2);
+				const stop_price = buy_price.div(2);
 				let { ee, algo } = setup({
 					algo_config: {
 						amount,
 						buy_price,
-						stopPrice
+						stop_price
 					}
 				});
 				try {
@@ -209,7 +209,7 @@ describe.skip('Virtual pair trading Algo', function() {
 				expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');
 				expect(ee.open_orders[0].orderId).to.equal(2);
-				expect(ee.open_orders[0].price.isEqualTo(stopPrice)).to.equal(true);
+				expect(ee.open_orders[0].price.isEqualTo(stop_price)).to.equal(true);
 				expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 			});
 		});
@@ -241,17 +241,17 @@ describe.skip('Virtual pair trading Algo', function() {
 			});
 		});
 
-		describe('when only a stopPrice present', function() {
+		describe('when only a stop_price present', function() {
 			it.skip('creates a stop order and returns', async function() {
 				const amount = BigNumber(1);
-				const stopPrice = BigNumber('0.5');
+				const stop_price = BigNumber('0.5');
 				let { ee, algo } = setup({
 					ee_config: {
 						starting_base_balance: BigNumber(1)
 					},
 					algo_config: {
 						amount,
-						stopPrice
+						stop_price
 					}
 				});
 				try {
@@ -264,8 +264,8 @@ describe.skip('Virtual pair trading Algo', function() {
 				expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');
 				expect(ee.open_orders[0].orderId).to.equal(1);
-				expect(ee.open_orders[0].price.isEqualTo(stopPrice)).to.equal(true);
-				expect(ee.open_orders[0].stopPrice.isEqualTo(stopPrice)).to.equal(true);
+				expect(ee.open_orders[0].price.isEqualTo(stop_price)).to.equal(true);
+				expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
 				expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 			});
 		});
@@ -296,7 +296,7 @@ describe.skip('Virtual pair trading Algo', function() {
 				expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 			});
 		});
-		describe('when a buy_price, stopPrice and target_price present', function() {
+		describe('when a buy_price, stop_price and target_price present', function() {
 			it.skip(
 				'if it.skip hits target price while buyOrder is still open then it.skip cancels buy and places targetOrder if partially filled'
 			);
@@ -305,7 +305,7 @@ describe.skip('Virtual pair trading Algo', function() {
 				it.skip('creates a stop limit sell order after the buy order hits', async function() {
 					const amount = BigNumber(1);
 					const buy_price = BigNumber(1);
-					const stopPrice = buy_price.times('0.5');
+					const stop_price = buy_price.times('0.5');
 					const target_price = buy_price.times(2);
 					let { ee, algo } = setup({
 						algo_config: {
@@ -313,7 +313,7 @@ describe.skip('Virtual pair trading Algo', function() {
 							amount,
 							buy_price,
 							target_price,
-							stopPrice
+							stop_price
 						}
 					});
 					try {
@@ -327,12 +327,12 @@ describe.skip('Virtual pair trading Algo', function() {
 					expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 					expect(ee.open_orders[0].side).to.equal('SELL');
 					expect(ee.open_orders[0].orderId).to.equal(2);
-					expect(ee.open_orders[0].price.isEqualTo(stopPrice)).to.equal(true);
-					expect(ee.open_orders[0].stopPrice.isEqualTo(stopPrice)).to.equal(true);
+					expect(ee.open_orders[0].price.isEqualTo(stop_price)).to.equal(true);
+					expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
 					expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 
 					try {
-						await ee.set_current_price({ symbol: default_pair, price: stopPrice });
+						await ee.set_current_price({ symbol: default_pair, price: stop_price });
 					} catch (e) {
 						console.log(e);
 						expect.fail('should not get here: expected call not to throw');
@@ -347,7 +347,7 @@ describe.skip('Virtual pair trading Algo', function() {
 					// TODO: what if the target_price limit order gets partially filled and then we retrace to the stop price?
 					const amount = BigNumber(1);
 					const buy_price = BigNumber(1);
-					const stopPrice = buy_price.times('0.5');
+					const stop_price = buy_price.times('0.5');
 					const target_price = buy_price.times(2);
 					let { ee, algo } = setup({
 						algo_config: {
@@ -355,7 +355,7 @@ describe.skip('Virtual pair trading Algo', function() {
 							amount,
 							buy_price,
 							target_price,
-							stopPrice
+							stop_price
 						}
 					});
 					try {
@@ -393,11 +393,11 @@ describe.skip('Virtual pair trading Algo', function() {
 				});
 			});
 			describe('with soft entry', function() {
-				it.skip('doesnt buy if price is below the stopPrice');
+				it.skip('doesnt buy if price is below the stop_price');
 				it.skip('creates a limit buy order only after the buy price hits', async function() {
 					const amount = BigNumber(1);
 					const buy_price = BigNumber(1);
-					const stopPrice = buy_price.times('0.5');
+					const stop_price = buy_price.times('0.5');
 					const target_price = buy_price.times(2);
 					let { ee, algo } = setup({
 						algo_config: {
@@ -405,7 +405,7 @@ describe.skip('Virtual pair trading Algo', function() {
 							amount,
 							buy_price,
 							target_price,
-							stopPrice,
+							stop_price,
 							soft_entry: true
 						}
 					});
@@ -436,7 +436,7 @@ describe.skip('Virtual pair trading Algo', function() {
 				it.skip('creates a stop limit sell order after the buy order hits', async function() {
 					const amount = BigNumber(1);
 					const buy_price = BigNumber(1);
-					const stopPrice = buy_price.times('0.5');
+					const stop_price = buy_price.times('0.5');
 					const target_price = buy_price.times(2);
 					let { ee, algo } = setup({
 						algo_config: {
@@ -444,7 +444,7 @@ describe.skip('Virtual pair trading Algo', function() {
 							amount,
 							buy_price,
 							target_price,
-							stopPrice,
+							stop_price,
 							soft_entry: true
 						}
 					});
@@ -460,12 +460,12 @@ describe.skip('Virtual pair trading Algo', function() {
 					expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 					expect(ee.open_orders[0].side).to.equal('SELL');
 					expect(ee.open_orders[0].orderId).to.equal(2);
-					expect(ee.open_orders[0].price.isEqualTo(stopPrice)).to.equal(true);
-					expect(ee.open_orders[0].stopPrice.isEqualTo(stopPrice)).to.equal(true);
+					expect(ee.open_orders[0].price.isEqualTo(stop_price)).to.equal(true);
+					expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
 					expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 
 					try {
-						await ee.set_current_price({ symbol: default_pair, price: stopPrice });
+						await ee.set_current_price({ symbol: default_pair, price: stop_price });
 					} catch (e) {
 						console.log(e);
 						expect.fail('should not get here: expected call not to throw');
@@ -480,7 +480,7 @@ describe.skip('Virtual pair trading Algo', function() {
 					// TODO: what if the target_price limit order gets partially filled and then we retrace to the stop price?
 					const amount = BigNumber(1);
 					const buy_price = BigNumber(1);
-					const stopPrice = buy_price.times('0.5');
+					const stop_price = buy_price.times('0.5');
 					const target_price = buy_price.times(2);
 					let { ee, algo } = setup({
 						algo_config: {
@@ -488,7 +488,7 @@ describe.skip('Virtual pair trading Algo', function() {
 							amount,
 							buy_price,
 							target_price,
-							stopPrice,
+							stop_price,
 							soft_entry: true
 						}
 					});
@@ -617,11 +617,11 @@ describe.skip('Virtual pair trading Algo', function() {
 			it.skip('auto calculates the max amount to buy based on portfolio value and stop_percentage');
 			it.skip('buys as much as it.skip can if there are insufficient funds to buy the requested amount');
 			it.skip(
-				'watches the user stream for freed up capital and if allocation still available and price between buy-stopPrice it.skip buys more'
+				'watches the user stream for freed up capital and if allocation still available and price between buy-stop_price it.skip buys more'
 			);
 		});
 		describe('auto-size', function() {
-			// needs buy_price, stopPrice, trading_rules. soft_entry?
+			// needs buy_price, stop_price, trading_rules. soft_entry?
 			if ('supports market buys by using the current price')
 				it.skip(
 					'throws an error in the constructor if it.skip doesnt have the information it.skip needs to auto-size'
@@ -635,7 +635,7 @@ describe.skip('Virtual pair trading Algo', function() {
 					'calculates the max amount to buy based on portfolio value and stop_percentage',
 					async function() {
 						const buy_price = BigNumber(1);
-						const stopPrice = buy_price.times('0.98');
+						const stop_price = buy_price.times('0.98');
 						const trading_rules = {
 							max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
 						};
@@ -643,7 +643,7 @@ describe.skip('Virtual pair trading Algo', function() {
 							algo_config: {
 								pair: default_pair,
 								buy_price,
-								stopPrice,
+								stop_price,
 								trading_rules,
 								soft_entry: true,
 								auto_size: true
@@ -672,7 +672,7 @@ describe.skip('Virtual pair trading Algo', function() {
 					'calculates the max amount to buy based on portfolio value and stop_percentage',
 					async function() {
 						const buy_price = BigNumber(4);
-						const stopPrice = buy_price.times('0.96');
+						const stop_price = buy_price.times('0.96');
 						const trading_rules = {
 							max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
 						};
@@ -680,7 +680,7 @@ describe.skip('Virtual pair trading Algo', function() {
 							algo_config: {
 								pair: default_pair,
 								buy_price,
-								stopPrice,
+								stop_price,
 								trading_rules,
 								soft_entry: true,
 								auto_size: true
@@ -730,7 +730,7 @@ describe.skip('Virtual pair trading Algo', function() {
 		);
 
 		describe('virtual/calculated pair trading', function() {
-			it.skip('doent buy if price is below stopPrice');
+			it.skip('doent buy if price is below stop_price');
 		});
 	});
 });

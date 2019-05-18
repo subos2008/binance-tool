@@ -24,7 +24,7 @@ class Algo {
 			amount,
 			quoteAmount,
 			buy_price,
-			stopPrice,
+			stop_price,
 			limit_price,
 			target_price,
 			nonBnbFees,
@@ -44,7 +44,7 @@ class Algo {
 		this.amount = amount;
 		this.quoteAmount = quoteAmount;
 		if (buy_price) this.buy_price = BigNumber(buy_price);
-		if (stopPrice) this.stopPrice = BigNumber(stopPrice);
+		if (stop_price) this.stop_price = BigNumber(stop_price);
 		if (limit_price) this.limit_price = BigNumber(limit_price);
 		if (target_price) this.target_price = BigNumber(target_price);
 		this.nonBnbFees = nonBnbFees;
@@ -56,17 +56,17 @@ class Algo {
 
 		this.pair = this.pair.toUpperCase();
 		this.quote_currency = utils.quote_currency_for_binance_pair(this.pair);
-		if (buy_price && stopPrice && !buy_price.isZero()) assert(stopPrice.isLessThan(buy_price));
+		if (buy_price && stop_price && !buy_price.isZero()) assert(stop_price.isLessThan(buy_price));
 		if (target_price && buy_price) assert(target_price.isGreaterThan(buy_price));
-		if (target_price && stopPrice) assert(target_price.isGreaterThan(stopPrice));
+		if (target_price && stop_price) assert(target_price.isGreaterThan(stop_price));
 		this.algo_utils = new AlgoUtils({ logger, ee });
 	}
 
 	calculate_percentages() {
-		let { buy_price, stopPrice, target_price, trading_rules } = this;
+		let { buy_price, stop_price, target_price, trading_rules } = this;
 		this.max_portfolio_percentage_allowed_in_this_trade = this.algo_utils.calculate_percentages({
 			buy_price,
-			stopPrice,
+			stop_price,
 			target_price,
 			trading_rules
 		});
@@ -257,13 +257,13 @@ class Algo {
 	}
 
 	_munge_amount_and_check_notionals() {
-		let { pair, amount, buy_price, stopPrice, target_price, limit_price } = this;
+		let { pair, amount, buy_price, stop_price, target_price, limit_price } = this;
 		if (buy_price && buy_price.isZero()) buy_price = undefined;
 		this.amount = this.algo_utils.munge_amount_and_check_notionals({
 			pair,
 			amount,
 			buy_price,
-			stopPrice,
+			stop_price,
 			target_price,
 			limit_price
 		});
@@ -277,8 +277,8 @@ class Algo {
 				symbol: this.pair,
 				type: 'STOP_LOSS_LIMIT',
 				quantity: this.amount.toFixed(),
-				price: (this.limit_price || this.stopPrice).toFixed(),
-				stopPrice: this.stopPrice.toFixed()
+				price: (this.limit_price || this.stop_price).toFixed(),
+				stopPrice: this.stop_price.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
 			this.logger.info(`Creating STOP_LOSS_LIMIT SELL ORDER`);
@@ -315,7 +315,7 @@ class Algo {
 	}
 
 	async placeSellOrder() {
-		if (this.stopPrice) {
+		if (this.stop_price) {
 			try {
 				this.stopOrderId = await this.placeStopOrder();
 				this.logger.info(`Set stopOrderId: ${this.stopOrderId}`);
@@ -360,8 +360,8 @@ class Algo {
 				}
 			}
 
-			if (typeof this.stopPrice !== 'undefined') {
-				this.stopPrice = utils.munge_and_check_price({ exchange_info, symbol, price: this.stopPrice });
+			if (typeof this.stop_price !== 'undefined') {
+				this.stop_price = utils.munge_and_check_price({ exchange_info, symbol, price: this.stop_price });
 			}
 
 			if (typeof this.target_price !== 'undefined') {
@@ -380,7 +380,7 @@ class Algo {
 					let current_price = (await this.ee.prices())[this.pair];
 					let quote_volume = await position_sizer.size_position_in_quote_currency({
 						buy_price: current_price,
-						stop_price: this.stopPrice,
+						stop_price: this.stop_price,
 						quote_currency: this.quote_currency
 					});
 					this.logger.info(`Would currently invest ${quote_volume} ${this.quote_currency}`);
@@ -411,7 +411,7 @@ class Algo {
 			if (this.percentages) process.exit();
 
 			let buy_msg = this.buy_price ? `buy: ${this.buy_price}` : '';
-			let stop_msg = this.stopPrice ? `stop: ${this.stopPrice}` : '';
+			let stop_msg = this.stop_price ? `stop: ${this.stop_price}` : '';
 			let target_msg = this.target_price ? `target: ${this.target_price}` : '';
 			this.send_message(`${this.pair} New trade: ${buy_msg} ${stop_msg} ${target_msg}`);
 			await this.monitor_user_stream();
@@ -448,7 +448,7 @@ class Algo {
 			let isCancelling = false;
 
 			// TODO: we don't always need this - only if we have stop and target orders that need monitoring
-			if ((this.stopPrice && this.target_price) || this.soft_entry) {
+			if ((this.stop_price && this.target_price) || this.soft_entry) {
 				let obj = this;
 				this.closeTradesWebSocket = await this.ee.ws.aggTrades([ this.pair ], async function(trade) {
 					var { symbol, price } = trade;
@@ -472,7 +472,7 @@ class Algo {
 						// obj.logger.info(`${symbol} trade update. price: ${price} buy: ${obj.buy_price}`);
 					} else if (obj.stopOrderId || obj.targetOrderId) {
 						// obj.logger.info(
-						// 	`${symbol} trade update. price: ${price} stop: ${obj.stopPrice} target: ${obj.target_price}`
+						// 	`${symbol} trade update. price: ${price} stop: ${obj.stop_price} target: ${obj.target_price}`
 						// );
 						if (
 							typeof obj.target_price !== 'undefined' &&
@@ -501,7 +501,7 @@ class Algo {
 						} else if (
 							obj.targetOrderId &&
 							!obj.stopOrderId &&
-							price.isLessThanOrEqualTo(obj.stopPrice) &&
+							price.isLessThanOrEqualTo(obj.stop_price) &&
 							!isCancelling
 						) {
 							isCancelling = true;

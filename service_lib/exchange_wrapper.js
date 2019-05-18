@@ -29,7 +29,7 @@ class ExchangeWrapper {
 			base_amount = this.algo_utils.munge_amount_and_check_notionals({
 				pair,
 				amount: base_amount,
-				buyPrice: limit_price
+				buy_price: limit_price
 			});
 			return true;
 		} catch (e) {
@@ -53,7 +53,7 @@ class ExchangeWrapper {
 			base_amount = this.algo_utils.munge_amount_and_check_notionals({
 				pair,
 				amount: base_amount,
-				buyPrice: limit_price
+				buy_price: limit_price
 			});
 		} catch (e) {
 			console.log(e);

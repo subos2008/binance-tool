@@ -278,6 +278,7 @@ class Algo {
 
 	_munge_amount_and_check_notionals() {
 		let { pair, amount, buyPrice, stopPrice, targetPrice, limitPrice } = this;
+		if (buyPrice.isZero()) buyPrice = undefined;
 		this.amount = this.algo_utils.munge_amount_and_check_notionals({
 			pair,
 			amount,

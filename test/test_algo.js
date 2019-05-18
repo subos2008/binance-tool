@@ -61,17 +61,19 @@ describe('Algo', function() {
 		if (ee_config.starting_quote_balance) {
 			ee_config.starting_balances[default_quote_currency] = ee_config.starting_quote_balance;
 		} else {
-			if (!ee_config.starting_balances) ee_config.starting_balances = {};
-			ee_config.starting_balances[default_quote_currency] = BigNumber(1);
+			if (!ee_config.starting_balances) {
+				ee_config.starting_balances = {};
+				ee_config.starting_balances[default_quote_currency] = BigNumber(1);
+			}
 		}
 		if (ee_config.starting_base_balance)
 			ee_config.starting_balances[default_base_currency] = ee_config.starting_base_balance;
 
 		let ee = new ExchangeEmulator(ee_config);
-		algo_config = Object.assign(
-			{ ee, logger: null_logger, send_message: fresh_message_queue(), pair: default_pair },
-			algo_config
-		);
+		algo_config = Object.assign({ ee, logger: null_logger, send_message: fresh_message_queue() }, algo_config);
+		if (!algo_config.pair && !algo_config.virtualPair) {
+			algo_config.pair = default_pair;
+		}
 		if (!no_agitate) {
 			if (algo_config.buyPrice) algo_config.buyPrice = aggrivate_price(algo_config.buyPrice);
 			if (algo_config.stopPrice) algo_config.stopPrice = aggrivate_price(algo_config.stopPrice);
@@ -156,6 +158,7 @@ describe('Algo', function() {
 			// the code assumed if(soft_entry) then targetPrice was assumed to be defined
 			it('doesnt error from assuming a targetPrice is specified');
 		});
+		it('doesnt buy if price is below the stopPrice');
 
 		it('creates a stop limit sell order after the buy order hits', async function() {
 			const amount = BigNumber(1);
@@ -363,6 +366,7 @@ describe('Algo', function() {
 			});
 		});
 		describe('with soft entry', function() {
+			it('doesnt buy if price is below the stopPrice');
 			it('creates a limit buy order only after the buy price hits', async function() {
 				const amount = BigNumber(1);
 				const buyPrice = BigNumber(1);
@@ -576,11 +580,14 @@ describe('Algo', function() {
 		it('sends a message if a soft entry hits the buy price but there are insufficient funds to execute it');
 		it('auto calculates the max amount to buy based on portfolio value and stop_percentage');
 		it('buys as much as it can if there are insufficient funds to buy the requested amount');
-		it('watches the user stream for freed up capital if between buy-stopPrice and uable to invest fully');
+		it(
+			'watches the user stream for freed up capital and if allocation still available and price between buy-stopPrice it buys more'
+		);
 	});
 	describe('auto-size', function() {
 		// needs buyPrice, stopPrice, trading_rules. soft_entry?
-		it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
+		if ('supports market buys by using the current price')
+			it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
 		it('knows something about trading fees and if that affects the amount if there isnt enough BNB');
 		describe('works when buying spot (market buy mode)', function() {
 			it('creates buy order for the max amount to buy based on current_price, portfolio value and stop_percentage', async function() {
@@ -745,4 +752,43 @@ describe('Algo', function() {
 	it(
 		'add tests for autosize and setting stop and target orders to verifty munging is happening and being checked for'
 	);
+
+	describe('virtual/calculated pair trading', function() {
+		it('doent buy if price is below stopPrice');
+		it('triggers when the buy price is hit', async function() {
+			const buyPrice = BigNumber('0.162');
+			const amount = BigNumber('3');
+			let { ee, algo } = setup({
+				algo_config: {
+					virtualPair: 'AIONUSDT',
+					intermediateCurrency: 'BTC',
+					buyPrice,
+					amount,
+					logger
+				},
+				ee_config: {
+					starting_balances: { USDT: BigNumber(20) },
+					logger
+				}
+			});
+			try {
+				// set price initially higher than the buyPrice. Probably unused code.
+				// BuyWhen AIONUSDT = 0.162, start at ~0.216. BTCUSDT of 7310, AIONBTC of 0.0000298
+				await ee.set_current_price({ symbol: 'BTCUSDT', price: '7310' });
+				await ee.set_current_price({ symbol: 'AIONBTC', price: '0.0000298' });
+				await algo.main();
+				// now lets move both currencies to hit buyPrice:
+				await ee.set_current_price({ symbol: 'BTCUSDT', price: '7500' });
+				await ee.set_current_price({ symbol: 'AIONBTC', price: '00.0000216' });
+				// test for a market buy... well let's check balances changed
+				let balances = (await ee.accountInfo()).balances;
+				// expect(balances).to.be.an('array').that.has.lengthOf(2);
+				expect(balances).to.deep.include({ asset: 'AION', free: amount.toFixed(), locked: '0' });
+				// expect(balances).to.deep.include({ asset: 'ETH', free: '202', locked: '0' });
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+		});
+	});
 });

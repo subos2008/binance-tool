@@ -613,6 +613,16 @@ describe('ExchangeEmulator', function() {
 		});
 		describe('STOP_LOSS_LIMIT order', async function() {
 			it('asserts pair exists');
+			// { Error: Order would trigger immediately.
+			// 	at /Users/ryan/Dropbox/crypto/binance-tool/node_modules/binance-api-node/dist/http.js:51:19
+			// 	at processTicksAndRejections (internal/process/next_tick.js:81:5)
+			//   actual_name: 'AsyncErrorWrapper',
+			//   name: 'Error',
+			//   wrapped: true,
+			//   message:
+			//    '[AsyncErrorWrapper of Error] Order would trigger immediately.' }
+			it('replicates the Binance behaviour: it rejects STOP_LOSS_LIMIT_ORDERS that would trigger immediately');
+
 			it('throws if it is passed price below MIN_PRICE', async function() {
 				const ee = setup({
 					starting_base_balance: BigNumber(1)

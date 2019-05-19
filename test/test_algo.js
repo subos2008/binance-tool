@@ -719,4 +719,14 @@ describe('Algo', function() {
 	it('handles getting unexpected insufficient balance errors');
 	it('when auto-size is not specified we can buy more than the trading rules would allow');
 	it('should autosize automatically and only ignore trading rules if --ignore-trading-rules is set');
+
+	// { Error: Order would trigger immediately.
+	// 	at /Users/ryan/Dropbox/crypto/binance-tool/node_modules/binance-api-node/dist/http.js:51:19
+	// 	at processTicksAndRejections (internal/process/next_tick.js:81:5)
+	//   actual_name: 'AsyncErrorWrapper',
+	//   name: 'Error',
+	//   wrapped: true,
+	//   message:
+	//    '[AsyncErrorWrapper of Error] Order would trigger immediately.' }
+	it('deals with the fact that Binance rejects STOP_LOSS_LIMIT_ORDERS that would trigger immediately');
 });

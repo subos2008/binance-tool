@@ -196,7 +196,7 @@ class Algo {
 			try {
 				await orderFilled(data);
 			} catch (error) {
-				async_error_handler(this.logger, `error placing order: ${error.body}`, error);
+				async_error_handler(obj.logger, `error placing order: ${error.body}`, error);
 			}
 		}
 

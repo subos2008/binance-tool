@@ -108,7 +108,9 @@ class PositionSizer {
 	async size_position_in_quote_currency({ buy_price, stop_price, quote_currency, max_quote_amount_to_buy } = {}) {
 		assert(buy_price);
 		//TODO: have a specific error class for TradingRules violations
-		if (!this.trading_rules.allowed_to_trade_without_stop) assert(stop_price);
+		if (!this.trading_rules.allowed_to_trade_without_stop) {
+			if (!stop_price) throw new Error(`TRADING_RULES_VIOLATION: attempt to trade without stop price`);
+		}
 		assert(quote_currency);
 
 		try {

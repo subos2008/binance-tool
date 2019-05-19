@@ -75,12 +75,15 @@ class Algo {
 		this.auto_size = auto_size;
 		this.percentages = percentages;
 
-		this.pair = this.pair.toUpperCase();
-		this.quote_currency = utils.quote_currency_for_binance_pair(this.pair);
+		this.algo_utils = new AlgoUtils({ logger, ee });
+
+		this.pair = pair = this.pair.toUpperCase();
+		let { quote_currency, base_currency } = this.algo_utils.split_pair(pair);
+		this.quote_currency = quote_currency;
+		this.base_currency = base_currency;
 		if (buy_price && stop_price && !buy_price.isZero()) assert(stop_price.isLessThan(buy_price));
 		if (target_price && buy_price) assert(target_price.isGreaterThan(buy_price));
 		if (target_price && stop_price) assert(target_price.isGreaterThan(stop_price));
-		this.algo_utils = new AlgoUtils({ logger, ee });
 		this.position_sizer = new PositionSizer({ logger, ee, trading_rules });
 	}
 
@@ -120,17 +123,15 @@ class Algo {
 		}
 	}
 
-	// checks this.auto_size and only passes stop_price through if it is set
-	// i.e. trading rules get ignored unless auto-size is set
 	async size_position({ current_price } = {}) {
-		let { trading_rules, buy_price, quote_currency, max_quote_amount_to_buy } = this;
+		let { trading_rules, stop_price, buy_price, quote_currency, max_quote_amount_to_buy } = this;
 		buy_price = current_price ? current_price : buy_price;
 		assert(buy_price);
 		try {
 			let quote_volume = await this.position_sizer.size_position_in_quote_currency({
 				trading_rules,
 				buy_price,
-				stop_price: this.auto_size ? this.stop_price : undefined,
+				stop_price,
 				quote_currency,
 				max_quote_amount_to_buy
 			});
@@ -138,6 +139,9 @@ class Algo {
 				quote_volume,
 				price: buy_price
 			});
+			this.logger.info(
+				`Sized trade at ${quote_volume} ${this.quote_currency}, ${base_amount} ${this.base_currency}`
+			);
 			return { quote_volume, base_amount };
 		} catch (error) {
 			async_error_handler(console, `sizing position`, error);

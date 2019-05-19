@@ -102,6 +102,9 @@ describe('Algo', function() {
 	});
 
 	describe('when only a buy_price is present', function() {
+		describe('when only an amount is specified (base, not quote)', function() {
+			it('doesnt autosize and uses the passed in amount');
+		});
 		describe('without soft_entry', function() {
 			describe('with max_quote_amount_to_buy and without autosize', function() {
 				it('buys using the available quote even if it it less than the max amount specified', async function() {

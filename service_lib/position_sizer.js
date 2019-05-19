@@ -105,7 +105,7 @@ class PositionSizer {
 			.times(100);
 	}
 
-	async size_position_in_quote_currency({ buy_price, stop_price, quote_currency } = {}) {
+	async size_position_in_quote_currency({ buy_price, stop_price, quote_currency, max_quote_amount_to_buy } = {}) {
 		assert(buy_price);
 		assert(stop_price);
 		assert(quote_currency);
@@ -119,6 +119,9 @@ class PositionSizer {
 				max_portfolio_percentage_allowed_in_trade,
 				quote_currency
 			});
+			if (max_quote_amount_to_buy) {
+				quote_volume = BigNumber.minimum(quote_volume, max_quote_amount_to_buy);
+			}
 			assert(quote_volume.isFinite());
 			return quote_volume;
 		} catch (error) {

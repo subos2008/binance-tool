@@ -37,7 +37,7 @@ const { argv } = require('yargs')
 	// '-q <amount in quote coin>'
 	.string('q')
 	.alias('q', 'amountquote')
-	.describe('q', 'Set amount to buy in quote coin (alternative to -a for limit buy orders only)')
+	.describe('q', 'Set max amount to buy in quote coin (alternative to -a)')
 	// '-b <buy_price>'
 	.string('b')
 	.alias('b', 'buy')
@@ -77,7 +77,7 @@ const { argv } = require('yargs')
 let {
 	p: pair,
 	a: amount,
-	q: quoteAmount,
+	q: max_quote_amount_to_buy,
 	b: buy_price,
 	s: stop_price,
 	l: limit_price,
@@ -104,7 +104,7 @@ const algo = new Algo({
 	logger,
 	pair,
 	amount,
-	quoteAmount,
+	max_quote_amount_to_buy,
 	buy_price,
 	stop_price,
 	limit_price,

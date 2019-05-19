@@ -22,7 +22,7 @@ class Algo {
 			logger,
 			pair,
 			amount,
-			quoteAmount,
+			max_quote_amount_to_buy,
 			buy_price,
 			stop_price,
 			limit_price,
@@ -42,7 +42,7 @@ class Algo {
 		this.send_message = send_message;
 		this.pair = pair;
 		this.amount = amount;
-		this.quoteAmount = quoteAmount;
+		this.max_quote_amount_to_buy = max_quote_amount_to_buy;
 		if (buy_price) {
 			buy_price = BigNumber(buy_price);
 			this.buy_price = BigNumber(buy_price);
@@ -379,8 +379,8 @@ class Algo {
 				// buy_price of zero is special case to denote market buy
 				if (!this.buy_price.isZero()) {
 					this.buy_price = utils.munge_and_check_price({ exchange_info, symbol, price: this.buy_price });
-					if (typeof this.quoteAmount !== 'undefined') {
-						this.amount = BigNumber(this.quoteAmount).dividedBy(this.buy_price);
+					if (typeof this.max_quote_amount_to_buy !== 'undefined') {
+						this.amount = BigNumber(this.max_quote_amount_to_buy).dividedBy(this.buy_price);
 						assert(this.amount.isFinite());
 						this.logger.info(`Calculated buy amount ${this.amount.toFixed()} (unmunged)`);
 					}
@@ -402,7 +402,8 @@ class Algo {
 					let position_sizer = new PositionSizer({
 						logger: this.logger,
 						ee: this.ee,
-						trading_rules: this.trading_rules
+						trading_rules: this.trading_rules,
+						max_quote_amount_to_buy: this.max_quote_amount_to_buy
 					});
 					let current_price = (await this.ee.prices())[this.pair];
 					let quote_volume = await position_sizer.size_position_in_quote_currency({

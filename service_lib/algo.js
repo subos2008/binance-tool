@@ -21,7 +21,7 @@ class Algo {
 			send_message,
 			logger,
 			pair,
-			max_base_amount_to_buy,
+			base_amount, // can be either the amount to buy or sell depending on other args
 			max_quote_amount_to_buy,
 			buy_price,
 			stop_price,
@@ -42,14 +42,16 @@ class Algo {
 		this.ee = ee;
 		this.send_message = send_message;
 		this.pair = pair;
-		this.max_base_amount_to_buy = max_base_amount_to_buy;
-		this.max_quote_amount_to_buy = max_quote_amount_to_buy;
+		if (max_quote_amount_to_buy) {
+			max_quote_amount_to_buy = BigNumber(max_quote_amount_to_buy);
+			this.max_quote_amount_to_buy = max_quote_amount_to_buy;
+		}
 		if (buy_price) {
 			buy_price = BigNumber(buy_price);
 			this.buy_price = BigNumber(buy_price);
+			if (base_amount) this.max_base_amount_to_buy = BigNumber(base_amount);
 		} else {
-			this.logger.info(`Ahh, oops, you meant amount as in the amount we already have...`);
-			this.base_amount_held = this.max_base_amount_to_buy;
+			if (base_amount) this.base_amount_held = BigNumber(base_amount);
 		}
 		if (stop_price) {
 			stop_price = BigNumber(stop_price);
@@ -228,6 +230,7 @@ class Algo {
 				if (orderId === obj.buyOrderId) {
 					await checkOrderFilled(data, async () => {
 						obj.buyOrderId = 0;
+						this.base_amount_held = BigNumber(data.executedQty);
 						this.send_message(`${data.symbol} buy order filled`);
 						await obj.placeSellOrder();
 					});
@@ -258,8 +261,7 @@ class Algo {
 	}
 
 	_munge_amount_and_check_notionals({ base_amount }) {
-		let { pair, amount, buy_price, stop_price, target_price, limit_price } = this;
-		assert(!amount);
+		let { pair, buy_price, stop_price, target_price, limit_price } = this;
 		assert(base_amount);
 		if (buy_price && buy_price.isZero()) buy_price = undefined;
 		return this.algo_utils.munge_amount_and_check_notionals({

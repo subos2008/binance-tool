@@ -139,7 +139,8 @@ describe('Algo', function() {
 				let { ee, algo } = setup({
 					algo_config: {
 						amount: base_volume,
-						buy_price: limit_price
+						buy_price: limit_price,
+						logger
 					}
 				});
 				try {

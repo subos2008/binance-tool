@@ -99,6 +99,8 @@ const binance_client = Binance({
 	// getTime: xxx // time generator function, optional, defaults to () => Date.now()
 });
 
+console.error(`WARNING -a is UNTESTED in this CODE`);
+
 const algo = new Algo({
 	ee: binance_client,
 	send_message,

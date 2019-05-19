@@ -85,6 +85,10 @@ class Algo {
 		if (target_price && buy_price) assert(target_price.isGreaterThan(buy_price));
 		if (target_price && stop_price) assert(target_price.isGreaterThan(stop_price));
 		this.position_sizer = new PositionSizer({ logger, ee, trading_rules });
+
+		this.logger.warn(
+			`STOP_LOSS_LIMIT orders will not be excepted by the exchange if they would trigger immediately`
+		);
 	}
 
 	print_percentages_for_user() {

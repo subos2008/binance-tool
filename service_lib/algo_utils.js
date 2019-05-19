@@ -137,11 +137,10 @@ class AlgoUtils {
 			let args = {
 				useServerTime: true,
 				side: 'BUY',
-				symbol: this.pair,
+				symbol: pair,
 				type: 'LIMIT',
-				quantity: this.amount.toFixed(),
-				price: this.buy_price.toFixed()
-				// TODO: more args here, server time and use FULL response body
+				quantity: base_amount.toFixed(),
+				price: limit_price.toFixed()
 			};
 			this.logger.info(`Creating LIMIT BUY ORDER`);
 			this.logger.info(args);

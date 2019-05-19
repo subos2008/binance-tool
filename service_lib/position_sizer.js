@@ -105,8 +105,12 @@ class PositionSizer {
 			.times(100);
 	}
 
-	async size_position_in_quote_currency({ buy_price, stop_price, quote_currency, max_quote_amount_to_buy } = {}) {
+	async size_position(
+		{ buy_price, stop_price, quote_currency, max_quote_amount_to_buy, max_base_amount_to_buy, auto_size } = {}
+	) {
 		assert(buy_price);
+		assert(auto_size === true); // not implemented to be switchable, we always do it if stop price is set
+		assert(!max_base_amount_to_buy); // not implemented
 		//TODO: have a specific error class for TradingRules violations
 		if (!this.trading_rules.allowed_to_trade_without_stop) {
 			if (!stop_price) throw new Error(`TRADING_RULES_VIOLATION: attempt to trade without stop price`);
@@ -128,7 +132,11 @@ class PositionSizer {
 				quote_volume = BigNumber.minimum(quote_volume, max_quote_amount_to_buy);
 			}
 			assert(quote_volume.isFinite());
-			return quote_volume;
+			let base_amount = utils.quote_volume_at_price_to_base_volume({
+				quote_volume,
+				price: buy_price
+			});
+			return { quote_volume, base_amount };
 		} catch (error) {
 			async_error_handler(this.logger, `Error when sizing trade:`, error);
 		}

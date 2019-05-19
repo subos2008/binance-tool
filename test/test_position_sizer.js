@@ -115,5 +115,9 @@ describe('PositionSizer', function() {
 
 		it('Converts held base currencies to their equavalent in the supplied quote currency and adds that in');
 		it('Handles base currencies that dont have a direct pairing to the quote currency');
+		it('respects max_base_amount_to_buy');
+		it(
+			'max_base_amount_to_buy ... do we want to use that not as a max but as an abolute value? .. i.e if auto-size isnt passed'
+		);
 	});
 });

@@ -112,7 +112,8 @@ describe('Algo', function() {
 					let { ee, algo } = setup({
 						algo_config: {
 							buy_price,
-							max_quote_amount_to_buy: BigNumber(1)
+							max_quote_amount_to_buy: BigNumber(1),
+							logger
 						},
 						ee_config: {
 							starting_quote_balance: BigNumber('0.5')

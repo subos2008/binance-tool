@@ -21,7 +21,7 @@ class Algo {
 			send_message,
 			logger,
 			pair,
-			amount,
+			max_base_amount_to_buy,
 			max_quote_amount_to_buy,
 			buy_price,
 			stop_price,
@@ -31,24 +31,25 @@ class Algo {
 			soft_entry,
 			trading_rules,
 			auto_size,
-			percentages,
-			quoteAmount // it's a trap
+			percentages
 		} = {}
 	) {
 		assert(logger);
 		this.logger = logger;
 		assert(send_message);
 		assert(pair);
-		assert(!quoteAmount);
 
 		this.ee = ee;
 		this.send_message = send_message;
 		this.pair = pair;
-		this.amount = amount;
+		this.max_base_amount_to_buy = max_base_amount_to_buy;
 		this.max_quote_amount_to_buy = max_quote_amount_to_buy;
 		if (buy_price) {
 			buy_price = BigNumber(buy_price);
 			this.buy_price = BigNumber(buy_price);
+		} else {
+			this.logger.info(`Ahh, oops, you meant amount as in the amount we already have...`);
+			this.base_amount_held = this.max_base_amount_to_buy;
 		}
 		if (stop_price) {
 			stop_price = BigNumber(stop_price);
@@ -110,15 +111,16 @@ class Algo {
 		if (this.closeTradesWebSocket) this.closeTradesWebSocket();
 	}
 
-	async _create_market_buy_order() {
+	async _create_market_buy_order({ base_amount }) {
+		assert(base_amount);
+		assert(BigNumber.isBigNumber(base_amount));
 		try {
 			let args = {
 				useServerTime: true,
 				side: 'BUY',
 				symbol: this.pair,
 				type: 'MARKET',
-				quantity: this.amount.toFixed()
-				// TODO: more args here, server time and use FULL response body
+				quantity: base_amount.toFixed()
 			};
 			this.logger.info(`Creating MARKET BUY ORDER`);
 			// this.logger.info(args);
@@ -133,22 +135,31 @@ class Algo {
 
 	async size_position({ current_price } = {}) {
 		if (current_price) current_price = BigNumber(current_price); // rare usage, be resilient
-		let { trading_rules, stop_price, buy_price, quote_currency, max_quote_amount_to_buy } = this;
+		let {
+			trading_rules,
+			auto_size,
+			stop_price,
+			buy_price,
+			quote_currency,
+			max_quote_amount_to_buy,
+			max_base_amount_to_buy
+		} = this;
 		buy_price = current_price ? current_price : buy_price;
 		assert(buy_price);
 		try {
-			let quote_volume = await this.position_sizer.size_position_in_quote_currency({
+			let { base_amount, quote_volume } = await this.position_sizer.size_position({
 				trading_rules,
+				auto_size,
 				buy_price,
 				stop_price,
 				quote_currency,
-				max_quote_amount_to_buy
+				max_quote_amount_to_buy,
+				max_base_amount_to_buy
 			});
-			console.log(`${typeof buy_price}`);
-			let base_amount = utils.quote_volume_at_price_to_base_volume({
-				quote_volume,
-				price: buy_price
-			});
+			assert(base_amount);
+			if (this.max_base_amount_to_buy) {
+				assert(base_amount.isLessThanOrEqualTo(this.max_base_amount_to_buy));
+			}
 			this.logger.info(
 				`Sized trade at ${quote_volume} ${this.quote_currency}, ${base_amount} ${this.base_currency}`
 			);
@@ -161,18 +172,13 @@ class Algo {
 	async _create_limit_buy_order() {
 		try {
 			let { base_amount } = await this.size_position();
-			this.amount = base_amount;
-			this._munge_amount_and_check_notionals();
-		} catch (error) {
-			async_error_handler(console, `Autosizing error during limit buy order: ${error.body}`, error);
-		}
-		try {
+			base_amount = this._munge_amount_and_check_notionals({ base_amount });
 			let args = {
 				useServerTime: true,
 				side: 'BUY',
 				symbol: this.pair,
 				type: 'LIMIT',
-				quantity: this.amount.toFixed(),
+				quantity: base_amount.toFixed(),
 				price: this.buy_price.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
@@ -251,12 +257,14 @@ class Algo {
 		this.shutdown_streams();
 	}
 
-	_munge_amount_and_check_notionals() {
+	_munge_amount_and_check_notionals({ base_amount }) {
 		let { pair, amount, buy_price, stop_price, target_price, limit_price } = this;
+		assert(!amount);
+		assert(base_amount);
 		if (buy_price && buy_price.isZero()) buy_price = undefined;
-		this.amount = this.algo_utils.munge_amount_and_check_notionals({
+		return this.algo_utils.munge_amount_and_check_notionals({
 			pair,
-			amount,
+			amount: base_amount,
 			buy_price,
 			stop_price,
 			target_price,
@@ -272,14 +280,14 @@ class Algo {
 				side: 'SELL',
 				symbol: this.pair,
 				type: 'STOP_LOSS_LIMIT',
-				quantity: this.amount.toFixed(),
+				quantity: this.base_amount_held.toFixed(),
 				price: price.toFixed(),
 				stopPrice: this.stop_price.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
 			this.logger.info(
 				`${this
-					.pair} Creating STOP_LOSS_LIMIT SELL ORDER: ${this.amount.toFixed()} at price ${price.toFixed()}, stopPrice ${this.stop_price.toFixed()}`
+					.pair} Creating STOP_LOSS_LIMIT SELL ORDER: ${this.base_amount_held.toFixed()} at price ${price.toFixed()}, stopPrice ${this.stop_price.toFixed()}`
 			);
 			let response = await this.ee.order(args);
 			this.logger.info('STOP_LOSS_LIMIT sell response', response);
@@ -297,7 +305,7 @@ class Algo {
 				side: 'SELL',
 				symbol: this.pair,
 				type: 'LIMIT',
-				quantity: this.amount.toFixed(),
+				quantity: this.base_amount_held.toFixed(),
 				price: this.target_price.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
@@ -340,6 +348,8 @@ class Algo {
 			async_error_handler(this.logger, 'Error could not pull exchange info', error);
 		}
 
+		let current_price, base_amount_to_buy, quote_volume;
+
 		try {
 			let exchange_info = this.exchange_info;
 			let symbol = this.pair;
@@ -359,37 +369,31 @@ class Algo {
 				this.target_price = utils.munge_and_check_price({ exchange_info, symbol, price: this.target_price });
 			}
 
-			let current_price; // pass it to print_percentages_for_user if we use it
-			if (this.auto_size && this.buy_price && this.buy_price.isZero()) {
+			if (this.buy_price) {
 				try {
-					this.logger.info(`Autosizing market buy using current price`);
-					let prices = await this.ee.prices();
-					current_price = BigNumber(prices[this.pair]);
-					let { quote_volume, base_amount } = await this.size_position({ current_price });
-					this.amount = base_amount;
+					if (this.buy_price.isZero()) {
+						this.logger.info(`Autosizing market buy using current price`);
+						let prices = await this.ee.prices();
+						current_price = BigNumber(prices[this.pair]);
+					}
+					let result = await this.size_position({ current_price });
+					base_amount_to_buy = result.base_amount;
+					quote_volume = result.quote_volume;
+					this._munge_amount_and_check_notionals({ base_amount: base_amount_to_buy });
+					this.print_percentages_for_user({ current_price });
 					this.logger.info(`Would currently invest ${quote_volume} ${this.quote_currency}`);
-					this.logger.info(`Calculated buy amount ${this.amount.toFixed()} (unmunged)`);
+					this.logger.info(`Calculated buy amount ${base_amount_to_buy.toFixed()} ${this.base_currency}`);
 				} catch (error) {
-					async_error_handler(this.logger, `Error auto-sizing spot buy:`, error);
+					async_error_handler(this.logger, undefined, error);
 				}
+			} else if (this.base_amount_held) {
+				this._munge_amount_and_check_notionals({ base_amount: this.base_amount_held });
+			} else {
+				throw new Error(
+					`Not sure what the user wants me to do, no buyPrice or base_amount to manage specified`
+				);
 			}
 
-			if (!this.amount && !this.auto_size) {
-				let msg = 'You must specify amount with -a, -q or use --auto-size';
-				this.logger.error(msg);
-				throw new Error(msg);
-			}
-
-			this._munge_amount_and_check_notionals();
-
-			this.print_percentages_for_user({ current_price });
-			try {
-				// trigger printing out the current status
-				let qv = await this._calculate_autosized_quote_volume_available();
-				console.log(`Would currently invest ${qv} ${this.quote_currency}`);
-			} catch (e) {
-				/* do nothing */
-			}
 			if (this.percentages) process.exit();
 
 			let buy_msg = this.buy_price ? `buy: ${this.buy_price}` : '';
@@ -400,27 +404,33 @@ class Algo {
 
 			const NON_BNB_TRADING_FEE = BigNumber('0.001'); // TODO: err why is this unused
 		} catch (error) {
-			console.log(error);
+			this.logger.error(error);
 			throw new Error('exception in setup code');
 			// async_error_handler(undefined, `exception in setup code: ${error.body}`, error);
 		}
 
 		try {
+			let pair = this.pair;
 			let waiting_for_soft_entry_price = false;
-			if (typeof this.buy_price !== 'undefined') {
+			if (this.buy_price) {
 				if (this.buy_price.isZero()) {
 					if (this.soft_entry) {
 						let msg = `Soft entry mode requires specified buy price`;
 						this.logger.error(msg);
 						throw new Error(msg);
 					}
-					this.buyOrderId = await this._create_market_buy_order();
+					assert(base_amount_to_buy);
+					this.buyOrderId = await this._create_market_buy_order({ base_amount: base_amount_to_buy });
 				} else {
 					if (this.soft_entry) {
 						this.logger.info(`Soft entry mode`);
 						waiting_for_soft_entry_price = true;
 					} else {
-						this.buyOrderId = await this._create_limit_buy_order();
+						this.buyOrderId = await this.algo_utils._create_limit_buy_order({
+							pair,
+							base_amount: base_amount_to_buy,
+							limit_price: this.buy_price
+						});
 					}
 				}
 			} else {
@@ -430,20 +440,16 @@ class Algo {
 			let isCancelling = false;
 
 			// TODO: we don't always need this - only if we have stop and target orders that need monitoring
+			// or we are monitoring for a soft_entry buy price. Soft entry means don't create buy
+			// order until until buy_price is hit
+			// TODO: in some cases we could close this stream when we no longer need it
 			if ((this.stop_price && this.target_price) || this.soft_entry) {
 				let obj = this;
 				this.closeTradesWebSocket = await this.ee.ws.aggTrades([ this.pair ], async function(trade) {
 					var { symbol, price } = trade;
 					assert(symbol);
 					assert(price);
-
-					// obj.logger.info('------------');
-					// obj.logger.info(`.ws.aggTrades recieved:`);
-					// obj.logger.info(trade);
-					// obj.logger.info(`stopOrderId: ${obj.stopOrderId}`);
-					// obj.logger.info('------------');
 					price = BigNumber(price);
-
 					if (waiting_for_soft_entry_price) {
 						if (price.isLessThanOrEqualTo(obj.buy_price)) {
 							waiting_for_soft_entry_price = false;

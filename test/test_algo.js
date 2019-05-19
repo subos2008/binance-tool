@@ -28,7 +28,8 @@ const default_pair = `${default_base_currency}${default_quote_currency}`;
 const exchange_info = JSON.parse(fs.readFileSync('./test/exchange_info.json', 'utf8'));
 
 const permissive_trading_rules = {
-	max_allowed_portfolio_loss_percentage_per_trade: BigNumber(100)
+	max_allowed_portfolio_loss_percentage_per_trade: BigNumber(100),
+	allowed_to_trade_without_stop: true
 };
 
 let message_queue = [];
@@ -125,7 +126,7 @@ describe('Algo', function() {
 					expect(ee.open_orders[0].side).to.equal('BUY');
 					expect(ee.open_orders[0].orderId).to.equal(1);
 					expect(ee.open_orders[0].price.isEqualTo(buy_price)).to.equal(true);
-					expect(ee.open_orders[0].origQty).bignumber.isEqualTo('0.5');
+					expect(ee.open_orders[0].origQty).bignumber.to.equal('0.5');
 				});
 			});
 			it('creates a buy order and returns', async function() {
@@ -534,80 +535,6 @@ describe('Algo', function() {
 				expect(most_recent_message()).to.equal(`${default_pair} target sell order filled`);
 			});
 		});
-	});
-
-	describe('_get_portfolio_value_from_exchange', function() {
-		it('when only quote currency held: returns the total amount of quote currency held', async function() {
-			let { ee, algo } = setup({
-				algo_config: {
-					pair: default_pair,
-					soft_entry: true,
-					auto_size: true
-				},
-				ee_config: {
-					starting_quote_balance: BigNumber(200)
-				}
-			});
-			let response = await algo._get_portfolio_value_from_exchange({ quote_currency: default_quote_currency });
-			expect(response).to.have.property('total');
-			expect(response.total).to.bignumber.equal(200);
-			expect(response.available).to.bignumber.equal(200);
-		});
-		it('when only default base currency held: returns the equvalent amount of quote currency held', async function() {
-			let { ee, algo } = setup({
-				algo_config: {
-					pair: default_pair,
-					soft_entry: true,
-					auto_size: true
-				},
-				ee_config: {
-					starting_quote_balance: BigNumber(0),
-					starting_base_balance: BigNumber(201)
-				}
-			});
-			let response;
-			try {
-				await ee.set_current_price({ symbol: default_pair, price: BigNumber('0.5') });
-				response = await algo._get_portfolio_value_from_exchange({
-					quote_currency: default_quote_currency
-				});
-			} catch (e) {
-				console.log(e);
-				expect.fail('should not get here: expected call not to throw');
-			}
-			expect(response).to.have.property('total');
-			expect(response.total).to.bignumber.equal('100.5');
-			expect(response.available).to.bignumber.equal('0');
-		});
-		it('with a mix of currencies', async function() {
-			let { ee, algo } = setup({
-				algo_config: {
-					pair: default_pair,
-					soft_entry: true,
-					auto_size: true
-				},
-				ee_config: {
-					starting_quote_balance: BigNumber(2),
-					starting_base_balance: BigNumber(201)
-				}
-			});
-			let response;
-			try {
-				await ee.set_current_price({ symbol: default_pair, price: BigNumber('0.5') });
-				response = await algo._get_portfolio_value_from_exchange({
-					quote_currency: default_quote_currency
-				});
-			} catch (e) {
-				console.log(e);
-				expect.fail('should not get here: expected call not to throw');
-			}
-			expect(response).to.have.property('total');
-			expect(response.total).to.bignumber.equal('102.5');
-			expect(response.available).to.bignumber.equal('2');
-		});
-
-		it('Converts held base currencies to their equavalent in the supplied quote currency and adds that in');
-		it('Handles base currencies that dont have a direct pairing to the quote currency');
 	});
 
 	describe('soft entry', function() {

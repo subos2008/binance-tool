@@ -107,14 +107,17 @@ class PositionSizer {
 
 	async size_position_in_quote_currency({ buy_price, stop_price, quote_currency, max_quote_amount_to_buy } = {}) {
 		assert(buy_price);
-		assert(stop_price);
+		//TODO: have a specific error class for TradingRules violations
+		if (!this.trading_rules.allowed_to_trade_without_stop) assert(stop_price);
 		assert(quote_currency);
 
 		try {
-			let max_portfolio_percentage_allowed_in_trade = this.max_portfolio_percentage_allowed_in_trade({
-				buy_price,
-				stop_price
-			});
+			let max_portfolio_percentage_allowed_in_trade = stop_price
+				? this.max_portfolio_percentage_allowed_in_trade({
+						buy_price,
+						stop_price
+					})
+				: BigNumber(100);
 			let quote_volume = await this._calculate_autosized_quote_volume_available({
 				max_portfolio_percentage_allowed_in_trade,
 				quote_currency

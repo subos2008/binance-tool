@@ -43,10 +43,23 @@ class Algo {
 		this.pair = pair;
 		this.amount = amount;
 		this.quoteAmount = quoteAmount;
-		if (buy_price) this.buy_price = BigNumber(buy_price);
-		if (stop_price) this.stop_price = BigNumber(stop_price);
-		if (limit_price) this.limit_price = BigNumber(limit_price);
-		if (target_price) this.target_price = BigNumber(target_price);
+		if (buy_price) {
+			buy_price = BigNumber(buy_price);
+			this.buy_price = BigNumber(buy_price);
+		}
+		if (stop_price) {
+			stop_price = BigNumber(stop_price);
+			this.stop_price = BigNumber(stop_price);
+		}
+		if (limit_price) {
+			limit_price = BigNumber(limit_price);
+			this.limit_price = BigNumber(limit_price);
+		}
+		if (target_price) {
+			target_price = BigNumber(target_price);
+			this.target_price = BigNumber(target_price);
+		}
+
 		this.nonBnbFees = nonBnbFees;
 		this.logger = logger;
 		this.soft_entry = soft_entry;

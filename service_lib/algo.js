@@ -49,7 +49,7 @@ class Algo {
 		if (buy_price) {
 			buy_price = BigNumber(buy_price);
 			this.buy_price = BigNumber(buy_price);
-			if (base_amount) this.max_base_amount_to_buy = BigNumber(base_amount);
+			if (base_amount) this.base_amount_to_buy = BigNumber(base_amount);
 		} else {
 			if (base_amount) this.base_amount_held = BigNumber(base_amount);
 		}
@@ -144,8 +144,17 @@ class Algo {
 			buy_price,
 			quote_currency,
 			max_quote_amount_to_buy,
-			max_base_amount_to_buy
+			base_amount_to_buy
 		} = this;
+
+		// this is kind of a corner case when the base_amount is specified for a buy order
+		// Do we want the position sizer to fiqure out if we have enough quote to buy that much
+		// base? For the moment as Algos are unlikely to use this we just return it directly, the
+		// user will see on the command line if there was an issue
+		if (this.base_amount_to_buy) {
+			return { base_amount: this.base_amount_to_buy };
+		}
+
 		buy_price = current_price ? current_price : buy_price;
 		assert(buy_price);
 		try {
@@ -155,13 +164,9 @@ class Algo {
 				buy_price,
 				stop_price,
 				quote_currency,
-				max_quote_amount_to_buy,
-				max_base_amount_to_buy
+				max_quote_amount_to_buy
 			});
 			assert(base_amount);
-			if (this.max_base_amount_to_buy) {
-				assert(base_amount.isLessThanOrEqualTo(this.max_base_amount_to_buy));
-			}
 			this.logger.info(
 				`Sized trade at ${quote_volume} ${this.quote_currency}, ${base_amount} ${this.base_currency}`
 			);

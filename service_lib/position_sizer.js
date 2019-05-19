@@ -106,24 +106,26 @@ class PositionSizer {
 	}
 
 	async size_position(
-		{ buy_price, stop_price, quote_currency, max_quote_amount_to_buy, max_base_amount_to_buy, auto_size } = {}
+		{ buy_price, stop_price, quote_currency, max_quote_amount_to_buy, do_not_auto_size_for_stop_percentage } = {}
 	) {
+		assert(quote_currency);
 		assert(buy_price);
-		assert(auto_size === true); // not implemented to be switchable, we always do it if stop price is set
-		assert(!max_base_amount_to_buy); // not implemented
-		//TODO: have a specific error class for TradingRules violations
 		if (!this.trading_rules.allowed_to_trade_without_stop) {
+			//TODO: have a specific error class for TradingRules violations
 			if (!stop_price) throw new Error(`TRADING_RULES_VIOLATION: attempt to trade without stop price`);
 		}
-		assert(quote_currency);
 
 		try {
-			let max_portfolio_percentage_allowed_in_trade = stop_price
-				? this.max_portfolio_percentage_allowed_in_trade({
-						buy_price,
-						stop_price
-					})
-				: BigNumber(100);
+			let max_portfolio_percentage_allowed_in_trade;
+			if (do_not_auto_size_for_stop_percentage || !stop_price) {
+				max_portfolio_percentage_allowed_in_trade = BigNumber(100);
+			} else {
+				max_portfolio_percentage_allowed_in_trade = this.max_portfolio_percentage_allowed_in_trade({
+					buy_price,
+					stop_price
+				});
+			}
+
 			let quote_volume = await this._calculate_autosized_quote_volume_available({
 				max_portfolio_percentage_allowed_in_trade,
 				quote_currency

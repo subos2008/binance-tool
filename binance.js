@@ -13,12 +13,13 @@ const send_message = require('./telegram.js');
 const Algo = require('./service_lib/algo');
 const Logger = require('./lib/faux_logger');
 const BigNumber = require('bignumber.js');
+const TradingRules = require('./service_lib/trading_rules');
 
 const logger = new Logger({ silent: false });
 
-const trading_rules = {
+const trading_rules = new TradingRules({
 	max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
-};
+});
 
 const { argv } = require('yargs')
 	.usage('Usage: $0')

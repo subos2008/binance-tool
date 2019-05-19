@@ -27,6 +27,10 @@ const default_quote_currency = 'BTC';
 const default_pair = `${default_base_currency}${default_quote_currency}`;
 const exchange_info = JSON.parse(fs.readFileSync('./test/exchange_info.json', 'utf8'));
 
+const permissive_trading_rules = {
+	max_allowed_portfolio_loss_percentage_per_trade: BigNumber(100)
+};
+
 let message_queue = [];
 function fresh_message_queue() {
 	message_queue = [];
@@ -70,7 +74,10 @@ describe('Algo', function() {
 			ee_config.starting_balances[default_base_currency] = ee_config.starting_base_balance;
 
 		let ee = new ExchangeEmulator(ee_config);
-		algo_config = Object.assign({ ee, logger: null_logger, send_message: fresh_message_queue() }, algo_config);
+		algo_config = Object.assign(
+			{ ee, logger: null_logger, send_message: fresh_message_queue(), trading_rules: permissive_trading_rules },
+			algo_config
+		);
 		if (!algo_config.pair && !algo_config.virtualPair) {
 			algo_config.pair = default_pair;
 		}
@@ -95,6 +102,32 @@ describe('Algo', function() {
 
 	describe('when only a buy_price is present', function() {
 		describe('without soft_entry', function() {
+			describe('with max_quote_amount_to_buy and without autosize', function() {
+				it('buys using the available quote even if it it less than the max amount specified', async function() {
+					const buy_price = BigNumber(1);
+					let { ee, algo } = setup({
+						algo_config: {
+							buy_price,
+							max_quote_amount_to_buy: BigNumber(1)
+						},
+						ee_config: {
+							starting_quote_balance: BigNumber('0.5')
+						}
+					});
+					try {
+						await algo.main();
+					} catch (e) {
+						console.log(e);
+						expect.fail('should not get here: expected call not to throw');
+					}
+					expect(ee.open_orders).to.have.lengthOf(1);
+					expect(ee.open_orders[0].type).to.equal('LIMIT');
+					expect(ee.open_orders[0].side).to.equal('BUY');
+					expect(ee.open_orders[0].orderId).to.equal(1);
+					expect(ee.open_orders[0].price.isEqualTo(buy_price)).to.equal(true);
+					expect(ee.open_orders[0].origQty).bignumber.isEqualTo('0.5');
+				});
+			});
 			it('creates a buy order and returns', async function() {
 				const base_volume = BigNumber(1);
 				const limit_price = BigNumber(1);
@@ -753,4 +786,7 @@ describe('Algo', function() {
 	it(
 		'add tests for autosize and setting stop and target orders to verifty munging is happening and being checked for'
 	);
+	it('handles getting unexpected insufficient balance errors');
+	it('when auto-size is not specified we can buy more than the trading rules would allow');
+	it('should autosize automatically and only ignore trading rules if --ignore-trading-rules is set');
 });

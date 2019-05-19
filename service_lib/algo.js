@@ -31,12 +31,15 @@ class Algo {
 			soft_entry,
 			trading_rules,
 			auto_size,
-			percentages
+			percentages,
+			quoteAmount // it's a trap
 		} = {}
 	) {
 		assert(logger);
+		this.logger = logger;
 		assert(send_message);
 		assert(pair);
+		assert(!quoteAmount);
 
 		this.ee = ee;
 		this.send_message = send_message;
@@ -60,8 +63,13 @@ class Algo {
 			this.target_price = BigNumber(target_price);
 		}
 
+		// require that the user at least pass in trading rules, this allows much
+		// more solid code downstream as we can assert that the trading_rules are present,
+		// otherwise we would ignore them if they were undefined which leaves the potential
+		// for massive fuckups
+		assert(trading_rules);
+
 		this.nonBnbFees = nonBnbFees;
-		this.logger = logger;
 		this.soft_entry = soft_entry;
 		this.trading_rules = trading_rules;
 		this.auto_size = auto_size;
@@ -73,11 +81,12 @@ class Algo {
 		if (target_price && buy_price) assert(target_price.isGreaterThan(buy_price));
 		if (target_price && stop_price) assert(target_price.isGreaterThan(stop_price));
 		this.algo_utils = new AlgoUtils({ logger, ee });
+		this.position_sizer = new PositionSizer({ logger, ee, trading_rules });
 	}
 
-	calculate_percentages() {
+	print_percentages_for_user() {
 		let { buy_price, stop_price, target_price, trading_rules } = this;
-		this.max_portfolio_percentage_allowed_in_this_trade = this.algo_utils.calculate_percentages({
+		this.algo_utils.calculate_percentages({
 			buy_price,
 			stop_price,
 			target_price,
@@ -111,87 +120,35 @@ class Algo {
 		}
 	}
 
-	// TODO: this is slowly hacking it's way up to returning the equivalent of the
-	// TODO: total portfolio in whatever quote currency is supplied
-	async _get_portfolio_value_from_exchange({ quote_currency } = {}) {
-		assert(quote_currency);
-		let balances, prices;
+	// checks this.auto_size and only passes stop_price through if it is set
+	// i.e. trading rules get ignored unless auto-size is set
+	async size_position({ current_price } = {}) {
+		let { trading_rules, buy_price, quote_currency, max_quote_amount_to_buy } = this;
+		buy_price = current_price ? current_price : buy_price;
+		assert(buy_price);
 		try {
-			let response = await this.ee.accountInfo();
-			balances = response.balances;
-		} catch (error) {
-			async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
-		}
-		try {
-			prices = await this.ee.prices();
-		} catch (error) {
-			async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
-		}
-
-		try {
-			let available = BigNumber(0), // only reflects quote_currency
-				total = BigNumber(0); // running total of all calculable asset values converted to quote_currency
-			balances.forEach((balance) => {
-				if (balance.asset === quote_currency) {
-					available = available.plus(balance.free);
-					total = total.plus(balance.free).plus(balance.locked);
-				} else {
-					// convert coin value to quote_currency if possible, else skip it
-					let pair = `${balance.asset}${quote_currency}`;
-					try {
-						if (pair in prices) {
-							let amount_held = BigNumber(balance.free).plus(balance.locked);
-							let value = amount_held.times(prices[pair]);
-							total = total.plus(value);
-						} else {
-							// this.logger.warn(
-							// 	`Non fatal error: unable to convert ${balance.asset} value to ${quote_currency}, skipping`
-							// );
-						}
-					} catch (e) {
-						// this.logger.warn(
-						// 	`Non fatal error: unable to convert ${balance.asset} value to ${quote_currency}, skipping`
-						// );
-					}
-				}
+			let quote_volume = await this.position_sizer.size_position_in_quote_currency({
+				trading_rules,
+				buy_price,
+				stop_price: this.auto_size ? this.stop_price : undefined,
+				quote_currency,
+				max_quote_amount_to_buy
 			});
-			return { available, total };
-		} catch (error) {
-			async_error_handler(console, `calculating portfolio value`, error);
-		}
-	}
-
-	async _calculate_autosized_quote_volume_available() {
-		assert(this.max_portfolio_percentage_allowed_in_this_trade);
-		assert(BigNumber.isBigNumber(this.max_portfolio_percentage_allowed_in_this_trade));
-		let quote_portfolio;
-		try {
-			quote_portfolio = await this._get_portfolio_value_from_exchange({
-				quote_currency: this.quote_currency
+			let base_amount = utils.quote_volume_at_price_to_base_volume({
+				quote_volume,
+				price: buy_price
 			});
+			return { quote_volume, base_amount };
 		} catch (error) {
-			async_error_handler(console, `Autosizing error during portfolio sizing: ${error.body}`, error);
+			async_error_handler(console, `sizing position`, error);
 		}
-		assert(BigNumber.isBigNumber(quote_portfolio.total));
-		assert(BigNumber.isBigNumber(quote_portfolio.available));
-		let max_quote_amount_to_invest = quote_portfolio.total
-			.times(this.max_portfolio_percentage_allowed_in_this_trade)
-			.dividedBy(100);
-		this.logger.info(`Max allowed to invest: ${max_quote_amount_to_invest} ${this.quote_currency}`);
-		this.logger.info(`Available to invest: ${quote_portfolio.available} ${this.quote_currency}`);
-		return BigNumber.minimum(max_quote_amount_to_invest, quote_portfolio.available);
 	}
 
 	async _create_limit_buy_order() {
 		try {
-			if (this.auto_size) {
-				let quote_volume = await this._calculate_autosized_quote_volume_available();
-				this.amount = utils.quote_volume_at_price_to_base_volume({
-					quote_volume,
-					price: this.buy_price
-				});
-				this._munge_amount_and_check_notionals();
-			}
+			let { base_amount } = await this.size_position();
+			this.amount = base_amount;
+			this._munge_amount_and_check_notionals();
 		} catch (error) {
 			async_error_handler(console, `Autosizing error during limit buy order: ${error.body}`, error);
 		}
@@ -398,22 +355,10 @@ class Algo {
 			if (this.auto_size && this.buy_price && this.buy_price.isZero()) {
 				try {
 					this.logger.info(`Autosizing market buy using current price`);
-
-					let position_sizer = new PositionSizer({
-						logger: this.logger,
-						ee: this.ee,
-						trading_rules: this.trading_rules,
-						max_quote_amount_to_buy: this.max_quote_amount_to_buy
-					});
 					let current_price = (await this.ee.prices())[this.pair];
-					let quote_volume = await position_sizer.size_position_in_quote_currency({
-						buy_price: current_price,
-						stop_price: this.stop_price,
-						quote_currency: this.quote_currency
-					});
+					let { quote_volume, base_amount } = await this.size_position({ current_price });
+					this.amount = base_amount;
 					this.logger.info(`Would currently invest ${quote_volume} ${this.quote_currency}`);
-					this.amount = quote_volume.dividedBy(current_price);
-					assert(this.amount.isFinite());
 					this.logger.info(`Calculated buy amount ${this.amount.toFixed()} (unmunged)`);
 				} catch (error) {
 					async_error_handler(this.logger, `Error auto-sizing spot buy:`, error);
@@ -428,7 +373,7 @@ class Algo {
 
 			this._munge_amount_and_check_notionals();
 
-			this.calculate_percentages();
+			this.print_percentages_for_user();
 			try {
 				// trigger printing out the current status
 				let qv = await this._calculate_autosized_quote_volume_available();

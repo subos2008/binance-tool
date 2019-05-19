@@ -205,7 +205,7 @@ class Algo {
 
 	async monitor_user_stream() {
 		let obj = this;
-		function checkOrderFilled(data, orderFilled) {
+		async function checkOrderFilled(data, orderFilled) {
 			const { symbol, price, quantity, side, orderType, orderId, orderStatus } = data;
 
 			obj.logger.info(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`);
@@ -219,33 +219,44 @@ class Algo {
 				throw new Error(`Order ${orderStatus}. Reason: ${data.r}`);
 			}
 
-			orderFilled(data);
+			try {
+				await orderFilled(data);
+			} catch (error) {
+				async_error_handler(this.logger, `error placing order: ${error.body}`, error);
+			}
 		}
 
-		this.closeUserWebsocket = await this.ee.ws.user((data) => {
-			const { orderId, eventType } = data;
-			if (eventType !== 'executionReport') {
-				return;
-			}
-			// obj.logger.info(`.ws.user recieved:`);
-			// obj.logger.info(data);
+		this.closeUserWebsocket = await this.ee.ws.user(async (data) => {
+			try {
+				const { orderId, eventType } = data;
+				if (eventType !== 'executionReport') {
+					return;
+				}
+				// obj.logger.info(`.ws.user recieved:`);
+				// obj.logger.info(data);
 
-			if (orderId === obj.buyOrderId) {
-				checkOrderFilled(data, () => {
-					obj.buyOrderId = 0;
-					this.send_message(`${data.symbol} buy order filled`);
-					obj.placeSellOrder();
-				});
-			} else if (orderId === obj.stopOrderId) {
-				checkOrderFilled(data, () => {
-					this.send_message(`${data.symbol} stop loss order filled`);
-					obj.execution_complete(`Stop hit`, 1);
-				});
-			} else if (orderId === obj.targetOrderId) {
-				checkOrderFilled(data, () => {
-					this.send_message(`${data.symbol} target sell order filled`);
-					obj.execution_complete(`Target hit`);
-				});
+				if (orderId === obj.buyOrderId) {
+					await checkOrderFilled(data, async () => {
+						obj.buyOrderId = 0;
+						this.send_message(`${data.symbol} buy order filled`);
+						await obj.placeSellOrder();
+					});
+				} else if (orderId === obj.stopOrderId) {
+					await checkOrderFilled(data, async () => {
+						this.send_message(`${data.symbol} stop loss order filled`);
+						await obj.execution_complete(`Stop hit`, 1);
+					});
+				} else if (orderId === obj.targetOrderId) {
+					await checkOrderFilled(data, async () => {
+						this.send_message(`${data.symbol} target sell order filled`);
+						await obj.execution_complete(`Target hit`);
+					});
+				}
+			} catch (error) {
+				let msg = `SHIT: error placing orders for pair ${this.pair}: error`;
+				this.logger.error(msg);
+				this.logger.error(error);
+				this.send_message(msg);
 			}
 		});
 	}
@@ -271,24 +282,27 @@ class Algo {
 
 	async placeStopOrder() {
 		try {
+			let price = this.limit_price || this.stop_price;
 			let args = {
 				useServerTime: true,
 				side: 'SELL',
 				symbol: this.pair,
 				type: 'STOP_LOSS_LIMIT',
 				quantity: this.amount.toFixed(),
-				price: (this.limit_price || this.stop_price).toFixed(),
+				price: price.toFixed(),
 				stopPrice: this.stop_price.toFixed()
 				// TODO: more args here, server time and use FULL response body
 			};
-			this.logger.info(`Creating STOP_LOSS_LIMIT SELL ORDER`);
-			this.logger.info(args);
+			this.logger.info(
+				`${this
+					.pair} Creating STOP_LOSS_LIMIT SELL ORDER: ${this.amount.toFixed()} at price ${price.toFixed()}, stopPrice ${this.stop_price.toFixed()}`
+			);
 			let response = await this.ee.order(args);
 			this.logger.info('STOP_LOSS_LIMIT sell response', response);
 			this.logger.info(`order id: ${response.orderId}`);
 			return response.orderId;
 		} catch (error) {
-			async_error_handler(console, `error placing order: ${error.body}`, error);
+			async_error_handler(this.logger, `error placing order: ${error.body}`, error);
 		}
 	}
 

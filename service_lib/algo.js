@@ -91,8 +91,12 @@ class Algo {
 		);
 	}
 
-	print_percentages_for_user() {
+	print_percentages_for_user({ current_price } = {}) {
 		let { buy_price, stop_price, target_price, trading_rules } = this;
+		if (current_price) {
+			assert(BigNumber.isBigNumber(current_price));
+			buy_price = current_price;
+		}
 		this.algo_utils.calculate_percentages({
 			buy_price,
 			stop_price,
@@ -128,6 +132,7 @@ class Algo {
 	}
 
 	async size_position({ current_price } = {}) {
+		if (current_price) current_price = BigNumber(current_price); // rare usage, be resilient
 		let { trading_rules, stop_price, buy_price, quote_currency, max_quote_amount_to_buy } = this;
 		buy_price = current_price ? current_price : buy_price;
 		assert(buy_price);
@@ -139,6 +144,7 @@ class Algo {
 				quote_currency,
 				max_quote_amount_to_buy
 			});
+			console.log(`${typeof buy_price}`);
 			let base_amount = utils.quote_volume_at_price_to_base_volume({
 				quote_volume,
 				price: buy_price
@@ -360,10 +366,12 @@ class Algo {
 				this.target_price = utils.munge_and_check_price({ exchange_info, symbol, price: this.target_price });
 			}
 
+			let current_price; // pass it to print_percentages_for_user if we use it
 			if (this.auto_size && this.buy_price && this.buy_price.isZero()) {
 				try {
 					this.logger.info(`Autosizing market buy using current price`);
-					let current_price = (await this.ee.prices())[this.pair];
+					let prices = await this.ee.prices();
+					current_price = BigNumber(prices[this.pair]);
 					let { quote_volume, base_amount } = await this.size_position({ current_price });
 					this.amount = base_amount;
 					this.logger.info(`Would currently invest ${quote_volume} ${this.quote_currency}`);
@@ -381,7 +389,7 @@ class Algo {
 
 			this._munge_amount_and_check_notionals();
 
-			this.print_percentages_for_user();
+			this.print_percentages_for_user({ current_price });
 			try {
 				// trigger printing out the current status
 				let qv = await this._calculate_autosized_quote_volume_available();

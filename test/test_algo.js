@@ -586,7 +586,6 @@ describe('Algo', function() {
 				expect(ee.open_orders[0].type).to.equal('MARKET');
 				expect(ee.open_orders[0].side).to.equal('BUY');
 				expect(ee.open_orders[0].origQty).to.bignumber.equal('0.5');
-				expect(ee.open_orders[0].price).to.bignumber.equal(buy_price);
 			});
 		});
 

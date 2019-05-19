@@ -82,6 +82,7 @@ class AlgoUtils {
 	calculate_percentages({ buy_price, stop_price, target_price, trading_rules } = {}) {
 		let stop_percentage, target_percentage, max_portfolio_percentage_allowed_in_this_trade;
 		if (buy_price && stop_price) {
+			assert(buy_price.isGreaterThan(0));
 			stop_percentage = BigNumber(buy_price).minus(stop_price).dividedBy(buy_price).times(100);
 			assert(stop_percentage.isFinite());
 			this.logger.info(`Stop percentage: ${stop_percentage.toFixed(2)}%`);

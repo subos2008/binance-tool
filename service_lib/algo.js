@@ -343,18 +343,11 @@ class Algo {
 		try {
 			let exchange_info = this.exchange_info;
 			let symbol = this.pair;
-			// TODO: munge buy_price here
-			// TODO: if x & x!=0 looks like redundant logic
+
 			if (typeof this.buy_price !== 'undefined') {
-				this.buy_price = BigNumber(this.buy_price);
 				// buy_price of zero is special case to denote market buy
 				if (!this.buy_price.isZero()) {
 					this.buy_price = utils.munge_and_check_price({ exchange_info, symbol, price: this.buy_price });
-					if (typeof this.max_quote_amount_to_buy !== 'undefined') {
-						this.amount = BigNumber(this.max_quote_amount_to_buy).dividedBy(this.buy_price);
-						assert(this.amount.isFinite());
-						this.logger.info(`Calculated buy amount ${this.amount.toFixed()} (unmunged)`);
-					}
 				}
 			}
 
@@ -407,7 +400,7 @@ class Algo {
 
 			const NON_BNB_TRADING_FEE = BigNumber('0.001'); // TODO: err why is this unused
 		} catch (error) {
-			this.logger.error(error);
+			console.log(error);
 			throw new Error('exception in setup code');
 			// async_error_handler(undefined, `exception in setup code: ${error.body}`, error);
 		}

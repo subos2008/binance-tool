@@ -19,7 +19,7 @@ class PositionSizer {
 		this.trading_rules = trading_rules;
 	}
 
-	// TODO: this is slowly hacking it's way up to returning the equivalent of the
+	// TODO: this is slowly hacking it's way up to returning the liquidated value of the
 	// TODO: total portfolio in whatever quote currency is supplied
 	async _get_portfolio_value_from_exchange({ quote_currency } = {}) {
 		assert(quote_currency);

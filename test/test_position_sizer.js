@@ -58,10 +58,21 @@ describe('PositionSizer', function() {
 	}
 
 	describe('constructor', function() {
-		it.skip('errors if stop is not present and trading_rules.allowed_to_trade_without_stop', function() {
-			const starting_quote_balance = BigNumber(1);
-			const ee = setup({ logger, starting_quote_balance });
-			expect(ee.balance_not_in_orders(default_quote_currency).isEqualTo(starting_quote_balance)).to.equal(true);
+		it('errors if trading_rules arent supplied', function() {
+			const trading_rules = undefined;
+			try {
+				let { position_sizer } = setup({
+					ee_config: {
+						starting_quote_balance: BigNumber('600')
+					},
+					ps_config: {
+						trading_rules
+					}
+				});
+				expect.fail('should not get here: expected call to throw');
+			} catch (e) {
+				expect(e.toString()).to.include('trading_rules');
+			}
 		});
 	});
 
@@ -123,50 +134,71 @@ describe('PositionSizer', function() {
 		});
 		it('Handles base currencies that dont have a direct pairing to the quote currency, ie. via BTC');
 	});
-	describe('size_position', function() {
-		describe('with auto_size', function() {
-			it('needs buy_price, stop_price, trading_rules');
-			it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
-			it('clips the quote_coin size to max_quote_amount_to_buy');
-			it('errors if no stop_price is passed and !trading_rules.allowed_to_trade_without_stop');
 
-			it.skip('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
-				const buy_price = BigNumber(1);
-				const stop_price = buy_price.times('0.98');
+	describe('size_position', function() {
+		describe('with auto sizing (default)', function() {
+			it('throws an error if it doesnt have buy_price, stop_price');
+			it('errors if no stop_price is passed and !trading_rules.allowed_to_trade_without_stop');
+			it('calculates the max amount to buy based on portfolio value and stop_percentage', async function() {
 				const trading_rules = {
 					max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
 				};
-				let { ee, algo } = setup({
+				let { position_sizer } = setup({
 					ee_config: {
-						starting_quote_balance: BigNumber(1)
+						starting_quote_balance: BigNumber('600')
+					},
+					ps_config: {
+						trading_rules
 					}
 				});
 				try {
-					await algo.main();
+					let buy_price = BigNumber('600');
+					let { quote_volume, base_amount } = await position_sizer.size_position({
+						buy_price,
+						stop_price: buy_price.times('0.98'),
+						quote_currency
+					});
+					expect(quote_volume).to.bignumber.equal('300');
+					expect(base_amount).to.bignumber.equal('0.5');
 				} catch (e) {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
 				}
-				// check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
-				expect(ee.open_orders).to.have.lengthOf(1);
-				expect(ee.open_orders[0].type).to.equal('LIMIT');
-				expect(ee.open_orders[0].side).to.equal('BUY');
-				expect(ee.open_orders[0].origQty).to.bignumber.equal('0.5');
-				expect(ee.open_orders[0].price).to.bignumber.equal(buy_price);
 			});
-
-			it('handles attempted trades below the min notional cleanly');
-			it('respects max_base_amount_to_buy');
-			it(
-				'max_base_amount_to_buy ... do we want to use that not as a max but as an abolute value? .. i.e if auto-size isnt passed'
-			);
+			it('clips the amount to max_quote_to_buy', async function() {
+				const trading_rules = {
+					max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
+				};
+				let { position_sizer } = setup({
+					ee_config: {
+						starting_quote_balance: BigNumber('600')
+					},
+					ps_config: {
+						trading_rules
+					}
+				});
+				try {
+					let buy_price = BigNumber('600');
+					let { quote_volume, base_amount } = await position_sizer.size_position({
+						buy_price,
+						stop_price: buy_price.times('0.98'),
+						quote_currency,
+						max_quote_amount_to_buy: BigNumber('150')
+					});
+					expect(quote_volume).to.bignumber.equal('150');
+					expect(base_amount).to.bignumber.equal('0.25');
+				} catch (e) {
+					console.log(e);
+					expect.fail('should not get here: expected call not to throw');
+				}
+			});
 		});
 		describe('with do_not_auto_size_for_stop_percentage', function() {
 			it('returns max_quote_to_buy when available', async function() {
 				const trading_rules = {
 					max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
 				};
-				let { ee, position_sizer } = setup({
+				let { position_sizer } = setup({
 					ee_config: {
 						starting_quote_balance: BigNumber(5)
 					},
@@ -193,7 +225,7 @@ describe('PositionSizer', function() {
 				const trading_rules = {
 					max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
 				};
-				let { ee, position_sizer } = setup({
+				let { position_sizer } = setup({
 					ee_config: {
 						starting_quote_balance: BigNumber(5)
 					},

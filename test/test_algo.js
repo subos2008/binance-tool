@@ -73,8 +73,9 @@ describe('Algo', function() {
 		}
 		if (ee_config.starting_base_balance)
 			ee_config.starting_balances[default_base_currency] = ee_config.starting_base_balance;
-
 		let ee = new ExchangeEmulator(ee_config);
+
+		algo_config.base_amount = algo_config.amount; // hack, renamed key
 		algo_config = Object.assign(
 			{ ee, logger: null_logger, send_message: fresh_message_queue(), trading_rules: permissive_trading_rules },
 			algo_config
@@ -88,7 +89,7 @@ describe('Algo', function() {
 			if (algo_config.target_price) algo_config.target_price = aggrivate_price(algo_config.target_price);
 			// TODO: add some tests with limit_price
 			if (algo_config.limit_price) algo_config.limit_price = aggrivate_price(algo_config.limit_price);
-			if (algo_config.amount) algo_config.amount = aggrivate_amount(algo_config.amount);
+			if (algo_config.base_amount) algo_config.base_amount = aggrivate_amount(algo_config.base_amount);
 		}
 		let algo = new Algo(algo_config);
 		return { algo, ee };
@@ -112,8 +113,7 @@ describe('Algo', function() {
 					let { ee, algo } = setup({
 						algo_config: {
 							buy_price,
-							max_quote_amount_to_buy: BigNumber(1),
-							logger
+							max_quote_amount_to_buy: BigNumber(1)
 						},
 						ee_config: {
 							starting_quote_balance: BigNumber('0.5')
@@ -139,8 +139,7 @@ describe('Algo', function() {
 				let { ee, algo } = setup({
 					algo_config: {
 						amount: base_volume,
-						buy_price: limit_price,
-						logger
+						buy_price: limit_price
 					}
 				});
 				try {
@@ -567,8 +566,7 @@ describe('Algo', function() {
 						buy_price: BigNumber('0'),
 						stop_price,
 						trading_rules,
-						auto_size: true,
-						logger
+						auto_size: true
 					},
 					ee_config: {
 						starting_quote_balance: BigNumber(1)
@@ -730,4 +728,5 @@ describe('Algo', function() {
 	//   message:
 	//    '[AsyncErrorWrapper of Error] Order would trigger immediately.' }
 	it('deals with the fact that Binance rejects STOP_LOSS_LIMIT_ORDERS that would trigger immediately');
+	it('can calculate the amount to sell to reduce a position by a quote_amount at spot');
 });

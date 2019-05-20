@@ -412,7 +412,7 @@ class Algo {
 			const NON_BNB_TRADING_FEE = BigNumber('0.001'); // TODO: err why is this unused
 		} catch (error) {
 			this.logger.error(error);
-			throw new Error('exception in setup code');
+			throw new Error(`exception in setup code: ${error}`);
 			// async_error_handler(undefined, `exception in setup code: ${error.body}`, error);
 		}
 

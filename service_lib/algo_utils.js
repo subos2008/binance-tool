@@ -1,6 +1,7 @@
 const utils = require('../lib/utils');
 const assert = require('assert');
 const BigNumber = require('bignumber.js');
+const async_error_handler = require('../lib/async_error_handler');
 
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion

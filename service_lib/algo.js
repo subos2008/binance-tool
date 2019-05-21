@@ -113,28 +113,6 @@ class Algo {
 		if (this.closeTradesWebSocket) this.closeTradesWebSocket();
 	}
 
-	async _create_market_buy_order({ base_amount }) {
-		assert(base_amount);
-		assert(BigNumber.isBigNumber(base_amount));
-		try {
-			let args = {
-				useServerTime: true,
-				side: 'BUY',
-				symbol: this.pair,
-				type: 'MARKET',
-				quantity: base_amount.toFixed()
-			};
-			this.logger.info(`Creating MARKET BUY ORDER`);
-			// this.logger.info(args);
-			let response = await this.ee.order(args);
-			this.logger.info('MARKET BUY response', response);
-			this.logger.info(`order id: ${response.orderId}`);
-			return response.orderId;
-		} catch (error) {
-			async_error_handler(console, `Buy error: ${error.body}`, error);
-		}
-	}
-
 	async size_position({ current_price, position_sizer_options } = { position_sizer_options: {} }) {
 		if (current_price) current_price = BigNumber(current_price); // rare usage, be resilient
 		let {
@@ -196,6 +174,14 @@ class Algo {
 		}
 	}
 
+	async _create_market_buy_order({ base_amount }) {
+		try {
+			let response = this.algo_utils.create_market_buy_order({ base_amount });
+			return response.orderId;
+		} catch (error) {
+			async_error_handler(console, `Buy error: ${error.body}`, error);
+		}
+	}
 	async monitor_user_stream() {
 		let obj = this;
 		async function checkOrderFilled(data, orderFilled) {

@@ -140,7 +140,6 @@ class AlgoUtils {
 		assert(BigNumber.isBigNumber(buy_price));
 		try {
 			base_amount = this.munge_amount_and_check_notionals({ pair, base_amount, buy_price });
-
 			let price = buy_price.toFixed();
 			let quantity = base_amount.toFixed();
 			let args = {
@@ -153,7 +152,27 @@ class AlgoUtils {
 			};
 			this.logger.info(`${pair} Creating LIMIT BUY ORDER for ${quantity} at ${price}`);
 			let response = await this.ee.order(args);
-			this.logger.info('LIMIT BUY response', response);
+			this.logger.info(`order id: ${response.orderId}`);
+			return response;
+		} catch (error) {
+			async_error_handler(console, `Buy error: ${error.body}`, error);
+		}
+	}
+
+	async create_market_buy_order({ base_amount }) {
+		assert(base_amount);
+		assert(BigNumber.isBigNumber(base_amount));
+		try {
+			let quantity = base_amount.toFixed();
+			let args = {
+				useServerTime: true,
+				side: 'BUY',
+				symbol: this.pair,
+				type: 'MARKET',
+				quantity
+			};
+			this.logger.info(`Creating MARKET BUY ORDER for ${quantity}`);
+			let response = await this.ee.order(args);
 			this.logger.info(`order id: ${response.orderId}`);
 			return response;
 		} catch (error) {

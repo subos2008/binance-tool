@@ -269,7 +269,7 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 		});
 	});
-	describe('when a buy_price, stop_price and target_price present', function() {
+	describe.only('when a buy_price, stop_price and target_price present', function() {
 		it(
 			'if it hits target price while buyOrder is still open then it cancels buy and places targetOrder if partially filled'
 		);
@@ -313,7 +313,7 @@ describe('Algo', function() {
 				expect(most_recent_message()).to.be.an('string');
 				expect(most_recent_message()).to.equal(`${default_pair} stop loss order filled`);
 			});
-			it('creates a limit sell order at the target_price when that price is hit', async function() {
+			it.only('creates a limit sell order at the target_price when that price is hit', async function() {
 				// TODO: also check that it cancels the stop order?
 				// TODO: Sends a message?
 				// TODO: what if we retrace to the stop price before the order is filled?
@@ -328,7 +328,8 @@ describe('Algo', function() {
 						amount,
 						buy_price,
 						target_price,
-						stop_price
+						stop_price,
+						logger
 					}
 				});
 				try {

@@ -222,7 +222,8 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 			expect(ee.open_orders[0].side).to.equal('SELL');
 			expect(ee.open_orders[0].orderId).to.equal(2);
-			expect(ee.open_orders[0].price.isEqualTo(stop_price)).to.equal(true);
+			expect(ee.open_orders[0].price.isEqualTo(0)).to.equal(true);
+			expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 		});
 		it('buys using the available quote if it it less than the max amount specified', async function() {

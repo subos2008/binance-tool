@@ -222,10 +222,12 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 			expect(ee.open_orders[0].side).to.equal('SELL');
 			expect(ee.open_orders[0].orderId).to.equal(2);
-			expect(ee.open_orders[0].price.isEqualTo(0)).to.equal(true);
-			expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
+			expect(ee.open_orders[0].price).bignumber.to.equal(stop_price);
+			// expect(ee.open_orders[0].price.isEqualTo(0)).to.equal(true);
+			// expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 		});
+		it('VERY IMPORTANT has been updated to have stop order with limit price of zero or market orders');
 		it('buys using the available quote if it it less than the max amount specified', async function() {
 			const buy_price = BigNumber(1);
 			const stop_price = buy_price.div(2);

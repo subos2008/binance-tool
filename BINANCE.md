@@ -51,3 +51,32 @@ LIMIT BUY response:
   creationTime: 1558470302739,
   totalQuoteTradeQuantity: '0.00000000' }
 
+FETUSDT BUY LIMIT ORDER #13001250 (FILLED)
+..price: 0.23500000, quantity: 63.82000000
+{ eventType: 'executionReport',
+  eventTime: 1558470929083,
+  symbol: 'FETUSDT',
+  newClientOrderId: 'Ba6EXlpF7uqeLloe0KeS87',
+  originalClientOrderId: 'null',
+  side: 'BUY',
+  orderType: 'LIMIT',
+  timeInForce: 'GTC',
+  quantity: '63.82000000',
+  price: '0.23500000',
+  executionType: 'TRADE',
+  stopPrice: '0.00000000',
+  icebergQuantity: '0.00000000',
+  orderStatus: 'FILLED',
+  orderRejectReason: 'NONE',
+  orderId: 13001250,
+  orderTime: 1558470929081,
+  lastTradeQuantity: '63.82000000',
+  totalTradeQuantity: '63.82000000',
+  priceLastTrade: '0.23500000',
+  commission: '0.00035195',
+  commissionAsset: 'BNB',
+  tradeId: 2056586,
+  isOrderWorking: false,
+  isBuyerMaker: true,
+  creationTime: 1558470920603,
+  totalQuoteTradeQuantity: '14.99770000' }

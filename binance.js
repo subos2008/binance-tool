@@ -18,7 +18,8 @@ const TradingRules = require('./service_lib/trading_rules');
 const logger = new Logger({ silent: false });
 
 const trading_rules = new TradingRules({
-	max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
+	max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1),
+	allowed_to_trade_without_stop: true
 });
 
 const { argv } = require('yargs')

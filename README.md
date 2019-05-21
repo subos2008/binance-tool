@@ -1,26 +1,3 @@
-
-LIMIT BUY response:
-{ symbol: 'BTCUSDT',
-  orderId: 364086254,
-  clientOrderId: 'IYXgETK2EuRNRoBSjfMvVD',
-  transactTime: 1557856489319,
-  price: '8019.74000000',
-  origQty: '0.00249300',
-  executedQty: '0.00249300',
-  cummulativeQuoteQty: '19.90044729',
-  status: 'FILLED',
-  timeInForce: 'IOC',
-  type: 'LIMIT',
-  side: 'BUY',
-  fills:
-   [ { price: '7982.53000000',
-       qty: '0.00249300',
-       commission: '0.00064001',
-       commissionAsset: 'BNB',
-       tradeId: 121907402 } ] }
-
-
-
 # Binance Auto Stop & Target OCO (One-Cancels-the-Other)
 
 A command line tool for placing conditional stop-limit, limit, and OCO (One-Cancels-the-Other) sell orders on [Binance](https://www.binance.com/?ref=17067303) cryptocurrency exchange.

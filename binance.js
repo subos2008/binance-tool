@@ -88,8 +88,8 @@ let {
 	percentages: percentages
 } = argv;
 
-if (this.buy_price === '') {
-	this.buy_price = '0';
+if (buy_price === '') {
+	buy_price = '0';
 }
 
 const binance_client = Binance({

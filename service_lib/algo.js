@@ -129,8 +129,8 @@ class Algo {
 		// Do we want the position sizer to fiqure out if we have enough quote to buy that much
 		// base? For the moment as Algos are unlikely to use this we just return it directly, the
 		// user will see on the command line if there was an issue
-		if (this.base_amount_to_buy) {
-			return { base_amount: this.base_amount_to_buy };
+		if (base_amount_to_buy) {
+			return { base_amount: base_amount_to_buy };
 		}
 
 		buy_price = current_price ? current_price : buy_price;
@@ -161,8 +161,9 @@ class Algo {
 
 	async _create_limit_buy_order() {
 		try {
+			assert(!this.buyOrderId);
 			let { base_amount } = await this.size_position();
-			base_amount = this._munge_amount_and_check_notionals({ base_amount });
+			base_amount = this._munge_amount_and_check_notionals({ base_amount, buy_price: this.buy_price });
 			let response = await this.algo_utils.create_limit_buy_order({
 				pair: this.pair,
 				base_amount,
@@ -189,8 +190,12 @@ class Algo {
 			async_error_handler(console, `Sell error: ${error.body}`, error);
 		}
 	}
-	async _create_market_buy_order({ base_amount }) {
+	async _create_market_buy_order() {
 		try {
+			assert(!this.buyOrderId);
+			let { base_amount } = await this.size_position();
+			base_amount = this._munge_amount_and_check_notionals({ base_amount, buy_price: this.buy_price });
+
 			let response = this.algo_utils.create_market_buy_order({ base_amount, pair: this.pair });
 			return response.orderId;
 		} catch (error) {
@@ -341,7 +346,7 @@ class Algo {
 			async_error_handler(this.logger, 'Error could not pull exchange info', error);
 		}
 
-		let current_price, base_amount_to_buy, quote_volume;
+		let current_price, quote_volume;
 
 		try {
 			let exchange_info = this.exchange_info;
@@ -369,13 +374,12 @@ class Algo {
 						let prices = await this.ee.prices();
 						current_price = BigNumber(prices[this.pair]);
 					}
-					let result = await this.size_position({ current_price });
-					base_amount_to_buy = result.base_amount;
+					let { base_amount } = await this.size_position({ current_price });
 					quote_volume = result.quote_volume;
-					base_amount_to_buy = this._munge_amount_and_check_notionals({ base_amount: base_amount_to_buy });
+					base_amount = this._munge_amount_and_check_notionals({ base_amount });
 					this.print_percentages_for_user({ current_price });
 					this.logger.info(`Would currently invest ${quote_volume} ${this.quote_currency}`);
-					this.logger.info(`Calculated buy amount ${base_amount_to_buy.toFixed()} ${this.base_currency}`);
+					this.logger.info(`Calculated buy amount ${base_amount.toFixed()} ${this.base_currency}`);
 				} catch (error) {
 					async_error_handler(this.logger, undefined, error);
 				}
@@ -413,18 +417,13 @@ class Algo {
 						this.logger.error(msg);
 						throw new Error(msg);
 					}
-					assert(base_amount_to_buy);
-					this.buyOrderId = await this._create_market_buy_order({ base_amount: base_amount_to_buy });
+					this.buyOrderId = await this._create_market_buy_order();
 				} else {
 					if (this.soft_entry) {
-						this.logger.info(`Soft entry mode`);
+						this.logger.info(`Soft entry mode: waiting for entry price before playing order`);
 						waiting_for_soft_entry_price = true;
 					} else {
-						this.buyOrderId = await this.algo_utils.create_limit_buy_order({
-							pair,
-							base_amount: base_amount_to_buy,
-							buy_price: this.buy_price
-						});
+						this.buyOrderId = await this._create_limit_buy_order();
 					}
 				}
 			} else {

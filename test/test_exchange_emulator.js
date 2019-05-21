@@ -407,7 +407,31 @@ describe('ExchangeEmulator', function() {
 				expect(response).to.have.property('orderId');
 				expect(response.orderId).to.equal(1);
 			});
+			it.skip('locks the quote_currency balance');
 			describe('when hit', async function() {
+				it('reduces the locked quote_currency balance');
+				it('increases the unlocked base_balance', async function() {
+					const ee = setup({
+						logger,
+						exchange_info,
+						starting_quote_balance: BigNumber(1),
+						starting_base_balance: BigNumber(0)
+					});
+					const base_volume = BigNumber('1.2');
+					const limit_price = BigNumber('0.1');
+					let balances, base_balance;
+					try {
+						await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
+						await ee.set_current_price({ symbol: default_pair, price: limit_price });
+						balances = (await ee.accountInfo()).balances;
+						base_balance = balances.find((o) => o.asset === default_base_currency);
+						expect(base_balance.locked).to.bignumber.equal(0);
+						expect(base_balance.free).to.bignumber.equal(base_volume);
+					} catch (error) {
+						console.log(error);
+						expect.fail('expected not to throw');
+					}
+				});
 				it('sends an executionReport to .ws.user', async function() {
 					const ee = setup({
 						logger,

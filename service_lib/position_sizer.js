@@ -138,6 +138,7 @@ class PositionSizer {
 				quote_volume,
 				price: buy_price
 			});
+			assert(base_amount);
 			return { quote_volume, base_amount };
 		} catch (error) {
 			async_error_handler(this.logger, `Error when sizing trade:`, error);

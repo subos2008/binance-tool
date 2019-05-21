@@ -32,14 +32,14 @@ const { argv } = require('yargs')
 	.demand('pair')
 	.alias('p', 'pair')
 	.describe('p', 'Set trading pair eg. BNBBTC')
-	// '-a <amount>'
+	// '-a <base_amount>'
 	.string('a')
-	.alias('a', 'amount')
-	.describe('a', 'Set amount to buy/sell')
-	// '-q <amount in quote coin>'
+	.alias('a', 'base_amount')
+	.describe('a', 'Set base_amount to buy/sell')
+	// '-q <quote_amount>'
 	.string('q')
 	.alias('q', 'amountquote')
-	.describe('q', 'Set max amount to buy in quote coin (alternative to -a)')
+	.describe('q', 'Set max to buy in quote coin (alternative to -a)')
 	// '-b <buy_price>'
 	.string('b')
 	.alias('b', 'buy')
@@ -78,7 +78,7 @@ const { argv } = require('yargs')
 
 let {
 	p: pair,
-	a: amount,
+	a: base_amount,
 	q: max_quote_amount_to_buy,
 	b: buy_price,
 	s: stop_price,
@@ -106,7 +106,7 @@ const algo = new Algo({
 	send_message,
 	logger,
 	pair,
-	amount,
+	base_amount,
 	max_quote_amount_to_buy,
 	buy_price,
 	stop_price,

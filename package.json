@@ -2,7 +2,7 @@
 	"main": "binance.js",
 	"bin": "binance.js",
 	"scripts": {
-		"test": "./node_modules/.bin/mocha"
+		"test": "./node_modules/.bin/mocha --forbid-only"
 	},
 	"dependencies": {
 		"bignumber.js": "^8.1.1",

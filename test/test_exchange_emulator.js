@@ -506,13 +506,16 @@ describe('ExchangeEmulator', function() {
 					let response = await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
 					await ee.set_current_price({ symbol: default_pair, price: limit_price });
 					expect(user_event).to.be.an('object');
+					expect(user_event.executedQty).to.be.a('string');
 					expect(user_event).to.include({
 						eventType: 'executionReport',
 						symbol: default_pair,
 						orderId: 1,
 						orderType: 'LIMIT',
 						side: 'BUY',
-						orderStatus: 'FILLED'
+						orderStatus: 'FILLED',
+						origQty: '1.2',
+						executedQty: '1.2'
 					});
 				});
 				it.skip('defines price and quantity in these .ws.user events');
@@ -599,13 +602,16 @@ describe('ExchangeEmulator', function() {
 					let response = await do_limit_sell_order({ ee, amount: base_volume, price: limit_price });
 					await ee.set_current_price({ symbol: default_pair, price: limit_price });
 					expect(user_event).to.be.an('object');
+					expect(user_event.executedQty).to.be.a('string');
 					expect(user_event).to.include({
 						eventType: 'executionReport',
 						symbol: default_pair,
 						orderId: 1,
 						orderType: 'LIMIT',
 						side: 'SELL',
-						orderStatus: 'FILLED'
+						orderStatus: 'FILLED',
+						origQty: '0.8',
+						executedQty: '0.8'
 					});
 				});
 			});
@@ -728,13 +734,16 @@ describe('ExchangeEmulator', function() {
 					await do_stop_loss_limit_sell_order({ ee, amount: base_volume, price: limit_price });
 					await ee.set_current_price({ symbol: default_pair, price: limit_price });
 					expect(user_event).to.be.an('object');
+					expect(user_event.executedQty).to.be.a('string');
 					expect(user_event).to.include({
 						eventType: 'executionReport',
 						symbol: default_pair,
 						orderId: 1,
 						orderType: 'STOP_LOSS_LIMIT',
 						side: 'SELL',
-						orderStatus: 'FILLED'
+						orderStatus: 'FILLED',
+						origQty: '0.8',
+						executedQty: '0.8'
 					});
 				});
 			});

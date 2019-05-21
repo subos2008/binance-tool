@@ -253,7 +253,7 @@ class Algo {
 		if (buy_price && buy_price.isZero()) buy_price = undefined;
 		return this.algo_utils.munge_amount_and_check_notionals({
 			pair,
-			amount: base_amount,
+			base_amount,
 			buy_price,
 			stop_price,
 			target_price,

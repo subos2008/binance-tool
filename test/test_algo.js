@@ -106,6 +106,8 @@ describe('Algo', function() {
 		describe('when only an amount is specified (base, not quote)', function() {
 			it('doesnt autosize and uses the passed in amount');
 		});
+		it('if auto-size and -q specified then use -q as a max');
+		it('if -q specified without auto-size then use -q as an absolute (trim it to available)');
 		describe('without soft_entry', function() {
 			describe('with max_quote_amount_to_buy and without autosize', function() {
 				it('buys using the available quote even if it it less than the max amount specified', async function() {
@@ -223,6 +225,32 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].price.isEqualTo(stop_price)).to.equal(true);
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 		});
+		it('buys using the available quote if it it less than the max amount specified', async function() {
+			const buy_price = BigNumber(1);
+			const stop_price = buy_price.div(2);
+			let { ee, algo } = setup({
+				algo_config: {
+					buy_price,
+					stop_price,
+					max_quote_amount_to_buy: BigNumber(1)
+				},
+				ee_config: {
+					starting_quote_balance: BigNumber('0.5')
+				}
+			});
+			try {
+				await algo.main();
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+			expect(ee.open_orders).to.have.lengthOf(1);
+			expect(ee.open_orders[0].type).to.equal('LIMIT');
+			expect(ee.open_orders[0].side).to.equal('BUY');
+			expect(ee.open_orders[0].orderId).to.equal(1);
+			expect(ee.open_orders[0].price.isEqualTo(buy_price)).to.equal(true);
+			expect(ee.open_orders[0].origQty).bignumber.to.equal('0.5');
+		});
 	});
 	describe('when only a buy_price and a target_price present', function() {
 		it('creates a limit sell order after the buy order hits', async function() {
@@ -307,6 +335,10 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 		});
 	});
+	describe('when only a stop_price and a target_price present', function() {
+		it('sends a message when the stop_price is hit (currently only notifies when filled');
+	});
+
 	describe('when a buy_price and an amount are present (-b and -a)', function() {
 		it('handles -b 0 and -a 100');
 		it('handles -b 100 and -a 100');
@@ -355,7 +387,7 @@ describe('Algo', function() {
 				expect(most_recent_message()).to.be.an('string');
 				expect(most_recent_message()).to.equal(`${default_pair} stop loss order filled`);
 			});
-			it.only('creates a limit sell order at the target_price when that price is hit', async function() {
+			it('creates a limit sell order at the target_price when that price is hit', async function() {
 				// TODO: also check that it cancels the stop order?
 				// TODO: Sends a message?
 				// TODO: what if we retrace to the stop price before the order is filled?
@@ -557,6 +589,10 @@ describe('Algo', function() {
 		// needs buy_price, stop_price, trading_rules. soft_entry?
 		it('throws an error in the constructor if it doesnt have the information it needs to auto-size');
 		it('knows something about trading fees and if that affects the amount if there isnt enough BNB');
+		it('buys the full amount when -q is specified without --auto-size');
+		it(
+			'does what when -a is specified --auto-size? on a buy? on a sell? -a with no args to manage whatever base balance we have?'
+		);
 		describe('works when buying spot (market buy mode)', function() {
 			it('creates market buy order for the max amount to buy based on current_price, portfolio value and stop_percentage', async function() {
 				const marketPrice = BigNumber(1);
@@ -591,6 +627,8 @@ describe('Algo', function() {
 				expect(ee.open_orders[0].side).to.equal('BUY');
 				expect(ee.open_orders[0].origQty).to.bignumber.equal('0.5');
 			});
+			it('prints the result when the order completes. I think maybe we are not setting order id atm');
+			it('creates the stop order after the market buy is completed (currently doesnt)');
 		});
 
 		describe('without soft_entry', function() {

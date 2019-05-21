@@ -307,7 +307,11 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
 		});
 	});
-	describe.only('when a buy_price, stop_price and target_price present', function() {
+	describe('when a buy_price and an amount are present (-b and -a)', function() {
+		it('handles -b 0 and -a 100');
+		it('handles -b 100 and -a 100');
+	});
+	describe('when a buy_price, stop_price and target_price present', function() {
 		it(
 			'if it hits target price while buyOrder is still open then it cancels buy and places targetOrder if partially filled'
 		);

@@ -386,7 +386,7 @@ class Algo {
 					let result = await this.size_position({ current_price });
 					base_amount_to_buy = result.base_amount;
 					quote_volume = result.quote_volume;
-					this._munge_amount_and_check_notionals({ base_amount: base_amount_to_buy });
+					base_amount_to_buy = this._munge_amount_and_check_notionals({ base_amount: base_amount_to_buy });
 					this.print_percentages_for_user({ current_price });
 					this.logger.info(`Would currently invest ${quote_volume} ${this.quote_currency}`);
 					this.logger.info(`Calculated buy amount ${base_amount_to_buy.toFixed()} ${this.base_currency}`);
@@ -394,6 +394,7 @@ class Algo {
 					async_error_handler(this.logger, undefined, error);
 				}
 			} else if (this.base_amount_held) {
+				// TODO: argh ... we should munge this before the sell orders...
 				this._munge_amount_and_check_notionals({ base_amount: this.base_amount_held });
 			} else {
 				throw new Error(

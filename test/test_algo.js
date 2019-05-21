@@ -103,13 +103,13 @@ describe('Algo', function() {
 
 	describe('when only a buy_price is present', function() {
 		describe('when only an base_amount is specified (base, not quote)', function() {
-			it('doesnt autosize and uses the passed in amount');
+			it('doesnt autosize and uses the passed in base_amount');
 		});
 		it('if auto-size and -q specified then use -q as a max');
 		it('if -q specified without auto-size then use -q as an absolute (trim it to available)');
 		describe('without soft_entry', function() {
 			describe('with max_quote_amount_to_buy and without autosize', function() {
-				it('buys using the available quote even if it it less than the max amount specified', async function() {
+				it('buys using the available quote even if it it less than the max specified', async function() {
 					const buy_price = BigNumber(1);
 					let { ee, algo } = setup({
 						algo_config: {
@@ -135,11 +135,11 @@ describe('Algo', function() {
 				});
 			});
 			it('creates a buy order', async function() {
-				const base_volume = BigNumber(1);
+				const base_amount = BigNumber(1);
 				const limit_price = BigNumber(1);
 				let { ee, algo } = setup({
 					algo_config: {
-						amount: base_volume,
+						base_amount,
 						buy_price: limit_price,
 						logger
 					}
@@ -155,17 +155,17 @@ describe('Algo', function() {
 				expect(ee.open_orders[0].side).to.equal('BUY');
 				expect(ee.open_orders[0].orderId).to.equal(1);
 				expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
-				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
+				expect(ee.open_orders[0].origQty.isEqualTo(base_amount)).to.equal(true);
 			});
 			it('sends a message when the trade fills/partial fills');
 		});
 		describe('with soft_entry', function() {
 			it('only creates a buy order when entry price is hit', async function() {
-				const base_volume = BigNumber(1);
+				const base_amount = BigNumber(1);
 				const buy_price = BigNumber(1);
 				let { ee, algo } = setup({
 					algo_config: {
-						amount: base_volume,
+						base_amount,
 						buy_price,
 						soft_entry: true
 					}
@@ -188,7 +188,7 @@ describe('Algo', function() {
 				expect(ee.open_orders[0].side).to.equal('BUY');
 				expect(ee.open_orders[0].orderId).to.equal(1);
 				expect(ee.open_orders[0].price.isEqualTo(buy_price)).to.equal(true);
-				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
+				expect(ee.open_orders[0].origQty.isEqualTo(base_amount)).to.equal(true);
 			});
 		});
 	});
@@ -201,14 +201,15 @@ describe('Algo', function() {
 		it('doesnt buy if price is below the stop_price');
 
 		it('creates a stop limit sell order after the buy order hits', async function() {
-			const amount = BigNumber(1);
+			const base_amount = BigNumber(1);
 			const buy_price = BigNumber(1);
 			const stop_price = buy_price.div(2);
 			let { ee, algo } = setup({
 				algo_config: {
-					amount,
+					base_amount,
 					buy_price,
-					stop_price
+					stop_price,
+					logger
 				}
 			});
 			try {
@@ -225,10 +226,10 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].price).bignumber.to.equal(stop_price);
 			// expect(ee.open_orders[0].price.isEqualTo(0)).to.equal(true);
 			// expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
-			expect(ee.open_orders[0].origQty.isEqualTo(amount)).to.equal(true);
+			expect(ee.open_orders[0].origQty.isEqualTo(base_amount)).to.equal(true);
 		});
 		it('VERY IMPORTANT has been updated to have stop order with limit price of zero or market orders');
-		it('buys using the available quote if it it less than the max amount specified', async function() {
+		it('buys using the available quote if it it less than the max specified', async function() {
 			const buy_price = BigNumber(1);
 			const stop_price = buy_price.div(2);
 			let { ee, algo } = setup({
@@ -257,7 +258,7 @@ describe('Algo', function() {
 	});
 	describe('when only a buy_price and a target_price present', function() {
 		it('creates a limit sell order after the buy order hits', async function() {
-			const amount = BigNumber(1);
+			const base_amount = BigNumber(1);
 			const buy_price = BigNumber(1);
 			const target_price = buy_price.times(2);
 			let { ee, algo } = setup({

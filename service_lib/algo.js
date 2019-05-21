@@ -416,10 +416,10 @@ class Algo {
 						this.logger.info(`Soft entry mode`);
 						waiting_for_soft_entry_price = true;
 					} else {
-						this.buyOrderId = await this.algo_utils._create_limit_buy_order({
+						this.buyOrderId = await this.algo_utils.create_limit_buy_order({
 							pair,
 							base_amount: base_amount_to_buy,
-							limit_price: this.buy_price
+							buy_price: this.buy_price
 						});
 					}
 				}

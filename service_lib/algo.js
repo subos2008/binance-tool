@@ -135,7 +135,7 @@ class Algo {
 		}
 	}
 
-	async size_position({ current_price } = {}) {
+	async size_position({ current_price, position_sizer_options } = { position_sizer_options: {} }) {
 		if (current_price) current_price = BigNumber(current_price); // rare usage, be resilient
 		let {
 			trading_rules,
@@ -158,14 +158,19 @@ class Algo {
 		buy_price = current_price ? current_price : buy_price;
 		assert(buy_price);
 		try {
-			let { base_amount, quote_volume } = await this.position_sizer.size_position({
-				trading_rules,
-				auto_size,
-				buy_price,
-				stop_price,
-				quote_currency,
-				max_quote_amount_to_buy
-			});
+			let { base_amount, quote_volume } = await this.position_sizer.size_position(
+				Object.assign(
+					{
+						trading_rules,
+						auto_size,
+						buy_price,
+						stop_price,
+						quote_currency,
+						max_quote_amount_to_buy
+					},
+					position_sizer_options
+				)
+			);
 			assert(base_amount);
 			this.logger.info(
 				`Sized trade at ${quote_volume} ${this.quote_currency}, ${base_amount} ${this.base_currency}`

@@ -133,6 +133,12 @@ class Algo {
 			return { base_amount: base_amount_to_buy };
 		}
 
+		if (buy_price.isZero() && !current_price) {
+			this.logger.info(`Sizing market buy using current market price.`);
+			let prices = await this.ee.prices();
+			current_price = BigNumber(prices[this.pair]);
+		}
+
 		buy_price = current_price ? current_price : buy_price;
 		assert(buy_price);
 		try {
@@ -346,61 +352,30 @@ class Algo {
 			async_error_handler(this.logger, 'Error could not pull exchange info', error);
 		}
 
-		let current_price, quote_volume;
-
 		try {
 			let exchange_info = this.exchange_info;
 			let symbol = this.pair;
 
-			if (typeof this.buy_price !== 'undefined') {
+			if (this.buy_price) {
 				// buy_price of zero is special case to denote market buy
 				if (!this.buy_price.isZero()) {
 					this.buy_price = utils.munge_and_check_price({ exchange_info, symbol, price: this.buy_price });
 				}
 			}
 
-			if (typeof this.stop_price !== 'undefined') {
+			if (this.stop_price) {
 				this.stop_price = utils.munge_and_check_price({ exchange_info, symbol, price: this.stop_price });
 			}
 
-			if (typeof this.target_price !== 'undefined') {
+			if (this.target_price) {
 				this.target_price = utils.munge_and_check_price({ exchange_info, symbol, price: this.target_price });
 			}
-
-			if (this.buy_price) {
-				try {
-					if (this.buy_price.isZero()) {
-						this.logger.info(`Autosizing market buy using current price`);
-						let prices = await this.ee.prices();
-						current_price = BigNumber(prices[this.pair]);
-					}
-					let { base_amount } = await this.size_position({ current_price });
-					quote_volume = result.quote_volume;
-					base_amount = this._munge_amount_and_check_notionals({ base_amount });
-					this.print_percentages_for_user({ current_price });
-					this.logger.info(`Would currently invest ${quote_volume} ${this.quote_currency}`);
-					this.logger.info(`Calculated buy amount ${base_amount.toFixed()} ${this.base_currency}`);
-				} catch (error) {
-					async_error_handler(this.logger, undefined, error);
-				}
-			} else if (this.base_amount_held) {
-				// TODO: argh ... we should munge this before the sell orders...
-				this._munge_amount_and_check_notionals({ base_amount: this.base_amount_held });
-			} else {
-				throw new Error(
-					`Not sure what the user wants me to do, no buyPrice or base_amount to manage specified`
-				);
-			}
-
-			if (this.percentages) process.exit();
 
 			let buy_msg = this.buy_price ? `buy: ${this.buy_price}` : '';
 			let stop_msg = this.stop_price ? `stop: ${this.stop_price}` : '';
 			let target_msg = this.target_price ? `target: ${this.target_price}` : '';
 			this.send_message(`${this.pair} New trade: ${buy_msg} ${stop_msg} ${target_msg}`);
 			await this.monitor_user_stream();
-
-			const NON_BNB_TRADING_FEE = BigNumber('0.001'); // TODO: err why is this unused
 		} catch (error) {
 			this.logger.error(error);
 			throw new Error(`exception in setup code: ${error}`);

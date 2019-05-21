@@ -100,7 +100,6 @@ const binance_client = Binance({
 });
 
 console.error(`WARNING -a is UNTESTED in this CODE`);
-
 const algo = new Algo({
 	ee: binance_client,
 	send_message,

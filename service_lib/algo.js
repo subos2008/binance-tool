@@ -166,7 +166,7 @@ class Algo {
 			let response = await this.algo_utils.create_limit_buy_order({
 				pair: this.pair,
 				base_amount,
-				buy_price: this.buy_price
+				price: this.buy_price
 			});
 			return response.orderId;
 		} catch (error) {
@@ -174,9 +174,24 @@ class Algo {
 		}
 	}
 
+	async _create_limit_sell_order({ price, base_amount }) {
+		assert(price);
+		assert(base_amount);
+		try {
+			base_amount = this.base_amount_held;
+			let response = await this.algo_utils.create_limit_sell_order({
+				pair: this.pair,
+				base_amount,
+				price
+			});
+			return response.orderId;
+		} catch (error) {
+			async_error_handler(console, `Sell error: ${error.body}`, error);
+		}
+	}
 	async _create_market_buy_order({ base_amount }) {
 		try {
-			let response = this.algo_utils.create_market_buy_order({ base_amount });
+			let response = this.algo_utils.create_market_buy_order({ base_amount, pair: this.pair });
 			return response.orderId;
 		} catch (error) {
 			async_error_handler(console, `Buy error: ${error.body}`, error);
@@ -211,8 +226,8 @@ class Algo {
 				if (eventType !== 'executionReport') {
 					return;
 				}
-				// obj.logger.info(`.ws.user recieved:`);
-				// obj.logger.info(data);
+				obj.logger.info(`.ws.user recieved:`);
+				obj.logger.info(data);
 
 				if (orderId === obj.buyOrderId) {
 					await checkOrderFilled(data, async () => {
@@ -289,23 +304,12 @@ class Algo {
 
 	async placeTargetOrder() {
 		try {
-			let args = {
-				useServerTime: true,
-				side: 'SELL',
-				symbol: this.pair,
-				type: 'LIMIT',
-				quantity: this.base_amount_held.toFixed(),
-				price: this.target_price.toFixed()
-				// TODO: more args here, server time and use FULL response body
-			};
-			this.logger.info(`Creating Target LIMIT SELL ORDER`);
-			this.logger.info(args);
-			let response = await this.ee.order(args);
-			this.logger.info('Target LIMIT SELL response', response);
-			this.logger.info(`order id: ${response.orderId}`);
-			return response.orderId;
+			return await this._create_limit_sell_order({
+				price: this.target_price,
+				base_amount: this.base_amount_held
+			});
 		} catch (error) {
-			async_error_handler(console, `error placing order: ${error.body}`, error);
+			async_error_handler(console, `error placing target sell order: ${error.body}`, error);
 		}
 	}
 

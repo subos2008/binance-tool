@@ -133,7 +133,7 @@ describe('Algo', function() {
 					expect(ee.open_orders[0].origQty).bignumber.to.equal('0.5');
 				});
 			});
-			it('creates a buy order and returns', async function() {
+			it('creates a buy order', async function() {
 				const base_volume = BigNumber(1);
 				const limit_price = BigNumber(1);
 				let { ee, algo } = setup({
@@ -194,7 +194,7 @@ describe('Algo', function() {
 	describe('when only a buy_price and a stop_price present', function() {
 		describe('with soft_entry', function() {
 			// the code assumed if(soft_entry) then target_price was assumed to be defined
-			it('doesnt error from assuming a target_price is specified');
+			it('doesnt error from assuming a target_price is specified (regression test');
 		});
 		it('doesnt buy if price is below the stop_price');
 

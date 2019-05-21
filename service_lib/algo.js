@@ -185,20 +185,11 @@ class Algo {
 		try {
 			let { base_amount } = await this.size_position();
 			base_amount = this._munge_amount_and_check_notionals({ base_amount });
-			let args = {
-				useServerTime: true,
-				side: 'BUY',
-				symbol: this.pair,
-				type: 'LIMIT',
-				quantity: base_amount.toFixed(),
-				price: this.buy_price.toFixed()
-				// TODO: more args here, server time and use FULL response body
-			};
-			this.logger.info(`Creating LIMIT BUY ORDER`);
-			this.logger.info(args);
-			let response = await this.ee.order(args);
-			this.logger.info('LIMIT BUY response', response);
-			this.logger.info(`order id: ${response.orderId}`);
+			let response = await this.algo_utils.create_limit_buy_order({
+				pair: this.pair,
+				base_amount,
+				buy_price: this.buy_price
+			});
 			return response.orderId;
 		} catch (error) {
 			async_error_handler(console, `Buy error: ${error.body}`, error);

@@ -26,20 +26,21 @@ class AlgoUtils {
 		return utils.munge_and_check_price({ exchange_info: this.exchange_info, symbol, price });
 	}
 
-	munge_amount_and_check_notionals({ pair, amount, buy_price, stop_price, target_price, limit_price } = {}) {
+	munge_amount_and_check_notionals({ pair, base_amount, buy_price, stop_price, target_price, limit_price } = {}) {
 		assert(this.exchange_info);
 		assert(pair);
-		if (typeof amount !== 'undefined') {
-			amount = utils.munge_and_check_quantity({
+		assert(base_amount);
+		if (typeof base_amount !== 'undefined') {
+			base_amount = utils.munge_and_check_quantity({
 				exchange_info: this.exchange_info,
 				symbol: pair,
-				volume: amount
+				volume: base_amount
 			});
 
 			if (typeof buy_price !== 'undefined') {
 				utils.check_notional({
 					price: buy_price,
-					volume: amount,
+					volume: base_amount,
 					exchange_info: this.exchange_info,
 					symbol: pair
 				});
@@ -47,7 +48,7 @@ class AlgoUtils {
 			if (typeof stop_price !== 'undefined') {
 				utils.check_notional({
 					price: stop_price,
-					volume: amount,
+					volume: base_amount,
 					exchange_info: this.exchange_info,
 					symbol: pair
 				});
@@ -55,7 +56,7 @@ class AlgoUtils {
 			if (typeof target_price !== 'undefined') {
 				utils.check_notional({
 					price: target_price,
-					volume: amount,
+					volume: base_amount,
 					exchange_info: this.exchange_info,
 					symbol: pair
 				});
@@ -63,12 +64,12 @@ class AlgoUtils {
 			if (typeof limit_price !== 'undefined') {
 				utils.check_notional({
 					price: limit_price,
-					volume: amount,
+					volume: base_amount,
 					exchange_info: this.exchange_info,
 					symbol: pair
 				});
 			}
-			return amount;
+			return base_amount;
 		}
 	}
 
@@ -133,22 +134,28 @@ class AlgoUtils {
 	// 	}
 	// }
 
-	async _create_limit_buy_order({ pair, base_amount, limit_price } = {}) {
+	async create_limit_buy_order({ pair, base_amount, buy_price } = {}) {
+		assert(pair && buy_price && base_amount);
+		assert(BigNumber.isBigNumber(base_amount));
+		assert(BigNumber.isBigNumber(buy_price));
 		try {
+			base_amount = this.munge_amount_and_check_notionals({ pair, base_amount, buy_price });
+
+			let price = buy_price.toFixed();
+			let quantity = base_amount.toFixed();
 			let args = {
 				useServerTime: true,
-				side: 'BUY',
 				symbol: pair,
+				side: 'BUY',
 				type: 'LIMIT',
-				quantity: base_amount.toFixed(),
-				price: limit_price.toFixed()
+				quantity,
+				price
 			};
-			this.logger.info(`Creating LIMIT BUY ORDER`);
-			this.logger.info(args);
+			this.logger.info(`${pair} Creating LIMIT BUY ORDER for ${quantity} at ${price}`);
 			let response = await this.ee.order(args);
 			this.logger.info('LIMIT BUY response', response);
 			this.logger.info(`order id: ${response.orderId}`);
-			return response.orderId;
+			return response;
 		} catch (error) {
 			async_error_handler(console, `Buy error: ${error.body}`, error);
 		}

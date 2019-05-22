@@ -318,9 +318,9 @@ class Algo {
 			this.logger.warn(
 				`Need to add code to create a market sell if STOP_LOSS_LIMIT order is rejected by exchange.`
 			);
-			let response = await this._create_stop_loss_limit_sell_order();
-			this.logger.info(`order id: ${response.orderId}`);
-			return response.orderId;
+			let orderId = await this._create_stop_loss_limit_sell_order();
+			this.logger.info(`order id: ${orderId}`);
+			return orderId;
 		} catch (error) {
 			async_error_handler(this.logger, `error placing order: ${error.body}`, error);
 		}

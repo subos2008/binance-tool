@@ -285,7 +285,7 @@ describe('Algo', function() {
 	});
 
 	describe('when only a stop_price present', function() {
-		it.only('creates a stop order and returns', async function() {
+		it('creates a stop order', async function() {
 			const base_amount = BigNumber(1);
 			const stop_price = BigNumber('0.5');
 			let { ee, algo } = setup({
@@ -304,11 +304,13 @@ describe('Algo', function() {
 				console.log(e);
 				expect.fail('should not get here: expected call not to throw');
 			}
+			expect(algo.stopOrderId).to.equal(1);
+
 			expect(ee.open_orders).to.have.lengthOf(1);
 			expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 			expect(ee.open_orders[0].side).to.equal('SELL');
 			expect(ee.open_orders[0].orderId).to.equal(1);
-			expect(ee.open_orders[0].price.isEqualTo(stop_price)).to.equal(true);
+			expect(ee.open_orders[0].price.isEqualTo(stop_price.times('0.8'))).to.equal(true); // hard coded default in algo
 			expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
 			expect(ee.open_orders[0].origQty.isEqualTo(base_amount)).to.equal(true);
 		});

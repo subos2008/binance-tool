@@ -642,6 +642,7 @@ describe('Algo', function() {
 				}
 				// check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
 				// it's a market buy - are these emulated yet? Not in order book perhaps iirc
+				expect(algo.buyOrderId).to.equal(1);
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('MARKET');
 				expect(ee.open_orders[0].side).to.equal('BUY');
@@ -677,6 +678,7 @@ describe('Algo', function() {
 					expect.fail('should not get here: expected call not to throw');
 				}
 				// check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
+				expect(algo.buyOrderId).to.equal(1);
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('BUY');

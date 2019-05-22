@@ -717,7 +717,7 @@ describe('ExchangeEmulator', function() {
 					expect(e.name).to.equal('InsufficientBalanceError');
 				}
 			});
-			describe('when hit', async function() {
+			describe('when hit (exactly on the limit price)', async function() {
 				it('sends an executionReport to .ws.user', async function() {
 					const ee = setup({
 						logger,
@@ -747,6 +747,7 @@ describe('ExchangeEmulator', function() {
 					});
 				});
 			});
+			it('probably doesnt implement the stop price yet');
 		});
 	});
 

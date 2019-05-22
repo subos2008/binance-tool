@@ -374,7 +374,7 @@ describe('Algo', function() {
 		);
 		it('what happens if I get a partial stop fill then hit target? base_amount needs to be dynamic, right?');
 		describe('without soft entry', function() {
-			it.only('creates a stop limit sell order after the buy order hits', async function() {
+			it('creates a stop limit sell order after the buy order hits', async function() {
 				const base_amount = BigNumber(1);
 				const buy_price = BigNumber(1);
 				const stop_price = buy_price.times('0.5');
@@ -397,18 +397,19 @@ describe('Algo', function() {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
 				}
+				let limit_price = stop_price.times(default_stop_limt_price_factor);
 				expect(algo.stopOrderId).to.equal(2);
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');
 				expect(ee.open_orders[0].orderId).to.equal(2);
-				expect(ee.open_orders[0].price).to.bignumber.equal(stop_price.times(default_stop_limt_price_factor));
+				expect(ee.open_orders[0].price).to.bignumber.equal(limit_price);
 				expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
 				expect(ee.open_orders[0].origQty.isEqualTo(base_amount)).to.equal(true);
 
 				try {
 					await ee.set_current_price({ symbol: default_pair, price: stop_price }); // trigger setting of stop
-					await ee.set_current_price({ symbol: default_pair, price: stop_price }); // fill stop order
+					await ee.set_current_price({ symbol: default_pair, price: limit_price }); // fill stop order
 				} catch (e) {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
@@ -514,7 +515,7 @@ describe('Algo', function() {
 				expect(most_recent_message()).to.equal(`${default_pair} soft entry buy price hit`);
 			});
 
-			it('creates a stop limit sell order after the buy order hits', async function() {
+			it('creates a stop limit sell order after the buy order hits, and sends a message when the stop fills', async function() {
 				const base_amount = BigNumber(1);
 				const buy_price = BigNumber(1);
 				const stop_price = buy_price.times('0.5');
@@ -546,8 +547,10 @@ describe('Algo', function() {
 				expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
 				expect(ee.open_orders[0].origQty.isEqualTo(base_amount)).to.equal(true);
 
+				let limit_price = stop_price.times(default_stop_limt_price_factor);
 				try {
-					await ee.set_current_price({ symbol: default_pair, price: stop_price });
+					await ee.set_current_price({ symbol: default_pair, price: stop_price }); // trigger stop creation
+					await ee.set_current_price({ symbol: default_pair, price: limit_price }); // fill stop order
 				} catch (e) {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
@@ -808,4 +811,6 @@ describe('Algo', function() {
 	//    '[AsyncErrorWrapper of Error] Order would trigger immediately.' }
 	it('deals with the fact that Binance rejects STOP_LOSS_LIMIT_ORDERS that would trigger immediately');
 	it('can calculate the base_amount to sell to reduce a position by a quote_amount at spot');
+	it('adds more capital to a trade if capital becomes available while still in the buy-stop zone');
+	it('WRNING: the ONLY test I had that stop losses were working is the one that checks sent_message!');
 });

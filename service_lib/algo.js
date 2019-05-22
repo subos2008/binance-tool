@@ -166,12 +166,14 @@ class Algo {
 	async _create_limit_buy_order() {
 		try {
 			assert(!this.buyOrderId);
+			assert(this.buy_price && !this.buy_price.isZero());
+			let price = this.buy_price;
 			let { base_amount } = await this.size_position();
-			base_amount = this._munge_amount_and_check_notionals({ base_amount, buy_price: this.buy_price });
+			base_amount = this._munge_amount_and_check_notionals({ base_amount, price });
 			let response = await this.algo_utils.create_limit_buy_order({
 				pair: this.pair,
 				base_amount,
-				price: this.buy_price
+				price
 			});
 			return response.orderId;
 		} catch (error) {
@@ -184,6 +186,7 @@ class Algo {
 		assert(base_amount);
 		try {
 			base_amount = this.base_amount_held;
+			base_amount = this._munge_amount_and_check_notionals({ base_amount, price });
 			let response = await this.algo_utils.create_limit_sell_order({
 				pair: this.pair,
 				base_amount,
@@ -194,12 +197,31 @@ class Algo {
 			async_error_handler(console, `Sell error: ${error.body}`, error);
 		}
 	}
+
+	async _create_stop_loss_limit_sell_order() {
+		assert(this.stop_price);
+		assert(this.base_amount_held);
+		assert(!this.base_amount_held.isZero());
+		try {
+			let base_amount = this.base_amount_held;
+			base_amount = this._munge_amount_and_check_notionals({ base_amount, stop_price: this.stop_price });
+			let response = await this.algo_utils.create_stop_loss_limit_sell_order({
+				pair: this.pair,
+				base_amount,
+				price: this.limit_price || BigNumber(0),
+				stop_price: this.stop_price
+			});
+			return response.orderId;
+		} catch (error) {
+			async_error_handler(console, `Sell error: ${error.body}`, error);
+		}
+	}
+
 	async _create_market_buy_order() {
 		try {
 			assert(!this.buyOrderId);
 			let { base_amount } = await this.size_position();
 			base_amount = this._munge_amount_and_check_notionals({ base_amount, buy_price: this.buy_price });
-
 			let response = this.algo_utils.create_market_buy_order({ base_amount, pair: this.pair });
 			return response.orderId;
 		} catch (error) {
@@ -287,23 +309,10 @@ class Algo {
 
 	async placeStopOrder() {
 		try {
-			let price = this.limit_price || this.stop_price;
-			let args = {
-				useServerTime: true,
-				side: 'SELL',
-				symbol: this.pair,
-				type: 'STOP_LOSS_LIMIT',
-				quantity: this.base_amount_held.toFixed(),
-				price: price.toFixed(),
-				stopPrice: this.stop_price.toFixed()
-				// TODO: more args here, server time and use FULL response body
-			};
-			this.logger.info(
-				`${this
-					.pair} Creating STOP_LOSS_LIMIT SELL ORDER: ${this.base_amount_held.toFixed()} at price ${price.toFixed()}, stopPrice ${this.stop_price.toFixed()}`
+			this.logger.warn(
+				`Need to add code to create a market sell if STOP_LOSS_LIMIT order is rejected by exchange.`
 			);
-			let response = await this.ee.order(args);
-			this.logger.info('STOP_LOSS_LIMIT sell response', response);
+			let response = await this._create_stop_loss_limit_sell_order();
 			this.logger.info(`order id: ${response.orderId}`);
 			return response.orderId;
 		} catch (error) {

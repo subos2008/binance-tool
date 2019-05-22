@@ -285,7 +285,7 @@ describe('Algo', function() {
 	});
 
 	describe('when only a stop_price present', function() {
-		it('creates a stop order and returns', async function() {
+		it.only('creates a stop order and returns', async function() {
 			const base_amount = BigNumber(1);
 			const stop_price = BigNumber('0.5');
 			let { ee, algo } = setup({
@@ -294,7 +294,8 @@ describe('Algo', function() {
 				},
 				algo_config: {
 					base_amount,
-					stop_price
+					stop_price,
+					logger
 				}
 			});
 			try {

@@ -127,7 +127,7 @@ class AlgoUtils {
 		assert(BigNumber.isBigNumber(price));
 		try {
 			base_amount = this.munge_amount_and_check_notionals({ pair, base_amount, price });
-			let price = price.toFixed();
+			price = price.toFixed();
 			let quantity = base_amount.toFixed();
 			let args = {
 				useServerTime: true,
@@ -163,6 +163,41 @@ class AlgoUtils {
 				price
 			};
 			this.logger.info(`${pair} Creating LIMIT SELL ORDER for ${quantity} at ${price}`);
+			let response = await this.ee.order(args);
+			this.logger.info(`order id: ${response.orderId}`);
+			return response;
+		} catch (error) {
+			async_error_handler(console, `Buy error: ${error.body}`, error);
+		}
+	}
+
+	async create_stop_loss_limit_sell_order({ pair, base_amount, price, stop_price } = {}) {
+		assert(pair && price && base_amount && stop_price);
+		assert(BigNumber.isBigNumber(base_amount));
+		assert(BigNumber.isBigNumber(price));
+		if (stop_price.isEqualTo(price)) {
+			this.logger.warn(
+				`WARNING: stop loss orders with limit and stop price the same will not fill in fast moving markets`
+			);
+		}
+		try {
+			// TODO: not checking price because often it is zero
+			base_amount = this.munge_amount_and_check_notionals({ pair, base_amount, stop_price });
+			stop_price = stop_price.toFixed();
+			price = price.toFixed();
+			let quantity = base_amount.toFixed();
+			let args = {
+				useServerTime: true,
+				symbol: pair,
+				side: 'SELL',
+				type: 'STOP_LOSS_LIMIT',
+				quantity,
+				price,
+				stopPrice: stop_price
+			};
+			this.logger.info(
+				`${pair} Creating STOP_LOSS_LIMIT SELL ORDER for ${quantity} at ${price} triggered at ${stop_price}`
+			);
 			let response = await this.ee.order(args);
 			this.logger.info(`order id: ${response.orderId}`);
 			return response;

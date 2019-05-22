@@ -143,8 +143,7 @@ describe('Algo', function() {
 				let { ee, algo } = setup({
 					algo_config: {
 						base_amount,
-						buy_price: limit_price,
-						logger
+						buy_price: limit_price
 					}
 				});
 				try {
@@ -309,8 +308,7 @@ describe('Algo', function() {
 				},
 				algo_config: {
 					base_amount,
-					stop_price,
-					logger
+					stop_price
 				}
 			});
 			try {
@@ -385,10 +383,8 @@ describe('Algo', function() {
 						base_amount,
 						buy_price,
 						target_price,
-						stop_price,
-						logger
-					},
-					ee_config: { logger }
+						stop_price
+					}
 				});
 				try {
 					await algo.main();
@@ -432,8 +428,7 @@ describe('Algo', function() {
 						base_amount,
 						buy_price,
 						target_price,
-						stop_price,
-						logger
+						stop_price
 					}
 				});
 				try {

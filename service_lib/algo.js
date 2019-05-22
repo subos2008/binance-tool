@@ -198,17 +198,23 @@ class Algo {
 		}
 	}
 
-	async _create_stop_loss_limit_sell_order() {
+	async _create_stop_loss_limit_sell_order({ limit_price_factor } = { limit_price_factor: BigNumber('0.8') }) {
+		assert(limit_price_factor);
 		assert(this.stop_price);
 		assert(this.base_amount_held);
 		assert(!this.base_amount_held.isZero());
 		try {
 			let base_amount = this.base_amount_held;
 			base_amount = this._munge_amount_and_check_notionals({ base_amount, stop_price: this.stop_price });
+			let price = this.limit_price;
+			if (!price) {
+				this.logger.warn(`STOP_LIMIT_SELL order using default limit_price_factor of ${limit_price_factor}`);
+				price = this.stop_price.times(limit_price_factor);
+			}
 			let response = await this.algo_utils.create_stop_loss_limit_sell_order({
 				pair: this.pair,
 				base_amount,
-				price: this.limit_price || BigNumber(0),
+				price,
 				stop_price: this.stop_price
 			});
 			return response.orderId;

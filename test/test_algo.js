@@ -216,7 +216,8 @@ describe('Algo', function() {
 					buy_price,
 					stop_price,
 					logger
-				}
+				},
+				ee_config: { logger }
 			});
 			try {
 				await algo.main();

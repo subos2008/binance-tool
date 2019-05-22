@@ -228,7 +228,7 @@ class Algo {
 			assert(!this.buyOrderId);
 			let { base_amount } = await this.size_position();
 			base_amount = this._munge_amount_and_check_notionals({ base_amount, buy_price: this.buy_price });
-			let response = this.algo_utils.create_market_buy_order({ base_amount, pair: this.pair });
+			let response = await this.algo_utils.create_market_buy_order({ base_amount, pair: this.pair });
 			return response.orderId;
 		} catch (error) {
 			async_error_handler(console, `Buy error: ${error.body}`, error);

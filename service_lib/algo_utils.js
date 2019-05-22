@@ -215,7 +215,7 @@ class AlgoUtils {
 			let args = {
 				useServerTime: true,
 				side: 'BUY',
-				symbol: this.pair,
+				symbol: pair,
 				type: 'MARKET',
 				quantity
 			};

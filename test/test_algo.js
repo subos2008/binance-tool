@@ -214,10 +214,8 @@ describe('Algo', function() {
 				algo_config: {
 					base_amount,
 					buy_price,
-					stop_price,
-					logger
-				},
-				ee_config: { logger }
+					stop_price
+				}
 			});
 			try {
 				await algo.main();
@@ -239,10 +237,9 @@ describe('Algo', function() {
 			expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 			expect(ee.open_orders[0].side).to.equal('SELL');
 			expect(ee.open_orders[0].orderId).to.equal(2);
-			expect(ee.open_orders[0].price).bignumber.to.equal(stop_price);
-			// expect(ee.open_orders[0].price.isEqualTo(0)).to.equal(true);
-			// expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
-			expect(ee.open_orders[0].origQty.isEqualTo(base_amount)).to.equal(true);
+			expect(ee.open_orders[0].price).bignumber.to.equal(stop_price.times(default_stop_limt_price_factor));
+			expect(ee.open_orders[0].stopPrice).bignumber.to.equal(stop_price);
+			expect(ee.open_orders[0].origQty).bignumber.to.equal(base_amount);
 		});
 		it('VERY IMPORTANT has been updated to have stop order with limit price of zero or market orders');
 		it('buys using the available quote if it it less than the max specified', async function() {

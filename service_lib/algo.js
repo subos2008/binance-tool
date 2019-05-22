@@ -453,8 +453,9 @@ class Algo {
 							obj.logger.info(`Event: price >= target_price: cancelling stop and placeTargetOrder()`);
 							isCancelling = true;
 							try {
-								obj.stopOrderId = 0; // Do before await cancelOrder
-								await obj.ee.cancelOrder({ symbol, orderId: obj.stopOrderId });
+								let stopOrderId = obj.stopOrderId;
+								obj.stopOrderId = undefined; // Do before await cancelOrder
+								await obj.ee.cancelOrder({ symbol, orderId: stopOrderId });
 								isCancelling = false;
 							} catch (error) {
 								console.error(`${symbol} cancel error:`, error.body);
@@ -475,8 +476,9 @@ class Algo {
 						) {
 							isCancelling = true;
 							try {
-								obj.targetOrderId = 0; // Do before await cancelOrder
-								await obj.ee.cancelOrder({ symbol, orderId: obj.targetOrderId });
+								let targetOrderId = obj.targetOrderId;
+								obj.targetOrderId = undefined; // Do before await cancelOrder
+								await obj.ee.cancelOrder({ symbol, orderId: targetOrderId });
 								isCancelling = false;
 							} catch (error) {
 								console.error(`${symbol} cancel error:`, error.body);

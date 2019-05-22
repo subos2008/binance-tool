@@ -164,6 +164,7 @@ describe('Algo', function() {
 			it('sends a message when the trade fills/partial fills');
 		});
 		describe('with soft_entry', function() {
+			it('Creates a buy order when the price is within a percentage of the buy price');
 			it('only creates a buy order when entry price is hit', async function() {
 				const base_amount = BigNumber(1);
 				const buy_price = BigNumber(1);
@@ -352,6 +353,9 @@ describe('Algo', function() {
 	});
 	describe('when only a stop_price and a target_price present', function() {
 		it('sends a message when the stop_price is hit (currently only notifies when filled');
+		it('switches from stop to target a percentage before the actual price is hit');
+		it('switches from target to stop a percentage before the actual price is hit');
+		it('switches back and forth from stop and target as the price moves');
 	});
 
 	describe('when a buy_price and an base_amount are present (-b and -a)', function() {
@@ -440,6 +444,7 @@ describe('Algo', function() {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
 				}
+				expect(algo.stoptOrderId).to.be.undefined;
 				expect(algo.targetOrderId).to.equal(3);
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
@@ -456,6 +461,7 @@ describe('Algo', function() {
 				}
 				expect(most_recent_message()).to.equal(`${default_pair} target sell order filled`);
 			});
+			it('creates a stop order again when price moves from target price back to stop price');
 		});
 		describe('with soft entry', function() {
 			it('doesnt buy if price is below the stop_price');

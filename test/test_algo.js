@@ -32,6 +32,8 @@ const permissive_trading_rules = {
 	allowed_to_trade_without_stop: true
 };
 
+let default_stop_limt_price_factor = BigNumber('0.8'); // hard coded default in algo atm
+
 let message_queue = [];
 function fresh_message_queue() {
 	message_queue = [];
@@ -219,6 +221,7 @@ describe('Algo', function() {
 				console.log(e);
 				expect.fail('should not get here: expected call not to throw');
 			}
+			expect(algo.stopOrderId).to.equal(2);
 			expect(ee.open_orders).to.have.lengthOf(1);
 			expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 			expect(ee.open_orders[0].side).to.equal('SELL');
@@ -305,12 +308,11 @@ describe('Algo', function() {
 				expect.fail('should not get here: expected call not to throw');
 			}
 			expect(algo.stopOrderId).to.equal(1);
-
 			expect(ee.open_orders).to.have.lengthOf(1);
 			expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 			expect(ee.open_orders[0].side).to.equal('SELL');
 			expect(ee.open_orders[0].orderId).to.equal(1);
-			expect(ee.open_orders[0].price.isEqualTo(stop_price.times('0.8'))).to.equal(true); // hard coded default in algo
+			expect(ee.open_orders[0].price).to.bignumber.equal(stop_price.times(default_stop_limt_price_factor));
 			expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
 			expect(ee.open_orders[0].origQty.isEqualTo(base_amount)).to.equal(true);
 		});
@@ -377,11 +379,12 @@ describe('Algo', function() {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
 				}
+				expect(algo.stopOrderId).to.equal(2);
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');
 				expect(ee.open_orders[0].orderId).to.equal(2);
-				expect(ee.open_orders[0].price.isEqualTo(stop_price)).to.equal(true);
+				expect(ee.open_orders[0].price).to.bignumber.equal(stop_price.times(default_stop_limt_price_factor));
 				expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
 				expect(ee.open_orders[0].origQty.isEqualTo(base_amount)).to.equal(true);
 
@@ -511,11 +514,12 @@ describe('Algo', function() {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
 				}
+				expect(algo.stopOrderId).to.equal(2);
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');
 				expect(ee.open_orders[0].orderId).to.equal(2);
-				expect(ee.open_orders[0].price.isEqualTo(stop_price)).to.equal(true);
+				expect(ee.open_orders[0].price).to.bignumber.equal(stop_price.times(default_stop_limt_price_factor));
 				expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(true);
 				expect(ee.open_orders[0].origQty.isEqualTo(base_amount)).to.equal(true);
 

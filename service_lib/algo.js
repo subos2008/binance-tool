@@ -181,7 +181,7 @@ class Algo {
 		}
 	}
 
-	async _create_limit_sell_order({ price, base_amount }) {
+	async _create_limit_sell_order({ price, base_amount } = {}) {
 		assert(price);
 		assert(base_amount);
 		try {

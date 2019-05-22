@@ -152,7 +152,7 @@ class AlgoUtils {
 		assert(BigNumber.isBigNumber(price));
 		try {
 			base_amount = this.munge_amount_and_check_notionals({ pair, base_amount, price });
-			let price = price.toFixed();
+			price = price.toFixed();
 			let quantity = base_amount.toFixed();
 			let args = {
 				useServerTime: true,

@@ -206,7 +206,7 @@ describe('Algo', function() {
 		});
 		it('doesnt buy if price is below the stop_price');
 		it('responds appropriately if the exchange rejects the stop order because it would execute immediately');
-		it.only('creates a stop limit sell order after the buy order hits', async function() {
+		it('creates a stop limit sell order after the buy order hits', async function() {
 			const base_amount = BigNumber(1);
 			const buy_price = BigNumber(1);
 			const stop_price = buy_price.div(2);
@@ -374,7 +374,7 @@ describe('Algo', function() {
 		);
 		it('what happens if I get a partial stop fill then hit target? base_amount needs to be dynamic, right?');
 		describe('without soft entry', function() {
-			it('creates a stop limit sell order after the buy order hits', async function() {
+			it.only('creates a stop limit sell order after the buy order hits', async function() {
 				const base_amount = BigNumber(1);
 				const buy_price = BigNumber(1);
 				const stop_price = buy_price.times('0.5');
@@ -385,8 +385,10 @@ describe('Algo', function() {
 						base_amount,
 						buy_price,
 						target_price,
-						stop_price
-					}
+						stop_price,
+						logger
+					},
+					ee_config: { logger }
 				});
 				try {
 					await algo.main();
@@ -405,7 +407,8 @@ describe('Algo', function() {
 				expect(ee.open_orders[0].origQty.isEqualTo(base_amount)).to.equal(true);
 
 				try {
-					await ee.set_current_price({ symbol: default_pair, price: stop_price });
+					await ee.set_current_price({ symbol: default_pair, price: stop_price }); // trigger setting of stop
+					await ee.set_current_price({ symbol: default_pair, price: stop_price }); // fill stop order
 				} catch (e) {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');

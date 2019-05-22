@@ -808,3 +808,4 @@ describe('ExchangeEmulator', function() {
 });
 
 it('fails if order gets passed unmunged values Notional, step and lot_size');
+it('has some decent tests for stop limit sell orders');

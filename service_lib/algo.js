@@ -268,7 +268,7 @@ class Algo {
 
 				if (orderId === obj.buyOrderId) {
 					await checkOrderFilled(data, async () => {
-						obj.buyOrderId = 0;
+						obj.buyOrderId = undefined;
 						this.base_amount_held = BigNumber(data.totalTradeQuantity);
 						this.send_message(`${data.symbol} buy order filled`);
 						await obj.placeSellOrder();

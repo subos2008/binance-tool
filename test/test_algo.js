@@ -205,8 +205,8 @@ describe('Algo', function() {
 			it('doesnt error from assuming a target_price is specified (regression test');
 		});
 		it('doesnt buy if price is below the stop_price');
-
-		it('creates a stop limit sell order after the buy order hits', async function() {
+		it('responds appropriately if the exchange rejects the stop order because it would execute immediately');
+		it.only('creates a stop limit sell order after the buy order hits', async function() {
 			const base_amount = BigNumber(1);
 			const buy_price = BigNumber(1);
 			const stop_price = buy_price.div(2);
@@ -220,11 +220,19 @@ describe('Algo', function() {
 			});
 			try {
 				await algo.main();
+			} catch (e) {
+				console.log(e);
+				expect.fail('should not get here: expected call not to throw');
+			}
+			expect(algo.buyOrderId).to.equal(1);
+
+			try {
 				await ee.set_current_price({ symbol: default_pair, price: buy_price });
 			} catch (e) {
 				console.log(e);
 				expect.fail('should not get here: expected call not to throw');
 			}
+			expect(algo.buyOrderId).to.be.undefined;
 			expect(algo.stopOrderId).to.equal(2);
 			expect(ee.open_orders).to.have.lengthOf(1);
 			expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');

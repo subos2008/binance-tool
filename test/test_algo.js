@@ -111,7 +111,7 @@ describe('Algo', function() {
 		it('if -q specified without auto-size then use -q as an absolute (trim it to available)');
 		describe('without soft_entry', function() {
 			describe('with max_quote_amount_to_buy and without autosize', function() {
-				it('buys using the available quote even if it it less than the max specified', async function() {
+				it('creates a buy order for the available quote if it it less than the max specified', async function() {
 					const buy_price = BigNumber(1);
 					let { ee, algo } = setup({
 						algo_config: {
@@ -128,6 +128,7 @@ describe('Algo', function() {
 						console.log(e);
 						expect.fail('should not get here: expected call not to throw');
 					}
+					expect(algo.buyOrderId).to.equal(1);
 					expect(ee.open_orders).to.have.lengthOf(1);
 					expect(ee.open_orders[0].type).to.equal('LIMIT');
 					expect(ee.open_orders[0].side).to.equal('BUY');
@@ -152,6 +153,7 @@ describe('Algo', function() {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
 				}
+				expect(algo.buyOrderId).to.equal(1);
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('BUY');
@@ -185,6 +187,7 @@ describe('Algo', function() {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
 				}
+				expect(algo.buyOrderId).to.equal(1);
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('BUY');
@@ -251,6 +254,7 @@ describe('Algo', function() {
 				console.log(e);
 				expect.fail('should not get here: expected call not to throw');
 			}
+			expect(algo.buyOrderId).to.equal(1);
 			expect(ee.open_orders).to.have.lengthOf(1);
 			expect(ee.open_orders[0].type).to.equal('LIMIT');
 			expect(ee.open_orders[0].side).to.equal('BUY');
@@ -278,6 +282,7 @@ describe('Algo', function() {
 				console.log(e);
 				expect.fail('should not get here: expected call not to throw');
 			}
+			expect(algo.targetOrderId).to.equal(2);
 			expect(ee.open_orders).to.have.lengthOf(1);
 			expect(ee.open_orders[0].type).to.equal('LIMIT');
 			expect(ee.open_orders[0].side).to.equal('SELL');
@@ -336,6 +341,7 @@ describe('Algo', function() {
 				console.log(e);
 				expect.fail('should not get here: expected call not to throw');
 			}
+			expect(algo.targetOrderId).to.equal(1);
 			expect(ee.open_orders).to.have.lengthOf(1);
 			expect(ee.open_orders[0].type).to.equal('LIMIT');
 			expect(ee.open_orders[0].side).to.equal('SELL');
@@ -434,6 +440,7 @@ describe('Algo', function() {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
 				}
+				expect(algo.targetOrderId).to.equal(3);
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');
@@ -481,6 +488,7 @@ describe('Algo', function() {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
 				}
+				expect(algo.buyOrderId).to.equal(1);
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('BUY');
@@ -570,6 +578,7 @@ describe('Algo', function() {
 					console.log(e);
 					expect.fail('should not get here: expected call not to throw');
 				}
+				expect(algo.targetOrderId).to.equal(3);
 				expect(ee.open_orders).to.have.lengthOf(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');

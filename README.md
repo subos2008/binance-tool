@@ -4,7 +4,7 @@ A command line tool for managing trades on [Binance](https://www.binance.com/?re
 
 The tool is designed to allow enforcement of trading rules, such as maximum portfolio risk per trade, and facilitate having multiple potential trades open at the same time. With the use of `--soft-entry` multiple potential trades can be open simultaneously and capital is only committed in the order book when the entry price on the trade looks likely to hit.
 
-Note: as with all MIT licenced code this is provided without warranty or expectation of fitness for purpose, see the `LICENSE.md` file. You use this at your own risk.
+Note: as with all MIT licenced code this is provided without warranty or expectation of fitness for purpose, see the `LICENSE` file. You use this at your own risk.
 
 ## Features
 

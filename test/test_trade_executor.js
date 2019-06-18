@@ -11,7 +11,7 @@ const { NotImplementedError, InsufficientBalanceError } = require('../lib/errors
 // const async_error_handler = require('../lib/async_error_handler');
 const utils = require('../lib/utils');
 const fs = require('fs');
-const TradeExecutor = require('../service_lib/trade_executor');
+const TradeExecutor = require('../lib/trade_executor');
 
 const logger = new Logger({ silent: false });
 const null_logger = new Logger({ silent: true });

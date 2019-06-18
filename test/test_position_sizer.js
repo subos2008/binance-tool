@@ -10,8 +10,8 @@ const ExchangeEmulator = require('../lib/exchange_emulator');
 const Logger = require('../lib/faux_logger');
 const async_error_handler = require('../lib/async_error_handler');
 const utils = require('../lib/utils');
-const PositionSizer = require('../service_lib/position_sizer');
-const TradingRules = require('../service_lib/trading_rules');
+const PositionSizer = require('../lib/position_sizer');
+const TradingRules = require('../lib/trading_rules');
 
 const fs = require('fs');
 

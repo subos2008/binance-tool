@@ -3,7 +3,7 @@ const { ExitNow } = require('../lib/errors');
 const BigNumber = require('bignumber.js');
 const utils = require('../lib/utils');
 const assert = require('assert');
-const TradeExecutor = require('../service_lib/trade_executor');
+const TradeExecutor = require('../lib/trade_executor');
 
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion

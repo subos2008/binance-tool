@@ -434,10 +434,9 @@ describe('TradeExecutor', function() {
 						pair: default_pair,
 						base_amount_held,
 						target_price,
-						stop_price,
-						logger
+						stop_price
 					},
-					ee_config: { starting_base_balance: base_amount_held, logger }
+					ee_config: { starting_base_balance: base_amount_held }
 				});
 				try {
 					await algo.main();
@@ -459,12 +458,11 @@ describe('TradeExecutor', function() {
 						target_price,
 						stop_price
 					},
-					ee_config: { starting_base_balance: base_amount_held, logger }
+					ee_config: { starting_base_balance: base_amount_held }
 				});
 				try {
 					await algo.main();
 					await ee.set_current_price({ symbol: default_pair, price: target_price });
-					console.log(message_queue);
 				} catch (e) {
 					expect.fail('should not get here: expected call not to throw');
 				}

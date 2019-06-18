@@ -2,17 +2,16 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
-require('dotenv').config();
+/* 
+ * Utility to update the static copy of Binance's exchangeInfo object used by the tests.
+ *
+ * For developers only, users can ignore this file
+ */
 
-const Binance = require('binance-api-node').default;
-const Logger = require('./lib/faux_logger');
-const logger = new Logger({ silent: false });
 var fs = require('fs');
 
-const binance_client = Binance({
-	apiKey: process.env.APIKEY,
-	apiSecret: process.env.APISECRET
-});
+const Binance = require('binance-api-node').default;
+const binance_client = Binance();
 
 async function main() {
 	try {

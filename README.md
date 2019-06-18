@@ -37,7 +37,7 @@ Options:
   -a, --base_amount       Set base_amount to buy/sell                   [string]
   -q, --amountquote       Set max to buy in quote coin (alternative to -a)
                                                                         [string]
-  -b, --buy, -e, --entry  Set buy price (0 for market buy)              [string]
+  -b, --buy, -e, --entry  Set buy price (omit price for market buy)     [string]
   -s, --stop              Set stop-limit order stop price               [string]
   -l, --limit             Set sell stop-limit order limit price (if different
                           from stop price)                              [string]

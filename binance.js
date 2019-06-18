@@ -45,7 +45,7 @@ const { argv } = require('yargs')
 	.alias('b', 'buy')
 	.alias('b', 'e')
 	.alias('b', 'entry')
-	.describe('b', 'Set buy price (0 for market buy)')
+	.describe('b', 'Set buy price (omit price for market buy)')
 	// '-s <stop_price>'
 	.string('s')
 	.alias('s', 'stop')

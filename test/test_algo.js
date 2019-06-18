@@ -1,4 +1,18 @@
 'use strict';
+
+/* NOTE:
+ * Algo is now a thin wrapper around the TradeExecutor however most
+ * of the original tests have been left here when they were duplicated
+ * to test the TradeExecutor. 
+ * 
+ * Consider if your tests are appropriate for the Algo wrapper or
+ * the TradeExecutor. 
+ * 
+ * This file needs to be thinned out and duplicates removed when
+ * we decide what tests we want at this level.
+ * 
+ */
+
 const chai = require('chai');
 chai.use(require('chai-bignumber')());
 const expect = chai.expect;

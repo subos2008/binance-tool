@@ -1,4 +1,5 @@
 {
+	"license": "UNLICENSED",
 	"main": "binance.js",
 	"bin": "binance.js",
 	"scripts": {

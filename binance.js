@@ -94,14 +94,30 @@ if (buy_price === '') {
 	buy_price = '0';
 }
 
-const binance_client = Binance({
-	apiKey: process.env.APIKEY,
-	apiSecret: process.env.APISECRET
-	// getTime: xxx // time generator function, optional, defaults to () => Date.now()
-});
+var ee;
+const live = false;
+if(live ){
+	ee = Binance({
+		apiKey: process.env.APIKEY,
+		apiSecret: process.env.APISECRET
+		// getTime: xxx // time generator function, optional, defaults to () => Date.now()
+	});
+} else {
+	const fs = require("fs")
+	const exchange_info = JSON.parse(fs.readFileSync('./test/exchange_info.json', 'utf8'));
+	let ee_config = {
+		starting_balances: {
+			'USDT': BigNumber('50')
+		},
+		logger,
+		exchange_info
+	}
+	const ExchangeEmulator = require('./lib/exchange_emulator');
+	ee = new ExchangeEmulator(ee_config);
+}
 
 const algo = new Algo({
-	ee: binance_client,
+	ee,
 	send_message,
 	logger,
 	pair,

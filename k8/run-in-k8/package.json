@@ -1,0 +1,12 @@
+{
+  "name": "k8-deployer",
+  "version": "1.0.0",
+  "description": "Convert template to yaml and kubectl run apply",
+  "main": "index.js",
+  "author": "Ryan Cocks",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "handlebars": "^4.1.2",
+    "yaml": "^1.6.0"
+  }
+}

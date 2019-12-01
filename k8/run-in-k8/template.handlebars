@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    run: binance-tool
+  name: binance-tool
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: {{container_name}}
+        image: {{docker_image}}
+        env:
+        - name: TELEGRAM_KEY
+          valueFrom:
+            secretKeyRef:
+              key: TELEGRAM_KEY
+              name: telegram
+        - name: TELEGRAM_CHAT_ID
+          valueFrom:
+            secretKeyRef:
+              key: TELEGRAM_CHAT_ID
+              name: telegram

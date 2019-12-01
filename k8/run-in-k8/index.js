@@ -1,7 +1,8 @@
 const assert = require('assert');
 
 // Configuration
-
+const dotenv = require('dotenv');
+dotenv.config({ path: '../../.env' });
 // End Config
 
 function fall_over(string) {

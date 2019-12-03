@@ -106,10 +106,10 @@ async function main() {
 
   // TODO: exceptions
   try {
-    const trade_id = await incrAsync("active-trades:next:trade_id");
+    const trade_id = await incrAsync("trades:next:trade_id");
     console.log(`Trade ID: ${trade_id}`);
 
-    const prefix = `active-trades:${trade_id}`;
+    const prefix = `trades:${trade_id}`;
 
     await setAsync(`${prefix}:completed`, false);
 

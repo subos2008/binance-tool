@@ -8,6 +8,6 @@ RUN yarn install
 
 COPY lib /app/lib
 COPY service_lib /app/service_lib
-COPY binance.js /app/
+COPY service.js /app/
 
-CMD node ./binance.js 
+CMD node ./service.js 

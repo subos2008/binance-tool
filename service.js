@@ -22,6 +22,8 @@ const TradingRules = require("./lib/trading_rules");
 const logger = new Logger({ silent: false });
 
 // TODO: load from shared yaml file with binance.js
+// eg: const vars = YAML.parse(fs.readFileSync(process.env.VARS_INPUT_FILENAME, 'utf8'));
+// with: const YAML = require('yaml');
 console.log('Warning trading rules hardcoded twice')
 const trading_rules = new TradingRules({
   max_allowed_portfolio_loss_percentage_per_trade: BigNumber("1"),
@@ -35,15 +37,11 @@ var { argv } = require("yargs")
   .string("trade-id")
   .demand("trade-id")
   .describe("trade-id", "ID of trade_definition to load from redis")
-  // '--launch'
-  .boolean("launch")
-  .describe("launch", "Launch a worker to execute the trade")
-  .default("launch", false);
   // '--live'
   .boolean("live")
   .describe("live", "Trade with real money")
   .default("live", false);
-let { "trade-id": trade_id, live, launch } = argv;
+let { "trade-id": trade_id, live } = argv;
 var algo;
 
 async function main() {

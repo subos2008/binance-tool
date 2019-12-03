@@ -28,10 +28,12 @@ const namespace = process.env.KUBECTL_NAMESPACE
 const container_name = "binance-tool"
 const job_name = "binance-tool-dev-job"
 const docker_image = process.env.DOCKER_REGISTRY
+const trade_id = "1"
 
 const contents = template({
     docker_image,
-    container_name
+    container_name,
+    trade_id
 });
 
 const output_dir = `deployed-trades`;

@@ -1,6 +1,35 @@
+# Update
+
+This tool is currently migrating from being a command line process that
+takes parameters and runs until the trade completes into a tool that
+adds a trade_definition to redis and associated tools that take a trade_id
+and retrieve and execute that trade. This can thus be used for executing
+trades using a remote cluster.
+
+### Kubernetes Workflow
+
+create a `.env` file:
+
+```bash
+APIKEY=
+APISECRET=
+TELEGRAM_KEY=
+TELEGRAM_CHAT_ID=
+# warning DOCKER_REGISTRY is hardcoded in run-in-k8.sh
+DOCKER_REGISTRY=
+DOCKER_REGISTRY_PASSWORD=
+DOCKER_REGISTRY_USER=
+KUBECTL_CONTEXT=
+KUBECTL_NAMESPACE=binance-tool
+```
+
+Run `./publish.sh` to buid and push the image to the docker registry.
+
+---
+
 # Binance Trading Tool
 
-A command line tool for managing trades on [Binance](https://www.binance.com/?ref=12598108). 
+A command line tool for managing trades on [Binance](https://www.binance.com/?ref=12598108).
 
 The tool is designed to allow enforcement of trading rules, such as maximum portfolio risk per trade, and facilitate having multiple potential trades open at the same time. With the use of `--soft-entry` multiple potential trades can be open simultaneously and capital is only committed in the order book when the entry price on the trade looks likely to hit.
 
@@ -14,9 +43,8 @@ Note: many of these features have caveats, you are responsible for reading the c
 1. "Soft entry" (`--soft-entry`) on limit buys. The buy order is only placed in the order book when the limit buy price approaches. This allows you to have multiple open trades and only commit funds to them when the entry price gets close.
 1. OCO (Order-Cancels-Order) orders: having both a stop and a target exit price for your trade. The tool will remain open and monitor the price the pair is trading at. The stop order will sit in the books until either it gets filled or the price hits the target price. When the target price is hit the stop order is cancelled and a limit sell at the target price replaces it in the books. Note the code may not yet handle partial fills.
 1. Notifications via Telegram when limit prices are hit/filled.
-1. Support for `--auto-size` and trading rules. Risk management is a key component of good trading. The tool contains a `PositionSizer` that will size trades according to the total size of your portfolio and your defined maximum risk per trade. The percentage loss that would incurred on the trade (if the stop loss is hit) is used to limit the percentage of your portfolio that can be allocated to a given trade. 
+1. Support for `--auto-size` and trading rules. Risk management is a key component of good trading. The tool contains a `PositionSizer` that will size trades according to the total size of your portfolio and your defined maximum risk per trade. The percentage loss that would incurred on the trade (if the stop loss is hit) is used to limit the percentage of your portfolio that can be allocated to a given trade.
 1. Specifying buy order sizes in the [quote currency](https://news.tradimo.com/glossary/quote-currency/). Binance only accepts [base](https://news.tradimo.com/glossary/base-currency/) amounts - i.e. if you want to buy the BNBUSDT pair you need to specify the amount of BNB to buy. This is equivalent to using `-a` with this tool. However, specifying the order size in the quote currency is also supported: `node binance -p BNBUSDT -q 100 -b 34` would calculate an order to buy 100 USDT worth of BNB at a price of 34. Market buys are also supported (though have received less testing) by passing just `-b` without a price.
-
 
 ## Installation
 
@@ -66,6 +94,7 @@ Missing required argument: pair
 Create a file called `.env` in the checked out folder.
 
 Add your [Binance API key](https://support.binance.com/hc/en-us/articles/360002502072-How-to-create-API) in the following format. Replace `BINANCE_API_KEY` with your API key and `BINANCE_API_SECRET` with your API secret.
+
 <pre>
 APIKEY=<b>BINANCE_API_KEY</b>
 APISECRET=<b>BINANCE_API_SECRET</b>
@@ -79,7 +108,7 @@ Using this tool without Telegram set up has not been tested.
 
 This is alpha / beta quality code and the most up to date documentation for what works and what doesn't is the output of the tests:
 
-Run `yarn test` to see the current functionality. 
+Run `yarn test` to see the current functionality.
 
 ```
 $ yarn test

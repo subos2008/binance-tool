@@ -12,7 +12,7 @@ spec:
       containers:
       - name: {{container_name}}
         image: {{docker_image}}
-        command: ["node",  "service.js", "--trade-id", "{{trade_id}}"]
+        command: ["node",  "service.js", "--trade-id", "{{trade_id}}", "--live"]
         env:
         - name: TELEGRAM_KEY
           valueFrom:
@@ -34,3 +34,13 @@ spec:
             secretKeyRef:
               key: REDIS_PASSWORD
               name: redis
+        - name: APIKEY
+          valueFrom:
+            secretKeyRef:
+              key: APIKEY
+              name: binance
+        - name: APISECRET
+          valueFrom:
+            secretKeyRef:
+              key: APISECRET
+              name: binance

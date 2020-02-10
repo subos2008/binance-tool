@@ -48,8 +48,11 @@ let { "trade-id": trade_id, live } = argv;
 var algo;
 
 async function main() {
+  var stringToBool = myValue => myValue === 'true';
   const redis_key = `trades:${trade_id}:trade_definition`;
   const trade_definition = await hgetallAsync(redis_key);
+  trade_definition.auto_size = stringToBool(trade_definition.auto_size)
+  trade_definition.soft_entry = stringToBool(trade_definition.soft_entry)
   client.quit();
   console.log(`From redis:`);
   console.log(trade_definition);

@@ -9,7 +9,10 @@ require("dotenv").config();
 // TODO: - in the original implementations
 
 const redis = require("redis");
-const client = redis.createClient();
+const client = redis.createClient({
+  host: process.env.REDIS_HOST,
+  password: process.env.REDIS_PASSWORD
+});
 const { promisify } = require("util");
 const hgetallAsync = promisify(client.hgetall).bind(client);
 const Binance = require("binance-api-node").default;
@@ -24,7 +27,7 @@ const logger = new Logger({ silent: false });
 // TODO: load from shared yaml file with binance.js
 // eg: const vars = YAML.parse(fs.readFileSync(process.env.VARS_INPUT_FILENAME, 'utf8'));
 // with: const YAML = require('yaml');
-console.log('Warning trading rules hardcoded twice')
+console.log("Warning trading rules hardcoded twice");
 const trading_rules = new TradingRules({
   max_allowed_portfolio_loss_percentage_per_trade: BigNumber("1"),
   allowed_to_trade_without_stop: true

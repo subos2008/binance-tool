@@ -1,7 +1,16 @@
+#!/usr/bin/env node
 // Adds a trade definition to redis for the executor to execute
 
+// Configuration
+const dotenv = require("dotenv");
+dotenv.config({ path: "./.env" });
+// End Config
+
 const redis = require("redis");
-const client = redis.createClient();
+const client = redis.createClient({
+  host: process.env.REDIS_HOST,
+  password: process.env.REDIS_PASSWORD
+});
 
 const { promisify } = require("util");
 const incrAsync = promisify(client.incr).bind(client);

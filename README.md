@@ -25,6 +25,10 @@ KUBECTL_NAMESPACE=binance-tool
 
 Run `./publish.sh` to buid and push the image to the docker registry.
 
+`create-trade.js` has the same cli as the old `binance-tool` but also add `--launch`. It will create a trade in redis then launch a Job to run the trade.
+
+**Note**: the Job launched into k8 currently doesn't have `--live` in the template so will just exit pretty much immediately.
+
 ---
 
 # Binance Trading Tool

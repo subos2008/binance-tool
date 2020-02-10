@@ -1,8 +1,8 @@
 #!/bin/bash
 
-set -xe 
-
 source .env
+
+set -xe 
 
 # $(aws ecr get-login --no-include-email --region eu-central-1)
 docker login docker.pkg.github.com -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD

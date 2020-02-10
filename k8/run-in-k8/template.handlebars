@@ -24,3 +24,13 @@ spec:
             secretKeyRef:
               key: TELEGRAM_CHAT_ID
               name: telegram
+        - name: REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              key: REDIS_HOST
+              name: redis
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: REDIS_PASSWORD
+              name: redis

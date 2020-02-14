@@ -13,7 +13,10 @@ function fall_over(string) {
 const fs = require("fs");
 const Handlebars = require("handlebars");
 
-const template_string = fs.readFileSync("template.handlebars", "utf8");
+const template_string = fs.readFileSync(
+  `${__dirname}/template.handlebars`,
+  "utf8"
+);
 const template = Handlebars.compile(template_string);
 
 const YAML = require("yaml");

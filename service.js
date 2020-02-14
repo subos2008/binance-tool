@@ -15,6 +15,7 @@ const client = redis.createClient({
 });
 const { promisify } = require("util");
 const hgetallAsync = promisify(client.hgetall).bind(client);
+const getAsync = promisify(client.get).bind(client);
 const Binance = require("binance-api-node").default;
 const send_message = require("./lib/telegram.js");
 const Algo = require("./service_lib/algo");
@@ -48,11 +49,24 @@ let { "trade-id": trade_id, live } = argv;
 var algo;
 
 async function main() {
-  var stringToBool = myValue => myValue === 'true';
-  const redis_key = `trades:${trade_id}:trade_definition`;
-  const trade_definition = await hgetallAsync(redis_key);
-  trade_definition.auto_size = stringToBool(trade_definition.auto_size)
-  trade_definition.soft_entry = stringToBool(trade_definition.soft_entry)
+  var stringToBool = myValue => myValue === "true";
+  const trade_definition = await hgetallAsync(
+    `trades:${trade_id}:trade_definition`
+  );
+
+  const trade_completed = stringToBool(
+    await getAsync(`trades:${trade_id}:completed`)
+  );
+
+  console.log(`trade_completed=${trade_completed}`);
+
+  if (trade_completed) {
+    console.log(`ERROR: trade is already marked as completed`);
+    process.exit(1);
+  }
+
+  trade_definition.auto_size = stringToBool(trade_definition.auto_size);
+  trade_definition.soft_entry = stringToBool(trade_definition.soft_entry);
   client.quit();
   console.log(`From redis:`);
   console.log(trade_definition);

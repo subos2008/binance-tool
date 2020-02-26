@@ -74,8 +74,11 @@ const { argv } = require("yargs")
     "auto-size",
     "Automatically size the trade based on stopLoss % and available funds"
   )
-  .default("auto-size", true);
-
+  .default("auto-size", true)
+  // '--launch'
+  .boolean("launch")
+  .describe("launch", "Launch kubectl task to execute trade")
+  .default("launch", true);
 let {
   p: pair,
   a: base_amount,
@@ -85,7 +88,8 @@ let {
   l: sell_stop_limit_price,
   t: target_price,
   "soft-entry": soft_entry,
-  "auto-size": auto_size
+  "auto-size": auto_size,
+  launch
 } = argv;
 
 if (buy_price === "") {
@@ -125,7 +129,14 @@ async function main() {
     const redis_key = `${prefix}:trade_definition`;
     console.log(trade_definition);
     await hmsetAsync(redis_key, trade_definition_as_list);
-    console.log(`Trade created, note you still need to launch an executor.`);
+    if (launch) {
+      const launch = require("./k8/run-in-k8/launch");
+      process.env.TRADE_ID = trade_id;
+      launch();
+    } else {
+      console.log(`Trade created, note you still need to launch an executor.`);
+    }
+
     console.log(`Redis key: ${redis_key}`);
   } catch (e) {
     console.error(`Exception:`);

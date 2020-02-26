@@ -45,7 +45,7 @@ var { argv } = require("yargs")
   .boolean("live")
   .describe("live", "Trade with real money")
   .default("live", false);
-let { "trade-id": trade_id, live } = argv;
+let { "trade-id": trade_id, live, launch } = argv;
 var algo;
 
 async function main() {

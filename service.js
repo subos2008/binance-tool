@@ -61,8 +61,8 @@ async function main() {
   console.log(`trade_completed=${trade_completed}`);
 
   if (trade_completed) {
-    console.log(`ERROR: trade is already marked as completed`);
-    process.exit(1);
+    console.log(`WARNING: trade is already marked as completed`);
+    process.exit(0);
   }
 
   trade_definition.auto_size = stringToBool(trade_definition.auto_size);

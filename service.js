@@ -8,14 +8,13 @@ require("dotenv").config();
 // TODO: add watchdog on trades stream - it can stop responding without realising
 // TODO: - in the original implementations
 
-const redis = require("redis");
-const client = redis.createClient({
+const redis = require("redis").createredis({
   host: process.env.REDIS_HOST,
   password: process.env.REDIS_PASSWORD
 });
 const { promisify } = require("util");
-const hgetallAsync = promisify(client.hgetall).bind(client);
-const getAsync = promisify(client.get).bind(client);
+const hgetallAsync = promisify(redis.hgetall).bind(redis);
+const getAsync = promisify(redis.get).bind(redis);
 const Binance = require("binance-api-node").default;
 const send_message = require("./lib/telegram.js");
 const Algo = require("./service_lib/algo");
@@ -67,7 +66,7 @@ async function main() {
 
   trade_definition.auto_size = stringToBool(trade_definition.auto_size);
   trade_definition.soft_entry = stringToBool(trade_definition.soft_entry);
-  client.quit();
+  redis.quit();
   console.log(`From redis:`);
   console.log(trade_definition);
   if (trade_definition === null) {
@@ -122,6 +121,8 @@ async function main() {
     ee,
     send_message,
     logger,
+    redis,
+    trade_id,
     pair,
     base_amount,
     max_quote_amount_to_buy,

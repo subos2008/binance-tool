@@ -10,7 +10,6 @@ trades using a remote cluster.
 
 - exit on unhandled promise errors
 - don't exit non-zero when stopping out, this causes the job to restart
-- set trades:\$id:completed when stopped out
 - create a cli tool to list trades
 - log with timestamps
 - log in json

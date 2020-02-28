@@ -105,7 +105,8 @@ const trade_definition = {
   sell_stop_limit_price,
   target_price,
   soft_entry,
-  auto_size
+  auto_size,
+  timestamp: Date.now()
 };
 
 async function main() {

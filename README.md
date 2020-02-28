@@ -7,18 +7,18 @@ and retrieve and execute that trade. This can thus be used for executing
 trades using a remote cluster.
 
 # TODO
-* add timestamp to trade
-* don't exit non-zero when stopping out, this causes the job to restart
-* set trades:$id:completed when stopped out
-* create a cli tool to list trades
-* log with timestamps
-* log in json
-* log to a log collector
-* know when it has already bought or created buy/sell orders: 
-  * trades:$id:position
-  * trades:$id:open_orders
-* make restartable and remove backoffLimit
-* fix bug - doesn't exit:
+
+- don't exit non-zero when stopping out, this causes the job to restart
+- set trades:\$id:completed when stopped out
+- create a cli tool to list trades
+- log with timestamps
+- log in json
+- log to a log collector
+- know when it has already bought or created buy/sell orders:
+  - trades:\$id:position
+  - trades:\$id:open_orders
+- make restartable and remove backoffLimit
+- fix bug - doesn't exit:
 
 ```
 Available to invest: 0.01178127 USDT
@@ -33,7 +33,6 @@ Sized trade at 0.01178127 USDT, 0.00064577 BNB
 (node:1) UnhandledPromiseRejectionWarning: Unhandled promise rejection. This error originated either by throwing inside of an async function without a catch block, or by rejecting a promise which was not handled with .catch(). (rejection id: 1)
 (node:1) [DEP0018] DeprecationWarning: Unhandled promise rejections are deprecated. In the future, promise rejections that are not handled will terminate the Node.js process with a non-zero exit code.
 ```
-
 
 ### Kubernetes Workflow
 

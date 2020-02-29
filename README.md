@@ -9,8 +9,8 @@ trades using a remote cluster.
 # TODO
 
 - exit on unhandled promise errors
-- don't exit non-zero when stopping out, this causes the job to restart
 - create a cli tool to list trades
+- remove AsyncErrorWrapper
 - log with timestamps
 - log in json
 - log to a log collector
@@ -18,7 +18,8 @@ trades using a remote cluster.
   - trades:\$id:position
   - trades:\$id:open_orders
 - make restartable and remove backoffLimit
-- fix bug - doesn't exit:
+- integrate with https://sentry.io
+- not all awaits are wrapped in try/catch: fix bug - doesn't exit:
 
 ```
 Available to invest: 0.01178127 USDT

@@ -25,6 +25,10 @@ const TradeState = require("../classes/redis_trade_state");
 
 const logger = new Logger({ silent: false });
 
+process.on("unhandledRejection", up => {
+  throw up;
+});
+
 // TODO: load from shared yaml file with binance.js
 // eg: const vars = YAML.parse(fs.readFileSync(process.env.VARS_INPUT_FILENAME, 'utf8'));
 // with: const YAML = require('yaml');

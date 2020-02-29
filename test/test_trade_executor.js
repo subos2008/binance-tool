@@ -186,8 +186,7 @@ describe("TradeExecutor", function() {
         let { ee, algo } = setup({
           algo_config: {
             base_amount_to_buy,
-            buy_price: limit_price,
-            logger
+            buy_price: limit_price
           }
         });
         try {

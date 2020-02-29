@@ -35,6 +35,22 @@ Sized trade at 0.01178127 USDT, 0.00064577 BNB
 (node:1) [DEP0018] DeprecationWarning: Unhandled promise rejections are deprecated. In the future, promise rejections that are not handled will terminate the Node.js process with a non-zero exit code.
 ```
 
+class FillOrDrainPosition
+
+- has a stop level on fill because we ... no when buying there is no stop.. states? : states: filling, draining at target, draining at stop
+- this.ee.ws.user moves into this class
+- position sizing can then move into this class
+- what about states prepped for target/stop draining
+- draining cancelled is a state perhaps
+
+I think what we need to do is have current_position in redis and a state or filling or draining. draining would probably have to distinguish target or stop. test cases for hitting stop while filling.
+
+Could introduce a trade monitior stop that sets the state based on the pice action. It sets the state. The state is executed by the FillOrDrainPosition class. Flip: the draining is signalled a bit before so the orders are in the books earlier.
+
+A TradeDefinition class could lift some printfs with a toString. Maybe print_percentages_for_user could also move into that.
+
+\_munge_amount_and_check_notionals can move to the AlgoUtils class
+
 ### Kubernetes Workflow
 
 create a `.env` file:

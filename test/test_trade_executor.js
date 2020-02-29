@@ -196,10 +196,7 @@ describe("TradeExecutor", function() {
           console.log(e);
           expect.fail("should not get here: expected call not to throw");
         }
-        const buyOrderId = await algo.trade_state.get_buyOrderId();
-        console.log(`buyOrderId is ${buyOrderId}`);
-        expect(buyOrderId).to.equal(1);
-        // expect(await algo.trade_state.get_buyOrderId()).to.equal(1);
+        expect(await algo.trade_state.get_buyOrderId()).to.equal(1);
         expect(ee.open_orders).to.have.lengthOf(1);
         expect(ee.open_orders[0].type).to.equal("LIMIT");
         expect(ee.open_orders[0].side).to.equal("BUY");
@@ -343,7 +340,7 @@ describe("TradeExecutor", function() {
           expect.fail("should not get here: expected call not to throw");
         }
         expect(await algo.trade_state.get_buyOrderId()).to.be.undefined;
-        expect(algo.stopOrderId).to.equal(2);
+        expect(await algo.trade_state.get_stopOrderId()).to.equal(2);
         expect(ee.open_orders).to.have.lengthOf(1);
         expect(ee.open_orders[0].type).to.equal("STOP_LOSS_LIMIT");
         expect(ee.open_orders[0].side).to.equal("SELL");
@@ -411,7 +408,7 @@ describe("TradeExecutor", function() {
           console.log(e);
           expect.fail("should not get here: expected call not to throw");
         }
-        expect(algo.targetOrderId).to.equal(2);
+        expect(await algo.trade_state.get_targetOrderId()).to.equal(2);
         expect(ee.open_orders).to.have.lengthOf(1);
         expect(ee.open_orders[0].type).to.equal("LIMIT");
         expect(ee.open_orders[0].side).to.equal("SELL");
@@ -462,7 +459,7 @@ describe("TradeExecutor", function() {
           console.log(e);
           expect.fail("should not get here: expected call not to throw");
         }
-        expect(algo.stopOrderId).to.equal(1);
+        expect(await algo.trade_state.get_stopOrderId()).to.equal(1);
         expect(ee.open_orders).to.have.lengthOf(1);
         expect(ee.open_orders[0].type).to.equal("STOP_LOSS_LIMIT");
         expect(ee.open_orders[0].side).to.equal("SELL");
@@ -499,7 +496,7 @@ describe("TradeExecutor", function() {
           console.log(e);
           expect.fail("should not get here: expected call not to throw");
         }
-        expect(algo.targetOrderId).to.equal(1);
+        expect(await algo.trade_state.get_targetOrderId()).to.equal(1);
         expect(ee.open_orders).to.have.lengthOf(1);
         expect(ee.open_orders[0].type).to.equal("LIMIT");
         expect(ee.open_orders[0].side).to.equal("SELL");
@@ -615,7 +612,7 @@ describe("TradeExecutor", function() {
             expect.fail("should not get here: expected call not to throw");
           }
           let limit_price = stop_price.times(default_stop_limt_price_factor);
-          expect(algo.stopOrderId).to.equal(2);
+          expect(await algo.trade_state.get_stopOrderId()).to.equal(2);
           expect(ee.open_orders).to.have.lengthOf(1);
           expect(ee.open_orders[0].type).to.equal("STOP_LOSS_LIMIT");
           expect(ee.open_orders[0].side).to.equal("SELL");
@@ -690,8 +687,8 @@ describe("TradeExecutor", function() {
             console.log(e);
             expect.fail("should not get here: expected call not to throw");
           }
-          expect(algo.stoptOrderId).to.be.undefined;
-          expect(algo.targetOrderId).to.equal(3);
+          expect(await algo.trade_state.get_stopOrderId()).to.be.undefined;
+          expect(await algo.trade_state.get_targetOrderId()).to.equal(3);
           expect(ee.open_orders).to.have.lengthOf(1);
           expect(ee.open_orders[0].type).to.equal("LIMIT");
           expect(ee.open_orders[0].side).to.equal("SELL");
@@ -800,7 +797,7 @@ describe("TradeExecutor", function() {
             console.log(e);
             expect.fail("should not get here: expected call not to throw");
           }
-          expect(algo.stopOrderId).to.equal(2);
+          expect(await algo.trade_state.get_stopOrderId()).to.equal(2);
           expect(ee.open_orders).to.have.lengthOf(1);
           expect(ee.open_orders[0].type).to.equal("STOP_LOSS_LIMIT");
           expect(ee.open_orders[0].side).to.equal("SELL");
@@ -883,7 +880,7 @@ describe("TradeExecutor", function() {
             console.log(e);
             expect.fail("should not get here: expected call not to throw");
           }
-          expect(algo.targetOrderId).to.equal(3);
+          expect(await algo.trade_state.get_targetOrderId()).to.equal(3);
           expect(ee.open_orders).to.have.lengthOf(1);
           expect(ee.open_orders[0].type).to.equal("LIMIT");
           expect(ee.open_orders[0].side).to.equal("SELL");

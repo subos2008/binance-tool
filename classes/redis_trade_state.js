@@ -5,6 +5,10 @@ function name_to_key(name) {
   switch (name) {
     case "buyOrderId":
       return `trades:${this.trade_id}:open_orders:buyOrderId`;
+    case "stopOrderId":
+      return `trades:${this.trade_id}:open_orders:stopOrderId`;
+    case "targetOrderId":
+      return `trades:${this.trade_id}:open_orders:targetOrderId`;
     default:
       throw new Error(`Unknown key name`);
   }
@@ -24,25 +28,53 @@ class TradeState {
     this.delAsync = promisify(this.redis.del).bind(this.redis);
   }
 
-  async set_buyOrderId(buyOrderId) {
-    if (buyOrderId == 0) {
-      throw new Error(`orderId of zero not supported`);
+  async set_or_delete_key(key, value) {
+    if (value == 0) {
+      // we use !value in logic to detect null
+      throw new Error(`value of zero not supported`);
     }
-    const key = name_to_key("buyOrderId");
-    this.logger.info(`Setting ${key} to ${buyOrderId}`);
-    if (buyOrderId === undefined) {
-      // TODO: remove this await
-      return await this.delAsync(key);
+    this.logger.info(`Setting ${key} to ${value}`);
+    if (value === undefined) {
+      return this.delAsync(key);
     }
-    // TODO: change to only set if not defined, throw otherwise
-    // TODO: remove this await
-    await this.set_redis_key(key, buyOrderId);
-    console.log(await this.get_redis_key(key));
-    return;
+    // TODO: change to only set if not defined, throw otherwise - to prevent concurrent runs interacting
+    return this.set_redis_key(key, value);
+  }
+
+  async set_buyOrderId(value) {
+    return this.set_or_delete_key(name_to_key("buyOrderId"), value);
+  }
+
+  async set_stopOrderId(value) {
+    return this.set_or_delete_key(name_to_key("stopOrderId"), value);
+  }
+
+  async set_targetOrderId(value) {
+    return this.set_or_delete_key(name_to_key("targetOrderId"), value);
   }
 
   async get_buyOrderId() {
     const key = name_to_key("buyOrderId");
+    const value = await this.get_redis_key(key);
+    this.logger.info(`${key} has value ${value}`);
+    if (!value) {
+      return undefined; // convert null to undefined
+    }
+    return Number(value);
+  }
+
+  async get_stopOrderId() {
+    const key = name_to_key("stopOrderId");
+    const value = await this.get_redis_key(key);
+    this.logger.info(`${key} has value ${value}`);
+    if (!value) {
+      return undefined; // convert null to undefined
+    }
+    return Number(value);
+  }
+
+  async get_targetOrderId() {
+    const key = name_to_key("targetOrderId");
     const value = await this.get_redis_key(key);
     this.logger.info(`${key} has value ${value}`);
     if (!value) {

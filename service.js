@@ -26,6 +26,7 @@ const TradeState = require("../classes/redis_trade_state");
 const logger = new Logger({ silent: false });
 
 process.on("unhandledRejection", up => {
+  send_message(`UnhandledPromiseRejection: ${up}`);
   throw up;
 });
 

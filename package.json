@@ -1,25 +1,27 @@
 {
-	"license": "UNLICENSED",
-	"main": "binance.js",
-	"bin": "binance.js",
-	"scripts": {
-		"test": "./node_modules/.bin/mocha --forbid-only"
-	},
-	"dependencies": {
-		"bignumber.js": "^8.1.1",
-		"binance-api-node": "^0.9.0",
-		"dotenv": "^6.0.0",
-		"flow-maintained": "^0.2.4",
-		"node-fetch": "^2.3.0",
-		"redis": "^2.8.0",
-		"yargs": "^11.0.0"
-	},
-	"devDependencies": {
-		"chai": "^4.2.0",
-		"chai-bignumber": "^3.0.0",
-		"eslint": "^4.19.1",
-		"eslint-config-airbnb-base": "^13.0.0",
-		"eslint-plugin-import": "^2.17.0",
-		"mocha": "^6.1.4"
-	}
+  "license": "UNLICENSED",
+  "main": "service.js",
+  "bin": "create-trade.js",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --forbid-only",
+    "test-only": "./node_modules/.bin/mocha"
+  },
+  "dependencies": {
+    "bignumber.js": "^8.1.1",
+    "binance-api-node": "^0.9.0",
+    "dotenv": "^6.0.0",
+    "flow-maintained": "^0.2.4",
+    "node-fetch": "^2.3.0",
+    "redis": "^2.8.0",
+    "yargs": "^11.0.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-bignumber": "^3.0.0",
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb-base": "^13.0.0",
+    "eslint-plugin-import": "^2.17.0",
+    "mocha": "^6.1.4",
+    "redis-mock": "^0.49.0"
+  }
 }

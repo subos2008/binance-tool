@@ -1447,6 +1447,11 @@ redis-commands@^1.2.0:
   resolved "https://registry.yarnpkg.com/redis-commands/-/redis-commands-1.5.0.tgz#80d2e20698fe688f227127ff9e5164a7dd17e785"
   integrity sha512-6KxamqpZ468MeQC3bkWmCB1fp56XL64D4Kf0zJSwDZbVLLm7KFkoIcHrgRvQ+sk8dnhySs7+yBg94yIkAK7aJg==
 
+redis-mock@^0.49.0:
+  version "0.49.0"
+  resolved "https://registry.yarnpkg.com/redis-mock/-/redis-mock-0.49.0.tgz#744c38dde3caae4c9ca70e2a674c4bb30eb607ca"
+  integrity sha512-FW/cLZvF1PAVN/PYIwXf1vQRoJCyYCwUMtq8BXRwrvb9LNNAT4RKXM02Qlt6qSkC/98hmHlU2EGoQoxVy3E2lA==
+
 redis-parser@^2.6.0:
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/redis-parser/-/redis-parser-2.6.0.tgz#52ed09dacac108f1a631c07e9b69941e7a19504b"

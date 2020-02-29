@@ -8,7 +8,7 @@ require("dotenv").config();
 // TODO: add watchdog on trades stream - it can stop responding without realising
 // TODO: - in the original implementations
 
-const redis = require("redis").createredis({
+const redis = require("redis").createClient({
   host: process.env.REDIS_HOST,
   password: process.env.REDIS_PASSWORD
 });
@@ -21,6 +21,7 @@ const Algo = require("./service_lib/algo");
 const Logger = require("./lib/faux_logger");
 const BigNumber = require("bignumber.js");
 const TradingRules = require("./lib/trading_rules");
+const TradeState = require("../classes/redis_trade_state");
 
 const logger = new Logger({ silent: false });
 
@@ -60,7 +61,7 @@ async function main() {
   console.log(`trade_completed=${trade_completed}`);
 
   if (trade_completed) {
-    console.log(`WARNING: trade is already marked as completed`);
+    console.log(`WARNING: trade ${trade_id} is already marked as completed`);
     process.exit(0);
   }
 
@@ -117,12 +118,14 @@ async function main() {
     ee = new ExchangeEmulator(ee_config);
   }
 
+  const trade_state = new TradeState({ logger, redis, trade_id });
+
   algo = new Algo({
     ee,
     send_message,
     logger,
-    redis,
     trade_id,
+    trade_state, // dependency injection for persistent state
     pair,
     base_amount,
     max_quote_amount_to_buy,

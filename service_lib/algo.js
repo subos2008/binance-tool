@@ -16,23 +16,11 @@ class Algo {
   constructor(args = {}) {
     // Map command line args to original TradeExecutor arguments
     let {
-      ee, // binance-api-node API
       send_message,
       logger,
-      redis,
-      trade_id,
-      pair,
+      trade_state,
       base_amount, // can be either the amount to buy or sell depending on other args
-      max_quote_amount_to_buy,
-      buy_price,
-      stop_price,
-      limit_price,
-      target_price,
-      nonBnbFees,
-      soft_entry,
-      trading_rules,
-      auto_size,
-      percentages
+      buy_price
     } = args;
 
     let te_args = args;
@@ -42,10 +30,8 @@ class Algo {
     assert(send_message);
     this.send_message = send_message;
 
-    assert(redis);
-    this.redis = redis;
-    assert(trade_id);
-    this.trade_id = trade_id;
+    assert(trade_state);
+    this.trade_state = trade_state;
 
     this.logger.warn(`WARNING -a is UNTESTED in this CODE`);
 

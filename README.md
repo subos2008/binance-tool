@@ -8,15 +8,12 @@ trades using a remote cluster.
 
 # TODO
 
-- exit on unhandled promise errors
-- create a cli tool to list trades
+- in-trades.js to know if there is a position on a trade trades:\$id:position
 - remove AsyncErrorWrapper
 - log with timestamps
 - log in json
 - log to a log collector
 - know when it has already bought or created buy/sell orders:
-  - trades:\$id:position
-  - trades:\$id:open_orders
 - make restartable and remove backoffLimit
 - integrate with https://sentry.io
 - not all awaits are wrapped in try/catch: fix bug - doesn't exit:
@@ -35,7 +32,16 @@ Sized trade at 0.01178127 USDT, 0.00064577 BNB
 (node:1) [DEP0018] DeprecationWarning: Unhandled promise rejections are deprecated. In the future, promise rejections that are not handled will terminate the Node.js process with a non-zero exit code.
 ```
 
-class FillOrDrainPosition
+= states
+
+1. waiting for approx buy price
+1. close to entry, add buyOrder
+1. filling with stop awareness
+1. filled, with stop trade in books
+1. close to target, with target sell in the books
+1. invalidated by getting close to exit with no fills
+
+= class FillOrDrainPosition
 
 - has a stop level on fill because we ... no when buying there is no stop.. states? : states: filling, draining at target, draining at stop
 - this.ee.ws.user moves into this class
@@ -48,6 +54,8 @@ I think what we need to do is have current_position in redis and a state or fill
 Could introduce a trade monitior stop that sets the state based on the pice action. It sets the state. The state is executed by the FillOrDrainPosition class. Flip: the draining is signalled a bit before so the orders are in the books earlier.
 
 A TradeDefinition class could lift some printfs with a toString. Maybe print_percentages_for_user could also move into that.
+
+Test migration could look like migration towards setting trade states in the tests. First in addition to setting orders and then splitting to cheking seting states in the monitor and then reacting to states in the FillOrDrainPosition reaction.
 
 \_munge_amount_and_check_notionals can move to the AlgoUtils class
 

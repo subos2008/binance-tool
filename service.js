@@ -21,7 +21,7 @@ const Algo = require("./service_lib/algo");
 const Logger = require("./lib/faux_logger");
 const BigNumber = require("bignumber.js");
 const TradingRules = require("./lib/trading_rules");
-const TradeState = require("../classes/redis_trade_state");
+const TradeState = require("./classes/redis_trade_state");
 
 const logger = new Logger({ silent: false });
 

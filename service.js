@@ -55,7 +55,7 @@ var algo;
 
 async function main() {
   var stringToBool = myValue => myValue === "true";
-  const trade_definition = await hgetallAsync(
+  const redis_trade_definition = await hgetallAsync(
     `trades:${trade_id}:trade_definition`
   );
 
@@ -69,12 +69,11 @@ async function main() {
     console.log(`WARNING: trade ${trade_id} is already marked as completed`);
     process.exit(0);
   }
-
-  trade_definition.auto_size = stringToBool(trade_definition.auto_size);
-  trade_definition.soft_entry = stringToBool(trade_definition.soft_entry);
   redis.quit();
+
   console.log(`From redis:`);
-  console.log(trade_definition);
+  console.log(redis_trade_definition);
+
   if (trade_definition === null) {
     logger.error(`Got null from Redis. Trade ${trade_id} likely doesn't exist`);
     soft_exit(1);
@@ -94,9 +93,7 @@ async function main() {
     auto_size
   } = trade_definition;
 
-  if (buy_price === "") {
-    buy_price = "0";
-  }
+  const trade_definition = new TradeDefinition(redis_trade_definition);
 
   var ee;
   if (live) {
@@ -131,17 +128,18 @@ async function main() {
     logger,
     trade_id,
     trade_state, // dependency injection for persistent state
-    pair,
-    base_amount,
-    max_quote_amount_to_buy,
-    buy_price,
-    stop_price,
-    limit_price,
-    target_price,
-    nonBnbFees,
-    soft_entry,
-    trading_rules,
-    auto_size
+    trade_definition,
+    // pair,
+    // base_amount,
+    // max_quote_amount_to_buy,
+    // buy_price,
+    // stop_price,
+    // limit_price,
+    // target_price,
+    // nonBnbFees,
+    // soft_entry,
+    // auto_size
+    trading_rules
   });
 
   const execSync = require("child_process").execSync;

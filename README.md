@@ -9,6 +9,7 @@ trades using a remote cluster.
 # TODO
 
 - in-trades.js to know if there is a position on a trade trades:\$id:position
+- trade_definition that checks validity and makes everything BigNumber
 - remove AsyncErrorWrapper
 - log with timestamps
 - log in json
@@ -16,6 +17,7 @@ trades using a remote cluster.
 - know when it has already bought or created buy/sell orders:
 - make restartable and remove backoffLimit
 - integrate with https://sentry.io
+- base_amount_held -> setup position. so tests convert -a to checking pre-existing postion
 - not all awaits are wrapped in try/catch: fix bug - doesn't exit:
 
 ```
@@ -40,6 +42,15 @@ Sized trade at 0.01178127 USDT, 0.00064577 BNB
 1. filled, with stop trade in books
 1. close to target, with target sell in the books
 1. invalidated by getting close to exit with no fills
+1. completed. defined by FillOrDrainPosition being complete in an end state.
+
+= position states
+
+1. filling
+1. filled as much as possible
+1. filled as much as possible, which was zero
+1. draining at target
+1. draining at stop (note can drain at target for a while then remainder at stop)
 
 = class FillOrDrainPosition
 

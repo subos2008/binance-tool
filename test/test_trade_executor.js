@@ -6,6 +6,7 @@ const expect = chai.expect;
 const BigNumber = require("bignumber.js");
 
 const ExchangeEmulator = require("../lib/exchange_emulator");
+const TradeDefinition = require("../classes/trade_definition");
 const Logger = require("../lib/faux_logger");
 const {
   NotImplementedError,
@@ -133,6 +134,7 @@ describe("TradeExecutor", function() {
           algo_config.max_quote_amount_to_buy
         );
     }
+    algo_config.trade_definition = new TradeDefinition(algo_config);
     let algo = new TradeExecutor(algo_config);
     return { algo, ee };
   }
@@ -212,14 +214,15 @@ describe("TradeExecutor", function() {
         "Creates a buy order when the price is within a percentage of the buy price"
       );
       describe("when base_amount_to_buy is supplied", function() {
-        it("only creates a buy order when entry price is hit", async function() {
+        it.only("only creates a buy order when entry price is hit", async function() {
           const base_amount_to_buy = BigNumber(1);
           const buy_price = BigNumber(1);
           let { ee, algo } = setup({
             algo_config: {
               base_amount_to_buy,
               buy_price,
-              soft_entry: true
+              soft_entry: true,
+              logger
             }
           });
           try {

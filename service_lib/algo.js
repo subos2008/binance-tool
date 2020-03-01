@@ -15,30 +15,22 @@ class Algo {
   // All numbers are expected to be passed in as strings
   constructor(args = {}) {
     // Map command line args to original TradeExecutor arguments
-    let {
-      send_message,
-      logger,
-      trade_state,
-      base_amount, // can be either the amount to buy or sell depending on other args
-      buy_price
-    } = args;
+    let { send_message, logger, trade_state, trade_definition } = args;
 
     let te_args = args;
 
     assert(logger);
     this.logger = logger;
     assert(send_message);
-    this.send_message = send_message;
-
+    assert(trade_definition);
     assert(trade_state);
-    this.trade_state = trade_state;
 
-    this.logger.warn(`WARNING -a is UNTESTED in this CODE`);
-
-    if (buy_price) {
-      if (base_amount) te_args.base_amount_to_buy = BigNumber(base_amount);
+    if (trade_definition.buy_price) {
+      if (trade_definition.base_amount)
+        te_args.base_amount_to_buy = BigNumber(trade_definition.base_amount);
     } else {
-      if (base_amount) te_args.base_amount_held = BigNumber(base_amount);
+      if (trade_definition.base_amount)
+        te_args.base_amount_held = BigNumber(trade_definition.base_amount);
     }
     delete te_args.base_amount;
 

@@ -29,7 +29,7 @@ class TradeDefinition {
 
     assert(pair);
 
-    var stringToBool = myValue => myValue === "true";
+    var stringToBool = myValue => myValue === "true" || myValue === true;
     auto_size = stringToBool(auto_size);
     soft_entry = stringToBool(soft_entry);
 

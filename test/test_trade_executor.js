@@ -214,7 +214,7 @@ describe("TradeExecutor", function() {
         "Creates a buy order when the price is within a percentage of the buy price"
       );
       describe("when base_amount_to_buy is supplied", function() {
-        it.only("only creates a buy order when entry price is hit", async function() {
+        it("only creates a buy order when entry price is hit", async function() {
           const base_amount_to_buy = BigNumber(1);
           const buy_price = BigNumber(1);
           let { ee, algo } = setup({

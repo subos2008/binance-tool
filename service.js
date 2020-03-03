@@ -17,7 +17,7 @@ const hgetallAsync = promisify(redis.hgetall).bind(redis);
 const getAsync = promisify(redis.get).bind(redis);
 const Binance = require("binance-api-node").default;
 const send_message = require("./lib/telegram.js");
-const Algo = require("./service_lib/algo");
+const TradeExecutor = require("./service_lib/trade_executor");
 const Logger = require("./lib/faux_logger");
 const BigNumber = require("bignumber.js");
 const TradingRules = require("./lib/trading_rules");
@@ -51,7 +51,7 @@ var { argv } = require("yargs")
   .describe("live", "Trade with real money")
   .default("live", false);
 let { "trade-id": trade_id, live, launch } = argv;
-var algo;
+var trade_executor;
 
 async function main() {
   var stringToBool = myValue => myValue === "true";
@@ -122,7 +122,16 @@ async function main() {
 
   const trade_state = new TradeState({ logger, redis, trade_id });
 
-  algo = new Algo({
+  // if (trade_definition.buy_price) {
+  //   if (trade_definition.base_amount)
+  //     te_args.base_amount_to_buy = BigNumber(trade_definition.base_amount);
+  // } else {
+  //   if (trade_definition.base_amount)
+  //     te_args.base_amount_held = BigNumber(trade_definition.base_amount);
+  // }
+  // delete te_args.base_amount;
+
+  trade_executor = new TradeExecutor({
     ee,
     send_message,
     logger,
@@ -130,7 +139,7 @@ async function main() {
     trade_state, // dependency injection for persistent state
     trade_definition,
     // pair,
-    // base_amount,
+    // base_amount, // base_amount is depricated: use base_amount_to_buy and base_amount_held
     // max_quote_amount_to_buy,
     // buy_price,
     // stop_price,
@@ -145,7 +154,7 @@ async function main() {
   const execSync = require("child_process").execSync;
   code = execSync("date -u >&2");
 
-  algo.main().catch(error => {
+  trade_executor.main().catch(error => {
     if (error.name && error.name === "FetchError") {
       logger.error(
         `${error.name}: Likely unable to connect to Binance and/or Telegram: ${error}`
@@ -176,7 +185,7 @@ main().catch(error => {
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code) {
-  if (algo) algo.shutdown_streams();
+  if (trade_executor) trade_executor.shutdown_streams();
   if (exit_code) process.exitCode = exit_code;
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }

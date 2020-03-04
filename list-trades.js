@@ -16,13 +16,15 @@ const hgetallAsync = promisify(redis.hgetall).bind(redis);
 
 async function main() {
   const keys = await keysAsync("trades:*:completed");
-  console.log(keys);
+  // console.log(keys);
   for (const key of keys) {
     if ((await getAsync(key)) !== "true") {
       const trade_id = key.match(/trades:(\d+):completed/)[1];
-      console.log(`Trade ${trade_id}:`);
       const foo = await hgetallAsync(`trades:${trade_id}:trade_definition`);
-      console.log(foo);
+      const flags = []
+      if(foo["soft_entry"]) flags.push("soft_entry")
+      if(foo["auto_size"]) flags.push("auto_size")
+      console.log(`Trade ${trade_id}: ${foo.pair}: ${foo.stop_price} ${foo.buy_price} ${foo.target_price} ${flags.join(' ')}`);
     }
   }
   redis.quit();

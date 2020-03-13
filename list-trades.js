@@ -18,14 +18,17 @@ async function main() {
   const keys = await keysAsync("trades:*:completed");
   // console.log(keys);
   for (const key of keys) {
-    if ((await getAsync(key)) !== "true") {
-      const trade_id = key.match(/trades:(\d+):completed/)[1];
-      const foo = await hgetallAsync(`trades:${trade_id}:trade_definition`);
-      const flags = []
-      if(foo["soft_entry"]) flags.push("soft_entry")
-      if(foo["auto_size"]) flags.push("auto_size")
-      console.log(`Trade ${trade_id}: ${foo.pair}: ${foo.stop_price} ${foo.buy_price} ${foo.target_price} ${flags.join(' ')}`);
-    }
+    const completed = (await getAsync(key)) === "true";
+    const trade_id = key.match(/trades:(\d+):completed/)[1];
+    const foo = await hgetallAsync(`trades:${trade_id}:trade_definition`);
+    const flags = [];
+    if (foo["soft_entry"]) flags.push("soft_entry");
+    if (foo["auto_size"]) flags.push("auto_size");
+    console.log(
+      `${completed ? " " : "A"} Trade ${trade_id}: ${foo.pair}: ${
+        foo.stop_price
+      } ${foo.buy_price} ${foo.target_price} ${flags.join(" ")}`
+    );
   }
   redis.quit();
 }

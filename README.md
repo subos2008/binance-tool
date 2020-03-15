@@ -34,6 +34,9 @@ Sized trade at 0.01178127 USDT, 0.00064577 BNB
 (node:1) [DEP0018] DeprecationWarning: Unhandled promise rejections are deprecated. In the future, promise rejections that are not handled will terminate the Node.js process with a non-zero exit code.
 ```
 
+aha - I could break out the service that watches for executed trades. load from redis the order
+numbers and update the position held data.
+
 = states
 
 1. waiting for approx buy price

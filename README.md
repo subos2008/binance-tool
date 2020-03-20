@@ -1,3 +1,5 @@
+![](https://github.com/subos2008/binance-tool/workflows/DockerPublish/badge.svg)
+
 # Update
 
 This tool is currently migrating from being a command line process that
@@ -5,6 +7,13 @@ takes parameters and runs until the trade completes into a tool that
 adds a trade_definition to redis and associated tools that take a trade_id
 and retrieve and execute that trade. This can thus be used for executing
 trades using a remote cluster.
+
+The next major step for this codebase is to split it up into services that
+can be updated from CI. At the moment each run manages a complete individual
+trade and we pray the processes never restart. This needs to be moved to a
+model where state is in Redis and the services are all restartable.
+
+First target is getting orderId's in redis.
 
 # TODO
 

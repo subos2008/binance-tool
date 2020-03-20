@@ -146,7 +146,7 @@ describe("TradeExecutor", function() {
     });
   });
 
-  describe("soft enwhen a buy_price, stop_price and target_price present", function() {
+  describe("when a buy_price, stop_price and target_price present", function() {
     it(
       "if it hits target price while buyOrder is still open then it cancels buy and places targetOrder if partially filled"
     );
@@ -473,6 +473,45 @@ describe("TradeExecutor", function() {
             `${default_pair} target sell order filled`
           );
         });
+      });
+    });
+  });
+
+  describe("Standar Test: stop, buy, target soft-entry", () => {
+    describe("with no starting state, only trade definition", () => {
+      // TODO:  this is bad test design perhaps... what about concurrency?
+      describe("before any action happens", () => {
+        it("sets trade:x:completed to false");
+      });
+      describe("when it hits target_price before buy_price", () => {
+        it("sets trade:x:completed to true");
+      });
+      describe("when price is below stop_price", () => {
+        it("sets trade:x:completed to true");
+      });
+      describe("when buy price is hit", () => {
+        // it("sets trade:x:position:actual to 0")
+        // it("sets trade:x:position:draining to false")
+        it("sets trade:x:position:target to >0");
+        describle("...then stop_price is hit", () => {
+          it("sets trade:x:position:target to 0");
+          it(
+            "sets something that prevents concurrency... what if it booted in this state?"
+          );
+        });
+      });
+    });
+  });
+
+  describe("On startup (pre-price tick)", () => {
+    // states: [untriggered, filling, filled, draining, complete]
+    describe("trade:x:completed is true", () => {
+      it("it exits");
+    });
+    describe("trade:x:completed is false", () => {
+      describe("trade:x:position:target is >0", () => {
+        it("it it is filling");
+        it("or it is filled");
       });
     });
   });

@@ -42,6 +42,14 @@ describe("TradeStateMachine", function() {
   //   Doing pretty well except there's currently no way
   //   to determine when draining if we are draining at target
   //   or stop.
+  //
+  //   I could have an array of acceptable order types to
+  //   achieve the position change. i.e. at target price it's
+  //   set to limit sell, for changes via a UI it might be set to
+  //   'market' at stop - there's a good question. I think we know
+  //   that stop limit sells are essentially market sells with a limit
+  //   that are triggered at a given price, they have two parameters, right,
+  //   trigger price and sell limit price?
 
   //   ... could work on definine the exact behaviour at target
   //   and stop at this point.

@@ -17,6 +17,10 @@ const incrAsync = promisify(client.incr).bind(client);
 const hmsetAsync = promisify(client.hmset).bind(client);
 const setAsync = promisify(client.set).bind(client);
 
+const {
+  initialiser: trade_state_initialiser
+} = require("./classes/redis_trade_state");
+
 // const logger = new Logger({ silent: false });
 
 const { argv } = require("yargs")
@@ -31,15 +35,13 @@ const { argv } = require("yargs")
   .describe("p", "Set trading pair eg. BNBBTC")
   // '-a <base_amount>'
   .string("a")
-  .alias("a", "base_amount")
-  .describe("a", "Set base_amount to buy/sell, a pair is BASEQUOTE")
+  .alias("a", "base_amount_held")
+  .default("base_amount_held", "0")
+  .describe("a", "Set base_amount_held to sell, a pair is BASEQUOTE")
   // '-q <quote_amount>'
   .string("q")
   .alias("q", "amountquote")
-  .describe(
-    "q",
-    "Set max to buy in quote coin (alternative to -a), a pair is BASEQUOTE"
-  )
+  .describe("q", "Set max to buy (spend) in quote coin, a pair is BASEQUOTE")
   // '-b <buy_price>'
   .string("b")
   .alias("b", "buy")
@@ -50,13 +52,13 @@ const { argv } = require("yargs")
   .string("s")
   .alias("s", "stop")
   .describe("s", "Set stop-limit order stop price")
-  // '-l <limit_price>'
-  .string("l")
-  .alias("l", "limit")
-  .describe(
-    "l",
-    "Set sell stop-limit order limit price (if different from stop price)"
-  )
+  // '-l <limit_price>' // needs reconnecting
+  // .string("l")
+  // .alias("l", "limit")
+  // .describe(
+  //   "l",
+  //   "Set sell stop-limit order limit price (if different from stop price)"
+  // )
   // '-t <target_price>'
   .string("t")
   .alias("t", "target")
@@ -81,7 +83,7 @@ const { argv } = require("yargs")
   .default("launch", true);
 let {
   p: pair,
-  a: base_amount,
+  a: base_amount_held,
   q: max_quote_amount_to_buy,
   b: buy_price,
   s: stop_price,
@@ -91,10 +93,6 @@ let {
   "auto-size": auto_size,
   launch
 } = argv;
-
-if (buy_price === "") {
-  buy_price = "0";
-}
 
 const trade_definition = {
   pair,
@@ -130,6 +128,15 @@ async function main() {
     const redis_key = `${prefix}:trade_definition`;
     console.log(trade_definition);
     await hmsetAsync(redis_key, trade_definition_as_list);
+
+    base_amount_held = BigNumber(base_amount_held);
+    await trade_state_initialiser({
+      redis: client,
+      logger,
+      trade_id,
+      base_amount_held
+    });
+
     if (launch) {
       const launch = require("./k8/run-in-k8/launch");
       process.env.TRADE_ID = trade_id;

@@ -9,6 +9,8 @@ function name_to_key(name) {
       return `trades:${this.trade_id}:open_orders:stopOrderId`;
     case "targetOrderId":
       return `trades:${this.trade_id}:open_orders:targetOrderId`;
+    case "base_amount_held":
+      return `trades:${this.trade_id}:position:base_amount_held`;
     default:
       throw new Error(`Unknown key name`);
   }
@@ -106,21 +108,25 @@ class TradeState {
 
   // returns BigNumber, 0 on null
   async get_base_amount_held() {
-    return (
-      BigNumber(
-        await this.get_redis_key(
-          `trades:${this.trade_id}:position:base_amount_held`
-        )
-      ) || 0
-    );
+    const key = name_to_key("base_amount_held");
+    return BigNumber((await this.get_redis_key(key)) || 0);
   }
 
   async set_base_amount_held(bignum_value) {
-    await this.set_redis_key(
-      `trades:${this.trade_id}:position:base_amount_held`,
-      bignum_value.toFixed()
-    );
+    const key = name_to_key("base_amount_held");
+    await this.set_redis_key(key, bignum_value.toFixed());
   }
 }
 
-module.exports = TradeState;
+async function initialiser(params = {}) {
+  const { logger, redis, trade_id, base_amount_held } = params;
+  assert(redis);
+  assert(trade_id);
+  assert(logger);
+  assert(base_amount_held); // BigNumber
+  const trade_state = new TradeState({ logger, redis, trade_id });
+  trade_state.set_base_amount_held(base_amount_held.toFixed());
+}
+
+// a bit unorthodox maybe ;-/
+module.exports = { TradeState, initialiser };

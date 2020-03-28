@@ -79,8 +79,13 @@ async function main() {
     process.exit(0);
   }
 
-  let { pair } = trade_definition;
+  // a neat little hack to get us on the way to restartable jobs,
+  // convert the amount bought so far to '-a'
+  // Actually no - this just lives in trade_state now
+  // fist we will init from it then we will update it
+  // trade_definition.base_amount_held = await trade_state.get_base_amount_held();
 
+  // Pick live or emulated ExecutionEngine/ExchangeEmulator
   var ee;
   if (live) {
     logger.info("Live trading mode");
@@ -132,7 +137,7 @@ async function main() {
       logger.error(`Error in main loop: ${error}`);
       logger.error(error);
       logger.error(`Error in main loop: ${error.stack}`);
-      send_message(`${pair}: Error in main loop: ${error}`);
+      send_message(`${trade_definition.pair}: Error in main loop: ${error}`);
     }
     soft_exit();
   });

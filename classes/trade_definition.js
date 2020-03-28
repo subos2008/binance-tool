@@ -12,6 +12,15 @@ const assert = require("assert");
 // base_amount, // can be either the amount to buy or sell depending on other args
 // base_amount, // depricated
 
+// if (trade_definition.buy_price) {
+//   if (trade_definition.base_amount)
+//     te_args.base_amount_to_buy = BigNumber(trade_definition.base_amount);
+// } else {
+//   if (trade_definition.base_amount)
+//     te_args.base_amount_held = BigNumber(trade_definition.base_amount);
+// }
+// delete te_args.base_amount;
+
 class TradeDefinition {
   constructor(trade_definition) {
     let {

@@ -14,6 +14,15 @@ function name_to_key(name) {
   }
 }
 
+var stringToBool = myValue => myValue === "true";
+
+const BigNumber = require("bignumber.js");
+BigNumber.DEBUG = true; // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function() {
+  throw Error("BigNumber .valueOf called!");
+};
+
 class TradeState {
   constructor({ logger, redis, trade_id } = {}) {
     assert(logger);
@@ -38,7 +47,7 @@ class TradeState {
       return this.delAsync(key);
     }
     // TODO: change to only set if not defined, throw otherwise - to prevent concurrent runs interacting
-    return this.set_redis_key(key, value);
+    return await this.set_redis_key(key, value);
   }
 
   async set_buyOrderId(value) {
@@ -90,7 +99,27 @@ class TradeState {
   }
 
   async get_trade_completed() {
-    return await this.get_redis_key(`trades:${this.trade_id}:trade_completed`);
+    return stringToBool(
+      await this.get_redis_key(`trades:${this.trade_id}:trade_completed`)
+    );
+  }
+
+  // returns BigNumber, 0 on null
+  async get_base_amount_held() {
+    return (
+      BigNumber(
+        await this.get_redis_key(
+          `trades:${this.trade_id}:position:base_amount_held`
+        )
+      ) || 0
+    );
+  }
+
+  async set_base_amount_held(bignum_value) {
+    await this.set_redis_key(
+      `trades:${this.trade_id}:position:base_amount_held`,
+      bignum_value.toFixed()
+    );
   }
 }
 

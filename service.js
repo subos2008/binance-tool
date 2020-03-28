@@ -4,6 +4,8 @@
 
 require("dotenv").config();
 
+require("./lib/sentry");
+
 // TODO: convert all the process.exit calls to be exceptions
 // TODO: add watchdog on trades stream - it can stop responding without realising
 // TODO: - in the original implementations

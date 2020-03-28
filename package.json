@@ -7,6 +7,7 @@
     "test-only": "./node_modules/.bin/mocha"
   },
   "dependencies": {
+    "@sentry/node": "5.15.2",
     "bignumber.js": "^8.1.1",
     "binance-api-node": "^0.9.0",
     "dotenv": "^6.0.0",

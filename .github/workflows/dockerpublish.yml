@@ -1,4 +1,4 @@
-name: DockerPublish
+name: Build, Push and Deploy
 
 on:
   push:
@@ -15,31 +15,33 @@ on:
 
 env:
   # TODO: Change variable to your image's name.
-  IMAGE_NAME: binance-tool
+  IMAGE_NAME: combined
 
 jobs:
   # Run tests.
   # See also https://docs.docker.com/docker-hub/builds/automated-testing/
-  test:
-    runs-on: ubuntu-latest
+  # test:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v2
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - name: Run build / tests
-        run: |
-          if [ -f docker-compose.test.yml ]; then
-            docker-compose --file docker-compose.test.yml build
-            docker-compose --file docker-compose.test.yml run sut
-          else
-            docker build . --file Dockerfile
-          fi
+  #     - name: Run tests
+  #       run: |
+  #         if [ -f docker-compose.test.yml ]; then
+  #           docker-compose --file docker-compose.test.yml build
+  #           docker-compose --file docker-compose.test.yml run sut
+  #         else
+  #           docker build . --file Dockerfile
+  #         fi
 
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
   push:
     # Ensure test job passes before pushing image.
-    needs: test
+
+    # !!!!
+    # needs: test
 
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
@@ -71,3 +73,22 @@ jobs:
 
           docker tag image $IMAGE_ID:$VERSION
           docker push $IMAGE_ID:$VERSION
+          docker tag image $IMAGE_ID:$(echo $GITHUB_SHA | head -c7)
+          docker push $IMAGE_ID:$(echo $GITHUB_SHA | head -c7)
+
+  deploy:
+    needs: push
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # - name: Save values.yaml
+      #   run: echo ${{ secrets.values_yaml }} | base64 --decode > $GITHUB_WORKSPACE/values.yaml
+
+      - name: Save kubeconfig to filesystem
+        run: echo ${{ secrets.kube_config }} | base64 --decode > $GITHUB_WORKSPACE/kube_config
+
+      - name: Deploy to Kubernetes
+        run: KUBECONFIG=$GITHUB_WORKSPACE/kube_config helm upgrade --install "services-chart" --namespace "binance-tool" ./k8/mychart --set "image.tag=$(echo $GITHUB_SHA | head -c7)"

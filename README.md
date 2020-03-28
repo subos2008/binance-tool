@@ -29,6 +29,7 @@ First target is getting orderId's in redis.
 - integrate with https://sentry.io
 - base_amount_held -> setup position. so tests convert -a to checking pre-existing postion
 - not all awaits are wrapped in try/catch: fix bug - doesn't exit:
+- remove async_error_handler (sentry)
 
 ```
 Available to invest: 0.01178127 USDT

@@ -25,7 +25,7 @@ class TradeDefinition {
   constructor(trade_definition) {
     let {
       pair,
-      base_amount,
+      base_amount_to_buy,
       max_quote_amount_to_buy,
       buy_price,
       stop_price,
@@ -49,7 +49,8 @@ class TradeDefinition {
     //     this.sell_stop_limit_price: limit_price,
 
     this.pair = pair;
-    this.base_amount = base_amount; // base_amount_to_buy, base_amount_held?
+    this.base_amount_to_buy = base_amount_to_buy; // may not be supported / implemented / tested
+    // this.base_amount_held = base_amount_held; // this is in trade_state now
     this.max_quote_amount_to_buy = max_quote_amount_to_buy;
     this.buy_price = buy_price;
     this.stop_price = stop_price;

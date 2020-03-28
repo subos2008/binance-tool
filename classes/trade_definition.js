@@ -4,7 +4,6 @@ const assert = require("assert");
 // max_quote_amount_to_buy,
 // buy_price,
 // stop_price,
-// limit_price,
 // target_price,
 // nonBnbFees,
 // soft_entry,
@@ -21,6 +20,13 @@ const assert = require("assert");
 // }
 // delete te_args.base_amount;
 
+const BigNumber = require("bignumber.js");
+BigNumber.DEBUG = true; // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function() {
+  throw Error("BigNumber .valueOf called!");
+};
+
 class TradeDefinition {
   constructor(trade_definition) {
     let {
@@ -29,7 +35,6 @@ class TradeDefinition {
       max_quote_amount_to_buy,
       buy_price,
       stop_price,
-      sell_stop_limit_price: limit_price,
       target_price,
       nonBnbFees,
       soft_entry,
@@ -46,18 +51,19 @@ class TradeDefinition {
       buy_price = "0";
     }
 
-    //     this.sell_stop_limit_price: limit_price,
-
+    // this.base_amount_held = BigNumber(base_amount_held); // this is in trade_state now
     this.pair = pair;
-    this.base_amount_to_buy = base_amount_to_buy; // may not be supported / implemented / tested
-    // this.base_amount_held = base_amount_held; // this is in trade_state now
-    this.max_quote_amount_to_buy = max_quote_amount_to_buy;
-    this.buy_price = buy_price;
-    this.stop_price = stop_price;
-    this.target_price = target_price;
+    this.base_amount_to_buy = BigNumber(base_amount_to_buy); // may not be supported / implemented / tested
+    this.max_quote_amount_to_buy = BigNumber(max_quote_amount_to_buy);
+    this.buy_price = BigNumber(buy_price);
+    this.stop_price = BigNumber(stop_price);
+    this.target_price = BigNumber(target_price);
     this.nonBnbFees = nonBnbFees;
     this.soft_entry = soft_entry;
     this.auto_size = auto_size;
+
+    if (this.buy_price.isZero()) {
+      throw new Error(`buy_price of 0 as request for a market buy is depricated. Execute your market buy prior to the trade and pass base_amount_held instead`)
   }
 }
 

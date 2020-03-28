@@ -30,6 +30,7 @@ First target is getting orderId's in redis.
 - base_amount_held -> setup position. so tests convert -a to checking pre-existing postion
 - not all awaits are wrapped in try/catch: fix bug - doesn't exit:
 - remove async_error_handler (sentry)
+- update base_amount_held even if order is not 100% complete (i.e. stops out during fill/target_drain and better if restarting?)
 
 ```
 Available to invest: 0.01178127 USDT

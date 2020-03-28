@@ -59,41 +59,27 @@ async function main() {
     `trades:${trade_id}:trade_definition`
   );
 
-  const trade_completed = stringToBool(
-    await getAsync(`trades:${trade_id}:completed`)
-  );
-
-  console.log(`trade_completed=${trade_completed}`);
-
-  if (trade_completed) {
-    console.log(`WARNING: trade ${trade_id} is already marked as completed`);
-    process.exit(0);
-  }
-  redis.quit();
-
   console.log(`From redis:`);
   console.log(redis_trade_definition);
 
-  if (trade_definition === null) {
+  if (redis_trade_definition === null) {
     logger.error(`Got null from Redis. Trade ${trade_id} likely doesn't exist`);
     soft_exit(1);
     return; // exit
   }
 
-  let {
-    pair,
-    base_amount,
-    max_quote_amount_to_buy,
-    buy_price,
-    stop_price,
-    sell_stop_limit_price: limit_price,
-    target_price,
-    nonBnbFees,
-    soft_entry,
-    auto_size
-  } = trade_definition;
-
   const trade_definition = new TradeDefinition(redis_trade_definition);
+  const trade_state = new TradeState({ logger, redis, trade_id });
+
+  const trade_completed = await trade_state.get_trade_completed();
+  console.log(`trade_completed=${trade_completed}`);
+  if (trade_completed) {
+    console.log(`WARNING: trade ${trade_id} is already marked as completed`);
+    console.log(exiting);
+    process.exit(0);
+  }
+
+  let { pair } = trade_definition;
 
   var ee;
   if (live) {
@@ -101,7 +87,6 @@ async function main() {
     ee = Binance({
       apiKey: process.env.APIKEY,
       apiSecret: process.env.APISECRET
-      // getTime: xxx // time generator function, optional, defaults to () => Date.now()
     });
   } else {
     logger.info("Emulated trading mode");
@@ -120,17 +105,6 @@ async function main() {
     ee = new ExchangeEmulator(ee_config);
   }
 
-  const trade_state = new TradeState({ logger, redis, trade_id });
-
-  // if (trade_definition.buy_price) {
-  //   if (trade_definition.base_amount)
-  //     te_args.base_amount_to_buy = BigNumber(trade_definition.base_amount);
-  // } else {
-  //   if (trade_definition.base_amount)
-  //     te_args.base_amount_held = BigNumber(trade_definition.base_amount);
-  // }
-  // delete te_args.base_amount;
-
   trade_executor = new TradeExecutor({
     ee,
     send_message,
@@ -138,16 +112,6 @@ async function main() {
     trade_id,
     trade_state, // dependency injection for persistent state
     trade_definition,
-    // pair,
-    // base_amount, // base_amount is depricated: use base_amount_to_buy and base_amount_held
-    // max_quote_amount_to_buy,
-    // buy_price,
-    // stop_price,
-    // limit_price,
-    // target_price,
-    // nonBnbFees,
-    // soft_entry,
-    // auto_size
     trading_rules
   });
 
@@ -185,6 +149,7 @@ main().catch(error => {
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code) {
+  redis.quit();
   if (trade_executor) trade_executor.shutdown_streams();
   if (exit_code) process.exitCode = exit_code;
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes

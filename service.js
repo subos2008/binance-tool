@@ -24,6 +24,7 @@ const Logger = require("./lib/faux_logger");
 const BigNumber = require("bignumber.js");
 const TradingRules = require("./lib/trading_rules");
 const TradeState = require("./classes/redis_trade_state");
+const TradeDefinition = require("./classes/trade_definition");
 
 const logger = new Logger({ silent: false });
 

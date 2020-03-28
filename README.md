@@ -17,6 +17,7 @@ First target is getting orderId's in redis.
 
 # TODO
 
+- add sentry.io
 - in-trades.js to know if there is a position on a trade trades:\$id:position
 - trade_definition that checks validity and makes everything BigNumber
 - remove AsyncErrorWrapper

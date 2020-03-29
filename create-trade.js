@@ -6,6 +6,15 @@ const dotenv = require("dotenv");
 dotenv.config({ path: "./.env" });
 // End Config
 
+const Logger = require("./lib/faux_logger");
+
+const BigNumber = require("bignumber.js");
+BigNumber.DEBUG = true; // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function() {
+  throw Error("BigNumber .valueOf called!");
+};
+
 const redis = require("redis");
 const client = redis.createClient({
   host: process.env.REDIS_HOST,
@@ -21,13 +30,13 @@ const {
   initialiser: trade_state_initialiser
 } = require("./classes/redis_trade_state");
 
-// const logger = new Logger({ silent: false });
+const logger = new Logger({ silent: false });
 
 const { argv } = require("yargs")
   .usage("Usage: $0")
   .example(
-    "$0 -p BNBBTC -a 1 -b 0.002 -s 0.001 -t 0.003",
-    "Place a buy order for 1 BNB @ 0.002 BTC. Once filled, place a stop-limit sell @ 0.001 BTC. If a price of 0.003 BTC is reached, cancel stop-limit order and place a limit sell @ 0.003 BTC."
+    "$0 -p BNBBTC  -b 0.002 -s 0.001 -t 0.003",
+    "Place a buy order for BNB @ 0.002 BTC. Once filled, place a stop-limit sell @ 0.001 BTC. If a price of 0.003 BTC is reached, cancel stop-limit order and place a limit sell @ 0.003 BTC. Amount to buy will be the maximum allowed by the trading rules unless you use -q."
   )
   // '-p <tradingPair>'
   .demand("pair")
@@ -37,11 +46,14 @@ const { argv } = require("yargs")
   .string("a")
   .alias("a", "base_amount_held")
   .default("base_amount_held", "0")
-  .describe("a", "Set base_amount_held to sell, a pair is BASEQUOTE")
+  .describe(
+    "a",
+    "Set base_amount_held - balance imported into the trade (a pair is BASEQUOTE)"
+  )
   // '-q <quote_amount>'
   .string("q")
   .alias("q", "amountquote")
-  .describe("q", "Set max to buy (spend) in quote coin, a pair is BASEQUOTE")
+  .describe("q", "Set max to buy (spend) in quote coin (a pair is BASEQUOTE)")
   // '-b <buy_price>'
   .string("b")
   .alias("b", "buy")
@@ -96,7 +108,7 @@ let {
 
 const trade_definition = {
   pair,
-  base_amount,
+  base_amount_held, // not used in the trade defn but stored there
   max_quote_amount_to_buy,
   buy_price,
   stop_price,

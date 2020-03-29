@@ -1,21 +1,6 @@
 const assert = require("assert");
 const { promisify } = require("util");
 
-function name_to_key(name) {
-  switch (name) {
-    case "buyOrderId":
-      return `trades:${this.trade_id}:open_orders:buyOrderId`;
-    case "stopOrderId":
-      return `trades:${this.trade_id}:open_orders:stopOrderId`;
-    case "targetOrderId":
-      return `trades:${this.trade_id}:open_orders:targetOrderId`;
-    case "base_amount_held":
-      return `trades:${this.trade_id}:position:base_amount_held`;
-    default:
-      throw new Error(`Unknown key name`);
-  }
-}
-
 var stringToBool = myValue => myValue === "true";
 
 const BigNumber = require("bignumber.js");
@@ -39,6 +24,21 @@ class TradeState {
     this.delAsync = promisify(this.redis.del).bind(this.redis);
   }
 
+  name_to_key(name) {
+    switch (name) {
+      case "buyOrderId":
+        return `trades:${this.trade_id}:open_orders:buyOrderId`;
+      case "stopOrderId":
+        return `trades:${this.trade_id}:open_orders:stopOrderId`;
+      case "targetOrderId":
+        return `trades:${this.trade_id}:open_orders:targetOrderId`;
+      case "base_amount_held":
+        return `trades:${this.trade_id}:position:base_amount_held`;
+      default:
+        throw new Error(`Unknown key name`);
+    }
+  }
+
   async set_or_delete_key(key, value) {
     if (value == 0) {
       // we use !value in logic to detect null
@@ -53,19 +53,19 @@ class TradeState {
   }
 
   async set_buyOrderId(value) {
-    return this.set_or_delete_key(name_to_key("buyOrderId"), value);
+    return this.set_or_delete_key(this.name_to_key("buyOrderId"), value);
   }
 
   async set_stopOrderId(value) {
-    return this.set_or_delete_key(name_to_key("stopOrderId"), value);
+    return this.set_or_delete_key(this.name_to_key("stopOrderId"), value);
   }
 
   async set_targetOrderId(value) {
-    return this.set_or_delete_key(name_to_key("targetOrderId"), value);
+    return this.set_or_delete_key(this.name_to_key("targetOrderId"), value);
   }
 
   async get_buyOrderId() {
-    const key = name_to_key("buyOrderId");
+    const key = this.name_to_key("buyOrderId");
     const value = await this.get_redis_key(key);
     this.logger.info(`${key} has value ${value}`);
     if (!value) {
@@ -75,7 +75,7 @@ class TradeState {
   }
 
   async get_stopOrderId() {
-    const key = name_to_key("stopOrderId");
+    const key = this.name_to_key("stopOrderId");
     const value = await this.get_redis_key(key);
     this.logger.info(`${key} has value ${value}`);
     if (!value) {
@@ -85,7 +85,7 @@ class TradeState {
   }
 
   async get_targetOrderId() {
-    const key = name_to_key("targetOrderId");
+    const key = this.name_to_key("targetOrderId");
     const value = await this.get_redis_key(key);
     this.logger.info(`${key} has value ${value}`);
     if (!value) {
@@ -108,12 +108,12 @@ class TradeState {
 
   // returns BigNumber, 0 on null
   async get_base_amount_held() {
-    const key = name_to_key("base_amount_held");
+    const key = this.name_to_key("base_amount_held");
     return BigNumber((await this.get_redis_key(key)) || 0);
   }
 
   async set_base_amount_held(bignum_value) {
-    const key = name_to_key("base_amount_held");
+    const key = this.name_to_key("base_amount_held");
     await this.set_redis_key(key, bignum_value.toFixed());
   }
 }
@@ -125,7 +125,7 @@ async function initialiser(params = {}) {
   assert(logger);
   assert(base_amount_held); // BigNumber
   const trade_state = new TradeState({ logger, redis, trade_id });
-  trade_state.set_base_amount_held(base_amount_held.toFixed());
+  trade_state.set_base_amount_held(base_amount_held);
 }
 
 // a bit unorthodox maybe ;-/

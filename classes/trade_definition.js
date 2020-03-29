@@ -31,7 +31,8 @@ class TradeDefinition {
   constructor(trade_definition) {
     let {
       pair,
-      base_amount_to_buy,
+      // base_amount_to_buy, // pretty much depricated
+      //  base_amount_held, may also be supplied but isn't used, it's mirrored in the trade_state instead
       max_quote_amount_to_buy,
       buy_price,
       stop_price,
@@ -53,7 +54,6 @@ class TradeDefinition {
 
     // this.base_amount_held = BigNumber(base_amount_held); // this is in trade_state now
     this.pair = pair;
-    this.base_amount_to_buy = BigNumber(base_amount_to_buy); // may not be supported / implemented / tested
     this.max_quote_amount_to_buy = BigNumber(max_quote_amount_to_buy);
     this.buy_price = BigNumber(buy_price);
     this.stop_price = BigNumber(stop_price);
@@ -63,7 +63,10 @@ class TradeDefinition {
     this.auto_size = auto_size;
 
     if (this.buy_price.isZero()) {
-      throw new Error(`buy_price of 0 as request for a market buy is depricated. Execute your market buy prior to the trade and pass base_amount_held instead`)
+      throw new Error(
+        `buy_price of 0 as request for a market buy is depricated. Execute your market buy prior to the trade and pass base_amount_held instead`
+      );
+    }
   }
 }
 

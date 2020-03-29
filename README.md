@@ -1,5 +1,15 @@
 ![](https://github.com/subos2008/binance-tool/workflows/DockerPublish/badge.svg)
 
+# Usage
+
+Beware the default behaviour is to launch a job in k8 to execute the trade. i.e. there will not be a local process or output to the terminal.
+
+```
+./create-trade <args>
+```
+
+You can also run locally with command: ["node", "service.js", "--trade-id", "{{trade_id}}", "--live"]
+
 # Update
 
 This tool is currently migrating from being a command line process that
@@ -17,8 +27,9 @@ First target is getting orderId's in redis.
 
 # TODO
 
+- if we pass `base_amount_held` it's not using that in the calc of how much to buy and it's buying the same amount again (and overwriting it in redis)
 - add sentry.io
-- in-trades.js to know if there is a position on a trade trades:\$id:position
+- list-trades.js to know if there is a position on a trade trades:\$id:position
 - trade_definition that checks validity and makes everything BigNumber
 - remove AsyncErrorWrapper
 - log with timestamps
@@ -31,6 +42,10 @@ First target is getting orderId's in redis.
 - not all awaits are wrapped in try/catch: fix bug - doesn't exit:
 - remove async_error_handler (sentry)
 - update base_amount_held even if order is not 100% complete (i.e. stops out during fill/target_drain and better if restarting?)
+- elements:
+  1. managing the exiting orders and changing state (placing stop orders) when trades complete
+  1. the initial buy order: create immediately or monitor price for soft_entry
+  1. swapping between stop and target orders as the price tracks about. If this could be somewhat independent of the checks for orders completing we could handle partial orders much better. Maybe even rabbitMQ has events for helping.
 
 ```
 Available to invest: 0.01178127 USDT
@@ -49,17 +64,21 @@ Sized trade at 0.01178127 USDT, 0.00064577 BNB
 aha - I could break out the service that watches for executed trades. load from redis the order
 numbers and update the position held data.
 
-= states
+## states
 
-1. waiting for approx buy price
-1. close to entry, add buyOrder
-1. filling with stop awareness
-1. filled, with stop trade in books
+1. waiting for approx buy price - waiting_for_entry_price
+1. close to entry, add buyOrder - buy_order: now this can be 0% filled, partialled filled, 100% filled it's really: buy_filling/filled
+1. filling with stop awareness (and target too). stops and target are always soft. this translates into a kind of ittt trade defn language. If we had that we could check for overlapping stop/target trigger prices.
+1. filled, with stop trade in books (or we always update the stop trade as the buy fills)
 1. close to target, with target sell in the books
-1. invalidated by getting close to exit with no fills
-1. completed. defined by FillOrDrainPosition being complete in an end state.
+1. completed.
 
-= position states
+- i think actually we have:
+  1. waiting for entry
+  1. amorphous blob of trade_active (beware that a partial target exit doesn't result in more buying - maybe that's the 70%-to-target rule: it invalidates \[more\] buying)
+  1. completed states. even then it's just invalidated before entry or completed. stop/target sells can be partial and we can have both in a trade result. `sold_at_stop_percentage/amount` and `sold_at_target_percentage/amount`
+
+## position states
 
 1. filling
 1. filled as much as possible
@@ -67,7 +86,23 @@ numbers and update the position held data.
 1. draining at target
 1. draining at stop (note can drain at target for a while then remainder at stop)
 
-= class FillOrDrainPosition
+## testing
+
+Tests should look like:
+
+- test_definition test_state in redis prior to test
+- EE setup with price events and placing orders in the order books to allow for full/partial fills
+- test pass/fail could just check the output of redis.MONITOR for SET events in the expected order
+
+## Trade Flow
+
+1. Maybe wait for entry price
+1. Create buy order
+1. Wait for buy order to fill or trade to invalidate by hitting target before buy_price. set buy disabled if we hit target. complete order if position is zero. sets `buy_disabled` if buy sell completes.
+1. Once we are in a position then maintain target and stop orders. Also: possibly the buy order is still open. Track total bought as position size might flow up and down. Set buy_disabled if we hit target.
+1. once the trade has emptied it's position then set completed and exit.
+
+## class FillOrDrainPosition
 
 - has a stop level on fill because we ... no when buying there is no stop.. states? : states: filling, draining at target, draining at stop
 - this.ee.ws.user moves into this class
@@ -86,6 +121,8 @@ Test migration could look like migration towards setting trade states in the tes
 \_munge_amount_and_check_notionals can move to the AlgoUtils class
 
 ### Kubernetes Workflow
+
+_There's a github workflow also_
 
 create a `.env` file:
 

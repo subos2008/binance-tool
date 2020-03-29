@@ -27,6 +27,7 @@ First target is getting orderId's in redis.
 
 # TODO
 
+- need to redis.quit() in shutdown_streams
 - if we pass `base_amount_held` it's not using that in the calc of how much to buy and it's buying the same amount again (and overwriting it in redis)
 - add sentry.io
 - list-trades.js to know if there is a position on a trade trades:\$id:position
@@ -93,6 +94,9 @@ Tests should look like:
 - test_definition test_state in redis prior to test
 - EE setup with price events and placing orders in the order books to allow for full/partial fills
 - test pass/fail could just check the output of redis.MONITOR for SET events in the expected order
+- buy_price is set (would normally indicate to buy) but `base_amount_held` is non-zero.
+  - case 1: buyOrderID is set
+  - case 2: buyOrderID is null - should go straight into placeSellOrder()
 
 ## Trade Flow
 

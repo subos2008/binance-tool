@@ -34,6 +34,8 @@ class TradeState {
         return `trades:${this.trade_id}:open_orders:targetOrderId`;
       case "base_amount_held":
         return `trades:${this.trade_id}:position:base_amount_held`;
+      case "trade_completed":
+        return `trades:${this.trade_id}:completed`;
       default:
         throw new Error(`Unknown key name`);
     }
@@ -67,7 +69,7 @@ class TradeState {
   async get_buyOrderId() {
     const key = this.name_to_key("buyOrderId");
     const value = await this.get_redis_key(key);
-    this.logger.info(`${key} has value ${value}`);
+    // this.logger.info(`${key} has value ${value}`);
     if (!value) {
       return undefined; // convert null to undefined
     }
@@ -77,7 +79,7 @@ class TradeState {
   async get_stopOrderId() {
     const key = this.name_to_key("stopOrderId");
     const value = await this.get_redis_key(key);
-    this.logger.info(`${key} has value ${value}`);
+    // this.logger.info(`${key} has value ${value}`);
     if (!value) {
       return undefined; // convert null to undefined
     }
@@ -87,7 +89,7 @@ class TradeState {
   async get_targetOrderId() {
     const key = this.name_to_key("targetOrderId");
     const value = await this.get_redis_key(key);
-    this.logger.info(`${key} has value ${value}`);
+    // this.logger.info(`${key} has value ${value}`);
     if (!value) {
       return undefined; // convert null to undefined
     }
@@ -96,14 +98,13 @@ class TradeState {
 
   async set_trade_completed(value) {
     assert(value === true);
-    const key = `trades:${this.trade_id}:trade_completed`;
+    const key = this.name_to_key("trade_completed");
     return await this.set_redis_key(key, value);
   }
 
   async get_trade_completed() {
-    return stringToBool(
-      await this.get_redis_key(`trades:${this.trade_id}:trade_completed`)
-    );
+    const key = this.name_to_key("trade_completed");
+    return stringToBool(await this.get_redis_key(key));
   }
 
   // returns BigNumber, 0 on null

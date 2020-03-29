@@ -78,7 +78,7 @@ async function main() {
   console.log(`trade_completed=${trade_completed}`);
   if (trade_completed) {
     console.log(`WARNING: trade ${trade_id} is already marked as completed`);
-    console.log(exiting);
+    console.log(`exiting`);
     process.exit(0);
   }
 

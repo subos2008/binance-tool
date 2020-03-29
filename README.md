@@ -29,6 +29,7 @@ First target is getting orderId's in redis.
 
 - need to redis.quit() in shutdown_streams
 - if we pass `base_amount_held` it's not using that in the calc of how much to buy and it's buying the same amount again (and overwriting it in redis)
+- we detect cancelled orders and shutDown but we don't clean up redis
 - add sentry.io
 - list-trades.js to know if there is a position on a trade trades:\$id:position
 - trade_definition that checks validity and makes everything BigNumber
@@ -47,6 +48,15 @@ First target is getting orderId's in redis.
   1. managing the exiting orders and changing state (placing stop orders) when trades complete
   1. the initial buy order: create immediately or monitor price for soft_entry
   1. swapping between stop and target orders as the price tracks about. If this could be somewhat independent of the checks for orders completing we could handle partial orders much better. Maybe even rabbitMQ has events for helping.
+- dealing with restarting while a buy order is partially executed. we need to add on any base_amount_held from the start of the trade and sum that with the amount bought
+- limit `max_portfolio_allowed_in_trade`:
+  ```
+  Max portfolio loss per trade: 1%
+  Stop percentage: 0.09%
+  Target percentage: 0.26%
+  Risk/reward ratio: 3.0
+  Max portfolio allowed in trade: 1173.0%
+  ```
 
 ```
 Available to invest: 0.01178127 USDT

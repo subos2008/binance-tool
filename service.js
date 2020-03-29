@@ -144,6 +144,7 @@ async function main() {
       send_message(`${trade_definition.pair}: Error in main loop: ${error}`);
     }
     soft_exit();
+    throw error; // sentry
   });
 }
 
@@ -153,6 +154,7 @@ main().catch(error => {
   logger.error(error);
   logger.error(`Error in main loop: ${error.stack}`);
   soft_exit(1);
+  throw error; // sentry
 });
 
 // Note this method returns!

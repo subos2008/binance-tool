@@ -1,5 +1,6 @@
 const assert = require("assert");
 const { promisify } = require("util");
+var _ = require("lodash");
 
 var stringToBool = myValue => myValue === "true";
 
@@ -116,6 +117,28 @@ class TradeState {
   async set_base_amount_held(bignum_value) {
     const key = this.name_to_key("base_amount_held");
     await this.set_redis_key(key, bignum_value.toFixed());
+  }
+
+  async print() {
+    const base_amount_held = await this.get_base_amount_held();
+    const trade_completed = await this.get_trade_completed();
+    const targetOrderId = await this.get_targetOrderId();
+    const stopOrderId = await this.get_stopOrderId();
+    const buyOrderId = await this.get_buyOrderId();
+    console.dir(
+      Object.assign(
+        {
+          base_amount_held: base_amount_held
+            ? base_amount_held.toFixed()
+            : null,
+          trade_completed,
+          targetOrderId,
+          stopOrderId,
+          buyOrderId
+        },
+        _.pick(this, ["trade_id"])
+      )
+    );
   }
 }
 

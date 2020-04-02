@@ -74,6 +74,8 @@ async function main() {
   const trade_definition = new TradeDefinition(redis_trade_definition);
   const trade_state = new TradeState({ logger, redis, trade_id });
 
+  await trade_state.print();
+
   const trade_completed = await trade_state.get_trade_completed();
   console.log(`trade_completed=${trade_completed}`);
   if (trade_completed) {

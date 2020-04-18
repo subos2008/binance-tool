@@ -53,4 +53,24 @@ spec:
                 secretKeyRef:
                   name: redis-auth
                   key: password
+            - name: TELEGRAM_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: TELEGRAM_KEY
+                  name: telegram
+            - name: TELEGRAM_CHAT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: TELEGRAM_CHAT_ID
+                  name: telegram
+            - name: APIKEY
+              valueFrom:
+                secretKeyRef:
+                  key: APIKEY
+                  name: binance
+            - name: APISECRET
+              valueFrom:
+                secretKeyRef:
+                  key: APISECRET
+                  name: binance
 ---

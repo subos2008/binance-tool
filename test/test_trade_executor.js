@@ -16,7 +16,7 @@ const {
 const utils = require("../lib/utils");
 const fs = require("fs");
 const TradeExecutor = require("../lib/trade_executor");
-const TradeState = require("../classes/redis_trade_state");
+const { TradeState } = require("../classes/redis_trade_state");
 
 const logger = new Logger({ silent: false });
 const null_logger = new Logger({ silent: true });

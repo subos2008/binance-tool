@@ -37,7 +37,6 @@ class TradeDefinition {
       buy_price,
       stop_price,
       target_price,
-      nonBnbFees,
       soft_entry,
       auto_size
     } = trade_definition;
@@ -48,17 +47,13 @@ class TradeDefinition {
     auto_size = stringToBool(auto_size);
     soft_entry = stringToBool(soft_entry);
 
-    if (buy_price === "") {
-      buy_price = "0";
-    }
-
     // this.base_amount_held = BigNumber(base_amount_held); // this is in trade_state now
     this.pair = pair;
-    this.max_quote_amount_to_buy = BigNumber(max_quote_amount_to_buy);
-    this.buy_price = BigNumber(buy_price);
-    this.stop_price = BigNumber(stop_price);
-    this.target_price = BigNumber(target_price);
-    this.nonBnbFees = nonBnbFees;
+    if (max_quote_amount_to_buy)
+      this.max_quote_amount_to_buy = BigNumber(max_quote_amount_to_buy);
+    if (buy_price) this.buy_price = BigNumber(buy_price);
+    if (stop_price) this.stop_price = BigNumber(stop_price);
+    if (target_price) this.target_price = BigNumber(target_price);
     this.soft_entry = soft_entry;
     this.auto_size = auto_size;
 

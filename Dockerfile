@@ -10,5 +10,6 @@ COPY lib /app/lib
 COPY classes /app/classes
 COPY service_lib /app/service_lib
 COPY service.js /app/
+COPY services /app/services
 
-CMD node ./service.js 
+CMD node ./service.js

@@ -63,20 +63,7 @@ export class OrderExecutionTracker {
         if (eventType !== "executionReport") {
           return;
         }
-
-        const { symbol } = data;
-
-        this.logger.info(`Got executionReport for order ${orderId} on ${symbol}`);
         this.processExecutionReport(data)
-
-        // if(orderId === (await this.trade_state.get_buyOrderId())) {
-        //   await checkOrderFilled(data, async () => {
-        //     await this.trade_state.set_buyOrderId(undefined);
-        //     this.base_amount_held = BigNumber(data.totalTradeQuantity);
-        //     this.send_message(`${data.symbol} buy order filled`);
-        //     await this.placeSellOrder();
-        //   });
-        // } 
       } catch (error) {
         let msg = `SHIT: error tracking orders for pair ${data.symbol}`;
         this.logger.error(msg);
@@ -86,7 +73,7 @@ export class OrderExecutionTracker {
     });
   }
 
-  async processExecutionReport(data:any) {
+  async processExecutionReport(data: any) {
     const {
       symbol,
       price,
@@ -104,6 +91,8 @@ export class OrderExecutionTracker {
     this.logger.info(`..price: ${price}, quantity: ${quantity}`);
 
     if (orderStatus === "NEW" || orderStatus === "PARTIALLY_FILLED") {
+      // TODO: initialise in redis? could add ${symbol} ${side} ${orderType} and ${orderStatus}
+      this.order_state.add_new_order(orderId, { symbol, side, orderType, orderStatus })
       return;
     }
 

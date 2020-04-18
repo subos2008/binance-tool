@@ -17,6 +17,7 @@ export class OrderState {
   set_redis_key: any;
   get_redis_key: any;
   delAsync: any;
+  msetnxAsync: any;
 
   constructor({ logger, redis }: { logger: Logger, redis: any }) {
     assert(logger);
@@ -27,12 +28,24 @@ export class OrderState {
     this.set_redis_key = promisify(this.redis.set).bind(this.redis);
     this.get_redis_key = promisify(this.redis.get).bind(this.redis);
     this.delAsync = promisify(this.redis.del).bind(this.redis);
+    this.msetnxAsync = promisify(this.redis.msetnx).bind(this.redis);
   }
 
   name_to_key(order_id: string, name: string) {
+    assert(order_id && order_id !== "")
     switch (name) {
+      case "symbol":
+        return `orders:${order_id}:symbol`;
+      case "side":
+        return `orders:${order_id}:side`;
+      case "orderType":
+        return `orders:${order_id}:orderType`;
+      case "orderStatus":
+        return `orders:${order_id}:orderStatus`;
       case "completed":
-        return `trades:${order_id}:completed`;
+        return `orders:${order_id}:completed`;
+      case "total_executed_quantity":
+        return `orders:${order_id}:total_executed_quantity`;
       default:
         throw new Error(`Unknown key name: ${name}`);
     }
@@ -65,6 +78,19 @@ export class OrderState {
   async get_order_completed(order_id: string): Promise<Boolean> {
     const key = this.name_to_key(order_id, "completed");
     return stringToBool(await this.get_redis_key(key));
+  }
+
+  async add_new_order(order_id: string, { symbol, side, orderType, orderStatus }: { symbol: string, side: string, orderType: string, orderStatus: string }): Promise<void> {
+    // so... we only add these values if they don't already exist, probably ought to
+    // add them atomically
+    await this.msetnxAsync(
+      this.name_to_key(order_id, "symbol"), symbol,
+      this.name_to_key(order_id, "side"), side,
+      this.name_to_key(order_id, "orderType"), orderType,
+      this.name_to_key(order_id, "orderStatus"), orderStatus,
+      this.name_to_key(order_id, "completed"), false,
+      this.name_to_key(order_id, "total_executed_quantity"), "0"
+    )
   }
 
   async print(order_id: string) {

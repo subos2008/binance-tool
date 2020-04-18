@@ -15,7 +15,7 @@ on:
 
 env:
   # TODO: Change variable to your image's name.
-  IMAGE_NAME: combined
+  IMAGE_NAME: binance-tool
 
 jobs:
   # Run tests.
@@ -84,11 +84,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # - name: Save values.yaml
-      #   run: echo ${{ secrets.values_yaml }} | base64 --decode > $GITHUB_WORKSPACE/values.yaml
+      - name: Save values.yaml
+        run: echo ${{ secrets.values_yaml }} | base64 --decode > $GITHUB_WORKSPACE/values.yaml
 
       - name: Save kubeconfig to filesystem
         run: echo ${{ secrets.kube_config }} | base64 --decode > $GITHUB_WORKSPACE/kube_config
 
       - name: Deploy to Kubernetes
-        run: KUBECONFIG=$GITHUB_WORKSPACE/kube_config helm upgrade --install "services-chart" --namespace "binance-tool" ./k8/mychart --set "image.tag=$(echo $GITHUB_SHA | head -c7)"
+        run: KUBECONFIG=$GITHUB_WORKSPACE/kube_config helm upgrade --install "services" --namespace "binance-tool" ./k8/charts/services --set "image.tag=$(echo $GITHUB_SHA | head -c7)"

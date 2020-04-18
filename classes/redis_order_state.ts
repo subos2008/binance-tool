@@ -59,20 +59,11 @@ export class OrderState {
     }
   }
 
-  async set_or_delete_key(key: string, value: string | undefined): Promise<void> {
-    this.logger.info(`Setting ${key} to ${value}`);
-    if (value === undefined) {
-      await this.delAsync(key);
-    } else {
-      // TODO: [old comment] change to only set if not defined, throw otherwise - to prevent concurrent runs interacting
-      await this.set_redis_key(key, value);
-    }
-  }
-
-  async set_total_executed_quantity(order_id: string, value: BigNumber, completed: Boolean): Promise<void> {
+  async set_total_executed_quantity(order_id: string, value: BigNumber, completed: Boolean, orderStatus: string): Promise<void> {
     // TODO: only allow incrementing total_executed_quantity and false->true transitions on completed
     // Probably not needed while we are directly watching the binance stream though
     await this.msetAsync(
+      this.name_to_key(order_id, "orderStatus"), orderStatus,
       this.name_to_key(order_id, "completed"), completed,
       this.name_to_key(order_id, "total_executed_quantity"), value.toFixed()
     )
@@ -83,15 +74,18 @@ export class OrderState {
     return new BigNumber((await this.get_redis_key(key)) || 0);
   }
 
-  async set_order_completed(order_id: string, value: Boolean): Promise<void> {
-    assert(value === true);
-    const key = this.name_to_key(order_id, "completed");
-    await this.set_redis_key(key, value);
-  }
-
-  async set_order_cancelled(order_id: string, value: Boolean, orderRejectReason: string): Promise<void> {
+  async set_order_completed(order_id: string, value: Boolean, orderStatus: string): Promise<void> {
     assert(value === true);
     await this.msetAsync(
+      this.name_to_key(order_id, "orderStatus"), orderStatus,
+      this.name_to_key(order_id, "completed"), value,
+    )
+  }
+
+  async set_order_cancelled(order_id: string, value: Boolean, orderRejectReason: string, orderStatus: string): Promise<void> {
+    assert(value === true);
+    await this.msetAsync(
+      this.name_to_key(order_id, "orderStatus"), orderStatus,
       this.name_to_key(order_id, "completed"), true,
       this.name_to_key(order_id, "cancelled"), true,
       this.name_to_key(order_id, "orderRejectReason"), orderRejectReason,

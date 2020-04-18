@@ -18,6 +18,8 @@ export class OrderState {
   get_redis_key: any;
   delAsync: any;
   msetnxAsync: any;
+  msetAsync: any;
+  mgetAsync: any;
 
   constructor({ logger, redis }: { logger: Logger, redis: any }) {
     assert(logger);
@@ -29,6 +31,8 @@ export class OrderState {
     this.get_redis_key = promisify(this.redis.get).bind(this.redis);
     this.delAsync = promisify(this.redis.del).bind(this.redis);
     this.msetnxAsync = promisify(this.redis.msetnx).bind(this.redis);
+    this.msetAsync = promisify(this.redis.mset).bind(this.redis);
+    this.mgetAsync = promisify(this.redis.mget).bind(this.redis);
   }
 
   name_to_key(order_id: string, name: string) {
@@ -46,6 +50,10 @@ export class OrderState {
         return `orders:${order_id}:completed`;
       case "total_executed_quantity":
         return `orders:${order_id}:total_executed_quantity`;
+      case "cancelled":
+        return `orders:${order_id}:cancelled`;
+      case "orderRejectReason":
+        return `orders:${order_id}:orderRejectReason`;
       default:
         throw new Error(`Unknown key name: ${name}`);
     }
@@ -54,14 +62,20 @@ export class OrderState {
   async set_or_delete_key(key: string, value: string | undefined): Promise<void> {
     this.logger.info(`Setting ${key} to ${value}`);
     if (value === undefined) {
-      return this.delAsync(key);
+      await this.delAsync(key);
+    } else {
+      // TODO: [old comment] change to only set if not defined, throw otherwise - to prevent concurrent runs interacting
+      await this.set_redis_key(key, value);
     }
-    // TODO: [old comment] change to only set if not defined, throw otherwise - to prevent concurrent runs interacting
-    return await this.set_redis_key(key, value);
   }
 
-  async set_total_executed_quantity(order_id: string, value: BigNumber): Promise<void> {
-    return await this.set_or_delete_key(this.name_to_key(order_id, "targetOrderId"), value.toFixed());
+  async set_total_executed_quantity(order_id: string, value: BigNumber, completed: Boolean): Promise<void> {
+    // TODO: only allow incrementing total_executed_quantity and false->true transitions on completed
+    // Probably not needed while we are directly watching the binance stream though
+    await this.msetAsync(
+      this.name_to_key(order_id, "completed"), completed,
+      this.name_to_key(order_id, "total_executed_quantity"), value.toFixed()
+    )
   }
 
   async get_total_executed_quantity(order_id: string): Promise<BigNumber> {
@@ -72,7 +86,16 @@ export class OrderState {
   async set_order_completed(order_id: string, value: Boolean): Promise<void> {
     assert(value === true);
     const key = this.name_to_key(order_id, "completed");
-    return await this.set_redis_key(key, value);
+    await this.set_redis_key(key, value);
+  }
+
+  async set_order_cancelled(order_id: string, value: Boolean, orderRejectReason: string): Promise<void> {
+    assert(value === true);
+    await this.msetAsync(
+      this.name_to_key(order_id, "completed"), true,
+      this.name_to_key(order_id, "cancelled"), true,
+      this.name_to_key(order_id, "orderRejectReason"), orderRejectReason,
+    )
   }
 
   async get_order_completed(order_id: string): Promise<Boolean> {
@@ -93,18 +116,37 @@ export class OrderState {
     )
   }
 
+  async get_state_as_object(order_id: string) {
+    const values = await this.mgetAsync(
+      this.name_to_key(order_id, "symbol"),
+      this.name_to_key(order_id, "side"),
+      this.name_to_key(order_id, "orderType"),
+      this.name_to_key(order_id, "orderStatus"),
+      this.name_to_key(order_id, "completed"),
+      this.name_to_key(order_id, "total_executed_quantity"),
+      this.name_to_key(order_id, "cancelled"),
+      this.name_to_key(order_id, "orderRejectReason"),
+    )
+    return Object.assign(
+      {
+        orderId: order_id,
+        symbol: values[0],
+        side: values[1],
+        orderType: values[2],
+        orderStatus: values[3],
+        completed: values[4],
+        total_executed_quantity: values[5],
+        cancelled: values[6],
+        orderRejectReason: values[7]
+      },
+    )
+  }
+
   async print(order_id: string) {
-    const total_executed_quantity = await this.get_total_executed_quantity(order_id);
-    const order_completed = await this.get_order_completed(order_id);
-    console.dir(
-      Object.assign(
-        {
-          total_executed_quantity: total_executed_quantity
-            ? total_executed_quantity.toFixed()
-            : null,
-          order_completed,
-        },
-      )
+    const object = await this.get_state_as_object(order_id)
+    this.logger.info(
+      `${object.symbol} ${object.side} ${object.orderType} ORDER #${object.orderId} (${object.orderStatus})`
     );
+    console.dir(object);
   }
 }

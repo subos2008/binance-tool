@@ -82,7 +82,8 @@ export class OrderExecutionTracker {
       orderType,
       orderId,
       orderStatus,
-      orderRejectReason
+      orderRejectReason,
+      totalTradeQuantity
     } = data;
 
     this.logger.info(
@@ -90,21 +91,30 @@ export class OrderExecutionTracker {
     );
     this.logger.info(`..price: ${price}, quantity: ${quantity}`);
 
-    if (orderStatus === "NEW" || orderStatus === "PARTIALLY_FILLED") {
+    if (orderStatus === "NEW" ) {
       // TODO: initialise in redis? could add ${symbol} ${side} ${orderType} and ${orderStatus}
       this.order_state.add_new_order(orderId, { symbol, side, orderType, orderStatus })
       return;
     }
 
-    if (orderStatus === "CANCELED" && orderRejectReason === "NONE") {
+    if (orderStatus === "PARTIALLY_FILLED") {
+      // TODO: initialise in redis? could add ${symbol} ${side} ${orderType} and ${orderStatus}
+      this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity) , false)
+      return;
+    }
+
+    if (orderStatus === "CANCELED" /*&& orderRejectReason === "NONE"*/) {
       // Assume user cancelled order and exit
       // `Order was cancelled, presumably by user. Exiting.`,
+      this.order_state.set_order_cancelled(orderId, true, orderRejectReason)
       return;
     }
 
     if (orderStatus !== "FILLED") {
       throw new Error(`Unexpected orderStatus: ${orderStatus}. Reason: ${data.r}`);
     }
+
+    this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity) , true)
   }
 
   // Event Listeners

@@ -20,7 +20,7 @@ redis:
 #   external_host: redis
 #   # redis config
 #   password: ""
-#   database_number: "1"
+#   database_number: "0"
 #   # insecure: 0 or 1, use 1 for NODE_TLS_REJECT_UNAUTHORIZED (bad certs allowed)
 #   insecure: "0"
 

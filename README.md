@@ -27,8 +27,15 @@ First target is getting orderId's in redis.
 
 # TODO
 
+- rename `base_amount_held` to `base_amount_imported` and add amount bought tracking separately.
+- if we split the price movement into it's own process and have services send an event to the main trade process when there's something it needs to know - then we can do away with the behaviour of checking `trades*:*OrderId` every price tick.
+- typescript
+- re-entrant when sell orders are present
+- promise return from send_message so I can quit after messages are delivered
+- move `monitor_user_stream` out of process somehow. Maybe it sends to RabbitMQ with orders routed to sepecific trades. But most of my worst code complexities are around missing order updates so if that code can be solid it's a winner. Could be watch binance user stream -> rabbitMQ generic -> route per trade -> persistant queues and the updating of redis -> ping the trades themselves. The ping to the trades themselves could be kind of a generic re-calculate everything from redis style thing; trade would check sell orders covered the held amounts etc. Could also break out the price monitor to forward to RabbitMQ on interesting price levels too. So the trade process just knows what state it's in (close_to_stop, etc) and how much position size it's managing.
 - need to redis.quit() in shutdown_streams
 - if we pass `base_amount_held` it's not using that in the calc of how much to buy and it's buying the same amount again (and overwriting it in redis)
+- move to `base_amount_imported` and `base_amount_bought` ? with base_amount_held being a sum of the two.
 - we detect cancelled orders and shutDown but we don't clean up redis
 - add sentry.io
 - list-trades.js to know if there is a position on a trade trades:\$id:position
@@ -88,6 +95,16 @@ numbers and update the position held data.
   1. waiting for entry
   1. amorphous blob of trade_active (beware that a partial target exit doesn't result in more buying - maybe that's the 70%-to-target rule: it invalidates \[more\] buying)
   1. completed states. even then it's just invalidated before entry or completed. stop/target sells can be partial and we can have both in a trade result. `sold_at_stop_percentage/amount` and `sold_at_target_percentage/amount`
+- what about `maintaining-sell-orders` and `maintaining-buy-and-sell-orders` there's a slight difference when the buying has completed..? I guess `buying-allowed` is a parallel state; would clean up any buy orders when entered. States might be `close-to-stop` and `close-to-target` or maybe `prepared-for-stop` and `prepared-for-target`. Of course **it's not one state, it's parallel states, two, three?**
+- So:
+  - [`buying-allowed`]
+  - [`prepared-for-stop` | `prepared-for-target` | `no-position`]
+  - [`buying-in-progress` | `buying-complete`] <--- absorbs into `buying_allowed`?
+  - [`trade-complete`]
+- services:
+  1. user stream watcher - updates redis state on order execution, pings trade process when state has changed or orders completed/cancelled
+  2. trade process - maintains orders
+  3. price watcher - pings the main trade process when price levels are crossed
 
 ## position states
 

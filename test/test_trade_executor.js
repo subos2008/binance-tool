@@ -939,53 +939,6 @@ describe("TradeExecutor", function() {
     it(
       "does what when -a is specified --auto-size? on a buy? on a sell? -a with no args to manage whatever base balance we have?"
     );
-    describe("works when buying spot (market buy mode)", function() {
-      describe("when only auto_size is supplied (no base_amount_to_buy or quote_amount)", function() {
-        it("creates market buy order for the max base_amount to buy based on current_price, portfolio value and stop_percentage", async function() {
-          const marketPrice = BigNumber(1);
-          const stop_price = marketPrice.times("0.98");
-          const trading_rules = {
-            max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
-          };
-          let { ee, algo } = setup({
-            algo_config: {
-              pair: default_pair,
-              buy_price: BigNumber("0"),
-              stop_price,
-              trading_rules,
-              auto_size: true
-            },
-            ee_config: {
-              starting_quote_balance: BigNumber(1)
-            },
-            no_agitate: true
-          });
-          try {
-            await ee.set_current_price({
-              symbol: default_pair,
-              price: marketPrice
-            });
-            await algo.main();
-          } catch (e) {
-            console.log(e);
-            expect.fail("should not get here: expected call not to throw");
-          }
-          // check for a buy order placed at an appropriate size: 2% stop and 1% max loss => 50% of portfolio
-          // it's a market buy - are these emulated yet? Not in order book perhaps iirc
-          expect(await algo.trade_state.get_buyOrderId()).to.equal(1);
-          expect(ee.open_orders).to.have.lengthOf(1);
-          expect(ee.open_orders[0].type).to.equal("MARKET");
-          expect(ee.open_orders[0].side).to.equal("BUY");
-          expect(ee.open_orders[0].origQty).to.bignumber.equal("0.5");
-        });
-      });
-      it(
-        "prints the result when the order completes. I think maybe we are not setting order id atm"
-      );
-      it(
-        "creates the stop order after the market buy is completed (currently doesnt)"
-      );
-    });
 
     describe("without soft_entry", function() {
       it("creates buy order for the max base_amount to buy based on portfolio value and stop_percentage", async function() {

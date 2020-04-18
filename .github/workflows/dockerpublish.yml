@@ -91,4 +91,4 @@ jobs:
         run: echo ${{ secrets.kube_config }} | base64 --decode > $GITHUB_WORKSPACE/kube_config
 
       - name: Deploy to Kubernetes
-        run: KUBECONFIG=$GITHUB_WORKSPACE/kube_config helm upgrade --install "services" --namespace "binance-tool" ./k8/charts/services --set "image.tag=$(echo $GITHUB_SHA | head -c7)"
+        run: KUBECONFIG=$GITHUB_WORKSPACE/kube_config helm upgrade --install "services" --namespace "binance-tool" --values $GITHUB_WORKSPACE/values.yaml ./k8/charts/services --set "image.tag=$(echo $GITHUB_SHA | head -c7)"

@@ -49,22 +49,22 @@ class TradeState {
     }
     this.logger.info(`Setting ${key} to ${value}`);
     if (value === undefined) {
-      return this.delAsync(key);
+      return await this.delAsync(key);
     }
     // TODO: change to only set if not defined, throw otherwise - to prevent concurrent runs interacting
     return await this.set_redis_key(key, value);
   }
 
   async set_buyOrderId(value) {
-    return this.set_or_delete_key(this.name_to_key("buyOrderId"), value);
+    return await this.set_or_delete_key(this.name_to_key("buyOrderId"), value);
   }
 
   async set_stopOrderId(value) {
-    return this.set_or_delete_key(this.name_to_key("stopOrderId"), value);
+    return await this.set_or_delete_key(this.name_to_key("stopOrderId"), value);
   }
 
   async set_targetOrderId(value) {
-    return this.set_or_delete_key(this.name_to_key("targetOrderId"), value);
+    return await this.set_or_delete_key(this.name_to_key("targetOrderId"), value);
   }
 
   async get_buyOrderId() {

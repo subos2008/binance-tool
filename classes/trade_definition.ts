@@ -86,14 +86,46 @@ export class TradeDefinition {
       );
     }
 
+    // Sanity checks
     if (this.unmunged.buy_price) assert(!this.unmunged.buy_price.isZero()); // depricated way of specifying a market buy
+
+    // TODO: we can add a few more - for example to swap between stop and terget orders based on the
+    // percentage of anb price to those levels - what if these price ranges where we prep for each order type overlap?
     if (this.unmunged.buy_price && this.unmunged.stop_price) assert(this.unmunged.stop_price.isLessThan(this.unmunged.buy_price));
     if (this.unmunged.target_price && this.unmunged.buy_price)
       assert(this.unmunged.target_price.isGreaterThan(this.unmunged.buy_price));
     if (this.unmunged.target_price && this.unmunged.stop_price)
       assert(this.unmunged.target_price.isGreaterThan(this.unmunged.stop_price));
 
+    if(this.soft_entry) assert(this.unmunged.buy_price);
 
     this.set_exchange_info(exchange_info)
+  }
+
+
+  print_trade_for_user() {
+    try {
+      let { trading_rules } = this;
+      let { buy_price, stop_price, target_price } = this.trade_definition.munged;
+      if (this.trading_rules) {
+        this.logger.info(
+          `Max portfolio loss per trade: ${this.trading_rules.max_allowed_portfolio_loss_percentage_per_trade}%`
+        );
+      }
+      this.algo_utils.calculate_percentages({
+        buy_price,
+        stop_price,
+        target_price,
+        trading_rules
+      });
+      let buy_msg = this.trade_definition.munged.buy_price ? `buy: ${this.trade_definition.munged.buy_price}` : "";
+      let stop_msg = this.trade_definition.munged.stop_price ? `stop: ${this.trade_definition.munged.stop_price}` : "";
+      let target_msg = this.trade_definition.munged.target_price ? `target: ${this.trade_definition.munged.target_price}` : "";
+      this.send_message(
+        `${this.trade_definition.pair} Executing: ${buy_msg} ${stop_msg} ${target_msg}`
+      );
+    } catch (error) {
+      this.logger.warn(error); // eat the error, this is non-essential
+    }
   }
 }

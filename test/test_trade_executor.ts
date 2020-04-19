@@ -1,9 +1,13 @@
-"use strict";
-const chai = require("chai");
-chai.use(require("chai-bignumber")());
-const expect = chai.expect;
+/// <reference types="../chai-bignumber" />
 
-const BigNumber = require("bignumber.js");
+import { expect } from 'chai'
+import * as chai from 'chai'
+
+const chaiBignumber = require("chai-bignumber");
+
+chai.use(chaiBignumber());
+
+import BigNumber from "bignumber.js";
 
 const ExchangeEmulator = require("../lib/exchange_emulator");
 const TradeDefinition = require("../classes/trade_definition");
@@ -12,20 +16,13 @@ const {
   NotImplementedError,
   InsufficientBalanceError
 } = require("../lib/errors");
-// const async_error_handler = require('../lib/async_error_handler');
-const utils = require("../lib/utils");
+
 const fs = require("fs");
 const TradeExecutor = require("../lib/trade_executor");
 const { initialiser: trade_state_initialiser } = require("../classes/redis_trade_state");
 
 const logger = new Logger({ silent: false });
 const null_logger = new Logger({ silent: true });
-
-// Tests needed:
-// .exchangeInfo
-// .order(args)
-// .ws.aggTrades([ pair ], (trade) => {
-// .ws.user((data) => {
 
 const default_base_currency = "ETH";
 const default_quote_currency = "BTC";
@@ -35,16 +32,16 @@ const exchange_info = JSON.parse(
 );
 
 const permissive_trading_rules = {
-  max_allowed_portfolio_loss_percentage_per_trade: BigNumber(100),
+  max_allowed_portfolio_loss_percentage_per_trade: new BigNumber(100),
   allowed_to_trade_without_stop: true
 };
 
-let default_stop_limt_price_factor = BigNumber("0.8"); // hard coded default in algo atm
+let default_stop_limt_price_factor = new BigNumber("0.8"); // hard coded default in algo atm
 
-let message_queue = [];
+let message_queue: string[] = [];
 function fresh_message_queue() {
   message_queue = [];
-  return msg => {
+  return (msg: string) => {
     message_queue.push(msg);
   };
 }
@@ -53,13 +50,13 @@ function most_recent_message() {
   return message_queue[message_queue.length - 1];
 }
 
-function aggrivate_price(price) {
-  return BigNumber(price).plus("0.00000001"); // will trigger the PRICE_FILTER unless prices are munged
+function aggrivate_price(price:BigNumber) {
+  return new BigNumber(price).plus("0.00000001"); // will trigger the PRICE_FILTER unless prices are munged
 }
-function aggrivate_amount(base_amount) {
-  return BigNumber(base_amount).plus(".0001"); // will trigger the LOT_SIZE unless base_amount is munged
+function aggrivate_amount(base_amount:BigNumber) {
+  return new BigNumber(base_amount).plus(".0001"); // will trigger the LOT_SIZE unless base_amount is munged
 }
-var redis;
+var redis: any;
 beforeEach(function () {
   redis = require("redis-mock").createClient();
 });
@@ -70,7 +67,7 @@ afterEach(function (done) {
 });
 
 describe("TradeExecutor", function () {
-  async function setup({ algo_config, ee_config, no_agitate } = {}) {
+  async function setup({ algo_config, ee_config, no_agitate }: { algo_config: any, ee_config?: any, no_agitate?: Boolean }) {
     ee_config = Object.assign(
       {
         logger: null_logger,
@@ -87,7 +84,7 @@ describe("TradeExecutor", function () {
     } else {
       if (!ee_config.starting_balances) {
         ee_config.starting_balances = {};
-        ee_config.starting_balances[default_quote_currency] = BigNumber(1);
+        ee_config.starting_balances[default_quote_currency] = new BigNumber(1);
       }
     }
     if (ee_config.starting_base_balance)
@@ -157,14 +154,14 @@ describe("TradeExecutor", function () {
     describe("without soft_entry", function () {
       describe("with max_quote_amount_to_buy and without autosize", function () {
         it("creates a buy order for the available quote if it it less than the max specified", async function () {
-          const buy_price = BigNumber(1);
+          const buy_price = new BigNumber(1);
           let { ee, algo } = await setup({
             algo_config: {
               buy_price,
-              max_quote_amount_to_buy: BigNumber(1)
+              max_quote_amount_to_buy: new BigNumber(1)
             },
             ee_config: {
-              starting_quote_balance: BigNumber("0.5")
+              starting_quote_balance: new BigNumber("0.5")
             }
           });
           try {
@@ -183,8 +180,8 @@ describe("TradeExecutor", function () {
         });
       });
       it("creates a buy order when base_amount_to_buy is specified", async function () {
-        const base_amount_to_buy = BigNumber(1);
-        const limit_price = BigNumber(1);
+        const base_amount_to_buy = new BigNumber(1);
+        const limit_price = new BigNumber(1);
         let { ee, algo } = await setup({
           algo_config: {
             base_amount_to_buy,
@@ -215,8 +212,8 @@ describe("TradeExecutor", function () {
       );
       describe("when base_amount_to_buy is supplied", function () {
         it("only creates a buy order when entry price is hit", async function () {
-          const base_amount_to_buy = BigNumber(1);
-          const buy_price = BigNumber(1);
+          const base_amount_to_buy = new BigNumber(1);
+          const buy_price = new BigNumber(1);
           let { ee, algo } = await setup({
             algo_config: {
               base_amount_to_buy,
@@ -252,10 +249,10 @@ describe("TradeExecutor", function () {
           ).to.equal(true);
         });
         it("creates a buy order when entry price is percentage_before_soft_buy_price_to_add_order", async function () {
-          const base_amount_to_buy = BigNumber(1);
-          const buy_price = BigNumber(100);
-          let percentage_before_soft_buy_price_to_add_order = BigNumber("0.5");
-          // let expected_trigger_price = BigNumber('100.5');
+          const base_amount_to_buy = new BigNumber(1);
+          const buy_price = new BigNumber(100);
+          let percentage_before_soft_buy_price_to_add_order = new BigNumber("0.5");
+          // let expected_trigger_price = new BigNumber('100.5');
           let { ee, algo } = await setup({
             algo_config: {
               base_amount_to_buy,
@@ -278,7 +275,7 @@ describe("TradeExecutor", function () {
           try {
             await ee.set_current_price({
               symbol: default_pair,
-              price: BigNumber("100.4")
+              price: new BigNumber("100.4")
             });
           } catch (e) {
             console.log(e);
@@ -314,8 +311,8 @@ describe("TradeExecutor", function () {
     );
     describe("when base_amount_to_buy is supplied", function () {
       it("creates a stop limit sell order after the buy order hits", async function () {
-        const base_amount_to_buy = BigNumber(1);
-        const buy_price = BigNumber(1);
+        const base_amount_to_buy = new BigNumber(1);
+        const buy_price = new BigNumber(1);
         const stop_price = buy_price.div(2);
         let { ee, algo } = await setup({
           algo_config: {
@@ -360,16 +357,16 @@ describe("TradeExecutor", function () {
       "VERY IMPORTANT has been updated to have stop order with limit price of zero or market orders"
     );
     it("buys using the available quote if it it less than the max specified", async function () {
-      const buy_price = BigNumber(1);
+      const buy_price = new BigNumber(1);
       const stop_price = buy_price.div(2);
       let { ee, algo } = await setup({
         algo_config: {
           buy_price,
           stop_price,
-          max_quote_amount_to_buy: BigNumber(1)
+          max_quote_amount_to_buy: new BigNumber(1)
         },
         ee_config: {
-          starting_quote_balance: BigNumber("0.5")
+          starting_quote_balance: new BigNumber("0.5")
         }
       });
       try {
@@ -390,8 +387,8 @@ describe("TradeExecutor", function () {
   describe("when only a buy_price and a target_price present", function () {
     describe("when base_amount_to_buy is supplied", function () {
       it("creates a limit sell order after the buy order hits", async function () {
-        const base_amount_to_buy = BigNumber(1);
-        const buy_price = BigNumber(1);
+        const base_amount_to_buy = new BigNumber(1);
+        const buy_price = new BigNumber(1);
         const target_price = buy_price.times(2);
         let { ee, algo } = await setup({
           algo_config: {
@@ -444,11 +441,11 @@ describe("TradeExecutor", function () {
 
     describe("when base_amount_imported is supplied", function () {
       it("creates a stop order", async function () {
-        const base_amount_imported = BigNumber(1);
-        const stop_price = BigNumber("0.5");
+        const base_amount_imported = new BigNumber(1);
+        const stop_price = new BigNumber("0.5");
         let { ee, algo } = await setup({
           ee_config: {
-            starting_base_balance: BigNumber(1)
+            starting_base_balance: new BigNumber(1)
           },
           algo_config: {
             base_amount_imported,
@@ -481,8 +478,8 @@ describe("TradeExecutor", function () {
   describe("when only a target_price present", function () {
     describe("when base_amount_imported is supplied", function () {
       it("creates a limit sell order and returns", async function () {
-        const base_amount_imported = BigNumber(1);
-        const target_price = BigNumber("2");
+        const base_amount_imported = new BigNumber(1);
+        const target_price = new BigNumber("2");
         let { ee, algo } = await setup({
           ee_config: {
             starting_base_balance: base_amount_imported
@@ -518,9 +515,9 @@ describe("TradeExecutor", function () {
     // The order is already in the books for the stop
     describe("when base_amount_imported is supplied", function () {
       it("sends a message when the stop_price is hit (currently only notifies when order is placed/filled)", async function () {
-        const base_amount_imported = BigNumber(1);
-        const stop_price = BigNumber("0.5");
-        const target_price = BigNumber(2);
+        const base_amount_imported = new BigNumber(1);
+        const stop_price = new BigNumber("0.5");
+        const target_price = new BigNumber(2);
         let { ee, algo } = await setup({
           algo_config: {
             pair: default_pair,
@@ -543,9 +540,9 @@ describe("TradeExecutor", function () {
         expect(message_queue).to.include(`${default_pair} stop price hit`);
       });
       it("sends a message when the target_price is hit (currently only notifies when order is placed/filled)", async function () {
-        const base_amount_imported = BigNumber(1);
-        const stop_price = BigNumber("0.5");
-        const target_price = BigNumber(2);
+        const base_amount_imported = new BigNumber(1);
+        const stop_price = new BigNumber("0.5");
+        const target_price = new BigNumber(2);
         let { ee, algo } = await setup({
           algo_config: {
             pair: default_pair,
@@ -590,8 +587,8 @@ describe("TradeExecutor", function () {
     describe("without soft entry", function () {
       describe("when base_amount_to_buy is supplied", function () {
         it("creates a stop limit sell order after the buy order hits", async function () {
-          const base_amount_to_buy = BigNumber(1);
-          const buy_price = BigNumber(1);
+          const base_amount_to_buy = new BigNumber(1);
+          const buy_price = new BigNumber(1);
           const stop_price = buy_price.times("0.5");
           const target_price = buy_price.times(2);
           let { ee, algo } = await setup({
@@ -650,8 +647,8 @@ describe("TradeExecutor", function () {
           // TODO: Sends a message?
           // TODO: what if we retrace to the stop price before the order is filled?
           // TODO: what if the target_price limit order gets partially filled and then we retrace to the stop price?
-          const base_amount_to_buy = BigNumber(1);
-          const buy_price = BigNumber(1);
+          const base_amount_to_buy = new BigNumber(1);
+          const buy_price = new BigNumber(1);
           const stop_price = buy_price.times("0.5");
           const target_price = buy_price.times(2);
           let { ee, algo } = await setup({
@@ -724,8 +721,8 @@ describe("TradeExecutor", function () {
       it("doesnt buy if price is below the stop_price");
       describe("when base_amount_to_buy is supplied", function () {
         it("creates a limit buy order only after the buy price hits", async function () {
-          const base_amount_to_buy = BigNumber(1);
-          const buy_price = BigNumber(1);
+          const base_amount_to_buy = new BigNumber(1);
+          const buy_price = new BigNumber(1);
           const stop_price = buy_price.times("0.5");
           const target_price = buy_price.times(2);
           let { ee, algo } = await setup({
@@ -771,8 +768,8 @@ describe("TradeExecutor", function () {
         });
 
         it("creates a stop limit sell order after the buy order hits, and sends a message when the stop fills", async function () {
-          const base_amount_to_buy = BigNumber(1);
-          const buy_price = BigNumber(1);
+          const base_amount_to_buy = new BigNumber(1);
+          const buy_price = new BigNumber(1);
           const stop_price = buy_price.times("0.5");
           const target_price = buy_price.times(2);
           let { ee, algo } = await setup({
@@ -838,8 +835,8 @@ describe("TradeExecutor", function () {
           // TODO: Sends a message?
           // TODO: what if we retrace to the stop price before the order is filled?
           // TODO: what if the target_price limit order gets partially filled and then we retrace to the stop price?
-          const base_amount_to_buy = BigNumber(1);
-          const buy_price = BigNumber(1);
+          const base_amount_to_buy = new BigNumber(1);
+          const buy_price = new BigNumber(1);
           const stop_price = buy_price.times("0.5");
           const target_price = buy_price.times(2);
           let { ee, algo } = await setup({
@@ -942,10 +939,10 @@ describe("TradeExecutor", function () {
 
     describe("without soft_entry", function () {
       it("creates buy order for the max base_amount to buy based on portfolio value and stop_percentage", async function () {
-        const buy_price = BigNumber(1);
+        const buy_price = new BigNumber(1);
         const stop_price = buy_price.times("0.98");
         const trading_rules = {
-          max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
+          max_allowed_portfolio_loss_percentage_per_trade: new BigNumber(1)
         };
         let { ee, algo } = await setup({
           algo_config: {
@@ -956,7 +953,7 @@ describe("TradeExecutor", function () {
             auto_size: true
           },
           ee_config: {
-            starting_quote_balance: BigNumber(1)
+            starting_quote_balance: new BigNumber(1)
           }
         });
         try {
@@ -977,10 +974,10 @@ describe("TradeExecutor", function () {
 
     describe("with soft_entry", function () {
       it("creates buy order for the max base_amount to buy based on portfolio value and stop_percentage", async function () {
-        const buy_price = BigNumber(1);
+        const buy_price = new BigNumber(1);
         const stop_price = buy_price.times("0.98");
         const trading_rules = {
-          max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
+          max_allowed_portfolio_loss_percentage_per_trade: new BigNumber(1)
         };
         let { ee, algo } = await setup({
           algo_config: {
@@ -992,7 +989,7 @@ describe("TradeExecutor", function () {
             auto_size: true
           },
           ee_config: {
-            starting_quote_balance: BigNumber(1)
+            starting_quote_balance: new BigNumber(1)
           }
         });
         try {
@@ -1013,10 +1010,10 @@ describe("TradeExecutor", function () {
       });
       describe("with base balances too (hack: using default base currency)", function () {
         it("calculates the max base_amount to buy based on portfolio value and stop_percentage", async function () {
-          const buy_price = BigNumber(4);
+          const buy_price = new BigNumber(4);
           const stop_price = buy_price.times("0.96");
           const trading_rules = {
-            max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)
+            max_allowed_portfolio_loss_percentage_per_trade: new BigNumber(1)
           };
           let { ee, algo } = await setup({
             algo_config: {
@@ -1028,8 +1025,8 @@ describe("TradeExecutor", function () {
               auto_size: true
             },
             ee_config: {
-              starting_quote_balance: BigNumber(20),
-              starting_base_balance: BigNumber(10) // where exchange has an ETHBTC pair
+              starting_quote_balance: new BigNumber(20),
+              starting_base_balance: new BigNumber(10) // where exchange has an ETHBTC pair
               // TODO: add another pairing rather than the default_pair. NB needs EE refactor
             }
           });
@@ -1048,7 +1045,7 @@ describe("TradeExecutor", function () {
           expect(ee.open_orders).to.have.lengthOf(1);
           expect(ee.open_orders[0].type).to.equal("LIMIT");
           expect(ee.open_orders[0].side).to.equal("BUY");
-          let base_quantity = BigNumber(15).dividedBy(buy_price);
+          let base_quantity = new BigNumber(15).dividedBy(buy_price);
           expect(ee.open_orders[0].origQty).to.bignumber.equal(base_quantity);
         });
       });

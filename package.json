@@ -3,8 +3,8 @@
   "main": "service.js",
   "bin": "create-trade.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha --forbid-only -r ts-node/register",
-    "test-only": "./node_modules/.bin/mocha -r ts-node/register"
+    "test": "./node_modules/.bin/mocha --forbid-only -r ts-node/register ./test/test_*",
+    "test-only": "./node_modules/.bin/mocha -r ts-node/register ./test/test_*"
   },
   "dependencies": {
     "@sentry/node": "5.15.2",

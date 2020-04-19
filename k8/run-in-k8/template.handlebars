@@ -11,7 +11,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: {{container_name}}
-        image: {{docker_image}}
+        image: {{docker_image}}:stable
         command: ["node",  "service.js", "--trade-id", "{{trade_id}}", "--live"]
         env:
         - name: TELEGRAM_KEY

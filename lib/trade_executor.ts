@@ -49,7 +49,6 @@ class TradeExecutor {
     assert(trade_definition);
 
     var {
-      pair,
       max_quote_amount_to_buy,
       buy_price,
       stop_price,
@@ -61,7 +60,6 @@ class TradeExecutor {
     this.trading_rules = trading_rules;
 
     //---
-    this.pair = pair;
     this.max_quote_amount_to_buy = max_quote_amount_to_buy;
     this.buy_price = buy_price;
     this.stop_price = stop_price;
@@ -96,8 +94,6 @@ class TradeExecutor {
     assert(trading_rules);
 
     this.algo_utils = new AlgoUtils({ logger, ee });
-
-    this.pair = pair = this.pair.toUpperCase();
 
     if (buy_price) assert(!buy_price.isZero()); // depricated way of specifying a market buy
     if (buy_price && stop_price) assert(stop_price.isLessThan(buy_price));
@@ -212,7 +208,7 @@ class TradeExecutor {
       });
       console.log(`base_amount: ${base_amount.toFixed()}`);
       let response = await this.algo_utils.create_limit_buy_order({
-        pair: this.pair,
+        pair: this.trade_definition.pair,
         base_amount,
         price
       });
@@ -232,7 +228,7 @@ class TradeExecutor {
         price
       });
       let response = await this.algo_utils.create_limit_sell_order({
-        pair: this.pair,
+        pair: this.trade_definition.pair,
         base_amount,
         price
       });
@@ -277,12 +273,12 @@ class TradeExecutor {
         // SHIT: error placing orders for pair KNCBTC: error
         price = utils.munge_and_check_price({
           exchange_info: this.exchange_info,
-          symbol: this.pair,
+          symbol: this.trade_definition.pair,
           price
         });
       }
       let response = await this.algo_utils.create_stop_loss_limit_sell_order({
-        pair: this.pair,
+        pair: this.trade_definition.pair,
         base_amount,
         price,
         stop_price: this.stop_price
@@ -303,7 +299,7 @@ class TradeExecutor {
       });
       let response = await this.algo_utils.create_market_buy_order({
         base_amount,
-        pair: this.pair
+        pair: this.trade_definition.pair
       });
       return response.orderId;
     } catch (error) {
@@ -387,7 +383,7 @@ class TradeExecutor {
           });
         }
       } catch (error) {
-        let msg = `SHIT: error placing orders for pair ${this.pair}: error`;
+        let msg = `SHIT: error placing orders for pair ${this.trade_definition.pair}: error`;
         this.logger.error(msg);
         this.logger.error(error);
         this.send_message(msg);
@@ -504,31 +500,7 @@ class TradeExecutor {
 
     try {
       let exchange_info = this.exchange_info;
-      let symbol = this.pair;
-
-      if (this.buy_price) {
-        this.buy_price = utils.munge_and_check_price({
-          exchange_info,
-          symbol,
-          price: this.buy_price
-        });
-      }
-
-      if (this.stop_price) {
-        this.stop_price = utils.munge_and_check_price({
-          exchange_info,
-          symbol,
-          price: this.stop_price
-        });
-      }
-
-      if (this.target_price) {
-        this.target_price = utils.munge_and_check_price({
-          exchange_info,
-          symbol,
-          price: this.target_price
-        });
-      }
+      let symbol = this.trade_definition.pair;
 
       this.print_percentages_for_user();
 
@@ -536,7 +508,7 @@ class TradeExecutor {
       let stop_msg = this.stop_price ? `stop: ${this.stop_price}` : "";
       let target_msg = this.target_price ? `target: ${this.target_price}` : "";
       this.send_message(
-        `${this.pair} Executing: ${buy_msg} ${stop_msg} ${target_msg}`
+        `${this.trade_definition.pair} Executing: ${buy_msg} ${stop_msg} ${target_msg}`
       );
       await this.monitor_user_stream();
     } catch (error) {
@@ -589,7 +561,7 @@ class TradeExecutor {
         let report_when_target_price_hit = true;
         let report_when_stop_price_hit = true;
         this.closeTradesWebSocket = await this.ee.ws.aggTrades(
-          [this.pair],
+          [this.trade_definition.pair],
           async function (trade) {
             var { symbol, price } = trade;
             assert(symbol);

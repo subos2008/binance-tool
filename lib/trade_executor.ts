@@ -52,7 +52,7 @@ class TradeExecutor {
 
     assert(trade_state);
     this.trade_state = trade_state;
-    
+
     // require that the user at least pass in trading rules, this allows much
     // more solid code downstream as we can assert that the trading_rules are present,
     // otherwise we would ignore them if they were undefined which leaves the potential
@@ -86,7 +86,7 @@ class TradeExecutor {
 
   print_trade_for_user({ current_price }: { current_price?: BigNumber } = {}) {
     try {
-      let {  trading_rules } = this;
+      let { trading_rules } = this;
       let { buy_price, stop_price, target_price } = this.trade_definition.munged;
       if (current_price) {
         assert(BigNumber.isBigNumber(current_price));
@@ -136,9 +136,9 @@ class TradeExecutor {
       stop_price,
       buy_price,
     } = this.trade_definition.munged;
-    
+
     let { quote_currency, base_currency } = this.algo_utils.split_pair(pair);
-    
+
     if (current_price != null) current_price = new BigNumber(current_price);
     buy_price = current_price ? current_price : buy_price;
     assert(buy_price);
@@ -472,180 +472,162 @@ class TradeExecutor {
     this.algo_utils.set_exchange_info(this.exchange_info);
     this.trade_definition.set_exchange_info(this.exchange_info)
 
-    try {
-      this.print_trade_for_user();
-      await this.monitor_user_stream();
-    } catch (error) {
-      this.logger.error(error);
-      // throw new Error(`exception in setup code: ${error}`);
-      async_error_handler(
-        undefined,
-        `exception in setup code: ${error.body}`,
-        error
-      );
+    this.print_trade_for_user();
+    await this.monitor_user_stream();
+
+    let waiting_for_soft_entry_price = false; // .. = .. buy_price & !buy_orderId & base_amount_bought === 0 & allowed_to_buy ?
+    if (
+      this.trade_definition.munged.buy_price &&
+      !(await this.trade_state.get_buyOrderId()) &&
+      (!(await this.trade_state.get_base_amount_held()) ||
+        (await this.trade_state.get_base_amount_held()).isZero())
+    ) {
+      // Cases:
+      // 1. we should buy and haven't started the process yet (fresh run)
+      // 2. buying is complete and base_amount_held is the full target amount
+      // 3. buyOrderId is non-null and we can catch the order still completing
+      // 4. buyOrderId is non-null but the order already completed
+      ///   it which case we can pull info from the order but we still might have gone into the trade with base_amount_held
+      //    non-null in the beginning and the buy order might have been a top-up
+      if (this.trade_definition.soft_entry) {
+        this.logger.info(
+          `Soft entry mode: waiting for entry price before placing order`
+        );
+        waiting_for_soft_entry_price = true;
+      } else {
+        await this.trade_state.set_buyOrderId(
+          await this._create_limit_buy_order()
+        );
+      }
+    } else {
+      await this.placeSellOrder();
     }
 
-    try {
-      let waiting_for_soft_entry_price = false;
-      if (
-        this.trade_definition.munged.buy_price &&
-        !(await this.trade_state.get_buyOrderId()) &&
-        (!(await this.trade_state.get_base_amount_held()) ||
-          (await this.trade_state.get_base_amount_held()).isZero())
-      ) {
-        // Cases:
-        // 1. we should buy and haven't started the process yet (fresh run)
-        // 2. buying is complete and base_amount_held is the full target amount
-        // 3. buyOrderId is non-null and we can catch the order still completing
-        // 4. buyOrderId is non-null but the order already completed
-        ///   it which case we can pull info from the order but we still might have gone into the trade with base_amount_held
-        //    non-null in the beginning and the buy order might have been a top-up
-        if (this.trade_definition.soft_entry) {
-          this.logger.info(
-            `Soft entry mode: waiting for entry price before placing order`
-          );
-          waiting_for_soft_entry_price = true;
-        } else {
-          await this.trade_state.set_buyOrderId(
-            await this._create_limit_buy_order()
-          );
-        }
-      } else {
-        await this.placeSellOrder();
-      }
+    let isCancelling = false;
 
-      let isCancelling = false;
-
-      // TODO: we don't always need this - only if we have stop and target orders that need monitoring
-      // or we are monitoring for a soft_entry buy price. Soft entry means don't create buy
-      // order until until buy_price is hit
-      // TODO: in some cases we could close this stream when we no longer need it
-      if ((this.stop_price && this.target_price) || this.trade_definition.soft_entry) {
-        let obj = this;
-        let report_when_target_price_hit = true;
-        let report_when_stop_price_hit = true;
-        this.closeTradesWebSocket = await this.ee.ws.aggTrades(
-          [this.trade_definition.pair],
-          async function (trade) {
-            var { symbol, price } = trade;
-            assert(symbol);
-            assert(price);
-            price = BigNumber(price);
-            if (waiting_for_soft_entry_price) {
-              if (
-                price.isLessThanOrEqualTo(
-                  obj.soft_entry_buy_order_trigger_price
-                )
-              ) {
-                waiting_for_soft_entry_price = false;
-                obj.send_message(
-                  `${symbol} soft entry buy order trigger price hit`
-                );
-                await obj.trade_state.set_buyOrderId(
-                  await obj._create_limit_buy_order()
-                );
-              }
-            } else if (await obj.trade_state.get_buyOrderId()) {
-              // obj.logger.info(`${symbol} trade update. price: ${price} buy: ${obj.buy_price}`);
-            } else if (
-              (await obj.trade_state.get_stopOrderId()) ||
-              (await obj.trade_state.get_targetOrderId())
+    // TODO: we don't always need this - only if we have stop and target orders that need monitoring
+    // or we are monitoring for a soft_entry buy price. Soft entry means don't create buy
+    // order until until buy_price is hit
+    // TODO: in some cases we could close this stream when we no longer need it
+    if ((this.stop_price && this.target_price) || this.trade_definition.soft_entry) {
+      let obj = this;
+      let report_when_target_price_hit = true;
+      let report_when_stop_price_hit = true;
+      this.closeTradesWebSocket = await this.ee.ws.aggTrades(
+        [this.trade_definition.pair],
+        async function (trade: { symbol: string, price: string }) {
+          var { symbol, price: string_price } = trade;
+          assert(symbol);
+          assert(string_price);
+          const price = new BigNumber(string_price);
+          if (waiting_for_soft_entry_price) {
+            if (
+              price.isLessThanOrEqualTo(
+                obj.soft_entry_buy_order_trigger_price
+              )
             ) {
-              // obj.logger.info(
-              // 	`${symbol} trade update. price: ${price} stop: ${obj.stop_price} target: ${obj.target_price}`
-              // );
-              if (
-                typeof obj.target_price !== "undefined" &&
-                price.isGreaterThanOrEqualTo(obj.target_price) &&
-                report_when_target_price_hit
-              ) {
-                report_when_target_price_hit = false;
-                let msg = `${symbol} target price hit`;
+              waiting_for_soft_entry_price = false;
+              obj.send_message(
+                `${symbol} soft entry buy order trigger price hit`
+              );
+              await obj.trade_state.set_buyOrderId(
+                await obj._create_limit_buy_order()
+              );
+            }
+          } else if (await obj.trade_state.get_buyOrderId()) {
+            // obj.logger.info(`${symbol} trade update. price: ${price} buy: ${obj.buy_price}`);
+          } else if (
+            (await obj.trade_state.get_stopOrderId()) ||
+            (await obj.trade_state.get_targetOrderId())
+          ) {
+            // obj.logger.info(
+            // 	`${symbol} trade update. price: ${price} stop: ${obj.stop_price} target: ${obj.target_price}`
+            // );
+            if (
+              typeof obj.target_price !== "undefined" &&
+              price.isGreaterThanOrEqualTo(obj.target_price) &&
+              report_when_target_price_hit
+            ) {
+              report_when_target_price_hit = false;
+              let msg = `${symbol} target price hit`;
+              obj.logger.info(msg);
+              obj.send_message(msg);
+            }
+            if (
+              typeof obj.stop_price !== "undefined" &&
+              price.isLessThanOrEqualTo(obj.stop_price) &&
+              report_when_stop_price_hit
+            ) {
+              report_when_stop_price_hit = false;
+              let msg = `${symbol} stop price hit`;
+              obj.logger.info(msg);
+              obj.send_message(msg);
+            }
+            if (
+              typeof obj.target_price !== "undefined" &&
+              (await obj.trade_state.get_stopOrderId()) &&
+              !(await obj.trade_state.get_targetOrderId()) &&
+              price.isGreaterThanOrEqualTo(obj.target_price) &&
+              !isCancelling
+            ) {
+              {
+                let msg = `Event: price >= target_price: cancelling stop and placeTargetOrder()`;
                 obj.logger.info(msg);
                 obj.send_message(msg);
               }
-              if (
-                typeof obj.stop_price !== "undefined" &&
-                price.isLessThanOrEqualTo(obj.stop_price) &&
-                report_when_stop_price_hit
-              ) {
-                report_when_stop_price_hit = false;
-                let msg = `${symbol} stop price hit`;
-                obj.logger.info(msg);
-                obj.send_message(msg);
+              isCancelling = true;
+              try {
+                let stopOrderId = await obj.trade_state.get_stopOrderId();
+                await obj.trade_state.set_stopOrderId(undefined); // Do before await cancelOrder
+                await obj.ee.cancelOrder({ symbol, orderId: stopOrderId });
+                isCancelling = false;
+              } catch (error) {
+                obj.logger.error(`${symbol} cancel error: ${error.body}`);
+                obj.logger.error(error);
+                return;
               }
-              if (
-                typeof obj.target_price !== "undefined" &&
-                (await obj.trade_state.get_stopOrderId()) &&
-                !(await obj.trade_state.get_targetOrderId()) &&
-                price.isGreaterThanOrEqualTo(obj.target_price) &&
-                !isCancelling
-              ) {
-                {
-                  let msg = `Event: price >= target_price: cancelling stop and placeTargetOrder()`;
-                  obj.logger.info(msg);
-                  obj.send_message(msg);
-                }
-                isCancelling = true;
-                try {
-                  let stopOrderId = await obj.trade_state.get_stopOrderId();
-                  await obj.trade_state.set_stopOrderId(undefined); // Do before await cancelOrder
-                  await obj.ee.cancelOrder({ symbol, orderId: stopOrderId });
-                  isCancelling = false;
-                } catch (error) {
-                  obj.logger.error(`${symbol} cancel error: ${error.body}`);
-                  obj.logger.error(error);
-                  return;
-                }
-                try {
-                  await obj.trade_state.set_targetOrderId(
-                    await obj.placeTargetOrder()
-                  );
-                } catch (error) {
-                  async_error_handler(
-                    obj.logger,
-                    `error placing order: ${error.body}`,
-                    error
-                  );
-                }
-              } else if (
-                (await obj.trade_state.get_targetOrderId()) &&
-                !(await obj.trade_state.get_stopOrderId()) &&
-                price.isLessThanOrEqualTo(obj.stop_price) &&
-                !isCancelling
-              ) {
-                isCancelling = true;
-                try {
-                  let targetOrderId = await obj.trade_state.get_targetOrderId();
-                  await obj.trade_state.set_targetOrderId(undefined); // Do before await cancelOrder
-                  await obj.ee.cancelOrder({ symbol, orderId: targetOrderId });
-                  isCancelling = false;
-                } catch (error) {
-                  obj.logger.error(`${symbol} cancel error ${error.body}`);
-                  return;
-                }
-                obj.logger.info(`${symbol} cancel response: ${response}`);
-                try {
-                  await obj.trade_state.set_stopOrderId(
-                    await obj.placeStopOrder()
-                  );
-                } catch (error) {
-                  async_error_handler(
-                    obj.logger,
-                    `error placing order: ${error.body}`,
-                    error
-                  );
-                }
+              try {
+                await obj.trade_state.set_targetOrderId(
+                  await obj.placeTargetOrder()
+                );
+              } catch (error) {
+                async_error_handler(
+                  obj.logger,
+                  `error placing order: ${error.body}`,
+                  error
+                );
+              }
+            } else if (
+              (await obj.trade_state.get_targetOrderId()) &&
+              !(await obj.trade_state.get_stopOrderId()) &&
+              price.isLessThanOrEqualTo(obj.stop_price) &&
+              !isCancelling
+            ) {
+              isCancelling = true;
+              try {
+                let targetOrderId = await obj.trade_state.get_targetOrderId();
+                await obj.trade_state.set_targetOrderId(undefined); // Do before await cancelOrder
+                await obj.ee.cancelOrder({ symbol, orderId: targetOrderId });
+                isCancelling = false;
+              } catch (error) {
+                obj.logger.error(`${symbol} cancel error ${error.body}`);
+                return;
+              }
+              obj.logger.info(`${symbol} cancel response: ${response}`);
+              try {
+                await obj.trade_state.set_stopOrderId(
+                  await obj.placeStopOrder()
+                );
+              } catch (error) {
+                async_error_handler(
+                  obj.logger,
+                  `error placing order: ${error.body}`,
+                  error
+                );
               }
             }
           }
-        );
-      }
-    } catch (error) {
-      async_error_handler(
-        this.logger,
-        `exception in main loop: ${error.body}`,
-        error
+        }
       );
     }
   }

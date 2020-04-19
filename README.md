@@ -80,8 +80,9 @@ Sized trade at 0.01178127 USDT, 0.00064577 BNB
 (node:1) [DEP0018] DeprecationWarning: Unhandled promise rejections are deprecated. In the future, promise rejections that are not handled will terminate the Node.js process with a non-zero exit code.
 ```
 
-aha - I could break out the service that watches for executed trades. load from redis the order
-numbers and update the position held data.
+- aha - I could break out the service that watches for executed trades. load from redis the order
+numbers and update the position held data.this is nice because its oer trade data being managed by a shared process.
+- if a buyOrder gets cancelled do we want to add something to the trade state? `buyCancelled`, `buyingComplete`, `buyingAllowed = false`? 
 
 ## states
 

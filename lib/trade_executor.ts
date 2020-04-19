@@ -64,8 +64,8 @@ class TradeExecutor {
 
     // TODO: these trigger prices and munging ... their own class?
     if (this.trade_definition.soft_entry) {
-      assert(this.buy_price);
-      this.soft_entry_buy_order_trigger_price = this.buy_price.times(
+      assert(this.trade_definition.unmunged.buy_price);
+      this.soft_entry_buy_order_trigger_price = this.trade_definition.unmunged.buy_price.times(
         new BigNumber(100)
           .plus(percentage_before_soft_buy_price_to_add_order)
           .div(100)
@@ -84,9 +84,10 @@ class TradeExecutor {
     });
   }
 
-  print_percentages_for_user({ current_price }: { current_price?: BigNumber } = {}) {
+  print_trade_for_user({ current_price }: { current_price?: BigNumber } = {}) {
     try {
-      let { buy_price, stop_price, target_price, trading_rules } = this;
+      let {  trading_rules } = this;
+      let { buy_price, stop_price, target_price } = this.trade_definition.munged;
       if (current_price) {
         assert(BigNumber.isBigNumber(current_price));
         buy_price = current_price;
@@ -102,6 +103,12 @@ class TradeExecutor {
         target_price,
         trading_rules
       });
+      let buy_msg = this.trade_definition.munged.buy_price ? `buy: ${this.trade_definition.munged.buy_price}` : "";
+      let stop_msg = this.trade_definition.munged.stop_price ? `stop: ${this.trade_definition.munged.stop_price}` : "";
+      let target_msg = this.trade_definition.munged.target_price ? `target: ${this.trade_definition.munged.target_price}` : "";
+      this.send_message(
+        `${this.trade_definition.pair} Executing: ${buy_msg} ${stop_msg} ${target_msg}`
+      );
     } catch (error) {
       this.logger.warn(error); // eat the error, this is non-essential
     }
@@ -166,8 +173,8 @@ class TradeExecutor {
   async _create_limit_buy_order() {
     try {
       assert(!(await this.trade_state.get_buyOrderId()));
-      assert(this.buy_price && !this.buy_price.isZero());
-      let price = this.buy_price;
+      assert(this.trade_definition.munged.buy_price && !this.trade_definition.munged.buy_price.isZero());
+      let price = this.trade_definition.munged.buy_price;
       let { base_amount } = await this.size_position();
       base_amount = this._munge_amount_and_check_notionals({
         base_amount,
@@ -262,7 +269,7 @@ class TradeExecutor {
       let { base_amount } = await this.size_position();
       base_amount = this._munge_amount_and_check_notionals({
         base_amount,
-        buy_price: this.buy_price
+        buy_price: this.trade_definition.munged.buy_price
       });
       let response = await this.algo_utils.create_market_buy_order({
         base_amount,
@@ -466,17 +473,7 @@ class TradeExecutor {
     this.trade_definition.set_exchange_info(this.exchange_info)
 
     try {
-      let exchange_info = this.exchange_info;
-      let symbol = this.trade_definition.pair;
-
-      this.print_percentages_for_user();
-
-      let buy_msg = this.buy_price ? `buy: ${this.buy_price}` : "";
-      let stop_msg = this.stop_price ? `stop: ${this.stop_price}` : "";
-      let target_msg = this.target_price ? `target: ${this.target_price}` : "";
-      this.send_message(
-        `${this.trade_definition.pair} Executing: ${buy_msg} ${stop_msg} ${target_msg}`
-      );
+      this.print_trade_for_user();
       await this.monitor_user_stream();
     } catch (error) {
       this.logger.error(error);
@@ -491,7 +488,7 @@ class TradeExecutor {
     try {
       let waiting_for_soft_entry_price = false;
       if (
-        this.buy_price &&
+        this.trade_definition.munged.buy_price &&
         !(await this.trade_state.get_buyOrderId()) &&
         (!(await this.trade_state.get_base_amount_held()) ||
           (await this.trade_state.get_base_amount_held()).isZero())

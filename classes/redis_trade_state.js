@@ -13,6 +13,7 @@ BigNumber.prototype.valueOf = function() {
 
 class TradeState {
   constructor({ logger, redis, trade_id } = {}) {
+    // NB: base_amount_imported is handled by initialiser()
     assert(logger);
     this.logger = logger;
     assert(redis);
@@ -159,15 +160,21 @@ class TradeState {
 }
 
 async function initialiser(params = {}) {
-  const { logger, redis, trade_id, base_amount_imported, base_amount_held } = params;
+  const { logger, redis, trade_id, trade_definition } = params;
   assert(redis);
   assert(trade_id);
   assert(logger);
-  assert(base_amount_imported); // BigNumber
-  assert(base_amount_held === null); // depricated
+  assert(trade_definition);
   const trade_state = new TradeState({ logger, redis, trade_id });
-  await trade_state.set_base_amount_imported(base_amount_imported);
+  let base_amount_imported = trade_definition.base_amount_imported; // BigNumber
+  if(base_amount_imported) {
+    logger.info(`TradeState setting base_amount_imported (${base_amount_imported})`)
+    await trade_state.set_base_amount_imported(base_amount_imported);
+  }else {
+    logger.info(`TradeState no base_amount_imported.`)
+  }
+  return trade_state
 }
 
-// a bit unorthodox maybe ;-/
-module.exports = { TradeState, initialiser };
+// a bit unorthodox maybe, basically a factory method to force the calling of async initialiser
+module.exports = {  initialiser };

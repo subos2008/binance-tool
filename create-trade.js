@@ -44,11 +44,11 @@ const { argv } = require("yargs")
   .describe("p", "Set trading pair eg. BNBBTC")
   // '-a <base_amount>'
   .string("a")
-  .alias("a", "base_amount_held")
-  .default("base_amount_held", "0")
+  .alias("a", "base_amount_imported")
+  .default("base_amount_imported", "0")
   .describe(
     "a",
-    "Set base_amount_held - balance imported into the trade (a pair is BASEQUOTE)"
+    "Set base_amount_imported - balance imported into the trade (a pair is BASEQUOTE)"
   )
   // '-q <quote_amount>'
   .string("q")
@@ -95,7 +95,7 @@ const { argv } = require("yargs")
   .default("launch", true);
 let {
   p: pair,
-  a: base_amount_held,
+  a: base_amount_imported,
   q: max_quote_amount_to_buy,
   b: buy_price,
   s: stop_price,
@@ -108,7 +108,7 @@ let {
 
 const trade_definition = {
   pair,
-  base_amount_held, // not used in the trade defn but stored there
+  base_amount_imported,
   max_quote_amount_to_buy,
   buy_price,
   stop_price,
@@ -141,12 +141,12 @@ async function main() {
     console.log(trade_definition);
     await hmsetAsync(redis_key, trade_definition_as_list);
 
-    base_amount_held = BigNumber(base_amount_held);
+    base_amount_imported = BigNumber(base_amount_imported);
     await trade_state_initialiser({
       redis: client,
       logger,
       trade_id,
-      base_amount_held
+      base_amount_imported
     });
 
     if (launch) {

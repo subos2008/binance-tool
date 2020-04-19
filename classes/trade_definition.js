@@ -8,17 +8,7 @@ const assert = require("assert");
 // nonBnbFees,
 // soft_entry,
 // auto_size
-// base_amount, // can be either the amount to buy or sell depending on other args
-// base_amount, // depricated
-
-// if (trade_definition.buy_price) {
-//   if (trade_definition.base_amount)
-//     te_args.base_amount_to_buy = BigNumber(trade_definition.base_amount);
-// } else {
-//   if (trade_definition.base_amount)
-//     te_args.base_amount_held = BigNumber(trade_definition.base_amount);
-// }
-// delete te_args.base_amount;
+// base_amount_imported, 
 
 const BigNumber = require("bignumber.js");
 BigNumber.DEBUG = true; // Prevent NaN
@@ -32,7 +22,7 @@ class TradeDefinition {
     let {
       pair,
       // base_amount_to_buy, // pretty much depricated
-      //  base_amount_held, may also be supplied but isn't used, it's mirrored in the trade_state instead
+      base_amount_imported,
       max_quote_amount_to_buy,
       buy_price,
       stop_price,
@@ -47,7 +37,10 @@ class TradeDefinition {
     auto_size = stringToBool(auto_size);
     soft_entry = stringToBool(soft_entry);
 
-    // this.base_amount_held = BigNumber(base_amount_held); // this is in trade_state now
+    if(base_amount_imported) {
+      console.log(`Oooh, trade_definition with base_amount_imported (${base_amount_imported})`)
+      this.base_amount_imported = BigNumber(base_amount_imported);
+    }
     this.pair = pair;
     if (max_quote_amount_to_buy)
       this.max_quote_amount_to_buy = BigNumber(max_quote_amount_to_buy);
@@ -57,9 +50,9 @@ class TradeDefinition {
     this.soft_entry = soft_entry;
     this.auto_size = auto_size;
 
-    if (this.buy_price.isZero()) {
+    if (this.buy_price && this.buy_price.isZero()) {
       throw new Error(
-        `buy_price of 0 as request for a market buy is depricated. Execute your market buy prior to the trade and pass base_amount_held instead`
+        `buy_price of 0 as request for a market buy is depricated. Execute your market buy prior to the trade and pass base_amount_imported instead`
       );
     }
   }

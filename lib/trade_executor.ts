@@ -46,62 +46,23 @@ class TradeExecutor {
 
     assert(ee);
     this.ee = ee;
-    assert(trade_definition);
 
-    var {
-      max_quote_amount_to_buy,
-      buy_price,
-      stop_price,
-      target_price,
-    } = trade_definition;
     assert(trade_definition)
     this.trade_definition = trade_definition
 
-    this.trading_rules = trading_rules;
-
-    //---
-    this.max_quote_amount_to_buy = max_quote_amount_to_buy;
-    this.buy_price = buy_price;
-    this.stop_price = stop_price;
-    this.target_price = target_price;
-    this.nonBnbFees = nonBnbFees;
-    //---
-
     assert(trade_state);
     this.trade_state = trade_state;
-
-    if (max_quote_amount_to_buy) {
-      this.max_quote_amount_to_buy = max_quote_amount_to_buy = new BigNumber(
-        max_quote_amount_to_buy
-      );
-    }
-
-    if (buy_price) {
-      this.buy_price = buy_price = new BigNumber(buy_price);
-    }
-
-    if (stop_price) {
-      this.stop_price = stop_price = new BigNumber(stop_price);
-    }
-    if (target_price) {
-      this.target_price = target_price = new BigNumber(target_price);
-    }
-
+    
     // require that the user at least pass in trading rules, this allows much
     // more solid code downstream as we can assert that the trading_rules are present,
     // otherwise we would ignore them if they were undefined which leaves the potential
     // for massive fuckups
     assert(trading_rules);
+    this.trading_rules = trading_rules;
 
     this.algo_utils = new AlgoUtils({ logger, ee });
 
-    if (buy_price) assert(!buy_price.isZero()); // depricated way of specifying a market buy
-    if (buy_price && stop_price) assert(stop_price.isLessThan(buy_price));
-    if (target_price && buy_price)
-      assert(target_price.isGreaterThan(buy_price));
-    if (target_price && stop_price)
-      assert(target_price.isGreaterThan(stop_price));
-
+    // TODO: these trigger prices and munging ... their own class?
     if (this.trade_definition.soft_entry) {
       assert(this.buy_price);
       this.soft_entry_buy_order_trigger_price = this.buy_price.times(
@@ -156,19 +117,25 @@ class TradeExecutor {
   async size_position(
     { current_price }: { current_price?: string | BigNumber } = {}
   ) {
-    if (current_price) current_price = new BigNumber(current_price); // rare usage, be resilient
+    let {
+      trading_rules,
+    } = this;
     let {
       pair,
-      trading_rules,
+      max_quote_amount_to_buy,
+      auto_size
+    } = this.trade_definition;
+    let {
       stop_price,
       buy_price,
-      max_quote_amount_to_buy
-    } = this;
-
+    } = this.trade_definition.munged;
+    
     let { quote_currency, base_currency } = this.algo_utils.split_pair(pair);
-
+    
+    if (current_price != null) current_price = new BigNumber(current_price);
     buy_price = current_price ? current_price : buy_price;
     assert(buy_price);
+
     try {
       let {
         base_amount,
@@ -177,7 +144,7 @@ class TradeExecutor {
         Object.assign(
           {
             trading_rules,
-            auto_size: this.trade_definition.auto_size,
+            auto_size,
             buy_price,
             stop_price,
             quote_currency,

@@ -27,7 +27,7 @@ export class TradeDefinition {
   max_quote_amount_to_buy: BigNumber | null
   soft_entry: Boolean
   auto_size: Boolean
-  munged: MungedPrices | null
+  munged: MungedPrices
   unmunged: { buy_price: BigNumber | null, stop_price: BigNumber | null, target_price: BigNumber | null }
 
   set_exchange_info(exchange_info:any){
@@ -85,6 +85,14 @@ export class TradeDefinition {
         `buy_price of 0 as request for a market buy is depricated. Execute your market buy prior to the trade and pass base_amount_imported instead`
       );
     }
+
+    if (this.unmunged.buy_price) assert(!this.unmunged.buy_price.isZero()); // depricated way of specifying a market buy
+    if (this.unmunged.buy_price && this.unmunged.stop_price) assert(this.unmunged.stop_price.isLessThan(this.unmunged.buy_price));
+    if (this.unmunged.target_price && this.unmunged.buy_price)
+      assert(this.unmunged.target_price.isGreaterThan(this.unmunged.buy_price));
+    if (this.unmunged.target_price && this.unmunged.stop_price)
+      assert(this.unmunged.target_price.isGreaterThan(this.unmunged.stop_price));
+
 
     this.set_exchange_info(exchange_info)
   }

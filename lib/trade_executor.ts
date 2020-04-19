@@ -20,6 +20,7 @@ class TradeExecutor {
   logger: Logger
   send_message: (msg: string) => void
   ee: any
+  exchange_info: any
   trade_state: TradeState
   trading_rules: TradingRules
   trade_definition: TradeDefinition
@@ -497,16 +498,9 @@ class TradeExecutor {
   }
 
   async main() {
-    try {
-      this.exchange_info = await this.ee.exchangeInfo();
-      this.algo_utils.set_exchange_info(this.exchange_info);
-    } catch (error) {
-      async_error_handler(
-        this.logger,
-        "Error could not pull exchange info",
-        error
-      );
-    }
+    this.exchange_info = await this.ee.exchangeInfo();
+    this.algo_utils.set_exchange_info(this.exchange_info);
+    this.trade_definition.set_exchange_info(this.exchange_info)
 
     try {
       let exchange_info = this.exchange_info;

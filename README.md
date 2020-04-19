@@ -29,6 +29,7 @@ First target is getting orderId's in redis.
 
 - rename `base_amount_held` to `base_amount_imported` and add amount bought tracking separately.
 - if we split the price movement into it's own process and have services send an event to the main trade process when there's something it needs to know - then we can do away with the behaviour of checking `trades*:*OrderId` every price tick.
+- if `*:*orderId`s are already set we would need to cancel our order. disasterous though (concurrency issue) would be better to have some way of preventing concurrent placing of orders - such as setting something before creating the order.
 - typescript
 - re-entrant when sell orders are present
 - promise return from send_message so I can quit after messages are delivered

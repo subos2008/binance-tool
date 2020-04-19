@@ -33,8 +33,12 @@ class TradeState {
         return `trades:${this.trade_id}:open_orders:stopOrderId`;
       case "targetOrderId":
         return `trades:${this.trade_id}:open_orders:targetOrderId`;
-      case "base_amount_held":
-        return `trades:${this.trade_id}:position:base_amount_held`;
+      case "base_amount_imported":
+        return `trades:${this.trade_id}:position:base_amount_imported`;
+      case "base_amount_bought":
+        return `trades:${this.trade_id}:position:base_amount_bought`;
+      case "base_amount_sold":
+        return `trades:${this.trade_id}:position:base_amount_sold`;
       case "trade_completed":
         return `trades:${this.trade_id}:completed`;
       default:
@@ -108,14 +112,26 @@ class TradeState {
     return stringToBool(await this.get_redis_key(key));
   }
 
-  // returns BigNumber, 0 on null
   async get_base_amount_held() {
-    const key = this.name_to_key("base_amount_held");
-    return BigNumber((await this.get_redis_key(key)) || 0);
+    let sum = BigNumber(0)
+    sum = sum.plus((await this.get_redis_key(this.name_to_key("base_amount_imported"))) || 0)
+    sum = sum.plus((await this.get_redis_key(this.name_to_key("base_amount_bought"))) || 0)
+    sum = sum.minus((await this.get_redis_key(this.name_to_key("base_amount_sold"))) || 0)
+    return sum;
   }
 
-  async set_base_amount_held(bignum_value) {
-    const key = this.name_to_key("base_amount_held");
+  async set_base_amount_imported(bignum_value) {
+    const key = this.name_to_key("base_amount_imported");
+    await this.set_redis_key(key, bignum_value.toFixed());
+  }
+
+  async set_base_amount_bought(bignum_value) {
+    const key = this.name_to_key("base_amount_bought");
+    await this.set_redis_key(key, bignum_value.toFixed());
+  }
+
+  async set_base_amount_sold(bignum_value) {
+    const key = this.name_to_key("base_amount_sold");
     await this.set_redis_key(key, bignum_value.toFixed());
   }
 
@@ -143,13 +159,14 @@ class TradeState {
 }
 
 async function initialiser(params = {}) {
-  const { logger, redis, trade_id, base_amount_held } = params;
+  const { logger, redis, trade_id, base_amount_imported, base_amount_held } = params;
   assert(redis);
   assert(trade_id);
   assert(logger);
-  assert(base_amount_held); // BigNumber
+  assert(base_amount_imported); // BigNumber
+  assert(base_amount_held === null); // depricated
   const trade_state = new TradeState({ logger, redis, trade_id });
-  trade_state.set_base_amount_held(base_amount_held);
+  await trade_state.set_base_amount_imported(base_amount_imported);
 }
 
 // a bit unorthodox maybe ;-/

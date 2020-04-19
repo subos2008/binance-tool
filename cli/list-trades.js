@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 require("dotenv").config();
 
 // TODO: convert all the process.exit calls to be exceptions

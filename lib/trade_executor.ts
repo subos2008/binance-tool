@@ -22,6 +22,7 @@ class TradeExecutor {
   ee: any
   trade_state: TradeState
   trading_rules: TradingRules
+  trade_definition: TradeDefinition
   algo_utils: AlgoUtils
   position_sizer: PositionSizer
   closeUserWebsocket: () => void
@@ -52,9 +53,9 @@ class TradeExecutor {
       buy_price,
       stop_price,
       target_price,
-      soft_entry,
-      auto_size
     } = trade_definition;
+    assert(trade_definition)
+    this.trade_definition = trade_definition
 
     this.trading_rules = trading_rules;
 
@@ -65,8 +66,6 @@ class TradeExecutor {
     this.stop_price = stop_price;
     this.target_price = target_price;
     this.nonBnbFees = nonBnbFees;
-    this.soft_entry = soft_entry;
-    this.auto_size = auto_size;
     //---
 
     assert(trade_state);
@@ -106,7 +105,7 @@ class TradeExecutor {
     if (target_price && stop_price)
       assert(target_price.isGreaterThan(stop_price));
 
-    if (this.soft_entry) {
+    if (this.trade_definition.soft_entry) {
       assert(this.buy_price);
       this.soft_entry_buy_order_trigger_price = this.buy_price.times(
         new BigNumber(100)
@@ -158,13 +157,12 @@ class TradeExecutor {
   }
 
   async size_position(
-    { current_price, position_sizer_options } = { position_sizer_options: {} }
+    { current_price }: { current_price?: string | BigNumber } = {}
   ) {
     if (current_price) current_price = new BigNumber(current_price); // rare usage, be resilient
     let {
       pair,
       trading_rules,
-      auto_size,
       stop_price,
       buy_price,
       max_quote_amount_to_buy
@@ -182,13 +180,12 @@ class TradeExecutor {
         Object.assign(
           {
             trading_rules,
-            auto_size,
+            auto_size: this.trade_definition.auto_size,
             buy_price,
             stop_price,
             quote_currency,
             max_quote_amount_to_buy
           },
-          position_sizer_options
         )
       );
       assert(base_amount);
@@ -397,7 +394,7 @@ class TradeExecutor {
     });
   }
 
-  execution_complete(msg:string, exit_code = 0) {
+  execution_complete(msg: string, exit_code = 0) {
     this.logger.info(`ExecutionComplete: ${msg}`);
     this.trade_state.set_trade_completed(true);
     if (exit_code) process.exitCode = exit_code;
@@ -573,7 +570,7 @@ class TradeExecutor {
         // 4. buyOrderId is non-null but the order already completed
         ///   it which case we can pull info from the order but we still might have gone into the trade with base_amount_held
         //    non-null in the beginning and the buy order might have been a top-up
-        if (this.soft_entry) {
+        if (this.trade_definition.soft_entry) {
           this.logger.info(
             `Soft entry mode: waiting for entry price before placing order`
           );
@@ -593,7 +590,7 @@ class TradeExecutor {
       // or we are monitoring for a soft_entry buy price. Soft entry means don't create buy
       // order until until buy_price is hit
       // TODO: in some cases we could close this stream when we no longer need it
-      if ((this.stop_price && this.target_price) || this.soft_entry) {
+      if ((this.stop_price && this.target_price) || this.trade_definition.soft_entry) {
         let obj = this;
         let report_when_target_price_hit = true;
         let report_when_stop_price_hit = true;

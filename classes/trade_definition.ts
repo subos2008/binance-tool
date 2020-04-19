@@ -1,24 +1,33 @@
 const assert = require("assert");
 
-// pair,
-// max_quote_amount_to_buy,
-// buy_price,
-// stop_price,
-// target_price,
-// nonBnbFees,
-// soft_entry,
-// auto_size
-// base_amount_imported, 
-
-const BigNumber = require("bignumber.js");
+import BigNumber from "bignumber.js";
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
-BigNumber.prototype.valueOf = function() {
+BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
-class TradeDefinition {
-  constructor(trade_definition) {
+export class TradeDefinition {
+  pair: string
+  buy_price: BigNumber | null
+  stop_price: BigNumber | null
+  target_price: BigNumber | null
+  base_amount_imported: BigNumber | null
+  max_quote_amount_to_buy: BigNumber | null
+  soft_entry: Boolean
+  auto_size: Boolean
+
+
+  constructor(trade_definition: {
+    pair: String,
+    base_amount_imported: BigNumber,
+    max_quote_amount_to_buy: BigNumber,
+    buy_price: BigNumber,
+    stop_price: BigNumber,
+    target_price: BigNumber,
+    soft_entry: Boolean,
+    auto_size: Boolean
+  }) {
     let {
       pair,
       // base_amount_to_buy, // pretty much depricated
@@ -33,11 +42,11 @@ class TradeDefinition {
 
     assert(pair);
 
-    var stringToBool = myValue => myValue === "true" || myValue === true;
+    var stringToBool = (myValue: String | Boolean) => myValue === "true" || myValue === true;
     auto_size = stringToBool(auto_size);
     soft_entry = stringToBool(soft_entry);
 
-    if(base_amount_imported) {
+    if (base_amount_imported) {
       console.log(`Oooh, trade_definition with base_amount_imported (${base_amount_imported})`)
       this.base_amount_imported = BigNumber(base_amount_imported);
     }
@@ -57,5 +66,3 @@ class TradeDefinition {
     }
   }
 }
-
-module.exports = TradeDefinition;

@@ -1,18 +1,31 @@
+
+
 const assert = require("assert");
 const { promisify } = require("util");
 var _ = require("lodash");
 
-var stringToBool = myValue => myValue === "true";
+var stringToBool = (myValue: string) => myValue === "true";
 
-const BigNumber = require("bignumber.js");
+import BigNumber from 'bignumber.js';
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
-BigNumber.prototype.valueOf = function() {
+BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
-class TradeState {
-  constructor({ logger, redis, trade_id } = {}) {
+import { Logger } from '../interfaces/logger'
+import { RedisClient } from 'redis'
+import { TradeDefinition } from './trade_definition';
+
+export class TradeState {
+  logger: Logger
+  redis: RedisClient
+  trade_id: string
+  get_redis_key: (key: string) => Promise<String>
+  set_redis_key: (key: string, value: string) => Promise<String>
+  delAsync: (key: string) => Promise<String>
+
+  constructor({ logger, redis, trade_id }: { logger: Logger, redis: any, trade_id: string }) {
     // NB: base_amount_imported is handled by initialiser()
     assert(logger);
     this.logger = logger;
@@ -26,7 +39,7 @@ class TradeState {
     this.delAsync = promisify(this.redis.del).bind(this.redis);
   }
 
-  name_to_key(name) {
+  name_to_key(name: string): string {
     switch (name) {
       case "buyOrderId":
         return `trades:${this.trade_id}:open_orders:buyOrderId`;
@@ -47,11 +60,7 @@ class TradeState {
     }
   }
 
-  async set_or_delete_key(key, value) {
-    if (value == 0) {
-      // we use !value in logic to detect null
-      throw new Error(`value of zero not supported`);
-    }
+  async set_or_delete_key(key: string, value: string | undefined) {
     this.logger.info(`Setting ${key} to ${value}`);
     if (value === undefined) {
       return await this.delAsync(key);
@@ -60,15 +69,15 @@ class TradeState {
     return await this.set_redis_key(key, value);
   }
 
-  async set_buyOrderId(value) {
+  async set_buyOrderId(value: string | undefined) {
     return await this.set_or_delete_key(this.name_to_key("buyOrderId"), value);
   }
 
-  async set_stopOrderId(value) {
+  async set_stopOrderId(value: string | undefined) {
     return await this.set_or_delete_key(this.name_to_key("stopOrderId"), value);
   }
 
-  async set_targetOrderId(value) {
+  async set_targetOrderId(value: string | undefined) {
     return await this.set_or_delete_key(this.name_to_key("targetOrderId"), value);
   }
 
@@ -102,10 +111,10 @@ class TradeState {
     return Number(value);
   }
 
-  async set_trade_completed(value) {
+  async set_trade_completed(value: Boolean) {
     assert(value === true);
     const key = this.name_to_key("trade_completed");
-    return await this.set_redis_key(key, value);
+    return await this.set_redis_key(key, `${value}`);
   }
 
   async get_trade_completed() {
@@ -121,17 +130,17 @@ class TradeState {
     return sum;
   }
 
-  async set_base_amount_imported(bignum_value) {
+  async set_base_amount_imported(bignum_value: BigNumber) {
     const key = this.name_to_key("base_amount_imported");
     await this.set_redis_key(key, bignum_value.toFixed());
   }
 
-  async set_base_amount_bought(bignum_value) {
+  async set_base_amount_bought(bignum_value: BigNumber) {
     const key = this.name_to_key("base_amount_bought");
     await this.set_redis_key(key, bignum_value.toFixed());
   }
 
-  async set_base_amount_sold(bignum_value) {
+  async set_base_amount_sold(bignum_value: BigNumber) {
     const key = this.name_to_key("base_amount_sold");
     await this.set_redis_key(key, bignum_value.toFixed());
   }
@@ -159,7 +168,7 @@ class TradeState {
   }
 }
 
-async function initialiser(params = {}) {
+async function initialiser(params: { logger: Logger, redis: RedisClient, trade_id: string, trade_definition: TradeDefinition }) {
   const { logger, redis, trade_id, trade_definition } = params;
   assert(redis);
   assert(trade_id);
@@ -167,14 +176,14 @@ async function initialiser(params = {}) {
   assert(trade_definition);
   const trade_state = new TradeState({ logger, redis, trade_id });
   let base_amount_imported = trade_definition.base_amount_imported; // BigNumber
-  if(base_amount_imported) {
+  if (base_amount_imported) {
     logger.info(`TradeState setting base_amount_imported (${base_amount_imported})`)
     await trade_state.set_base_amount_imported(base_amount_imported);
-  }else {
+  } else {
     logger.info(`TradeState no base_amount_imported.`)
   }
   return trade_state
 }
 
 // a bit unorthodox maybe, basically a factory method to force the calling of async initialiser
-module.exports = {  initialiser };
+module.exports = { initialiser };

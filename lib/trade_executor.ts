@@ -1,9 +1,14 @@
 const async_error_handler = require("./async_error_handler");
-const BigNumber = require("bignumber.js");
 const utils = require("./utils");
 const assert = require("assert");
-const PositionSizer = require("./position_sizer");
-const AlgoUtils = require("../service_lib/algo_utils");
+import { PositionSizer } from "./position_sizer"
+import { AlgoUtils } from "../service_lib/algo_utils"
+
+import { Logger } from '../interfaces/logger'
+import { TradeState } from '../classes/redis_trade_state'
+import { TradeDefinition } from '../classes/trade_definition'
+import { TradingRules } from '../lib/trading_rules'
+import BigNumber from 'bignumber.js';
 
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
@@ -12,6 +17,16 @@ BigNumber.prototype.valueOf = function () {
 };
 
 class TradeExecutor {
+  logger: Logger
+  send_message: (msg: string) => void
+  ee: any
+  trade_state: TradeState
+  trading_rules: TradingRules
+  algo_utils: AlgoUtils
+  position_sizer: PositionSizer
+  closeUserWebsocket: () => void
+  closeTradesWebSocket: () => void
+
   // All numbers are expected to be passed in as strings
   constructor({
     ee, // binance-api-node API
@@ -19,10 +34,9 @@ class TradeExecutor {
     logger,
     trade_state,
     trade_definition,
-    base_amount_to_buy,
-    percentage_before_soft_buy_price_to_add_order = BigNumber("0.5"),
+    percentage_before_soft_buy_price_to_add_order = new BigNumber("0.5"),
     trading_rules,
-  } = {}) {
+  }: { logger: Logger, ee: any, send_message: (msg: string) => void, trade_state: TradeState, trade_definition: TradeDefinition, percentage_before_soft_buy_price_to_add_order: BigNumber, trading_rules: TradingRules }) {
     assert(logger);
     this.logger = logger;
     assert(send_message);
@@ -37,20 +51,15 @@ class TradeExecutor {
       max_quote_amount_to_buy,
       buy_price,
       stop_price,
-      limit_price,
       target_price,
-      nonBnbFees,
       soft_entry,
       auto_size
     } = trade_definition;
-
-    this.logger.warn(`WARNING -a is UNTESTED in this CODE`);
 
     this.trading_rules = trading_rules;
 
     //---
     this.pair = pair;
-    this.base_amount_to_buy = base_amount_to_buy;
     this.max_quote_amount_to_buy = max_quote_amount_to_buy;
     this.buy_price = buy_price;
     this.stop_price = stop_price;
@@ -64,27 +73,20 @@ class TradeExecutor {
     this.trade_state = trade_state;
 
     if (max_quote_amount_to_buy) {
-      this.max_quote_amount_to_buy = max_quote_amount_to_buy = BigNumber(
+      this.max_quote_amount_to_buy = max_quote_amount_to_buy = new BigNumber(
         max_quote_amount_to_buy
       );
     }
 
     if (buy_price) {
-      this.buy_price = buy_price = BigNumber(buy_price);
-    }
-
-    if (base_amount_to_buy) {
-      this.base_amount_to_buy = BigNumber(base_amount_to_buy);
+      this.buy_price = buy_price = new BigNumber(buy_price);
     }
 
     if (stop_price) {
-      this.stop_price = stop_price = BigNumber(stop_price);
-    }
-    if (limit_price) {
-      this.limit_price = limit_price = BigNumber(limit_price);
+      this.stop_price = stop_price = new BigNumber(stop_price);
     }
     if (target_price) {
-      this.target_price = target_price = BigNumber(target_price);
+      this.target_price = target_price = new BigNumber(target_price);
     }
 
     // require that the user at least pass in trading rules, this allows much
@@ -96,9 +98,7 @@ class TradeExecutor {
     this.algo_utils = new AlgoUtils({ logger, ee });
 
     this.pair = pair = this.pair.toUpperCase();
-    let { quote_currency, base_currency } = this.algo_utils.split_pair(pair);
-    this.quote_currency = quote_currency;
-    this.base_currency = base_currency;
+
     if (buy_price) assert(!buy_price.isZero()); // depricated way of specifying a market buy
     if (buy_price && stop_price) assert(stop_price.isLessThan(buy_price));
     if (target_price && buy_price)
@@ -109,7 +109,7 @@ class TradeExecutor {
     if (this.soft_entry) {
       assert(this.buy_price);
       this.soft_entry_buy_order_trigger_price = this.buy_price.times(
-        BigNumber(100)
+        new BigNumber(100)
           .plus(percentage_before_soft_buy_price_to_add_order)
           .div(100)
       );
@@ -127,7 +127,7 @@ class TradeExecutor {
     });
   }
 
-  print_percentages_for_user({ current_price } = {}) {
+  print_percentages_for_user({ current_price }: { current_price?: BigNumber } = {}) {
     try {
       let { buy_price, stop_price, target_price, trading_rules } = this;
       if (current_price) {
@@ -160,15 +160,17 @@ class TradeExecutor {
   async size_position(
     { current_price, position_sizer_options } = { position_sizer_options: {} }
   ) {
-    if (current_price) current_price = BigNumber(current_price); // rare usage, be resilient
+    if (current_price) current_price = new BigNumber(current_price); // rare usage, be resilient
     let {
+      pair,
       trading_rules,
       auto_size,
       stop_price,
       buy_price,
-      quote_currency,
       max_quote_amount_to_buy
     } = this;
+
+    let { quote_currency, base_currency } = this.algo_utils.split_pair(pair);
 
     buy_price = current_price ? current_price : buy_price;
     assert(buy_price);
@@ -191,11 +193,12 @@ class TradeExecutor {
       );
       assert(base_amount);
       this.logger.info(
-        `Sized trade at ${quote_volume} ${this.quote_currency}, ${base_amount} ${this.base_currency}`
+        `Sized trade at ${quote_volume} ${quote_currency}, ${base_amount} ${base_currency}`
       );
       return { quote_volume, base_amount };
     } catch (error) {
       async_error_handler(this.logger, `sizing position`, error);
+      throw error
     }
   }
 
@@ -369,7 +372,7 @@ class TradeExecutor {
             await this.trade_state.set_buyOrderId(undefined);
             // TODO: this should perhaps be an atomic add?... or maybe not?
             await this.trade_state.set_base_amount_bought(
-              BigNumber(data.totalTradeQuantity)
+              new BigNumber(data.totalTradeQuantity)
             );
             this.send_message(`${data.symbol} buy order filled`);
             await obj.placeSellOrder();
@@ -394,18 +397,18 @@ class TradeExecutor {
     });
   }
 
-  execution_complete(msg, exit_code = 0) {
+  execution_complete(msg:string, exit_code = 0) {
     this.logger.info(`ExecutionComplete: ${msg}`);
     this.trade_state.set_trade_completed(true);
     if (exit_code) process.exitCode = exit_code;
     this.shutdown_streams();
   }
 
-  _munge_amount_and_check_notionals({ base_amount }) {
+  _munge_amount_and_check_notionals({ base_amount }: { base_amount: BigNumber }) {
     let { pair, buy_price, stop_price, target_price, limit_price } = this;
     assert(base_amount);
     if (buy_price && buy_price.isZero()) buy_price = undefined; // old code but left in, can remove if you want
-    const original_base_amount = BigNumber(base_amount);
+    const original_base_amount = new BigNumber(base_amount);
     console.log(`orig base_amount: ${original_base_amount}`);
     const new_base_amount = this.algo_utils.munge_amount_and_check_notionals({
       pair,
@@ -663,7 +666,7 @@ class TradeExecutor {
                   await obj.ee.cancelOrder({ symbol, orderId: stopOrderId });
                   isCancelling = false;
                 } catch (error) {
-                  obj.logger.error(`${symbol} cancel error:`, error.body);
+                  obj.logger.error(`${symbol} cancel error: ${error.body}`);
                   obj.logger.error(error);
                   return;
                 }
@@ -691,10 +694,10 @@ class TradeExecutor {
                   await obj.ee.cancelOrder({ symbol, orderId: targetOrderId });
                   isCancelling = false;
                 } catch (error) {
-                  obj.logger.error(`${symbol} cancel error:`, error.body);
+                  obj.logger.error(`${symbol} cancel error ${error.body}`);
                   return;
                 }
-                obj.logger.info(`${symbol} cancel response:`, response);
+                obj.logger.info(`${symbol} cancel response: ${response}`);
                 try {
                   await obj.trade_state.set_stopOrderId(
                     await obj.placeStopOrder()

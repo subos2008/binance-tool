@@ -18,6 +18,12 @@ export class TradePriceRangeTracker {
   trade_definition: TradeDefinition
 
   constructor(logger: Logger, send_message: (msg: string) => void, trade_definition: TradeDefinition, trade_state: TradeState) {
+  shutdown_streams() {
+    if (this.closeTradesWebSocket) {
+      this.logger.info(`Shutting down streams`);
+      this.closeTradesWebSocket();
+    }
+  }
     this.logger = logger
     this.trade_definition = trade_definition
     this.trade_state = trade_state

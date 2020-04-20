@@ -63,10 +63,13 @@ export class TradeExecutor {
   }
 
   shutdown_streams() {
-    if (this.closeUserWebsocket || this.closeTradesWebSocket)
+    if (this.closeUserWebsocket) {
       this.logger.info(`Shutting down streams`);
-    if (this.closeUserWebsocket) this.closeUserWebsocket();
-    if (this.closeTradesWebSocket) this.closeTradesWebSocket();
+      this.closeUserWebsocket();
+    }
+    if (this.trade_price_range_tracker) {
+      this.trade_price_range_tracker.shutdown_streams()
+    }
   }
 
   async size_position(

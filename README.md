@@ -85,7 +85,7 @@ numbers and update the position held data.this is nice because its oer trade dat
 - if a buyOrder gets cancelled do we want to add something to the trade state? `buyCancelled`, `buyingComplete`, `buyingAllowed = false`? 
 - `base_amount_held` becomes derived, computed from `base_amount_imported`, `base_amount_bought` and `base_amount_sold`. A trade is completed when it has no open orders and `base_amount_held` is too small to be tradeable.
 - How do we calculate `base_amount_sold`? We want it to update on partial fills of target and stop orders. Assuming we can bounce around from stops to targets we want to incrementally eat down the position on each partial fill. 
-- I think a `trade-position-tracker` service is in order. This maintains the components of `base_amount_held` and signals when the position size of a trade has changed. Initial implementation can simply signal when an order is complete so we avoid complexity around the excahnge's order api rate limiting.
+- I think a `trade-position-tracker` service is in order. This maintains the components of `base_amount_held` and signals when the position size of a trade has changed. Initial implementation can simply signal when an order is complete so we avoid complexity around the exchange's order api rate limiting.
 - exchange_info should be reloaded periodically and we should recalculate munged values
 - Create an interface for ee's
 - Wrap all the class main()s in sentry exception handlers

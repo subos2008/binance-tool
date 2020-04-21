@@ -87,6 +87,11 @@ numbers and update the position held data.this is nice because its oer trade dat
 - How do we calculate `base_amount_sold`? We want it to update on partial fills of target and stop orders. Assuming we can bounce around from stops to targets we want to incrementally eat down the position on each partial fill. 
 - I think a `trade-position-tracker` service is in order. This maintains the components of `base_amount_held` and signals when the position size of a trade has changed. Initial implementation can simply signal when an order is complete so we avoid complexity around the excahnge's order api rate limiting.
 - exchange_info should be reloaded periodically and we should recalculate munged values
+- Create an interface for ee's
+- Wrap all the class main()s in sentry exception handlers
+- Let's use faux internal events to evolve the TradeOrderSetter but eventually we want to trade state in redis and just to be sending
+     'state changed' events to cause it to look up the current trade state and check for adjustments that need to be made. If we rely
+     on events to hold the trade state they can get out of date. However, *first we need to determine what the trade states are.*
 
 ## states
 

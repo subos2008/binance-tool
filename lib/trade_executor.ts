@@ -219,6 +219,7 @@ export class TradeExecutor {
     this.trade_order_creator = new TradeOrderCreator(this.logger, this.trade_definition, this.trade_state, this.algo_utils, this.exchange_info, this)
 
     this.trade_definition.print_trade_for_user();
+    this.send_message(this.trade_definition.get_message())
 
     await this.monitor_user_stream();
 

@@ -19,9 +19,9 @@ export class TradeOrderCreator {
   trade_definition: TradeDefinition
   trade_state: TradeState
   algo_utils: AlgoUtils
-  buy_price: BigNumber | null
-  stop_price: BigNumber | null
-  target_price: BigNumber | null
+  buy_price: BigNumber | undefined
+  stop_price: BigNumber | undefined
+  target_price: BigNumber | undefined
   exchange_info: any
   mummy: TradeExecutor // a crutch while we get started
 
@@ -30,9 +30,9 @@ export class TradeOrderCreator {
     this.trade_definition = trade_definition
     this.trade_state = trade_state
     this.algo_utils = algo_utils
-    this.target_price = this.trade_definition.munged.target_price
-    this.stop_price = this.trade_definition.munged.stop_price
-    this.buy_price = this.trade_definition.munged.buy_price
+    // this.target_price = this.trade_definition.munged.target_price
+    // this.stop_price = this.trade_definition.munged.stop_price
+    // this.buy_price = this.trade_definition.munged.buy_price
     this.exchange_info = exchange_info
     this.mummy = mummy
 
@@ -49,6 +49,7 @@ export class TradeOrderCreator {
   }
 
   async placeTargetOrder() {
+    if(!this.target_price) throw new Error(`placeTargetOrder called when this.target_price is not set`)
     return await this._create_limit_sell_order({
       price: this.target_price,
       base_amount: await this.trade_state.get_base_amount_held()
@@ -90,6 +91,7 @@ export class TradeOrderCreator {
       assert(!(await this.trade_state.get_buyOrderId()));
       assert(this.trade_definition.munged.buy_price && !this.trade_definition.munged.buy_price.isZero());
       let price = this.trade_definition.munged.buy_price;
+      if(!price) throw new Error(`_create_limit_buy_order called when trade_definition.munged.buy_price is null`)
       let { base_amount } = await this.mummy.size_position();
       base_amount = this._munge_amount_and_check_notionals({
         base_amount,
@@ -103,7 +105,8 @@ export class TradeOrderCreator {
       });
       return response.orderId;
     } catch (error) {
-      async_error_handler(this.logger, `Buy error: ${error.body}`, error);
+      // async_error_handler(this.logger, `Buy error: ${error.body}`, error);
+      throw error
     }
   }
 
@@ -123,7 +126,8 @@ export class TradeOrderCreator {
       });
       return response.orderId;
     } catch (error) {
-      async_error_handler(this.logger, `Sell error: ${error.body}`, error);
+      // async_error_handler(this.logger, `Sell error: ${error.body}`, error);
+      throw error
     }
   }
 
@@ -162,7 +166,8 @@ export class TradeOrderCreator {
       });
       return response.orderId;
     } catch (error) {
-      async_error_handler(this.logger, `Sell error: ${error.body}`, error);
+      // async_error_handler(this.logger, `Sell error: ${error.body}`, error);
+      throw error
     }
   }
 
@@ -180,12 +185,14 @@ export class TradeOrderCreator {
       });
       return response.orderId;
     } catch (error) {
-      async_error_handler(this.logger, `Buy error: ${error.body}`, error);
+      // async_error_handler(this.logger, `Buy error: ${error.body}`, error);
+      throw error
     }
   }
 
+  // TODO: this is a key method as notionals determine if order is complete
   _munge_amount_and_check_notionals({ base_amount }: { base_amount: BigNumber }) {
-    let { buy_price, stop_price, target_price, limit_price } = this;
+    let { buy_price, stop_price, target_price } = this;
     assert(base_amount);
     const original_base_amount = new BigNumber(base_amount);
     console.log(`orig base_amount: ${original_base_amount}`);
@@ -195,7 +202,6 @@ export class TradeOrderCreator {
       buy_price,
       stop_price,
       target_price,
-      limit_price
     });
     console.log(`new base_amount: ${new_base_amount}`);
 

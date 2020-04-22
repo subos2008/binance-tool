@@ -138,7 +138,8 @@ export class TradeExecutor {
         new BigNumber(totalTradeQuantity)
       );
       this.send_message(`${symbol} buy order filled`);
-      await this.placeSellOrder();
+      if(!this.trade_order_creator) throw new Error(`placeSellOrder called before trade_order_creator is initialised`)
+      await this.trade_order_creator.placeSellOrder();
     } else if (orderId === (await this.trade_state.get_stopOrderId())) {
       this.send_message(`${symbol} stop loss order filled`);
       this.execution_complete(`Stop hit`, 1);
@@ -209,11 +210,11 @@ export class TradeExecutor {
       //    non-null in the beginning and the buy order might have been a top-up
       if (!this.trade_definition.soft_entry) {
         await this.trade_state.set_buyOrderId(
-          await this._create_limit_buy_order() // why not placeBuyOrder? Ah, there is no placeBuyOrder :)
+          await this.trade_order_creator._create_limit_buy_order() // why not placeBuyOrder? Ah, there is no placeBuyOrder :)
         );
       }
     } else {
-      await this.placeSellOrder();
+      await this.trade_order_creator.placeSellOrder();
     }
 
 

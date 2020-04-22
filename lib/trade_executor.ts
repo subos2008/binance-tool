@@ -229,7 +229,7 @@ export class TradeExecutor {
     // TODO: in some cases we could close this stream when we no longer need it
     // Use unmunged as we are checking if they were present in the trade_definition
     if ((this.trade_definition.unmunged.stop_price && this.trade_definition.unmunged.target_price) || this.trade_definition.soft_entry) {
-      this.trade_price_range_tracker = new TradePriceRangeTracker(this.logger, this.send_message, this.trade_definition, this.trade_state, this.price_ranges)
+      this.trade_price_range_tracker = new TradePriceRangeTracker(this.logger, this.send_message, this.trade_definition, this.trade_state, this.price_ranges, this.trade_order_creator)
       this.trade_price_range_tracker.main() // async function but I don't think we need to await it..?
     }
   }

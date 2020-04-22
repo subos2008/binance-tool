@@ -1,9 +1,12 @@
+const assert = require("assert");
 import { Logger } from "../interfaces/logger";
 
 import BigNumber from "bignumber.js";
 import { TradeState } from "./persistent_state/redis_trade_state";
 import { TradeDefinition } from "./specifications/trade_definition";
 import { PriceRanges } from "./specifications/price_ranges";
+import { TradeOrderCreator } from '../classes/trade_order_creator'
+
 
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
@@ -15,31 +18,27 @@ export class TradePriceRangeTracker {
   logger: Logger
   send_message: (msg: string) => void
   closeTradesWebSocket: () => void | null
-  soft_entry_buy_order_trigger_price: BigNumber | null
   trade_state: TradeState
   trade_definition: TradeDefinition
   price_ranges: PriceRanges
+  trade_order_creator: TradeOrderCreator
 
   constructor(logger: Logger, send_message: (msg: string) => void, trade_definition: TradeDefinition, trade_state: TradeState,
-    price_ranges: PriceRanges) {
+    price_ranges: PriceRanges, trade_order_creator: TradeOrderCreator) {
 
     this.logger = logger
     this.trade_definition = trade_definition
     this.trade_state = trade_state
     this.price_ranges = price_ranges
     this.send_message = send_message
+    this.trade_order_creator = trade_order_creator
 
     if (this.trade_definition.soft_entry) {
       if (this.trade_definition.unmunged.buy_price === null) {
         throw new Error(`soft_entry set when buy_price is null`)
       }
-      this.soft_entry_buy_order_trigger_price = this.trade_definition.unmunged.buy_price.times(
-        new BigNumber(100)
-          .plus(percentage_before_soft_buy_price_to_add_order)
-          .div(100)
-      );
       this.logger.info(
-        `Soft entry buy order trigger price ${this.soft_entry_buy_order_trigger_price.toFixed()}`
+        `Soft entry buy order trigger price: ${this.price_ranges.soft_entry_buy_order_trigger_price.toFixed()}`
       );
     }
   }
@@ -72,7 +71,7 @@ export class TradePriceRangeTracker {
         if (waiting_for_soft_entry_price) {
           if (
             price.isLessThanOrEqualTo(
-              this.soft_entry_buy_order_trigger_price
+              this.price_ranges.soft_entry_buy_order_trigger_price
             )
           ) {
             waiting_for_soft_entry_price = false;
@@ -80,7 +79,7 @@ export class TradePriceRangeTracker {
               `${symbol} soft entry buy order trigger price hit`
             );
             await this.trade_state.set_buyOrderId(
-              await this._create_limit_buy_order()
+              await this.trade_order_creator._create_limit_buy_order()
             );
           }
         } else if (await this.trade_state.get_buyOrderId()) {
@@ -137,7 +136,7 @@ export class TradePriceRangeTracker {
             }
             try {
               await this.trade_state.set_targetOrderId(
-                await this.placeTargetOrder()
+                await this.trade_order_creator.placeTargetOrder()
               );
             } catch (error) {
               // async_error_handler(
@@ -166,7 +165,7 @@ export class TradePriceRangeTracker {
             this.logger.info(`${symbol} cancel response: ${response}`);
             try {
               await this.trade_state.set_stopOrderId(
-                await this.placeStopOrder()
+                await this.trade_order_creator.placeStopOrder()
               );
             } catch (error) {
               // async_error_handler(

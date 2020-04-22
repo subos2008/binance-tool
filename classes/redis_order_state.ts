@@ -82,12 +82,12 @@ export class OrderState {
     )
   }
 
-  async set_order_cancelled(order_id: string, value: Boolean, orderRejectReason: string, orderStatus: string): Promise<void> {
+  async set_order_cancelled(order_id: string, value: Boolean, orderRejectReason: string | undefined, orderStatus: string | undefined): Promise<void> {
     assert(value === true);
     await this.msetAsync(
-      this.name_to_key(order_id, "orderStatus"), orderStatus,
       this.name_to_key(order_id, "completed"), true,
       this.name_to_key(order_id, "cancelled"), true,
+      this.name_to_key(order_id, "orderStatus"), orderStatus,
       this.name_to_key(order_id, "orderRejectReason"), orderRejectReason,
     )
   }

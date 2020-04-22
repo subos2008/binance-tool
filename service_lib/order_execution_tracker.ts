@@ -10,7 +10,7 @@ BigNumber.prototype.valueOf = function () {
 import { OrderState } from "../classes/redis_order_state";
 
 import { Logger } from '../interfaces/logger'
-import { OrderCallbacks } from '../interfaces/order_callbacks'
+import { OrderCallbacks, BinanceOrderData } from '../interfaces/order_callbacks'
 
 export class OrderExecutionTracker {
   send_message: Function;
@@ -27,8 +27,9 @@ export class OrderExecutionTracker {
     logger,
     order_state,
     order_callbacks
-  }: { ee: any, send_message: (msg: string) => void, logger: Logger, order_state: OrderState, order_callbacks: OrderCallbacks,
- }) {
+  }: {
+    ee: any, send_message: (msg: string) => void, logger: Logger, order_state: OrderState, order_callbacks: OrderCallbacks,
+  }) {
     assert(logger);
     this.logger = logger;
     assert(send_message);
@@ -89,7 +90,7 @@ export class OrderExecutionTracker {
       orderStatus,
       orderRejectReason,
       totalTradeQuantity
-    } = data;
+    } = data as BinanceOrderData;
 
     this.logger.info(
       `${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`
@@ -97,22 +98,19 @@ export class OrderExecutionTracker {
     this.logger.info(`..price: ${price}, quantity: ${quantity}`);
 
     if (orderStatus === "NEW") {
-      // TODO: initialise in redis? could add ${symbol} ${side} ${orderType} and ${orderStatus}
-      this.order_state.add_new_order(orderId, { symbol, side, orderType, orderStatus })
+      await this.order_state.add_new_order(orderId, { symbol, side, orderType, orderStatus })
       return;
     }
 
     if (orderStatus === "PARTIALLY_FILLED") {
-      // TODO: initialise in redis? could add ${symbol} ${side} ${orderType} and ${orderStatus}
-      this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity), false, orderStatus)
+      await this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity), false, orderStatus)
       return;
     }
 
     if (orderStatus === "CANCELED" /*&& orderRejectReason === "NONE"*/) {
-      // Assume user cancelled order and exit
-      // `Order was cancelled, presumably by user. Exiting.`,
+      // `Order was cancelled, presumably by user. Exiting.`, (orderRejectReason === "NONE happens when user cancelled)
       await this.order_state.set_order_cancelled(orderId, true, orderRejectReason, orderStatus)
-      this.order_callbacks.order_cancelled(orderId)
+      await this.order_callbacks.order_cancelled(orderId, data)
       return;
     }
 
@@ -121,7 +119,7 @@ export class OrderExecutionTracker {
     }
 
     await this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity), true, orderStatus)
-    this.order_callbacks.order_complete(orderId)
+    await this.order_callbacks.order_filled(orderId, data)
   }
 
   // Event Listeners

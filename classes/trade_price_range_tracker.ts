@@ -134,11 +134,12 @@ export class TradePriceRangeTracker {
                 await this.placeTargetOrder()
               );
             } catch (error) {
-              async_error_handler(
-                this.logger,
-                `error placing order: ${error.body}`,
-                error
-              );
+              // async_error_handler(
+              //   this.logger,
+              //   `error placing order: ${error.body}`,
+              //   error
+              // );
+              throw error
             }
           } else if (
             (await this.trade_state.get_targetOrderId()) &&
@@ -162,11 +163,12 @@ export class TradePriceRangeTracker {
                 await this.placeStopOrder()
               );
             } catch (error) {
-              async_error_handler(
-                this.logger,
-                `error placing order: ${error.body}`,
-                error
-              );
+              // async_error_handler(
+              //   this.logger,
+              //   `error placing order: ${error.body}`,
+              //   error
+              // );
+              throw error
             }
           }
         }

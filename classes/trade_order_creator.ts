@@ -49,7 +49,7 @@ export class TradeOrderCreator {
   }
 
   async placeTargetOrder() {
-    if(!this.target_price) throw new Error(`placeTargetOrder called when this.target_price is not set`)
+    if (!this.target_price) throw new Error(`placeTargetOrder called when this.target_price is not set`)
     return await this._create_limit_sell_order({
       price: this.target_price,
       base_amount: await this.trade_state.get_base_amount_held()
@@ -91,7 +91,7 @@ export class TradeOrderCreator {
       assert(!(await this.trade_state.get_buyOrderId()));
       assert(this.trade_definition.munged.buy_price && !this.trade_definition.munged.buy_price.isZero());
       let price = this.trade_definition.munged.buy_price;
-      if(!price) throw new Error(`_create_limit_buy_order called when trade_definition.munged.buy_price is null`)
+      if (!price) throw new Error(`_create_limit_buy_order called when trade_definition.munged.buy_price is null`)
       let { base_amount } = await this.mummy.size_position();
       base_amount = this._munge_amount_and_check_notionals({
         base_amount,
@@ -134,6 +134,7 @@ export class TradeOrderCreator {
   async _create_stop_loss_limit_sell_order(
     { limit_price_factor } = { limit_price_factor: new BigNumber("0.8") }
   ) {
+    if (!this.stop_price) throw new Error(`_create_stop_loss_limit_sell_order called when this.stop_price is not defined`)
     try {
       assert(limit_price_factor);
       assert(this.stop_price !== null);
@@ -191,17 +192,18 @@ export class TradeOrderCreator {
   }
 
   // TODO: this is a key method as notionals determine if order is complete
-  _munge_amount_and_check_notionals({ base_amount }: { base_amount: BigNumber }) {
-    let { buy_price, stop_price, target_price } = this;
+  _munge_amount_and_check_notionals({ base_amount, buy_price, stop_price, target_price, price }:
+    { base_amount: BigNumber, buy_price?: BigNumber, stop_price?: BigNumber, target_price?: BigNumber, price?: BigNumber }) {
     assert(base_amount);
     const original_base_amount = new BigNumber(base_amount);
     console.log(`orig base_amount: ${original_base_amount}`);
     const new_base_amount = this.algo_utils.munge_amount_and_check_notionals({
-      pair:this.trade_definition.pair,
+      pair: this.trade_definition.pair,
       base_amount,
       buy_price,
       stop_price,
       target_price,
+      price
     });
     console.log(`new base_amount: ${new_base_amount}`);
 

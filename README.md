@@ -93,6 +93,7 @@ numbers and update the position held data.this is nice because its oer trade dat
      'state changed' events to cause it to look up the current trade state and check for adjustments that need to be made. If we rely
      on events to hold the trade state they can get out of date. However, *first we need to determine what the trade states are.*
 - we hammer redis loading multiple orderIds on every trade event from the exchange
+- *Test*: we import almost enough to fill what we are allowed to trade but the amount extra we would buy is below the notional checks, so we wouldn't buy more
 
 ## states
 

@@ -11,6 +11,10 @@ import { TradeOrderCreator } from '../classes/trade_order_creator'
 import { TradePriceRangeTracker } from '../classes/trade_price_range_tracker'
 
 import BigNumber from 'bignumber.js';
+import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";
+import { OrderState } from "../classes/redis_order_state";
+import { BinanceOrderData } from '../interfaces/order_callbacks'
+
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -23,6 +27,7 @@ export class TradeExecutor {
   ee: any
   exchange_info: any
   trade_state: TradeState
+  order_state: OrderState
   trading_rules: TradingRules
   trade_definition: TradeDefinition
   algo_utils: AlgoUtils
@@ -30,6 +35,7 @@ export class TradeExecutor {
   closeUserWebsocket: () => void | null
   trade_order_creator: TradeOrderCreator | null
   trade_price_range_tracker: TradePriceRangeTracker | null
+  order_execution_tracker: OrderExecutionTracker|null
 
   // All numbers are expected to be passed in as strings
   constructor({
@@ -37,10 +43,11 @@ export class TradeExecutor {
     send_message,
     logger,
     trade_state,
+    order_state,
     trade_definition,
     percentage_before_soft_buy_price_to_add_order = new BigNumber("0.5"),
     trading_rules,
-  }: { logger: Logger, ee: any, send_message: (msg: string) => void, trade_state: TradeState, trade_definition: TradeDefinition, percentage_before_soft_buy_price_to_add_order: BigNumber, trading_rules: TradingRules }) {
+  }: { logger: Logger, ee: any, send_message: (msg: string) => void, trade_state: TradeState, order_state: OrderState, trade_definition: TradeDefinition, percentage_before_soft_buy_price_to_add_order: BigNumber, trading_rules: TradingRules }) {
     assert(logger);
     this.logger = logger;
     assert(send_message);
@@ -51,6 +58,8 @@ export class TradeExecutor {
     this.trade_definition = trade_definition
     assert(trade_state);
     this.trade_state = trade_state;
+    assert(order_state);
+    this.order_state = order_state;
     assert(trading_rules);
     this.trading_rules = trading_rules;
 
@@ -121,88 +130,38 @@ export class TradeExecutor {
     }
   }
 
-  async monitor_user_stream() {
-    let obj = this;
-    async function checkOrderFilled(data, orderFilled) {
-      const {
-        symbol,
-        price,
-        quantity,
-        side,
-        orderType,
-        orderId,
-        orderStatus,
-        orderRejectReason
-      } = data;
-
-      obj.logger.info(
-        `${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`
+  async order_filled(orderId: string, { totalTradeQuantity, symbol }: { totalTradeQuantity: string, symbol: string }) {
+    if (orderId === (await this.trade_state.get_buyOrderId())) {
+      await this.trade_state.set_buyOrderId(undefined);
+      // TODO: this should perhaps be an atomic add?... or maybe not?
+      await this.trade_state.set_base_amount_bought(
+        new BigNumber(totalTradeQuantity)
       );
-      obj.logger.info(`..price: ${price}, quantity: ${quantity}`);
-
-      if (orderStatus === "NEW" || orderStatus === "PARTIALLY_FILLED") {
-        return;
-      }
-
-      if (orderStatus === "CANCELED" && orderRejectReason === "NONE") {
-        // Assume user cancelled order and exit
-        obj.execution_complete(
-          `Order was cancelled, presumably by user. Exiting.`,
-          1
-        );
-        return;
-      }
-
-      if (orderStatus !== "FILLED") {
-        throw new Error(`Order ${orderStatus}. Reason: ${data.r}`);
-      }
-
-      try {
-        await orderFilled(data);
-      } catch (error) {
-        async_error_handler(
-          obj.logger,
-          `error placing order: ${error.body}`,
-          error
-        );
-      }
+      this.send_message(`${symbol} buy order filled`);
+      await this.placeSellOrder();
+    } else if (orderId === (await this.trade_state.get_stopOrderId())) {
+      this.send_message(`${symbol} stop loss order filled`);
+      this.execution_complete(`Stop hit`, 1);
+    } else if (orderId === (await this.trade_state.get_targetOrderId())) {
+      this.send_message(`${symbol} target sell order filled`);
+      this.execution_complete(`Target hit`);
+    } else {
+      console.warn(`Didn't recognise order: ${orderId}`)
     }
+    // TODO: catch: shit failed to update after order state change!
+  }
 
-    this.closeUserWebsocket = await this.ee.ws.user(async data => {
-      try {
-        const { orderId, eventType } = data;
-        if (eventType !== "executionReport") {
-          return;
-        }
-
-        if (orderId === (await this.trade_state.get_buyOrderId())) {
-          await checkOrderFilled(data, async () => {
-            await this.trade_state.set_buyOrderId(undefined);
-            // TODO: this should perhaps be an atomic add?... or maybe not?
-            await this.trade_state.set_base_amount_bought(
-              new BigNumber(data.totalTradeQuantity)
-            );
-            this.send_message(`${data.symbol} buy order filled`);
-            await obj.placeSellOrder();
-          });
-        } else if (orderId === (await this.trade_state.get_stopOrderId())) {
-          await checkOrderFilled(data, async () => {
-            this.send_message(`${data.symbol} stop loss order filled`);
-            obj.execution_complete(`Stop hit`, 1);
-          });
-        } else if (orderId === (await this.trade_state.get_targetOrderId())) {
-          await checkOrderFilled(data, async () => {
-            this.send_message(`${data.symbol} target sell order filled`);
-            obj.execution_complete(`Target hit`);
-          });
-        }
-      } catch (error) {
-        let msg = `SHIT: error placing orders for pair ${this.trade_definition.pair}: error`;
-        this.logger.error(msg);
-        this.logger.error(error);
-        this.send_message(msg);
-      }
-    });
+  async order_cancelled(orderId: string, data: BinanceOrderData) {
+    if(data.orderRejectReason === "NONE") {
+      // Assume user cancelled order and exit
+      this.execution_complete(
+        `Order was cancelled, presumably by user. Exiting.`,
+        1
+      )
+    }
+    else {
+      throw new Error(`Order #${orderId} cancelled for unknown reason: ${data.orderRejectReason}`)
+    }
   }
 
   execution_complete(msg: string, exit_code = 0) {
@@ -221,7 +180,15 @@ export class TradeExecutor {
     this.trade_definition.print_trade_for_user();
     this.send_message(this.trade_definition.get_message())
 
-    await this.monitor_user_stream();
+    // Monitor Binance user stream for completed orders
+    this.order_execution_tracker = new OrderExecutionTracker({
+      ee: this.ee, // binance-api-node API
+      send_message: this.send_message,
+      logger: this.logger,
+      order_state: this.order_state,
+      order_callbacks: this
+    })
+    await this.order_execution_tracker.main()
 
     // TODO: we could change this just to determine if we need the price watcher
     // .. but I think basically here what we want is an iteration of:
@@ -257,7 +224,7 @@ export class TradeExecutor {
     // TODO: in some cases we could close this stream when we no longer need it
     // Use unmunged as we are checking if they were present in the trade_definition
     if ((this.trade_definition.unmunged.stop_price && this.trade_definition.unmunged.target_price) || this.trade_definition.soft_entry) {
-      this.trade_price_range_tracker = new TradePriceRangeTracker(this.logger, this.send_message,this.trade_definition,this.trade_state)
+      this.trade_price_range_tracker = new TradePriceRangeTracker(this.logger, this.send_message, this.trade_definition, this.trade_state)
       this.trade_price_range_tracker.main() // async function but I don't think we need to await it..?
     }
   }

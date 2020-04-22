@@ -12,6 +12,8 @@ import BigNumber from "bignumber.js";
 const ExchangeEmulator = require("../lib/exchange_emulator");
 const TradeDefinition = require("../classes/trade_definition");
 const Logger = require("../lib/faux_logger");
+import { OrderState } from "../classes/redis_order_state"
+
 const {
   NotImplementedError,
   InsufficientBalanceError
@@ -131,7 +133,9 @@ describe("TradeExecutor", function () {
     const trade_state = await trade_state_initialiser(
       Object.assign({ trade_id: 1, redis, logger: null_logger }, algo_config)
     );
-    algo_config = Object.assign(algo_config, { trade_state });
+    const order_state = new OrderState(Object.assign({ redis, logger: null_logger }, algo_config))
+    
+    algo_config = Object.assign(algo_config, { trade_state, order_state });
     let algo = new TradeExecutor(algo_config);
     return { algo, ee };
   }

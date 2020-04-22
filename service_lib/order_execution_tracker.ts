@@ -10,6 +10,7 @@ BigNumber.prototype.valueOf = function () {
 import { OrderState } from "../classes/redis_order_state";
 
 import { Logger } from '../interfaces/logger'
+import { OrderCallbacks } from '../interfaces/order_callbacks'
 
 export class OrderExecutionTracker {
   send_message: Function;
@@ -17,21 +18,25 @@ export class OrderExecutionTracker {
   ee: any;
   closeUserWebsocket: Function;
   order_state: OrderState;
+  order_callbacks: OrderCallbacks
 
   // All numbers are expected to be passed in as strings
   constructor({
     ee, // binance-api-node API
     send_message,
     logger,
-    order_state
-  }: { ee: any, send_message: (msg: string) => void, logger: Logger, order_state: OrderState }) {
+    order_state,
+    order_callbacks
+  }: { ee: any, send_message: (msg: string) => void, logger: Logger, order_state: OrderState, order_callbacks: OrderCallbacks,
+ }) {
     assert(logger);
     this.logger = logger;
     assert(send_message);
     this.send_message = send_message;
     assert(order_state);
     this.order_state = order_state;
-
+    assert(order_callbacks);
+    this.order_callbacks = order_callbacks;
     assert(ee);
     this.ee = ee;
 
@@ -106,7 +111,8 @@ export class OrderExecutionTracker {
     if (orderStatus === "CANCELED" /*&& orderRejectReason === "NONE"*/) {
       // Assume user cancelled order and exit
       // `Order was cancelled, presumably by user. Exiting.`,
-      this.order_state.set_order_cancelled(orderId, true, orderRejectReason, orderStatus)
+      await this.order_state.set_order_cancelled(orderId, true, orderRejectReason, orderStatus)
+      this.order_callbacks.order_cancelled(orderId)
       return;
     }
 
@@ -114,7 +120,8 @@ export class OrderExecutionTracker {
       throw new Error(`Unexpected orderStatus: ${orderStatus}. Reason: ${data.r}`);
     }
 
-    this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity), true, orderStatus)
+    await this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity), true, orderStatus)
+    this.order_callbacks.order_complete(orderId)
   }
 
   // Event Listeners

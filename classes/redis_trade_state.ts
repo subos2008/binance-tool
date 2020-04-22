@@ -21,9 +21,9 @@ export class TradeState {
   logger: Logger
   redis: RedisClient
   trade_id: string
-  get_redis_key: (key: string) => Promise<String>
-  set_redis_key: (key: string, value: string) => Promise<String>
-  delAsync: (key: string) => Promise<String>
+  get_redis_key: (key: string) => Promise<string>
+  set_redis_key: (key: string, value: string) => Promise<string>
+  delAsync: (key: string) => Promise<string>
 
   constructor({ logger, redis, trade_id }: { logger: Logger, redis: any, trade_id: string }) {
     // NB: base_amount_imported is handled by initialiser()
@@ -81,34 +81,34 @@ export class TradeState {
     return await this.set_or_delete_key(this.name_to_key("targetOrderId"), value);
   }
 
-  async get_buyOrderId() {
+  async get_buyOrderId():Promise<string|undefined> {
     const key = this.name_to_key("buyOrderId");
     const value = await this.get_redis_key(key);
     // this.logger.info(`${key} has value ${value}`);
     if (!value) {
       return undefined; // convert null to undefined
     }
-    return Number(value);
+    return value;
   }
 
-  async get_stopOrderId() {
+  async get_stopOrderId():Promise<string|undefined> {
     const key = this.name_to_key("stopOrderId");
     const value = await this.get_redis_key(key);
     // this.logger.info(`${key} has value ${value}`);
     if (!value) {
       return undefined; // convert null to undefined
     }
-    return Number(value);
+    return value;
   }
 
-  async get_targetOrderId() {
+  async get_targetOrderId():Promise<string|undefined> {
     const key = this.name_to_key("targetOrderId");
     const value = await this.get_redis_key(key);
     // this.logger.info(`${key} has value ${value}`);
     if (!value) {
       return undefined; // convert null to undefined
     }
-    return Number(value);
+    return value;
   }
 
   async set_trade_completed(value: Boolean) {
@@ -123,7 +123,7 @@ export class TradeState {
   }
 
   async get_base_amount_held() {
-    let sum = BigNumber(0)
+    let sum = new BigNumber(0)
     sum = sum.plus((await this.get_redis_key(this.name_to_key("base_amount_imported"))) || 0)
     sum = sum.plus((await this.get_redis_key(this.name_to_key("base_amount_bought"))) || 0)
     sum = sum.minus((await this.get_redis_key(this.name_to_key("base_amount_sold"))) || 0)

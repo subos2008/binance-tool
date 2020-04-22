@@ -1,8 +1,10 @@
 import { Logger } from "../interfaces/logger";
 
 import BigNumber from "bignumber.js";
-import { TradeState } from "./redis_trade_state";
-import { TradeDefinition } from "./trade_definition";
+import { TradeState } from "./persistent_state/redis_trade_state";
+import { TradeDefinition } from "./specifications/trade_definition";
+import { PriceRanges } from "./specifications/price_ranges";
+
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -16,11 +18,15 @@ export class TradePriceRangeTracker {
   soft_entry_buy_order_trigger_price: BigNumber | null
   trade_state: TradeState
   trade_definition: TradeDefinition
+  price_ranges: PriceRanges
 
-  constructor(logger: Logger, send_message: (msg: string) => void, trade_definition: TradeDefinition, trade_state: TradeState) {
+  constructor(logger: Logger, send_message: (msg: string) => void, trade_definition: TradeDefinition, trade_state: TradeState,
+    price_ranges: PriceRanges) {
+
     this.logger = logger
     this.trade_definition = trade_definition
     this.trade_state = trade_state
+    this.price_ranges = price_ranges
     this.send_message = send_message
 
     if (this.trade_definition.soft_entry) {
@@ -44,7 +50,7 @@ export class TradePriceRangeTracker {
       this.closeTradesWebSocket();
     }
   }
-  
+
   async main() {
     let waiting_for_soft_entry_price = false;
     if (this.trade_definition.soft_entry) {

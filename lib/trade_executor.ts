@@ -4,16 +4,17 @@ import { PositionSizer } from "./position_sizer"
 import { AlgoUtils } from "../service_lib/algo_utils"
 
 import { Logger } from '../interfaces/logger'
-import { TradeState } from '../classes/redis_trade_state'
-import { TradeDefinition } from '../classes/trade_definition'
+import { TradeState } from '../classes/persistent_state/redis_trade_state'
+import { TradeDefinition } from '../classes/specifications/trade_definition'
 import { TradingRules } from '../lib/trading_rules'
 import { TradeOrderCreator } from '../classes/trade_order_creator'
 import { TradePriceRangeTracker } from '../classes/trade_price_range_tracker'
 
 import BigNumber from 'bignumber.js';
 import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";
-import { OrderState } from "../classes/redis_order_state";
+import { OrderState } from "../classes/persistent_state/redis_order_state";
 import { BinanceOrderData } from '../interfaces/order_callbacks'
+import { PriceRanges } from "../classes/specifications/price_ranges";
 
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
@@ -30,6 +31,7 @@ export class TradeExecutor {
   order_state: OrderState
   trading_rules: TradingRules
   trade_definition: TradeDefinition
+  price_ranges: PriceRanges
   algo_utils: AlgoUtils
   position_sizer: PositionSizer
   closeUserWebsocket: () => void | null
@@ -62,6 +64,8 @@ export class TradeExecutor {
     this.order_state = order_state;
     assert(trading_rules);
     this.trading_rules = trading_rules;
+
+    this.price_ranges = new PriceRanges({trade_definition, percentage_before_soft_buy_price_to_add_order })
 
     this.algo_utils = new AlgoUtils({ logger, ee });
     this.position_sizer = new PositionSizer({ logger, ee, trading_rules });
@@ -225,7 +229,7 @@ export class TradeExecutor {
     // TODO: in some cases we could close this stream when we no longer need it
     // Use unmunged as we are checking if they were present in the trade_definition
     if ((this.trade_definition.unmunged.stop_price && this.trade_definition.unmunged.target_price) || this.trade_definition.soft_entry) {
-      this.trade_price_range_tracker = new TradePriceRangeTracker(this.logger, this.send_message, this.trade_definition, this.trade_state)
+      this.trade_price_range_tracker = new TradePriceRangeTracker(this.logger, this.send_message, this.trade_definition, this.trade_state, this.price_ranges)
       this.trade_price_range_tracker.main() // async function but I don't think we need to await it..?
     }
   }

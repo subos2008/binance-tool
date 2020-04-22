@@ -3,7 +3,7 @@ const { promisify } = require("util");
 
 var stringToBool = (myValue: string) => myValue === "true";
 
-import { Logger } from '../interfaces/logger'
+import { Logger } from '../../interfaces/logger'
 import { BigNumber } from 'bignumber.js';
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion

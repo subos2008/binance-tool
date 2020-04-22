@@ -10,9 +10,9 @@ chai.use(chaiBignumber());
 import BigNumber from "bignumber.js";
 
 const ExchangeEmulator = require("../lib/exchange_emulator");
-const TradeDefinition = require("../classes/trade_definition");
+import {TradeDefinition} from "../classes/specifications/trade_definition";
 const Logger = require("../lib/faux_logger");
-import { OrderState } from "../classes/redis_order_state"
+import { OrderState } from "../classes/persistent_state/redis_order_state"
 
 const {
   NotImplementedError,
@@ -20,8 +20,8 @@ const {
 } = require("../lib/errors");
 
 const fs = require("fs");
-const TradeExecutor = require("../lib/trade_executor");
-const { initialiser: trade_state_initialiser } = require("../classes/redis_trade_state");
+import {TradeExecutor} from "../lib/trade_executor"
+const { initialiser: trade_state_initialiser } = require("../classes/persistent_state/redis_trade_state");
 
 const logger = new Logger({ silent: false });
 const null_logger = new Logger({ silent: true });
@@ -129,7 +129,7 @@ describe("TradeExecutor", function () {
           algo_config.max_quote_amount_to_buy
         );
     }
-    algo_config.trade_definition = new TradeDefinition(algo_config);
+    algo_config.trade_definition = new TradeDefinition(logger, algo_config,exchange_info);
     const trade_state = await trade_state_initialiser(
       Object.assign({ trade_id: 1, redis, logger: null_logger }, algo_config)
     );

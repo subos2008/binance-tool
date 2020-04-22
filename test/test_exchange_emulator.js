@@ -4,6 +4,11 @@ chai.use(require('chai-bignumber')());
 const expect = chai.expect;
 
 const BigNumber = require('bignumber.js');
+BigNumber.DEBUG = true; // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function() {
+	throw Error('BigNumber .valueOf called!');
+};
 
 const ExchangeEmulator = require('../lib/exchange_emulator');
 const Logger = require('../lib/faux_logger');
@@ -290,7 +295,7 @@ describe('ExchangeEmulator', function() {
 					exchange_info,
 					starting_quote_balance: BigNumber(1)
 				});
-				let price_target = BigNumber('0.8');
+				let price_target = '0.8';
 				let event;
 				let clean = await ee.ws.aggTrades([ default_pair ], (msg) => {
 					event = msg;
@@ -307,7 +312,7 @@ describe('ExchangeEmulator', function() {
 					exchange_info,
 					starting_quote_balance: BigNumber(1)
 				});
-				let price_target = BigNumber('0.8');
+				let price_target = '0.8';
 				let event;
 				await ee.ws.aggTrades([ default_pair, 'AIONBTC' ], (msg) => {
 					event = msg;

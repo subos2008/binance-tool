@@ -2,13 +2,13 @@ const utils = require('../lib/utils');
 const assert = require('assert');
 const async_error_handler = require('../lib/async_error_handler');
 
+import BigNumber from "bignumber.js";
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
   throw Error('BigNumber .valueOf called!');
 };
 import { Logger } from "../interfaces/logger";
-import BigNumber from "bignumber.js";
 import { TradingRules } from "../lib/trading_rules";
 
 export class AlgoUtils {
@@ -89,7 +89,7 @@ export class AlgoUtils {
     return base_amount;
   }
 
-  split_pair(pair: string) {
+  split_pair(pair: string): { quote_currency: string, base_currency: string } {
     const [total, base_currency, quote_currency] = utils.break_up_binance_pair(pair);
     return {
       quote_currency,
@@ -231,6 +231,9 @@ export class AlgoUtils {
       async_error_handler(console, `Buy error: ${error.body}`, error);
     }
   }
+
+  async cancelOrder(args: { symbol: string, orderId: string }) {
+    await this.ee.cancelOrder(args);
+  }
 }
 
-module.exports = AlgoUtils;

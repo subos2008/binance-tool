@@ -13,9 +13,9 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
-import { Logger } from '../interfaces/logger'
+import { Logger } from '../../interfaces/logger'
 import { RedisClient } from 'redis'
-import { TradeDefinition } from './trade_definition';
+import { TradeDefinition } from '../specifications/trade_definition';
 
 export class TradeState {
   logger: Logger
@@ -177,7 +177,7 @@ async function initialiser(params: { logger: Logger, redis: RedisClient, trade_i
   const trade_state = new TradeState({ logger, redis, trade_id });
   let base_amount_imported = trade_definition.base_amount_imported; // BigNumber
   if (base_amount_imported) {
-    logger.info(`TradeState setting base_amount_imported (${base_amount_imported})`)
+    logger.info(`TradeState setting base_amount_imported (${base_amount_imported.toFixed()})`)
     await trade_state.set_base_amount_imported(base_amount_imported);
   } else {
     logger.info(`TradeState no base_amount_imported.`)

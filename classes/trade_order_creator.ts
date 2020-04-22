@@ -1,9 +1,9 @@
 const assert = require("assert");
 const utils = require('../lib/utils')
 
-import { TradeDefinition } from "./trade_definition";
+import { TradeDefinition } from "./specifications/trade_definition";
 import { Logger } from "../interfaces/logger";
-import { TradeState } from './redis_trade_state'
+import { TradeState } from './persistent_state/redis_trade_state'
 import { AlgoUtils } from "../service_lib/algo_utils"
 import { TradeExecutor } from "../lib/trade_executor"
 
@@ -84,6 +84,10 @@ export class TradeOrderCreator {
     } else {
       this.mummy.execution_complete("buy completed and no sell actions defined");
     }
+  }
+
+  async cancelOrder({ symbol, orderId }: { symbol: string, orderId: string }) {
+    await this.algo_utils.cancelOrder({ symbol, orderId });
   }
 
   async _create_limit_buy_order() {
@@ -196,7 +200,7 @@ export class TradeOrderCreator {
     { base_amount: BigNumber, buy_price?: BigNumber, stop_price?: BigNumber, target_price?: BigNumber, price?: BigNumber }) {
     assert(base_amount);
     const original_base_amount = new BigNumber(base_amount);
-    console.log(`orig base_amount: ${original_base_amount}`);
+    console.log(`orig base_amount: ${original_base_amount.toFixed()}`);
     const new_base_amount = this.algo_utils.munge_amount_and_check_notionals({
       pair: this.trade_definition.pair,
       base_amount,
@@ -205,7 +209,7 @@ export class TradeOrderCreator {
       target_price,
       price
     });
-    console.log(`new base_amount: ${new_base_amount}`);
+    console.log(`new base_amount: ${new_base_amount.toFixed()}`);
 
     if (!new_base_amount.eq(original_base_amount)) {
       console.log(

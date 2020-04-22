@@ -102,9 +102,9 @@ export class PositionSizer {
       .times(max_portfolio_percentage_allowed_in_trade)
       .dividedBy(100);
     this.logger.info(
-      `Max allowed to invest, based on stop percentage: ${max_quote_amount_to_invest} ${quote_currency}`
+      `Max allowed to invest, based on stop percentage: ${max_quote_amount_to_invest.toFixed()} ${quote_currency}`
     );
-    this.logger.info(`Available to invest: ${quote_portfolio.available} ${quote_currency}`);
+    this.logger.info(`Available to invest: ${quote_portfolio.available.toFixed()} ${quote_currency}`);
     return BigNumber.minimum(max_quote_amount_to_invest, quote_portfolio.available);
   }
 
@@ -155,5 +155,3 @@ export class PositionSizer {
     return { quote_volume, base_amount };
   }
 }
-
-module.exports = PositionSizer;

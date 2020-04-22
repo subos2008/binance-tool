@@ -22,9 +22,10 @@ export class TradePriceRangeTracker {
   trade_definition: TradeDefinition
   price_ranges: PriceRanges
   trade_order_creator: TradeOrderCreator
+  ee: any
 
   constructor(logger: Logger, send_message: (msg: string) => void, trade_definition: TradeDefinition, trade_state: TradeState,
-    price_ranges: PriceRanges, trade_order_creator: TradeOrderCreator) {
+    price_ranges: PriceRanges, trade_order_creator: TradeOrderCreator, ee: any) {
 
     this.logger = logger
     this.trade_definition = trade_definition
@@ -32,6 +33,7 @@ export class TradePriceRangeTracker {
     this.price_ranges = price_ranges
     this.send_message = send_message
     this.trade_order_creator = trade_order_creator
+    this.ee = ee
 
     if (this.trade_definition.soft_entry) {
       if (this.trade_definition.unmunged.buy_price === null) {
@@ -89,11 +91,11 @@ export class TradePriceRangeTracker {
           (await this.trade_state.get_targetOrderId())
         ) {
           // this.logger.info(
-          // 	`${symbol} trade update. price: ${price} stop: ${this.stop_price} target: ${this.target_price}`
+          // 	`${symbol} trade update. price: ${price} stop: ${this.stop_price} target: ${this.tartrade_definition.munged.get_price}`
           // );
           if (
-            typeof this.target_price !== "undefined" &&
-            price.isGreaterThanOrEqualTo(this.target_price) &&
+            typeof this.trade_definition.munged.target_price !== "undefined" &&
+            price.isGreaterThanOrEqualTo(this.trade_definition.munged.target_price) &&
             report_when_target_price_hit
           ) {
             report_when_target_price_hit = false;
@@ -102,8 +104,8 @@ export class TradePriceRangeTracker {
             this.send_message(msg);
           }
           if (
-            typeof this.stop_price !== "undefined" &&
-            price.isLessThanOrEqualTo(this.stop_price) &&
+            typeof this.trade_definition.munged.stop_price !== "undefined" &&
+            price.isLessThanOrEqualTo(this.trade_definition.munged.stop_price) &&
             report_when_stop_price_hit
           ) {
             report_when_stop_price_hit = false;
@@ -112,10 +114,10 @@ export class TradePriceRangeTracker {
             this.send_message(msg);
           }
           if (
-            typeof this.target_price !== "undefined" &&
+            typeof this.trade_definition.munged.target_price !== "undefined" &&
             (await this.trade_state.get_stopOrderId()) &&
             !(await this.trade_state.get_targetOrderId()) &&
-            price.isGreaterThanOrEqualTo(this.target_price) &&
+            price.isGreaterThanOrEqualTo(this.trade_definition.munged.target_price) &&
             !isCancelling
           ) {
             {
@@ -127,7 +129,7 @@ export class TradePriceRangeTracker {
             try {
               let stopOrderId = await this.trade_state.get_stopOrderId();
               await this.trade_state.set_stopOrderId(undefined); // Do before await cancelOrder
-              await this.ee.cancelOrder({ symbol, orderId: stopOrderId });
+              if (stopOrderId) await this.trade_order_creator.cancelOrder({ symbol, orderId: stopOrderId });
               isCancelling = false;
             } catch (error) {
               this.logger.error(`${symbol} cancel error: ${error.body}`);
@@ -149,20 +151,20 @@ export class TradePriceRangeTracker {
           } else if (
             (await this.trade_state.get_targetOrderId()) &&
             !(await this.trade_state.get_stopOrderId()) &&
-            price.isLessThanOrEqualTo(this.stop_price) &&
+            // TODO: remove || 0 hack
+            price.isLessThanOrEqualTo(this.trade_definition.munged.stop_price || 0) &&
             !isCancelling
           ) {
             isCancelling = true;
             try {
               let targetOrderId = await this.trade_state.get_targetOrderId();
               await this.trade_state.set_targetOrderId(undefined); // Do before await cancelOrder
-              await this.ee.cancelOrder({ symbol, orderId: targetOrderId });
+              if (targetOrderId) await this.trade_order_creator.cancelOrder({ symbol, orderId: targetOrderId });
               isCancelling = false;
             } catch (error) {
               this.logger.error(`${symbol} cancel error ${error.body}`);
               return;
             }
-            this.logger.info(`${symbol} cancel response: ${response}`);
             try {
               await this.trade_state.set_stopOrderId(
                 await this.trade_order_creator.placeStopOrder()

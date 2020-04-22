@@ -37,7 +37,7 @@ export class TradeExecutor {
   closeUserWebsocket: () => void | null
   trade_order_creator: TradeOrderCreator | null
   trade_price_range_tracker: TradePriceRangeTracker | null
-  order_execution_tracker: OrderExecutionTracker|null
+  order_execution_tracker: OrderExecutionTracker | null
 
   // All numbers are expected to be passed in as strings
   constructor({
@@ -65,7 +65,7 @@ export class TradeExecutor {
     assert(trading_rules);
     this.trading_rules = trading_rules;
 
-    this.price_ranges = new PriceRanges({trade_definition, percentage_before_soft_buy_price_to_add_order })
+    this.price_ranges = new PriceRanges({ trade_definition, percentage_before_soft_buy_price_to_add_order })
 
     this.algo_utils = new AlgoUtils({ logger, ee });
     this.position_sizer = new PositionSizer({ logger, ee, trading_rules });
@@ -125,7 +125,7 @@ export class TradeExecutor {
       );
       assert(base_amount);
       this.logger.info(
-        `Sized trade at ${quote_volume} ${quote_currency}, ${base_amount} ${base_currency}`
+        `Sized trade at ${quote_volume.toFixed()} ${quote_currency}, ${base_amount.toFixed()} ${base_currency}`
       );
       return { quote_volume, base_amount };
     } catch (error) {
@@ -142,7 +142,7 @@ export class TradeExecutor {
         new BigNumber(totalTradeQuantity)
       );
       this.send_message(`${symbol} buy order filled`);
-      if(!this.trade_order_creator) throw new Error(`placeSellOrder called before trade_order_creator is initialised`)
+      if (!this.trade_order_creator) throw new Error(`placeSellOrder called before trade_order_creator is initialised`)
       await this.trade_order_creator.placeSellOrder();
     } else if (orderId === (await this.trade_state.get_stopOrderId())) {
       this.send_message(`${symbol} stop loss order filled`);
@@ -157,7 +157,7 @@ export class TradeExecutor {
   }
 
   async order_cancelled(orderId: string, data: BinanceOrderData) {
-    if(data.orderRejectReason === "NONE") {
+    if (data.orderRejectReason === "NONE") {
       // Assume user cancelled order and exit
       this.execution_complete(
         `Order was cancelled, presumably by user. Exiting.`,
@@ -229,10 +229,8 @@ export class TradeExecutor {
     // TODO: in some cases we could close this stream when we no longer need it
     // Use unmunged as we are checking if they were present in the trade_definition
     if ((this.trade_definition.unmunged.stop_price && this.trade_definition.unmunged.target_price) || this.trade_definition.soft_entry) {
-      this.trade_price_range_tracker = new TradePriceRangeTracker(this.logger, this.send_message, this.trade_definition, this.trade_state, this.price_ranges, this.trade_order_creator)
+      this.trade_price_range_tracker = new TradePriceRangeTracker(this.logger, this.send_message, this.trade_definition, this.trade_state, this.price_ranges, this.trade_order_creator, this.ee)
       this.trade_price_range_tracker.main() // async function but I don't think we need to await it..?
     }
   }
 }
-
-module.exports = TradeExecutor;

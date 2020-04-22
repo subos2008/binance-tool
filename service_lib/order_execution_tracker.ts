@@ -7,7 +7,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
-import { OrderState } from "../classes/redis_order_state";
+import { OrderState } from "../classes/persistent_state/redis_order_state";
 
 import { Logger } from '../interfaces/logger'
 import { OrderCallbacks, BinanceOrderData } from '../interfaces/order_callbacks'

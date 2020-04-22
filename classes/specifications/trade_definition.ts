@@ -1,9 +1,9 @@
 const assert = require("assert");
-const utils = require('../lib/utils')
+const utils = require('../../lib/utils')
 
 import BigNumber from "bignumber.js";
-import { TradingRules } from "../lib/trading_rules";
-import { Logger } from "../interfaces/logger";
+import { TradingRules } from "../../lib/trading_rules";
+import { Logger } from "../../interfaces/logger";
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -26,12 +26,12 @@ class MungedPrices {
 export class TradeDefinition {
   logger: Logger
   pair: string
-  base_amount_imported: BigNumber | null
-  max_quote_amount_to_buy: BigNumber | null
+  base_amount_imported: BigNumber | undefined
+  max_quote_amount_to_buy: BigNumber | undefined
   soft_entry: Boolean
   auto_size: Boolean
   munged: MungedPrices
-  unmunged: { buy_price: BigNumber | null, stop_price: BigNumber | null, target_price: BigNumber | null }
+  unmunged: { buy_price?: BigNumber | undefined, stop_price?: BigNumber | undefined, target_price?: BigNumber | undefined } = {}
 
   set_exchange_info(exchange_info: any) {
     this.munged = new MungedPrices(exchange_info, this)
@@ -73,8 +73,8 @@ export class TradeDefinition {
     soft_entry = stringToBool(soft_entry);
 
     if (base_amount_imported) {
-      console.log(`Oooh, trade_definition with base_amount_imported (${base_amount_imported})`)
       this.base_amount_imported = new BigNumber(base_amount_imported);
+      console.log(`Oooh, trade_definition with base_amount_imported (${this.base_amount_imported.toFixed()})`)
     }
     this.pair = pair;
     if (max_quote_amount_to_buy)
@@ -128,9 +128,9 @@ export class TradeDefinition {
   }
 
   get_message():string{
-    let buy_msg = this.munged.buy_price ? `buy: ${this.munged.buy_price}` : "";
-    let stop_msg = this.munged.stop_price ? `stop: ${this.munged.stop_price}` : "";
-    let target_msg = this.munged.target_price ? `target: ${this.munged.target_price}` : "";
+    let buy_msg = this.munged.buy_price ? `buy: ${this.munged.buy_price.toFixed()}` : "";
+    let stop_msg = this.munged.stop_price ? `stop: ${this.munged.stop_price.toFixed()}` : "";
+    let target_msg = this.munged.target_price ? `target: ${this.munged.target_price.toFixed()}` : "";
     return `${this.pair}: from ${buy_msg} to ${stop_msg} or ${target_msg}`
   }
 

@@ -19,5 +19,3 @@ export class TradingRules {
     this.allowed_to_trade_without_stop = allowed_to_trade_without_stop ? true : false;
   }
 }
-
-module.exports = TradingRules;

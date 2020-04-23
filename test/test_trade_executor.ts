@@ -9,8 +9,8 @@ chai.use(chaiBignumber());
 
 import BigNumber from "bignumber.js";
 
-const ExchangeEmulator = require("../lib/exchange_emulator");
-import {TradeDefinition} from "../classes/specifications/trade_definition";
+import { ExchangeEmulator } from "../lib/exchange_emulator";
+import { TradeDefinition } from "../classes/specifications/trade_definition";
 const Logger = require("../lib/faux_logger");
 import { OrderState } from "../classes/persistent_state/redis_order_state"
 
@@ -20,7 +20,7 @@ const {
 } = require("../lib/errors");
 
 const fs = require("fs");
-import {TradeExecutor} from "../lib/trade_executor"
+import { TradeExecutor } from "../lib/trade_executor"
 const { initialiser: trade_state_initialiser } = require("../classes/persistent_state/redis_trade_state");
 
 const logger = new Logger({ silent: false });
@@ -52,10 +52,10 @@ function most_recent_message() {
   return message_queue[message_queue.length - 1];
 }
 
-function aggrivate_price(price:BigNumber) {
+function aggrivate_price(price: BigNumber) {
   return new BigNumber(price).plus("0.00000001"); // will trigger the PRICE_FILTER unless prices are munged
 }
-function aggrivate_amount(base_amount:BigNumber) {
+function aggrivate_amount(base_amount: BigNumber) {
   return new BigNumber(base_amount).plus(".0001"); // will trigger the LOT_SIZE unless base_amount is munged
 }
 var redis: any;
@@ -129,12 +129,12 @@ describe("TradeExecutor", function () {
           algo_config.max_quote_amount_to_buy
         );
     }
-    algo_config.trade_definition = new TradeDefinition(logger, algo_config,exchange_info);
+    algo_config.trade_definition = new TradeDefinition(logger, algo_config, exchange_info);
     const trade_state = await trade_state_initialiser(
       Object.assign({ trade_id: 1, redis, logger: null_logger }, algo_config)
     );
     const order_state = new OrderState(Object.assign({ redis, logger: null_logger }, algo_config))
-    
+
     algo_config = Object.assign(algo_config, { trade_state, order_state });
     let algo = new TradeExecutor(algo_config);
     return { algo, ee };
@@ -179,7 +179,7 @@ describe("TradeExecutor", function () {
           expect(ee.open_orders[0].type).to.equal("LIMIT");
           expect(ee.open_orders[0].side).to.equal("BUY");
           expect(ee.open_orders[0].orderId).to.equal('1');
-          expect(ee.open_orders[0].price.isEqualTo(buy_price)).to.equal(true);
+          expect(ee.open_orders[0].price).to.equal(buy_price.toFixed());
           expect(ee.open_orders[0].origQty).bignumber.to.equal("0.5");
         });
       });
@@ -203,10 +203,9 @@ describe("TradeExecutor", function () {
         expect(ee.open_orders[0].type).to.equal("LIMIT");
         expect(ee.open_orders[0].side).to.equal("BUY");
         expect(ee.open_orders[0].orderId).to.equal('1');
-        expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
+        expect(ee.open_orders[0].price).to.equal(limit_price.toFixed());
         expect(
-          ee.open_orders[0].origQty.isEqualTo(base_amount_to_buy)
-        ).to.equal(true);
+          ee.open_orders[0].origQty).to.equal(base_amount_to_buy.toFixed());
       });
       it("sends a message when the trade fills/partial fills");
     });
@@ -247,10 +246,9 @@ describe("TradeExecutor", function () {
           expect(ee.open_orders[0].type).to.equal("LIMIT");
           expect(ee.open_orders[0].side).to.equal("BUY");
           expect(ee.open_orders[0].orderId).to.equal('1');
-          expect(ee.open_orders[0].price.isEqualTo(buy_price)).to.equal(true);
+          expect(ee.open_orders[0].price).to.equal(buy_price.toFixed());
           expect(
-            ee.open_orders[0].origQty.isEqualTo(base_amount_to_buy)
-          ).to.equal(true);
+            ee.open_orders[0].origQty).to.equal(base_amount_to_buy.toFixed());
         });
         it("creates a buy order when entry price is percentage_before_soft_buy_price_to_add_order", async function () {
           const base_amount_to_buy = new BigNumber(1);
@@ -290,10 +288,8 @@ describe("TradeExecutor", function () {
           expect(ee.open_orders[0].type).to.equal("LIMIT");
           expect(ee.open_orders[0].side).to.equal("BUY");
           expect(ee.open_orders[0].orderId).to.equal('1');
-          expect(ee.open_orders[0].price.isEqualTo(buy_price)).to.equal(true);
-          expect(
-            ee.open_orders[0].origQty.isEqualTo(base_amount_to_buy)
-          ).to.equal(true);
+          expect(ee.open_orders[0].price).to.equal(buy_price.toFixed());
+          expect(ee.open_orders[0].origQty).to.equal(base_amount_to_buy.toFixed());
         });
       });
     });
@@ -384,8 +380,8 @@ describe("TradeExecutor", function () {
       expect(ee.open_orders[0].type).to.equal("LIMIT");
       expect(ee.open_orders[0].side).to.equal("BUY");
       expect(ee.open_orders[0].orderId).to.equal('1');
-      expect(ee.open_orders[0].price.isEqualTo(buy_price)).to.equal(true);
-      expect(ee.open_orders[0].origQty).bignumber.to.equal("0.5");
+      expect(ee.open_orders[0].price).to.equal(buy_price.toFixed());
+      expect(ee.open_orders[0].origQty).to.equal("0.5");
     });
   });
   describe("when only a buy_price and a target_price present", function () {
@@ -416,10 +412,10 @@ describe("TradeExecutor", function () {
         expect(ee.open_orders[0].type).to.equal("LIMIT");
         expect(ee.open_orders[0].side).to.equal("SELL");
         expect(ee.open_orders[0].orderId).to.equal('2');
-        expect(ee.open_orders[0].price.isEqualTo(target_price)).to.equal(true);
+        expect(ee.open_orders[0].price).to.equal(target_price);
         expect(
-          ee.open_orders[0].origQty.isEqualTo(base_amount_to_buy)
-        ).to.equal(true);
+          ee.open_orders[0].origQty
+        ).to.equal(base_amount_to_buy);
       });
     });
   });
@@ -470,11 +466,11 @@ describe("TradeExecutor", function () {
         expect(ee.open_orders[0].price).to.bignumber.equal(
           stop_price.times(default_stop_limt_price_factor)
         );
-        expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(
-          true
+        expect(ee.open_orders[0].stopPrice).to.equal(
+          stop_price
         );
-        expect(ee.open_orders[0].origQty.isEqualTo(base_amount_imported)).to.equal(
-          true
+        expect(ee.open_orders[0].origQty).to.equal(
+          base_amount_imported
         );
       });
     });
@@ -504,9 +500,9 @@ describe("TradeExecutor", function () {
         expect(ee.open_orders[0].type).to.equal("LIMIT");
         expect(ee.open_orders[0].side).to.equal("SELL");
         expect(ee.open_orders[0].orderId).to.equal('1');
-        expect(ee.open_orders[0].price.isEqualTo(target_price)).to.equal(true);
-        expect(ee.open_orders[0].origQty.isEqualTo(base_amount_imported)).to.equal(
-          true
+        expect(ee.open_orders[0].price).to.equal(target_price);
+        expect(ee.open_orders[0].origQty).to.equal(
+          base_amount_imported
         );
       });
 
@@ -621,12 +617,12 @@ describe("TradeExecutor", function () {
           expect(ee.open_orders[0].side).to.equal("SELL");
           expect(ee.open_orders[0].orderId).to.equal('2');
           expect(ee.open_orders[0].price).to.bignumber.equal(limit_price);
-          expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(
-            true
+          expect(ee.open_orders[0].stopPrice).to.equal(
+            stop_price
           );
           expect(
-            ee.open_orders[0].origQty.isEqualTo(base_amount_to_buy)
-          ).to.equal(true);
+            ee.open_orders[0].origQty
+          ).to.equal(base_amount_to_buy);
 
           try {
             await ee.set_current_price({
@@ -696,12 +692,12 @@ describe("TradeExecutor", function () {
           expect(ee.open_orders[0].type).to.equal("LIMIT");
           expect(ee.open_orders[0].side).to.equal("SELL");
           expect(ee.open_orders[0].orderId).to.equal('3');
-          expect(ee.open_orders[0].price.isEqualTo(target_price)).to.equal(
-            true
+          expect(ee.open_orders[0].price).to.equal(
+            target_price
           );
           expect(
-            ee.open_orders[0].origQty.isEqualTo(base_amount_to_buy)
-          ).to.equal(true);
+            ee.open_orders[0].origQty
+          ).to.equal(base_amount_to_buy);
 
           try {
             await ee.set_current_price({
@@ -761,10 +757,8 @@ describe("TradeExecutor", function () {
           expect(ee.open_orders[0].type).to.equal("LIMIT");
           expect(ee.open_orders[0].side).to.equal("BUY");
           expect(ee.open_orders[0].orderId).to.equal('1');
-          expect(ee.open_orders[0].price.isEqualTo(buy_price)).to.equal(true);
-          expect(
-            ee.open_orders[0].origQty.isEqualTo(base_amount_to_buy)
-          ).to.equal(true);
+          expect(ee.open_orders[0].price).to.equal(buy_price.toFixed());
+          expect(ee.open_orders[0].origQty).to.equal(base_amount_to_buy.toFixed());
           expect(most_recent_message()).to.be.an("string");
           expect(most_recent_message()).to.equal(
             `${default_pair} soft entry buy order trigger price hit`
@@ -808,12 +802,12 @@ describe("TradeExecutor", function () {
           expect(ee.open_orders[0].price).to.bignumber.equal(
             stop_price.times(default_stop_limt_price_factor)
           );
-          expect(ee.open_orders[0].stopPrice.isEqualTo(stop_price)).to.equal(
-            true
+          expect(ee.open_orders[0].stopPrice).to.equal(
+            stop_price
           );
           expect(
-            ee.open_orders[0].origQty.isEqualTo(base_amount_to_buy)
-          ).to.equal(true);
+            ee.open_orders[0].origQty
+          ).to.equal(base_amount_to_buy);
 
           let limit_price = stop_price.times(default_stop_limt_price_factor);
           try {
@@ -868,7 +862,7 @@ describe("TradeExecutor", function () {
             expect.fail("should not get here: expected call not to throw");
           }
           expect(most_recent_message()).to.be.an("string");
-          expect(most_recent_message()).to.equal(
+          expect(message_queue).to.include(
             `${default_pair} buy order filled`
           );
 
@@ -888,12 +882,9 @@ describe("TradeExecutor", function () {
           expect(ee.open_orders[0].type).to.equal("LIMIT");
           expect(ee.open_orders[0].side).to.equal("SELL");
           expect(ee.open_orders[0].orderId).to.equal('3');
-          expect(ee.open_orders[0].price.isEqualTo(target_price)).to.equal(
-            true
-          );
+          expect(ee.open_orders[0].price).to.equal(target_price);
           expect(
-            ee.open_orders[0].origQty.isEqualTo(base_amount_to_buy)
-          ).to.equal(true);
+            ee.open_orders[0].origQty).to.equal(base_amount_to_buy);
 
           try {
             await ee.set_current_price({

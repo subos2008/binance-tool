@@ -6,7 +6,7 @@ const expect = chai.expect;
 
 const BigNumber = require('bignumber.js');
 
-const ExchangeEmulator = require('../lib/exchange_emulator');
+const {ExchangeEmulator} = require('../lib/exchange_emulator');
 const Logger = require('../lib/faux_logger');
 const async_error_handler = require('../lib/async_error_handler');
 const utils = require('../lib/utils');

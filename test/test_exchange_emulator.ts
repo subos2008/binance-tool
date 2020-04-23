@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function() {
 	throw Error('BigNumber .valueOf called!');
 };
 
-const ExchangeEmulator = require('../lib/exchange_emulator');
+import {ExchangeEmulator} from '../lib/exchange_emulator'
 const Logger = require('../lib/faux_logger');
 const { NotImplementedError, InsufficientBalanceError } = require('../lib/errors');
 const async_error_handler = require('../lib/async_error_handler');
@@ -117,15 +117,15 @@ describe('ExchangeEmulator', function() {
 		it('adds a limit_buy_order to open_orders', async function() {
 			const starting_quote_balance = new BigNumber(1);
 			const ee = setup({ starting_quote_balance });
-			const base_volume = new BigNumber(1);
-			const limit_price = new BigNumber(1);
+			const base_volume = "1";
+			const limit_price = "1";
 			await ee.add_limit_buy_order({ base_volume, limit_price, pair: default_pair });
 			expect(ee.open_orders.length).to.equal(1);
 			expect(ee.open_orders[0].type).to.equal('LIMIT');
 			expect(ee.open_orders[0].side).to.equal('BUY');
-			expect(ee.open_orders[0].orderId).to.equal(1);
-			expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
-			expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
+			expect(ee.open_orders[0].orderId).to.equal('1');
+			expect(ee.open_orders[0].price).to.equal(limit_price);
+			expect(ee.open_orders[0].origQty).to.equal(base_volume);
 		});
 		it('executes the order when the buy price is hit');
 	});
@@ -155,15 +155,15 @@ describe('ExchangeEmulator', function() {
 			const starting_quote_balance = new BigNumber(1);
 			const starting_base_balance = new BigNumber(4);
 			const ee = setup({ starting_quote_balance, starting_base_balance });
-			const base_volume = new BigNumber(1);
-			const limit_price = new BigNumber(1);
+			const base_volume = '1';
+			const limit_price = '1';
 			await ee.add_limit_sell_order({ base_volume, limit_price, pair: default_pair });
 			expect(ee.open_orders.length).to.equal(1);
 			expect(ee.open_orders[0].type).to.equal('LIMIT');
-			expect(ee.open_orders[0].orderId).to.equal(1);
+			expect(ee.open_orders[0].orderId).to.equal('1');
 			expect(ee.open_orders[0].side).to.equal('SELL');
-			expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
-			expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
+			expect(ee.open_orders[0].price).to.equal(limit_price);
+			expect(ee.open_orders[0].origQty).to.equal(base_volume);
 		});
 	});
 	describe('cancel_all_open_orders', function() {
@@ -253,14 +253,14 @@ describe('ExchangeEmulator', function() {
 				async_error_handler(null, null, e);
 			}
 		}
-		async function do_limit_sell_order({ ee, price, amount }:{ ee:any, price:BigNumber, amount:BigNumber }) {
+		async function do_limit_sell_order({ ee, price, amount }:{ ee:any, price:string, amount:string }) {
 			try {
 				return await ee.order({
 					side: 'SELL',
 					symbol: default_pair,
 					type: 'LIMIT',
-					quantity: amount.toFixed(),
-					price: price.toFixed()
+					quantity: amount,
+					price: price
 				});
 			} catch (e) {
 				async_error_handler(null, null, e);
@@ -301,7 +301,7 @@ describe('ExchangeEmulator', function() {
 				let clean = await ee.ws.aggTrades([ default_pair ], (msg:string) => {
 					event = msg;
 				});
-				await ee.set_current_price({ symbol: default_pair, price: price_target });
+				await ee.set_current_price({ symbol: default_pair, price: new BigNumber(price_target) });
 				expect(event).to.be.an('object');
 				expect(event).to.include({
 					symbol: default_pair,
@@ -318,13 +318,13 @@ describe('ExchangeEmulator', function() {
 				await ee.ws.aggTrades([ default_pair, 'AIONBTC' ], (msg:string) => {
 					event = msg;
 				});
-				await ee.set_current_price({ symbol: default_pair, price: price_target });
+				await ee.set_current_price({ symbol: default_pair, price: new BigNumber(price_target) });
 				expect(event).to.be.an('object');
 				expect(event).to.include({
 					symbol: default_pair,
 					price: price_target
 				});
-				await ee.set_current_price({ symbol: 'AIONBTC', price: price_target });
+				await ee.set_current_price({ symbol: 'AIONBTC', price: new BigNumber(price_target) });
 				expect(event).to.be.an('object');
 				expect(event).to.include({
 					symbol: 'AIONBTC',
@@ -341,7 +341,7 @@ describe('ExchangeEmulator', function() {
 				await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
 				await ee.cancelOrder({
 					symbol: default_pair,
-					orderId: 1
+					orderId: '1'
 				});
 				expect(ee.open_orders).to.have.lengthOf(0);
 			});
@@ -353,10 +353,11 @@ describe('ExchangeEmulator', function() {
 				await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
 				await ee.cancelOrder({
 					symbol: default_pair,
-					orderId: 1
+					orderId: '1'
 				});
 				let balances = (await ee.accountInfo()).balances;
-				let balance = balances.find((o:any) => o.asset === default_quote_currency);
+        let balance = balances.find((o:any) => o.asset === default_quote_currency);
+        if(!balance) throw 'shit'
 				expect(balance.locked).to.bignumber.equal(0);
 				expect(balance.free).to.bignumber.equal(starting_quote_balance);
 			});
@@ -368,11 +369,12 @@ describe('ExchangeEmulator', function() {
 				await do_stop_loss_limit_sell_order({ ee, amount: base_volume, price: limit_price });
 				await ee.cancelOrder({
 					symbol: default_pair,
-					orderId: 1
+					orderId: '1'
 				});
 
 				let balances = (await ee.accountInfo()).balances;
 				let balance = balances.find((o:any) => o.asset === default_base_currency);
+        if(!balance) throw 'shit'
 				expect(balance.locked).to.bignumber.equal(0);
 				expect(balance.free).to.bignumber.equal(starting_base_balance);
 			});
@@ -391,14 +393,14 @@ describe('ExchangeEmulator', function() {
 				await do_stop_loss_limit_sell_order({ ee, amount: base_volume, price: limit_price });
 				await ee.cancelOrder({
 					symbol: default_pair,
-					orderId: 1
+					orderId: '1'
 				});
 				expect(user_event).not.to.be.undefined;
 				expect(user_event).to.be.an('object');
 				expect(user_event).to.include({
 					eventType: 'executionReport',
 					symbol: default_pair,
-					orderId: 1,
+					orderId: '1',
 					orderType: 'STOP_LOSS_LIMIT',
 					side: 'SELL',
 					orderStatus: 'CANCELLED'
@@ -451,14 +453,14 @@ describe('ExchangeEmulator', function() {
 				const ee = setup({ exchange_info, starting_quote_balance: new BigNumber(1) });
 				const base_volume = new BigNumber('1.2');
 				const limit_price = new BigNumber('0.1');
-				let response = await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
+				await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
 				expect(ee.open_orders.length).to.equal(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('BUY');
 				expect(ee.open_orders[0].symbol).to.equal(default_pair);
-				expect(ee.open_orders[0].orderId).to.equal(1);
-				expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
-				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
+				expect(ee.open_orders[0].orderId).to.equal('1');
+				expect(ee.open_orders[0].price).to.equal(limit_price.toFixed());
+				expect(ee.open_orders[0].origQty).to.equal(base_volume.toFixed());
 			});
 			it('returns the expected response object with orderID', async function() {
 				const ee = setup({ exchange_info, starting_quote_balance: new BigNumber(1) });
@@ -466,7 +468,7 @@ describe('ExchangeEmulator', function() {
 				const limit_price = new BigNumber('0.1');
 				let response = await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
 				expect(response).to.have.property('orderId');
-				expect(response.orderId).to.equal(1);
+				expect(response.orderId).to.equal('1');
 			});
 			it.skip('locks the quote_currency balance');
 			describe('when hit', async function() {
@@ -484,7 +486,8 @@ describe('ExchangeEmulator', function() {
 						await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
 						await ee.set_current_price({ symbol: default_pair, price: limit_price });
 						balances = (await ee.accountInfo()).balances;
-						base_balance = balances.find((o:any) => o.asset === default_base_currency);
+            base_balance = balances.find((o:any) => o.asset === default_base_currency);
+            if(!base_balance) throw '';
 						expect(base_balance.locked).to.bignumber.equal(0);
 						expect(base_balance.free).to.bignumber.equal(base_volume);
 					} catch (error) {
@@ -510,7 +513,7 @@ describe('ExchangeEmulator', function() {
 					expect(user_event).to.include({
 						eventType: 'executionReport',
 						symbol: default_pair,
-						orderId: 1,
+						orderId: '1',
 						orderType: 'LIMIT',
 						side: 'BUY',
 						orderStatus: 'FILLED',
@@ -529,7 +532,7 @@ describe('ExchangeEmulator', function() {
 					starting_base_balance: new BigNumber(1)
 				});
 				try {
-					await do_limit_sell_order({ ee, amount: new BigNumber('1'), price: new BigNumber('0.00000001') });
+					await do_limit_sell_order({ ee, amount: '1', price: '0.00000001' });
 				} catch (e) {
 					expect(e.message).to.include('PRICE_FILTER');
 					return;
@@ -541,7 +544,7 @@ describe('ExchangeEmulator', function() {
 					starting_base_balance: new BigNumber(1)
 				});
 				try {
-					await do_limit_sell_order({ ee, amount: new BigNumber('0.0001'), price: new BigNumber('1') });
+					await do_limit_sell_order({ ee, amount: '0.0001', price: '1' });
 				} catch (e) {
 					expect(e.message).to.include('LOT_SIZE');
 					return;
@@ -553,7 +556,7 @@ describe('ExchangeEmulator', function() {
 					starting_base_balance: new BigNumber(1)
 				});
 				try {
-					await do_limit_sell_order({ ee, amount: new BigNumber('0.001'), price: new BigNumber('0.000001') });
+					await do_limit_sell_order({ ee, amount: '0.001', price: '0.000001' });
 				} catch (e) {
 					expect(e.message).to.include('MIN_NOTIONAL');
 					return;
@@ -565,16 +568,16 @@ describe('ExchangeEmulator', function() {
 					starting_quote_balance: new BigNumber(0),
 					starting_base_balance: new BigNumber(1)
 				});
-				const base_volume = new BigNumber('0.8');
-				const limit_price = new BigNumber('0.1');
+				const base_volume = '0.8';
+				const limit_price = '0.1';
 				let response = await do_limit_sell_order({ ee, amount: base_volume, price: limit_price });
 				expect(ee.open_orders.length).to.equal(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');
 				expect(ee.open_orders[0].symbol).to.equal(default_pair);
-				expect(ee.open_orders[0].orderId).to.equal(1);
-				expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
-				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
+				expect(ee.open_orders[0].orderId).to.equal('1');
+				expect(ee.open_orders[0].price).to.equal(limit_price);
+				expect(ee.open_orders[0].origQty).to.equal(base_volume);
 			});
 			it('returns the expected response object with orderID', async function() {
 				const ee = setup({
@@ -583,9 +586,9 @@ describe('ExchangeEmulator', function() {
 				});
 				const base_volume = new BigNumber('0.8');
 				const limit_price = new BigNumber('0.1');
-				let response = await do_limit_sell_order({ ee, amount: base_volume, price: limit_price });
+				let response = await do_limit_sell_order({ ee, amount: base_volume.toFixed(), price: limit_price.toFixed() });
 				expect(response).to.have.property('orderId');
-				expect(response.orderId).to.equal(1);
+				expect(response.orderId).to.equal('1');
 			});
 			describe('when hit', async function() {
 				it('sends an executionReport to .ws.user', async function() {
@@ -599,14 +602,14 @@ describe('ExchangeEmulator', function() {
 					let clean = await ee.ws.user((msg:any) => {
 						user_event = msg;
 					});
-					let response = await do_limit_sell_order({ ee, amount: base_volume, price: limit_price });
+					let response = await do_limit_sell_order({ ee, amount: base_volume.toFixed(), price: limit_price.toFixed() });
 					await ee.set_current_price({ symbol: default_pair, price: limit_price });
 					expect(user_event).to.be.an('object');
 					expect(user_event.totalTradeQuantity).to.be.a('string');
 					expect(user_event).to.include({
 						eventType: 'executionReport',
 						symbol: default_pair,
-						orderId: 1,
+						orderId: '1',
 						orderType: 'LIMIT',
 						side: 'SELL',
 						orderStatus: 'FILLED',
@@ -717,10 +720,10 @@ describe('ExchangeEmulator', function() {
 				expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');
 				expect(ee.open_orders[0].symbol).to.equal(default_pair);
-				expect(ee.open_orders[0].orderId).to.equal(1);
-				expect(ee.open_orders[0].price.isEqualTo(limit_price)).to.equal(true);
-				expect(ee.open_orders[0].stopPrice.isEqualTo(limit_price)).to.equal(true);
-				expect(ee.open_orders[0].origQty.isEqualTo(base_volume)).to.equal(true);
+				expect(ee.open_orders[0].orderId).to.equal('1');
+				expect(ee.open_orders[0].price).to.equal(limit_price.toFixed());
+				expect(ee.open_orders[0].stopPrice).to.equal(limit_price.toFixed());
+				expect(ee.open_orders[0].executedQty).to.equal(base_volume.toFixed());
 			});
 			it('returns the expected response object with orderID', async function() {
 				const ee = setup({
@@ -732,7 +735,7 @@ describe('ExchangeEmulator', function() {
 				const limit_price = new BigNumber('0.1');
 				let response = await do_stop_loss_limit_sell_order({ ee, amount: base_volume, price: limit_price });
 				expect(response).to.have.property('orderId');
-				expect(response.orderId).to.equal(1);
+				expect(response.orderId).to.equal('1');
 			});
 			it('throws Error(Account has insufficient balance for requested action.)');
 			it('refuses order if insufficient balance', async function() {
@@ -770,7 +773,7 @@ describe('ExchangeEmulator', function() {
 					expect(user_event).to.include({
 						eventType: 'executionReport',
 						symbol: default_pair,
-						orderId: 1,
+						orderId: '1',
 						orderType: 'STOP_LOSS_LIMIT',
 						side: 'SELL',
 						orderStatus: 'FILLED',

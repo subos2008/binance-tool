@@ -3,7 +3,7 @@ const chai = require("chai");
 chai.use(require("chai-bignumber")());
 const expect = chai.expect;
 
-const TradeDefinition = require("../classes/specifications/trade_definition");
+const {TradeDefinition} = require("../classes/specifications/trade_definition");
 
 function base() {
   return { pair: "BTCUSDT" };

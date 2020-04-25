@@ -55,7 +55,6 @@ export class TradeDefinition {
 
     let {
       pair,
-      // base_amount_to_buy, // pretty much depricated
       base_amount_imported,
       max_quote_amount_to_buy,
       buy_price,
@@ -64,6 +63,9 @@ export class TradeDefinition {
       soft_entry,
       auto_size
     } = trade_definition;
+
+    // depricated base_amount_to_buy
+    assert((trade_definition as any).base_amount_to_buy === undefined)
 
     assert(pair);
     pair = pair.toUpperCase();

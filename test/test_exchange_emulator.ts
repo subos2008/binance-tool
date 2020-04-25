@@ -413,8 +413,7 @@ describe('ExchangeEmulator', function() {
 				try {
 					await do_limit_buy_order({ ee, amount: new BigNumber('1'), price: new BigNumber('1'), symbol: 'FOOBTC' });
 				} catch (e) {
-					expect(e.message).to.include('assert');
-					expect(e.message).to.include('symbol');
+					expect(e.message).to.include('symbol not known');
 					return;
 				}
 				expect.fail('Expected call to throw');
@@ -723,7 +722,6 @@ describe('ExchangeEmulator', function() {
 				expect(ee.open_orders[0].orderId).to.equal('1');
 				expect(ee.open_orders[0].price).to.equal(limit_price.toFixed());
 				expect(ee.open_orders[0].stopPrice).to.equal(limit_price.toFixed());
-				expect(ee.open_orders[0].executedQty).to.equal(base_volume.toFixed());
 			});
 			it('returns the expected response object with orderID', async function() {
 				const ee = setup({

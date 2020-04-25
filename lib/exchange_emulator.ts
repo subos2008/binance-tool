@@ -475,7 +475,9 @@ export class ExchangeEmulator {
   async order({ side, symbol, type, quantity, price, stopPrice }: { side: string, symbol: string, type: string, quantity: string, price: string, stopPrice: string }) {
     assert(symbol);
     // assert known symbol
-    assert(this.exchange_info.symbols.find((ei: any) => ei.symbol === symbol));
+    if(!this.exchange_info.symbols.find((ei: any) => ei.symbol === symbol)) {
+      throw new Error(`symbol not known in EE.order: ${symbol}`)
+    }
     if (typeof price !== 'undefined') {
       let munged_price = utils.munge_and_check_price({ price, exchange_info: this.exchange_info, symbol });
       if (!new BigNumber(price).isEqualTo(munged_price)) {

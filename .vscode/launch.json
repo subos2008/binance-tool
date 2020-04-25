@@ -16,9 +16,7 @@
         "${workspaceFolder}/out/**/*.js"
       ],
       "args": [
-        "-r",
-        "ts-node/register",
-        "./test/test_exchange_emulator.ts"
+        "./out/test/test_exchange_emulator"
       ],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "tsc: build - tsconfig.json",

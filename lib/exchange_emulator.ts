@@ -26,7 +26,6 @@ BigNumber.prototype.valueOf = function () {
 const assert = require('assert');
 const utils = require('../lib/utils');
 const async_error_handler = require('../lib/async_error_handler');
-const asyncForEach = require('./async_foreach');
 
 const { NotImplementedError, InsufficientBalanceError } = require('../lib/errors');
 
@@ -380,7 +379,7 @@ export class ExchangeEmulator {
   }
 
   // TODO: fees
-  _execute_hit_sell_order({ order, price }: { order: Order, price: string }) {
+  _execute_hit_sell_order({ order, price }: { order: Order, price: BigNumber }) {
     const base_volume = new BigNumber(order['origQty']);
     assert(BigNumber.isBigNumber(base_volume));
     assert(BigNumber.isBigNumber(price));
@@ -394,7 +393,7 @@ export class ExchangeEmulator {
     order.orderStatus = 'FILLED';
     order.executedQty = base_volume.toFixed();
     this.completed_orders.push(order);
-    this.logger.info(`Hit ${order.type} sell: sold ${base_volume} at ${price} for ${quote_volume}`);
+    this.logger.info(`Hit ${order.type} sell: sold ${base_volume} at ${price.toFixed()} for ${quote_volume}`);
     return order;
   }
 
@@ -428,7 +427,7 @@ export class ExchangeEmulator {
       if ((order.symbol === symbol && price.isEqualTo(order['price'])) || order.type === 'MARKET') {
         // TODO: this does execute stop limit orders but ...
         if (order.side === 'SELL') {
-          completed_orders.push(this._execute_hit_sell_order({ order, price: price.toFixed() }));
+          completed_orders.push(this._execute_hit_sell_order({ order, price: price }));
         } else if (order.side === 'BUY') {
           completed_orders.push(this._execute_hit_buy_order({ order }));
         } else {
@@ -639,7 +638,9 @@ export class ExchangeEmulator {
         obj.logger.error(error);
       }
     }
-    await asyncForEach(this.logger, completed_orders, callback);
+    for (const order of completed_orders) {
+      callback(order)
+    }
   }
 
   async send_ws_trades_events(trade:any) {

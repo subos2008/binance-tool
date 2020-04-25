@@ -192,7 +192,7 @@ describe('ExchangeEmulator', function() {
 		it('deducts from ??? if not set to use BNB');
 	});
 
-	describe.only('check_for_completed_limit_orders', function() {
+	describe('check_for_completed_limit_orders', function() {
 		it.skip('checks for the correct symbol. ISSUE');
 		it('executes a limit buy order', async function() {
 			const starting_quote_balance = new BigNumber(3);

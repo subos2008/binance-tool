@@ -1,4 +1,4 @@
-const assert = require("assert");
+import { strict as assert } from 'assert';
 import { Logger } from "../interfaces/logger";
 
 import BigNumber from "bignumber.js";

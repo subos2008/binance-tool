@@ -1,4 +1,4 @@
-const assert = require("assert");
+import { strict as assert } from 'assert';
 const utils = require('../../lib/utils')
 
 import BigNumber from "bignumber.js";
@@ -16,11 +16,22 @@ class MungedPrices {
   target_price: BigNumber | undefined
 
   constructor(exchange_info: Object, trade_definition: TradeDefinition) {
-    assert(exchange_info)
+    assert(exchange_info, `Not exchange_info passed to MungedPrices constructor`)
     if (trade_definition.unmunged.buy_price) this.buy_price = utils.munge_and_check_price({ exchange_info, symbol: trade_definition.pair, price: trade_definition.unmunged.buy_price })
     if (trade_definition.unmunged.stop_price) this.stop_price = utils.munge_and_check_price({ exchange_info, symbol: trade_definition.pair, price: trade_definition.unmunged.stop_price })
     if (trade_definition.unmunged.target_price) this.target_price = utils.munge_and_check_price({ exchange_info, symbol: trade_definition.pair, price: trade_definition.unmunged.target_price })
   }
+}
+
+export interface TradeDefinitionInputSpec {
+  pair: string,
+  base_amount_imported?: BigNumber | string,
+  max_quote_amount_to_buy?: BigNumber | string,
+  buy_price?: BigNumber | string,
+  stop_price?: BigNumber | string,
+  target_price?: BigNumber | string,
+  soft_entry: Boolean,
+  auto_size: Boolean
 }
 
 export class TradeDefinition {
@@ -37,21 +48,14 @@ export class TradeDefinition {
     this.munged = new MungedPrices(exchange_info, this)
   }
 
-  constructor(logger: Logger,
-    trade_definition: {
-    pair: string,
-    base_amount_imported: BigNumber | string | null,
-    max_quote_amount_to_buy: BigNumber | string | null,
-    buy_price: BigNumber | string | null,
-    stop_price: BigNumber | string | null,
-    target_price: BigNumber | string | null,
-    soft_entry: Boolean,
-    auto_size: Boolean
-  },
+  constructor(
+    logger: Logger,
+    trade_definition: TradeDefinitionInputSpec,
     exchange_info: any, // guess it'll have to be allowed to be null
   ) {
     assert(logger);
     this.logger = logger
+    assert(trade_definition);
 
     let {
       pair,
@@ -104,9 +108,12 @@ export class TradeDefinition {
     if (this.unmunged.target_price && this.unmunged.stop_price)
       assert(this.unmunged.target_price.isGreaterThan(this.unmunged.stop_price));
 
-    if (this.soft_entry) assert(this.unmunged.buy_price);
+    if (this.soft_entry) assert(this.unmunged.buy_price, `No buy_price when soft_entry is true`);
 
-    this.set_exchange_info(exchange_info)
+    if (exchange_info) {
+      this.set_exchange_info(exchange_info)
+    }
+    else { console.warn(`TradeDefinition created with no exchange_info specified`) }
   }
 
 
@@ -129,7 +136,7 @@ export class TradeDefinition {
     }
   }
 
-  get_message():string{
+  get_message(): string {
     let buy_msg = this.munged.buy_price ? `buy: ${this.munged.buy_price.toFixed()}` : "";
     let stop_msg = this.munged.stop_price ? `stop: ${this.munged.stop_price.toFixed()}` : "";
     let target_msg = this.munged.target_price ? `target: ${this.munged.target_price.toFixed()}` : "";

@@ -1,4 +1,4 @@
-const assert = require("assert");
+import { strict as assert } from 'assert';
 const { promisify } = require("util");
 
 var stringToBool = (myValue: string) => myValue === "true";

@@ -1,6 +1,6 @@
 
 
-const assert = require("assert");
+import { strict as assert } from 'assert';
 const { promisify } = require("util");
 var _ = require("lodash");
 

@@ -1,4 +1,4 @@
-const assert = require("assert");
+import { strict as assert } from 'assert';
 const utils = require('../lib/utils')
 
 import { TradeDefinition } from "./specifications/trade_definition";

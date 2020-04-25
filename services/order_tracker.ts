@@ -1,7 +1,7 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
-const assert = require("assert");
+import { strict as assert } from 'assert';
 
 require("dotenv").config();
 assert(process.env.REDIS_HOST)

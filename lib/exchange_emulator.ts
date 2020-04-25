@@ -23,7 +23,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
-const assert = require('assert');
+import { strict as assert } from 'assert';;
 const utils = require('../lib/utils');
 const async_error_handler = require('../lib/async_error_handler');
 
@@ -115,9 +115,6 @@ export class ExchangeEmulator {
       logger,
       starting_balances,
       starting_quote_balance,
-      starting_base_balance,
-      base_currency,
-      quote_currency,
       exchange_info
     }: {
       logger: Logger

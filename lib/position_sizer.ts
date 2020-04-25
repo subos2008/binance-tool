@@ -1,5 +1,5 @@
 const utils = require('../lib/utils');
-const assert = require('assert');
+import { strict as assert } from 'assert';;
 const async_error_handler = require('../lib/async_error_handler');
 
 import BigNumber from "bignumber.js";
@@ -22,7 +22,7 @@ export class PositionSizer {
     this.logger = logger;
     assert(ee);
     this.ee = ee;
-    assert(trading_rules);
+    assert.ok(trading_rules, 'missing trading_rules');
     this.trading_rules = trading_rules;
   }
 
@@ -120,7 +120,7 @@ export class PositionSizer {
 
   async size_position(
     { buy_price, stop_price, quote_currency, max_quote_amount_to_buy, do_not_auto_size_for_stop_percentage }
-      : { buy_price: BigNumber, stop_price: BigNumber, quote_currency: string, max_quote_amount_to_buy: BigNumber, do_not_auto_size_for_stop_percentage: boolean }
+      : { buy_price: BigNumber, stop_price: BigNumber, quote_currency: string, max_quote_amount_to_buy?: BigNumber, do_not_auto_size_for_stop_percentage?: boolean }
   ): Promise<{ quote_volume: BigNumber, base_amount: BigNumber }> {
     assert(quote_currency);
     assert(buy_price);

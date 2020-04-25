@@ -1,4 +1,4 @@
-const assert = require('assert');
+import { strict as assert } from 'assert';;
 import { BigNumber } from 'bignumber.js'
 
 // TODO: binance_regex only supports BTC and returns undef otherwise

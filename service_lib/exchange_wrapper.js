@@ -1,5 +1,5 @@
 const utils = require('../lib/utils');
-const assert = require('assert');
+import { strict as assert } from 'assert';;
 const BigNumber = require('bignumber.js');
 const async_error_handler = require('../lib/async_error_handler');
 

@@ -1,5 +1,5 @@
 const async_error_handler = require("./async_error_handler");
-const assert = require("assert");
+import { strict as assert } from 'assert';
 import { PositionSizer } from "./position_sizer"
 import { AlgoUtils } from "../service_lib/algo_utils"
 

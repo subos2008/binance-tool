@@ -1,4 +1,4 @@
-const assert = require('assert');
+import { strict as assert } from 'assert';;
 
 import BigNumber from "bignumber.js";
 BigNumber.DEBUG = true; // Prevent NaN

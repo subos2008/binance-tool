@@ -445,11 +445,11 @@ describe("TradeExecutor", function () {
         const stop_price = new BigNumber("0.5");
         let { ee, algo } = await setup({
           ee_config: {
-            starting_base_balance: new BigNumber(1)
+            starting_base_balance: new BigNumber(1),
           },
           algo_config: {
             base_amount_imported,
-            stop_price
+            stop_price,
           }
         });
         try {
@@ -467,10 +467,10 @@ describe("TradeExecutor", function () {
           stop_price.times(default_stop_limt_price_factor)
         );
         expect(ee.open_orders[0].stopPrice).to.equal(
-          stop_price
+          stop_price.toFixed()
         );
         expect(ee.open_orders[0].origQty).to.equal(
-          base_amount_imported
+          base_amount_imported.toFixed()
         );
       });
     });
@@ -500,9 +500,9 @@ describe("TradeExecutor", function () {
         expect(ee.open_orders[0].type).to.equal("LIMIT");
         expect(ee.open_orders[0].side).to.equal("SELL");
         expect(ee.open_orders[0].orderId).to.equal('1');
-        expect(ee.open_orders[0].price).to.equal(target_price);
+        expect(ee.open_orders[0].price).to.equal(target_price.toFixed());
         expect(ee.open_orders[0].origQty).to.equal(
-          base_amount_imported
+          base_amount_imported.toFixed()
         );
       });
 

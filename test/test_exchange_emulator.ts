@@ -192,7 +192,7 @@ describe('ExchangeEmulator', function() {
 		it('deducts from ??? if not set to use BNB');
 	});
 
-	describe('check_for_completed_limit_orders', function() {
+	describe.only('check_for_completed_limit_orders', function() {
 		it.skip('checks for the correct symbol. ISSUE');
 		it('executes a limit buy order', async function() {
 			const starting_quote_balance = new BigNumber(3);
@@ -762,12 +762,13 @@ describe('ExchangeEmulator', function() {
 					});
 					const base_volume = new BigNumber('0.8');
 					const limit_price = new BigNumber('0.1');
-					let user_event = {totalTradeQuantity:undefined}; // TODO: revert this typing
+					let user_event : any
 					await ee.ws.user((msg:any) => {
 						user_event = msg;
 					});
 					await do_stop_loss_limit_sell_order({ ee, amount: base_volume, price: limit_price });
-					await ee.set_current_price({ symbol: default_pair, price: limit_price });
+          await ee.set_current_price({ symbol: default_pair, price: limit_price });
+          expect(user_event)
 					expect(user_event).to.be.an('object');
 					expect(user_event.totalTradeQuantity).to.be.a('string');
 					expect(user_event).to.include({

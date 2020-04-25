@@ -38,7 +38,7 @@ const redis = require("redis").createClient({
 
 const Binance = require("binance-api-node").default;
 import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";
-import { OrderState } from "../classes/redis_order_state";
+import { OrderState } from "../classes/persistent_state/redis_order_state";
 
 let live = true
 let order_execution_tracker: OrderExecutionTracker | null = null
@@ -69,15 +69,15 @@ async function main() {
     ee = new ExchangeEmulator(ee_config);
   }
 
+  const execSync = require("child_process").execSync;
+  execSync("date -u >&2");
+
   order_execution_tracker = new OrderExecutionTracker({
     ee,
     send_message,
     logger,
     order_state: new OrderState({ logger, redis } )
   })
-
-  const execSync = require("child_process").execSync;
-  execSync("date -u >&2");
 
   order_execution_tracker.main().catch(error => {
     if (error.name && error.name === "FetchError") {

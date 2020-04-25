@@ -23,7 +23,6 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
-const util = require('util');
 const assert = require('assert');
 const utils = require('../lib/utils');
 const async_error_handler = require('../lib/async_error_handler');
@@ -220,8 +219,6 @@ export class ExchangeEmulator {
 
   async set_current_price({ price, symbol }: { price: BigNumber, symbol: string }) {
     assert(symbol);
-    if (typeof price === 'string') price = new BigNumber(price);
-    assert(BigNumber.isBigNumber(price));
     this.known_prices[symbol] = price;
     try {
       await this._check_for_completed_orders({ price, symbol });
@@ -425,7 +422,9 @@ export class ExchangeEmulator {
     assert(BigNumber.isBigNumber(price));
     var remaining_orders: Order[] = [];
     var completed_orders: Order[] = [];
+    console.log(`in _check_for_completed_orders`)
     this.open_orders.forEach((order) => {
+      console.log(`Checking ${order.symbol} === ${symbol} and ${price} == ${order['price']}`)
       if ((order.symbol === symbol && price.isEqualTo(order['price'])) || order.type === 'MARKET') {
         // TODO: this does execute stop limit orders but ...
         if (order.side === 'SELL') {

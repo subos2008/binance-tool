@@ -19,7 +19,7 @@ const getAsync = promisify(redis.get).bind(redis);
 const hgetallAsync = promisify(redis.hgetall).bind(redis);
 const mgetAsync = promisify(redis.mget).bind(redis);
 
-import { OrderState } from "../classes/redis_order_state";
+import { OrderState } from "../classes/persistent_state/redis_order_state";
 const order_state= new OrderState({ logger, redis } )
 
 

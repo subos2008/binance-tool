@@ -421,6 +421,7 @@ export class ExchangeEmulator {
     console.log(`in _check_for_completed_orders`)
     this.open_orders.forEach((order) => {
       console.log(`Checking ${order.symbol} === ${symbol} and ${price} == ${order['price']}`)
+      // throw 'got here'
       if ((order.symbol === symbol && price.isEqualTo(order['price'])) || order.type === 'MARKET') {
         // TODO: this does execute stop limit orders but ...
         if (order.side === 'SELL') {

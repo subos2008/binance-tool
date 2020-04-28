@@ -12,5 +12,7 @@ COPY service_lib /app/service_lib
 COPY service.js /app/
 COPY services /app/services
 COPY interfaces /app/interfaces
+COPY test /app/test
+COPY chai-bignumber.d.ts /app/chai-bignumber.d.ts
 
 CMD node ./service.js

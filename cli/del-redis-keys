@@ -1,1 +1,2 @@
-redis-cli -h $REDIS_HOST -n $REDIS_DATABASE_NUMBER --scan --pattern 'orders:*' | xargs redis-cli -h $REDIS_HOST -n $REDIS_DATABASE_NUMBER del
+export REDISCLI_AUTH="$REDIS_PASSWORD"
+redis-cli -h $REDIS_HOST -n $REDIS_DATABASE_NUMBER --scan --pattern "$PATTERN" | xargs redis-cli -h $REDIS_HOST -n $REDIS_DATABASE_NUMBER del

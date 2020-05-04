@@ -4,7 +4,7 @@ RUN mkdir -p /app
 WORKDIR /app
 
 COPY package.json yarn.lock /app/
-RUN yarn install
+RUN yarn install --frozen-lockfile
 
 COPY lib /app/lib
 COPY classes /app/classes

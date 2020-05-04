@@ -14,5 +14,6 @@ COPY services /app/services
 COPY interfaces /app/interfaces
 COPY test /app/test
 COPY chai-bignumber.d.ts /app/chai-bignumber.d.ts
+COPY tsconfig.json /app/tsconfig.json
 
 CMD node ./service.js

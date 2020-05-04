@@ -3,7 +3,7 @@
   "main": "service.js",
   "bin": "create-trade.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha --forbid-only -r ts-node/register ./test/test_*",
+    "test": "TS_NODE_PROJECT=./tsconfig.json ./node_modules/.bin/mocha --forbid-only -r ts-node/register ./test/test_*",
     "test-only": "./node_modules/.bin/mocha -r ts-node/register ./test/test_*",
     "nodemon": "./node_modules/.bin/nodemon -e js,ts ./node_modules/.bin/mocha -r ts-node/register ./test/test_*"
   },

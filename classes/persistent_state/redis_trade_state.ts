@@ -91,7 +91,7 @@ export class TradeState {
     return value;
   }
 
-  async get_stopOrderId():Promise<string|undefined> {
+  async get_stopOrderId(): Promise<string | undefined> {
     const key = this.name_to_key("stopOrderId");
     const value = await this.get_redis_key(key);
     // this.logger.info(`${key} has value ${value}`);
@@ -166,9 +166,30 @@ export class TradeState {
       )
     );
   }
+
+  // A v2 of the interface developed while creating tests
+  // chosen because they are very readable in the tests and could also allow us 
+  // to store more semantic data in the state if we choose later
+  async add_buy_order({ orderId }: { orderId: string }) {
+    return await this.set_buyOrderId(orderId)
+  }
+
+  async fully_filled_buy_order({ orderId, total_base_amount_bought}: { orderId: string, total_base_amount_bought: BigNumber }) {
+    assert.strictEqual(orderId, await this.get_buyOrderId())
+    await this.set_buyOrderId(undefined)
+    await this.set_base_amount_bought(total_base_amount_bought)
+  }
+
 }
 
-async function initialiser(params: { logger: Logger, redis: RedisClient, trade_id: string, trade_definition: TradeDefinition }) {
+export interface RedisTradeStateInitialiserParams {
+  logger: Logger;
+  redis: RedisClient;
+  trade_id: string;
+  trade_definition: TradeDefinition
+}
+
+export async function initialiser(params: RedisTradeStateInitialiserParams): Promise<TradeState> {
   const { logger, redis, trade_id, trade_definition } = params;
   assert(redis);
   assert(trade_id);
@@ -184,6 +205,3 @@ async function initialiser(params: { logger: Logger, redis: RedisClient, trade_i
   }
   return trade_state
 }
-
-// a bit unorthodox maybe, basically a factory method to force the calling of async initialiser
-module.exports = { initialiser };

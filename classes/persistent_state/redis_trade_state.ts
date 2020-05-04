@@ -81,7 +81,7 @@ export class TradeState {
     return await this.set_or_delete_key(this.name_to_key("targetOrderId"), value);
   }
 
-  async get_buyOrderId():Promise<string|undefined> {
+  async get_buyOrderId(): Promise<string | undefined> {
     const key = this.name_to_key("buyOrderId");
     const value = await this.get_redis_key(key);
     // this.logger.info(`${key} has value ${value}`);
@@ -101,7 +101,7 @@ export class TradeState {
     return value;
   }
 
-  async get_targetOrderId():Promise<string|undefined> {
+  async get_targetOrderId(): Promise<string | undefined> {
     const key = this.name_to_key("targetOrderId");
     const value = await this.get_redis_key(key);
     // this.logger.info(`${key} has value ${value}`);

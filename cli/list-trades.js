@@ -18,8 +18,9 @@ const hgetallAsync = promisify(redis.hgetall).bind(redis);
 
 async function main() {
   const keys = await keysAsync("trades:*:completed");
-  // console.log(keys);
-  for (const key of keys) {
+  let trade_ids = keys.map(key => parseInt(key.match(/:(\d+):/)[1])).sort((a,b) => a-b)
+  let sorted_keys = trade_ids.map(id => `trades:${id}:completed`)
+  for (const key of sorted_keys) {
     const completed = (await getAsync(key)) === "true";
     const trade_id = key.match(/trades:(\d+):completed/)[1];
     const foo = await hgetallAsync(`trades:${trade_id}:trade_definition`);
@@ -28,7 +29,7 @@ async function main() {
     if (foo["auto_size"]) flags.push("auto_size");
     console.log(
       `${completed ? " " : "A"} Trade ${trade_id}: ${foo.pair}: ${
-        foo.stop_price
+      foo.stop_price
       } ${foo.buy_price} ${foo.target_price} ${flags.join(" ")}`
     );
   }

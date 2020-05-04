@@ -401,9 +401,9 @@ export class ExchangeEmulator {
     assert(BigNumber.isBigNumber(price));
     var remaining_orders: Order[] = [];
     var completed_orders: Order[] = [];
-    console.log(`in _check_for_completed_orders`)
+    this.logger.info(`in _check_for_completed_orders`)
     this.open_orders.forEach((order) => {
-      console.log(`Checking ${order.symbol} === ${symbol} and ${price} == ${order['price']}`)
+      this.logger.info(`Checking ${order.symbol} === ${symbol} and ${price} == ${order['price']}`)
       // throw 'got here'
       if ((order.symbol === symbol && price.isEqualTo(order['price'])) || order.type === 'MARKET') {
         // TODO: this does execute stop limit orders but ...

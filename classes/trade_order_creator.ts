@@ -1,5 +1,7 @@
 import { strict as assert } from 'assert';
 const utils = require('../lib/utils')
+var util = require('util');
+
 
 import { TradeDefinition } from "./specifications/trade_definition";
 import { Logger } from "../interfaces/logger";
@@ -55,7 +57,7 @@ export class TradeOrderCreator {
       (await this.trade_state.get_stopOrderId()) ||
       (await this.trade_state.get_targetOrderId())
     ) {
-      console.log(
+      this.logger.info(
         `placeSellOrder: orders already exist, skipping. (stop: ${await this.trade_state.get_stopOrderId()}, target: ${await this.trade_state.get_targetOrderId()})`
       );
       return;
@@ -76,7 +78,7 @@ export class TradeOrderCreator {
     } else if (this.trade_definition.munged.target_price) {
       await this.trade_state.set_targetOrderId(await this.placeTargetOrder());
     } else {
-      console.log(this)
+      this.logger.info(util.inspect(this))
       this.mummy.execution_complete("buy completed and no sell actions defined");
     }
   }
@@ -96,7 +98,7 @@ export class TradeOrderCreator {
         base_amount,
         price
       });
-      console.log(`base_amount: ${base_amount.toFixed()}`);
+      this.logger.info(`base_amount: ${base_amount.toFixed()}`);
       let response = await this.algo_utils.create_limit_buy_order({
         pair: this.trade_definition.pair,
         base_amount,
@@ -195,7 +197,7 @@ export class TradeOrderCreator {
     { base_amount: BigNumber, buy_price?: BigNumber, stop_price?: BigNumber, target_price?: BigNumber, price?: BigNumber }) {
     assert(base_amount);
     const original_base_amount = new BigNumber(base_amount);
-    console.log(`orig base_amount: ${original_base_amount.toFixed()}`);
+    this.logger.info(`orig base_amount: ${original_base_amount.toFixed()}`);
     const new_base_amount = this.algo_utils.munge_amount_and_check_notionals({
       pair: this.trade_definition.pair,
       base_amount,
@@ -204,10 +206,10 @@ export class TradeOrderCreator {
       target_price,
       price
     });
-    console.log(`new base_amount: ${new_base_amount.toFixed()}`);
+    this.logger.info(`new base_amount: ${new_base_amount.toFixed()}`);
 
     if (!new_base_amount.eq(original_base_amount)) {
-      console.log(
+      this.logger.info(
         `Base amount changed during munging from ${original_base_amount.toFixed()} to ${new_base_amount.toFixed()}.`
       );
     }

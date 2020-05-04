@@ -80,7 +80,7 @@ export class TradeDefinition {
 
     if (base_amount_imported) {
       this.base_amount_imported = new BigNumber(base_amount_imported);
-      console.log(`Oooh, trade_definition with base_amount_imported (${this.base_amount_imported.toFixed()})`)
+      this.logger.info(`Oooh, trade_definition with base_amount_imported (${this.base_amount_imported.toFixed()})`)
     }
     this.pair = pair;
     if (max_quote_amount_to_buy)

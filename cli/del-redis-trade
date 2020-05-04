@@ -1,0 +1,6 @@
+#!/bin/bash 
+
+source .env
+export REDISCLI_AUTH="$REDIS_PASSWORD"
+
+redis-cli -h $REDIS_HOST -n $REDIS_DATABASE_NUMBER --scan --pattern "trades:$1:*" | xargs redis-cli -h $REDIS_HOST -n $REDIS_DATABASE_NUMBER del

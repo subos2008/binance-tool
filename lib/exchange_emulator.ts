@@ -82,11 +82,6 @@ class Order {
 
 export class ExchangeEmulator {
   logger: Logger
-  starting_balances: BigNumber
-  starting_quote_balance: BigNumber
-  starting_base_balance: BigNumber
-  base_currency: string
-  quote_currency: string
   exchange_info: any
   balances: { [currency: string]: { free: BigNumber, locked: BigNumber } }
   open_orders: Order[]
@@ -114,20 +109,13 @@ export class ExchangeEmulator {
     {
       logger,
       starting_balances,
-      starting_quote_balance,
       exchange_info
     }: {
       logger: Logger
       starting_balances: { [currency: string]: BigNumber }
-      starting_quote_balance: BigNumber
-      starting_base_balance: BigNumber
-      base_currency: string
-      quote_currency: string
       exchange_info: any
     }
   ) {
-    if (typeof starting_quote_balance === 'undefined') starting_quote_balance = new BigNumber(0);
-    assert(starting_quote_balance);
     assert(logger);
     this.logger = logger;
     this.exchange_info = exchange_info;
@@ -202,11 +190,6 @@ export class ExchangeEmulator {
     } else {
       return new BigNumber(0);
     }
-  }
-
-  // used by some tests
-  get quote_coin_balance_in_orders() {
-    return this.balance_in_orders(this.quote_currency);
   }
 
   total_balance(currency: string) {

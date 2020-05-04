@@ -171,10 +171,14 @@ export class TradeState {
   // chosen because they are very readable in the tests and could also allow us 
   // to store more semantic data in the state if we choose later
   async add_buy_order({ orderId }: { orderId: string }) {
-    return await this.set_buyOrderId(orderId)
+    await this.set_buyOrderId(orderId)
   }
 
-  async fully_filled_buy_order({ orderId, total_base_amount_bought}: { orderId: string, total_base_amount_bought: BigNumber }) {
+  async add_stop_order({ orderId }: { orderId: string }) {
+    await this.set_stopOrderId(orderId)
+  }
+
+  async fully_filled_buy_order({ orderId, total_base_amount_bought }: { orderId: string, total_base_amount_bought: BigNumber }) {
     assert.strictEqual(orderId, await this.get_buyOrderId())
     await this.set_buyOrderId(undefined)
     await this.set_base_amount_bought(total_base_amount_bought)

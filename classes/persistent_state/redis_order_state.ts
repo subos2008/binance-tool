@@ -5,6 +5,7 @@ var stringToBool = (myValue: string) => myValue === "true";
 
 import { Logger } from '../../interfaces/logger'
 import { BigNumber } from 'bignumber.js';
+import { RedisClient } from 'redis';
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -21,7 +22,7 @@ export class OrderState {
   msetAsync: any;
   mgetAsync: any;
 
-  constructor({ logger, redis }: { logger: Logger, redis: any }) {
+  constructor({ logger, redis }: { logger: Logger, redis: RedisClient }) {
     assert(logger);
     this.logger = logger;
     assert(redis);

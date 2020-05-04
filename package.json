@@ -5,13 +5,14 @@
   "scripts": {
     "test": "./node_modules/.bin/mocha --forbid-only -r ts-node/register ./test/test_*",
     "test-only": "./node_modules/.bin/mocha -r ts-node/register ./test/test_*",
-    "nodemon": "./node_modules/.bin/nodemon ./node_modules/.bin/mocha -r ts-node/register ./test/test_*"
+    "nodemon": "./node_modules/.bin/nodemon -e js,ts ./node_modules/.bin/mocha -r ts-node/register ./test/test_*"
   },
   "dependencies": {
     "@sentry/node": "5.15.2",
     "@types/bignumber.js": "^5.0.0",
     "@types/node": "^13.13.0",
     "@types/redis": "^2.8.18",
+    "@types/redis-mock": "^0.17.0",
     "bignumber.js": "^8.1.1",
     "binance-api-node": "^0.9.0",
     "dotenv": "^6.0.0",

@@ -65,7 +65,7 @@ export class TradeExecutor {
     assert(trading_rules);
     this.trading_rules = trading_rules;
 
-    this.price_ranges = new PriceRanges({ trade_definition, percentage_before_soft_buy_price_to_add_order })
+    this.price_ranges = new PriceRanges({ logger, trade_definition, percentage_before_soft_buy_price_to_add_order })
 
     this.algo_utils = new AlgoUtils({ logger, ee });
     this.position_sizer = new PositionSizer({ logger, ee, trading_rules });

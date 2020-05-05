@@ -1,5 +1,4 @@
-#!/usr/bin/env node
-// Adds a trade definition to redis for the executor to execute
+#!./node_modules/.bin/ts-node
 
 // Configuration
 const dotenv = require("dotenv");
@@ -15,20 +14,20 @@ BigNumber.prototype.valueOf = function() {
   throw Error("BigNumber .valueOf called!");
 };
 
-const redis = require("redis");
-const client = redis.createClient({
+const Redis = require("redis");
+const redis = Redis.createClient({
   host: process.env.REDIS_HOST,
   password: process.env.REDIS_PASSWORD
 });
 
 const { promisify } = require("util");
-const incrAsync = promisify(client.incr).bind(client);
-const hmsetAsync = promisify(client.hmset).bind(client);
-const setAsync = promisify(client.set).bind(client);
+const incrAsync = promisify(redis.incr).bind(redis);
+const hmsetAsync = promisify(redis.hmset).bind(redis);
+const setAsync = promisify(redis.set).bind(redis);
 
-const {
-  initialiser: trade_state_initialiser
-} = require("./classes/redis_trade_state");
+import { initialiser as trade_state_initialiser } from "./classes/persistent_state/redis_trade_state"
+import { intialise_in_redis as trade_state_initialiser_in_redis } from "./classes/persistent_state/redis_trade_state"
+import { TradeDefinitionInputSpec, TradeDefinition } from "./classes/specifications/trade_definition";
 
 const logger = new Logger({ silent: false });
 
@@ -106,47 +105,32 @@ let {
   launch
 } = argv;
 
-const trade_definition = {
+const trade_definition : TradeDefinitionInputSpec = {
   pair,
   base_amount_imported,
   max_quote_amount_to_buy,
   buy_price,
   stop_price,
-  sell_stop_limit_price,
   target_price,
   soft_entry,
   auto_size,
-  timestamp: Date.now()
+  timestamp: Date.now(),
 };
 
 async function main() {
-  var trade_definition_as_list = [];
-  for (var key in trade_definition) {
-    if (trade_definition[key] != undefined) {
-      trade_definition_as_list.push(key);
-      trade_definition_as_list.push(trade_definition[key]);
-    }
-  }
-
   // TODO: exceptions
   try {
     const trade_id = await incrAsync("trades:next:trade_id");
     console.log(`Trade ID: ${trade_id}`);
 
-    const prefix = `trades:${trade_id}`;
-
-    await setAsync(`${prefix}:completed`, false);
-
-    const redis_key = `${prefix}:trade_definition`;
-    console.log(trade_definition);
-    await hmsetAsync(redis_key, trade_definition_as_list);
-
-    base_amount_imported = BigNumber(base_amount_imported);
+    // TODO: needs cleanup, which of these two methods is supposed to factory a proxy
+    // and which is supposed to init the trade in redis?
+    trade_state_initialiser_in_redis({logger, redis, trade_id, trade_definition})
     await trade_state_initialiser({
-      redis: client,
+      redis,
       logger,
       trade_id,
-      base_amount_imported
+      trade_definition: new TradeDefinition(logger, trade_definition, null)
     });
 
     if (launch) {
@@ -156,13 +140,11 @@ async function main() {
     } else {
       console.log(`Trade created, note you still need to launch an executor.`);
     }
-
-    console.log(`Redis key: ${redis_key}`);
   } catch (e) {
     console.error(`Exception:`);
     console.error(e);
   }
-  client.quit();
+  redis.quit();
 }
 
 main();

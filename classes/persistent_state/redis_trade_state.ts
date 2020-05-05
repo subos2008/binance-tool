@@ -190,22 +190,53 @@ export interface RedisTradeStateInitialiserParams {
   logger: Logger;
   redis: RedisClient;
   trade_id: string;
-  trade_definition: TradeDefinition
+  trade_definition: TradeDefinition | TradeDefinitionInputSpec
 }
 
+// TODO: I think this is mixed up whether it initialises redis on creates a proxy class to examine it
 export async function initialiser(params: RedisTradeStateInitialiserParams): Promise<TradeState> {
   const { logger, redis, trade_id, trade_definition } = params;
   assert(redis);
   assert(trade_id);
   assert(logger);
   assert(trade_definition);
+
   const trade_state = new TradeState({ logger, redis, trade_id });
-  let base_amount_imported = trade_definition.base_amount_imported; // BigNumber
-  if (base_amount_imported) {
+  if (trade_definition.base_amount_imported) {
+    let base_amount_imported = new BigNumber(trade_definition.base_amount_imported)
     logger.info(`TradeState setting base_amount_imported (${base_amount_imported.toFixed()})`)
     await trade_state.set_base_amount_imported(base_amount_imported);
   } else {
     logger.info(`TradeState no base_amount_imported.`)
   }
+
   return trade_state
+}
+
+// creates in redis, moved from create-trade.js
+export async function intialise_in_redis(params: RedisTradeStateInitialiserParams) {
+  const { logger, redis, trade_id, trade_definition } = params;
+  assert(redis);
+  assert(trade_id);
+  assert(logger);
+  assert(trade_definition);
+
+  const hmsetAsync = promisify(redis.hmset).bind(redis);
+  const setAsync = promisify(redis.set).bind(redis);
+
+  // TODO: moved from create-trade.js
+  const prefix = `trades:${trade_id}`;
+  await setAsync(`${prefix}:completed`, false);
+  const redis_key = `${prefix}:trade_definition`;
+  logger.info(inspect(trade_definition));
+  var trade_definition_as_list = [];
+  var vanilla_obj = trade_definition as any;
+  for (const key in trade_definition) {
+    const value: any = vanilla_obj[key] as any
+    if (vanilla_obj[key] !== undefined) {
+      trade_definition_as_list.push(key);
+      trade_definition_as_list.push(vanilla_obj[key]);
+    }
+  }
+  await hmsetAsync(redis_key, trade_definition_as_list);
 }

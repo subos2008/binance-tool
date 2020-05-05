@@ -31,7 +31,8 @@ export interface TradeDefinitionInputSpec {
   stop_price?: BigNumber | string,
   target_price?: BigNumber | string,
   soft_entry: Boolean,
-  auto_size: Boolean
+  auto_size: Boolean,
+  timestamp?: number
 }
 
 export class TradeDefinition {

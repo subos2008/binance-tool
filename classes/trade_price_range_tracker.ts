@@ -82,7 +82,7 @@ export class TradePriceRangeTracker {
               `${symbol} soft entry buy order trigger price hit`
             );
             await this.trade_state.set_buyOrderId(
-              await this.trade_order_creator._create_limit_buy_order()
+              await this.trade_order_creator.placeBuyOrder()
             );
           }
         } else if (await this.trade_state.get_buyOrderId()) {

@@ -17,7 +17,7 @@ BigNumber.prototype.valueOf = function () {
 export class TradePriceRangeTracker {
   logger: Logger
   send_message: (msg: string) => void
-  closeTradesWebSocket: () => void | null
+  closeTradesWebSocket: (() => void) | null
   trade_state: TradeState
   trade_definition: TradeDefinition
   price_ranges: PriceRanges
@@ -49,6 +49,7 @@ export class TradePriceRangeTracker {
     if (this.closeTradesWebSocket) {
       this.logger.info(`Shutting down streams`);
       this.closeTradesWebSocket();
+      this.closeTradesWebSocket = null
     }
   }
 

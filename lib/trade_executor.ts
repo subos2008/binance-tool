@@ -34,7 +34,7 @@ export class TradeExecutor {
   price_ranges: PriceRanges
   algo_utils: AlgoUtils
   position_sizer: PositionSizer
-  closeUserWebsocket: () => void | null
+  closeUserWebsocket: (() => void) | null
   trade_order_creator: TradeOrderCreator | null
   trade_price_range_tracker: TradePriceRangeTracker | null
   order_execution_tracker: OrderExecutionTracker | null
@@ -69,16 +69,13 @@ export class TradeExecutor {
 
     this.algo_utils = new AlgoUtils({ logger, ee });
     this.position_sizer = new PositionSizer({ logger, ee, trading_rules });
-
-    process.on("exit", () => {
-      this.shutdown_streams();
-    });
   }
 
   shutdown_streams() {
     if (this.closeUserWebsocket) {
       this.logger.info(`Shutting down streams`);
       this.closeUserWebsocket();
+      this.closeUserWebsocket = null
     }
     if (this.trade_price_range_tracker) {
       this.trade_price_range_tracker.shutdown_streams()

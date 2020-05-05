@@ -50,9 +50,9 @@ function most_recent_message() {
   return message_queue[message_queue.length - 1];
 }
 
-var redis: RedisClient;
+var redis: RedisClient = require("redis-mock").createClient();;
 beforeEach(function () {
-  redis = require("redis-mock").createClient();
+  // empty
 });
 
 afterEach(function (done) {

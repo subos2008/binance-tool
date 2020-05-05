@@ -221,7 +221,7 @@ export class TradeExecutor {
     }
 
 
-    // TODO: we don't always need this (price stream monitoring)
+    // we don't always need the price stream monitoring
     // - only if we have stop and target orders that need monitoring
     // or we are monitoring for a soft_entry buy price. 
     // Soft entry means don't the create buy order until until buy_price is hit

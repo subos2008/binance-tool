@@ -24,6 +24,7 @@ export class TradeState {
   get_redis_key: (key: string) => Promise<string>
   set_redis_key: (key: string, value: string) => Promise<string>
   delAsync: (key: string) => Promise<string>
+  mgetAsync: (...args: string[]) => Promise<string[]>
 
   constructor({ logger, redis, trade_id }: { logger: Logger, redis: RedisClient, trade_id: string }) {
     // NB: base_amount_imported is handled by initialiser()
@@ -37,6 +38,7 @@ export class TradeState {
     this.set_redis_key = promisify(this.redis.set).bind(this.redis);
     this.get_redis_key = promisify(this.redis.get).bind(this.redis);
     this.delAsync = promisify(this.redis.del).bind(this.redis);
+    this.mgetAsync = promisify(this.redis.mget).bind(this.redis);
   }
 
   name_to_key(name: string): string {
@@ -165,6 +167,11 @@ export class TradeState {
         _.pick(this, ["trade_id"])
       )
     );
+  }
+
+  async get_order_ids() {
+    const [buyOrderId, stopOrderId, targetOrderId] = await this.mgetAsync(this.name_to_key("buyOrderId"), this.name_to_key("stopOrderId"), this.name_to_key("targetOrderId"))
+    return { buyOrderId, stopOrderId, targetOrderId }
   }
 
   // A v2 of the interface developed while creating tests

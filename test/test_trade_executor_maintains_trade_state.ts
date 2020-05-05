@@ -78,11 +78,11 @@ starting_balances[default_base_currency] = new BigNumber('1000')
 
 async function check_orders(trade_state: TradeState, { buy, target, stop }: { buy?: boolean, target?: boolean, stop?: boolean }) {
   if (buy) { expect(await trade_state.get_buyOrderId(), "expected buyOrderId to be set").not.to.be.undefined }
-  else { expect(await trade_state.get_buyOrderId(), "buyOrderId set incorrectly").to.be.undefined }
+  else { expect(await trade_state.get_buyOrderId(), "buyOrderId has value when undefined expected").to.be.undefined }
   if (stop) { expect(await trade_state.get_stopOrderId(), "expected stopyOrderId to be set").not.to.be.undefined }
-  else { expect(await trade_state.get_stopOrderId(), "stopOrderId set incorrectly").to.be.undefined }
+  else { expect(await trade_state.get_stopOrderId(), "stopOrderId has value when undefined expected").to.be.undefined }
   if (target) { expect(await trade_state.get_targetOrderId(), "expected targetOrderId to be set").not.to.be.undefined }
-  else { expect(await trade_state.get_targetOrderId(), "targetOrderId set incorrectly").to.be.undefined }
+  else { expect(await trade_state.get_targetOrderId(), "targetOrderId has value when undefined expected").to.be.undefined }
 
 }
 

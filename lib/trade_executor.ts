@@ -214,9 +214,7 @@ export class TradeExecutor {
       //    non-null in the beginning and the buy order might have been a top-up
       // 5. (TODO?) buyOrderId is null but we could buy a bit more as the trading account size has changed
       if (!this.trade_definition.soft_entry) {
-        await this.trade_state.set_buyOrderId(
-          await this.trade_order_creator._create_limit_buy_order() // why not placeBuyOrder? Ah, there is no placeBuyOrder :)
-        );
+        await this.trade_order_creator.placeBuyOrder();
       }
     } else {
       await this.trade_order_creator.placeSellOrder();

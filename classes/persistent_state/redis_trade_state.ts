@@ -25,7 +25,7 @@ export class TradeState {
   set_redis_key: (key: string, value: string) => Promise<string>
   delAsync: (key: string) => Promise<string>
 
-  constructor({ logger, redis, trade_id }: { logger: Logger, redis: any, trade_id: string }) {
+  constructor({ logger, redis, trade_id }: { logger: Logger, redis: RedisClient, trade_id: string }) {
     // NB: base_amount_imported is handled by initialiser()
     assert(logger);
     this.logger = logger;

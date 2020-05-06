@@ -31,7 +31,7 @@ enum Name {
   trade_definition = 'trade_definition',
 }
 
-function name_to_key(trade_id:string, name: Name): string {
+function name_to_key(trade_id: string, name: Name): string {
   switch (name) {
     case Name.buyOrderId:
       return `trades:${trade_id}:open_orders:buyOrderId`;

@@ -25,7 +25,6 @@ const incrAsync = promisify(redis.incr).bind(redis);
 const hmsetAsync = promisify(redis.hmset).bind(redis);
 const setAsync = promisify(redis.set).bind(redis);
 
-import { initialiser as trade_state_initialiser } from "./classes/persistent_state/redis_trade_state"
 import { create_new_trade } from "./classes/persistent_state/redis_trade_state"
 import { TradeDefinitionInputSpec, TradeDefinition } from "./classes/specifications/trade_definition";
 

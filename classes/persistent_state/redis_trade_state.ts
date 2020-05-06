@@ -181,8 +181,6 @@ export class TradeState {
 
   async get_base_amount_held() {
     let sum = new BigNumber(0)
-    console.log("FOO:", await this.get_redis_key(this.name_to_key(Name.base_amount_imported)))
-    console.log((await this.get_redis_key(this.name_to_key(Name.base_amount_imported))) || 0)
     sum = sum.plus((await this.get_redis_key(this.name_to_key(Name.base_amount_imported))) || 0)
     sum = sum.plus((await this.get_redis_key(this.name_to_key(Name.base_amount_bought))) || 0)
     sum = sum.minus((await this.get_redis_key(this.name_to_key(Name.base_amount_sold))) || 0)

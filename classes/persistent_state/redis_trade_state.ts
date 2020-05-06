@@ -304,9 +304,9 @@ export async function create_new_trade(params: CreateTradeParams): Promise<strin
   if (ret !== "OK") throw new Error(`Failed to save trade to redis`)
 
   var mset_array = [
-      name_to_key(trade_id, Name.trade_state_schema_version), 'v1',
-      name_to_key(trade_id, Name.buying_allowed), trade_definition.unmunged.hasOwnProperty('buy_price') ? true : false,
-      name_to_key(trade_id, Name.trade_completed), false
+    name_to_key(trade_id, Name.trade_state_schema_version), 'v1',
+    name_to_key(trade_id, Name.buying_allowed), trade_definition.unmunged.hasOwnProperty('buy_price') ? true : false,
+    name_to_key(trade_id, Name.trade_completed), false
   ]
 
   if (trade_definition.base_amount_imported) {

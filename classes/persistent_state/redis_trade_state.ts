@@ -115,26 +115,31 @@ export class TradeState {
       return await this.delAsync(key);
     }
     // TODO: change to only set if not defined, throw otherwise - to prevent concurrent runs interacting
-    return await this.set_redis_key(key, value);
+    let ret = await this.set_redis_key(key, value);
+    if(ret !== 'OK') throw new Error(`Setting redis key ${key} failed`)
   }
 
-  async set_buyOrderId(value: string | undefined) {
-    return await this.set_or_delete_key(this.name_to_key(Name.buyOrderId), value);
+  async set_buyOrderId(value: string | undefined): Promise<void> {
+    if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
+    await this.set_or_delete_key(this.name_to_key(Name.buyOrderId), value);
   }
 
-  async set_stopOrderId(value: string | undefined) {
-    return await this.set_or_delete_key(this.name_to_key(Name.stopOrderId), value);
+  async set_stopOrderId(value: string | undefined): Promise<void>  {
+    if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
+    await this.set_or_delete_key(this.name_to_key(Name.stopOrderId), value);
   }
 
-  async set_targetOrderId(value: string | undefined) {
-    return await this.set_or_delete_key(this.name_to_key(Name.targetOrderId), value);
+  async set_targetOrderId(value: string | undefined): Promise<void>  {
+    if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
+    await this.set_or_delete_key(this.name_to_key(Name.targetOrderId), value);
   }
 
   async get_buyOrderId(): Promise<string | undefined> {
     const key = this.name_to_key(Name.buyOrderId);
     const value = await this.get_redis_key(key);
+    console.log(`${key}: ${value}`)
     // this.logger.info(`${key} has value ${value}`);
-    if (!value) {
+    if (value === null) {
       return undefined; // convert null to undefined
     }
     return value;

@@ -110,7 +110,6 @@ export class TradeState {
   }
 
   async set_or_delete_key(key: string, value: string | undefined) {
-    this.logger.info(`Setting ${key} to ${value}`);
     if (value === undefined) {
       return await this.delAsync(key);
     }
@@ -137,7 +136,6 @@ export class TradeState {
   async get_buyOrderId(): Promise<string | undefined> {
     const key = this.name_to_key(Name.buyOrderId);
     const value = await this.get_redis_key(key);
-    console.log(`${key}: ${value}`)
     // this.logger.info(`${key} has value ${value}`);
     if (value === null) {
       return undefined; // convert null to undefined

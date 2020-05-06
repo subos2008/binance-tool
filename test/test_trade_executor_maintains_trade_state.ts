@@ -16,7 +16,7 @@ import { OrderState } from "../classes/persistent_state/redis_order_state"
 
 const fs = require("fs");
 import { TradeExecutor } from "../lib/trade_executor"
-import { initialiser as trade_state_initialiser, TradeState } from "../classes/persistent_state/redis_trade_state";
+import { create_new_trade, build_trade_state_for_trade_id, TradeState } from "../classes/persistent_state/redis_trade_state";
 import { Logger } from '../interfaces/logger';
 import { RedisClient } from 'redis';
 
@@ -50,7 +50,7 @@ function most_recent_message() {
   return message_queue[message_queue.length - 1];
 }
 
-var redis: RedisClient = require("redis-mock").createClient();;
+var redis: RedisClient = require("redis-mock").createClient();
 beforeEach(function () {
   // empty
 });
@@ -96,9 +96,8 @@ describe("TradeExecutor Maintains TradeState", function () {
         buy_price, stop_price, target_price,
         soft_entry: true, auto_size: true
       }, overrides.td_config || {}), exchange_info)
-      const trade_state = await trade_state_initialiser(
-        Object.assign({ trade_id: '1', redis, logger: null_logger }, { trade_definition })
-      );
+      const trade_id = await create_new_trade({ redis, logger, trade_definition })
+      const trade_state = await build_trade_state_for_trade_id({ trade_id, redis, logger });
 
       let ee = new ExchangeEmulator({ starting_balances, logger, exchange_info });
 
@@ -118,12 +117,44 @@ describe("TradeExecutor Maintains TradeState", function () {
     describe("Fresh trade with a buy_price", function () {
       describe("When soft_entry is true", function () {
         describe("Before the buy trigger price is hit", function () {
-          it('the target position size is undefined')
-          it('buyOrderId is undefined')
+          it('Sets buying_allowed to true', async function () {
+            let { trade_state } = await setup({ td_config: { soft_entry: true } })
+            expect(await trade_state.get_buying_allowed()).to.be.true
+          })
+          it('the target position size is undefined', async function () {
+            let { trade_state } = await setup({ td_config: { soft_entry: true } })
+            expect(await trade_state.get_target_base_amount_to_buy()).to.be.undefined
+          })
+          it('buyOrderId is undefined', async function () {
+            let { trade_state } = await setup({ td_config: { soft_entry: true } })
+            await check_orders(trade_state, { buy: false })
+          })
         })
         describe("When the buy trigger price is hit", function () {
-          it('Sets the target position size')
-          it('Set the buyOrderId')
+          it('Sets target_base_amount_to_buy', async function () {
+            let { trade_state, ee } = await setup({ td_config: { soft_entry: true } })
+            await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
+            expect(await trade_state.get_target_base_amount_to_buy()).not.to.be.undefined
+          })
+          it('Sets the buyOrderId', async function () {
+            let { trade_state, ee } = await setup({ td_config: { soft_entry: true } })
+            await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
+            await check_orders(trade_state, { buy: true })
+          })
+        })
+        describe("When the buy order has completed", function () {
+          it('Unsets the buyOrderId', async function () {
+            let { trade_state, ee } = await setup({ td_config: { soft_entry: true } })
+            await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
+            await ee.set_current_price({ symbol: default_pair, price: new BigNumber(buy_price) });
+            await check_orders(trade_state, { buy: false })
+          })
+          it('Sets buying_allowed to false', async function () {
+            let { trade_state, ee } = await setup({ td_config: { soft_entry: true } })
+            await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
+            await ee.set_current_price({ symbol: default_pair, price: new BigNumber(buy_price) });
+            expect(await trade_state.get_buying_allowed()).to.be.false
+          })
         })
       })
       describe("When soft_entry is false", function () {
@@ -131,8 +162,11 @@ describe("TradeExecutor Maintains TradeState", function () {
           let { trade_state } = await setup({ td_config: { soft_entry: false } })
           expect(await trade_state.get_base_amount_held()).to.bignumber.equal(0)
         })
-        it('Sets the target position size')
-        it('Set the buyOrderId', async function () {
+        it('Sets target_base_amount_to_buy', async function () {
+          let { trade_state } = await setup({ td_config: { soft_entry: false } })
+          expect(await trade_state.get_target_base_amount_to_buy()).not.to.be.undefined
+        })
+        it('Sets the buyOrderId', async function () {
           let { trade_state } = await setup({ td_config: { soft_entry: false } })
           await check_orders(trade_state, { buy: true })
         })

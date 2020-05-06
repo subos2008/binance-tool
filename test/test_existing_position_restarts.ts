@@ -16,7 +16,7 @@ import { OrderState } from "../classes/persistent_state/redis_order_state"
 
 const fs = require("fs");
 import { TradeExecutor } from "../lib/trade_executor"
-import { initialiser as trade_state_initialiser, TradeState } from "../classes/persistent_state/redis_trade_state";
+import { create_new_trade, build_trade_state_for_trade_id, TradeState } from "../classes/persistent_state/redis_trade_state";
 import { Logger } from '../interfaces/logger';
 import { RedisClient } from 'redis';
 
@@ -89,16 +89,15 @@ async function check_orders(trade_state: TradeState, { buy, target, stop }: { bu
 describe("TradeExecutor Restarting", function () {
   describe("Given an open position", function () {
     async function setup() {
-      // let logger: Logger = null_logger
+      let logger: Logger = null_logger
       let trade_definition = new TradeDefinition(logger, {
         pair: default_pair,
         max_quote_amount_to_buy,
         buy_price, stop_price, target_price,
         soft_entry: true, auto_size: true
       }, exchange_info)
-      const trade_state = await trade_state_initialiser(
-        Object.assign({ trade_id: '1', redis, logger: null_logger }, { trade_definition })
-      );
+      const trade_id = await create_new_trade({ redis, logger, trade_definition })
+      const trade_state = await build_trade_state_for_trade_id({ trade_id, redis, logger });
 
       let ee = new ExchangeEmulator({ starting_balances, logger, exchange_info });
 

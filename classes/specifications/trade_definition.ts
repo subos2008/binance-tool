@@ -10,6 +10,8 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
+var _ = require("lodash");
+
 class MungedPrices {
   buy_price: BigNumber | undefined
   stop_price: BigNumber | undefined
@@ -52,7 +54,7 @@ export class TradeDefinition {
   constructor(
     logger: Logger,
     trade_definition: TradeDefinitionInputSpec,
-    exchange_info: any, // guess it'll have to be allowed to be null
+    exchange_info?: any,
   ) {
     assert(logger);
     this.logger = logger
@@ -117,7 +119,6 @@ export class TradeDefinition {
     else { console.warn(`TradeDefinition created with no exchange_info specified`) }
   }
 
-
   print_trade_for_user(trading_rules?: TradingRules) {
     try {
       let { buy_price, stop_price, target_price } = this.munged;
@@ -135,6 +136,12 @@ export class TradeDefinition {
     } catch (error) {
       this.logger.warn(error); // eat the error, this is non-essential
     }
+  }
+
+  serialised_to_simple_object(): TradeDefinitionInputSpec {
+    return Object.assign(
+      _.pick(this, 'pair', 'base_amount_imported', 'max_quote_amount_to_buy', 'soft_entry', 'auto_size', 'timestamp'),
+      _.pick(this.unmunged, 'buy_price', 'stop_price', 'target_price'))
   }
 
   get_message(): string {

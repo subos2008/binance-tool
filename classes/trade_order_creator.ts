@@ -107,6 +107,7 @@ export class TradeOrderCreator {
         base_amount,
         price
       });
+      this.trade_state.set_target_base_amount_to_buy(base_amount)
       this.logger.info(`base_amount: ${base_amount.toFixed()}`);
       let response = await this.algo_utils.create_limit_buy_order({
         pair: this.trade_definition.pair,

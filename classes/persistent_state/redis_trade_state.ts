@@ -149,6 +149,14 @@ export class TradeState {
     const key = this.name_to_key(Name.trade_completed);
     return stringToBool(await this.get_redis_key(key));
   }
+
+  async set_buying_allowed(value: Boolean) {
+    const key = this.name_to_key(Name.buying_allowed);
+    return await this.set_redis_key(key, `${value}`);
+  }
+
+  async get_buying_allowed() {
+    const key = this.name_to_key(Name.buying_allowed);
     return stringToBool(await this.get_redis_key(key));
   }
 
@@ -173,6 +181,17 @@ export class TradeState {
   async set_base_amount_sold(bignum_value: BigNumber) {
     const key = this.name_to_key(Name.base_amount_sold);
     await this.set_redis_key(key, bignum_value.toFixed());
+  }
+
+  async set_target_base_amount_to_buy(bignum_value: BigNumber) {
+    const key = this.name_to_key(Name.target_base_amount_to_buy);
+    await this.set_redis_key(key, bignum_value.toFixed());
+  }
+
+  async get_target_base_amount_to_buy(): Promise<BigNumber | undefined> {
+    const key = this.name_to_key(Name.target_base_amount_to_buy);
+    const value = await this.get_redis_key(key)
+    return value ? new BigNumber(value) : undefined
   }
 
   async print() {
@@ -215,21 +234,21 @@ export class TradeState {
 
   async fully_filled_buy_order({ orderId, total_base_amount_bought }: { orderId: string, total_base_amount_bought: BigNumber }) {
     assert.strictEqual(orderId, await this.get_buyOrderId())
+    this.logger.warn('redis updates should be atomic') // including check for expected orderId
+    await this.set_redis_key('buying_allowed', 'false')
     await this.set_buyOrderId(undefined)
     await this.set_base_amount_bought(total_base_amount_bought)
   }
-
 }
 
 export interface RedisTradeStateInitialiserParams {
   logger: Logger;
   redis: RedisClient;
   trade_id: string;
-  trade_definition: TradeDefinition | TradeDefinitionInputSpec
 }
 
 // factory. Could probably be turned into a class constructor again now
-export async function initialiser(params: RedisTradeStateInitialiserParams): Promise<TradeState> {
+export async function build_trade_state_for_trade_id(params: RedisTradeStateInitialiserParams): Promise<TradeState> {
   return new TradeState(params);
 }
 

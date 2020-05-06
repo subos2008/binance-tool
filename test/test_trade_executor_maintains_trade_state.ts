@@ -88,8 +88,8 @@ async function check_orders(trade_state: TradeState, { buy, target, stop }: { bu
 
 describe("TradeExecutor Maintains TradeState", function () {
   describe("Given an open position", function () {
-    async function setup(overrides: { td_config?: any } = {}) {
-      let logger: Logger = null_logger
+    async function setup(overrides: { td_config?: any, logger?: Logger } = {}) {
+      const logger : Logger = overrides.logger ? overrides.logger : null_logger
       let trade_definition = new TradeDefinition(logger, Object.assign({
         pair: default_pair,
         max_quote_amount_to_buy,

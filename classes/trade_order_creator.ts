@@ -40,7 +40,7 @@ export class TradeOrderCreator {
     // This prevents us from spamming the API checking portfolio size
     if (!this.trade_definition.munged.buy_price) throw new Error(`placeBuyOrder called when this.trade_definition.munged.buy_price is not set`)
     let orderId = await this._create_limit_buy_order()
-    await this.trade_state.set_buyOrderId(orderId);
+    await this.trade_state.add_buy_order({ orderId })
     return orderId;
   }
 

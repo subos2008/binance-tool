@@ -134,11 +134,7 @@ export class TradeExecutor {
   async order_filled(orderId: string, { totalTradeQuantity, symbol }: { totalTradeQuantity: string, symbol: string }) {
     const { buyOrderId, stopOrderId, targetOrderId } = await this.trade_state.get_order_ids()
     if (orderId === buyOrderId) {
-      await this.trade_state.set_buyOrderId(undefined);
-      // TODO: this should perhaps be an atomic add?... or maybe not?
-      await this.trade_state.set_base_amount_bought(
-        new BigNumber(totalTradeQuantity)
-      );
+      await this.trade_state.fully_filled_buy_order({ orderId: buyOrderId, total_base_amount_bought: new BigNumber(totalTradeQuantity) })
       this.send_message(`${symbol} buy order filled`);
       if (!this.trade_order_creator) throw new Error(`placeSellOrder called before trade_order_creator is initialised`)
       await this.trade_order_creator.placeSellOrder();

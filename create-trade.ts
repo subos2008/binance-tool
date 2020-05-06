@@ -26,7 +26,7 @@ const hmsetAsync = promisify(redis.hmset).bind(redis);
 const setAsync = promisify(redis.set).bind(redis);
 
 import { initialiser as trade_state_initialiser } from "./classes/persistent_state/redis_trade_state"
-import { intialise_in_redis as trade_state_initialiser_in_redis } from "./classes/persistent_state/redis_trade_state"
+import { create_new_trade } from "./classes/persistent_state/redis_trade_state"
 import { TradeDefinitionInputSpec, TradeDefinition } from "./classes/specifications/trade_definition";
 
 const logger = new Logger({ silent: false });
@@ -105,7 +105,7 @@ let {
   launch
 } = argv;
 
-const trade_definition : TradeDefinitionInputSpec = {
+const trade_definition_input_spec : TradeDefinitionInputSpec = {
   pair,
   base_amount_imported,
   max_quote_amount_to_buy,
@@ -120,18 +120,9 @@ const trade_definition : TradeDefinitionInputSpec = {
 async function main() {
   // TODO: exceptions
   try {
-    const trade_id = await incrAsync("trades:next:trade_id");
+    const trade_definition = new TradeDefinition(logger, trade_definition_input_spec)
+    const trade_id = await create_new_trade({logger, redis, trade_definition})
     console.log(`Trade ID: ${trade_id}`);
-
-    // TODO: needs cleanup, which of these two methods is supposed to factory a proxy
-    // and which is supposed to init the trade in redis?
-    trade_state_initialiser_in_redis({logger, redis, trade_id, trade_definition})
-    await trade_state_initialiser({
-      redis,
-      logger,
-      trade_id,
-      trade_definition: new TradeDefinition(logger, trade_definition, null)
-    });
 
     if (launch) {
       const launch = require("./k8/run-in-k8/launch");

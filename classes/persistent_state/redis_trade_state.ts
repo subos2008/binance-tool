@@ -1,7 +1,7 @@
 
 
 import { strict as assert } from 'assert';
-const { promisify } = require("util");
+const { promisify, inspect } = require("util");
 var _ = require("lodash");
 
 var stringToBool = (myValue: string) => myValue === "true";
@@ -15,7 +15,50 @@ BigNumber.prototype.valueOf = function () {
 
 import { Logger } from '../../interfaces/logger'
 import { RedisClient } from 'redis'
-import { TradeDefinition } from '../specifications/trade_definition';
+import { TradeDefinition, TradeDefinitionInputSpec } from '../specifications/trade_definition';
+
+enum Name {
+  trade_state_schema_version = 'trade_state_schema_version',
+  buyOrderId = 'buyOrderId',
+  stopOrderId = 'stopOrderId',
+  targetOrderId = 'targetOrderId',
+  base_amount_imported = 'base_amount_imported',
+  base_amount_bought = 'base_amount_bought',
+  base_amount_sold = 'base_amount_sold',
+  target_base_amount_to_buy = 'target_base_amount_to_buy',
+  buying_allowed = 'buying_allowed',
+  trade_completed = 'trade_completed',
+  trade_definition = 'trade_definition',
+}
+
+function name_to_key(trade_id:string, name: Name): string {
+  switch (name) {
+    case Name.buyOrderId:
+      return `trades:${trade_id}:open_orders:buyOrderId`;
+    case Name.stopOrderId:
+      return `trades:${trade_id}:open_orders:stopOrderId`;
+    case Name.targetOrderId:
+      return `trades:${trade_id}:open_orders:targetOrderId`;
+    case Name.base_amount_imported:
+      return `trades:${trade_id}:position:base_amount_imported`;
+    case Name.base_amount_bought:
+      return `trades:${trade_id}:position:base_amount_bought`;
+    case Name.base_amount_sold:
+      return `trades:${trade_id}:position:base_amount_sold`;
+    case Name.target_base_amount_to_buy:
+      return `trades:${trade_id}:position:target_base_amount_to_buy`;
+    case Name.buying_allowed:
+      return `trades:${trade_id}:buying_allowed`;
+    case Name.trade_completed:
+      return `trades:${trade_id}:completed`;
+    case Name.trade_state_schema_version:
+      return `trades:${trade_id}:trade_state_schema_version`;
+    case Name.trade_definition:
+      return `trades:${trade_id}:trade_definition`;
+    default:
+      throw new Error(`Unknown key name`);
+  }
+}
 
 export class TradeState {
   logger: Logger
@@ -41,25 +84,8 @@ export class TradeState {
     this.mgetAsync = promisify(this.redis.mget).bind(this.redis);
   }
 
-  name_to_key(name: string): string {
-    switch (name) {
-      case "buyOrderId":
-        return `trades:${this.trade_id}:open_orders:buyOrderId`;
-      case "stopOrderId":
-        return `trades:${this.trade_id}:open_orders:stopOrderId`;
-      case "targetOrderId":
-        return `trades:${this.trade_id}:open_orders:targetOrderId`;
-      case "base_amount_imported":
-        return `trades:${this.trade_id}:position:base_amount_imported`;
-      case "base_amount_bought":
-        return `trades:${this.trade_id}:position:base_amount_bought`;
-      case "base_amount_sold":
-        return `trades:${this.trade_id}:position:base_amount_sold`;
-      case "trade_completed":
-        return `trades:${this.trade_id}:completed`;
-      default:
-        throw new Error(`Unknown key name`);
-    }
+  name_to_key(key: Name) {
+    return name_to_key(this.trade_id, key)
   }
 
   async set_or_delete_key(key: string, value: string | undefined) {
@@ -72,19 +98,19 @@ export class TradeState {
   }
 
   async set_buyOrderId(value: string | undefined) {
-    return await this.set_or_delete_key(this.name_to_key("buyOrderId"), value);
+    return await this.set_or_delete_key(this.name_to_key(Name.buyOrderId), value);
   }
 
   async set_stopOrderId(value: string | undefined) {
-    return await this.set_or_delete_key(this.name_to_key("stopOrderId"), value);
+    return await this.set_or_delete_key(this.name_to_key(Name.stopOrderId), value);
   }
 
   async set_targetOrderId(value: string | undefined) {
-    return await this.set_or_delete_key(this.name_to_key("targetOrderId"), value);
+    return await this.set_or_delete_key(this.name_to_key(Name.targetOrderId), value);
   }
 
   async get_buyOrderId(): Promise<string | undefined> {
-    const key = this.name_to_key("buyOrderId");
+    const key = this.name_to_key(Name.buyOrderId);
     const value = await this.get_redis_key(key);
     // this.logger.info(`${key} has value ${value}`);
     if (!value) {
@@ -94,7 +120,7 @@ export class TradeState {
   }
 
   async get_stopOrderId(): Promise<string | undefined> {
-    const key = this.name_to_key("stopOrderId");
+    const key = this.name_to_key(Name.stopOrderId);
     const value = await this.get_redis_key(key);
     // this.logger.info(`${key} has value ${value}`);
     if (!value) {
@@ -104,7 +130,7 @@ export class TradeState {
   }
 
   async get_targetOrderId(): Promise<string | undefined> {
-    const key = this.name_to_key("targetOrderId");
+    const key = this.name_to_key(Name.targetOrderId);
     const value = await this.get_redis_key(key);
     // this.logger.info(`${key} has value ${value}`);
     if (!value) {
@@ -115,35 +141,37 @@ export class TradeState {
 
   async set_trade_completed(value: Boolean) {
     assert(value === true);
-    const key = this.name_to_key("trade_completed");
+    const key = this.name_to_key(Name.trade_completed);
     return await this.set_redis_key(key, `${value}`);
   }
 
   async get_trade_completed() {
-    const key = this.name_to_key("trade_completed");
+    const key = this.name_to_key(Name.trade_completed);
+    return stringToBool(await this.get_redis_key(key));
+  }
     return stringToBool(await this.get_redis_key(key));
   }
 
   async get_base_amount_held() {
     let sum = new BigNumber(0)
-    sum = sum.plus((await this.get_redis_key(this.name_to_key("base_amount_imported"))) || 0)
-    sum = sum.plus((await this.get_redis_key(this.name_to_key("base_amount_bought"))) || 0)
-    sum = sum.minus((await this.get_redis_key(this.name_to_key("base_amount_sold"))) || 0)
+    sum = sum.plus((await this.get_redis_key(this.name_to_key(Name.base_amount_imported))) || 0)
+    sum = sum.plus((await this.get_redis_key(this.name_to_key(Name.base_amount_bought))) || 0)
+    sum = sum.minus((await this.get_redis_key(this.name_to_key(Name.base_amount_sold))) || 0)
     return sum;
   }
 
   async set_base_amount_imported(bignum_value: BigNumber) {
-    const key = this.name_to_key("base_amount_imported");
+    const key = this.name_to_key(Name.base_amount_imported);
     await this.set_redis_key(key, bignum_value.toFixed());
   }
 
   async set_base_amount_bought(bignum_value: BigNumber) {
-    const key = this.name_to_key("base_amount_bought");
+    const key = this.name_to_key(Name.base_amount_bought);
     await this.set_redis_key(key, bignum_value.toFixed());
   }
 
   async set_base_amount_sold(bignum_value: BigNumber) {
-    const key = this.name_to_key("base_amount_sold");
+    const key = this.name_to_key(Name.base_amount_sold);
     await this.set_redis_key(key, bignum_value.toFixed());
   }
 
@@ -170,7 +198,7 @@ export class TradeState {
   }
 
   async get_order_ids() {
-    const [buyOrderId, stopOrderId, targetOrderId] = await this.mgetAsync(this.name_to_key("buyOrderId"), this.name_to_key("stopOrderId"), this.name_to_key("targetOrderId"))
+    const [buyOrderId, stopOrderId, targetOrderId] = await this.mgetAsync(this.name_to_key(Name.buyOrderId), this.name_to_key(Name.stopOrderId), this.name_to_key(Name.targetOrderId))
     return { buyOrderId, stopOrderId, targetOrderId }
   }
 
@@ -200,50 +228,42 @@ export interface RedisTradeStateInitialiserParams {
   trade_definition: TradeDefinition | TradeDefinitionInputSpec
 }
 
-// TODO: I think this is mixed up whether it initialises redis on creates a proxy class to examine it
+// factory. Could probably be turned into a class constructor again now
 export async function initialiser(params: RedisTradeStateInitialiserParams): Promise<TradeState> {
-  const { logger, redis, trade_id, trade_definition } = params;
-  assert(redis);
-  assert(trade_id);
-  assert(logger);
-  assert(trade_definition);
-
-  const trade_state = new TradeState({ logger, redis, trade_id });
-  if (trade_definition.base_amount_imported) {
-    let base_amount_imported = new BigNumber(trade_definition.base_amount_imported)
-    logger.info(`TradeState setting base_amount_imported (${base_amount_imported.toFixed()})`)
-    await trade_state.set_base_amount_imported(base_amount_imported);
-  } else {
-    logger.info(`TradeState no base_amount_imported.`)
-  }
-
-  return trade_state
+  return new TradeState(params);
 }
 
-// creates in redis, moved from create-trade.js
-export async function intialise_in_redis(params: RedisTradeStateInitialiserParams) {
-  const { logger, redis, trade_id, trade_definition } = params;
+interface CreateTradeParams {
+  logger: Logger, redis: RedisClient,
+  trade_definition: TradeDefinition // use the class here to force validation upstream
+}
+
+// creates in redis
+export async function create_new_trade(params: CreateTradeParams): Promise<string> {
+  const { logger, redis, trade_definition } = params;
   assert(redis);
-  assert(trade_id);
   assert(logger);
   assert(trade_definition);
 
   const hmsetAsync = promisify(redis.hmset).bind(redis);
-  const setAsync = promisify(redis.set).bind(redis);
+  const msetAsync = promisify(redis.mset).bind(redis);
+  const incrAsync = promisify(redis.incr).bind(redis);
 
-  // TODO: moved from create-trade.js
-  const prefix = `trades:${trade_id}`;
-  await setAsync(`${prefix}:completed`, false);
-  const redis_key = `${prefix}:trade_definition`;
+  const trade_id = await incrAsync("trades:next:trade_id");
+
   logger.info(inspect(trade_definition));
-  var trade_definition_as_list = [];
-  var vanilla_obj = trade_definition as any;
-  for (const key in trade_definition) {
-    const value: any = vanilla_obj[key] as any
-    if (vanilla_obj[key] !== undefined) {
-      trade_definition_as_list.push(key);
-      trade_definition_as_list.push(vanilla_obj[key]);
-    }
-  }
-  await hmsetAsync(redis_key, trade_definition_as_list);
+
+  const obj = trade_definition.serialised_to_simple_object() as any
+  await hmsetAsync(name_to_key(trade_id, Name.trade_definition),
+    _.pickBy(obj), (key: string) => obj[key] !== undefined);
+
+  msetAsync(
+    [name_to_key(trade_id, Name.trade_state_schema_version)], 'v1',
+    [name_to_key(trade_id, Name.base_amount_imported)], trade_definition.base_amount_imported,
+    [name_to_key(trade_id, Name.buying_allowed)], trade_definition.unmunged.hasOwnProperty('buy_price') ? true : false,
+    [name_to_key(trade_id, Name.trade_completed)], false
+  );
+
+  logger.info(`TradeState setting base_amount_imported (${trade_definition.base_amount_imported})`)
+  return trade_id;
 }

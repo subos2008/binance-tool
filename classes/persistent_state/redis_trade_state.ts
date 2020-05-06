@@ -255,7 +255,7 @@ export interface RedisTradeStateInitialiserParams {
   trade_id: string;
 }
 
-// factory. Could probably be turned into a class constructor again now
+// factory. Could probably be turned into a class constructor again now but then we loose the ability to put async code in here
 export async function build_trade_state_for_trade_id(params: RedisTradeStateInitialiserParams): Promise<TradeState> {
   return new TradeState(params);
 }

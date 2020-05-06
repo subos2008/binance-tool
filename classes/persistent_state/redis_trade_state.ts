@@ -90,18 +90,18 @@ export class TradeState {
 
   async get_redis_key(key: string) {
     const ret = await this._get_redis_key(key)
-    if(ret === 'undefined') {
+    if (ret === 'undefined') {
       throw new Error(`Redis error: key ${key} is the string 'undefined'`)
     }
     return ret
   }
 
   async set_redis_key(key: string, value: string) {
-    if(value === 'undefined') {
+    if (value === 'undefined') {
       throw new Error(`Redis error: attempt to set key ${key} to the string 'undefined'`)
     }
     const ret = await this._set_redis_key(key, value)
-    if(ret !== 'OK') {
+    if (ret !== 'OK') {
       throw new Error(`Redis error: failed to set key ${key}: ${ret}`)
     }
     return ret
@@ -182,7 +182,7 @@ export class TradeState {
   async get_base_amount_held() {
     let sum = new BigNumber(0)
     console.log("FOO:", await this.get_redis_key(this.name_to_key(Name.base_amount_imported)))
-    console.log(   (await this.get_redis_key(this.name_to_key(Name.base_amount_imported))) || 0  )
+    console.log((await this.get_redis_key(this.name_to_key(Name.base_amount_imported))) || 0)
     sum = sum.plus((await this.get_redis_key(this.name_to_key(Name.base_amount_imported))) || 0)
     sum = sum.plus((await this.get_redis_key(this.name_to_key(Name.base_amount_bought))) || 0)
     sum = sum.minus((await this.get_redis_key(this.name_to_key(Name.base_amount_sold))) || 0)
@@ -232,7 +232,7 @@ export class TradeState {
           stopOrderId,
           buyOrderId
         },
-        _.pick(this, ["trade_id"])
+        _.pick(this, ["trade_id", 'buying_allowed'])
       )
     );
   }
@@ -298,12 +298,19 @@ export async function create_new_trade(params: CreateTradeParams): Promise<strin
     _.pickBy(obj), (key: string) => obj[key] !== undefined);
   if (ret !== "OK") throw new Error(`Failed to save trade to redis`)
 
-  ret = await msetAsync(
-    name_to_key(trade_id, Name.trade_state_schema_version), 'v1',
-    name_to_key(trade_id, Name.base_amount_imported), trade_definition.base_amount_imported,
-    name_to_key(trade_id, Name.buying_allowed), trade_definition.unmunged.hasOwnProperty('buy_price') ? true : false,
-    name_to_key(trade_id, Name.trade_completed), false
-  );
+  var mset_array = [
+      name_to_key(trade_id, Name.trade_state_schema_version), 'v1',
+      name_to_key(trade_id, Name.buying_allowed), trade_definition.unmunged.hasOwnProperty('buy_price') ? true : false,
+      name_to_key(trade_id, Name.trade_completed), false
+  ]
+
+  if (trade_definition.base_amount_imported) {
+    mset_array = mset_array.concat([
+      name_to_key(trade_id, Name.base_amount_imported), trade_definition.base_amount_imported.toFixed(),
+    ])
+  }
+
+  ret = await msetAsync(mset_array)
   if (ret !== "OK") throw new Error(`Failed to save trade to redis`)
 
   logger.info(`TradeState setting base_amount_imported (${trade_definition.base_amount_imported})`)

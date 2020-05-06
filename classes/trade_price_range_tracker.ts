@@ -81,9 +81,7 @@ export class TradePriceRangeTracker {
             this.send_message(
               `${symbol} soft entry buy order trigger price hit`
             );
-            await this.trade_state.set_buyOrderId(
-              await this.trade_order_creator.placeBuyOrder()
-            );
+            await this.trade_order_creator.placeBuyOrder()
           }
         } else if (await this.trade_state.get_buyOrderId()) {
           // this.logger.info(`${symbol} trade update. price: ${price} buy: ${this.buy_price}`);

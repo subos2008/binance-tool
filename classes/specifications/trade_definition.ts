@@ -116,7 +116,7 @@ export class TradeDefinition {
     if (exchange_info) {
       this.set_exchange_info(exchange_info)
     }
-    else { console.warn(`TradeDefinition created with no exchange_info specified`) }
+    else { this.logger.warn(`TradeDefinition created with no exchange_info specified`) }
   }
 
   print_trade_for_user(trading_rules?: TradingRules) {

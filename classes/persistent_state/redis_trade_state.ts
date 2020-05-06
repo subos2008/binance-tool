@@ -281,15 +281,17 @@ export async function create_new_trade(params: CreateTradeParams): Promise<strin
   logger.info(inspect(trade_definition));
 
   const obj = trade_definition.serialised_to_simple_object() as any
-  await hmsetAsync(name_to_key(trade_id, Name.trade_definition),
+  let ret = await hmsetAsync(name_to_key(trade_id, Name.trade_definition),
     _.pickBy(obj), (key: string) => obj[key] !== undefined);
+  if (ret !== "OK") throw new Error(`Failed to save trade to redis`)
 
-  msetAsync(
-    [name_to_key(trade_id, Name.trade_state_schema_version)], 'v1',
-    [name_to_key(trade_id, Name.base_amount_imported)], trade_definition.base_amount_imported,
-    [name_to_key(trade_id, Name.buying_allowed)], trade_definition.unmunged.hasOwnProperty('buy_price') ? true : false,
-    [name_to_key(trade_id, Name.trade_completed)], false
+  ret = await msetAsync(
+    name_to_key(trade_id, Name.trade_state_schema_version), 'v1',
+    name_to_key(trade_id, Name.base_amount_imported), trade_definition.base_amount_imported,
+    name_to_key(trade_id, Name.buying_allowed), trade_definition.unmunged.hasOwnProperty('buy_price') ? true : false,
+    name_to_key(trade_id, Name.trade_completed), false
   );
+  if (ret !== "OK") throw new Error(`Failed to save trade to redis`)
 
   logger.info(`TradeState setting base_amount_imported (${trade_definition.base_amount_imported})`)
   return trade_id;

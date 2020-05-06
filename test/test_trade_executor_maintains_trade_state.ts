@@ -88,7 +88,7 @@ async function check_orders(trade_state: TradeState, { buy, target, stop }: { bu
 
 describe("TradeExecutor Maintains TradeState", function () {
   describe("Given an open position", function () {
-    async function setup(overrides: { td_config?: any }) {
+    async function setup(overrides: { td_config?: any } = {}) {
       let logger: Logger = null_logger
       let trade_definition = new TradeDefinition(logger, Object.assign({
         pair: default_pair,
@@ -118,39 +118,39 @@ describe("TradeExecutor Maintains TradeState", function () {
       describe("When soft_entry is true", function () {
         describe("Before the buy trigger price is hit", function () {
           it('Sets buying_allowed to true', async function () {
-            let { trade_state } = await setup({ td_config: { soft_entry: true } })
+            let { trade_state } = await setup()
             expect(await trade_state.get_buying_allowed()).to.be.true
           })
           it('the target position size is undefined', async function () {
-            let { trade_state } = await setup({ td_config: { soft_entry: true } })
+            let { trade_state } = await setup()
             expect(await trade_state.get_target_base_amount_to_buy()).to.be.undefined
           })
           it('buyOrderId is undefined', async function () {
-            let { trade_state } = await setup({ td_config: { soft_entry: true } })
+            let { trade_state } = await setup()
             await check_orders(trade_state, { buy: false })
           })
         })
         describe("When the buy trigger price is hit", function () {
           it('Sets target_base_amount_to_buy', async function () {
-            let { trade_state, ee } = await setup({ td_config: { soft_entry: true } })
+            let { trade_state, ee } = await setup()
             await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
             expect(await trade_state.get_target_base_amount_to_buy()).not.to.be.undefined
           })
           it('Sets the buyOrderId', async function () {
-            let { trade_state, ee } = await setup({ td_config: { soft_entry: true } })
+            let { trade_state, ee } = await setup()
             await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
             await check_orders(trade_state, { buy: true })
           })
         })
         describe("When the buy order has completed", function () {
           it('Unsets the buyOrderId', async function () {
-            let { trade_state, ee } = await setup({ td_config: { soft_entry: true } })
+            let { trade_state, ee } = await setup()
             await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
             await ee.set_current_price({ symbol: default_pair, price: new BigNumber(buy_price) });
             await check_orders(trade_state, { buy: false })
           })
           it('Sets buying_allowed to false', async function () {
-            let { trade_state, ee } = await setup({ td_config: { soft_entry: true } })
+            let { trade_state, ee } = await setup()
             await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
             await ee.set_current_price({ symbol: default_pair, price: new BigNumber(buy_price) });
             expect(await trade_state.get_buying_allowed()).to.be.false

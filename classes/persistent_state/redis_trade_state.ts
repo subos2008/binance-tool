@@ -64,7 +64,7 @@ export class TradeState {
   logger: Logger
   redis: RedisClient
   trade_id: string
-  get_redis_key: (key: string) => Promise<string>
+  _get_redis_key: (key: string) => Promise<string>
   set_redis_key: (key: string, value: string) => Promise<string>
   delAsync: (key: string) => Promise<string>
   mgetAsync: (...args: string[]) => Promise<string[]>
@@ -79,13 +79,21 @@ export class TradeState {
     this.trade_id = trade_id;
 
     this.set_redis_key = promisify(this.redis.set).bind(this.redis);
-    this.get_redis_key = promisify(this.redis.get).bind(this.redis);
+    this._get_redis_key = promisify(this.redis.get).bind(this.redis);
     this.delAsync = promisify(this.redis.del).bind(this.redis);
     this.mgetAsync = promisify(this.redis.mget).bind(this.redis);
   }
 
   name_to_key(key: Name) {
     return name_to_key(this.trade_id, key)
+  }
+
+  async get_redis_key(key: string) {
+    const ret = await this._get_redis_key(key)
+    if(ret === 'undefined') {
+      throw new Error(`Redis error: key ${key} is the string 'undefined'`)
+    }
+    return ret
   }
 
   async set_or_delete_key(key: string, value: string | undefined) {

@@ -39,9 +39,9 @@ export class TradeOrderCreator {
     // Size the trade when we create the buy order and keep that sizeing.
     // This prevents us from spamming the API checking portfolio size
     if (!this.trade_definition.munged.buy_price) throw new Error(`placeBuyOrder called when this.trade_definition.munged.buy_price is not set`)
-    return await this.trade_state.set_buyOrderId(
-      await this._create_limit_buy_order()
-    );
+    let orderId = await this._create_limit_buy_order()
+    await this.trade_state.set_buyOrderId(orderId);
+    return orderId;
   }
 
   async placeStopOrder() {

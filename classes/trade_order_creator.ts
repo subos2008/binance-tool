@@ -35,10 +35,14 @@ export class TradeOrderCreator {
     this.logger.warn(`WARNING: STOP_LOSS_LIMIT orders need work`);
   }
 
-  async placeBuyOrder() {
+  async placeBuyOrder() : Promise<string | null> {
     // Size the trade when we create the buy order and keep that sizeing.
     // This prevents us from spamming the API checking portfolio size
     if (!this.trade_definition.munged.buy_price) throw new Error(`placeBuyOrder called when this.trade_definition.munged.buy_price is not set`)
+    if(await this.trade_state.get_buying_allowed() !== true) {
+      this.logger.info(`Not allowed to buy, skipping request to placeBuyOrder`)
+      return null
+    }
     let orderId = await this._create_limit_buy_order()
     await this.trade_state.add_buy_order({ orderId })
     return orderId;

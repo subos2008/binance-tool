@@ -142,11 +142,15 @@ describe("TradeExecutor Maintains TradeState", function () {
         })
       })
       describe("When the buy order has completed", function () {
-        it('Unsets the buyOrderId', async function () {
-          let { trade_state, ee } = await setup()
+        it('Unsets the buyOrderId and sets stopOrderId', async function () {
+          const sleep = (milliseconds:number) => {
+            return new Promise(resolve => setTimeout(resolve, milliseconds))
+          }
+          let { trade_state, ee } = await setup({logger})
           await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
           await ee.set_current_price({ symbol: default_pair, price: new BigNumber(buy_price) });
-          await check_orders(trade_state, { buy: false })
+          // await sleep(100)
+          await check_orders(trade_state, { buy: false, stop: true })
         })
         it('Sets buying_allowed to false', async function () {
           let { trade_state, ee } = await setup()

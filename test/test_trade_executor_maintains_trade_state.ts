@@ -146,7 +146,7 @@ describe("TradeExecutor Maintains TradeState", function () {
           const sleep = (milliseconds:number) => {
             return new Promise(resolve => setTimeout(resolve, milliseconds))
           }
-          let { trade_state, ee } = await setup({logger})
+          let { trade_state, ee } = await setup()
           await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
           await ee.set_current_price({ symbol: default_pair, price: new BigNumber(buy_price) });
           // await sleep(100)

@@ -78,7 +78,7 @@ starting_balances[default_base_currency] = new BigNumber('1000')
 
 async function check_orders(trade_state: TradeState, { buy, target, stop }: { buy?: boolean, target?: boolean, stop?: boolean }) {
   if (buy) { expect(await trade_state.get_buyOrderId()).not.to.be.undefined }
-  else { expect(await trade_state.get_buyOrderId()).to.be.undefined }
+  else { expect(await trade_state.get_buyOrderId(), 'get_buyOrderId').to.be.undefined }
   if (stop) { expect(await trade_state.get_stopOrderId()).not.to.be.undefined }
   else { expect(await trade_state.get_stopOrderId()).to.be.undefined }
   if (target) { expect(await trade_state.get_targetOrderId()).not.to.be.undefined }
@@ -112,8 +112,8 @@ describe("TradeExecutor Restarting", function () {
 
       return { trade_state, trade_definition, trade_executor, ee }
     }
-    async function setup_filled_buy_order() {
-      let { trade_state, trade_definition, trade_executor, ee } = await setup()
+    async function setup_filled_buy_order(params?:any) {
+      let { trade_state, trade_definition, trade_executor, ee } = await setup(params)
       await trade_state.add_buy_order({ orderId: '1' })
       await trade_state.fully_filled_buy_order({ orderId: '1', total_base_amount_bought })
       return { trade_state, trade_definition, trade_executor, ee }
@@ -123,11 +123,15 @@ describe("TradeExecutor Restarting", function () {
         let { trade_state } = await setup_filled_buy_order()
         expect(await trade_state.get_base_amount_held()).to.bignumber.equal(total_base_amount_bought)
       })
+      it("allowed_to_buy is false", async function () {
+        let { trade_state } = await setup_filled_buy_order()
+        expect(await trade_state.get_buying_allowed()).to.be.false
+      })
       it("doesn't create another buy order if the price hits the buy price", async function () {
-        let { trade_state, trade_executor, ee } = await setup_filled_buy_order()
+        let { trade_state, trade_executor, ee } = await setup_filled_buy_order({logger})
         await trade_executor.main()
         await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
-        await check_orders(trade_state, { buy: false })
+        await check_orders(trade_state, { buy: false, stop: true })
       })
       // TODO: ok so we fork out here:
       //  1. there are no orders, say stop/targetOrder creation borked out

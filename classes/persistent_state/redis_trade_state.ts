@@ -128,12 +128,12 @@ export class TradeState {
     await this.set_or_delete_key(this.name_to_key(Name.buyOrderId), value);
   }
 
-  async set_stopOrderId(value: string | undefined): Promise<void>  {
+  async set_stopOrderId(value: string | undefined): Promise<void> {
     if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
     await this.set_or_delete_key(this.name_to_key(Name.stopOrderId), value);
   }
 
-  async set_targetOrderId(value: string | undefined): Promise<void>  {
+  async set_targetOrderId(value: string | undefined): Promise<void> {
     if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
     await this.set_or_delete_key(this.name_to_key(Name.targetOrderId), value);
   }

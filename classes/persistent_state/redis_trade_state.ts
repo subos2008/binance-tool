@@ -66,7 +66,7 @@ export class TradeState {
   trade_id: string
   _get_redis_key: (key: string) => Promise<string>
   _set_redis_key: (key: string, value: string) => Promise<string>
-  delAsync: (key: string) => Promise<string>
+  delAsync: (key: string) => Promise<number>
   mgetAsync: (...args: string[]) => Promise<string[]>
 
   constructor({ logger, redis, trade_id }: { logger: Logger, redis: RedisClient, trade_id: string }) {
@@ -97,6 +97,7 @@ export class TradeState {
   }
 
   async set_redis_key(key: string, value: string) {
+    this.logger.info(`set_redis_key ${key} to ${value}`)
     if (value === 'undefined') {
       throw new Error(`Redis error: attempt to set key ${key} to the string 'undefined'`)
     }
@@ -111,11 +112,15 @@ export class TradeState {
 
   async set_or_delete_key(key: string, value: string | undefined) {
     if (value === undefined) {
-      return await this.delAsync(key);
+      this.logger.info(`Deleting redis key ${key}`)
+      let ret = await this.delAsync(key);
+      if (ret !== 1) throw new Error(`Deleting redis key ${key} failed, got ${ret}`)
+      this.logger.info(`Deleted redis key ${key} (done)`)
+      return
     }
     // TODO: change to only set if not defined, throw otherwise - to prevent concurrent runs interacting
     let ret = await this.set_redis_key(key, value);
-    if(ret !== 'OK') throw new Error(`Setting redis key ${key} failed`)
+    if (ret !== 'OK') throw new Error(`Setting redis key ${key} failed`)
   }
 
   async set_buyOrderId(value: string | undefined): Promise<void> {

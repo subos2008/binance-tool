@@ -32,7 +32,8 @@ const exchange_info = JSON.parse(
 
 const permissive_trading_rules = {
   max_allowed_portfolio_loss_percentage_per_trade: new BigNumber(100),
-  allowed_to_trade_without_stop: true
+  allowed_to_trade_without_stop: true,
+  max_portfolio_percentage_per_trade: new BigNumber(100)
 };
 
 let default_stop_limt_price_factor = new BigNumber("0.8"); // hard coded default in algo atm

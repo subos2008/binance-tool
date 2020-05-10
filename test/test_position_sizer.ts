@@ -26,6 +26,8 @@ const quote_currency = default_quote_currency;
 const default_pair = `${default_base_currency}${default_quote_currency}`;
 const exchange_info = JSON.parse(fs.readFileSync('./test/exchange_info.json', 'utf8'));
 
+// TODO: add test for max_portfolio_percentage_per_trade
+
 describe('PositionSizer', function () {
   function setup({ ee_config, ps_config }: { ee_config:any, ps_config?:any }) {
     if (ee_config.starting_quote_balance || ee_config.starting_base_balance) {

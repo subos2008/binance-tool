@@ -262,11 +262,15 @@ export class TradeState {
   }
 
   async fully_filled_buy_order({ orderId, total_base_amount_bought }: { orderId: string, total_base_amount_bought: BigNumber }) {
+    this.logger.info(`buy: filled, in fully_filled_buy_order`)
+    // await sleep(1000)
+    this.logger.info(`buy: filled, in fully_filled_buy_order: sleep completed`)
+
     assert.strictEqual(orderId, await this.get_buyOrderId())
     this.logger.warn('redis updates should be atomic') // including check for expected orderId
     await this.set_redis_key(this.name_to_key(Name.buying_allowed), 'false')
-    await this.set_buyOrderId(undefined)
     await this.set_base_amount_bought(total_base_amount_bought)
+    await this.set_buyOrderId(undefined)
   }
 }
 

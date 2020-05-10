@@ -36,7 +36,6 @@ export class OrderExecutionTracker {
     this.send_message = send_message;
     assert(order_state);
     this.order_state = order_state;
-    assert(order_callbacks);
     this.order_callbacks = order_callbacks;
     assert(ee);
     this.ee = ee;

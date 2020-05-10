@@ -69,7 +69,7 @@ export class OrderExecutionTracker {
         if (eventType !== "executionReport") {
           return;
         }
-        this.processExecutionReport(data)
+        await this.processExecutionReport(data)
       } catch (error) {
         let msg = `SHIT: error tracking orders for pair ${data.symbol}`;
         this.logger.error(msg);

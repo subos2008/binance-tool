@@ -622,7 +622,7 @@ export class ExchangeEmulator {
       }
     }
     for (const order of completed_orders) {
-      callback(order)
+      await callback(order)
     }
   }
 

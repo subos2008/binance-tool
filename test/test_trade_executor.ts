@@ -21,7 +21,7 @@ const {
 
 const fs = require("fs");
 import { TradeExecutor } from "../lib/trade_executor"
-const { initialiser: trade_state_initialiser } = require("../classes/persistent_state/redis_trade_state");
+import { create_new_trade, build_trade_state_for_trade_id }  from "../classes/persistent_state/redis_trade_state"
 
 const logger = new Logger({ silent: false });
 const null_logger = new Logger({ silent: true });
@@ -126,9 +126,11 @@ describe("TradeExecutor", function () {
         );
     }
     algo_config.trade_definition = new TradeDefinition(logger, algo_config, exchange_info);
-    const trade_state = await trade_state_initialiser(
-      Object.assign({ trade_id: 1, redis, logger: null_logger }, algo_config)
+    const trade_id = await create_new_trade(
+      Object.assign({ redis, logger: null_logger }, algo_config)
     );
+    const trade_state = await build_trade_state_for_trade_id({ redis, logger: null_logger, trade_id })
+
     const order_state = new OrderState(Object.assign({ redis, logger: null_logger }, algo_config))
 
     algo_config = Object.assign(algo_config, { trade_state, order_state });

@@ -17,7 +17,7 @@ const { promisify } = require("util");
 const hgetallAsync = promisify(redis.hgetall).bind(redis);
 const getAsync = promisify(redis.get).bind(redis);
 const Binance = require("binance-api-node").default;
-const send_message = require("./lib/telegram");
+const send_message = require("./lib/telegram")("binance-tool: ");
 import { TradeExecutor } from "./lib/trade_executor"
 const Logger = require("./lib/faux_logger");
 const BigNumber = require("bignumber.js");

@@ -189,29 +189,19 @@ export class TradeExecutor {
     })
     await this.order_execution_tracker.main()
 
-    // TODO: we could change this just to determine if we need the price watcher
-    // .. but I think basically here what we want is an iteration of:
-    //       - what's the current price, what state should be be in? Tell the trade_order_creator and let it add any missing orders
-    // TODO: the logic in this if() is out of date
+    let base_amount_held = await this.trade_state.get_base_amount_held()
+    let buyOrderId = await this.trade_state.get_buyOrderId()
+    let buying_allowed = await this.trade_state.get_buying_allowed()
     if (
-      this.trade_definition.munged.buy_price &&
-      !(await this.trade_state.get_buyOrderId()) &&
-      (!(await this.trade_state.get_base_amount_held()) || // TODO: get_base_amount_held replace with get_base_amount_imported awaare logic
-        (await this.trade_state.get_base_amount_held()).isZero())
+      this.trade_definition.munged.buy_price && (!buyOrderId) && buying_allowed
     ) {
-      // Cases:
-      // 1. we should buy and haven't started the process yet (fresh run)
-      // 2. buying is complete and base_amount_held is the full target amount
-      // 3. buyOrderId is non-null and we can catch the order still completing
-      // 4. buyOrderId is non-null but the order already completed
-      ///   it which case we can pull info from the order but we still might have gone into the trade with base_amount_held
-      //    non-null in the beginning and the buy order might have been a top-up
-      // 5. (TODO?) buyOrderId is null but we could buy a bit more as the trading account size has changed
       if (!this.trade_definition.soft_entry) {
         await this.trade_order_creator.placeBuyOrder();
       }
-    } else {
+    } else if ((!buyOrderId) && !base_amount_held.isZero()) {
       await this.trade_order_creator.placeSellOrder();
+    } else {
+      this.logger.error(`WARN: Possible logic error`)
     }
 
 

@@ -3,6 +3,7 @@
 require("dotenv").config();
 
 require("./lib/sentry");
+const Sentry = require("@sentry/node");
 
 // TODO: convert all the process.exit calls to be exceptions
 // TODO: add watchdog on trades stream - it can stop responding without realising
@@ -128,34 +129,27 @@ async function main() {
   const execSync = require("child_process").execSync;
   execSync("date -u >&2");
 
-  trade_executor.main().catch(error => {
+  try {
+    await trade_executor.main()
+  } catch (error) {
     if (error.name && error.name === "FetchError") {
       logger.error(
         `${error.name}: Likely unable to connect to Binance and/or Telegram: ${error}`
       );
-    } else if (
-      error.message &&
-      error.message.includes("exception in setup code")
-    ) {
-      logger.error(`Error setting up trade, exiting.`);
-    } else {
-      logger.error(`Error in main loop: ${error}`);
-      logger.error(error);
-      logger.error(`Error in main loop: ${error.stack}`);
       send_message(`${trade_definition.pair}: Error in main loop: ${error}`);
     }
-    soft_exit();
+    soft_exit(1);
     throw error; // sentry
-  });
+  };
 }
 
 // TODO: exceptions
 main().catch(error => {
+  Sentry.captureException(error);
   logger.error(`Error in main loop: ${error}`);
   logger.error(error);
   logger.error(`Error in main loop: ${error.stack}`);
   soft_exit(1);
-  throw error; // sentry
 });
 
 // Note this method returns!

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!./node_modules/.bin/ts-node
 
 require("dotenv").config();
 
@@ -18,8 +18,8 @@ const hgetallAsync = promisify(redis.hgetall).bind(redis);
 
 async function main() {
   const keys = await keysAsync("trades:*:completed");
-  let trade_ids = keys.map(key => parseInt(key.match(/:(\d+):/)[1])).sort((a,b) => a-b)
-  let sorted_keys = trade_ids.map(id => `trades:${id}:completed`)
+  let trade_ids = keys.map((key: any) => parseInt(key.match(/:(\d+):/)[1])).sort((a: any, b: any) => a - b)
+  let sorted_keys = trade_ids.map((id: any) => `trades:${id}:completed`)
   for (const key of sorted_keys) {
     const completed = (await getAsync(key)) === "true";
     const trade_id = key.match(/trades:(\d+):completed/)[1];

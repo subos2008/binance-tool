@@ -102,7 +102,7 @@ export class TradeState {
       throw new Error(`Redis error: attempt to set key ${key} to the string 'undefined'`)
     }
     // assert key is in our namespace:
-    assert(key.startsWith(`trades:${this.trade_id}:`)||key.startsWith(`order_associations:`), `Attempt to set key outside namespace: ${key}`)
+    assert(key.startsWith(`trades:${this.trade_id}:`) || key.startsWith(`order_associations:`), `Attempt to set key outside namespace: ${key}`)
     const ret = await this._set_redis_key(key, value)
     if (ret !== 'OK') {
       throw new Error(`Redis error: failed to set key ${key}: ${ret}`)
@@ -124,19 +124,19 @@ export class TradeState {
   }
 
   async set_buyOrderId(value: string | undefined): Promise<void> {
-    if(value) await this._set_order_id_to_trade_id_association(value)
+    if (value) await this._set_order_id_to_trade_id_association(value)
     if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
     await this.set_or_delete_key(this.name_to_key(Name.buyOrderId), value);
   }
 
   async set_stopOrderId(value: string | undefined): Promise<void> {
-    if(value) await this._set_order_id_to_trade_id_association(value)
+    if (value) await this._set_order_id_to_trade_id_association(value)
     if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
     await this.set_or_delete_key(this.name_to_key(Name.stopOrderId), value);
   }
 
   async set_targetOrderId(value: string | undefined): Promise<void> {
-    if(value) await this._set_order_id_to_trade_id_association(value)
+    if (value) await this._set_order_id_to_trade_id_association(value)
     if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
     await this.set_or_delete_key(this.name_to_key(Name.targetOrderId), value);
   }
@@ -264,7 +264,7 @@ export class TradeState {
     await this.set_stopOrderId(orderId)
   }
 
-  async _set_order_id_to_trade_id_association(orderId:string) {
+  async _set_order_id_to_trade_id_association(orderId: string) {
     await this.set_redis_key(`order_associations:${orderId}:trade_id`, this.trade_id)
   }
 
@@ -313,7 +313,7 @@ export async function create_new_trade(params: CreateTradeParams): Promise<strin
   logger.info(inspect(trade_definition));
 
   let obj = trade_definition.serialised_to_simple_object() as any
-  obj = _.pickBy(obj, (value:any, key: string) => value !== undefined)
+  obj = _.pickBy(obj, (value: any, key: string) => value !== undefined)
   let array = (Object.entries(obj) as any).flat()
   let ret = await hmsetAsync(name_to_key(trade_id, Name.trade_definition), array);
   if (ret !== "OK") throw new Error(`Failed to save trade to redis`)

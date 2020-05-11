@@ -7,6 +7,7 @@ import { TradeDefinition } from "./specifications/trade_definition";
 import { PriceRanges } from "./specifications/price_ranges";
 import { TradeOrderCreator } from '../classes/trade_order_creator'
 
+const Sentry = require("@sentry/node");
 
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
@@ -67,116 +68,121 @@ export class TradePriceRangeTracker {
     this.closeTradesWebSocket = await this.ee.ws.aggTrades(
       [this.trade_definition.pair],
       async (trade: { symbol: string, price: string }) => {
-        var { symbol, price: string_price } = trade;
-        assert(symbol);
-        assert(string_price);
-        const price = new BigNumber(string_price);
-        if (waiting_for_soft_entry_price) {
-          if (
-            price.isLessThanOrEqualTo(
-              this.price_ranges.soft_entry_buy_order_trigger_price
-            )
+        try {
+          var { symbol, price: string_price } = trade;
+          assert(symbol);
+          assert(string_price);
+          this.logger.info(`${symbol}: ${string_price}`)
+          const price = new BigNumber(string_price);
+          if (waiting_for_soft_entry_price) {
+            if (
+              price.isLessThanOrEqualTo(
+                this.price_ranges.soft_entry_buy_order_trigger_price
+              )
+            ) {
+              waiting_for_soft_entry_price = false;
+              this.send_message(
+                `${symbol} soft entry buy order trigger price hit`
+              );
+              await this.trade_order_creator.placeBuyOrder()
+            }
+          } else if (await this.trade_state.get_buyOrderId()) {
+            // this.logger.info(`${symbol} trade update. price: ${price} buy: ${this.buy_price}`);
+          } else if (
+            (await this.trade_state.get_stopOrderId()) ||
+            (await this.trade_state.get_targetOrderId())
           ) {
-            waiting_for_soft_entry_price = false;
-            this.send_message(
-              `${symbol} soft entry buy order trigger price hit`
-            );
-            await this.trade_order_creator.placeBuyOrder()
-          }
-        } else if (await this.trade_state.get_buyOrderId()) {
-          // this.logger.info(`${symbol} trade update. price: ${price} buy: ${this.buy_price}`);
-        } else if (
-          (await this.trade_state.get_stopOrderId()) ||
-          (await this.trade_state.get_targetOrderId())
-        ) {
-          // this.logger.info(
-          // 	`${symbol} trade update. price: ${price} stop: ${this.stop_price} target: ${this.tartrade_definition.munged.get_price}`
-          // );
-          if (
-            typeof this.trade_definition.munged.target_price !== "undefined" &&
-            price.isGreaterThanOrEqualTo(this.trade_definition.munged.target_price) &&
-            report_when_target_price_hit
-          ) {
-            report_when_target_price_hit = false;
-            let msg = `${symbol} target price hit`;
-            this.logger.info(msg);
-            this.send_message(msg);
-          }
-          if (
-            typeof this.trade_definition.munged.stop_price !== "undefined" &&
-            price.isLessThanOrEqualTo(this.trade_definition.munged.stop_price) &&
-            report_when_stop_price_hit
-          ) {
-            report_when_stop_price_hit = false;
-            let msg = `${symbol} stop price hit`;
-            this.logger.info(msg);
-            this.send_message(msg);
-          }
-          if (
-            typeof this.trade_definition.munged.target_price !== "undefined" &&
-            (await this.trade_state.get_stopOrderId()) &&
-            !(await this.trade_state.get_targetOrderId()) &&
-            price.isGreaterThanOrEqualTo(this.trade_definition.munged.target_price) &&
-            !isCancelling
-          ) {
-            {
-              let msg = `Event: price >= target_price: cancelling stop and placeTargetOrder()`;
+            // this.logger.info(
+            // 	`${symbol} trade update. price: ${price} stop: ${this.stop_price} target: ${this.tartrade_definition.munged.get_price}`
+            // );
+            if (
+              typeof this.trade_definition.munged.target_price !== "undefined" &&
+              price.isGreaterThanOrEqualTo(this.trade_definition.munged.target_price) &&
+              report_when_target_price_hit
+            ) {
+              report_when_target_price_hit = false;
+              let msg = `${symbol} target price hit`;
               this.logger.info(msg);
               this.send_message(msg);
             }
-            isCancelling = true;
-            try {
-              let stopOrderId = await this.trade_state.get_stopOrderId();
-              await this.trade_state.set_stopOrderId(undefined); // Do before await cancelOrder
-              if (stopOrderId) await this.trade_order_creator.cancelOrder({ symbol, orderId: stopOrderId });
-              isCancelling = false;
-            } catch (error) {
-              this.logger.error(`${symbol} cancel error: ${error.body}`);
-              this.logger.error(error);
-              return;
+            if (
+              typeof this.trade_definition.munged.stop_price !== "undefined" &&
+              price.isLessThanOrEqualTo(this.trade_definition.munged.stop_price) &&
+              report_when_stop_price_hit
+            ) {
+              report_when_stop_price_hit = false;
+              let msg = `${symbol} stop price hit`;
+              this.logger.info(msg);
+              this.send_message(msg);
             }
-            try {
-              await this.trade_state.set_targetOrderId(
-                await this.trade_order_creator.placeTargetOrder()
-              );
-            } catch (error) {
-              // async_error_handler(
-              //   this.logger,
-              //   `error placing order: ${error.body}`,
-              //   error
-              // );
-              throw error
-            }
-          } else if (
-            (await this.trade_state.get_targetOrderId()) &&
-            !(await this.trade_state.get_stopOrderId()) &&
-            // TODO: remove || 0 hack
-            price.isLessThanOrEqualTo(this.trade_definition.munged.stop_price || 0) &&
-            !isCancelling
-          ) {
-            isCancelling = true;
-            try {
-              let targetOrderId = await this.trade_state.get_targetOrderId();
-              await this.trade_state.set_targetOrderId(undefined); // Do before await cancelOrder
-              if (targetOrderId) await this.trade_order_creator.cancelOrder({ symbol, orderId: targetOrderId });
-              isCancelling = false;
-            } catch (error) {
-              this.logger.error(`${symbol} cancel error ${error.body}`);
-              return;
-            }
-            try {
-              await this.trade_state.set_stopOrderId(
-                await this.trade_order_creator.placeStopOrder()
-              );
-            } catch (error) {
-              // async_error_handler(
-              //   this.logger,
-              //   `error placing order: ${error.body}`,
-              //   error
-              // );
-              throw error
+            if (
+              typeof this.trade_definition.munged.target_price !== "undefined" &&
+              (await this.trade_state.get_stopOrderId()) &&
+              !(await this.trade_state.get_targetOrderId()) &&
+              price.isGreaterThanOrEqualTo(this.trade_definition.munged.target_price) &&
+              !isCancelling
+            ) {
+              {
+                let msg = `Event: price >= target_price: cancelling stop and placeTargetOrder()`;
+                this.logger.info(msg);
+                this.send_message(msg);
+              }
+              isCancelling = true;
+              try {
+                let stopOrderId = await this.trade_state.get_stopOrderId();
+                await this.trade_state.set_stopOrderId(undefined); // Do before await cancelOrder
+                if (stopOrderId) await this.trade_order_creator.cancelOrder({ symbol, orderId: stopOrderId });
+                isCancelling = false;
+              } catch (error) {
+                this.logger.error(`${symbol} cancel error: ${error.body}`);
+                this.logger.error(error);
+                return;
+              }
+              try {
+                await this.trade_state.set_targetOrderId(
+                  await this.trade_order_creator.placeTargetOrder()
+                );
+              } catch (error) {
+                // async_error_handler(
+                //   this.logger,
+                //   `error placing order: ${error.body}`,
+                //   error
+                // );
+                throw error
+              }
+            } else if (
+              (await this.trade_state.get_targetOrderId()) &&
+              !(await this.trade_state.get_stopOrderId()) &&
+              // TODO: remove || 0 hack
+              price.isLessThanOrEqualTo(this.trade_definition.munged.stop_price || 0) &&
+              !isCancelling
+            ) {
+              isCancelling = true;
+              try {
+                let targetOrderId = await this.trade_state.get_targetOrderId();
+                await this.trade_state.set_targetOrderId(undefined); // Do before await cancelOrder
+                if (targetOrderId) await this.trade_order_creator.cancelOrder({ symbol, orderId: targetOrderId });
+                isCancelling = false;
+              } catch (error) {
+                this.logger.error(`${symbol} cancel error ${error.body}`);
+                return;
+              }
+              try {
+                await this.trade_state.set_stopOrderId(
+                  await this.trade_order_creator.placeStopOrder()
+                );
+              } catch (error) {
+                // async_error_handler(
+                //   this.logger,
+                //   `error placing order: ${error.body}`,
+                //   error
+                // );
+                throw error
+              }
             }
           }
+        } catch (err) {
+          Sentry.captureException(err);
         }
       }
     );

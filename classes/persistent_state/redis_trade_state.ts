@@ -124,16 +124,19 @@ export class TradeState {
   }
 
   async set_buyOrderId(value: string | undefined): Promise<void> {
+    if(value) await this._set_order_id_to_trade_id_association(value)
     if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
     await this.set_or_delete_key(this.name_to_key(Name.buyOrderId), value);
   }
 
   async set_stopOrderId(value: string | undefined): Promise<void> {
+    if(value) await this._set_order_id_to_trade_id_association(value)
     if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
     await this.set_or_delete_key(this.name_to_key(Name.stopOrderId), value);
   }
 
   async set_targetOrderId(value: string | undefined): Promise<void> {
+    if(value) await this._set_order_id_to_trade_id_association(value)
     if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
     await this.set_or_delete_key(this.name_to_key(Name.targetOrderId), value);
   }
@@ -259,6 +262,10 @@ export class TradeState {
 
   async add_stop_order({ orderId }: { orderId: string }) {
     await this.set_stopOrderId(orderId)
+  }
+
+  async _set_order_id_to_trade_id_association(orderId:string) {
+    await this.set_redis_key(`order_associations:${orderId}:trade_id`, this.trade_id)
   }
 
   async fully_filled_buy_order({ orderId, total_base_amount_bought }: { orderId: string, total_base_amount_bought: BigNumber }) {

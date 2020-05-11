@@ -127,6 +127,10 @@ numbers and update the position held data.this is nice because its oer trade dat
 1. draining at target
 1. draining at stop (note can drain at target for a while then remainder at stop)
 
+## Consistency Checker service
+
+1. Given a trade with a buy order if the buy order is complete then the buyOrderId in the trade and the amount bought have been updated (this is a real case where we crash out or somehow miss the updating of the trade when the order complete notification goes out)
+
 ## testing
 
 Tests should look like:

@@ -12,9 +12,58 @@ const keysAsync = promisify(redis.keys).bind(redis);
 const getAsync = promisify(redis.get).bind(redis);
 const hgetallAsync = promisify(redis.hgetall).bind(redis);
 
-async function main() {
+const yargs = require("yargs");
+
+async function sorted_trade_ids() {
   const keys = await keysAsync("trades:*:completed");
-  let trade_ids = keys.map((key: any) => parseInt(key.match(/:(\d+):/)[1])).sort((a: any, b: any) => a - b)
+  return keys.map((key: any) => parseInt(key.match(/:(\d+):/)[1])).sort((a: any, b: any) => a - b)
+}
+
+async function main() {
+  yargs
+    .strict()
+    .command(
+      "describe",
+      "details of trade",
+      {
+        'trade-id': {
+          description: "trade id",
+          type: "string",
+          demandOption: true,
+          choices: (await sorted_trade_ids()).map((n: number) => n.toString()),
+        },
+      },
+      describe_trade
+    )
+    .command(["list", "$0"], "list all trades", {}, list_trades)
+    .help()
+    .alias("help", "h").argv;
+}
+main().then(() => { });
+
+async function describe_trade(argv: any) {
+  let trade_id = argv['trade-id']
+  // console.log(`Trade ID: ${trade_id}`)
+  let keys = await keysAsync(`trades:${trade_id}:*`);
+  const output_obj: any = {}
+  keys = keys.map((key: string) => key.match(/trades:[^:]+:(.*)$/)?.[1] ?? null)
+  for (const key of keys) {
+    switch (key) {
+      case "trade_definition":
+        const trade_definition = await hgetallAsync(`trades:${trade_id}:trade_definition`);
+        output_obj[key] = trade_definition
+        break;
+      default:
+        const value = await getAsync(`trades:${trade_id}:${key}`);
+        output_obj[key] = value
+    }
+  }
+  console.log(output_obj)
+  redis.quit();
+}
+
+async function list_trades(argv: any) {
+  let trade_ids = await sorted_trade_ids()
   let sorted_keys = trade_ids.map((id: any) => `trades:${id}:completed`)
   for (const key of sorted_keys) {
     const completed = (await getAsync(key)) === "true";
@@ -31,4 +80,3 @@ async function main() {
   }
   redis.quit();
 }
-main();

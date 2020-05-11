@@ -67,7 +67,7 @@ export class TradeState {
   _get_redis_key: (key: string) => Promise<string>
   _set_redis_key: (key: string, value: string) => Promise<string>
   delAsync: (key: string) => Promise<number>
-  mgetAsync: (...args: string[]) => Promise<string[]>
+  mgetAsync: (args: string[]) => Promise<string[]>
 
   constructor({ logger, redis, trade_id }: { logger: Logger, redis: RedisClient, trade_id: string }) {
     // NB: base_amount_imported is handled by initialiser()
@@ -249,7 +249,7 @@ export class TradeState {
   }
 
   async get_order_ids() {
-    const [buyOrderId, stopOrderId, targetOrderId] = await this.mgetAsync(this.name_to_key(Name.buyOrderId), this.name_to_key(Name.stopOrderId), this.name_to_key(Name.targetOrderId))
+    const [buyOrderId, stopOrderId, targetOrderId] = await this.mgetAsync([this.name_to_key(Name.buyOrderId), this.name_to_key(Name.stopOrderId), this.name_to_key(Name.targetOrderId)])
     return { buyOrderId, stopOrderId, targetOrderId }
   }
 

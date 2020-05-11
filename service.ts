@@ -1,6 +1,4 @@
-#!/usr/bin/env node
-/* eslint-disable no-console */
-/* eslint func-names: ["warn", "as-needed"] */
+#!./node_modules/.bin/ts-node
 
 require("dotenv").config();
 
@@ -18,13 +16,16 @@ const { promisify } = require("util");
 const hgetallAsync = promisify(redis.hgetall).bind(redis);
 const getAsync = promisify(redis.get).bind(redis);
 const Binance = require("binance-api-node").default;
-const send_message = require("./lib/telegram.js");
-const TradeExecutor = require("./lib/trade_executor");
+const send_message = require("./lib/telegram");
+import { TradeExecutor } from "./lib/trade_executor"
 const Logger = require("./lib/faux_logger");
 const BigNumber = require("bignumber.js");
-const TradingRules = require("./lib/trading_rules");
-const { TradeState } = require("./classes/redis_trade_state");
-const TradeDefinition = require("./classes/trade_definition");
+import { TradingRules } from "./lib/trading_rules"
+import { build_trade_state_for_trade_id } from "./classes/persistent_state/redis_trade_state"
+import { OrderState } from "./classes/persistent_state/redis_order_state"
+import { TradeDefinition } from "./classes/specifications/trade_definition";
+import { ExchangeEmulator } from "./lib/exchange_emulator"
+
 
 const logger = new Logger({ silent: false });
 
@@ -53,11 +54,11 @@ var { argv } = require("yargs")
   .boolean("live")
   .describe("live", "Trade with real money")
   .default("live", false);
-let { "trade-id": trade_id, live, launch } = argv;
-var trade_executor;
+let { "trade-id": trade_id, live } = argv;
+var trade_executor: TradeExecutor;
 
 async function main() {
-  var stringToBool = myValue => myValue === "true";
+  var stringToBool = (myValue: string) => myValue === "true";
   const redis_trade_definition = await hgetallAsync(
     `trades:${trade_id}:trade_definition`
   );
@@ -71,9 +72,9 @@ async function main() {
     return; // exit
   }
 
-  const trade_definition = new TradeDefinition(redis_trade_definition);
-  const trade_state = new TradeState({ logger, redis, trade_id });
+  const trade_definition = new TradeDefinition(logger, redis_trade_definition);
 
+  const trade_state = await build_trade_state_for_trade_id({ trade_id, redis, logger });
   await trade_state.print();
 
   const trade_completed = await trade_state.get_trade_completed();
@@ -112,22 +113,20 @@ async function main() {
       logger,
       exchange_info
     };
-    const ExchangeEmulator = require("./lib/exchange_emulator");
     ee = new ExchangeEmulator(ee_config);
   }
 
-  trade_executor = new TradeExecutor({
-    ee,
-    send_message,
-    logger,
-    trade_id,
-    trade_state, // dependency injection for persistent state
-    trade_definition,
-    trading_rules
+
+  const order_state = new OrderState({ redis, logger })
+
+  let trade_executor = new TradeExecutor({
+    logger, ee, send_message,
+    trading_rules,
+    trade_state, order_state, trade_definition
   });
 
   const execSync = require("child_process").execSync;
-  code = execSync("date -u >&2");
+  execSync("date -u >&2");
 
   trade_executor.main().catch(error => {
     if (error.name && error.name === "FetchError") {
@@ -161,7 +160,7 @@ main().catch(error => {
 
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
-function soft_exit(exit_code) {
+function soft_exit(exit_code?: number | undefined) {
   redis.quit();
   if (trade_executor) trade_executor.shutdown_streams();
   if (exit_code) process.exitCode = exit_code;

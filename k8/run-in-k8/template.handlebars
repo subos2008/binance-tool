@@ -12,7 +12,7 @@ spec:
       containers:
       - name: {{container_name}}
         image: {{docker_image}}:latest
-        command: ["node",  "service.js", "--trade-id", "{{trade_id}}", "--live"]
+        command: ["./service.ts", "--trade-id", "{{trade_id}}", "--live"]
         env:
         - name: TELEGRAM_KEY
           valueFrom:

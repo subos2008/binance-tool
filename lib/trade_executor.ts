@@ -49,7 +49,7 @@ export class TradeExecutor {
     trade_definition,
     percentage_before_soft_buy_price_to_add_order = new BigNumber("0.5"),
     trading_rules,
-  }: { logger: Logger, ee: any, send_message: (msg: string) => void, trade_state: TradeState, order_state: OrderState, trade_definition: TradeDefinition, percentage_before_soft_buy_price_to_add_order: BigNumber, trading_rules: TradingRules }) {
+  }: { logger: Logger, ee: any, send_message: (msg: string) => void, trade_state: TradeState, order_state: OrderState, trade_definition: TradeDefinition, percentage_before_soft_buy_price_to_add_order?: BigNumber, trading_rules: TradingRules }) {
     assert(logger);
     this.logger = logger;
     assert(send_message);

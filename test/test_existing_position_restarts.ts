@@ -129,7 +129,7 @@ describe("TradeExecutor Restarting", function () {
         expect(await trade_state.get_buying_allowed()).to.be.false
       })
       it("doesn't create another buy order if the price hits the buy price", async function () {
-        let { trade_state, trade_executor, ee } = await setup_filled_buy_order({logger})
+        let { trade_state, trade_executor, ee } = await setup_filled_buy_order()
         await trade_executor.main()
         await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
         await check_orders(trade_state, { buy: false, stop: true })

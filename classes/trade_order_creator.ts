@@ -141,7 +141,7 @@ export class TradeOrderCreator {
       });
       return response.orderId;
     } catch (error) {
-      // async_error_handler(this.logger, `Sell error: ${error.body}`, error);
+      this.logger.error(`Sell error: ${error.body}`);
       throw error
     }
   }

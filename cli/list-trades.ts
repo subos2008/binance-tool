@@ -2,10 +2,6 @@
 
 require("dotenv").config();
 
-// TODO: convert all the process.exit calls to be exceptions
-// TODO: add watchdog on trades stream - it can stop responding without realising
-// TODO: - in the original implementations
-
 const redis = require("redis").createClient({
   host: process.env.REDIS_HOST,
   password: process.env.REDIS_PASSWORD

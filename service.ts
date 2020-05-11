@@ -86,13 +86,6 @@ async function main() {
     process.exit(0);
   }
 
-  // a neat little hack to get us on the way to restartable jobs,
-  // convert the amount bought so far to '-a'
-  // Actually no - this just lives in trade_state now
-  // fist we will init from it then we will update it
-  // does need to be a BigNumber
-  // trade_definition.base_amount_held = await trade_state.get_base_amount_held();
-
   // Pick live or emulated ExecutionEngine/ExchangeEmulator
   var ee;
   if (live) {

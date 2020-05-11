@@ -129,7 +129,6 @@ export class TradeOrderCreator {
     assert(price);
     assert(base_amount);
     try {
-      base_amount = await this.trade_state.get_base_amount_held();
       base_amount = this._munge_amount_and_check_notionals({
         base_amount,
         price

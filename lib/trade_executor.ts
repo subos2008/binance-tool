@@ -133,15 +133,15 @@ export class TradeExecutor {
 
   async order_filled(orderId: string, { totalTradeQuantity, symbol }: { totalTradeQuantity: string, symbol: string }) {
     const { buyOrderId, stopOrderId, targetOrderId } = await this.trade_state.get_order_ids()
-    if (orderId === buyOrderId) {
+    if (orderId == buyOrderId) {
       await this.trade_state.fully_filled_buy_order({ orderId: buyOrderId, total_base_amount_bought: new BigNumber(totalTradeQuantity) })
       this.send_message(`${symbol} buy order filled`);
       if (!this.trade_order_creator) throw new Error(`placeSellOrder called before trade_order_creator is initialised`)
       await this.trade_order_creator.placeSellOrder();
-    } else if (orderId === stopOrderId) {
+    } else if (orderId == stopOrderId) {
       this.send_message(`${symbol} stop loss order filled`);
       this.execution_complete(`Stop hit`, 1);
-    } else if (orderId === targetOrderId) {
+    } else if (orderId == targetOrderId) {
       this.send_message(`${symbol} target sell order filled`);
       this.execution_complete(`Target hit`);
     } else {

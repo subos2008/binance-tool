@@ -102,7 +102,7 @@ export class TradeState {
       throw new Error(`Redis error: attempt to set key ${key} to the string 'undefined'`)
     }
     // assert key is in our namespace:
-    assert(key.startsWith(`trades:${this.trade_id}:`)||key.startsWith(`order_associations:${this.trade_id}:`), `Attempt to set key outside namespace: ${key}`)
+    assert(key.startsWith(`trades:${this.trade_id}:`)||key.startsWith(`order_associations:`), `Attempt to set key outside namespace: ${key}`)
     const ret = await this._set_redis_key(key, value)
     if (ret !== 'OK') {
       throw new Error(`Redis error: failed to set key ${key}: ${ret}`)

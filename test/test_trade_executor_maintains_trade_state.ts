@@ -84,7 +84,6 @@ async function check_orders(trade_state: TradeState, { buy, target, stop }: { bu
   else { expect(await trade_state.get_stopOrderId(), "stopOrderId has value when undefined expected").to.be.undefined }
   if (target) { expect(await trade_state.get_targetOrderId(), "expected targetOrderId to be set").not.to.be.undefined }
   else { expect(await trade_state.get_targetOrderId(), "targetOrderId has value when undefined expected").to.be.undefined }
-
 }
 
 describe("TradeExecutor Maintains TradeState", function () {
@@ -143,11 +142,17 @@ describe("TradeExecutor Maintains TradeState", function () {
         })
       })
       describe("When the buy order has completed", function () {
-        it('Unsets the buyOrderId and sets stopOrderId', async function () {
+        it('Sets stopOrderId', async function () {
           let { trade_state, ee } = await setup()
           await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
           await ee.set_current_price({ symbol: default_pair, price: new BigNumber(buy_price) });
-          await check_orders(trade_state, { buy: false, stop: true })
+          expect(await trade_state.get_stopOrderId(), "expected stopOrderId to be set").not.to.be.undefined
+        })
+        it('Unsets the buyOrderId', async function () {
+          let { trade_state, ee } = await setup()
+          await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
+          await ee.set_current_price({ symbol: default_pair, price: new BigNumber(buy_price) });
+          expect(await trade_state.get_buyOrderId(), "buyOrderId has value when undefined expected").to.be.undefined
         })
         it('Sets buying_allowed to false', async function () {
           let { trade_state, ee } = await setup()

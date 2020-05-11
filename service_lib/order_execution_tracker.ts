@@ -12,6 +12,8 @@ import { OrderState } from "../classes/persistent_state/redis_order_state";
 import { Logger } from '../interfaces/logger'
 import { OrderCallbacks, BinanceOrderData } from '../interfaces/order_callbacks'
 
+const Sentry = require("@sentry/node");
+
 export class OrderExecutionTracker {
   send_message: Function;
   logger: Logger;
@@ -70,6 +72,7 @@ export class OrderExecutionTracker {
         }
         await this.processExecutionReport(data)
       } catch (error) {
+        Sentry.captureException(error);
         let msg = `SHIT: error tracking orders for pair ${data.symbol}`;
         this.logger.error(msg);
         this.logger.error(error);

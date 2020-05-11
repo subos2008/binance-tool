@@ -113,13 +113,9 @@ export class PositionSizer {
     assert(buy_price);
     assert(stop_price);
     let stop_percentage = new BigNumber(buy_price).minus(stop_price).dividedBy(buy_price).times(100);
-    let foo = new BigNumber(this.trading_rules.max_allowed_portfolio_loss_percentage_per_trade)
+    return new BigNumber(this.trading_rules.max_allowed_portfolio_loss_percentage_per_trade)
       .dividedBy(stop_percentage)
       .times(100);
-      if(this.trading_rules.max_portfolio_percentage_per_trade) {
-        foo = BigNumber.minimum(foo, this.trading_rules.max_portfolio_percentage_per_trade)
-      }
-      return foo
   }
 
   async size_position(
@@ -141,6 +137,10 @@ export class PositionSizer {
         buy_price,
         stop_price
       });
+    }
+    if (this.trading_rules.max_portfolio_percentage_per_trade) {
+      max_portfolio_percentage_allowed_in_trade = BigNumber.minimum(max_portfolio_percentage_allowed_in_trade, this.trading_rules.max_portfolio_percentage_per_trade)
+      this.logger.info(`Applied trading_rules.max_portfolio_percentage_per_trade, now: ${max_portfolio_percentage_allowed_in_trade.toFixed()}%`)
     }
 
     let quote_volume = await this._calculate_autosized_quote_volume_available({

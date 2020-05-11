@@ -72,7 +72,7 @@ export class TradePriceRangeTracker {
           var { symbol, price: string_price } = trade;
           assert(symbol);
           assert(string_price);
-          this.logger.info(`${symbol}: ${string_price}`)
+          // this.logger.info(`${symbol}: ${string_price}`)
           const price = new BigNumber(string_price);
           if (waiting_for_soft_entry_price) {
             if (

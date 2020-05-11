@@ -139,9 +139,15 @@ export class TradeDefinition {
   }
 
   serialised_to_simple_object(): TradeDefinitionInputSpec {
-    return Object.assign(
+    let obj = Object.assign(
       _.pick(this, 'pair', 'base_amount_imported', 'max_quote_amount_to_buy', 'soft_entry', 'auto_size', 'timestamp'),
       _.pick(this.unmunged, 'buy_price', 'stop_price', 'target_price'))
+    if(obj.base_amount_imported) obj.base_amount_imported = obj.base_amount_imported.toFixed()
+    if(obj.max_quote_amount_to_buy) obj.max_quote_amount_to_buy = obj.max_quote_amount_to_buy.toFixed()
+    if(obj.buy_price) obj.buy_price = obj.buy_price.toFixed()
+    if(obj.stop_price) obj.stop_price = obj.stop_price.toFixed()
+    if(obj.target_price) obj.target_price = obj.target_price.toFixed()
+    return obj
   }
 
   get_message(): string {

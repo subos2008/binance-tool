@@ -305,9 +305,13 @@ export async function create_new_trade(params: CreateTradeParams): Promise<strin
 
   logger.info(inspect(trade_definition));
 
-  const obj = trade_definition.serialised_to_simple_object() as any
-  let ret = await hmsetAsync(name_to_key(trade_id, Name.trade_definition),
-    _.pickBy(obj), (key: string) => obj[key] !== undefined);
+  let obj = trade_definition.serialised_to_simple_object() as any
+  console.log(obj)
+  obj = _.pickBy(obj, (value:any, key: string) => value !== undefined)
+  console.log(obj)
+  let array = (Object.entries(obj) as any).flat()
+  console.log(array)
+  let ret = await hmsetAsync(name_to_key(trade_id, Name.trade_definition), array);
   if (ret !== "OK") throw new Error(`Failed to save trade to redis`)
 
   var mset_array = [

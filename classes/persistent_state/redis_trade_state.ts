@@ -249,8 +249,14 @@ export class TradeState {
   }
 
   async get_order_ids() {
-    const [buyOrderId, stopOrderId, targetOrderId] = await this.mgetAsync([this.name_to_key(Name.buyOrderId), this.name_to_key(Name.stopOrderId), this.name_to_key(Name.targetOrderId)])
-    return { buyOrderId, stopOrderId, targetOrderId }
+    // const [buyOrderId, stopOrderId, targetOrderId] = await this.mgetAsync([this.name_to_key(Name.buyOrderId), this.name_to_key(Name.stopOrderId), this.name_to_key(Name.targetOrderId)])
+    // return { buyOrderId, stopOrderId, targetOrderId }
+    // const [buyOrderId, stopOrderId, targetOrderId] = await this.mgetAsync([this.name_to_key(Name.buyOrderId), this.name_to_key(Name.stopOrderId), this.name_to_key(Name.targetOrderId)])
+    return {
+      buyOrderId: await this.get_buyOrderId(),
+      stopOrderId: await this.get_stopOrderId(),
+      targetOrderId: await this.get_targetOrderId()
+    }
   }
 
   // A v2 of the interface developed while creating tests

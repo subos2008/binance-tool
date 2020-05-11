@@ -179,8 +179,9 @@ describe("TradeExecutor Restarting", function () {
     describe("When there is no buyOrder", function () {
       it('create tests')
     })
-    describe("When the buyOrder exists and potentially executed?", function () {
+    describe("When the buyOrder exists and potentially executed", function () {
       it('create tests')
+      it('gets the data from the order-tracker')
     })
   })
 })

@@ -22,6 +22,8 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
+var util = require('util');
+
 export class TradeExecutor {
   logger: Logger
   send_message: (msg: string) => void
@@ -64,6 +66,8 @@ export class TradeExecutor {
     this.order_state = order_state;
     assert(trading_rules);
     this.trading_rules = trading_rules;
+    this.logger.info('Trading Rules:')
+    this.logger.info(util.inspect(this.trading_rules))
 
     this.price_ranges = new PriceRanges({ logger, trade_definition, percentage_before_soft_buy_price_to_add_order })
 

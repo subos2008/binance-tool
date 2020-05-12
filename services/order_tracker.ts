@@ -72,7 +72,7 @@ async function main() {
   }
 
   const execSync = require("child_process").execSync;
-  execSync("date -u >&2");
+  execSync("date -u");
 
   order_execution_tracker = new OrderExecutionTracker({
     ee,
@@ -94,7 +94,7 @@ async function main() {
       send_message(`Error in main loop: ${error}`);
     }
     soft_exit(1);
-  }).then(() => { logger.info('main() returned.') });
+  }).then(() => { logger.info('order_execution_tracker.main() returned.') });
 }
 
 // TODO: exceptions / sentry
@@ -109,6 +109,7 @@ main().catch(error => {
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code: number | null = null) {
+  if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`);
   if (order_execution_tracker) order_execution_tracker.shutdown_streams();
   if (exit_code) process.exitCode = exit_code;
   if (redis) redis.quit();

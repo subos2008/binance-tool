@@ -160,10 +160,12 @@ export class TradeExecutor {
   async order_cancelled(orderId: string, data: BinanceOrderData) {
     if (data.orderRejectReason === "NONE") {
       // Assume user cancelled order and exit
-      this.execution_complete(
-        `Order was cancelled, presumably by user. Exiting.`,
-        1
-      )
+      console.log(`Order ${orderId} was cancelled maybe by user or by engine, taking no action`)
+      console.log(data)
+      // this.execution_complete(
+      //   `Order was cancelled, presumably by user. Exiting.`,
+      //   1
+      // )
     }
     else {
       throw new Error(`Order #${orderId} cancelled for unknown reason: ${data.orderRejectReason}`)

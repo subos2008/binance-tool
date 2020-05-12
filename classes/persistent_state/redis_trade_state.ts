@@ -114,7 +114,8 @@ export class TradeState {
     if (value === undefined) {
       this.logger.info(`Deleting redis key ${key}`)
       let ret = await this.delAsync(key);
-      if (ret !== 1) throw new Error(`Deleting redis key ${key} failed, got ${ret}`)
+      // if 0 it was already deleted, if 1 we deleted it
+      if (ret !== 1 && ret !== 0) throw new Error(`Deleting redis key ${key} failed, got ${ret}`)
       this.logger.info(`Deleted redis key ${key} (done)`)
       return
     }

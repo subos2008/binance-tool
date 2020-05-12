@@ -17,16 +17,26 @@ spec:
         app.kubernetes.io/name: {{ include "mychart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
         binance-tool/service: "order-tracker"
+      annotations:
+        ad.datadoghq.com/nginx.logs: '[{"source":"order-tracker","service":"order-tracker"}]'
+  
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
     {{- end }}
+      volumes:
+        - hostPath:
+            path: /opt/datadog-agent/run
+          name: pointerdir
       containers:
         - name: order-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./services/order_tracker.ts"]
+          volumeMounts:
+            - name: pointerdir
+              mountPath: /opt/datadog-agent/run
           # ports:
           # - name: http
           #   containerPort: 8081
@@ -40,6 +50,10 @@ spec:
           #     path: /health
           #     port: http
           env:
+            - name: DD_LOGS_ENABLED
+              value: "true"
+            - name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
+              value: "true"
             - name: REDIS_HOST
               {{- if .Values.redis.create_local }}
               value: {{ .Release.Name }}-redis-master

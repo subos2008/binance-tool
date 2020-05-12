@@ -1,5 +1,7 @@
 #!./node_modules/.bin/ts-node
 
+const Logger = require("./lib/faux_logger");
+const logger = new Logger({ silent: false });
 require("dotenv").config();
 
 require("./lib/sentry");
@@ -13,13 +15,18 @@ const redis = require("redis").createClient({
   host: process.env.REDIS_HOST,
   password: process.env.REDIS_PASSWORD
 });
+redis.on('error', function (err:any) {
+  logger.warn('Redis.on errror handler called'); 
+  console.error(err.stack); 
+  console.error(err); 
+  Sentry.captureException(err)
+});
 const { promisify } = require("util");
 const hgetallAsync = promisify(redis.hgetall).bind(redis);
 const getAsync = promisify(redis.get).bind(redis);
 const Binance = require("binance-api-node").default;
 const send_message = require("./lib/telegram")("binance-tool: ");
 import { TradeExecutor } from "./lib/trade_executor"
-const Logger = require("./lib/faux_logger");
 const BigNumber = require("bignumber.js");
 import { TradingRules } from "./lib/trading_rules"
 import { build_trade_state_for_trade_id } from "./classes/persistent_state/redis_trade_state"
@@ -28,7 +35,6 @@ import { TradeDefinition } from "./classes/specifications/trade_definition";
 import { ExchangeEmulator } from "./lib/exchange_emulator"
 
 
-const logger = new Logger({ silent: false });
 
 process.on("unhandledRejection", up => {
   send_message(`UnhandledPromiseRejection: ${up}`);

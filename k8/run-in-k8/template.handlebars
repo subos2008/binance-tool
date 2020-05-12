@@ -5,10 +5,10 @@ metadata:
     run: binance-tool
   name: "binance-tool-trade-id-{{trade_id}}"
 spec:
-  backoffLimit: 0
+  backoffLimit: 5
   template:
     spec:
-      restartPolicy: Never
+      restartPolicy: OnFailure
       containers:
       - name: {{container_name}}
         image: {{docker_image}}:latest

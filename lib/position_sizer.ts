@@ -12,6 +12,8 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../interfaces/logger";
 import { TradingRules } from "./trading_rules";
 
+const Sentry = require("@sentry/node");
+
 export class PositionSizer {
   logger: Logger
   ee: any
@@ -37,12 +39,14 @@ export class PositionSizer {
       let response = await this.ee.accountInfo();
       balances = response.balances;
     } catch (error) {
-      async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
+          Sentry.captureException(error);
+          async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
     }
     try {
       prices = await this.ee.prices();
     } catch (error) {
-      async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
+          Sentry.captureException(error);
+          async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
     }
 
     // try {

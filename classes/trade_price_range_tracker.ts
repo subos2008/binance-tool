@@ -56,7 +56,7 @@ export class TradePriceRangeTracker {
 
   async main() {
     let waiting_for_soft_entry_price = false;
-    if (this.trade_definition.soft_entry) {
+    if (this.trade_definition.soft_entry && await this.trade_state.get_buying_allowed()) {
       this.logger.info(
         `Soft entry mode: waiting for entry price before placing order`
       );
@@ -134,6 +134,7 @@ export class TradePriceRangeTracker {
                 if (stopOrderId) await this.trade_order_creator.cancelOrder({ symbol, orderId: stopOrderId });
                 isCancelling = false;
               } catch (error) {
+                Sentry.captureException(error);
                 this.logger.error(`${symbol} cancel error: ${error.body}`);
                 this.logger.error(error);
                 return;
@@ -143,6 +144,7 @@ export class TradePriceRangeTracker {
                   await this.trade_order_creator.placeTargetOrder()
                 );
               } catch (error) {
+                Sentry.captureException(error);
                 // async_error_handler(
                 //   this.logger,
                 //   `error placing order: ${error.body}`,
@@ -164,6 +166,7 @@ export class TradePriceRangeTracker {
                 if (targetOrderId) await this.trade_order_creator.cancelOrder({ symbol, orderId: targetOrderId });
                 isCancelling = false;
               } catch (error) {
+                Sentry.captureException(error);
                 this.logger.error(`${symbol} cancel error ${error.body}`);
                 return;
               }
@@ -172,6 +175,7 @@ export class TradePriceRangeTracker {
                   await this.trade_order_creator.placeStopOrder()
                 );
               } catch (error) {
+                Sentry.captureException(error);
                 // async_error_handler(
                 //   this.logger,
                 //   `error placing order: ${error.body}`,
@@ -181,8 +185,8 @@ export class TradePriceRangeTracker {
               }
             }
           }
-        } catch (err) {
-          Sentry.captureException(err);
+        } catch (error) {
+          Sentry.captureException(error);
         }
       }
     );

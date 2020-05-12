@@ -10,6 +10,7 @@ BigNumber.prototype.valueOf = function () {
 };
 import { Logger } from "../interfaces/logger";
 import { TradingRules } from "../lib/trading_rules";
+const Sentry = require("@sentry/node");
 
 export class AlgoUtils {
   logger: Logger
@@ -149,6 +150,7 @@ export class AlgoUtils {
       this.logger.info(`order id: ${response.orderId}`);
       return response;
     } catch (error) {
+      Sentry.captureException(error)
       async_error_handler(console, `Buy error: ${error.body}`, error);
     }
   }
@@ -206,6 +208,7 @@ export class AlgoUtils {
       this.logger.info(`order id: ${response.orderId}`);
       return response;
     } catch (error) {
+      Sentry.captureException(error)
       async_error_handler(console, `Buy error: ${error.body}`, error);
     }
   }
@@ -228,6 +231,7 @@ export class AlgoUtils {
       this.logger.info(`order id: ${response.orderId}`);
       return response;
     } catch (error) {
+      Sentry.captureException(error)
       async_error_handler(console, `Buy error: ${error.body}`, error);
     }
   }

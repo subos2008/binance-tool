@@ -52,6 +52,7 @@ export class OrderExecutionTracker {
     try {
       await this.monitor_user_stream();
     } catch (error) {
+      Sentry.captureException(error);
       this.logger.error(error);
       throw (error)
     }
@@ -112,7 +113,7 @@ export class OrderExecutionTracker {
     if (orderStatus === "CANCELED" /*&& orderRejectReason === "NONE"*/) {
       // `Order was cancelled, presumably by user. Exiting.`, (orderRejectReason === "NONE happens when user cancelled)
       await this.order_state.set_order_cancelled(orderId, true, orderRejectReason, orderStatus)
-      if(this.order_callbacks) await this.order_callbacks.order_cancelled(orderId, data)
+      if (this.order_callbacks) await this.order_callbacks.order_cancelled(orderId, data)
       return;
     }
 
@@ -121,7 +122,7 @@ export class OrderExecutionTracker {
     }
 
     await this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity), true, orderStatus)
-    if(this.order_callbacks) await this.order_callbacks.order_filled(orderId, data)
+    if (this.order_callbacks) await this.order_callbacks.order_filled(orderId, data)
   }
 
   // Event Listeners

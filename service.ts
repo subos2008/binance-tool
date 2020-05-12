@@ -125,6 +125,7 @@ async function main() {
   try {
     await trade_executor.main()
   } catch (error) {
+    Sentry.captureException(error)
     if (error.name && error.name === "FetchError") {
       logger.error(
         `${error.name}: Likely unable to connect to Binance and/or Telegram: ${error}`
@@ -132,7 +133,6 @@ async function main() {
       send_message(`${trade_definition.pair}: Error in main loop: ${error}`);
     }
     soft_exit(1);
-    throw error; // sentry
   };
 }
 

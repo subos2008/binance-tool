@@ -16,6 +16,8 @@ import { OrderState } from "../classes/persistent_state/redis_order_state";
 import { BinanceOrderData } from '../interfaces/order_callbacks'
 import { PriceRanges } from "../classes/specifications/price_ranges";
 
+const Sentry = require("@sentry/node");
+
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -130,7 +132,8 @@ export class TradeExecutor {
       );
       return { quote_volume, base_amount };
     } catch (error) {
-      async_error_handler(this.logger, `sizing position`, error);
+                Sentry.captureException(error);
+                async_error_handler(this.logger, `sizing position`, error);
       throw error
     }
   }

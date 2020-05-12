@@ -9,6 +9,8 @@ assert(process.env.REDIS_PASSWORD)
 assert(process.env.APIKEY)
 assert(process.env.APISECRET)
 
+const Sentry = require("@sentry/node");
+
 // redis + events + binance
 
 // TODO: sentry
@@ -80,6 +82,7 @@ async function main() {
   })
 
   order_execution_tracker.main().catch(error => {
+    Sentry.captureException(error)
     if (error.name && error.name === "FetchError") {
       logger.error(
         `${error.name}: Likely unable to connect to Binance and/or Telegram: ${error}`
@@ -96,6 +99,7 @@ async function main() {
 
 // TODO: exceptions / sentry
 main().catch(error => {
+  Sentry.captureException(error)
   logger.error(`Error in main loop: ${error}`);
   logger.error(error);
   logger.error(`Error in main loop: ${error.stack}`);

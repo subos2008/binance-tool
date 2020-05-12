@@ -16,6 +16,8 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
+const Sentry = require("@sentry/node");
+
 export class TradeOrderCreator {
   logger: Logger
   trade_definition: TradeDefinition
@@ -35,11 +37,11 @@ export class TradeOrderCreator {
     this.logger.warn(`WARNING: STOP_LOSS_LIMIT orders need work`);
   }
 
-  async placeBuyOrder() : Promise<string | null> {
+  async placeBuyOrder(): Promise<string | null> {
     // Size the trade when we create the buy order and keep that sizeing.
     // This prevents us from spamming the API checking portfolio size
     if (!this.trade_definition.munged.buy_price) throw new Error(`placeBuyOrder called when this.trade_definition.munged.buy_price is not set`)
-    if(await this.trade_state.get_buying_allowed() !== true) {
+    if (await this.trade_state.get_buying_allowed() !== true) {
       this.logger.info(`Not allowed to buy, skipping request to placeBuyOrder`)
       return null
     }
@@ -120,6 +122,7 @@ export class TradeOrderCreator {
       });
       return response.orderId;
     } catch (error) {
+      Sentry.captureException(error);
       // async_error_handler(this.logger, `Buy error: ${error.body}`, error);
       throw error
     }
@@ -140,6 +143,7 @@ export class TradeOrderCreator {
       });
       return response.orderId;
     } catch (error) {
+      Sentry.captureException(error);
       this.logger.error(`Sell error: ${error.body}`);
       throw error
     }
@@ -181,6 +185,7 @@ export class TradeOrderCreator {
       });
       return response.orderId;
     } catch (error) {
+      Sentry.captureException(error);
       // async_error_handler(this.logger, `Sell error: ${error.body}`, error);
       throw error
     }
@@ -200,6 +205,7 @@ export class TradeOrderCreator {
       });
       return response.orderId;
     } catch (error) {
+      Sentry.captureException(error);
       // async_error_handler(this.logger, `Buy error: ${error.body}`, error);
       throw error
     }

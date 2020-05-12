@@ -5,6 +5,8 @@ import { BigNumber } from 'bignumber.js'
 const binance_regex = /^([A-Z]+)(BTC|USDT|BNB|TUSD)$/;
 const ccxt_regex = /^([A-Z]+)\/([A-Z]+)$/;
 
+const Sentry = require("@sentry/node");
+
 function break_up_binance_pair(pair: string) {
   try {
     assert(typeof pair === 'string');
@@ -12,6 +14,7 @@ function break_up_binance_pair(pair: string) {
     if (!quote_coin) throw new Error(`binance_regex didn't split properly`)
     return [total, base_coin, quote_coin];
   } catch (e) {
+    Sentry.captureException(e)
     let msg = `Cannot split up binance pair: ${pair}, check utils knows this quote currency`;
     console.error(msg);
     throw new Error(msg);

@@ -128,7 +128,7 @@ async function main() {
   });
 
   const execSync = require("child_process").execSync;
-  execSync("date -u >&2");
+  execSync("date -u");
 
   try {
     await trade_executor.main()

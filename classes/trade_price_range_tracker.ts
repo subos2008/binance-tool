@@ -56,6 +56,7 @@ export class TradePriceRangeTracker {
 
   async main() {
     let waiting_for_soft_entry_price = false;
+    this.logger.info(`soft_entry: ${this.trade_definition.soft_entry}, buying_allowed: ${await this.trade_state.get_buying_allowed()}, buyOrderId: ${await this.trade_state.get_buyOrderId()}`)
     if (this.trade_definition.soft_entry && await this.trade_state.get_buying_allowed() && !await this.trade_state.get_buyOrderId()) {
       this.logger.info(
         `Soft entry mode: waiting for entry price before placing order`

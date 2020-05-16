@@ -1,3 +1,22 @@
-sut:
-  build: .
-  command: yarn test
+version: '2'
+
+services:
+  sut:
+    build: .
+    command: yarn test
+    environment:
+      - AMQP_HOST=amqp
+      - AMQP_USER='user'
+      - AMQP_PASSWORD='my_password'
+      - AMQP_EXCHANGE=ukrgo
+      - AMQP_VHOST='ukrgo'
+    ports:
+      - '15672:15672'
+    depends_on: 
+      - amqp
+  amqp:
+    image: 'bitnami/rabbitmq:latest'
+    environment:
+      - RABBITMQ_PASSWORD=my_password
+      - RABBITMQ_USERNAME=user
+

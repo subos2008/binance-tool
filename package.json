@@ -1,6 +1,6 @@
 {
   "license": "UNLICENSED",
-  "main": "service.js",
+  "main": "service.ts",
   "bin": "create-trade.js",
   "scripts": {
     "test": "TS_NODE_PROJECT=./tsconfig.json ./node_modules/.bin/mocha --forbid-only -r ts-node/register ./test/test_*",

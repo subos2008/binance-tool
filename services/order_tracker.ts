@@ -31,7 +31,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
-send_message('Hello world!')
+send_message('restarted.')
 
 const redis = require("redis").createClient({
   host: process.env.REDIS_HOST,

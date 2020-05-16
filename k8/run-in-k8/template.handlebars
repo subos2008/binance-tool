@@ -5,7 +5,7 @@ metadata:
     run: binance-tool
   name: "execution-engine-trade-id-{{trade_id}}"
   annotations:
-    ad.datadoghq.com/nginx.logs: '[{"source":"trade-id-{{trade_id}}","service":"execution-engine"}]'
+    ad.datadoghq.com/ee.logs: '[{"source":"trade-id-{{trade_id}}","service":"execution-engine"}]'
 
 spec:
   backoffLimit: 5

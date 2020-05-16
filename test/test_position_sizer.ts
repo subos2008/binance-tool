@@ -141,6 +141,33 @@ describe('PositionSizer', function () {
     describe('with auto sizing (default)', function () {
       it('throws an error if it doesnt have buy_price, stop_price');
       it('errors if no stop_price is passed and !trading_rules.allowed_to_trade_without_stop');
+      it('limits the position size to max_portfolio_percentage_per_trade', async function () {
+        const trading_rules = {
+          max_portfolio_percentage_per_trade: BigNumber(10),
+          max_allowed_portfolio_loss_percentage_per_trade: BigNumber(100)
+        };
+        let { position_sizer } = setup({
+          ee_config: {
+            starting_quote_balance: BigNumber('100')
+          },
+          ps_config: {
+            trading_rules
+          }
+        });
+        try {
+          let buy_price = BigNumber('1');
+          let { quote_volume, base_amount } = await position_sizer.size_position({
+            buy_price,
+            stop_price: buy_price.times('0.98'),
+            quote_currency
+          });
+          expect(quote_volume).to.bignumber.equal('10');
+          expect(base_amount).to.bignumber.equal('10');
+        } catch (e) {
+          console.log(e);
+          expect.fail('should not get here: expected call not to throw');
+        }
+      })
       it('calculates the max amount to buy based on portfolio value and stop_percentage', async function () {
         const trading_rules = {
           max_allowed_portfolio_loss_percentage_per_trade: BigNumber(1)

@@ -1,5 +1,72 @@
 ![](https://github.com/subos2008/binance-tool/workflows/DockerPublish/badge.svg)
 
+# Fails when only stopOrderId set
+
+```
+2020-05-11T22:16:24.51687425Z Set telegram prefix to "binance-tool: "
+2020-05-11T22:16:30.192177911Z Warning trading rules hardcoded twice
+2020-05-11T22:16:30.909323577Z From redis:
+2020-05-11T22:16:30.910605378Z {
+2020-05-11T22:16:30.910612872Z   pair: 'AIONBTC',
+2020-05-11T22:16:30.910617031Z   base_amount_imported: '0',
+2020-05-11T22:16:30.910620852Z   soft_entry: 'true',
+2020-05-11T22:16:30.910624461Z   auto_size: 'true',
+2020-05-11T22:16:30.910638133Z   buy_price: '0.0000089',
+2020-05-11T22:16:30.910641408Z   stop_price: '0.00000858',
+2020-05-11T22:16:30.910644649Z   target_price: '0.00000927'
+2020-05-11T22:16:30.910647891Z }
+2020-05-11T22:16:30.910651057Z Oooh, trade_definition with base_amount_imported (0)
+2020-05-11T22:16:30.910654338Z TradeDefinition created with no exchange_info specified
+2020-05-11T22:16:30.992291673Z {
+2020-05-11T22:16:30.992336057Z   base_amount_held: '...',
+2020-05-11T22:16:30.992340458Z   trade_completed: false,
+2020-05-11T22:16:30.992343666Z   targetOrderId: undefined,
+2020-05-11T22:16:30.992346724Z   stopOrderId: '...',
+2020-05-11T22:16:30.992349829Z   buyOrderId: undefined,
+2020-05-11T22:16:30.992352876Z   trade_id: '46'
+2020-05-11T22:16:30.992356144Z }
+2020-05-11T22:16:31.007900292Z trade_completed=false
+2020-05-11T22:16:31.008063058Z Live trading mode
+2020-05-11T22:16:31.022795098Z PriceRanges should refresh with exchange_info
+2020-05-11T22:16:31.092631656Z Mon May 11 22:16:31 UTC 2020
+2020-05-11T22:16:32.255672601Z WARNING: STOP_LOSS_LIMIT orders need work
+2020-05-11T22:16:32.266214636Z Stop percentage: 3.60%
+2020-05-11T22:16:32.266824276Z Target percentage: 4.16%
+2020-05-11T22:16:32.267200081Z Risk/reward ratio: 1.2
+2020-05-11T22:16:32.269119029Z AIONBTC: from buy: 0.0000089 to stop: 0.00000858 or target: 0.00000927
+2020-05-11T22:16:34.676357479Z placeSellOrder: orders already exist, skipping. (stop: 69200853, target: undefined)
+2020-05-11T22:16:34.696631726Z Soft entry buy order trigger price: 0.0000089445
+2020-05-11T22:16:34.700184426Z Soft entry mode: waiting for entry price before placing order
+2020-05-11T22:16:46.314950969Z AIONBTC soft entry buy order trigger price hit
+2020-05-11T22:16:46.719968566Z Not allowed to buy, skipping request to placeBuyOrder
+```
+
+# BNB trade problem
+
+Currently the total amount bought reported is more than the actual amount bought. It appears
+to be that the transaction cost is deducted from the amount bought in BNB is not available.
+This causes placing stop orders to fail if the BNB balance is zero
+
+# race condition
+
+Base amount changed during munging from 107.6235955 to 107.
+set_redis_key trades:43:position:target_base_amount_to_buy to 107
+base_amount: 107
+AIONBTC Creating LIMIT BUY ORDER for 107 at 0.0000089
+AIONBTC BUY LIMIT ORDER #69199135 (NEW)
+..price: 0.00000890, quantity: 107.00000000
+AIONBTC BUY LIMIT ORDER #69199135 (PARTIALLY_FILLED)
+..price: 0.00000890, quantity: 107.00000000
+order id: 69199135
+set_redis_key order_associations:69199135:trade_id to 43
+AIONBTC BUY LIMIT ORDER #69199135 (FILLED)
+..price: 0.00000890, quantity: 107.00000000
+set_redis_key trades:43:open_orders:buyOrderId to 69199135
+Didn't recognise order: 69199135 [buy: 69199135 stop: undefined target: undefined]
+
+Could fill the order before we are finished setting it in redis. Would set to undefined maybe before 
+then setting again to the buy order id
+
 # Usage
 
 Beware the default behaviour is to launch a job in k8 to execute the trade. i.e. there will not be a local process or output to the terminal.
@@ -24,6 +91,26 @@ trade and we pray the processes never restart. This needs to be moved to a
 model where state is in Redis and the services are all restartable.
 
 First target is getting orderId's in redis.
+
+---
+
+## Consistency Checker service
+
+*Not built yet: TODO*
+
+1. Given a trade with a buy order if the buy order is complete then the buyOrderId in the trade and the amount bought have been updated (this is a real case where we crash out or somehow miss the updating of the trade when the order complete notification goes out)
+1. Open orders are for the correct amount at the correct prices (imagine we tweak a trade definition when the relevant order is already placed)
+
+### Seen when we had three trade executor pods running for a trade:
+
+1. Orders that are in the OrderTracker namespace as PARTIALLY_FILLED that according to
+   the exchange have filled. Just seen this happen. WOA: eventually it resolved, binance
+   was just being slow sending out the message! Like 5-15m slow afaict
+1. Reality is trade has a stopOrderID on the exchange and the buy order is complete, but
+   redis thinks it's still waiting for the buyOrder to complete... I just saw some very strange shit where the buy order was gone on the exchange and the stop order had been
+   placed but the redis state wasn't reflecting that (the buy order was still waiting to be filled according to the redis state)
+
+---
 
 # TODO
 
@@ -127,9 +214,6 @@ numbers and update the position held data.this is nice because its oer trade dat
 1. draining at target
 1. draining at stop (note can drain at target for a while then remainder at stop)
 
-## Consistency Checker service
-
-1. Given a trade with a buy order if the buy order is complete then the buyOrderId in the trade and the amount bought have been updated (this is a real case where we crash out or somehow miss the updating of the trade when the order complete notification goes out)
 
 ## testing
 

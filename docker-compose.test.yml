@@ -1,4 +1,4 @@
-version: '2'
+version: "3.8"
 
 services:
   sut:
@@ -19,4 +19,18 @@ services:
     environment:
       - RABBITMQ_PASSWORD=my_password
       - RABBITMQ_USERNAME=user
-
+  beacon:
+    build:
+      context: .
+      dockerfile: Dockerfile.beacon
+    command: yarn test
+    environment:
+      - AMQP_HOST=amqp
+      - AMQP_USER='user'
+      - AMQP_PASSWORD='my_password'
+      - AMQP_EXCHANGE=ukrgo
+      - AMQP_VHOST='ukrgo'
+    ports:
+      - '15672:15672'
+    depends_on: 
+      - amqp

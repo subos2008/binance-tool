@@ -46,7 +46,7 @@ process.on("unhandledRejection", up => {
 // with: const YAML = require('yaml');
 console.log("Warning trading rules hardcoded twice");
 const trading_rules = new TradingRules({
-  max_allowed_portfolio_loss_percentage_per_trade: BigNumber("1"),
+  max_allowed_portfolio_loss_percentage_per_trade: BigNumber("1.5"),
   allowed_to_trade_without_stop: true,
   // Diversification is the only free lunch on wallstreet
   max_portfolio_percentage_per_trade: BigNumber("30")

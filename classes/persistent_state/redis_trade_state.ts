@@ -69,6 +69,12 @@ export class TradeState {
   delAsync: (key: string) => Promise<number>
   mgetAsync: (args: string[]) => Promise<string[]>
 
+  // cache so we don't hit redis on every trade event on the exchange
+  _cached_buyOrderId: string | undefined
+  _cached_targetOrderId: string | undefined
+  _cached_stopOrderId: string | undefined
+
+
   constructor({ logger, redis, trade_id }: { logger: Logger, redis: RedisClient, trade_id: string }) {
     // NB: base_amount_imported is handled by initialiser()
     assert(logger);
@@ -128,21 +134,27 @@ export class TradeState {
     if (value) await this._set_order_id_to_trade_id_association(value)
     if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
     await this.set_or_delete_key(this.name_to_key(Name.buyOrderId), value);
+    this._cached_buyOrderId = value
   }
 
   async set_stopOrderId(value: string | undefined): Promise<void> {
     if (value) await this._set_order_id_to_trade_id_association(value)
     if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
     await this.set_or_delete_key(this.name_to_key(Name.stopOrderId), value);
+    this._cached_stopOrderId = value
   }
 
   async set_targetOrderId(value: string | undefined): Promise<void> {
     if (value) await this._set_order_id_to_trade_id_association(value)
     if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
     await this.set_or_delete_key(this.name_to_key(Name.targetOrderId), value);
+    this._cached_targetOrderId = value
   }
 
   async get_buyOrderId(): Promise<string | undefined> {
+    if(this._cached_buyOrderId !== undefined) {
+      return this._cached_buyOrderId
+    }
     const key = this.name_to_key(Name.buyOrderId);
     const value = await this.get_redis_key(key);
     // this.logger.info(`${key} has value ${value}`);
@@ -153,6 +165,9 @@ export class TradeState {
   }
 
   async get_stopOrderId(): Promise<string | undefined> {
+    if(this._cached_stopOrderId !== undefined) {
+      return this._cached_stopOrderId
+    }
     const key = this.name_to_key(Name.stopOrderId);
     const value = await this.get_redis_key(key);
     // this.logger.info(`${key} has value ${value}`);
@@ -163,6 +178,9 @@ export class TradeState {
   }
 
   async get_targetOrderId(): Promise<string | undefined> {
+    if(this._cached_targetOrderId !== undefined) {
+      return this._cached_targetOrderId
+    }
     const key = this.name_to_key(Name.targetOrderId);
     const value = await this.get_redis_key(key);
     // this.logger.info(`${key} has value ${value}`);

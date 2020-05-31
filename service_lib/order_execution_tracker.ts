@@ -78,6 +78,7 @@ export class OrderExecutionTracker {
         this.logger.error(msg);
         this.logger.error(error);
         this.send_message(msg);
+        throw error
       }
     });
   }

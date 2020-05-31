@@ -75,3 +75,16 @@ Environment variables
       name: amqp
 {{- end -}}
 
+{{- define "binance.vars" -}}
+- name: APIKEY
+  valueFrom:
+    secretKeyRef:
+      key: APIKEY
+      name: binance
+- name: APISECRET
+  valueFrom:
+    secretKeyRef:
+      key: APISECRET
+      name: binance
+{{- end -}}
+

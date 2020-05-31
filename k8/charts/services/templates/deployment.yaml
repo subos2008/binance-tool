@@ -163,15 +163,7 @@ spec:
                 secretKeyRef:
                   key: TELEGRAM_CHAT_ID
                   name: telegram
-            - name: APIKEY
-              valueFrom:
-                secretKeyRef:
-                  key: APIKEY
-                  name: binance
-            - name: APISECRET
-              valueFrom:
-                secretKeyRef:
-                  key: APISECRET
-                  name: binance
+
+            {{- include "binance.vars" . | nindent 14 }}
             {{- include "aqmp.vars" . | nindent 14 }}
 

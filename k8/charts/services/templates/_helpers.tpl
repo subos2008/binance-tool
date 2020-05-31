@@ -43,3 +43,35 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+
+{{/*
+Environment variables
+*/}}
+{{- define "aqmp.vars" -}}
+- name: AMQP_HOST
+  valueFrom:
+    secretKeyRef:
+      key: AMQP_HOST
+      name: amqp
+- name: AMQP_PROTOCOL
+  valueFrom:
+    secretKeyRef:
+      key: AMQP_PROTOCOL
+      name: amqp
+- name: AMQP_VHOST
+  valueFrom:
+    secretKeyRef:
+      key: AMQP_VHOST
+      name: amqp
+- name: AMQP_USER
+  valueFrom:
+    secretKeyRef:
+      key: AMQP_USER
+      name: amqp
+- name: AMQP_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      key: AMQP_PASSWORD
+      name: amqp
+{{- end -}}
+

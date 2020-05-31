@@ -50,6 +50,7 @@ spec:
           #     path: /health
           #     port: http
           env:
+{{- include "binance.vars" . | nindent 12 }}
             - name: DD_LOGS_ENABLED
               value: "true"
             - name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
@@ -77,8 +78,6 @@ spec:
                 secretKeyRef:
                   key: TELEGRAM_CHAT_ID
                   name: telegram
-            {{- include "binance.vars" . | nindent 14 }}
-
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -128,6 +127,8 @@ spec:
           #     path: /health
           #     port: http
           env:
+{{- include "binance.vars" . | nindent 12 }}
+{{- include "amqp.vars" . | nindent 12 }}
             - name: DD_LOGS_ENABLED
               value: "true"
             - name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
@@ -155,6 +156,4 @@ spec:
                 secretKeyRef:
                   key: TELEGRAM_CHAT_ID
                   name: telegram
-            {{- include "binance.vars" . | nindent 14 }}
-            {{- include "amqp.vars" . | nindent 14 }}
 

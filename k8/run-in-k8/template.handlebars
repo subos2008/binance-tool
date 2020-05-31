@@ -46,8 +46,8 @@ spec:
         - name: REDIS_PASSWORD
           valueFrom:
             secretKeyRef:
-              key: REDIS_PASSWORD
-              name: redis
+              key: password
+              name: redis-auth
         - name: APIKEY
           valueFrom:
             secretKeyRef:

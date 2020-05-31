@@ -11,6 +11,8 @@ const { promisify } = require("util");
 const keysAsync = promisify(redis.keys).bind(redis);
 const getAsync = promisify(redis.get).bind(redis);
 const hgetallAsync = promisify(redis.hgetall).bind(redis);
+const setAsync = promisify(redis.set).bind(redis);
+
 
 const yargs = require("yargs");
 
@@ -34,6 +36,19 @@ async function main() {
         },
       },
       describe_trade
+    )
+    .command(
+      "complete",
+      "mark trade as complete",
+      {
+        'trade-id': {
+          description: "trade id",
+          type: "string",
+          demandOption: true,
+          choices: (await sorted_trade_ids()).map((n: number) => n.toString()),
+        },
+      },
+      mark_trade_complete
     )
     .command(["list", "$0"], "list all trades", {}, list_trades)
     .help()
@@ -59,6 +74,21 @@ async function describe_trade(argv: any) {
     }
   }
   console.log(output_obj)
+  redis.quit();
+}
+
+async function mark_trade_complete(argv: any) {
+  let trade_id = argv['trade-id']
+  let key = `trades:${trade_id}:complete`
+  let keys: string[] = await keysAsync(key);
+  if(keys.length !== 1) {
+    throw new Error(`Trade ${trade_id} doesn't appear to exist.`)
+  }
+  const ret = await setAsync(key, true)
+  if (ret !== 'OK') {
+    throw new Error(`Redis error: failed to set key ${key}: ${ret}`)
+  }
+  console.log(`Done.`)
   redis.quit();
 }
 

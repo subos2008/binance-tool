@@ -65,3 +65,8 @@ package-lock.json
 
 # typescript
 out/
+
+# terraform
+terraform.tfstate
+.terraform
+terraform.tfstate.backup

@@ -37,9 +37,7 @@ async function main() {
       },
       describe_trade
     )
-    .command(
-      "complete",
-      "mark trade as complete",
+    .command("complete", "mark trade as complete",
       {
         'trade-id': {
           description: "trade id",
@@ -50,7 +48,13 @@ async function main() {
       },
       mark_trade_complete
     )
-    .command(["list", "$0"], "list all trades", {}, list_trades)
+    .command(["list", "$0"], "list all trades",
+      {
+        'active': {
+          description: "only list active trades",
+          type: "boolean",
+        }
+      }, list_trades)
     .help()
     .alias("help", "h").argv;
 }
@@ -81,7 +85,7 @@ async function mark_trade_complete(argv: any) {
   let trade_id = argv['trade-id']
   let key = `trades:${trade_id}:complete`
   let keys: string[] = await keysAsync(key);
-  if(keys.length !== 1) {
+  if (keys.length !== 1) {
     throw new Error(`Trade ${trade_id} doesn't appear to exist.`)
   }
   const ret = await setAsync(key, true)
@@ -97,6 +101,7 @@ async function list_trades(argv: any) {
   let sorted_keys = trade_ids.map((id: any) => `trades:${id}:completed`)
   for (const key of sorted_keys) {
     const completed = (await getAsync(key)) === "true";
+    if (argv['active'] && completed) { continue };
     const trade_id = key.match(/trades:(\d+):completed/)[1];
     const foo = await hgetallAsync(`trades:${trade_id}:trade_definition`);
     const flags = [];

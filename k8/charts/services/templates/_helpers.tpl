@@ -47,7 +47,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Environment variables
 */}}
-{{- define "aqmp.vars" -}}
+{{- define "amqp.vars" -}}
 - name: AMQP_HOST
   valueFrom:
     secretKeyRef:

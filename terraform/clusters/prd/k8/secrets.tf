@@ -1,6 +1,6 @@
-resource "kubernetes_secret" "aqmp" {
+resource "kubernetes_secret" "amqp" {
   metadata {
-    name      = "aqmp"
+    name      = "amqp"
     namespace = var.k8_namespace
   }
   type = "Opaque"

@@ -77,6 +77,7 @@ async function main() {
 
   if (redis_trade_definition === null) {
     logger.error(`Got null from Redis. Trade ${trade_id} likely doesn't exist`);
+    throw new Error(`Got null from Redis. Trade ${trade_id} likely doesn't exist`)
     soft_exit(1);
     return; // exit
   }

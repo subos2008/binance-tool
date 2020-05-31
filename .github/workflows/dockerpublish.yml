@@ -16,6 +16,7 @@ on:
 env:
   # TODO: Change variable to your image's name.
   IMAGE_NAME: binance-tool
+  KUBECONFIG: $GITHUB_WORKSPACE/kube_config
 
 jobs:
   # Run tests.
@@ -92,4 +93,6 @@ jobs:
         run: echo ${{ secrets.kube_config }} | base64 --decode > $GITHUB_WORKSPACE/kube_config
 
       - name: Deploy to Kubernetes
-        run: KUBECONFIG=$GITHUB_WORKSPACE/kube_config helm upgrade --install "services" --namespace "binance-tool" --values $GITHUB_WORKSPACE/values.yaml ./k8/charts/services --set "image.tag=$(echo $GITHUB_SHA | head -c7)"
+        uses: WyriHaximus/github-action-helm3@v1.0.0
+        with:
+          exec: helm upgrade --install "services" --namespace "binance-tool" --values $GITHUB_WORKSPACE/values.yaml ./k8/charts/services --set "image.tag=$(echo $GITHUB_SHA | head -c7)"

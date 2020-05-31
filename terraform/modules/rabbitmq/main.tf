@@ -10,8 +10,8 @@ resource "rabbitmq_user" "default" {
 }
 
 resource "rabbitmq_permissions" "default" {
-  user  = "${rabbitmq_user.default.name}"
-  vhost = "${rabbitmq_vhost.default.name}"
+  user  = rabbitmq_user.default.name
+  vhost = rabbitmq_vhost.default.name
 
   permissions {
     configure = ".*"

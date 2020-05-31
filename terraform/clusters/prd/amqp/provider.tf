@@ -3,5 +3,3 @@ provider "rabbitmq" {
   username = var.AMQP_ADMIN_USERNAME
   password = var.AMQP_ADMIN_PASSWORD
 }
-
-

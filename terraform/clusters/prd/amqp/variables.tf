@@ -4,7 +4,7 @@ variable "AMQP_ENDPOINT" {
 }
 variable "AMQP_ADMIN_USERNAME" {}
 
-variable "vhost_name" {
+variable "AMQP_VHOST" {
   default = "binance-tool"
 }
 
@@ -12,6 +12,5 @@ variable "AMQP_CREATED_USER_USERNAME" {
   default = "binance-tool-shared"
 }
 
-variable "AMQP_CREATED_USER_PASSWORD" {
-  
-}
+variable "AMQP_CREATED_USER_PASSWORD" { }
+

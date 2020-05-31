@@ -82,3 +82,38 @@ Environment variables
       name: binance
 {{- end -}}
 
+{{- define "datadog.vars" -}}
+- name: DD_LOGS_ENABLED
+  value: "true"
+- name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
+  value: "true"
+{{- end -}}
+
+{{- define "redis.vars" -}}
+- name: REDIS_HOST
+  {{- if .Values.redis.create_local }}
+  value: {{ .Release.Name }}-redis-master
+  {{- else }}
+  value: {{ .Values.redis.external_host | quote }}
+  {{- end }}
+- name: REDIS_DATABASE_NUMBER
+  value: {{ .Values.redis.database_number | quote }}
+- name: REDIS_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: redis-auth
+      key: password    
+{{- end -}}
+
+{{- define "telegram.vars" -}}
+- name: TELEGRAM_KEY
+  valueFrom:
+    secretKeyRef:
+      key: TELEGRAM_KEY
+      name: telegram
+- name: TELEGRAM_CHAT_ID
+  valueFrom:
+    secretKeyRef:
+      key: TELEGRAM_CHAT_ID
+      name: telegram
+{{- end -}}

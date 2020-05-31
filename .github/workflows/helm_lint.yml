@@ -1,0 +1,12 @@
+name: Lint
+on:
+  push:
+jobs:
+  lint-helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Lint Helm
+        uses: WyriHaximus/github-action-helm3@v1
+        with:
+          exec: helm lint ./k8/charts/services

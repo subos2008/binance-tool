@@ -3,7 +3,3 @@ dependencies:
     version: 7.1.0
     repository: https://kubernetes-charts.storage.googleapis.com
     condition: redis.create_local
-  - name: rabbitmq
-    version: 7.1.0
-    repository: https://kubernetes-charts.storage.googleapis.com
-    condition: redis.create_local

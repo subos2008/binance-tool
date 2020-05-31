@@ -23,9 +23,22 @@ redis.on('error', function (err:any) {
 });
 const { promisify } = require("util");
 const hgetallAsync = promisify(redis.hgetall).bind(redis);
-const getAsync = promisify(redis.get).bind(redis);
 const Binance = require("binance-api-node").default;
-const send_message = require("./lib/telegram")("binance-tool: ");
+
+var { argv } = require("yargs")
+  .usage("Usage: $0 --trade-id <trade-id>")
+  .example("$0 --trade-id 1")
+  // '-T <trade_id>'
+  .string("trade-id")
+  .demand("trade-id")
+  .describe("trade-id", "ID of trade_definition to load from redis")
+  // '--live'
+  .boolean("live")
+  .describe("live", "Trade with real money")
+  .default("live", false);
+let { "trade-id": trade_id, live } = argv;
+
+const send_message = require("./lib/telegram")(`binance-tool (${trade_id}): `);
 import { TradeExecutor } from "./lib/trade_executor"
 const BigNumber = require("bignumber.js");
 import { TradingRules } from "./lib/trading_rules"
@@ -33,8 +46,6 @@ import { build_trade_state_for_trade_id } from "./classes/persistent_state/redis
 import { OrderState } from "./classes/persistent_state/redis_order_state"
 import { TradeDefinition } from "./classes/specifications/trade_definition";
 import { ExchangeEmulator } from "./lib/exchange_emulator"
-
-
 
 process.on("unhandledRejection", up => {
   send_message(`UnhandledPromiseRejection: ${up}`);
@@ -52,22 +63,9 @@ const trading_rules = new TradingRules({
   max_portfolio_percentage_per_trade: BigNumber("30")
 });
 
-var { argv } = require("yargs")
-  .usage("Usage: $0 --trade-id <trade-id>")
-  .example("$0 --trade-id 1")
-  // '-T <trade_id>'
-  .string("trade-id")
-  .demand("trade-id")
-  .describe("trade-id", "ID of trade_definition to load from redis")
-  // '--live'
-  .boolean("live")
-  .describe("live", "Trade with real money")
-  .default("live", false);
-let { "trade-id": trade_id, live } = argv;
 var trade_executor: TradeExecutor;
 
 async function main() {
-  var stringToBool = (myValue: string) => myValue === "true";
   const redis_trade_definition = await hgetallAsync(
     `trades:${trade_id}:trade_definition`
   );
@@ -78,8 +76,6 @@ async function main() {
   if (redis_trade_definition === null) {
     logger.error(`Got null from Redis. Trade ${trade_id} likely doesn't exist`);
     throw new Error(`Got null from Redis. Trade ${trade_id} likely doesn't exist`)
-    soft_exit(1);
-    return; // exit
   }
 
   const trade_definition = new TradeDefinition(logger, redis_trade_definition);

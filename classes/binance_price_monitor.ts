@@ -1,9 +1,6 @@
 import { strict as assert } from 'assert';
 import { Logger } from "../interfaces/logger";
 
-import BigNumber from "bignumber.js";
-import { timingSafeEqual } from 'crypto';
-
 const Sentry = require("@sentry/node");
 
 export class BinancePriceMonitor {

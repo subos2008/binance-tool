@@ -42,6 +42,7 @@ const redis = require("redis").createClient({
 
 const Binance = require("binance-api-node").default;
 import { BinancePriceMonitor } from "../classes/binance_price_monitor";
+import { PricePublisher } from "../classes/amqp/price-publisher";
 
 let live = true
 
@@ -73,8 +74,13 @@ async function main() {
   const execSync = require("child_process").execSync;
   execSync("date -u");
 
-  function price_event_callback(symbol:string, price:string, raw:any) {
+  const publisher = new PricePublisher(logger, send_message)
+  await publisher.connect()
+
+  const price_event_callback = (symbol: string, price: string, raw: any) => {
     logger.info(`Callback: ${symbol}: ${price}`)
+    let event = { symbol, price, raw }
+    publisher.publish(event, symbol)
   }
 
   const monitor = new BinancePriceMonitor(logger, send_message, ee, price_event_callback)

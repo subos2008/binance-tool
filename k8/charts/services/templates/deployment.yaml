@@ -108,4 +108,43 @@ spec:
 {{- include "redis.vars" . | nindent 12 }}
 {{- include "telegram.vars" . | nindent 12 }}
 {{- include "amqp.vars" . | nindent 12 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-monitor
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "redis-monitor"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "redis-monitor"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "redis-monitor"}'
+    spec:
+      volumes:
+        - hostPath:
+            path: /opt/datadog-agent/run
+          name: pointerdir
+      containers:
+        - name: redis-monitor
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["./services/redis-monitor.ts"]
+          volumeMounts:
+            - name: pointerdir
+              mountPath: /opt/datadog-agent/run
+          env:
+{{- include "datadog.vars" . | nindent 12 }}
+{{- include "redis.vars" . | nindent 12 }}
+{{- include "telegram.vars" . | nindent 12 }}
 

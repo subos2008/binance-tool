@@ -5,17 +5,6 @@ import { Logger } from "../../interfaces/logger";
 
 const Sentry = require("@sentry/node");
 
-console.warn(`WARNING: amqp publish implementation creates channel on every message`)
-
-// topic exchange: ...
-// topic/routing key: something.something_else -> queue post-created-queue
-// consumer creates it's own queue and binding
-// "Trying to filter once the message is in the queue, is an anti-pattern in RabbitMQ."
-//     - https://derickbailey.com/2015/09/02/rabbitmq-best-practices-for-designing-exchanges-queues-and-bindings/
-
-// Create topic exchange, but not actually any routing, the consumer can create the
-// routing and queues it needs.
-
 const exchange = 'prices';
 assert(exchange)
 
@@ -39,6 +28,8 @@ export class PricePublisher {
 
   async connect() {
     try {
+      this.logger.info(`AMQP connect options:`)
+      this.logger.info(connect_options)
       this.connection = await connect(connect_options)
       const createChannel = promisify(this.connection.createChannel).bind(this.connection);
       this.channel = await createChannel()

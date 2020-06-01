@@ -13,3 +13,25 @@ resource "kubernetes_secret" "amqp" {
   }
 }
 
+resource "kubernetes_secret" "redis-auth" {
+  metadata {
+    name      = "redis-auth"
+    namespace = var.k8_namespace
+  }
+  type = "Opaque"
+  data = {
+    password = var.REDIS_AUTH
+  }
+}
+
+resource "kubernetes_secret" "redis" {
+  metadata {
+    name      = "redis"
+    namespace = var.k8_namespace
+  }
+  type = "Opaque"
+  data = {
+    REDIS_HOST = var.REDIS_HOST
+    REDIS_PASSWORD = var.REDIS_AUTH
+  }
+}

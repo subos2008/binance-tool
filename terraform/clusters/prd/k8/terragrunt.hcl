@@ -8,6 +8,7 @@ terraform {
     arguments = [
       "-var-file=../kubernetes.tfvars",
       "-var-file=../amqp-config.tfvars",
+      "-var-file=../redis-config.tfvars",
     ]
   }
 }

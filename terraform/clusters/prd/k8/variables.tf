@@ -5,3 +5,8 @@ variable "AMQP_HOST" { }
 variable "AMQP_VHOST" { }
 variable "AMQP_CREATED_USER_USERNAME" { }
 variable "AMQP_CREATED_USER_PASSWORD" { }
+
+
+variable "REDIS_AUTH" { }
+variable "REDIS_HOST" { }
+

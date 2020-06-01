@@ -3,6 +3,7 @@
 /* eslint func-names: ["warn", "as-needed"] */
 import { strict as assert } from 'assert';
 
+
 require("dotenv").config();
 assert(process.env.REDIS_HOST)
 assert(process.env.REDIS_PASSWORD)
@@ -31,6 +32,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
+logger.warn(`TODO: don't die if redis isn't accessible`)
 send_message('starting')
 
 const redis = require("redis").createClient({
@@ -39,8 +41,7 @@ const redis = require("redis").createClient({
 });
 
 const Binance = require("binance-api-node").default;
-import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";
-import { OrderState } from "../classes/persistent_state/redis_order_state";
+import { BinancePriceMonitor } from "../classes/binance_price_monitor";
 
 let live = true
 
@@ -51,10 +52,9 @@ async function main() {
     ee = Binance({
       apiKey: process.env.APIKEY,
       apiSecret: process.env.APISECRET
-      // getTime: xxx // time generator function, optional, defaults to () => Date.now()
     });
   } else {
-    logger.info("Emulated trading mode");
+    logger.info("Emulated exchange mode");
     const fs = require("fs");
     const exchange_info = JSON.parse(
       fs.readFileSync("./test/exchange_info.json", "utf8")
@@ -73,30 +73,14 @@ async function main() {
   const execSync = require("child_process").execSync;
   execSync("date -u");
 
-  // order_execution_tracker = new OrderExecutionTracker({
-  //   ee,
-  //   send_message,
-  //   logger,
-  //   order_state: new OrderState({ logger, redis } )
-  // })
+  function price_event_callback(symbol:string, price:string, raw:any) {
+    logger.info(`Callback: ${symbol}: ${price}`)
+  }
 
-  // order_execution_tracker.main().catch(error => {
-  //   Sentry.captureException(error)
-  //   if (error.name && error.name === "FetchError") {
-  //     logger.error(
-  //       `${error.name}: Likely unable to connect to Binance and/or Telegram: ${error}`
-  //     );
-  //   } else {
-  //     logger.error(`Error in main loop: ${error}`);
-  //     logger.error(error);
-  //     logger.error(`Error in main loop: ${error.stack}`);
-  //     send_message(`Error in main loop: ${error}`);
-  //   }
-  //   soft_exit(1);
-  // }).then(() => { logger.info('order_execution_tracker.main() returned.') });
+  const monitor = new BinancePriceMonitor(logger, send_message, ee, price_event_callback)
+  monitor.monitor_pairs(['ENJBTC'])
 }
 
-// TODO: exceptions / sentry
 main().catch(error => {
   Sentry.captureException(error)
   logger.error(`Error in main loop: ${error}`);
@@ -109,7 +93,6 @@ main().catch(error => {
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code: number | null = null) {
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`);
-  if (order_execution_tracker) order_execution_tracker.shutdown_streams();
   if (exit_code) process.exitCode = exit_code;
   if (redis) redis.quit();
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes

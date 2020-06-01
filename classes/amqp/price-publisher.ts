@@ -1,4 +1,4 @@
-const connect_options = require("../../lib/amqp/connect_options")
+const connect_options = require("../../lib/amqp/connect_options").default
 
 import { strict as assert } from 'assert';
 import { Logger } from "../../interfaces/logger";

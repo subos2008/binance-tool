@@ -22,8 +22,11 @@ const redis = require("redis").createClient({
   password: process.env.REDIS_PASSWORD
 });
 
+const { promisify } = require("util");
+const incrAsync = promisify(redis.incr).bind(redis);
+
 function ping() {
-  redis.incrAsync("redis-monitor:incr")
+  incrAsync("redis-monitor:incr")
     .then((res : any) => { logger.info(`OK: ${res}`) })
     .catch((err:any) => {
       logger.error(err)

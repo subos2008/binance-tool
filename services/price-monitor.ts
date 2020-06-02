@@ -84,7 +84,7 @@ async function main() {
   }
 
   const monitor = new BinancePriceMonitor(logger, send_message, ee, price_event_callback)
-  monitor.monitor_pairs(["FUELBTC", "GVTBTC", "LINKBTC", "MATICBTC", "QKCBTC", "STEEMBTC", "TNTBTC", "ZILBTC"])
+  monitor.monitor_pairs(["FUELBTC", "GVTBTC", "LINKBTC", "MATICBTC", "QKCBTC", "STEEMBTC", "TNTBTC", "ZILBTC", "BTCUSDT"])
 }
 
 

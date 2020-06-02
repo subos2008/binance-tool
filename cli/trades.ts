@@ -50,10 +50,8 @@ async function main() {
     )
     .command(["list", "$0"], "list all trades",
       {
-        'active': {
-          description: "only list active trades",
-          type: "boolean",
-        }
+        'active': { description: "only list active trades", type: "boolean", },
+        'position': { description: "only list trade in positions", type: "boolean", },
       }, list_trades)
     .help()
     .alias("help", "h").argv;
@@ -97,12 +95,15 @@ async function mark_trade_complete(argv: any) {
 }
 
 async function list_trades(argv: any) {
+  if (argv['position']) { console.log(`Warning position determination is inaccurate.`) };
+
   let trade_ids = await sorted_trade_ids()
-  let sorted_keys = trade_ids.map((id: any) => `trades:${id}:completed`)
-  for (const key of sorted_keys) {
-    const completed = (await getAsync(key)) === "true";
+  for (const trade_id of trade_ids) {
+    // needs to include imported too = port this util to use trade_state
+    const position = await getAsync(`trades:${trade_id}:position:base_amount_bought`);
+    const completed = (await getAsync(`trades:${trade_id}:completed`)) === "true";
     if (argv['active'] && completed) { continue };
-    const trade_id = key.match(/trades:(\d+):completed/)[1];
+    if (argv['position'] && !position) { continue };
     const foo = await hgetallAsync(`trades:${trade_id}:trade_definition`);
     const flags = [];
     if (foo["soft_entry"]) flags.push("soft_entry");
@@ -110,7 +111,7 @@ async function list_trades(argv: any) {
     console.log(
       `${completed ? " " : "A"} Trade ${trade_id}: ${foo.pair}: ${
       foo.stop_price
-      } ${foo.buy_price} ${foo.target_price} ${flags.join(" ")}`
+      } ${foo.buy_price} ${foo.target_price} ${flags.join(" ")} ${position || ""}`
     );
   }
   redis.quit();

@@ -6,7 +6,7 @@ resource "kubernetes_secret" "amqp" {
   type = "Opaque"
   data = {
     AMQP_HOST = var.AMQP_HOST
-    AMQP_PROTOCOL = "amqps"
+    AMQP_PROTOCOL = "amqp"
     AMQP_VHOST = var.AMQP_VHOST
     AMQP_USER = var.AMQP_CREATED_USER_USERNAME
     AMQP_PASSWORD = var.AMQP_CREATED_USER_PASSWORD

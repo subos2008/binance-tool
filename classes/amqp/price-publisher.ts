@@ -48,7 +48,7 @@ export class PricePublisher {
     event.routing_key = routing_key;
     let msg = JSON.stringify(event);
     this.channel.publish(exchange, routing_key, Buffer.from(msg));
-    this.logger.info(` [x] Sent event to ${routing_key}`);
+    // this.logger.info(` [x] Sent event to ${routing_key}`);
   }
 
   async shutdown_streams() {

@@ -36,7 +36,7 @@ export class BinancePriceMonitor {
           var { symbol, price: string_price } = trade;
           assert(symbol);
           assert(string_price);
-          this.logger.info(`${symbol}: ${string_price}`)
+          // this.logger.info(`${symbol}: ${string_price}`) # spams logging ingestion
           this.price_event_callback(symbol, string_price, trade)
         } catch (error) {
           Sentry.captureException(error);

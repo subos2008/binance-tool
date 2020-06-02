@@ -78,7 +78,6 @@ async function main() {
   await publisher.connect()
 
   const price_event_callback = (symbol: string, price: string, raw: any) => {
-    logger.info(`Callback: ${symbol}: ${price}`)
     let event = { symbol, price, raw }
     publisher.publish(event, symbol)
   }

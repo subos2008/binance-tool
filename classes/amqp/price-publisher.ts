@@ -28,8 +28,8 @@ export class PricePublisher {
 
   async connect() {
     try {
-      this.logger.info(`AMQP connect options:`)
-      this.logger.info(connect_options)
+      // this.logger.info(`AMQP connect options:`)
+      // this.logger.info(connect_options)
       this.connection = await connect(connect_options)
       const createChannel = promisify(this.connection.createChannel).bind(this.connection);
       this.channel = await createChannel()

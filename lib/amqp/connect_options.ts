@@ -21,7 +21,7 @@ if (protocol !== 'amqps') {
 export default {
   // TODO: add SSL: http://www.squaremobius.net/amqp.node/ssl.html
   protocol, // Don't be a fool, encrypt traffic
-  port: 5671,
+  port: 5672,
   hostname: amqp_server,
   username: amqp_user,
   password: amqp_password,

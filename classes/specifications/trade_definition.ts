@@ -83,7 +83,7 @@ export class TradeDefinition {
 
     if (base_amount_imported) {
       this.base_amount_imported = new BigNumber(base_amount_imported);
-      this.logger.info(`Oooh, trade_definition with base_amount_imported (${this.base_amount_imported.toFixed()})`)
+      // this.logger.info(`Oooh, trade_definition with base_amount_imported (${this.base_amount_imported.toFixed()})`)
     }
     this.pair = pair;
     if (max_quote_amount_to_buy)
@@ -116,7 +116,7 @@ export class TradeDefinition {
     if (exchange_info) {
       this.set_exchange_info(exchange_info)
     }
-    else { this.logger.warn(`TradeDefinition created with no exchange_info specified`) }
+    // else { this.logger.warn(`TradeDefinition created with no exchange_info specified`) }
   }
 
   print_trade_for_user(trading_rules?: TradingRules) {

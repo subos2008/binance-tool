@@ -3,6 +3,7 @@
 /* eslint func-names: ["warn", "as-needed"] */
 import { strict as assert } from 'assert';
 
+const _ = require("lodash");
 
 require("dotenv").config();
 assert(process.env.REDIS_HOST)
@@ -35,7 +36,8 @@ BigNumber.prototype.valueOf = function () {
 logger.warn(`TODO: don't die if redis isn't accessible`)
 send_message('starting')
 
-const redis = require("redis").createClient({
+import { RedisClient } from 'redis';
+const redis: RedisClient = require("redis").createClient({
   host: process.env.REDIS_HOST,
   password: process.env.REDIS_PASSWORD
 });
@@ -43,11 +45,25 @@ const redis = require("redis").createClient({
 const Binance = require("binance-api-node").default;
 import { BinancePriceMonitor } from "../classes/binance_price_monitor";
 import { PricePublisher } from "../classes/amqp/price-publisher";
+import { RedisTrades } from "../classes/persistent_state/redis_trades";
+import { TradeState } from "../classes/persistent_state/redis_trade_state";
+
+const publisher = new PricePublisher(logger, send_message)
+const redis_trades = new RedisTrades({ logger, redis })
+
+const price_event_callback = (symbol: string, price: string, raw: any) => {
+  let event = { symbol, price, raw }
+  publisher.publish(event, symbol)
+}
+
+var monitor = null;
+
+
 
 let live = true
+var ee: Object;
 
 async function main() {
-  var ee: Object;
   if (live) {
     logger.info("Live monitoring mode");
     ee = Binance({
@@ -74,18 +90,50 @@ async function main() {
   const execSync = require("child_process").execSync;
   execSync("date -u");
 
-  const publisher = new PricePublisher(logger, send_message)
   await publisher.connect()
-
-  const price_event_callback = (symbol: string, price: string, raw: any) => {
-    let event = { symbol, price, raw }
-    publisher.publish(event, symbol)
-  }
-
-  const monitor = new BinancePriceMonitor(logger, send_message, ee, price_event_callback)
-  monitor.monitor_pairs(["FUELBTC", "GVTBTC", "LINKBTC", "MATICBTC", "QKCBTC", "STEEMBTC", "TNTBTC", "ZILBTC", "BTCUSDT"])
+  update_monitors_if_active_pairs_have_changed()
+  setInterval(update_monitors_if_active_pairs_have_changed, 1000 * 30)
 }
 
+
+async function get_active_pairs() {
+  let trade_ids = await redis_trades.get_active_order_ids()
+  let pairs: string[] = []
+  for (const trade_id of trade_ids) {
+    try {
+      let trade_state = new TradeState({ logger, redis, trade_id })
+      let trade_definition = await trade_state.get_trade_definition()
+      pairs.push(trade_definition.pair)
+    } catch (err) {
+      Sentry.captureException(err)
+      logger.error(`Failed to create TradeDefinition for trade ${trade_id}`)
+      logger.error(err)
+    }
+  }
+  return new Set(pairs.sort())
+}
+
+let currently_monitored_pairs: Set<string> = new Set([])
+
+async function update_monitors_if_active_pairs_have_changed() {
+  let active_pairs = await get_active_pairs()
+  active_pairs.add("BTCUSDT") // We want the system under some stress so always add this
+  if (!_.isEqual(currently_monitored_pairs, active_pairs)) {
+    if (Array.from(currently_monitored_pairs).length != 0) {
+      // let's die to change the monitored pairs, we will be restarted and can cleanly monitor the new 
+      // set from a fresh process. We can investigate cleanly replacing monitors later at our
+      // leasure
+      const message = `Changing to monitor: ${Array.from(active_pairs).join(', ')}`
+      this.logger.info(message)
+      this.send_message(message)
+      this.logger.info('Exiting to replace monitors')
+      process.exit(0)
+    }
+    currently_monitored_pairs = active_pairs
+    monitor = new BinancePriceMonitor(logger, send_message, ee, price_event_callback)
+    monitor.monitor_pairs(Array.from(active_pairs))
+  }
+}
 
 main().catch(error => {
   Sentry.captureException(error)

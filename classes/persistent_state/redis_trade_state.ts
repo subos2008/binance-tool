@@ -68,6 +68,7 @@ export class TradeState {
   _set_redis_key: (key: string, value: string) => Promise<string>
   delAsync: (key: string) => Promise<number>
   mgetAsync: (args: string[]) => Promise<string[]>
+  hgetallAsync: (args: string) => Promise<Object>
 
   // cache so we don't hit redis on every trade event on the exchange
   _cached_buyOrderId: string | undefined
@@ -88,6 +89,7 @@ export class TradeState {
     this._get_redis_key = promisify(this.redis.get).bind(this.redis);
     this.delAsync = promisify(this.redis.del).bind(this.redis);
     this.mgetAsync = promisify(this.redis.mget).bind(this.redis);
+    this.hgetallAsync = promisify(this.redis.hgetall).bind(this.redis);
   }
 
   name_to_key(key: Name) {
@@ -152,7 +154,7 @@ export class TradeState {
   }
 
   async get_buyOrderId(): Promise<string | undefined> {
-    if(this._cached_buyOrderId !== undefined) {
+    if (this._cached_buyOrderId !== undefined) {
       return this._cached_buyOrderId
     }
     const key = this.name_to_key(Name.buyOrderId);
@@ -165,7 +167,7 @@ export class TradeState {
   }
 
   async get_stopOrderId(): Promise<string | undefined> {
-    if(this._cached_stopOrderId !== undefined) {
+    if (this._cached_stopOrderId !== undefined) {
       return this._cached_stopOrderId
     }
     const key = this.name_to_key(Name.stopOrderId);
@@ -178,7 +180,7 @@ export class TradeState {
   }
 
   async get_targetOrderId(): Promise<string | undefined> {
-    if(this._cached_targetOrderId !== undefined) {
+    if (this._cached_targetOrderId !== undefined) {
       return this._cached_targetOrderId
     }
     const key = this.name_to_key(Name.targetOrderId);
@@ -303,6 +305,19 @@ export class TradeState {
     await this.set_redis_key(this.name_to_key(Name.buying_allowed), 'false')
     await this.set_base_amount_bought(total_base_amount_bought)
     await this.set_buyOrderId(undefined)
+  }
+
+  async get_trade_definition() {
+    const redis_trade_definition = await this.hgetallAsync(
+      name_to_key(this.trade_id, Name.trade_definition)
+    );
+
+    if (redis_trade_definition === null) {
+      this.logger.error(`Got null from Redis. Trade ${this.trade_id} likely doesn't exist`);
+      throw new Error(`Got null from Redis. Trade ${this.trade_id} likely doesn't exist`)
+    }
+
+    return new TradeDefinition(this.logger, redis_trade_definition as TradeDefinitionInputSpec);
   }
 }
 

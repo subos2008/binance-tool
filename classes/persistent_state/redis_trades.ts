@@ -42,7 +42,7 @@ export class RedisTrades {
     const result: string[] = []
     for (const trade_id of trade_ids) {
       const completed = (await this.getAsync(`trades:${trade_id}:completed`)) === "true";
-      if (completed) result.push(trade_id)
+      if (!completed) result.push(trade_id)
     }
     return result
   }

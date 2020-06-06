@@ -118,6 +118,8 @@ let currently_monitored_pairs: Set<string> = new Set([])
 async function update_monitors_if_active_pairs_have_changed() {
   let active_pairs = await get_active_pairs()
   active_pairs.add("BTCUSDT") // We want the system under some stress so always add this
+  console.log(`Active Pairs: ${active_pairs}`)
+  console.log(`currently_monitored_pairs: ${currently_monitored_pairs}`)
   if (!_.isEqual(currently_monitored_pairs, active_pairs)) {
     if (Array.from(currently_monitored_pairs).length != 0) {
       // let's die to change the monitored pairs, we will be restarted and can cleanly monitor the new 

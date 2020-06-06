@@ -91,18 +91,17 @@ Environment variables
 
 {{- define "redis.vars" -}}
 - name: REDIS_HOST
-  {{- if .Values.redis.create_local }}
-  value: {{ .Release.Name }}-redis-master
-  {{- else }}
-  value: {{ .Values.redis.external_host | quote }}
-  {{- end }}
+  valueFrom:
+    secretKeyRef:
+      key: REDIS_HOST
+      name: redis
 - name: REDIS_DATABASE_NUMBER
   value: {{ .Values.redis.database_number | quote }}
 - name: REDIS_PASSWORD
   valueFrom:
     secretKeyRef:
-      name: redis-auth
-      key: password    
+      name: redis
+      key: REDIS_PASSWORD    
 {{- end -}}
 
 {{- define "telegram.vars" -}}

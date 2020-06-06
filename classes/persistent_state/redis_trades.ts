@@ -34,7 +34,7 @@ export class RedisTrades {
 
   async sorted_trade_ids() {
     const keys = await this.keysAsync("trades:*:completed");
-    let trade_ids = keys.map((key: any) => parseInt(key.match(/:(\d+):/)[1])).sort((a: any, b: any) => a - b)
+    let trade_ids = keys.map((key: any) => parseInt(key.match(/trades:(\d+):completed/)[1])).sort((a: any, b: any) => a - b)
     console.log(`Trades: ${trade_ids}`)
     return trade_ids
   }

@@ -104,6 +104,7 @@ async function get_active_pairs() {
       let trade_state = new TradeState({ logger, redis, trade_id })
       let trade_definition = await trade_state.get_trade_definition()
       pairs.push(trade_definition.pair)
+      console.log(`Trade ${trade_id}: ${trade_definition.pair}`)
     } catch (err) {
       Sentry.captureException(err)
       logger.error(`Failed to create TradeDefinition for trade ${trade_id}`)

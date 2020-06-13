@@ -8,7 +8,7 @@ assert(process.env.REDIS_HOST)
 assert(process.env.REDIS_PASSWORD)
 
 // Service entry files should include this to set the DSN
-const Sentry = require("./lib/sentry");
+const Sentry = require("../lib/sentry");
 Sentry.configureScope(function(scope:any) {
   scope.setTag("service", "redis-monitor");
 });

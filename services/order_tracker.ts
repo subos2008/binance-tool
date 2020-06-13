@@ -10,7 +10,7 @@ assert(process.env.APIKEY)
 assert(process.env.APISECRET)
 
 // Service entry files should include this to set the DSN
-const Sentry = require("./lib/sentry");
+const Sentry = require("../lib/sentry");
 Sentry.configureScope(function(scope:any) {
   scope.setTag("service", "order-tracker");
 });

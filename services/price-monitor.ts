@@ -12,7 +12,7 @@ assert(process.env.REDIS_HOST)
 // assert(process.env.APISECRET)
 
 // Service entry files should include this to set the DSN
-const Sentry = require("../lib/sentry");
+import Sentry from "../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "price-monitor");
 });
@@ -51,6 +51,7 @@ import { BinancePriceMonitor } from "../classes/binance_price_monitor";
 import { PricePublisher } from "../classes/amqp/price-publisher";
 import { RedisTrades } from "../classes/persistent_state/redis_trades";
 import { TradeState } from "../classes/persistent_state/redis_trade_state";
+import { ExchangeEmulator } from "../lib/exchange_emulator";
 
 const publisher = new PricePublisher(logger, send_message)
 const redis_trades = new RedisTrades({ logger, redis })
@@ -95,7 +96,6 @@ async function main() {
       logger,
       exchange_info
     };
-    const ExchangeEmulator = require("./lib/exchange_emulator");
     ee = new ExchangeEmulator(ee_config);
   }
 

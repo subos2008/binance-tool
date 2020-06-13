@@ -10,7 +10,7 @@ assert(process.env.REDIS_HOST)
 // assert(process.env.APISECRET)
 
 // Service entry files should include this to set the DSN
-const Sentry = require("../lib/sentry");
+import Sentry from "../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "order-tracker");
 });
@@ -45,6 +45,7 @@ const redis = require("redis").createClient({
 const Binance = require("binance-api-node").default;
 import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";
 import { OrderState } from "../classes/persistent_state/redis_order_state";
+import { ExchangeEmulator } from "../lib/exchange_emulator";
 
 var { argv } = require("yargs")
   .usage("Usage: $0 --live")
@@ -81,7 +82,6 @@ async function main() {
       logger,
       exchange_info
     };
-    const ExchangeEmulator = require("./lib/exchange_emulator");
     ee = new ExchangeEmulator(ee_config);
   }
 

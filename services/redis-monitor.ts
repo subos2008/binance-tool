@@ -7,7 +7,11 @@ require("dotenv").config();
 assert(process.env.REDIS_HOST)
 assert(process.env.REDIS_PASSWORD)
 
-const Sentry = require("@sentry/node");
+// Service entry files should include this to set the DSN
+const Sentry = require("./lib/sentry");
+Sentry.configureScope(function(scope:any) {
+  scope.setTag("service", "redis-monitor");
+});
 
 const send_message = require("../lib/telegram.js")("redis-monitor: ");
 

@@ -9,7 +9,11 @@ assert(process.env.REDIS_PASSWORD)
 assert(process.env.APIKEY)
 assert(process.env.APISECRET)
 
-const Sentry = require("@sentry/node");
+// Service entry files should include this to set the DSN
+const Sentry = require("./lib/sentry");
+Sentry.configureScope(function(scope:any) {
+  scope.setTag("service", "order-tracker");
+});
 
 // redis + events + binance
 

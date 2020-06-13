@@ -4,8 +4,11 @@ const Logger = require("./lib/faux_logger");
 const logger = new Logger({ silent: false });
 require("dotenv").config();
 
-require("./lib/sentry");
-const Sentry = require("@sentry/node");
+// Service entry files should include this to set the DSN
+const Sentry = require("./lib/sentry");
+Sentry.configureScope(function(scope:any) {
+  scope.setTag("service", "binance-tool");
+});
 
 // TODO: convert all the process.exit calls to be exceptions
 // TODO: add watchdog on trades stream - it can stop responding without realising

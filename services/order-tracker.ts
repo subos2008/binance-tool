@@ -5,13 +5,13 @@ import { strict as assert } from 'assert';
 
 require("dotenv").config();
 assert(process.env.REDIS_HOST)
-assert(process.env.REDIS_PASSWORD)
-assert(process.env.APIKEY)
-assert(process.env.APISECRET)
+// assert(process.env.REDIS_PASSWORD)
+// assert(process.env.APIKEY)
+// assert(process.env.APISECRET)
 
 // Service entry files should include this to set the DSN
 const Sentry = require("../lib/sentry");
-Sentry.configureScope(function(scope:any) {
+Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "order-tracker");
 });
 
@@ -46,13 +46,23 @@ const Binance = require("binance-api-node").default;
 import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";
 import { OrderState } from "../classes/persistent_state/redis_order_state";
 
-let live = true
+var { argv } = require("yargs")
+  .usage("Usage: $0 --live")
+  .example("$0 --live")
+  // '--live'
+  .boolean("live")
+  .describe("live", "Trade with real money")
+  .default("live", false);
+let { live } = argv;
+
 let order_execution_tracker: OrderExecutionTracker | null = null
 
 async function main() {
   var ee: Object;
   if (live) {
     logger.info("Live monitoring mode");
+    assert(process.env.APIKEY)
+    assert(process.env.APISECRET)
     ee = Binance({
       apiKey: process.env.APIKEY,
       apiSecret: process.env.APISECRET
@@ -82,7 +92,7 @@ async function main() {
     ee,
     send_message,
     logger,
-    order_state: new OrderState({ logger, redis } )
+    order_state: new OrderState({ logger, redis })
   })
 
   order_execution_tracker.main().catch(error => {

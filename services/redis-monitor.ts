@@ -5,7 +5,7 @@ import { strict as assert } from 'assert';
 
 require("dotenv").config();
 assert(process.env.REDIS_HOST)
-assert(process.env.REDIS_PASSWORD)
+// assert(process.env.REDIS_PASSWORD)
 
 // Service entry files should include this; to set the DSN
 const Sentry = require("../lib/sentry");

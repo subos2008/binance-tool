@@ -8,12 +8,14 @@ services:
       - RABBITMQ_USERNAME=user
   redis:
     image: 'bitnami/redis:latest'
+    environment: 
+      - ALLOW_EMPTY_PASSWORD=yes
 
   order-tracker:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ./services/order-tracker.ts
+    command: ./services/order-tracker.ts --live=false
     environment:
       - AMQP_HOST=amqp
       - AMQP_USER='user'
@@ -29,7 +31,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ./services/price-monitor.ts
+    command: ./services/price-monitor.ts --live=false
     environment:
       - AMQP_HOST=amqp
       - AMQP_USER='user'
@@ -56,19 +58,19 @@ services:
     depends_on: 
       - redis
 
-  services:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: ./services-test-rig/entrypoint.sh
-    environment:
-      - AMQP_HOST=amqp
-      - AMQP_USER='user'
-      - AMQP_PASSWORD='my_password'
-      - AMQP_EXCHANGE=test
-      - AMQP_VHOST='test'
-      - REDIS_HOST='redis'
-    depends_on: 
-      - price-monitor
-      - order-tracker
-      - redis-monitor
+  # services:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   command: ./services-test-rig/entrypoint.sh
+  #   environment:
+  #     - AMQP_HOST=amqp
+  #     - AMQP_USER='user'
+  #     - AMQP_PASSWORD='my_password'
+  #     - AMQP_EXCHANGE=test
+  #     - AMQP_VHOST='test'
+  #     - REDIS_HOST='redis'
+  #   depends_on: 
+  #     - price-monitor
+  #     - order-tracker
+  #     - redis-monitor

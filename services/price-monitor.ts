@@ -7,13 +7,13 @@ const _ = require("lodash");
 
 require("dotenv").config();
 assert(process.env.REDIS_HOST)
-assert(process.env.REDIS_PASSWORD)
-assert(process.env.APIKEY)
-assert(process.env.APISECRET)
+// assert(process.env.REDIS_PASSWORD)
+// assert(process.env.APIKEY)
+// assert(process.env.APISECRET)
 
 // Service entry files should include this to set the DSN
 const Sentry = require("../lib/sentry");
-Sentry.configureScope(function(scope:any) {
+Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "price-monitor");
 });
 
@@ -62,14 +62,22 @@ const price_event_callback = (symbol: string, price: string, raw: any) => {
 
 var monitor = null;
 
+var { argv } = require("yargs")
+  .usage("Usage: $0 --live")
+  .example("$0 --live")
+  // '--live'
+  .boolean("live")
+  .describe("live", "Trade with real money")
+  .default("live", false);
+let { live } = argv;
 
-
-let live = true
 var ee: Object;
 
 async function main() {
   if (live) {
     logger.info("Live monitoring mode");
+    assert(process.env.APIKEY)
+    assert(process.env.APISECRET)
     ee = Binance({
       apiKey: process.env.APIKEY,
       apiSecret: process.env.APISECRET

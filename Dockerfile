@@ -13,7 +13,7 @@ COPY service.ts /app/
 COPY services /app/services
 COPY interfaces /app/interfaces
 COPY test /app/test
-COPY services-test-rig /app/services-test-rig
+# COPY services-test-rig /app/services-test-rig
 COPY chai-bignumber.d.ts /app/chai-bignumber.d.ts
 COPY tsconfig.json /app/tsconfig.json
 

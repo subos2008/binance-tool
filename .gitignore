@@ -70,3 +70,4 @@ out/
 terraform.tfstate
 .terraform
 terraform.tfstate.backup
+Icon

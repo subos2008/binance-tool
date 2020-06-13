@@ -22,7 +22,7 @@ Sentry.configureScope(function(scope:any) {
 // TODO: add watchdog on trades stream - it can stop responding without realising
 // TODO: - in the original implementations (iirc lib around binance has been replaced)
 
-const send_message = require("../lib/telegram.js")("order_tracker: ");
+const send_message = require("../lib/telegram.js")("order-tracker: ");
 
 import { Logger } from '../interfaces/logger'
 const LoggerClass = require("../lib/faux_logger");

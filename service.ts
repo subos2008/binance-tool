@@ -6,7 +6,7 @@ require("dotenv").config();
 
 // Service entry files should include this to set the DSN
 const Sentry = require("./lib/sentry");
-Sentry.configureScope(function(scope:any) {
+Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "binance-tool");
 });
 
@@ -18,10 +18,10 @@ const redis = require("redis").createClient({
   host: process.env.REDIS_HOST,
   password: process.env.REDIS_PASSWORD
 });
-redis.on('error', function (err:any) {
-  logger.warn('Redis.on errror handler called'); 
-  console.error(err.stack); 
-  console.error(err); 
+redis.on('error', function (err: any) {
+  logger.warn('Redis.on errror handler called');
+  console.error(err.stack);
+  console.error(err);
   Sentry.captureException(err)
 });
 const { promisify } = require("util");
@@ -41,7 +41,12 @@ var { argv } = require("yargs")
   .default("live", false);
 let { "trade-id": trade_id, live } = argv;
 
+Sentry.configureScope(function (scope: any) {
+  scope.setTag("trade-id", trade_id);
+  scope.setUser({ id: trade_id });
+});
 const send_message = require("./lib/telegram")(`binance-tool (${trade_id}): `);
+
 import { TradeExecutor } from "./lib/trade_executor"
 const BigNumber = require("bignumber.js");
 import { TradingRules } from "./lib/trading_rules"

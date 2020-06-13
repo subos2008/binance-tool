@@ -6,57 +6,70 @@ services:
     environment:
       - RABBITMQ_PASSWORD=my_password
       - RABBITMQ_USERNAME=user
+    # logging:
+    #   driver: "none"
+    ports:
+      - '5672:5672'
   redis:
     image: 'bitnami/redis:latest'
     environment: 
       - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - '6379:6379'
+    # logging:
+    #   driver: "none"
 
-  order-tracker:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: ./services/order-tracker.ts --live=false
-    environment:
-      - AMQP_HOST=amqp
-      - AMQP_USER='user'
-      - AMQP_PASSWORD='my_password'
-      - AMQP_EXCHANGE=test
-      - AMQP_VHOST='test'
-      - REDIS_HOST='redis'
-    depends_on: 
-      - redis
-      - amqp
+  # order-tracker:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   command: ./services/order-tracker.ts --live=false
+  #   environment:
+  #     - AMQP_HOST=amqp
+  #     - AMQP_USER='user'
+  #     - AMQP_PASSWORD='my_password'
+  #     - AMQP_EXCHANGE=test
+  #     - AMQP_PROTOCOL=amqp
+  #     - AMQP_VHOST='test'
+  #     - REDIS_HOST='redis'
+  #   depends_on: 
+  #     - redis
+  #     - amqp
 
-  price-monitor:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: ./services/price-monitor.ts --live=false
-    environment:
-      - AMQP_HOST=amqp
-      - AMQP_USER='user'
-      - AMQP_PASSWORD='my_password'
-      - AMQP_EXCHANGE=test
-      - AMQP_VHOST='test'
-      - REDIS_HOST='redis'
-    depends_on: 
-      - redis
-      - amqp
+  # price-monitor:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   command: ./services/price-monitor.ts --live=false
+  #   environment:
+  #     - AMQP_HOST=amqp
+  #     - AMQP_USER='user'
+  #     - AMQP_PASSWORD='my_password'
+  #     - AMQP_EXCHANGE=test
+  #     - AMQP_VHOST='test'
+  #     - AMQP_PROTOCOL=amqp
+  #     - REDIS_HOST='redis'
+  #   depends_on: 
+  #     - redis
+  #     - amqp
 
   redis-monitor:
     build:
       context: .
       dockerfile: Dockerfile
     command: ./services/price-monitor.ts
+    restart: on-failure
     environment:
       - AMQP_HOST=amqp
       - AMQP_USER='user'
       - AMQP_PASSWORD='my_password'
       - AMQP_EXCHANGE=test
       - AMQP_VHOST='test'
+      - AMQP_PROTOCOL=amqp
       - REDIS_HOST='redis'
     depends_on: 
       - redis
+      - amqp
 
   # services:
   #   build:

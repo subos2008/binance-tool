@@ -8,8 +8,8 @@ services:
       - AMQP_HOST=amqp
       - AMQP_USER='user'
       - AMQP_PASSWORD='my_password'
-      - AMQP_EXCHANGE=ukrgo
-      - AMQP_VHOST='ukrgo'
+      - AMQP_EXCHANGE=test
+      - AMQP_VHOST='test'
     ports:
       - '15672:15672'
     depends_on: 
@@ -19,6 +19,9 @@ services:
     environment:
       - RABBITMQ_PASSWORD=my_password
       - RABBITMQ_USERNAME=user
+  redis:
+    image: 'bitnami/redis:latest'
+
   beacon:
     build:
       context: .
@@ -28,9 +31,10 @@ services:
       - AMQP_HOST=amqp
       - AMQP_USER='user'
       - AMQP_PASSWORD='my_password'
-      - AMQP_EXCHANGE=ukrgo
-      - AMQP_VHOST='ukrgo'
+      - AMQP_EXCHANGE=test
+      - AMQP_VHOST='test'
     ports:
       - '15672:15672'
     depends_on: 
       - amqp
+

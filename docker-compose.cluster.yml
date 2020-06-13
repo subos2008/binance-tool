@@ -1,0 +1,74 @@
+version: "3.3"
+
+services:
+  amqp:
+    image: 'bitnami/rabbitmq:latest'
+    environment:
+      - RABBITMQ_PASSWORD=my_password
+      - RABBITMQ_USERNAME=user
+  redis:
+    image: 'bitnami/redis:latest'
+
+  order-tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ./services/order-tracker.ts
+    environment:
+      - AMQP_HOST=amqp
+      - AMQP_USER='user'
+      - AMQP_PASSWORD='my_password'
+      - AMQP_EXCHANGE=test
+      - AMQP_VHOST='test'
+      - REDIS_HOST='redis'
+    depends_on: 
+      - redis
+      - amqp
+
+  price-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ./services/price-monitor.ts
+    environment:
+      - AMQP_HOST=amqp
+      - AMQP_USER='user'
+      - AMQP_PASSWORD='my_password'
+      - AMQP_EXCHANGE=test
+      - AMQP_VHOST='test'
+      - REDIS_HOST='redis'
+    depends_on: 
+      - redis
+      - amqp
+
+  redis-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ./services/price-monitor.ts
+    environment:
+      - AMQP_HOST=amqp
+      - AMQP_USER='user'
+      - AMQP_PASSWORD='my_password'
+      - AMQP_EXCHANGE=test
+      - AMQP_VHOST='test'
+      - REDIS_HOST='redis'
+    depends_on: 
+      - redis
+
+  services:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ./services-test-rig/entrypoint.sh
+    environment:
+      - AMQP_HOST=amqp
+      - AMQP_USER='user'
+      - AMQP_PASSWORD='my_password'
+      - AMQP_EXCHANGE=test
+      - AMQP_VHOST='test'
+      - REDIS_HOST='redis'
+    depends_on: 
+      - price-monitor
+      - order-tracker
+      - redis-monitor

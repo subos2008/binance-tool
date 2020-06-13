@@ -14,16 +14,10 @@ Sentry.configureScope(function (scope: any) {
 // TODO: add watchdog on trades stream - it can stop responding without realising
 // TODO: - in the original implementations
 
-const redis = require("redis").createClient({
-  host: process.env.REDIS_HOST,
-  password: process.env.REDIS_PASSWORD
-});
-redis.on('error', function (err: any) {
-  logger.warn('Redis.on errror handler called');
-  console.error(err.stack);
-  console.error(err);
-  Sentry.captureException(err)
-});
+import { get_redis_client, set_redis_logger } from "./lib/redis"
+set_redis_logger(logger)
+const redis = get_redis_client()
+
 const { promisify } = require("util");
 const hgetallAsync = promisify(redis.hgetall).bind(redis);
 const Binance = require("binance-api-node").default;

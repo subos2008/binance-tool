@@ -37,10 +37,10 @@ BigNumber.prototype.valueOf = function () {
 
 send_message('restarted.')
 
-const redis = require("redis").createClient({
-  host: process.env.REDIS_HOST,
-  password: process.env.REDIS_PASSWORD
-});
+import { get_redis_client, set_redis_logger } from "../lib/redis"
+set_redis_logger(logger)
+const redis = get_redis_client()
+
 
 const Binance = require("binance-api-node").default;
 import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";

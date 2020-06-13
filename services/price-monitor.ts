@@ -40,11 +40,9 @@ BigNumber.prototype.valueOf = function () {
 logger.warn(`TODO: don't die if redis isn't accessible`)
 send_message('starting')
 
-import { RedisClient } from 'redis';
-const redis: RedisClient = require("redis").createClient({
-  host: process.env.REDIS_HOST,
-  password: process.env.REDIS_PASSWORD
-});
+import { get_redis_client, set_redis_logger } from "../lib/redis"
+set_redis_logger(logger)
+const redis = get_redis_client()
 
 const Binance = require("binance-api-node").default;
 import { BinancePriceMonitor } from "../classes/binance_price_monitor";

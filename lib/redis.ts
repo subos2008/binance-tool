@@ -16,7 +16,7 @@ function generate_client(logger: Logger): RedisClient {
     Sentry.withScope(function (scope: any) {
       scope.setTag("location", "redis-global-error-handler");
       scope.setExtra("options", options);
-      Sentry.Sentry.captureMessage("In redis_retry_strategy.");
+      Sentry.captureMessage("In redis_retry_strategy.");
     });
     logger.warn('Redis retry strategy called:');
     logger.warn(util.inspect(options));
@@ -36,6 +36,7 @@ function generate_client(logger: Logger): RedisClient {
       return undefined;
     }
     // reconnect after
+    logger.warn('Redis retry strategy called: reconnect after');
     return Math.min(options.attempt * 100, 3000);
   }
 

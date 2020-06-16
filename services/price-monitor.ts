@@ -114,7 +114,7 @@ async function get_active_pairs() {
       let trade_state = new TradeState({ logger, redis, trade_id })
       let trade_definition = await trade_state.get_trade_definition()
       pairs.push(trade_definition.pair)
-      console.log(`Trade ${trade_id}: ${trade_definition.pair}`)
+      // logger.info(`Trade ${trade_id}: ${trade_definition.pair}`)
     } catch (err) {
       Sentry.captureException(err)
       logger.error(`Failed to create TradeDefinition for trade ${trade_id}`)
@@ -129,9 +129,9 @@ let currently_monitored_pairs: Set<string> = new Set([])
 async function update_monitors_if_active_pairs_have_changed() {
   let active_pairs = await get_active_pairs()
   active_pairs.add("BTCUSDT") // We want the system under some stress so always add this
-  console.log(`Active Pairs: ${Array.from(active_pairs)}`)
-  console.log(`currently_monitored_pairs: ${Array.from(currently_monitored_pairs)}`)
   if (!_.isEqual(currently_monitored_pairs, active_pairs)) {
+    logger.info(`Active Pairs: ${Array.from(active_pairs)}`)
+    logger.info(`currently_monitored_pairs: ${Array.from(currently_monitored_pairs)}`)
     if (Array.from(currently_monitored_pairs).length != 0) {
       // let's die to change the monitored pairs, we will be restarted and can cleanly monitor the new 
       // set from a fresh process. We can investigate cleanly replacing monitors later at our
@@ -139,7 +139,7 @@ async function update_monitors_if_active_pairs_have_changed() {
       const message = `Changing to monitor: ${Array.from(active_pairs).join(', ')}`
       logger.info(message)
       this.send_message(message)
-      logger.info('Exiting to replace monitors')
+      logger.warn('Exiting to replace monitors')
       process.exit(0)
     }
     currently_monitored_pairs = active_pairs

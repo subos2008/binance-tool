@@ -16,7 +16,7 @@ function generate_client(logger: Logger): RedisClient {
     Sentry.withScope(function (scope: any) {
       scope.setTag("location", "redis-global-error-handler");
       scope.setExtra("options", options);
-      Sentry.captureMessage("In redis_retry_strategy.");
+      // Sentry.captureMessage("In redis_retry_strategy.");
     });
     logger.warn('Redis retry strategy called:');
     logger.warn(util.inspect(options));
@@ -27,11 +27,13 @@ function generate_client(logger: Logger): RedisClient {
       return new Error("The server refused the connection");
     }
     if (options.total_retry_time > 1000 * 60 * 60) {
+      Sentry.captureMessage("In redis_retry_strategy: Retry time exhausted");
       // End reconnecting after a specific timeout and flush all commands
       // with a individual error
       return new Error("Retry time exhausted");
     }
     if (options.attempt > 10) {
+      Sentry.captureMessage("In redis_retry_strategy: End reconnecting with built in error");
       // End reconnecting with built in error
       return undefined;
     }

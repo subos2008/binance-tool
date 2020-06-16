@@ -5,7 +5,7 @@ const logger = new Logger({ silent: false });
 require("dotenv").config();
 
 // Service entry files should include this to set the DSN
-const Sentry = require("./lib/sentry");
+import Sentry from "../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "binance-tool");
 });

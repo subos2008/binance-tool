@@ -137,9 +137,9 @@ async function update_monitors_if_active_pairs_have_changed() {
       // set from a fresh process. We can investigate cleanly replacing monitors later at our
       // leasure
       const message = `Changing to monitor: ${Array.from(active_pairs).join(', ')}`
-      this.logger.info(message)
+      logger.info(message)
       this.send_message(message)
-      this.logger.info('Exiting to replace monitors')
+      logger.info('Exiting to replace monitors')
       process.exit(0)
     }
     currently_monitored_pairs = active_pairs

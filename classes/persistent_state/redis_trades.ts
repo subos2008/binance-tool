@@ -35,7 +35,6 @@ export class RedisTrades {
   async sorted_trade_ids() {
     const keys = await this.keysAsync("trades:*:completed");
     let trade_ids = keys.map((key: any) => parseInt(key.match(/trades:(\d+):completed/)[1])).sort((a: any, b: any) => a - b)
-    console.log(`Trades: ${trade_ids}`)
     return trade_ids
   }
 
@@ -44,7 +43,6 @@ export class RedisTrades {
     const result: string[] = []
     for (const trade_id of trade_ids) {
       const completed = stringToBool(await this.getAsync(`trades:${trade_id}:completed`));
-      console.log(`${trade_id}: ${completed}`)
       if (!completed) result.push(trade_id)
     }
     return result

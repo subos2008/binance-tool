@@ -136,11 +136,14 @@ async function update_monitors_if_active_pairs_have_changed() {
       // let's die to change the monitored pairs, we will be restarted and can cleanly monitor the new 
       // set from a fresh process. We can investigate cleanly replacing monitors later at our
       // leasure
-      const message = `Changing to monitor: ${Array.from(active_pairs).join(', ')}`
-      logger.info(message)
-      this.send_message(message)
-      logger.warn('Exiting to replace monitors')
-      process.exit(0)
+      try {
+        const message = `Changing to monitor: ${Array.from(active_pairs).join(', ')}`
+        logger.info(message)
+        send_message(message)
+        logger.warn('Exiting to replace monitors')
+      } finally {
+        process.exit(0)
+      }
     }
     currently_monitored_pairs = active_pairs
     monitor = new BinancePriceMonitor(logger, send_message, ee, price_event_callback)

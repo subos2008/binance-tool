@@ -149,7 +149,7 @@ spec:
               mountPath: /opt/datadog-agent/run
           env:
             - name: SENTRY_DSN
-            value: "https://673cf6fd7c5e49339128d0f4bb3f37c7@o369902.ingest.sentry.io/5286786"
+              value: "https://673cf6fd7c5e49339128d0f4bb3f37c7@o369902.ingest.sentry.io/5286786"
 {{- include "datadog.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}
 {{- include "telegram.vars" . | nindent 12 }}

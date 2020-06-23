@@ -11,8 +11,10 @@ assert(process.env.REDIS_HOST)
 // assert(process.env.APIKEY)
 // assert(process.env.APISECRET)
 
-// Service entry files should include this to set the DSN
-import Sentry from "../lib/sentry"
+const Sentry = require("@sentry/node");
+Sentry.init({
+  dsn: "https://c4ea793663d3411e9a0fd91ee8e303e1@o369902.ingest.sentry.io/5286780"
+});
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "price-monitor");
 });

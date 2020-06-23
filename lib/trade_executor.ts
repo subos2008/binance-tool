@@ -16,7 +16,7 @@ import { OrderState } from "../classes/persistent_state/redis_order_state";
 import { BinanceOrderData } from '../interfaces/order_callbacks'
 import { PriceRanges } from "../classes/specifications/price_ranges";
 
-const Sentry = require("@sentry/node");
+import * as Sentry from '@sentry/node';
 
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion

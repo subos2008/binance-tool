@@ -10,7 +10,7 @@ BigNumber.prototype.valueOf = function () {
 };
 import { Logger } from "../interfaces/logger";
 import { TradingRules } from "../lib/trading_rules";
-const Sentry = require("@sentry/node");
+import * as Sentry from '@sentry/node';
 
 export class AlgoUtils {
   logger: Logger

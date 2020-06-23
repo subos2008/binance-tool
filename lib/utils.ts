@@ -5,7 +5,7 @@ import { BigNumber } from 'bignumber.js'
 const binance_regex = /^([A-Z]+)(BTC|USDT|BNB|TUSD)$/;
 const ccxt_regex = /^([A-Z]+)\/([A-Z]+)$/;
 
-const Sentry = require("@sentry/node");
+import * as Sentry from '@sentry/node';
 
 function break_up_binance_pair(pair: string) {
   try {

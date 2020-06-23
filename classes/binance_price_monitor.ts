@@ -1,7 +1,7 @@
 import { strict as assert } from 'assert';
 import { Logger } from "../interfaces/logger";
 
-const Sentry = require("@sentry/node");
+import * as Sentry from '@sentry/node';
 
 export class BinancePriceMonitor {
   logger: Logger

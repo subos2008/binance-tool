@@ -7,7 +7,7 @@ import { TradeDefinition } from "./specifications/trade_definition";
 import { PriceRanges } from "./specifications/price_ranges";
 import { TradeOrderCreator } from '../classes/trade_order_creator'
 
-const Sentry = require("@sentry/node");
+import * as Sentry from '@sentry/node';
 
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion

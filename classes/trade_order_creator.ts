@@ -16,7 +16,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
-const Sentry = require("@sentry/node");
+import * as Sentry from '@sentry/node';
 
 export class TradeOrderCreator {
   logger: Logger

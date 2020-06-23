@@ -12,7 +12,7 @@ import { OrderState } from "../classes/persistent_state/redis_order_state";
 import { Logger } from '../interfaces/logger'
 import { OrderCallbacks, BinanceOrderData } from '../interfaces/order_callbacks'
 
-const Sentry = require("@sentry/node");
+import * as Sentry from '@sentry/node';
 
 export class OrderExecutionTracker {
   send_message: Function;

@@ -3,7 +3,7 @@ const connect_options = require("../../lib/amqp/connect_options").default
 import { strict as assert } from 'assert';
 import { Logger } from "../../interfaces/logger";
 
-const Sentry = require("@sentry/node");
+import * as Sentry from '@sentry/node';
 
 const exchange = 'prices';
 assert(exchange)

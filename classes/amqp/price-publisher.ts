@@ -36,6 +36,7 @@ export class PricePublisher {
       this.channel.assertExchange(exchange, "topic", {
         durable: false
       });
+      this.logger.info(`Connection with AMQP server established.`)
     } catch (err) {
       this.logger.error(`Error connecting to amqp server`);
       this.logger.error(err);

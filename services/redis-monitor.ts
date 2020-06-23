@@ -7,10 +7,8 @@ require("dotenv").config();
 assert(process.env.REDIS_HOST)
 // assert(process.env.REDIS_PASSWORD)
 
-const Sentry = require("@sentry/node");
-Sentry.init({
-  dsn: "https://673cf6fd7c5e49339128d0f4bb3f37c7@o369902.ingest.sentry.io/5286786"
-});
+import * as Sentry from '@sentry/node';
+Sentry.init({});
 Sentry.configureScope(function(scope:any) {
   scope.setTag("service", "redis-monitor");
 });

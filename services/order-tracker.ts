@@ -9,10 +9,8 @@ assert(process.env.REDIS_HOST)
 // assert(process.env.APIKEY)
 // assert(process.env.APISECRET)
 
-const Sentry = require("@sentry/node");
-Sentry.init({
-  dsn: "https://fdceaf9d5e984c6aad15f6ec0301f1f5@o369902.ingest.sentry.io/5286784"
-});
+import * as Sentry from '@sentry/node';
+Sentry.init({});
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "order-tracker");
 });

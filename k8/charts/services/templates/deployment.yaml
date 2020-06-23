@@ -50,6 +50,8 @@ spec:
           #     path: /health
           #     port: http
           env:
+            - name: SENTRY_DSN
+              value: "https://fdceaf9d5e984c6aad15f6ec0301f1f5@o369902.ingest.sentry.io/5286784"
 {{- include "binance.vars" . | nindent 12 }}
 {{- include "datadog.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}
@@ -103,6 +105,8 @@ spec:
           #     path: /health
           #     port: http
           env:
+            - name: SENTRY_DSN
+              value: "https://c4ea793663d3411e9a0fd91ee8e303e1@o369902.ingest.sentry.io/5286780"
 {{- include "binance.vars" . | nindent 12 }}
 {{- include "datadog.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}
@@ -144,6 +148,8 @@ spec:
             - name: pointerdir
               mountPath: /opt/datadog-agent/run
           env:
+            - name: SENTRY_DSN
+            value: "https://673cf6fd7c5e49339128d0f4bb3f37c7@o369902.ingest.sentry.io/5286786"
 {{- include "datadog.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}
 {{- include "telegram.vars" . | nindent 12 }}

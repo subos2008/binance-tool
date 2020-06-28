@@ -2,6 +2,10 @@ import { strict as assert } from 'assert';
 const utils = require('../lib/utils')
 var util = require('util');
 
+// Uses Custm OrderIds and maintains associations in redis
+// Improvements:
+//  * Create a RedisOrderState class instead of managing `order_associations:` from TradeState
+//  * We need to evolve error handling here: i.e. balance is too low, MIN_NOTIONAL etc
 
 import { Logger } from "../interfaces/logger";
 import { TradeState } from './persistent_state/redis_trade_state'
@@ -143,14 +147,15 @@ export class OrderCreator {
     return `${Date.now()}:${pair}:incr_me`
   }
 
-  // We need to evolve error handling here: i.e. balance is too low, MIN_NOTIONAL etc
+  // We need to evolve error handling in OrderCreator.market_sell: i.e. balance is too low, MIN_NOTIONAL etc
   async market_sell(trade_state: TradeState, pair: string, base_amount: BigNumber) {
+    this.logger.warn(`We need to evolve error handling in OrderCreator.market_sell: i.e. balance is too low, MIN_NOTIONAL etc`)
     var orderId: string | undefined;
     try {
       orderId = await this.create_new_order_id(pair)
       await trade_state.associate_order_with_trade(orderId)
 
-      base_amount = this._munge_amount_and_check_notionals({ base_amount });
+      base_amount = this._munge_amount_and_check_notionals({ base_amount, pair });
 
       let response = await this.algo_utils.create_market_sell_order({
         base_amount,
@@ -170,7 +175,7 @@ export class OrderCreator {
   }
 
   _munge_amount_and_check_notionals({ base_amount, buy_price, stop_price, target_price, price, pair }:
-    { base_amount: BigNumber, buy_price?: BigNumber, stop_price?: BigNumber, target_price?: BigNumber, price?: BigNumber }) {
+    { base_amount: BigNumber, buy_price?: BigNumber, stop_price?: BigNumber, target_price?: BigNumber, price?: BigNumber, pair: string }) {
     assert(base_amount);
     const original_base_amount = new BigNumber(base_amount);
     this.logger.info(`orig base_amount: ${original_base_amount.toFixed()}`);

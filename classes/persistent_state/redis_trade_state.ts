@@ -1,4 +1,5 @@
 
+import * as Sentry from '@sentry/node';
 
 import { strict as assert } from 'assert';
 const { promisify, inspect } = require("util");
@@ -16,6 +17,7 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from '../../interfaces/logger'
 import { RedisClient } from 'redis'
 import { TradeDefinition, TradeDefinitionInputSpec } from '../specifications/trade_definition';
+import { assignWith } from 'lodash';
 
 enum Name {
   trade_state_schema_version = 'trade_state_schema_version',
@@ -96,8 +98,18 @@ export class TradeState {
     return name_to_key(this.trade_id, key)
   }
 
-  async get_redis_key(key: string) {
-    const ret = await this._get_redis_key(key)
+  async get_redis_key(key: string): Promise<string> {
+    let ret;
+    try {
+      ret = await this._get_redis_key(key)
+    } catch (err) {
+      Sentry.withScope(function (scope: any) {
+        scope.setTag("redis-key", key);
+        scope.setTag("redis-operation", 'get');
+        Sentry.captureException(err);
+      });
+      throw (err)
+    }
     if (ret === 'undefined') {
       throw new Error(`Redis error: key ${key} is the string 'undefined'`)
     }
@@ -111,7 +123,18 @@ export class TradeState {
     }
     // assert key is in our namespace:
     assert(key.startsWith(`trades:${this.trade_id}:`) || key.startsWith(`order_associations:`), `Attempt to set key outside namespace: ${key}`)
-    const ret = await this._set_redis_key(key, value)
+    let ret = "ERROR: wibble"
+    try {
+      ret = await this._set_redis_key(key, value)
+    } catch (err) {
+      // I don't think this will work as we don't see the exception here
+      Sentry.withScope(function (scope: any) {
+        scope.setTag("redis-key", key);
+        scope.setTag("redis-operation", 'set');
+        Sentry.captureException(err);
+        throw (err)
+      });
+    }
     if (ret !== 'OK') {
       throw new Error(`Redis error: failed to set key ${key}: ${ret}`)
     }
@@ -151,6 +174,11 @@ export class TradeState {
     if (value === 'OK') throw new Error(`Redis error: attempt to set OrderId to 'OK`)
     await this.set_or_delete_key(this.name_to_key(Name.targetOrderId), value);
     this._cached_targetOrderId = value
+  }
+
+  async associate_order_with_trade(orderId: string): Promise<void> {
+    assert(orderId)
+    await this._set_order_id_to_trade_id_association(orderId)
   }
 
   async get_buyOrderId(): Promise<string | undefined> {

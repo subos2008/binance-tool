@@ -1,6 +1,6 @@
 export interface BinanceOrderData {
   orderId:string
-  totalTradeQuantity: string; // TODO: need to mark this optional?
+  totalTradeQuantity: string;
   symbol: string;
   side:string
   orderType:string

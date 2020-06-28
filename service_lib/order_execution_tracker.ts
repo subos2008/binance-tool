@@ -95,6 +95,8 @@ export class OrderExecutionTracker {
       orderRejectReason,
       totalTradeQuantity
     } = data as BinanceOrderData;
+    // How can I automagically check an input matches the expected type?
+    this.logger.warn(`Not type checking BinanceOrderData when casting`)
 
     this.logger.info(
       `${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`
@@ -102,7 +104,9 @@ export class OrderExecutionTracker {
     this.logger.info(`..price: ${price}, quantity: ${quantity}`);
 
     if (orderStatus === "NEW") {
-      await this.order_state.add_new_order(orderId, { symbol, side, orderType, orderStatus })
+      // Originally orders were all first added here but as we re-architect they will become
+      // more likely to pre-exist
+      await this.order_state.add_new_order(orderId, { symbol, side, orderType })
       return;
     }
 
@@ -132,6 +136,8 @@ export class OrderExecutionTracker {
     // we check to see if that has happened and copy the data accross. This mitigates
     // the case where the binance stream sends out a completed order before the orderId
     // is associated with the trade
+
+    // ED: using custom orderIds is a better solution to this
   }
 
   // Event publishers

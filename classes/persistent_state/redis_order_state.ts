@@ -55,6 +55,9 @@ export class OrderState {
         return `orders:${order_id}:cancelled`;
       case "orderRejectReason":
         return `orders:${order_id}:orderRejectReason`;
+      case "base_amount":
+        // The order quantity
+        return `orders:${order_id}:base_amount`;
       default:
         throw new Error(`Unknown key name: ${name}`);
     }

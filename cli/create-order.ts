@@ -98,7 +98,10 @@ async function connect() {
     apiKey: process.env.APIKEY,
     apiSecret: process.env.APISECRET
   });
+
   const algo_utils = new AlgoUtils({ logger, ee });
+  let exchange_info = await ee.exchangeInfo();
+  algo_utils.set_exchange_info(exchange_info)
 
   const redis = require("redis").createClient({
     host: process.env.REDIS_HOST,
@@ -117,7 +120,7 @@ async function create_market_sell(argv: any) {
 
   let trade_state = trade_id ? new TradeState({ logger, redis, trade_id }) : undefined
 
-  order_creator.market_sell({ trade_state, pair, base_amount })
+  await order_creator.market_sell({ trade_state, pair, base_amount })
 
   redis.quit();
 }
@@ -131,7 +134,7 @@ async function create_market_buy(argv: any) {
 
   let trade_state = trade_id ? new TradeState({ logger, redis, trade_id }) : undefined
 
-  order_creator.market_buy({ trade_state, pair, base_amount })
+  await order_creator.market_buy({ trade_state, pair, base_amount })
 
   redis.quit();
 }

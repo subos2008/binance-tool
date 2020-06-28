@@ -147,7 +147,7 @@ export class OrderCreator {
   // TODO: race condition-ish, needs an incr somewhere or we could make quick fire orders with the same ID
   async create_new_order_id(pair: string) {
     this.logger.warn("WARNNG: create_new_order_id only unique by timestamp and pair")
-    return `${Date.now()}:${pair}:incr_me`
+    return `OV1:${Date.now()}:${pair}:incr_me`
   }
 
   // We need to evolve error handling in OrderCreator.market_sell: i.e. balance is too low, MIN_NOTIONAL etc

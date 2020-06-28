@@ -160,7 +160,12 @@ export class OrderCreator {
 
       // Add (to) persistant state 
       const order_state = new OrderState({ logger: this.logger, redis })
-      await trade_state.associate_order_with_trade(orderId)
+
+      if (trade_state) {
+        const trade_definition = await trade_state.get_trade_definition()
+        assert(pair === trade_definition.pair)
+        await trade_state.associate_order_with_trade(orderId)
+      }
       // TODO: I want base_amount surely too?
       await order_state.add_new_order(orderId, { symbol: pair, side: 'SELL', orderType: 'MARKET', base_amount })
 

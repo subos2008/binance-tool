@@ -226,13 +226,37 @@ export class AlgoUtils {
         type: 'MARKET',
         quantity
       };
-      this.logger.info(`Creating MARKET BUY ORDER for ${quantity}`);
+      this.logger.info(`Creating MARKET BUY ORDER for ${quantity} ${pair}`);
       let response = await this.ee.order(args);
       this.logger.info(`order id: ${response.orderId}`);
       return response;
     } catch (error) {
       Sentry.captureException(error)
       async_error_handler(console, `Buy error: ${error.body}`, error);
+    }
+  }
+
+  async create_market_sell_order({ base_amount, pair, orderId }: { base_amount: BigNumber, pair: string, orderId: string | undefined }) {
+    assert(pair);
+    assert(base_amount);
+    assert(BigNumber.isBigNumber(base_amount));
+    try {
+      let quantity = base_amount.toFixed();
+      let args: any = {
+        useServerTime: true,
+        side: 'SELL',
+        symbol: pair,
+        type: 'MARKET',
+        quantity
+      };
+      if (orderId) args.newClientOrderId = orderId
+      this.logger.info(`Creating MARKET SELL ORDER for ${quantity} ${pair}`);
+      let response = await this.ee.order(args);
+      this.logger.info(`Exchange order id: ${response.orderId}, requested ${orderId}`);
+      return response;
+    } catch (error) {
+      Sentry.captureException(error)
+      async_error_handler(console, `Merket sell error: ${error.body}`, error);
     }
   }
 

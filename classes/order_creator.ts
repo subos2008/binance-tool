@@ -22,17 +22,19 @@ BigNumber.prototype.valueOf = function () {
 };
 
 import * as Sentry from '@sentry/node';
+import { RedisClient } from 'redis';
 
 export class OrderCreator {
   logger: Logger
+  redis: RedisClient
   trade_state: TradeState
   algo_utils: AlgoUtils
   exchange_info: any
 
-  constructor(logger: Logger, algo_utils: AlgoUtils, exchange_info: any) {
+  constructor(logger: Logger, redis: RedisClient, algo_utils: AlgoUtils) {
     this.logger = logger
+    this.redis = redis
     this.algo_utils = algo_utils
-    this.exchange_info = exchange_info
   }
 
   // async _create_limit_buy_order() {
@@ -146,12 +148,13 @@ export class OrderCreator {
 
   // TODO: race condition-ish, needs an incr somewhere or we could make quick fire orders with the same ID
   async create_new_order_id(pair: string) {
-    this.logger.warn("WARNNG: create_new_order_id only unique by timestamp and pair")
-    return `OV1:${Date.now()}:${pair}:incr_me`
+    let id = `OV1:${Date.now()}:${pair}:incr_me`
+    this.logger.warn(`WARNNG: create_new_order_id only unique by timestamp and pair: ${id}`)
+    return id
   }
 
   // We need to evolve error handling in OrderCreator.market_sell: i.e. balance is too low, MIN_NOTIONAL etc
-  async market_sell(trade_state: TradeState, pair: string, base_amount: BigNumber) {
+  async market_sell({ trade_state, pair, base_amount }: { trade_state?: TradeState, pair: string, base_amount: BigNumber }) {
     this.logger.warn(`We need to evolve error handling in OrderCreator.market_sell: i.e. balance is too low, MIN_NOTIONAL etc`)
     var orderId: string | undefined;
     try {
@@ -159,14 +162,13 @@ export class OrderCreator {
       base_amount = this._munge_amount_and_check_notionals({ base_amount, pair });
 
       // Add (to) persistant state 
-      const order_state = new OrderState({ logger: this.logger, redis })
+      const order_state = new OrderState({ logger: this.logger, redis: this.redis })
 
       if (trade_state) {
         const trade_definition = await trade_state.get_trade_definition()
         assert(pair === trade_definition.pair)
         await trade_state.associate_order_with_trade(orderId)
       }
-      // TODO: I want base_amount surely too?
       await order_state.add_new_order(orderId, { symbol: pair, side: 'SELL', orderType: 'MARKET', base_amount })
 
       // Submit to exchange, OrderExecutionTracker will take it from here
@@ -179,6 +181,41 @@ export class OrderCreator {
     } catch (error) {
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "market_sell");
+        scope.setTag("pair", pair);
+        if (orderId) scope.setTag("orderId", orderId);
+        Sentry.captureException(error);
+      });
+      throw error
+    }
+  }
+
+  async market_buy({ trade_state, pair, base_amount }: { trade_state?: TradeState, pair: string, base_amount: BigNumber }) {
+    this.logger.warn(`We need to evolve error handling in OrderCreator.market_buy: i.e. balance is too low, MIN_NOTIONAL etc`)
+    var orderId: string | undefined;
+    try {
+      orderId = await this.create_new_order_id(pair)
+      base_amount = this._munge_amount_and_check_notionals({ base_amount, pair });
+
+      // Add (to) persistant state 
+      const order_state = new OrderState({ logger: this.logger, redis: this.redis })
+
+      if (trade_state) {
+        const trade_definition = await trade_state.get_trade_definition()
+        assert(pair === trade_definition.pair)
+        await trade_state.associate_order_with_trade(orderId)
+      }
+      await order_state.add_new_order(orderId, { symbol: pair, side: 'BUY', orderType: 'MARKET', base_amount })
+
+      // Submit to exchange, OrderExecutionTracker will take it from here
+      let response = await this.algo_utils.create_market_buy_order({
+        base_amount,
+        pair,
+        orderId
+      });
+      return response.orderId;
+    } catch (error) {
+      Sentry.withScope(function (scope) {
+        scope.setTag("operation", "market_buy");
         scope.setTag("pair", pair);
         if (orderId) scope.setTag("orderId", orderId);
         Sentry.captureException(error);

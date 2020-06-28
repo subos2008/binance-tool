@@ -98,17 +98,23 @@ export class OrderState {
     return stringToBool(await this.get_redis_key(key));
   }
 
-  async add_new_order(order_id: string, { symbol, side, orderType, orderStatus }: { symbol: string, side: string, orderType: string, orderStatus: string }): Promise<void> {
+  async add_new_order(order_id: string, { symbol, side, orderType, orderStatus, base_amount }: { symbol: string, side: string, orderType: string, orderStatus?: string, base_amount?: BigNumber }): Promise<void> {
     // so... we only add these values if they don't already exist, probably ought to
-    // add them atomically
+    // add them atomically.. aren't all redis operations atomic? But does this do
+    // "all or none" behaviour?
     await this.msetnxAsync(
       this.name_to_key(order_id, "symbol"), symbol,
       this.name_to_key(order_id, "side"), side,
       this.name_to_key(order_id, "orderType"), orderType,
-      this.name_to_key(order_id, "orderStatus"), orderStatus,
+      this.name_to_key(order_id, "orderStatus"), orderStatus || 'NEW',
       this.name_to_key(order_id, "completed"), false,
       this.name_to_key(order_id, "total_executed_quantity"), "0"
     )
+    if (base_amount) {
+      await this.msetnxAsync(
+        this.name_to_key(order_id, "base_amount"), base_amount.toFixed(),
+      )
+    }
   }
 
   async get_state_as_object(order_id: string) {

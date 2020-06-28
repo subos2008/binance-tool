@@ -1,4 +1,4 @@
-import { strict as assert } from 'assert';
+import { strict as assert, throws } from 'assert';
 const utils = require('../lib/utils')
 var util = require('util');
 
@@ -6,9 +6,12 @@ var util = require('util');
 // Improvements:
 //  * Create a RedisOrderState class instead of managing `order_associations:` from TradeState
 //  * We need to evolve error handling here: i.e. balance is too low, MIN_NOTIONAL etc
+//  * this is already getting Binance specific as the redis_order_state matches the Binance
+//    order fields
 
 import { Logger } from "../interfaces/logger";
 import { TradeState } from './persistent_state/redis_trade_state'
+import { OrderState } from './persistent_state/redis_order_state'
 import { AlgoUtils } from "../service_lib/algo_utils"
 
 import BigNumber from "bignumber.js";
@@ -153,10 +156,15 @@ export class OrderCreator {
     var orderId: string | undefined;
     try {
       orderId = await this.create_new_order_id(pair)
-      await trade_state.associate_order_with_trade(orderId)
-
       base_amount = this._munge_amount_and_check_notionals({ base_amount, pair });
 
+      // Add (to) persistant state 
+      const order_state = new OrderState({ logger: this.logger, redis })
+      await trade_state.associate_order_with_trade(orderId)
+      // TODO: I want base_amount surely too?
+      await order_state.add_new_order(orderId, { symbol: pair, side: 'SELL', orderType: 'MARKET', base_amount })
+
+      // Submit to exchange, OrderExecutionTracker will take it from here
       let response = await this.algo_utils.create_market_sell_order({
         base_amount,
         pair,
@@ -167,7 +175,7 @@ export class OrderCreator {
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "market_sell");
         scope.setTag("pair", pair);
-        if(orderId) scope.setTag("orderId", orderId);
+        if (orderId) scope.setTag("orderId", orderId);
         Sentry.captureException(error);
       });
       throw error

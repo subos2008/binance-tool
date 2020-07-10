@@ -8,6 +8,15 @@ import { Logger } from '../interfaces/logger'
 const LoggerClass = require("../lib/faux_logger");
 const logger: Logger = new LoggerClass({ silent: false });
 
+import * as Sentry from '@sentry/node';
+Sentry.init({
+  dsn: "https://5f5398dfd6b0475ea6061cf39bc4ed03@sentry.io/5178400"
+});
+Sentry.configureScope(function (scope: any) {
+  scope.setTag("service", "cli");
+  scope.setTag("cli", "list-orders");
+});
+
 const redis = require("redis").createClient({
   host: process.env.REDIS_HOST,
   password: process.env.REDIS_PASSWORD

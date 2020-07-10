@@ -10,6 +10,15 @@ require("dotenv").config();
 const Logger = require("../lib/faux_logger");
 const logger = new Logger({ silent: false });
 
+import * as Sentry from '@sentry/node';
+Sentry.init({
+  dsn: "https://5f5398dfd6b0475ea6061cf39bc4ed03@sentry.io/5178400"
+});
+Sentry.configureScope(function (scope: any) {
+  scope.setTag("service", "cli");
+  scope.setTag("cli", "create-order");
+});
+
 const { promisify } = require("util");
 
 const yargs = require("yargs");

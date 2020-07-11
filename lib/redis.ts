@@ -39,7 +39,7 @@ function generate_client(logger: Logger): RedisClient {
       return undefined;
     }
     // reconnect after
-    logger.warn('Redis retry strategy called: reconnect after');
+    if (options.attempt > 1) logger.warn('Redis retry strategy called: reconnect after');
     return Math.min(options.attempt * 100, 3000);
   }
 

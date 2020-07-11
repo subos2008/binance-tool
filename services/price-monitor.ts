@@ -57,6 +57,8 @@ import { ExchangeEmulator } from "../lib/exchange_emulator";
 const publisher = new PricePublisher(logger, send_message)
 const redis_trades = new RedisTrades({ logger, redis })
 
+const watchdog = new RedisWatchdog({ logger, redis, watchdog_name: service_name, timeout_seconds })
+
 var first_price_event_recieved = false
 const price_event_callback = (symbol: string, price: string, raw: any) => {
   if(!first_price_event_recieved) {
@@ -154,7 +156,6 @@ async function update_monitors_if_active_pairs_have_changed() {
       }
     }
     currently_monitored_pairs = active_pairs
-    const watchdog = new RedisWatchdog({ logger, redis, watchdog_name: service_name, timeout_seconds })
     monitor = new BinancePriceMonitor(logger, watchdog, send_message, ee, price_event_callback)
     monitor.monitor_pairs(Array.from(active_pairs))
   }

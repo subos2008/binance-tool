@@ -138,6 +138,11 @@ export class TradeExecutor {
     }
   }
 
+  async order_filled_or_partially_filled(orderId: string, { totalTradeQuantity, symbol }: { totalTradeQuantity: string, symbol: string }) {
+    // ignore
+  }
+
+
   async order_filled(orderId: string, { totalTradeQuantity, symbol }: { totalTradeQuantity: string, symbol: string }) {
     const { buyOrderId, stopOrderId, targetOrderId } = await this.trade_state.get_order_ids()
     if (orderId == buyOrderId) {

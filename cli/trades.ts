@@ -90,7 +90,7 @@ async function describe_trade(argv: any) {
 
 async function mark_trade_complete(argv: any) {
   let trade_id = argv['trade-id']
-  let key = `trades:${trade_id}:complete`
+  let key = `trades:${trade_id}:completed`
   let keys: string[] = await keysAsync(key);
   if (keys.length !== 1) {
     throw new Error(`Trade ${trade_id} doesn't appear to exist.`)

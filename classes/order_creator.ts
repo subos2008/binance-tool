@@ -8,6 +8,7 @@ var util = require('util');
 //  * We need to evolve error handling here: i.e. balance is too low, MIN_NOTIONAL etc
 //  * this is already getting Binance specific as the redis_order_state matches the Binance
 //    order fields
+//  * We leave state in redis for aborted (error on creation) orders, we should clean that up
 
 import { Logger } from "../interfaces/logger";
 import { TradeState } from './persistent_state/redis_trade_state'

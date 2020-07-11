@@ -4,6 +4,8 @@ const { promisify } = require("util");
 import { Logger } from '../../interfaces/logger'
 import { RedisClient } from 'redis';
 
+import * as Sentry from '@sentry/node';
+
 export class RedisWatchdog {
   logger: Logger;
   redis: RedisClient;
@@ -60,6 +62,11 @@ export class RedisWatchdog {
     }
     this.timeout_objs[subsystem] = setTimeout(() => {
       console.error(`Watchdog timer ${this.watchdog_name}:${subsystem} expired!`);
+      Sentry.withScope(function (scope: any) {
+        scope.setTag("location", "redis-watchdog-expiry");
+        scope.setTag("watchdog-subsystem", subsystem);
+        Sentry.captureMessage(`Watchdog timer expired`);
+      });
     }, this.timeout_seconds * 1000);
     this.timeout_objs[subsystem].unref() // stop the watchdog from keeping the process alive
   }

@@ -18,14 +18,20 @@ if (protocol !== 'amqps') {
   console.error(`Connection to AMQP Server ${amqp_server} is not using https: ${protocol}`)
 }
 
-export default {
+const port = 5672
+
+const connection_options = {
   // TODO: add SSL: http://www.squaremobius.net/amqp.node/ssl.html
   protocol, // Don't be a fool, encrypt traffic
-  port: 5672,
+  port,
   hostname: amqp_server,
   username: amqp_user,
   password: amqp_password,
   locale: "en_US",
   vhost,
   // ca: splitca("./ca-certificates.crt")
-};
+}
+
+console.log(`AMQP hostname: ${amqp_server} port: ${port} protocol: ${protocol}`)
+
+export default connection_options;

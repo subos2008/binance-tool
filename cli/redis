@@ -4,4 +4,4 @@ source .env
 
 export REDISCLI_AUTH="$REDIS_PASSWORD"
 
-redis-cli -h $REDIS_HOST -n $REDIS_DATABASE_NUMBER
+redis-cli -h $REDIS_HOST -n $REDIS_DATABASE_NUMBER $@

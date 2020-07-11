@@ -213,7 +213,7 @@ export class AlgoUtils {
     }
   }
 
-  async create_market_buy_order({ base_amount, pair, orderId }: { base_amount: BigNumber, pair: string, orderId: string | undefined }) {
+  async create_market_buy_order({ base_amount, pair, orderId }: { base_amount: BigNumber, pair: string, orderId?: string | undefined }) {
     assert(pair);
     assert(base_amount);
     assert(BigNumber.isBigNumber(base_amount));

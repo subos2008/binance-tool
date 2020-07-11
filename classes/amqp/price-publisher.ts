@@ -1,5 +1,7 @@
 const connect_options = require("../../lib/amqp/connect_options").default
 
+const price_data_expiration_seconds = "60"
+
 import { strict as assert } from 'assert';
 import { Logger } from "../../interfaces/logger";
 
@@ -8,7 +10,7 @@ import * as Sentry from '@sentry/node';
 const exchange = 'prices';
 assert(exchange)
 
-import { connect } from "amqplib";
+import { connect, Connection } from "amqplib";
 
 export class PricePublisher {
   logger: Logger
@@ -16,7 +18,7 @@ export class PricePublisher {
   closeTradesWebSocket: (() => void) | null
   ee: any
   price_event_callback: (symbol: string, price: string, raw: any) => void
-  connection: any
+  connection: Connection
   channel: any
 
   constructor(logger: Logger, send_message: (msg: string) => void) {
@@ -42,11 +44,16 @@ export class PricePublisher {
     }
   }
 
-  async publish(event: any, routing_key: string) {
+  async publish(event: any, routing_key: string): Promise<boolean> {
     event.routing_key = routing_key;
     let msg = JSON.stringify(event);
-    this.channel.publish(exchange, routing_key, Buffer.from(msg));
-    // this.logger.info(` [x] Sent event to ${routing_key}`);
+    const options = {
+      expiration: price_data_expiration_seconds,
+      persistent: false,
+      timestamp: Date.now()
+    }
+    const server_full = await this.channel.publish(exchange, routing_key, Buffer.from(msg), options);
+    return server_full
   }
 
   async shutdown_streams() {

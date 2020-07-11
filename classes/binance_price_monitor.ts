@@ -1,22 +1,19 @@
 import { strict as assert } from 'assert';
 import { Logger } from "../interfaces/logger";
-import { Watchdog } from "../interfaces/watchdog";
 
 import * as Sentry from '@sentry/node';
 
 export class BinancePriceMonitor {
   logger: Logger
-  watchdog: Watchdog
   send_message: (msg: string) => void
   closeTradesWebSocket: (() => void) | null
   ee: any
-  price_event_callback: (symbol: string, price: string, raw: any) => void
+  price_event_callback: (symbol: string, price: string, raw: any) => Promise<void>
 
-  constructor(logger: Logger, watchdog: Watchdog, send_message: (msg: string) => void, ee: any,
-    price_event_callback: (symbol: string, price: string, raw: any) => void) {
+  constructor(logger: Logger, send_message: (msg: string) => void, ee: any,
+    price_event_callback: (symbol: string, price: string, raw: any) => Promise<void>) {
 
     this.logger = logger
-    this.watchdog = watchdog
     this.send_message = send_message
     this.ee = ee
     this.price_event_callback = price_event_callback
@@ -40,9 +37,7 @@ export class BinancePriceMonitor {
           assert(symbol);
           assert(string_price);
           // this.logger.info(`${symbol}: ${string_price}`) # spams logging ingestion
-          this.watchdog.reset()
-          this.watchdog.reset_subsystem(symbol)
-          this.price_event_callback(symbol, string_price, trade)
+          await this.price_event_callback(symbol, string_price, trade)
         } catch (error) {
           Sentry.captureException(error);
         }

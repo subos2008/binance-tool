@@ -60,13 +60,20 @@ const redis_trades = new RedisTrades({ logger, redis })
 const watchdog = new RedisWatchdog({ logger, redis, watchdog_name: service_name, timeout_seconds })
 
 var first_price_event_recieved = false
-const price_event_callback = (symbol: string, price: string, raw: any) => {
-  if(!first_price_event_recieved) {
+var first_price_event_published = false
+async function price_event_callback(symbol: string, price: string, raw: any): Promise<void> {
+  if (!first_price_event_recieved) {
     console.log(`Received first price event ${symbol} ${price}.`)
     first_price_event_recieved = true
   }
   let event = { symbol, price, raw }
-  publisher.publish(event, symbol)
+  await publisher.publish(event, symbol)
+  if (!first_price_event_published) {
+    console.log(`Published first price event ${symbol} ${price}.`)
+    first_price_event_published = true
+  }
+  watchdog.reset()
+  watchdog.reset_subsystem(symbol)
 }
 
 var monitor = null;

@@ -4,7 +4,7 @@ require("dotenv").config();
 
 import * as Sentry from '@sentry/node';
 Sentry.init({
-  dsn: "https://5f5398dfd6b0475ea6061cf39bc4ed03@sentry.io/5178400"
+  dsn: "https://ebe019da62da46189b217c476ec1ab62@o369902.ingest.sentry.io/5326470"
 });
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "cli");

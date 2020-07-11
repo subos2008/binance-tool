@@ -88,7 +88,7 @@ spec:
         - name: price-monitor
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/price-monitor.ts"]
+          command: ["./services/price-monitor.ts","--live"]
           volumeMounts:
             - name: pointerdir
               mountPath: /opt/datadog-agent/run

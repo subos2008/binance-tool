@@ -18,12 +18,13 @@ function generate_client(logger: Logger): RedisClient {
       scope.setExtra("options", options);
       // Sentry.captureMessage("In redis_retry_strategy.");
     });
-    logger.warn('Redis retry strategy called:');
-    logger.warn(util.inspect(options));
+    // logger.warn('Redis retry strategy called:');
+    // logger.warn(util.inspect(options));
 
     if (options.error && options.error.code === "ECONNREFUSED") {
       // End reconnecting on a specific error and flush all commands with
       // a individual error
+      Sentry.captureMessage("In redis_retry_strategy: The server refused the connection");
       return new Error("The server refused the connection");
     }
     if (options.total_retry_time > 1000 * 60 * 60) {

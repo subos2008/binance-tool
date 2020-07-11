@@ -2,6 +2,8 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 import { strict as assert } from 'assert';
+const service_name = "price-monitor";
+const timeout_seconds = Number(process.env.WATCHDOG_TIMEOUT_SECONDS || "3600")
 
 const _ = require("lodash");
 
@@ -14,7 +16,7 @@ assert(process.env.REDIS_HOST)
 import * as Sentry from '@sentry/node';
 Sentry.init({});
 Sentry.configureScope(function (scope: any) {
-  scope.setTag("service", "price-monitor");
+  scope.setTag("service", service_name);
 });
 
 // redis + events + binance
@@ -49,12 +51,18 @@ import { BinancePriceMonitor } from "../classes/binance_price_monitor";
 import { PricePublisher } from "../classes/amqp/price-publisher";
 import { RedisTrades } from "../classes/persistent_state/redis_trades";
 import { TradeState } from "../classes/persistent_state/redis_trade_state";
+import { RedisWatchdog } from "../classes/persistent_state/redis_watchdog";
 import { ExchangeEmulator } from "../lib/exchange_emulator";
 
 const publisher = new PricePublisher(logger, send_message)
 const redis_trades = new RedisTrades({ logger, redis })
 
+var first_price_event_recieved = false
 const price_event_callback = (symbol: string, price: string, raw: any) => {
+  if(!first_price_event_recieved) {
+    console.log(`Received first price event ${symbol} ${price}.`)
+    first_price_event_recieved = true
+  }
   let event = { symbol, price, raw }
   publisher.publish(event, symbol)
 }
@@ -67,7 +75,7 @@ var { argv } = require("yargs")
   // '--live'
   .boolean("live")
   .describe("live", "Trade with real money")
-  .default("live", false);
+  .default("live", true);
 let { live } = argv;
 
 var ee: Object;
@@ -146,7 +154,8 @@ async function update_monitors_if_active_pairs_have_changed() {
       }
     }
     currently_monitored_pairs = active_pairs
-    monitor = new BinancePriceMonitor(logger, send_message, ee, price_event_callback)
+    const watchdog = new RedisWatchdog({ logger, redis, watchdog_name: service_name, timeout_seconds })
+    monitor = new BinancePriceMonitor(logger, watchdog, send_message, ee, price_event_callback)
     monitor.monitor_pairs(Array.from(active_pairs))
   }
 }

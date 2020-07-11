@@ -163,7 +163,7 @@ async function update_monitors_if_active_pairs_have_changed() {
       }
     }
     currently_monitored_pairs = active_pairs
-    monitor = new BinancePriceMonitor(logger, watchdog, send_message, ee, price_event_callback)
+    monitor = new BinancePriceMonitor(logger, send_message, ee, price_event_callback)
     monitor.monitor_pairs(Array.from(active_pairs))
   }
 }

@@ -8,9 +8,7 @@ import * as Sentry from '@sentry/node';
 const exchange = 'prices';
 assert(exchange)
 
-const amqp = require("amqplib/callback_api");
-const { promisify } = require("util");
-const connect = promisify(amqp.connect).bind(amqp);
+import { connect } from "amqplib";
 
 export class PricePublisher {
   logger: Logger
@@ -31,8 +29,7 @@ export class PricePublisher {
       // this.logger.info(`AMQP connect options:`)
       // this.logger.info(connect_options)
       this.connection = await connect(connect_options)
-      const createChannel = promisify(this.connection.createChannel).bind(this.connection);
-      this.channel = await createChannel()
+      this.channel = await this.connection.createChannel()
       this.channel.assertExchange(exchange, "topic", {
         durable: false
       });

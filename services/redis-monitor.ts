@@ -29,6 +29,16 @@ const redis = require("redis").createClient({
   password: process.env.REDIS_PASSWORD
 });
 
+redis.on('error', function (err: any) {
+  logger.warn('Redis.on errror handler called');
+  console.error(err.stack);
+  console.error(err);
+  Sentry.withScope(function (scope: any) {
+    scope.setTag("location", "redis-global-error-handler");
+    Sentry.captureException(err);
+  });
+});
+
 const { promisify } = require("util");
 const incrAsync = promisify(redis.incr).bind(redis);
 

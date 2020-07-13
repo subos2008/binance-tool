@@ -6,10 +6,11 @@ import { strict as assert } from 'assert';
 require("dotenv").config();
 assert(process.env.REDIS_HOST)
 // assert(process.env.REDIS_PASSWORD)
+const connection_check_interval_seconds: number = Number(process.env.CONNECTION_TEST_INTERVAL_SECONDS) || 60
 
 import * as Sentry from '@sentry/node';
 Sentry.init({});
-Sentry.configureScope(function(scope:any) {
+Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "redis-monitor");
 });
 
@@ -40,15 +41,10 @@ function ping() {
     })
 }
 
-function inspect_price_monitor() {
-
-}
-
 async function main() {
   const execSync = require("child_process").execSync;
   execSync("date -u");
-  setInterval(ping, 1000*60); // note enabling this debug line will delay exit until it executes
-  setInterval(inspect_price_monitor, 1000*60); // note enabling this debug line will delay exit until it executes
+  setInterval(ping, connection_check_interval_seconds * 1000); // note enabling this debug line will delay exit until it executes
 }
 
 // TODO: exceptions / sentry

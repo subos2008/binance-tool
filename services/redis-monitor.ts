@@ -34,8 +34,9 @@ const incrAsync = promisify(redis.incr).bind(redis);
 
 function ping() {
   incrAsync("redis-monitor:incr")
-    .then((res : any) => { logger.info(`OK: ${res}`) })
-    .catch((err:any) => {
+    .then((res: any) => { logger.info(`OK: ${res}`) })
+    .catch((err: any) => {
+      console.error(`Exception when checking redis connection with incr`)
       logger.error(err)
       Sentry.captureException(err)
     })

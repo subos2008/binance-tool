@@ -21,6 +21,8 @@ const logger: Logger = new LoggerClass({ silent: false });
 
 send_message('starting')
 
+require('make-promises-safe') // installs an 'unhandledRejection' handler
+
 const redis = require("redis").createClient({
   host: process.env.REDIS_HOST,
   password: process.env.REDIS_PASSWORD

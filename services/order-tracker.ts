@@ -35,7 +35,9 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
-send_message('restarted.')
+send_message('starting.')
+
+require('make-promises-safe') // installs an 'unhandledRejection' handler
 
 import { get_redis_client, set_redis_logger } from "../lib/redis"
 set_redis_logger(logger)

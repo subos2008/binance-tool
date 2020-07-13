@@ -42,6 +42,8 @@ BigNumber.prototype.valueOf = function () {
 logger.warn(`TODO: don't die if redis isn't accessible`)
 send_message('starting')
 
+require('make-promises-safe') // installs an 'unhandledRejection' handler
+
 import { get_redis_client, set_redis_logger } from "../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()

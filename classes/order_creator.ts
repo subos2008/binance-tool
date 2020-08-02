@@ -149,7 +149,9 @@ export class OrderCreator {
 
   // TODO: race condition-ish, needs an incr somewhere or we could make quick fire orders with the same ID
   async create_new_order_id(pair: string) {
-    let id = `OV1-${Date.now()}-${pair}-incr_me`
+    // OV1 => Order ID Version
+    // -B- => Binance
+    let id = `OV1-B-${Date.now()}-${pair}-incr_me`
     assert(id.match(/^[a-zA-Z0-9-_]{1,36}$/), `Generated custom orderId is invalid: ${id}`)
     this.logger.warn(`WARNNG: create_new_order_id only unique by timestamp and pair: ${id}`)
     return id

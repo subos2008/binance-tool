@@ -22,6 +22,12 @@ const getAsync = promisify(redis.get).bind(redis);
 const hgetallAsync = promisify(redis.hgetall).bind(redis);
 const setAsync = promisify(redis.set).bind(redis);
 
+import { BigNumber } from "bignumber.js";
+BigNumber.DEBUG = true; // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function () {
+  throw Error("BigNumber .valueOf called!");
+};
 
 const yargs = require("yargs");
 
@@ -119,8 +125,8 @@ async function list_trades(argv: any) {
     if (foo["auto_size"]) flags.push("auto_size");
     console.log(
       `${completed ? " " : "A"} Trade ${trade_id}: ${foo.pair}: ${
-      foo.stop_price
-      } ${foo.buy_price} ${foo.target_price} ${flags.join(" ")} ${position || ""}`
+      (new BigNumber(foo.stop_price)).toFixed(8)
+      } ${(new BigNumber(foo.buy_price)).toFixed(8)} ${(new BigNumber(foo.target_price)).toFixed(8)} ${flags.join(" ")} ${position || ""}`
     );
   }
   redis.quit();

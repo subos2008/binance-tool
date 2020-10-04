@@ -63,6 +63,17 @@ async function main() {
       },
       mark_trade_complete
     )
+    .command("incomplete", "mark trade as NOT complete",
+      {
+        'trade-id': {
+          description: "trade id",
+          type: "string",
+          demandOption: true,
+          choices: (await sorted_trade_ids()).map((n: number) => n.toString()),
+        },
+      },
+      mark_trade_incomplete
+    )
     .command(["list", "$0"], "list all trades",
       {
         'active': { description: "only list active trades", type: "boolean", },
@@ -102,6 +113,21 @@ async function mark_trade_complete(argv: any) {
     throw new Error(`Trade ${trade_id} doesn't appear to exist.`)
   }
   const ret = await setAsync(key, true)
+  if (ret !== 'OK') {
+    throw new Error(`Redis error: failed to set key ${key}: ${ret}`)
+  }
+  console.log(`Done.`)
+  redis.quit();
+}
+
+async function mark_trade_incomplete(argv: any) {
+  let trade_id = argv['trade-id']
+  let key = `trades:${trade_id}:completed`
+  let keys: string[] = await keysAsync(key);
+  if (keys.length !== 1) {
+    throw new Error(`Trade ${trade_id} doesn't appear to exist.`)
+  }
+  const ret = await setAsync(key, false)
   if (ret !== 'OK') {
     throw new Error(`Redis error: failed to set key ${key}: ${ret}`)
   }

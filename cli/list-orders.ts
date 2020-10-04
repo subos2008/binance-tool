@@ -37,8 +37,14 @@ async function main() {
   // console.log(keys);
   for (const key of keys) {
     const completed = (await getAsync(key)) === "true";
-    const order_id = key.match(/orders:(\d+):completed/)[1];
-    await order_state.print(order_id)
+    let regex_result = key.match(/orders:([^:]+):completed/)
+    try {
+      const order_id = regex_result[1];
+      await order_state.print(order_id)
+    } catch (e) {
+      logger.error(e)
+      logger.error(`Error decompising order id from redis key: ${key}`)
+    }
   }
   redis.quit();
 }

@@ -163,12 +163,20 @@ export class TradeExecutor {
   }
 
   async order_cancelled(orderId: string, data: BinanceOrderData) {
-    const order_ids = Object.values(await this.trade_state.get_order_ids())
-    if (order_ids.includes(orderId)) {
+    // Get the key so we can cancel the order
+    function getKeyByValue(object: any, value: string) {
+      return Object.keys(object).find(key => object[key] === value);
+    }
+
+    const order_key = getKeyByValue(await this.trade_state.get_order_ids(), orderId)
+
+    if (order_key) {
       if (data.orderRejectReason === "NONE") {
         // Assume user cancelled order and exit - when the engine cancels orders it clears redis first
-        console.log(`Order ${orderId} was cancelled (assuming by user)`)
+        this.logger.warn(`Order ${orderId} was cancelled (assuming by user)`)
         console.log(data)
+        await this.trade_state.set_order_id_by_name({ key: order_key, orderId: undefined })
+        // TODO: await?
         this.send_message(`Order ${orderId} an open order was cancelled by user`);
         this.execution_complete(`Order was cancelled, presuming by user and exiting.`)
       }

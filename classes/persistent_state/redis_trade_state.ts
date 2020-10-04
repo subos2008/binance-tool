@@ -308,6 +308,18 @@ export class TradeState {
     }
   }
 
+  async set_order_id_by_name({ key, orderId }: { key: string, orderId: string | undefined }) {
+    if (key == 'buyOrderId') {
+      await this.set_buyOrderId(orderId)
+    } else if (key == 'stopOrderId') {
+      await this.set_stopOrderId(orderId)
+    } else if (key == 'targetOrderId') {
+      await this.set_targetOrderId(orderId)
+    } else {
+      throw new Error(`unknown key in set_order_id_by_name ${key}`)
+    }
+  }
+
   // A v2 of the interface developed while creating tests
   // chosen because they are very readable in the tests and could also allow us 
   // to store more semantic data in the state if we choose later

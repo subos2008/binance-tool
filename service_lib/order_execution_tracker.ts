@@ -68,6 +68,7 @@ export class OrderExecutionTracker {
     this.closeUserWebsocket = await this.ee.ws.user(async (data: any) => {
       try {
         const { orderId, eventType } = data;
+        this.logger.debug(data)
         if (eventType !== "executionReport") {
           return;
         }

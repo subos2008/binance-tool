@@ -21,6 +21,7 @@ class FauxLogger {
   }
   debug(args: string) {
     if (!this.silent) {
+      if (process.env.LOG_LEVEL && process.env.LOG_LEVEL !== 'DEBUG') return
       console.log(args);
     }
   }

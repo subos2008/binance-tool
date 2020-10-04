@@ -132,8 +132,8 @@ export class TradeExecutor {
       );
       return { quote_volume, base_amount };
     } catch (error) {
-                Sentry.captureException(error);
-                async_error_handler(this.logger, `sizing position`, error);
+      Sentry.captureException(error);
+      async_error_handler(this.logger, `sizing position`, error);
       throw error
     }
   }
@@ -163,15 +163,18 @@ export class TradeExecutor {
   }
 
   async order_cancelled(orderId: string, data: BinanceOrderData) {
-    if (data.orderRejectReason === "NONE") {
-      // Assume user cancelled order and exit
-      console.log(`Order ${orderId} was cancelled maybe by user or by engine, taking no action`)
-      console.log(data)
-      this.send_message(`Order ${orderId} an open order was cancelled by user`);
-      this.execution_complete(`Order was cancelled, presumably by user. Exiting.`)
-    }
-    else {
-      throw new Error(`Order #${orderId} cancelled for unknown reason: ${data.orderRejectReason}`)
+    const order_ids = Object.values(await this.trade_state.get_order_ids())
+    if (order_ids.includes(orderId)) {
+      if (data.orderRejectReason === "NONE") {
+        // Assume user cancelled order and exit - when the engine cancels orders it clears redis first
+        console.log(`Order ${orderId} was cancelled (assuming by user)`)
+        console.log(data)
+        this.send_message(`Order ${orderId} an open order was cancelled by user`);
+        this.execution_complete(`Order was cancelled, presuming by user and exiting.`)
+      }
+      else {
+        throw new Error(`Order #${orderId} cancelled for unknown reason: ${data.orderRejectReason}`)
+      }
     }
   }
 
@@ -181,6 +184,8 @@ export class TradeExecutor {
     this.send_message(`ExecutionComplete exit code ${exit_code}`);
     if (exit_code) process.exitCode = exit_code;
     this.shutdown_streams();
+    this.logger.info(`For this to work we need to close the redis and any other streams too, so exiting explicitly after a timeout`);
+    setTimeout(() => process.exit(), 3000)
   }
 
   async main() {

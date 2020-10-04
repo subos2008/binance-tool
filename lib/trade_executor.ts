@@ -167,10 +167,8 @@ export class TradeExecutor {
       // Assume user cancelled order and exit
       console.log(`Order ${orderId} was cancelled maybe by user or by engine, taking no action`)
       console.log(data)
-      // this.execution_complete(
-      //   `Order was cancelled, presumably by user. Exiting.`,
-      //   1
-      // )
+      this.send_message(`Order ${orderId} an open order was cancelled by user`);
+      this.execution_complete(`Order was cancelled, presumably by user. Exiting.`)
     }
     else {
       throw new Error(`Order #${orderId} cancelled for unknown reason: ${data.orderRejectReason}`)
@@ -180,6 +178,7 @@ export class TradeExecutor {
   execution_complete(msg: string, exit_code = 0) {
     this.logger.info(`ExecutionComplete: ${msg}`);
     this.trade_state.set_trade_completed(true);
+    this.send_message(`ExecutionComplete exit code ${exit_code}`);
     if (exit_code) process.exitCode = exit_code;
     this.shutdown_streams();
   }

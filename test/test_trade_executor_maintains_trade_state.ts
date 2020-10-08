@@ -160,6 +160,19 @@ describe("TradeExecutor Maintains TradeState", function () {
           await ee.set_current_price({ symbol: default_pair, price: new BigNumber(buy_price) });
           expect(await trade_state.get_buying_allowed()).to.be.false
         })
+        describe("And the order is cancelled on the exchange", function () {
+          it('Unsets the stopOrderId', async function () {
+            let { trade_state, ee } = await setup()
+            await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
+            await ee.set_current_price({ symbol: default_pair, price: new BigNumber(buy_price) });
+            const orderId = await trade_state.get_stopOrderId()
+            expect(orderId, "expected stopOrderId to be set").not.to.be.undefined
+            if(orderId) {
+              await ee.cancelOrder({ symbol: default_pair, orderId})
+              expect(await trade_state.get_stopOrderId(), "expected stopOrderId to be undefined").to.be.undefined
+            }
+          })
+        })
       })
       describe("When soft_entry is false", function () {
         it("base_amount_held is zero", async function () {

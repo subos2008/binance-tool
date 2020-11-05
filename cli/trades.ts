@@ -152,7 +152,7 @@ async function list_trades(argv: any) {
     console.log(
       `${completed ? " " : "A"} Trade ${trade_id}: ${foo.pair}: ${
       (new BigNumber(foo.stop_price)).toFixed(8)
-      } ${(new BigNumber(foo.buy_price)).toFixed(8)} ${(new BigNumber(foo.target_price)).toFixed(8)} ${flags.join(" ")} ${position || ""}`
+      } ${(new BigNumber(foo.buy_price)).toFixed(8)} ${foo.target_price ? (new BigNumber(foo.target_price)).toFixed(8) : '-'} ${flags.join(" ")} ${position || ""}`
     );
   }
   redis.quit();

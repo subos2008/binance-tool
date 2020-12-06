@@ -392,9 +392,19 @@ export async function create_new_trade(params: CreateTradeParams): Promise<strin
 
   logger.info(inspect(trade_definition));
 
-  let obj = trade_definition.serialised_to_simple_object() as any
+  let obj = trade_definition.serialised_to_simple_object() as TradeDefinitionInputSpec
   obj = _.pickBy(obj, (value: any, key: string) => value !== undefined)
-  let array = (Object.entries(obj) as any).flat()
+  let array = null;
+  let entries : Array<any> = Object.entries(obj)
+  try {
+    array = entries.flat()
+  } catch (err) {
+    console.error('If you get errors here you probably are using an old version of node')
+    console.error(err)
+    console.log(obj)
+    console.log(array)
+    throw err
+  }
   let ret = await hmsetAsync(name_to_key(trade_id, Name.trade_definition), array);
   if (ret !== "OK") throw new Error(`Failed to save trade to redis`)
 

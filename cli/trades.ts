@@ -151,8 +151,8 @@ async function list_trades(argv: any) {
     if (foo["auto_size"]) flags.push("auto_size");
     console.log(
       `${completed ? " " : "A"} Trade ${trade_id}: ${foo.pair}: ${
-      (new BigNumber(foo.stop_price)).toFixed(8)
-      } ${(new BigNumber(foo.buy_price)).toFixed(8)} ${foo.target_price ? (new BigNumber(foo.target_price)).toFixed(8) : '-'} ${flags.join(" ")} ${position || ""}`
+        foo.stop_price ? (new BigNumber(foo.stop_price)).toFixed(8) : "(none)"
+      } ${foo.buy_price ? (new BigNumber(foo.buy_price)).toFixed(8) : "(none)"} ${foo.target_price ? (new BigNumber(foo.target_price)).toFixed(8) : '-'} ${flags.join(" ")} ${position || ""}`
     );
   }
   redis.quit();

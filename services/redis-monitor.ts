@@ -55,7 +55,7 @@ function ping() {
 async function main() {
   const execSync = require("child_process").execSync;
   execSync("date -u");
-  setInterval(ping, connection_check_interval_seconds * 1000); // note enabling this debug line will delay exit until it executes
+  setInterval(ping, connection_check_interval_seconds * 1000);
 }
 
 // TODO: exceptions / sentry

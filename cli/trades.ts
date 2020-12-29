@@ -11,10 +11,13 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("cli", "trades");
 });
 
-const redis = require("redis").createClient({
-  host: process.env.REDIS_HOST,
-  password: process.env.REDIS_PASSWORD
-});
+import { Logger } from '../interfaces/logger'
+const LoggerClass = require("../lib/faux_logger");
+const logger: Logger = new LoggerClass({ silent: false });
+
+import { get_redis_client, set_redis_logger } from "../lib/redis"
+set_redis_logger(logger)
+const redis = get_redis_client()
 
 const { promisify } = require("util");
 const keysAsync = promisify(redis.keys).bind(redis);
@@ -31,9 +34,11 @@ BigNumber.prototype.valueOf = function () {
 
 const yargs = require("yargs");
 
+import { RedisTrades } from "../classes/persistent_state/redis_trades";
+const redis_trades = new RedisTrades({ logger, redis })
+
 async function sorted_trade_ids() {
-  const keys = await keysAsync("trades:*:completed");
-  return keys.map((key: any) => parseInt(key.match(/:(\d+):/)[1])).sort((a: any, b: any) => a - b)
+  return await redis_trades.sorted_trade_ids()
 }
 
 async function main() {

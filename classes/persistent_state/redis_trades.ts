@@ -38,7 +38,7 @@ export class RedisTrades {
     return trade_ids
   }
 
-  async get_active_order_ids() {
+  async get_active_trade_ids() {
     let trade_ids = await this.sorted_trade_ids()
     const result: string[] = []
     for (const trade_id of trade_ids) {

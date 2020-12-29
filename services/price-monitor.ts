@@ -126,7 +126,7 @@ async function main() {
 
 
 async function get_active_pairs() {
-  let trade_ids = await redis_trades.get_active_order_ids()
+  let trade_ids = await redis_trades.get_active_trade_ids()
   let pairs: string[] = []
   for (const trade_id of trade_ids) {
     try {

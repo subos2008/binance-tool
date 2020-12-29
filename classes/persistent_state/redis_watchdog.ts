@@ -65,8 +65,9 @@ export class RedisWatchdog {
       Sentry.withScope(function (scope: any) {
         scope.setTag("location", "redis-watchdog-expiry");
         scope.setTag("watchdog-subsystem", subsystem);
-        Sentry.captureMessage(`Watchdog timer expired`);
+        Sentry.captureMessage(`Watchdog timer ${this.watchdog_name}:${subsystem} expired!`);
       });
+      throw new Error(`Watchdog timer ${this.watchdog_name}:${subsystem} expired!`)
     }, this.timeout_seconds * 1000);
     this.timeout_objs[subsystem].unref() // stop the watchdog from keeping the process alive
   }

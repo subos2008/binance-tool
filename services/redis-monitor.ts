@@ -7,6 +7,7 @@ require("dotenv").config();
 assert(process.env.REDIS_HOST)
 // assert(process.env.REDIS_PASSWORD)
 const connection_check_interval_seconds: number = Number(process.env.CONNECTION_TEST_INTERVAL_SECONDS) || 60
+const check_positions_interval_seconds: number = Number(process.env.CHECK_POSITIONS_INTERVAL_SECONDS) || 300
 
 import * as Sentry from '@sentry/node';
 Sentry.init({});
@@ -41,8 +42,12 @@ function ping() {
     })
 }
 
+const redis_trades = new RedisTrades({ logger, redis })
+
 function check_positions() {
   // Get all active trades
+  let trade_ids = await redis_trades.get_active_trade_ids()
+
   // determine if we expect them to have a position or not - based on prices
   // alert if:
   // 1. no price stored
@@ -56,6 +61,7 @@ async function main() {
   const execSync = require("child_process").execSync;
   execSync("date -u");
   setInterval(ping, connection_check_interval_seconds * 1000);
+  setInterval(check_positions, check_positions_interval_seconds * 1000);
 }
 
 // TODO: exceptions / sentry

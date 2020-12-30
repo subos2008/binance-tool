@@ -24,20 +24,9 @@ send_message('starting')
 
 require('make-promises-safe') // installs an 'unhandledRejection' handler
 
-const redis = require("redis").createClient({
-  host: process.env.REDIS_HOST,
-  password: process.env.REDIS_PASSWORD
-});
-
-redis.on('error', function (err: any) {
-  logger.warn('Redis.on errror handler called');
-  console.error(err.stack);
-  console.error(err);
-  Sentry.withScope(function (scope: any) {
-    scope.setTag("location", "redis-global-error-handler");
-    Sentry.captureException(err);
-  });
-});
+import { get_redis_client, set_redis_logger } from "../lib/redis"
+set_redis_logger(logger)
+const redis = get_redis_client()
 
 const { promisify } = require("util");
 const incrAsync = promisify(redis.incr).bind(redis);
@@ -50,6 +39,17 @@ function ping() {
       logger.error(err)
       Sentry.captureException(err)
     })
+}
+
+function check_positions() {
+  // Get all active trades
+  // determine if we expect them to have a position or not - based on prices
+  // alert if:
+  // 1. no price stored
+  // 2. not in position when we should be
+  // 3. visa versa
+
+  // Need: list of active trades and prices for their coins
 }
 
 async function main() {

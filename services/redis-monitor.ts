@@ -42,6 +42,7 @@ function ping() {
     })
 }
 
+import { RedisTrades } from "../classes/persistent_state/redis_trades";
 const redis_trades = new RedisTrades({ logger, redis })
 
 function check_positions() {

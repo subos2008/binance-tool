@@ -78,6 +78,7 @@ spec:
         binance-tool/service: "price-monitor"
       annotations:
         ad.datadoghq.com/tags: '{"service": "price-monitor"}'
+        # c.f. https://docs.datadoghq.com/agent/kubernetes/?tab=helm
         # c.f. https://docs.datadoghq.com/agent/logs/advanced_log_collection/?tab=kubernetes#scrub-sensitive-data-from-your-logs
         ad.datadoghq.com/price-monitor.logs: >-
           [{

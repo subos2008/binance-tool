@@ -52,12 +52,14 @@ const Binance = require("binance-api-node").default;
 import { BinancePriceMonitor } from "../classes/binance_price_monitor";
 import { PricePublisher } from "../classes/amqp/price-publisher";
 import { RedisTrades } from "../classes/persistent_state/redis_trades";
+import { SymbolPrices } from "../classes/persistent_state/redis_symbol_prices";
 import { TradeState } from "../classes/persistent_state/redis_trade_state";
 import { RedisWatchdog } from "../classes/persistent_state/redis_watchdog";
 import { ExchangeEmulator } from "../lib/exchange_emulator";
 
 const publisher = new PricePublisher(logger, send_message)
 const redis_trades = new RedisTrades({ logger, redis })
+const symbol_prices = new SymbolPrices({ logger, redis, exchange_name: 'binance', seconds: 5 * 60 })
 
 const watchdog = new RedisWatchdog({ logger, redis, watchdog_name: service_name, timeout_seconds })
 
@@ -70,6 +72,13 @@ async function price_event_callback(symbol: string, price: string, raw: any): Pr
   }
   let event = { symbol, price, raw }
   await publisher.publish(event, symbol)
+  try {
+    await symbol_prices.set_price(symbol, new BigNumber(price))
+  } catch (err) {
+    Sentry.captureException(err)
+    logger.error(`Failed to set price in redis for ${symbol}`)
+    logger.error(err)
+  }
   if (!first_price_event_published) {
     console.log(`Published first price event ${symbol} ${price}.`)
     first_price_event_published = true

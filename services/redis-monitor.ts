@@ -37,7 +37,7 @@ const incrAsync = promisify(redis.incr).bind(redis);
 
 function ping() {
   incrAsync("redis-monitor:incr")
-    .then((res: any) => { logger.info(`OK: ${res}`) })
+    .then((res: any) => { logger.info(`Connection Check: OK (${res})`) })
     .catch((err: any) => {
       console.error(`Exception when checking redis connection with incr`)
       logger.error(err)
@@ -52,6 +52,7 @@ async function check_positions() : Promise<void> {
   // Get all active trades
   let trade_ids = await redis_trades.get_active_trade_ids()
 
+  let prices_available_check_ok = true
   for (const trade_id of trade_ids) {
     try {
       let trade_state = new TradeState({ logger, redis, trade_id })
@@ -63,8 +64,8 @@ async function check_positions() : Promise<void> {
       // 3. visa versa
       let symbol = trade_definition.pair
       let current_price = await symbol_prices.get_price(symbol)
-      console.log(`${trade_id} price ${current_price?.toFixed()}`)
       if ( typeof current_price == 'undefined' ){
+        prices_available_check_ok = false
         throw new Error(`Symbol ${symbol} has no price in redis but has active trade_id ${trade_id}`)
       }
 
@@ -75,6 +76,11 @@ async function check_positions() : Promise<void> {
     }
   }
 
+  if(prices_available_check_ok) {
+    console.info(`Prices in Redis Check: OK`)
+  } else {
+    console.error(`Prices in Redis Check: FAILED`)
+  }
 }
 
 async function main() {

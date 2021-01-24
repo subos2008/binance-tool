@@ -28,6 +28,9 @@ require('make-promises-safe') // installs an 'unhandledRejection' handler
 import { get_redis_client, set_redis_logger } from "../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()
+import { TradeState } from '../classes/persistent_state/redis_trade_state'
+import { SymbolPrices } from "../classes/persistent_state/redis_symbol_prices";
+const symbol_prices = new SymbolPrices({ logger, redis, exchange_name: 'binance', seconds: 5 * 60 })
 
 const { promisify } = require("util");
 const incrAsync = promisify(redis.incr).bind(redis);
@@ -45,17 +48,33 @@ function ping() {
 import { RedisTrades } from "../classes/persistent_state/redis_trades";
 const redis_trades = new RedisTrades({ logger, redis })
 
-function check_positions() {
+async function check_positions() : Promise<void> {
   // Get all active trades
   let trade_ids = await redis_trades.get_active_trade_ids()
 
-  // determine if we expect them to have a position or not - based on prices
-  // alert if:
-  // 1. no price stored
-  // 2. not in position when we should be
-  // 3. visa versa
+  for (const trade_id of trade_ids) {
+    try {
+      let trade_state = new TradeState({ logger, redis, trade_id })
+      let trade_definition = await trade_state.get_trade_definition()
+      // determine if we expect them to have a position or not - based on prices
+      // alert if:
+      // 1. no price stored
+      // 2. not in position when we should be
+      // 3. visa versa
+      let symbol = trade_definition.pair
+      let current_price = await symbol_prices.get_price(symbol)
+      console.log(`${trade_id} price ${current_price?.toFixed()}`)
+      if ( typeof current_price == 'undefined' ){
+        throw new Error(`Symbol ${symbol} has no price in redis but has active trade_id ${trade_id}`)
+      }
 
-  // Need: list of active trades and prices for their coins
+    } catch (err) {
+      Sentry.captureException(err)
+      logger.error(`Failed to create TradeDefinition for trade ${trade_id}`)
+      logger.error(err)
+    }
+  }
+
 }
 
 async function main() {

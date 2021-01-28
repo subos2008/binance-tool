@@ -42,7 +42,7 @@ export class TradeOrderCreator {
     // This prevents us from spamming the API checking portfolio size
     if (!this.trade_definition.munged.buy_price) throw new Error(`placeBuyOrder called when this.trade_definition.munged.buy_price is not set`)
     if (await this.trade_state.get_buying_allowed() !== true) {
-      this.logger.info(`Not allowed to buy, skipping request to placeBuyOrder`)
+      this.logger.warn(`Not allowed to buy, skipping request to placeBuyOrder`)
       return null
     }
     let orderId = await this._create_limit_buy_order()
@@ -109,11 +109,13 @@ export class TradeOrderCreator {
       let price = this.trade_definition.munged.buy_price;
       if (!price) throw new Error(`_create_limit_buy_order called when trade_definition.munged.buy_price is null`)
       let { base_amount } = await this.mummy.size_position();
+      this.logger.info(`Sized position base_amount: ${base_amount.toFixed()}`);
       base_amount = this._munge_amount_and_check_notionals({
         base_amount,
         price
       });
-      this.trade_state.set_target_base_amount_to_buy(base_amount)
+      this.logger.info(`Sized position base_amount (munged): ${base_amount.toFixed()}`);
+      await this.trade_state.set_target_base_amount_to_buy(base_amount)
       this.logger.info(`base_amount: ${base_amount.toFixed()}`);
       let response = await this.algo_utils.create_limit_buy_order({
         pair: this.trade_definition.pair,

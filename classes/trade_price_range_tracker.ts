@@ -86,6 +86,8 @@ export class TradePriceRangeTracker {
                 `${symbol} soft entry buy order trigger price hit`
               );
               await this.trade_order_creator.placeBuyOrder()
+              let tmp = await this.trade_state.get_buyOrderId()
+              this.send_message(`Returned from placeBuyOrder, id is ${tmp}`);
             }
           } else if (await this.trade_state.get_buyOrderId()) {
             // this.logger.info(`${symbol} trade update. price: ${price} buy: ${this.buy_price}`);
@@ -146,11 +148,6 @@ export class TradePriceRangeTracker {
                 );
               } catch (error) {
                 Sentry.captureException(error);
-                // async_error_handler(
-                //   this.logger,
-                //   `error placing order: ${error.body}`,
-                //   error
-                // );
                 throw error
               }
             } else if (
@@ -177,17 +174,14 @@ export class TradePriceRangeTracker {
                 );
               } catch (error) {
                 Sentry.captureException(error);
-                // async_error_handler(
-                //   this.logger,
-                //   `error placing order: ${error.body}`,
-                //   error
-                // );
                 throw error
               }
             }
           }
         } catch (error) {
           Sentry.captureException(error);
+          this.logger.error(`Top level error encountered in TradePriceRangeTracker`);
+          this.logger.error(`Top level error: ${error}`);
         }
       }
     );

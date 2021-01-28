@@ -125,7 +125,6 @@ export class TradeOrderCreator {
       return response.orderId;
     } catch (error) {
       Sentry.captureException(error);
-      // async_error_handler(this.logger, `Buy error: ${error.body}`, error);
       throw error
     }
   }

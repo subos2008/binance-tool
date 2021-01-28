@@ -570,4 +570,5 @@ describe("TradeExecutor", function () {
     "adds more capital to a trade if capital becomes available while still in the buy-stop zone"
   );
   it("exits without trading if percentages is passed");
+  it("completes a trade if the target price is hit with no position");
 });

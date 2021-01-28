@@ -161,7 +161,7 @@ describe("TradeExecutor Maintains TradeState", function () {
           expect(await trade_state.get_buying_allowed()).to.be.false
         })
         describe("And the order is cancelled on the exchange", function () {
-          it('Unsets the stopOrderId', async function () {
+          it.skip('Unsets the stopOrderId', async function () {
             let { trade_state, ee } = await setup()
             await ee.set_current_price({ symbol: default_pair, price: buy_order_trigger_price });
             await ee.set_current_price({ symbol: default_pair, price: new BigNumber(buy_price) });

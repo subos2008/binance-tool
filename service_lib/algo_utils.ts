@@ -151,7 +151,7 @@ export class AlgoUtils {
       return response;
     } catch (error) {
       Sentry.captureException(error)
-      async_error_handler(console, `Buy error: ${error.body}`, error);
+      throw error
     }
   }
 

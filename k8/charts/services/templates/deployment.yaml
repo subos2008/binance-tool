@@ -19,7 +19,11 @@ spec:
         binance-tool/service: "order-tracker"
       annotations:
         ad.datadoghq.com/tags: '{"service": "order-tracker"}'
-  
+        ad.datadoghq.com/order-tracker.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "order-tracker"
+          }]   
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -141,6 +145,11 @@ spec:
         binance-tool/service: "redis-monitor"
       annotations:
         ad.datadoghq.com/tags: '{"service": "redis-monitor"}'
+        ad.datadoghq.com/redis-monitor.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "redis-monitor"
+          }]  
     spec:
       volumes:
         - hostPath:

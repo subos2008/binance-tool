@@ -91,7 +91,7 @@ export class ExchangeEmulator {
   ws: any
   user_cb: any // callback
   agg_trades_cb: any // callback
-  agg_trades_watched_pairs:string[]
+  agg_trades_watched_pairs: string[]
   known_prices: { [key: string]: BigNumber }
 
 
@@ -211,7 +211,7 @@ export class ExchangeEmulator {
     }
   }
 
-  async add_limit_buy_order({ base_volume, limit_price, pair }: { base_volume: BigNumber|string, limit_price: BigNumber|string, pair: string }) {
+  async add_limit_buy_order({ base_volume, limit_price, pair }: { base_volume: BigNumber | string, limit_price: BigNumber | string, pair: string }) {
     base_volume = new BigNumber(base_volume)
     limit_price = new BigNumber(limit_price)
     try {
@@ -281,7 +281,7 @@ export class ExchangeEmulator {
     }
   }
 
-  async add_limit_sell_order({ base_volume, limit_price, pair }: { base_volume: BigNumber|string, limit_price: BigNumber|string, pair: string }) {
+  async add_limit_sell_order({ base_volume, limit_price, pair }: { base_volume: BigNumber | string, limit_price: BigNumber | string, pair: string }) {
     base_volume = new BigNumber(base_volume)
     limit_price = new BigNumber(limit_price)
     try {
@@ -456,7 +456,7 @@ export class ExchangeEmulator {
   async order({ side, symbol, type, quantity, price, stopPrice }: { side: string, symbol: string, type: string, quantity: string, price: string, stopPrice: string }) {
     assert(symbol);
     // assert known symbol
-    if(!this.exchange_info.symbols.find((ei: any) => ei.symbol === symbol)) {
+    if (!this.exchange_info.symbols.find((ei: any) => ei.symbol === symbol)) {
       throw new Error(`symbol not known in EE.order: ${symbol}`)
     }
     if (typeof price !== 'undefined') {
@@ -551,7 +551,7 @@ export class ExchangeEmulator {
       const base_volume = order['origQty'];
       assert(order.type === 'LIMIT' || order.type === 'STOP_LOSS_LIMIT');
       if (order.side === 'BUY') {
-        const quote_volume = utils.base_volume_at_price_to_quote_volume({ base_volume:new BigNumber(base_volume), price: new BigNumber(order.price) });
+        const quote_volume = utils.base_volume_at_price_to_quote_volume({ base_volume: new BigNumber(base_volume), price: new BigNumber(order.price) });
         this._unlock_balance(order.quote_currency, quote_volume);
       }
       if (order.side === 'SELL') {
@@ -562,7 +562,7 @@ export class ExchangeEmulator {
     }
   }
 
-  async accountInfo() {
+  async accountInfo(): Promise<{ balances: { asset: string, free: string, locked: string }[] }> {
     let balances: { asset: string, free: string, locked: string }[] = [];
     Object.keys(this.balances).forEach((asset) => {
       if (!this.balances[asset].free.isZero() || !this.balances[asset].locked.isZero())
@@ -579,27 +579,27 @@ export class ExchangeEmulator {
   }
 
   async prices() {
-    let prices : { [key:string]: string} = {}
+    let prices: { [key: string]: string } = {}
     for (var key in this.known_prices) {
       prices[key] = this.known_prices[key].toFixed();
     }
     return prices;
   }
 
-  async ws_user(user_cb:any) {
+  async ws_user(user_cb: any) {
     if (this.user_cb) throw new Error('Only one user callback implemented atm');
     this.user_cb = user_cb;
   }
 
-  async ws_agg_trades(pairs:string[], cb:any) {
+  async ws_agg_trades(pairs: string[], cb: any) {
     if (this.agg_trades_cb) throw new Error('Only one aggTrades callback implemented atm');
     this.agg_trades_watched_pairs = pairs;
     this.agg_trades_cb = cb;
   }
 
-  async send_ws_events(completed_orders:Order[]) {
+  async send_ws_events(completed_orders: Order[]) {
     if (!this.user_cb) return;
-    let mapper = (m:Order) => ({
+    let mapper = (m: Order) => ({
       orderId: m.orderId,
       price: m.price,
       quantity: m.origQty,
@@ -612,7 +612,7 @@ export class ExchangeEmulator {
       lastTradeQuantity: m.executedQty
     });
     let obj = this;
-    async function callback(order:Order) {
+    async function callback(order: Order) {
       assert(order);
       try {
         await obj.user_cb(mapper(order));
@@ -626,7 +626,7 @@ export class ExchangeEmulator {
     }
   }
 
-  async send_ws_trades_events(trade:any) {
+  async send_ws_trades_events(trade: any) {
     if (this.agg_trades_cb) {
       if (this.agg_trades_watched_pairs.includes(trade.symbol)) await this.agg_trades_cb(trade);
     }

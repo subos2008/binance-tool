@@ -46,6 +46,7 @@ const redis = get_redis_client()
 
 const Binance = require("binance-api-node").default;
 import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";
+import { OrderCallbacks, BinanceOrderData } from '../interfaces/order_callbacks'
 import { OrderState } from "../classes/persistent_state/redis_order_state";
 import { ExchangeEmulator } from "../lib/exchange_emulator";
 
@@ -59,6 +60,31 @@ var { argv } = require("yargs")
 let { live } = argv;
 
 let order_execution_tracker: OrderExecutionTracker | null = null
+
+class MyOrderCallbacks {
+  send_message: Function;
+  logger: Logger;
+
+  constructor({
+    send_message,
+    logger,
+  }: { send_message: (msg: string) => void, logger: Logger }) {
+    assert(logger);
+    this.logger = logger;
+    assert(send_message);
+    this.send_message = send_message;
+  }
+
+  async order_cancelled(order_id: string, data: BinanceOrderData): Promise<void> {
+    this.send_message(`${data.side} order on ${data.symbol} cancelled.`)
+  }
+  async order_filled(order_id: string, data: BinanceOrderData): Promise<void> {
+    this.send_message(`${data.side} order on ${data.symbol} filled.`)
+  }
+  async order_filled_or_partially_filled(order_id: string, data: BinanceOrderData): Promise<void> {
+    this.send_message(`${data.side} order on ${data.symbol} filled_or_partially_filled.`)
+  }
+}
 
 async function main() {
   var ee: Object;

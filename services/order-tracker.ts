@@ -116,11 +116,14 @@ async function main() {
   const execSync = require("child_process").execSync;
   execSync("date -u");
 
+  let order_callbacks = new MyOrderCallbacks({ logger, send_message })
+
   order_execution_tracker = new OrderExecutionTracker({
     ee,
     send_message,
     logger,
-    order_state: new OrderState({ logger, redis })
+    order_state: new OrderState({ logger, redis }),
+    order_callbacks
   })
 
   order_execution_tracker.main().catch(error => {

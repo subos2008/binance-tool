@@ -29,10 +29,6 @@ const update_portfolio_from_exchange_interval_seconds: number = Number(process.e
 const _ = require("lodash");
 
 require("dotenv").config();
-assert(process.env.REDIS_HOST)
-// assert(process.env.REDIS_PASSWORD)
-// assert(process.env.APIKEY)
-// assert(process.env.APISECRET)
 
 import * as Sentry from '@sentry/node';
 Sentry.init({});

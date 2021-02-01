@@ -174,7 +174,7 @@ export class TradeExecutor {
       if (data.orderRejectReason === "NONE") {
         // Assume user cancelled order and exit - when the engine cancels orders it clears redis first
         this.logger.warn(`Order ${orderId} was cancelled (assuming by user)`)
-        console.log(data)
+        this.logger.info(data)
         await this.trade_state.set_order_id_by_name({ key: order_key, orderId: undefined })
         // TODO: await?
         this.send_message(`Order ${orderId} an open order was cancelled by user`);

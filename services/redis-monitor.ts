@@ -39,7 +39,7 @@ function ping() {
   incrAsync("redis-monitor:incr")
     .then((res: any) => { logger.info(`Connection Check: OK (${res})`) })
     .catch((err: any) => {
-      console.error(`Exception when checking redis connection with incr`)
+      logger.error(`Exception when checking redis connection with incr`)
       logger.error(err)
       Sentry.captureException(err)
     })
@@ -77,9 +77,9 @@ async function check_positions() : Promise<void> {
   }
 
   if(prices_available_check_ok) {
-    console.info(`Prices in Redis Check: OK`)
+    logger.info(`Prices in Redis Check: OK`)
   } else {
-    console.error(`Prices in Redis Check: FAILED`)
+    logger.error(`Prices in Redis Check: FAILED`)
   }
 }
 

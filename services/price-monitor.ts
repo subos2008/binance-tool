@@ -67,7 +67,7 @@ var first_price_event_recieved = false
 var first_price_event_published = false
 async function price_event_callback(symbol: string, price: string, raw: any): Promise<void> {
   if (!first_price_event_recieved) {
-    console.log(`Received first price event ${symbol} ${price}.`)
+    logger.info(`Received first price event ${symbol} ${price}.`)
     first_price_event_recieved = true
   }
   let event = { symbol, price, raw }
@@ -80,7 +80,7 @@ async function price_event_callback(symbol: string, price: string, raw: any): Pr
     logger.error(err)
   }
   if (!first_price_event_published) {
-    console.log(`Published first price event ${symbol} ${price}.`)
+    logger.info(`Published first price event ${symbol} ${price}.`)
     first_price_event_published = true
   }
   watchdog.reset()

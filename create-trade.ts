@@ -121,7 +121,7 @@ async function main() {
   try {
     const trade_definition = new TradeDefinition(logger, trade_definition_input_spec)
     const trade_id = await create_new_trade({logger, redis, trade_definition})
-    console.log(`Trade ID: ${trade_id}`);
+    console.log(`Trade ID: T${trade_id}`);
 
     if (launch) {
       const launch = require("./k8/run-in-k8/launch");

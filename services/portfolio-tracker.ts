@@ -139,36 +139,42 @@ class PortfolioTracker {
     }
   }
 
-  async calculate_portfolio_value_in_quote_currency({ quote_currency }: { quote_currency: string }): Promise<{ available: BigNumber, total: BigNumber }> {
+  // Get value of one asset in terms of another ()
+  // TODO: allow conversions backwards, i.e. USDT to BTC is done via the BTCUSDT pair
+  convert_base_to_quote_currency({ base_quantity, base_currency, quote_currency }: { base_quantity: BigNumber, base_currency: string, quote_currency: string }) {
+    let pair = `${base_currency}${quote_currency}`;
+    if (pair in this.prices) {
+      return base_quantity.times(this.prices[pair]);
+    } else {
+      throw new Error(`Pair ${pair} not available when converting ${base_currency} to ${quote_currency}`)
+    }
+  }
+
+  async calculate_portfolio_value_in_quote_currency({ quote_currency }: { quote_currency: string }): Promise<{ available: BigNumber, total: BigNumber, unprocessed_balances: string[] }> {
     try {
       let available = new BigNumber(0), // only reflects quote_currency
         total = new BigNumber(0); // running total of all calculable asset values converted to quote_currency
-      let count = 0;
+      let unprocessed_balances: string[] = []
       this.balances.forEach((balance: any) => {
         if (balance.asset === quote_currency) {
           available = available.plus(balance.free);
           total = total.plus(balance.free).plus(balance.locked);
         } else {
           // convert coin value to quote_currency if possible, else skip it
-          let pair = `${balance.asset}${quote_currency}`;
           try {
-            if (pair in this.prices) {
-              let amount_held = new BigNumber(balance.free).plus(balance.locked);
-              let value = amount_held.times(this.prices[pair]);
-              total = total.plus(value);
-            } else {
-              throw new Error(`Pair ${pair} not available when calculating portfolio balance in ${quote_currency}`)
-            }
+            let value = this.convert_base_to_quote_currency({
+              base_quantity: new BigNumber(balance.free).plus(balance.locked),
+              base_currency: balance.asset, quote_currency
+            })
+            total = total.plus(value);
           } catch (e) {
-            // this.logger.warn(
-            //   `Non fatal error: unable to convert ${balance.asset} value to ${quote_currency}, skipping`
-            // );
-            count += 1;
+            // Balances we were unable to convert
+            unprocessed_balances.push(balance.asset)
           }
         }
       });
-      if (count) this.logger.warn(`Non fatal error: unable to convert ${count} assets to ${quote_currency}, skipping`);
-      return { available, total };
+      if (unprocessed_balances.length) this.logger.warn(`Non fatal error: unable to convert ${unprocessed_balances.length} assets to ${quote_currency}, skipping`);
+      return { available, total, unprocessed_balances };
     } catch (error) {
       Sentry.captureException(error);
       throw error

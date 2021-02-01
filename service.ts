@@ -12,7 +12,7 @@ Sentry.init({
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "binance-tool");
 });
-throw new Error('Yo! sentry! binacne-tool here!')
+
 require('make-promises-safe') // installs an 'unhandledRejection' handler
 
 // TODO: convert all the process.exit calls to be exceptions

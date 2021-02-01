@@ -160,8 +160,10 @@ main().catch(error => {
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code?: number | undefined) {
-  redis.quit();
-  if (trade_executor) trade_executor.shutdown_streams();
+  logger.warn(`soft_exit called, exit_code: ${exit_code}`)
+  if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`);
   if (exit_code) process.exitCode = exit_code;
+  if (trade_executor) trade_executor.shutdown_streams();
+  redis.quit();
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }

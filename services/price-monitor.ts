@@ -193,6 +193,7 @@ main().catch(error => {
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code: number | null = null) {
+  logger.warn(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`);
   if (exit_code) process.exitCode = exit_code;
   if (redis) redis.quit();

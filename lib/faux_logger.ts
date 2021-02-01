@@ -1,27 +1,46 @@
+var bunyan = require('bunyan');
+
 class FauxLogger {
   silent: boolean
-  constructor({ silent }: { silent: boolean } = { silent: false }) {
+  bunyan: any
+  constructor({ silent, template }: { silent: boolean, template: object } = { silent: false, template: {} }) {
     this.silent = silent;
+    let args = {
+      name: 'bunyan_stream_name',  // Required
+      // level: <level name or number>,      // Optional, see "Levels" section
+      streams: [
+        {
+          stream: process.stderr,
+          level: "warn"
+        },
+      ],
+      // serializers: <serializers mapping>, // Optional, see "Serializers" section
+      // src: <boolean>,                     // Optional, see "src" section
+
+      // Any other fields are added to all log records as is.
+      // foo: 'bar',
+    }
+    this.bunyan = bunyan.createLogger({ ...args, ...template });
   }
 
-  info(args: string) {
+  info(...args: any[]) {
     if (!this.silent) {
-      console.log(args);
+      this.bunyan.info(...args);
     }
   }
-  error(args: string) {
+  error(...args: any[]) {
     if (!this.silent) {
-      console.log(args);
+      this.bunyan.error(...args);
     }
   }
-  warn(args: string) {
+  warn(...args: any[]) {
     if (!this.silent) {
-      console.log(args);
+      this.bunyan.warn(...args);
     }
   }
-  debug(args: string) {
+  debug(...args: any[]) {
     if (!this.silent) {
-      console.log(args);
+      this.bunyan.debug(...args);
     }
   }
 }

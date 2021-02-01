@@ -281,7 +281,7 @@ export class TradeState {
     const targetOrderId = await this.get_targetOrderId();
     const stopOrderId = await this.get_stopOrderId();
     const buyOrderId = await this.get_buyOrderId();
-    console.dir(
+    this.logger.info(
       Object.assign(
         {
           base_amount_held: base_amount_held

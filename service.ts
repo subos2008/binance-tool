@@ -54,9 +54,9 @@ import { OrderState } from "./classes/persistent_state/redis_order_state"
 import { TradeDefinition } from "./classes/specifications/trade_definition";
 import { ExchangeEmulator } from "./lib/exchange_emulator"
 
-process.on("unhandledRejection", up => {
-  send_message(`UnhandledPromiseRejection: ${up}`);
-  throw up;
+process.on("unhandledRejection", error => {
+  logger.error(error)
+  send_message(`UnhandledPromiseRejection: ${error}`);
 });
 
 // TODO: load from shared yaml file with binance.js

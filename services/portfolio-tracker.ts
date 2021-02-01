@@ -62,8 +62,6 @@ BigNumber.prototype.valueOf = function () {
 
 send_message('starting')
 
-require('make-promises-safe') // installs an 'unhandledRejection' handler
-
 import { get_redis_client, set_redis_logger } from "../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()

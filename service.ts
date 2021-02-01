@@ -13,8 +13,6 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "binance-tool");
 });
 
-require('make-promises-safe') // installs an 'unhandledRejection' handler
-
 // TODO: convert all the process.exit calls to be exceptions
 // TODO: add watchdog on trades stream - it can stop responding without realising
 // TODO: - in the original implementations

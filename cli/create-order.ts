@@ -24,14 +24,14 @@ const { promisify } = require("util");
 const yargs = require("yargs");
 
 async function sorted_trade_ids() {
-  console.log(`Examining redis...`)
+  logger.info(`Examining redis...`)
   const redis = require("redis").createClient({
     host: process.env.REDIS_HOST,
     password: process.env.REDIS_PASSWORD
   });
   const keysAsync = promisify(redis.keys).bind(redis);
   const keys = await keysAsync("trades:*:completed");
-  console.log(`Finished examining redis.`)
+  logger.info(`Finished examining redis.`)
   redis.quit();
   return keys.map((key: any) => parseInt(key.match(/:(\d+):/)[1])).sort((a: any, b: any) => a - b)
 }

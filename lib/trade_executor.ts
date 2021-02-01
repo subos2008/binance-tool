@@ -157,7 +157,7 @@ export class TradeExecutor {
       this.send_message(`${symbol} target sell order filled`);
       this.execution_complete(`Target hit`);
     } else {
-      console.warn(`Didn't recognise order: ${orderId} [buy: ${buyOrderId} stop: ${stopOrderId} target: ${targetOrderId}]`)
+      this.logger.warn(`Didn't recognise order: ${orderId} [buy: ${buyOrderId} stop: ${stopOrderId} target: ${targetOrderId}]`)
     }
     // TODO: catch: shit failed to update after order state change!
   }

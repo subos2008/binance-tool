@@ -51,8 +51,8 @@ function generate_client(logger: Logger): RedisClient {
 
   redis.on('error', function (err: any) {
     logger.warn('Redis.on errror handler called');
-    console.error(err.stack);
-    console.error(err);
+    logger.error(err.stack);
+    logger.error(err);
     Sentry.withScope(function (scope: any) {
       scope.setTag("location", "redis-global-error-handler");
       Sentry.captureException(err);

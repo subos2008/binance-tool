@@ -39,14 +39,18 @@ export class PositionSizer {
       let response = await this.ee.accountInfo();
       balances = response.balances;
     } catch (error) {
-          Sentry.captureException(error);
-          async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
+      Sentry.captureException(error);
+      this.logger.error(`Getting account info from exchange:`)
+      this.logger.error(error)
+      throw error
     }
     try {
       prices = await this.ee.prices();
     } catch (error) {
-          Sentry.captureException(error);
-          async_error_handler(console, `Getting account info from exchange: ${error.body}`, error);
+      Sentry.captureException(error);
+      this.logger.error(`Getting account info from exchange:`)
+      this.logger.error(error)
+      throw error
     }
 
     // try {

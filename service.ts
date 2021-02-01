@@ -62,7 +62,7 @@ process.on("unhandledRejection", up => {
 // TODO: load from shared yaml file with binance.js
 // eg: const vars = YAML.parse(fs.readFileSync(process.env.VARS_INPUT_FILENAME, 'utf8'));
 // with: const YAML = require('yaml');
-console.log("Warning trading rules hardcoded twice");
+logger.info("Warning trading rules hardcoded twice");
 const trading_rules = new TradingRules({
   max_allowed_portfolio_loss_percentage_per_trade: BigNumber("1.5"),
   allowed_to_trade_without_stop: true,
@@ -77,8 +77,8 @@ async function main() {
     `trades:${trade_id}:trade_definition`
   );
 
-  console.log(`From redis:`);
-  console.log(redis_trade_definition);
+  logger.info(`From redis:`);
+  logger.info(redis_trade_definition);
 
   if (redis_trade_definition === null) {
     logger.error(`Got null from Redis. Trade ${trade_id} likely doesn't exist`);
@@ -91,10 +91,10 @@ async function main() {
   await trade_state.print();
 
   const trade_completed = await trade_state.get_trade_completed();
-  console.log(`trade_completed=${trade_completed}`);
+  logger.info(`trade_completed=${trade_completed}`);
   if (trade_completed) {
-    console.log(`WARNING: trade ${trade_id} is already marked as completed`);
-    console.log(`exiting`);
+    logger.info(`WARNING: trade ${trade_id} is already marked as completed`);
+    logger.info(`exiting`);
     process.exit(0);
   }
 

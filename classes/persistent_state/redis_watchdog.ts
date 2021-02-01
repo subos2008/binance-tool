@@ -27,7 +27,7 @@ export class RedisWatchdog {
 
     this.set_redis_key = promisify(this.redis.set).bind(this.redis);
 
-    console.log(`Created redis watchdog for ${this.watchdog_name} expiring each ${this.timeout_seconds} seconds, redis key '${this.get_key()}'`)
+    this.logger.info(`Created redis watchdog for ${this.watchdog_name} expiring each ${this.timeout_seconds} seconds, redis key '${this.get_key()}'`)
     // set a timeout that will make an entry in the logs but don't create the key in redis
     // this is beacuse we don't want a process that continually restarts without a ping to look
     // healthy in redis

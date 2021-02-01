@@ -1,7 +1,8 @@
 #!./node_modules/.bin/ts-node
 
 const Logger = require("./lib/faux_logger");
-const logger = new Logger({ silent: false });
+// Initial logger, we re-create it below once we have the trade_id
+var logger = new Logger({ silent: false });
 require("dotenv").config();
 
 import * as Sentry from '@sentry/node';
@@ -41,6 +42,8 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("trade-id", trade_id);
   scope.setUser({ id: trade_id });
 });
+
+logger = new Logger({ silent: false, template: { trade_id } });
 const send_message = require("./lib/telegram")(`binance-tool (${trade_id}): `);
 
 import { TradeExecutor } from "./lib/trade_executor"

@@ -70,8 +70,11 @@ const redis = get_redis_client()
 
 const Binance = require("binance-api-node").default;
 import { ExchangeEmulator } from "../lib/exchange_emulator";
+import { PortfolioPublisher } from "../classes/amqp/portfolio-publisher";
 import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";
 import { BinanceOrderData } from '../interfaces/order_callbacks'
+
+const publisher = new PortfolioPublisher({ logger, send_message, broker_name: 'binance' })
 
 // let order_execution_tracker: OrderExecutionTracker | null = null
 
@@ -199,12 +202,28 @@ async function update_portfolio_from_exchange(): Promise<void> {
     await portfolio_tracker.get_portfolio_from_exchange()
     await portfolio_tracker.get_prices_from_exchange()
     let btc_value = await portfolio_tracker.calculate_portfolio_value_in_quote_currency({ quote_currency: 'BTC' })
-    let usdt_value = await portfolio_tracker.calculate_portfolio_value_in_quote_currency({ quote_currency: 'USDT' })
-    send_message(`B: ${btc_value.total.toFixed(4)}, U: ${usdt_value.total.toFixed(0)}`)
+    let usd_value = await portfolio_tracker.calculate_portfolio_value_in_quote_currency({ quote_currency: 'USDT' })
+
+    try {
+      send_message(`B: ${btc_value.total.toFixed(4)}, U: ${usd_value.total.toFixed(0)}`)
+    } catch (err) {
+      Sentry.captureException(err)
+      logger.error(err)
+    }
+
+    try {
+      let event = { btc_value: btc_value.total.toFixed(), usd_value: usd_value.total.toFixed() }
+      await publisher.publish(event)
+    } catch (err) {
+      Sentry.captureException(err)
+      logger.error(err)
+    }
+
   } catch (err) {
     Sentry.captureException(err)
     logger.error(err)
   }
+
 }
 
 async function main() {
@@ -237,6 +256,7 @@ async function main() {
 
   portfolio_tracker = new PortfolioTracker({ logger, send_message, ee })
 
+  await publisher.connect()
   update_portfolio_from_exchange()
   setInterval(update_portfolio_from_exchange, update_portfolio_from_exchange_interval_seconds * 1000);
 }
@@ -254,6 +274,7 @@ main().catch(error => {
 function soft_exit(exit_code: number | null = null) {
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`);
   if (exit_code) process.exitCode = exit_code;
+  if (publisher) publisher.shutdown_streams()
   if (redis) redis.quit();
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }

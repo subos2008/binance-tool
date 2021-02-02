@@ -20,7 +20,13 @@ class FauxLogger {
       // Any other fields are added to all log records as is.
       // foo: 'bar',
     }
-    this.bunyan = bunyan.createLogger({ ...args, ...template });
+    console.log('logger setup:')
+    const foo = { ...args, ...template }
+    console.log('logger setup:')
+    console.log(foo)
+    console.log(args)
+    console.log(template)
+    this.bunyan = bunyan.createLogger(foo);
   }
 
   info(...args: any[]) {

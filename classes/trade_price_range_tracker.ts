@@ -180,8 +180,8 @@ export class TradePriceRangeTracker {
           }
         } catch (error) {
           Sentry.captureException(error);
-          this.logger.error(`Top level error encountered in TradePriceRangeTracker`);
-          this.logger.error(`Top level error: ${error}`);
+          this.logger.error(`TradePriceRangeTracker.main error: ${error}`);
+          this.logger.error(error);
         }
       }
     );

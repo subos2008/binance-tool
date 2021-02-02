@@ -7,7 +7,8 @@ require("dotenv").config();
 assert(process.env.REDIS_HOST)
 // assert(process.env.REDIS_PASSWORD)
 const connection_check_interval_seconds: number = Number(process.env.CONNECTION_TEST_INTERVAL_SECONDS) || 60
-const check_positions_interval_seconds: number = Number(process.env.CHECK_POSITIONS_INTERVAL_SECONDS) || 300
+// TODO: this needs to be long enough that there would have been a trade in the timeframe
+const check_positions_interval_seconds: number = Number(process.env.CHECK_POSITIONS_INTERVAL_SECONDS) || 60
 
 import * as Sentry from '@sentry/node';
 Sentry.init({});

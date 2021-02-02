@@ -13,6 +13,10 @@ class FauxLogger {
           stream: process.stderr,
           level: "warn"
         },
+        {
+          stream: process.stdout,
+          level: "debug"
+        },
       ],
       // serializers: <serializers mapping>, // Optional, see "Serializers" section
       // src: <boolean>,                     // Optional, see "src" section
@@ -20,12 +24,9 @@ class FauxLogger {
       // Any other fields are added to all log records as is.
       // foo: 'bar',
     }
-    console.log('logger setup:')
     const foo = { ...args, ...template }
     console.log('logger setup:')
     console.log(foo)
-    console.log(args)
-    console.log(template)
     this.bunyan = bunyan.createLogger(foo);
   }
 

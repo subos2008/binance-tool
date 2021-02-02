@@ -68,6 +68,7 @@ const watchdog = new RedisWatchdog({ logger, redis, watchdog_name: service_name,
 
 var first_price_event_recieved = false
 var first_price_event_published = false
+
 async function price_event_callback(symbol: string, price: string, raw: any): Promise<void> {
   if (!first_price_event_recieved) {
     logger.info(`Received first price event ${symbol} ${price}.`)
@@ -90,7 +91,7 @@ async function price_event_callback(symbol: string, price: string, raw: any): Pr
   watchdog.reset_subsystem(symbol)
 }
 
-var monitor = null;
+var monitor: BinancePriceMonitor | undefined;
 
 var { argv } = require("yargs")
   .usage("Usage: $0 --live")
@@ -175,7 +176,8 @@ async function update_monitors_if_active_pairs_have_changed() {
         send_message(message)
         logger.warn('Exiting to replace monitors')
       } finally {
-        process.exit(0)
+        soft_exit(0)
+        throw new Error('list of pairs to monitor has changed')
       }
     }
     currently_monitored_pairs = active_pairs
@@ -199,5 +201,6 @@ function soft_exit(exit_code: number | null = null) {
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`);
   if (exit_code) process.exitCode = exit_code;
   if (redis) redis.quit();
+  if (monitor) monitor.shutdown_streams()
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }

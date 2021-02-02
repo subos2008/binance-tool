@@ -18,9 +18,9 @@ assert(amqp_user)
 assert(vhost)
 assert(amqp_server)
 
-if (protocol !== 'amqps') {
-  logger.warn(`Connection to AMQP Server ${amqp_server} is not using https: ${protocol}`)
-}
+// if (protocol !== 'amqps') {
+//   logger.warn(`Connection to AMQP Server ${amqp_server} is not using https: ${protocol}`)
+// }
 
 const port = 5672
 
@@ -36,6 +36,6 @@ const connection_options = {
   // ca: splitca("./ca-certificates.crt")
 }
 
-logger.info(`AMQP hostname: ${amqp_server} port: ${port} protocol: ${protocol}`)
+// logger.info(`AMQP hostname: ${amqp_server} port: ${port} protocol: ${protocol}`)
 
 export default connection_options;

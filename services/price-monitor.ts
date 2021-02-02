@@ -159,7 +159,9 @@ let currently_monitored_pairs: Set<string> = new Set([])
 
 async function update_monitors_if_active_pairs_have_changed() {
   let active_pairs = await get_active_pairs()
-  active_pairs.add("BTCUSDT") // We want the system under some stress so always add this
+  // Removed the BTC hack as it makes the AMQP stats look like it's dropping all the prices
+  // messages as unroutable
+  // active_pairs.add("BTCUSDT") // We want the system under some stress so always add this
   if (!_.isEqual(currently_monitored_pairs, active_pairs)) {
     logger.info(`Active Pairs: ${Array.from(active_pairs)}`)
     logger.info(`currently_monitored_pairs: ${Array.from(currently_monitored_pairs)}`)

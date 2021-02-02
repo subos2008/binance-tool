@@ -74,7 +74,7 @@ async function check_positions() : Promise<void> {
 
     } catch (err) {
       Sentry.captureException(err)
-      logger.error(`Failed to create TradeDefinition for trade ${trade_id}`)
+      logger.error(`Exception in check_poitions for trade ${trade_id}`)
       logger.error(err)
     }
   }

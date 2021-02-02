@@ -73,6 +73,9 @@ async function check_positions() : Promise<void> {
         throw new Error(`Symbol ${symbol} has no price in redis but has active trade_id ${trade_id}`)
       }
 
+      // TODO: note when we add checks that poll the exchange here we might want to put the timeout back
+      // up. Checking prices in redis can be frequent but we want to be careful polling Binance
+
     } catch (err) {
       Sentry.captureException(err)
       logger.error(`Exception in check_poitions for trade ${trade_id}`)

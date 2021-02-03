@@ -88,8 +88,7 @@ spec:
           [{
             "source": "nodejs",
             "service": "price-monitor"
-          }]  
-  
+          }]
     spec:
       volumes:
         - hostPath:
@@ -103,18 +102,18 @@ spec:
           volumeMounts:
             - name: pointerdir
               mountPath: /opt/datadog-agent/run
-          # ports:
-          # - name: http
-          #   containerPort: 8081
-          #   protocol: TCP
-          # livenessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: http
-          # readinessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: http
+          ports:
+          - name: http
+            containerPort: 80
+            protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
           env:
             - name: SENTRY_DSN
               value: "https://c4ea793663d3411e9a0fd91ee8e303e1@o369902.ingest.sentry.io/5286780"

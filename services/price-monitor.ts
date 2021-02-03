@@ -3,6 +3,10 @@
 /* eslint func-names: ["warn", "as-needed"] */
 import { strict as assert } from 'assert';
 const service_name = "price-monitor";
+
+declare var service_is_healthy: boolean;
+service_is_healthy = true // global
+
 const timeout_seconds = Number(process.env.WATCHDOG_TIMEOUT_SECONDS || "3600")
 
 const _ = require("lodash");
@@ -202,5 +206,17 @@ function soft_exit(exit_code: number | null = null) {
   if (exit_code) process.exitCode = exit_code;
   if (redis) redis.quit();
   if (monitor) monitor.shutdown_streams()
+  service_is_healthy = false // it seems price-monitor isn't exiting on soft exit, but add this to make sure
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
+
+
+var express = require("express");
+var app = express();
+app.get("/health", function (req: any, res: any) {
+  if (service_is_healthy) res.send({ status: "OK" });
+  else res.status(500).json({ status: "UNHEALTHY" });
+});
+const port = "80"
+app.listen(port);
+logger.info(`Server on port ${port}`);

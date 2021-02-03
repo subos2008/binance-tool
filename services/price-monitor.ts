@@ -168,6 +168,7 @@ async function update_monitors_if_active_pairs_have_changed() {
   // active_pairs.add("BTCUSDT") // We want the system under some stress so always add this
   if (!_.isEqual(currently_monitored_pairs, active_pairs)) {
     logger.info(`Active Pairs: ${Array.from(active_pairs)}`)
+    send_message(`Active Pairs: ${Array.from(active_pairs)}`)
     logger.info(`currently_monitored_pairs: ${Array.from(currently_monitored_pairs)}`)
     if (Array.from(currently_monitored_pairs).length != 0) {
       // let's die to change the monitored pairs, we will be restarted and can cleanly monitor the new 

@@ -4,8 +4,7 @@
 import { strict as assert } from 'assert';
 const service_name = "price-monitor";
 
-declare var service_is_healthy: boolean;
-service_is_healthy = true // global
+var service_is_healthy: boolean = true;
 
 const timeout_seconds = Number(process.env.WATCHDOG_TIMEOUT_SECONDS || "3600")
 

@@ -85,7 +85,7 @@ class MyOrderCallbacks {
     this.send_message(`${data.side} order on ${data.symbol} filled at ${data.price}.`)
   }
   async order_filled_or_partially_filled(order_id: string, data: BinanceOrderData): Promise<void> {
-    this.send_message(`${data.side} order on ${data.symbol} filled_or_partially_filled at ${data.price}.`)
+    // this.send_message(`${data.side} order on ${data.symbol} filled_or_partially_filled at ${data.price}.`)
   }
 }
 

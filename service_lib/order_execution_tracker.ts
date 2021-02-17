@@ -21,6 +21,7 @@ export class OrderExecutionTracker {
   closeUserWebsocket: Function;
   order_state: OrderState | undefined;
   order_callbacks: OrderCallbacks | undefined
+  print_all_trades: boolean = false
 
   // All numbers are expected to be passed in as strings
   constructor({
@@ -28,9 +29,10 @@ export class OrderExecutionTracker {
     send_message,
     logger,
     order_state,
-    order_callbacks
+    order_callbacks,
+    print_all_trades
   }: {
-    ee: any, send_message: (msg: string) => void, logger: Logger, order_state?: OrderState, order_callbacks?: OrderCallbacks,
+    ee: any, send_message: (msg: string) => void, logger: Logger, order_state?: OrderState, order_callbacks?: OrderCallbacks, print_all_trades?: boolean
   }) {
     assert(logger);
     this.logger = logger;
@@ -41,6 +43,9 @@ export class OrderExecutionTracker {
     this.order_callbacks = order_callbacks;
     assert(ee);
     this.ee = ee;
+    if (print_all_trades) this.print_all_trades = true
+
+    this.logger.warn(`Not type checking BinanceOrderData when casting`)
 
     process.on("exit", () => {
       this.shutdown_streams();
@@ -95,12 +100,13 @@ export class OrderExecutionTracker {
       totalTradeQuantity
     } = data as BinanceOrderData;
     // How can I automagically check an input matches the expected type?
-    this.logger.warn(`Not type checking BinanceOrderData when casting`)
 
-    this.logger.info(
-      `${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`
-    );
-    this.logger.info(`..price: ${price}, quantity: ${quantity}`);
+    if (this.print_all_trades) {
+      this.logger.info(
+        `${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`
+      );
+      this.logger.info(`..price: ${price}, quantity: ${quantity}`);
+    }
 
     if (orderStatus === "NEW") {
       // Originally orders were all first added here but as we re-architect they will become

@@ -126,7 +126,8 @@ async function main() {
     send_message,
     logger,
     order_state: new OrderState({ logger, redis }),
-    order_callbacks
+    order_callbacks,
+    true
   })
 
   order_execution_tracker.main().catch(error => {

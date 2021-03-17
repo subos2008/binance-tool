@@ -36,6 +36,15 @@ jobs:
             docker build . --file Dockerfile
           fi
 
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Yarn install
+        run: yarn install
+      - name: Compile
+        run: ./node_modules/.bin/tsc
+
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
   push:
@@ -43,6 +52,7 @@ jobs:
 
     # !!!!
     # needs: test
+    needs: compile
 
     runs-on: ubuntu-latest
     if: github.event_name == 'push'

@@ -111,19 +111,19 @@ export class OrderExecutionTracker {
     if (orderStatus === "NEW") {
       // Originally orders were all first added here but as we re-architect they will become
       // more likely to pre-exist
-      if(this.order_state) await this.order_state.add_new_order(orderId, { symbol, side, orderType })
+      if (this.order_state) await this.order_state.add_new_order(orderId, { symbol, side, orderType })
       return;
     }
 
     if (orderStatus === "PARTIALLY_FILLED") {
-    if (this.order_callbacks) await this.order_callbacks.order_filled_or_partially_filled(orderId, data)
-      if(this.order_state) await this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity), false, orderStatus)
+      if (this.order_callbacks) await this.order_callbacks.order_filled_or_partially_filled(orderId, data)
+      if (this.order_state) await this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity), false, orderStatus)
       return;
     }
 
     if (orderStatus === "CANCELED" /*&& orderRejectReason === "NONE"*/) {
       // `Order was cancelled, presumably by user. Exiting.`, (orderRejectReason === "NONE happens when user cancelled)
-      if(this.order_state) await this.order_state.set_order_cancelled(orderId, true, orderRejectReason, orderStatus)
+      if (this.order_state) await this.order_state.set_order_cancelled(orderId, true, orderRejectReason, orderStatus)
       if (this.order_callbacks) await this.order_callbacks.order_cancelled(orderId, data)
       return;
     }
@@ -132,7 +132,7 @@ export class OrderExecutionTracker {
       throw new Error(`Unexpected orderStatus: ${orderStatus}. Reason: ${data.r}`);
     }
 
-    if(this.order_state) await this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity), true, orderStatus)
+    if (this.order_state) await this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity), true, orderStatus)
     if (this.order_callbacks) await this.order_callbacks.order_filled_or_partially_filled(orderId, data)
     if (this.order_callbacks) await this.order_callbacks.order_filled(orderId, data)
   }

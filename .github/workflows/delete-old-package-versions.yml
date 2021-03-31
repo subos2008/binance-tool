@@ -12,6 +12,6 @@ jobs:
     - name: delete old packages, keeping x
       uses: smartsquaregmbh/delete-old-packages@v0.3.0
       with:
-        keep: 5
+        keep: 15
         names: |
           binance-tool

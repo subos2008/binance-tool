@@ -1,0 +1,17 @@
+name: Package Cleanup
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+
+  cleanpackages:
+    runs-on: ubuntu-latest
+    steps:
+    - name: delete old packages, keeping x
+      uses: smartsquaregmbh/delete-old-packages@v0.3.0
+      with:
+        keep: 5
+        names: |
+          binance-tool

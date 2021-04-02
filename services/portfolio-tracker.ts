@@ -24,7 +24,7 @@
 import { strict as assert } from 'assert';
 const service_name = "portfolio-tracker";
 
-const update_portfolio_from_exchange_interval_seconds: number = Number(process.env.UPDATE_PORTFOLIO_FROM_EXCHANGE_INTERVAL_SECONDS) || (24 * 60 * 60)
+const update_portfolio_from_exchange_interval_seconds: number = Number(process.env.UPDATE_PORTFOLIO_FROM_EXCHANGE_INTERVAL_SECONDS) || (6 * 60 * 60)
 
 const _ = require("lodash");
 

@@ -104,7 +104,7 @@ export class OrderExecutionTracker {
 
     // Average price can be found by doing totalQuoteTradeQuantity (Z) divided by totalTradeQuantity (z).
     // https://binance-docs.github.io/apidocs/spot/en/#payload-balance-update
-    data.averageExecutionPrice = (new BigNumber(totalQuoteTradeQuantity).div(totalTradeQuantity)).toFixed()
+    data.averageExecutionPrice = (new BigNumber(totalQuoteTradeQuantity).div(totalTradeQuantity)).toFixed(8)
 
     if (this.print_all_trades) {
       this.logger.info(

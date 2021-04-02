@@ -112,6 +112,7 @@ export class OrderExecutionTracker {
       // Originally orders were all first added here but as we re-architect they will become
       // more likely to pre-exist
       if (this.order_state) await this.order_state.add_new_order(orderId, { symbol, side, orderType })
+      if (this.order_callbacks) await this.order_callbacks.order_created(orderId, data)
       return;
     }
 

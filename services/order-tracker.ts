@@ -78,6 +78,10 @@ class MyOrderCallbacks {
     this.send_message = send_message;
   }
 
+  async order_created(order_id: string, data: BinanceOrderData): Promise<void> {
+    this.logger.info(data);
+    this.send_message(`Created ${data.side} order on ${data.symbol} at ${data.price}.`)
+  }
   async order_cancelled(order_id: string, data: BinanceOrderData): Promise<void> {
     this.send_message(`${data.side} order on ${data.symbol} cancelled.`)
   }

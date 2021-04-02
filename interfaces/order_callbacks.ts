@@ -8,6 +8,8 @@ export interface BinanceOrderData {
   price?:string
   quantity?:string
   orderStatus?:string
+  totalQuoteTradeQuantity: string
+  averageExecutionPrice?: string // Added by us
 }
 
 export interface OrderCallbacks {

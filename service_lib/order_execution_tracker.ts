@@ -97,15 +97,20 @@ export class OrderExecutionTracker {
       orderId,
       orderStatus,
       orderRejectReason,
-      totalTradeQuantity
+      totalTradeQuantity,
+      totalQuoteTradeQuantity
     } = data as BinanceOrderData;
     // How can I automagically check an input matches the expected type?
+
+    // Average price can be found by doing totalQuoteTradeQuantity (Z) divided by totalTradeQuantity (z).
+    // https://binance-docs.github.io/apidocs/spot/en/#payload-balance-update
+    data.averageExecutionPrice = (new BigNumber(totalQuoteTradeQuantity).div(totalTradeQuantity)).toFixed()
 
     if (this.print_all_trades) {
       this.logger.info(
         `${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`
       );
-      this.logger.info(`..price: ${price}, quantity: ${quantity}`);
+      this.logger.info(`..price: ${price}, quantity: ${quantity}, averageExecutionPrice: ${data.averageExecutionPrice}`);
     }
 
     if (orderStatus === "NEW") {

@@ -122,8 +122,8 @@ export class OrderExecutionTracker {
     }
 
     if (orderStatus === "PARTIALLY_FILLED") {
-      if (this.order_state) await this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity), false, orderStatus)
       if (this.order_callbacks) await this.order_callbacks.order_filled_or_partially_filled(orderId, data)
+      if (this.order_state) await this.order_state.set_total_executed_quantity(orderId, new BigNumber(totalTradeQuantity), false, orderStatus)
       return;
     }
 

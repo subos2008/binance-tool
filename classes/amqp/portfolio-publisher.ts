@@ -12,13 +12,7 @@ assert(exchange)
 
 import { connect, Connection } from "amqplib";
 import BigNumber from 'bignumber.js';
-
-export interface PortfolioEvent {
-  usd_value: string;
-  btc_value: string;
-  balances?: { asset: string, free: string, locked: string }[]
-  prices?: { [name: string]: string }
-}
+import { Portfolio } from "../../interfaces/portfolio"
 
 export class PortfolioPublisher {
   logger: Logger
@@ -50,8 +44,15 @@ export class PortfolioPublisher {
     }
   }
 
-  async publish(event: PortfolioEvent): Promise<boolean> {
-    let msg = JSON.stringify(event);
+  async publish(event: Portfolio): Promise<boolean> {
+    // Extract only those fields we want to publish
+    let trimmed_event: Portfolio = {
+      usd_value: event.usd_value,
+      btc_value: event.btc_value,
+      balances: event.balances,
+      prices: event.prices
+    }
+    let msg = JSON.stringify(trimmed_event);
     const options = {
       expiration: event_expiration_seconds,
       persistent: false,

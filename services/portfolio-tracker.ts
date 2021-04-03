@@ -67,15 +67,12 @@ process.on("unhandledRejection", error => {
   send_message(`UnhandledPromiseRejection: ${error}`);
 });
 
-import { get_redis_client, set_redis_logger } from "../lib/redis"
-set_redis_logger(logger)
-const redis = get_redis_client()
-
 const Binance = require("binance-api-node").default;
 import { ExchangeEmulator } from "../lib/exchange_emulator";
 import { PortfolioPublisher } from "../classes/amqp/portfolio-publisher";
-import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";
-import { BinanceOrderData } from '../interfaces/order_callbacks'
+import { PortfolioUtils } from "../classes/utils/portfolio-utils";
+import { Portfolio } from '../interfaces/portfolio';
+import { join } from 'lodash';
 
 const publisher = new PortfolioPublisher({ logger, send_message, broker_name: 'binance' })
 
@@ -110,9 +107,7 @@ class PortfolioTracker {
   send_message: Function;
   logger: Logger;
   ee: any;
-  balances: { asset: string, free: string, locked: string }[] = [];
-  prices: { [name: string]: string } = {};
-
+  portfolio: Portfolio = {}
 
   constructor({
     send_message,
@@ -128,63 +123,29 @@ class PortfolioTracker {
 
   async get_prices_from_exchange() {
     try {
-      this.prices = await this.ee.prices();
+      this.portfolio.prices = await this.ee.prices();
     } catch (error) {
       Sentry.captureException(error);
       throw error
     }
   }
 
-  async get_portfolio_from_exchange() {
+  async get_balances_from_exchange() {
     try {
       let response = await this.ee.accountInfo();
-      this.balances = response.balances;
+      this.portfolio.balances = response.balances;
     } catch (error) {
       Sentry.captureException(error);
       throw error
     }
   }
 
-  // Get value of one asset in terms of another ()
-  // TODO: allow conversions backwards, i.e. USDT to BTC is done via the BTCUSDT pair
-  convert_base_to_quote_currency({ base_quantity, base_currency, quote_currency }: { base_quantity: BigNumber, base_currency: string, quote_currency: string }) {
-    let pair = `${base_currency}${quote_currency}`;
-    if (pair in this.prices) {
-      return base_quantity.times(this.prices[pair]);
-    } else {
-      throw new Error(`Pair ${pair} not available when converting ${base_currency} to ${quote_currency}`)
-    }
-  }
-
-  async calculate_portfolio_value_in_quote_currency({ quote_currency }: { quote_currency: string }): Promise<{ available: BigNumber, total: BigNumber, unprocessed_balances: string[] }> {
-    try {
-      let available = new BigNumber(0), // only reflects quote_currency
-        total = new BigNumber(0); // running total of all calculable asset values converted to quote_currency
-      let unprocessed_balances: string[] = []
-      this.balances.forEach((balance: any) => {
-        if (balance.asset === quote_currency) {
-          available = available.plus(balance.free);
-          total = total.plus(balance.free).plus(balance.locked);
-        } else {
-          // convert coin value to quote_currency if possible, else skip it
-          try {
-            let value = this.convert_base_to_quote_currency({
-              base_quantity: new BigNumber(balance.free).plus(balance.locked),
-              base_currency: balance.asset, quote_currency
-            })
-            total = total.plus(value);
-          } catch (e) {
-            // Balances we were unable to convert
-            unprocessed_balances.push(balance.asset)
-          }
-        }
-      });
-      if (unprocessed_balances.length) this.logger.warn(`Non fatal error: unable to convert ${unprocessed_balances.length} assets to ${quote_currency}, skipping`);
-      return { available, total, unprocessed_balances };
-    } catch (error) {
-      Sentry.captureException(error);
-      throw error
-    }
+  async current_portfolio_with_prices(): Promise<Portfolio> {
+    await portfolio_tracker.get_balances_from_exchange()
+    await portfolio_tracker.get_prices_from_exchange()
+    this.portfolio.btc_value = (await portfolio_utils.calculate_portfolio_value_in_quote_currency({ quote_currency: 'BTC', portfolio: this.portfolio })).total.toFixed(8)
+    this.portfolio.usd_value = (await portfolio_utils.calculate_portfolio_value_in_quote_currency({ quote_currency: 'USDT', portfolio: this.portfolio })).total.toFixed(2)
+    return this.portfolio
   }
 }
 
@@ -197,31 +158,60 @@ var { argv } = require("yargs")
   .default("live", true);
 let { live } = argv;
 
-var ee: Object;
-var portfolio_tracker: PortfolioTracker;
+let ee: Object;
+let portfolio_tracker: PortfolioTracker;
+const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger, sentry: Sentry })
+
+function balances_to_string(portfolio: Portfolio, quote_currency: string): string | null {
+  let quote_total = portfolio_utils.calculate_portfolio_value_in_quote_currency({ quote_currency, portfolio }).total
+  let { portfolio: portfolio_with_quote_values, unprocessed_balances } = portfolio_utils.add_quote_value_to_portfolio_balances({ portfolio, quote_currency })
+  if (!portfolio_with_quote_values.balances) return null
+  let balances = portfolio_with_quote_values.balances
+    .filter(balance => balance.quote_equivalents?.[quote_currency])
+    .sort((a, b) => new BigNumber(b.quote_equivalents?.[quote_currency] || 0).minus(a.quote_equivalents?.[quote_currency] || 0).toNumber())
+  let snippets: (string | null)[] = balances.map((balance) => {
+    if (balance.asset == quote_currency) {
+      let total = portfolio_utils.total_balance(balance)
+      let percentage = new BigNumber(total).dividedBy(quote_total).times(100).toFixed(0)
+      return `${quote_currency} (${percentage}%)`
+      // return `${total}${quote_currency} (${percentage}%)`
+    }
+    if (!balance.quote_equivalents?.[quote_currency]) return null
+    if (portfolio_utils.total_balance_bignum(balance).isZero()) return null
+    let percentage = new BigNumber(balance.quote_equivalents[quote_currency]).dividedBy(quote_total).times(100)
+    if (percentage.isLessThan(0.3)) return null
+    return `${balance.asset} (${percentage.toFixed(0)}%)`
+    // return `${balance.asset}: ${balance.quote_equivalents[quote_currency]}${quote_currency} (${percentage.toFixed(0)}%)`
+  })
+  // if (unprocessed_balances.length > 0) snippets.push(`${unprocessed_balances.length} unprocessed`)
+  return snippets ? snippets.filter(Boolean).join(', ') : null
+}
+
 
 async function update_portfolio_from_exchange(): Promise<void> {
   try {
-    await portfolio_tracker.get_portfolio_from_exchange()
-    await portfolio_tracker.get_prices_from_exchange()
-    let btc_value = await portfolio_tracker.calculate_portfolio_value_in_quote_currency({ quote_currency: 'BTC' })
-    let usd_value = await portfolio_tracker.calculate_portfolio_value_in_quote_currency({ quote_currency: 'USDT' })
-
+    const portfolio = await portfolio_tracker.current_portfolio_with_prices()
     try {
-      send_message(`B: ${btc_value.total.toFixed(4)}, U: ${usd_value.total.toFixed(0)}`)
+      let msg = `B: ${portfolio.btc_value}, U: ${portfolio.usd_value}`;
+      try {
+        msg += ' as ' + balances_to_string(portfolio, "BTC")
+      } catch (err) {
+        Sentry.captureException(err)
+        logger.error(err)
+      }
+      send_message(msg)
     } catch (err) {
       Sentry.captureException(err)
       logger.error(err)
     }
 
+
     try {
-      let event = { btc_value: btc_value.total.toFixed(), usd_value: usd_value.total.toFixed(), balances: portfolio_tracker.balances }
-      await publisher.publish(event)
+      await publisher.publish(portfolio)
     } catch (err) {
       Sentry.captureException(err)
       logger.error(err)
     }
-
   } catch (err) {
     Sentry.captureException(err)
     logger.error(err)
@@ -279,6 +269,5 @@ function soft_exit(exit_code: number | null = null) {
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`);
   if (exit_code) process.exitCode = exit_code;
   if (publisher) publisher.shutdown_streams()
-  if (redis) redis.quit();
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }

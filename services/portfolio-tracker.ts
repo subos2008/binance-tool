@@ -215,7 +215,7 @@ async function update_portfolio_from_exchange(): Promise<void> {
     }
 
     try {
-      let event = { btc_value: btc_value.total.toFixed(), usd_value: usd_value.total.toFixed() }
+      let event = { btc_value: btc_value.total.toFixed(), usd_value: usd_value.total.toFixed(), balances: portfolio_tracker.balances }
       await publisher.publish(event)
     } catch (err) {
       Sentry.captureException(err)

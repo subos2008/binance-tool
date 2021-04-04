@@ -72,36 +72,65 @@ import { ExchangeEmulator } from "../lib/exchange_emulator";
 import { PortfolioPublisher } from "../classes/amqp/portfolio-publisher";
 import { PortfolioUtils } from "../classes/utils/portfolio-utils";
 import { Portfolio } from '../interfaces/portfolio';
-import { join } from 'lodash';
+import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";
+import { BinanceOrderData } from '../interfaces/order_callbacks'
 
 const publisher = new PortfolioPublisher({ logger, send_message, broker_name: 'binance' })
+let order_execution_tracker: OrderExecutionTracker | null = null
 
-// let order_execution_tracker: OrderExecutionTracker | null = null
+async function update_portfolio_from_exchange(): Promise<void> {
+  try {
+    const portfolio = await portfolio_tracker.current_portfolio_with_prices()
+    try {
+      let msg = `B: ${portfolio.btc_value}, U: ${portfolio.usd_value}`;
+      try {
+        msg += ' as ' + portfolio_utils.balances_to_string(portfolio, "BTC")
+      } catch (err) {
+        Sentry.captureException(err)
+        logger.error(err)
+      }
+      send_message(msg)
+    } catch (err) {
+      Sentry.captureException(err)
+      logger.error(err)
+    }
 
-// class MyOrderCallbacks {
-//   send_message: Function;
-//   logger: Logger;
+    try {
+      await publisher.publish(portfolio)
+    } catch (err) {
+      Sentry.captureException(err)
+      logger.error(err)
+    }
+  } catch (err) {
+    Sentry.captureException(err)
+    logger.error(err)
+  }
+}
+class MyOrderCallbacks {
+  send_message: Function;
+  logger: Logger;
 
-//   constructor({
-//     send_message,
-//     logger,
-//   }: { send_message: (msg: string) => void, logger: Logger }) {
-//     assert(logger);
-//     this.logger = logger;
-//     assert(send_message);
-//     this.send_message = send_message;
-//   }
+  constructor({
+    send_message,
+    logger,
+  }: { send_message: (msg: string) => void, logger: Logger }) {
+    assert(logger);
+    this.logger = logger;
+    assert(send_message);
+    this.send_message = send_message;
+  }
 
-//   async order_cancelled(order_id: string, data: BinanceOrderData): Promise<void> {
-//     this.logger.info(`${data.side} order on ${data.symbol} cancelled.`)
-//   }
-//   async order_filled(order_id: string, data: BinanceOrderData): Promise<void> {
-//     this.logger.info(`${data.side} order on ${data.symbol} filled.`)
-//   }
-//   async order_filled_or_partially_filled(order_id: string, data: BinanceOrderData): Promise<void> {
-//     this.logger.info(`${data.side} order on ${data.symbol} filled_or_partially_filled.`)
-//   }
-// }
+  async order_cancelled(order_id: string, data: BinanceOrderData): Promise<void> {
+    // this.logger.info(`${data.side} order on ${data.symbol} cancelled.`)
+  }
+  async order_filled(order_id: string, data: BinanceOrderData): Promise<void> {
+    this.logger.info(`${data.side} order on ${data.symbol} filled.`)
+    update_portfolio_from_exchange()
+  }
+  async order_filled_or_partially_filled(order_id: string, data: BinanceOrderData): Promise<void> {
+    // this.logger.info(`${data.side} order on ${data.symbol} filled_or_partially_filled.`)
+  }
+}
 
 class PortfolioTracker {
   send_message: Function;
@@ -162,36 +191,6 @@ let ee: Object;
 let portfolio_tracker: PortfolioTracker;
 const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger, sentry: Sentry })
 
-async function update_portfolio_from_exchange(): Promise<void> {
-  try {
-    const portfolio = await portfolio_tracker.current_portfolio_with_prices()
-    try {
-      let msg = `B: ${portfolio.btc_value}, U: ${portfolio.usd_value}`;
-      try {
-        msg += ' as ' + portfolio_utils.balances_to_string(portfolio, "BTC")
-      } catch (err) {
-        Sentry.captureException(err)
-        logger.error(err)
-      }
-      send_message(msg)
-    } catch (err) {
-      Sentry.captureException(err)
-      logger.error(err)
-    }
-
-
-    try {
-      await publisher.publish(portfolio)
-    } catch (err) {
-      Sentry.captureException(err)
-      logger.error(err)
-    }
-  } catch (err) {
-    Sentry.captureException(err)
-    logger.error(err)
-  }
-}
-
 async function main() {
   if (live) {
     logger.info("Live monitoring mode");
@@ -223,8 +222,19 @@ async function main() {
   portfolio_tracker = new PortfolioTracker({ logger, send_message, ee })
 
   await publisher.connect()
+
+  // Update on intervals
   update_portfolio_from_exchange()
   setInterval(update_portfolio_from_exchange, update_portfolio_from_exchange_interval_seconds * 1000);
+
+  // Update when any order completes
+  let order_callbacks = new MyOrderCallbacks({ logger, send_message })
+  order_execution_tracker = new OrderExecutionTracker({
+    ee,
+    send_message,
+    logger,
+    order_callbacks
+  })
 }
 
 main().catch(error => {

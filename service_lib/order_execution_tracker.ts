@@ -102,9 +102,20 @@ export class OrderExecutionTracker {
     } = data as BinanceOrderData;
     // How can I automagically check an input matches the expected type?
 
-    // Average price can be found by doing totalQuoteTradeQuantity (Z) divided by totalTradeQuantity (z).
-    // https://binance-docs.github.io/apidocs/spot/en/#payload-balance-update
-    data.averageExecutionPrice = (new BigNumber(totalQuoteTradeQuantity).div(totalTradeQuantity)).toFixed(8)
+    try {
+      // Average price can be found by doing totalQuoteTradeQuantity (Z) divided by totalTradeQuantity (z).
+      // https://binance-docs.github.io/apidocs/spot/en/#payload-balance-update
+      if (totalQuoteTradeQuantity && totalTradeQuantity)
+        data.averageExecutionPrice = (new BigNumber(totalQuoteTradeQuantity).div(totalTradeQuantity)).toFixed(8)
+    } catch (error) {
+      this.logger.error(error)
+      Sentry.withScope(function (scope) {
+        scope.setTag("operation", "processExecutionReport");
+        scope.setTag("pair", symbol);
+        if (orderId) scope.setTag("orderId", orderId);
+        Sentry.captureException(error);
+      })
+    }
 
     if (this.print_all_trades) {
       this.logger.info(

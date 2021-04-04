@@ -97,4 +97,29 @@ export class PortfolioUtils {
       throw error
     }
   }
+
+  balances_to_string(portfolio: Portfolio, quote_currency: string): string | null {
+    let quote_total = this.calculate_portfolio_value_in_quote_currency({ quote_currency, portfolio }).total
+    let { portfolio: portfolio_with_quote_values, unprocessed_balances } = this.add_quote_value_to_portfolio_balances({ portfolio, quote_currency })
+    if (!portfolio_with_quote_values.balances) return null
+    let balances = portfolio_with_quote_values.balances
+      .filter(balance => balance.quote_equivalents?.[quote_currency])
+      .sort((a, b) => new BigNumber(b.quote_equivalents?.[quote_currency] || 0).minus(a.quote_equivalents?.[quote_currency] || 0).toNumber())
+    let snippets: (string | null)[] = balances.map((balance) => {
+      if (balance.asset == quote_currency) {
+        let total = this.total_balance(balance)
+        let percentage = new BigNumber(total).dividedBy(quote_total).times(100).toFixed(0)
+        return `${quote_currency} (${percentage}%)`
+        // return `${total}${quote_currency} (${percentage}%)`
+      }
+      if (!balance.quote_equivalents?.[quote_currency]) return null
+      if (this.total_balance_bignum(balance).isZero()) return null
+      let percentage = new BigNumber(balance.quote_equivalents[quote_currency]).dividedBy(quote_total).times(100)
+      if (percentage.isLessThan(0.3)) return null
+      return `${balance.asset} (${percentage.toFixed(0)}%)`
+      // return `${balance.asset}: ${balance.quote_equivalents[quote_currency]}${quote_currency} (${percentage.toFixed(0)}%)`
+    })
+    // if (unprocessed_balances.length > 0) snippets.push(`${unprocessed_balances.length} unprocessed`)
+    return snippets ? snippets.filter(Boolean).join(', ') : null
+  }
 }

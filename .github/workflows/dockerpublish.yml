@@ -52,7 +52,7 @@ jobs:
 
     # !!!!
     # needs: test
-    needs: compile
+    needs: [compile, test]
 
     runs-on: ubuntu-latest
     if: github.event_name == 'push'

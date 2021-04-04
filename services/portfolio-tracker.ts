@@ -71,7 +71,7 @@ const Binance = require("binance-api-node").default;
 import { ExchangeEmulator } from "../lib/exchange_emulator";
 import { PortfolioPublisher } from "../classes/amqp/portfolio-publisher";
 import { PortfolioUtils } from "../classes/utils/portfolio-utils";
-import { Portfolio } from '../interfaces/portfolio';
+import { Portfolio, Balance } from '../interfaces/portfolio';
 import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";
 import { BinanceOrderData } from '../interfaces/order_callbacks'
 
@@ -90,6 +90,19 @@ async function update_portfolio_from_exchange(): Promise<void> {
         logger.error(err)
       }
       send_message(msg)
+    } catch (err) {
+      Sentry.captureException(err)
+      logger.error(err)
+    }
+
+    try {
+      if (portfolio.prices) {
+        let trigger = new BigNumber('50')
+        let balance: Balance | undefined = portfolio_utils.balance_for_asset({ asset: 'BNB', portfolio })
+        let bnb_balance = new BigNumber(balance ? balance.free : 0)
+        let bnb_balance_in_usd = portfolio_utils.convert_base_to_quote_currency({ base_quantity: bnb_balance, base_currency: 'BNB', quote_currency: 'USDT', prices: portfolio.prices })
+        if (bnb_balance_in_usd.isLessThan(trigger)) send_message(`Free BNB balance in USDT fell below ${trigger.toString()}`)
+      }
     } catch (err) {
       Sentry.captureException(err)
       logger.error(err)
@@ -172,8 +185,10 @@ class PortfolioTracker {
   async current_portfolio_with_prices(): Promise<Portfolio> {
     await portfolio_tracker.get_balances_from_exchange()
     await portfolio_tracker.get_prices_from_exchange()
-    this.portfolio.btc_value = (await portfolio_utils.calculate_portfolio_value_in_quote_currency({ quote_currency: 'BTC', portfolio: this.portfolio })).total.toFixed(8)
-    this.portfolio.usd_value = (await portfolio_utils.calculate_portfolio_value_in_quote_currency({ quote_currency: 'USDT', portfolio: this.portfolio })).total.toFixed(2)
+    this.portfolio = portfolio_utils.add_quote_value_to_portfolio_balances({ portfolio: this.portfolio, quote_currency: 'BTC' }).portfolio
+    this.portfolio = portfolio_utils.add_quote_value_to_portfolio_balances({ portfolio: this.portfolio, quote_currency: 'USDT' }).portfolio
+    this.portfolio.btc_value = portfolio_utils.calculate_portfolio_value_in_quote_currency({ quote_currency: 'BTC', portfolio: this.portfolio }).total.toFixed(8)
+    this.portfolio.usd_value = portfolio_utils.calculate_portfolio_value_in_quote_currency({ quote_currency: 'USDT', portfolio: this.portfolio }).total.toFixed(2)
     return this.portfolio
   }
 }

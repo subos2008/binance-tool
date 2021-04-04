@@ -122,4 +122,8 @@ export class PortfolioUtils {
     // if (unprocessed_balances.length > 0) snippets.push(`${unprocessed_balances.length} unprocessed`)
     return snippets ? snippets.filter(Boolean).join(', ') : null
   }
+
+  balance_for_asset({ asset, portfolio }: { asset: string, portfolio: Portfolio }) {
+    return portfolio.balances?.find(balance => balance.asset == asset)
+  }
 }

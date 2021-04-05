@@ -80,10 +80,11 @@ class MyOrderCallbacks {
 
   async order_created(order_id: string, data: BinanceOrderData): Promise<void> {
     this.logger.info(data);
-    this.send_message(`Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.price}.`)
+    if (data.orderType != "MARKET")
+      this.send_message(`Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.price}.`)
   }
   async order_cancelled(order_id: string, data: BinanceOrderData): Promise<void> {
-    this.send_message(`${data.orderType} ${data.side} order on ${data.symbol} cancelled.`)
+    this.send_message(`${data.orderType} ${data.side} order on ${data.symbol} at ${data.price} cancelled.`)
   }
   async order_filled(order_id: string, data: BinanceOrderData): Promise<void> {
     this.send_message(`${data.orderType} ${data.side} order on ${data.symbol} filled at ${data.price}/${data.averageExecutionPrice}.`)

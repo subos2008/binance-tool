@@ -75,6 +75,10 @@ class MyOrderCallbacks {
       this.logger.info(`BUY order on ${data.symbol} filled.`)
       this.position_tracker.buy_order_filled({ generic_order_data: fromCompletedBinanceOrderData(data) })
     }
+    if (data.side == 'SELL') {
+      this.logger.info(`SELL order on ${data.symbol} filled.`)
+      this.position_tracker.sell_order_filled({ generic_order_data: fromCompletedBinanceOrderData(data) })
+    }
   }
   async order_filled_or_partially_filled(order_id: string, data: BinanceOrderData): Promise<void> {
     // this.logger.info(`${data.side} order on ${data.symbol} filled_or_partially_filled.`)

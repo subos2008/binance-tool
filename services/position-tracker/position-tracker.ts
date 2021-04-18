@@ -33,7 +33,7 @@ export class PositionTracker {
     // 1. Is this an existing position?
     let { symbol, exchange, account, averageExecutionPrice, totalBaseTradeQuantity, totalQuoteTradeQuantity } = generic_order_data
     if (!account) account = 'default'
-    let position_size = this.positions_state.get_position_size({ exchange, account, symbol })
+    let position_size: BigNumber = await this.positions_state.get_position_size({ exchange, account, symbol })
     if ((await position_size).isZero()) {
       // 1.1 if not, create a new position and record the entry price and timestamp
       this.logger.info(`New position for ${symbol}`)
@@ -57,7 +57,7 @@ export class PositionTracker {
     // 1. Is this an existing position?
     let { symbol, exchange, account } = generic_order_data
     if (!account) account = 'default'
-    let position_size = this.positions_state.get_position_size({ exchange, account, symbol })
+    let position_size: BigNumber = await this.positions_state.get_position_size({ exchange, account, symbol })
     if ((await position_size).isZero()) {
       // 1.1 if not, create a new position and record the entry price and timestamp
       this.logger.info(`Sell executed on unknown position for ${symbol}`)

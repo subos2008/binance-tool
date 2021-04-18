@@ -17,10 +17,10 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name);
 });
 
-const send_message = require("../lib/telegram.js")(`${service_name}: `);
+const send_message = require("../../lib/telegram.js")(`${service_name}: `);
 
 import { Logger } from '../../interfaces/logger'
-const LoggerClass = require("../lib/faux_logger");
+const LoggerClass = require("../../lib/faux_logger");
 const logger: Logger = new LoggerClass({ silent: false });
 
 import { BigNumber } from "bignumber.js";

@@ -74,6 +74,7 @@ export class OrderState {
         this.name_to_key(order_id, "total_executed_quantity"), value.toFixed()
       )
     } catch (error) {
+      console.error(error)
       Sentry.withScope(function (scope) {
         scope.setTag("orderStatus", orderStatus);
         scope.setTag("completed", completed.toString());
@@ -132,6 +133,7 @@ export class OrderState {
         )
       }
     } catch (error) {
+      console.error(error)
       Sentry.withScope(function (scope) {
         scope.setTag("symbol", symbol);
         scope.setTag("side", side);

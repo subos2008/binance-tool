@@ -52,6 +52,7 @@ export class RedisPositionsState {
         this.name_to_key({ symbol, exchange, account, name: "position_size" }), position_size.toFixed()
       )
     } catch (error) {
+      console.error(error)
       Sentry.withScope(function (scope) {
         scope.setTag("symbol", symbol);
         scope.setTag("exchange", exchange);
@@ -82,6 +83,7 @@ export class RedisPositionsState {
         this.name_to_key({ symbol, exchange, account, name: "netQuoteBalanceChange" }), quote_invested?.toFixed()
       )
     } catch (error) {
+      console.error(error)
       Sentry.withScope(function (scope) {
         scope.setTag("symbol", symbol);
         scope.setTag("exchange", exchange);

@@ -56,7 +56,7 @@ export class RedisPositionsState {
         scope.setTag("symbol", symbol);
         scope.setTag("exchange", exchange);
         scope.setTag("account", account);
-        scope.setTag("redis.connected", this.redis.connected.toString());
+        // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(error);
       });
       throw error
@@ -86,7 +86,7 @@ export class RedisPositionsState {
         scope.setTag("symbol", symbol);
         scope.setTag("exchange", exchange);
         scope.setTag("account", account);
-        scope.setTag("redis.connected", this.redis.connected.toString());
+        // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(error);
       });
       throw error
@@ -140,7 +140,7 @@ export class RedisPositionsState {
   //       scope.setTag("side", side);
   //       scope.setTag("orderType", orderType);
   //       if (base_amount) scope.setTag("base_amount", base_amount.toFixed());
-  //       scope.setTag("redis.connected", this.redis.connected.toString());
+  //       //scope.setTag("redis.connected", this.redis.connected.toString());
   //       Sentry.captureException(error);
   //     });
   //     throw error

@@ -1,6 +1,6 @@
 export interface BinanceOrderData {
   orderId:string
-  totalTradeQuantity: string;
+  totalTradeQuantity: string; // NB: we might rename this to totalBaseTradeQuantity in exchange_neutral
   symbol: string;
   side:string
   orderType:string

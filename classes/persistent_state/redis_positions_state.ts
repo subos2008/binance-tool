@@ -41,6 +41,10 @@ export class RedisPositionsState {
     switch (name) {
       case "position_size":
         return `positions:${exchange}:${account}:${symbol}:position_size`;
+      case "initial_entry_price":
+        return `positions:${exchange}:${account}:${symbol}:initial_entry_price`;
+      case "netQuoteBalanceChange":
+        return `positions:${exchange}:${account}:${symbol}:netQuoteBalanceChange`;
       default:
         throw new Error(`Unknown key name: ${name}`);
     }

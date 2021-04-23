@@ -48,9 +48,11 @@ export class PositionTracker {
       // not sure what do do about entry price adjustments yet
       this.logger.info(`Existing position found for ${symbol}`)
       this.send_message(`Existing position found for ${symbol}, size ${position_size}`)
+      this.positions_state.increase_position_size_by({ symbol, exchange, account }, new BigNumber(totalBaseTradeQuantity))
     }
 
     // 3. Fire a position changed event or call a callback so we can add auto-exit 10@10 orders
+    // A new service called trading-rules-auto-position-exits
   }
 
   async sell_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
@@ -68,6 +70,7 @@ export class PositionTracker {
       let msg = `reducing the position size for ${symbol}`
       this.logger.info(`Existing position found for ${symbol}`)
       this.send_message(` ${symbol}, size ${position_size}`)
+      // TODO: this has to go to zero (null) to exit a position
     }
 
     // 3. Fire a position changed event or call a callback so we can add auto-exit 10@10 orders

@@ -22,6 +22,7 @@ export class RedisPositionsState {
   msetnxAsync: any;
   msetAsync: any;
   mgetAsync: any;
+  incrbyAsync: any;
 
   constructor({ logger, redis }: { logger: Logger, redis: RedisClient }) {
     assert(logger);
@@ -35,6 +36,7 @@ export class RedisPositionsState {
     this.msetnxAsync = promisify(this.redis.msetnx).bind(this.redis);
     this.msetAsync = promisify(this.redis.mset).bind(this.redis);
     this.mgetAsync = promisify(this.redis.mget).bind(this.redis);
+    this.incrbyAsync = promisify(this.redis.incrby).bind(this.redis);
   }
 
   name_to_key({ symbol, name, exchange, account }: { symbol: string, name: string, exchange: string, account: string }) {
@@ -97,6 +99,26 @@ export class RedisPositionsState {
       });
       throw error
     }
+  }
+
+  async increase_position_size_by(
+    { symbol, exchange, account }: { symbol: string, exchange: string, account: string },
+    amount: BigNumber) {
+      try {
+        await this.incrbyAsync(
+          this.name_to_key({ symbol, exchange, account, name: "position_size" }), amount.toFixed(),
+        )
+      } catch (error) {
+        console.error(error)
+        Sentry.withScope(function (scope) {
+          scope.setTag("symbol", symbol);
+          scope.setTag("exchange", exchange);
+          scope.setTag("account", account);
+          // scope.setTag("redis.connected", this.redis.connected.toString());
+          Sentry.captureException(error);
+        });
+        throw error
+      }
   }
 
   // async set_order_completed(order_id: string, value: Boolean, orderStatus: string): Promise<void> {

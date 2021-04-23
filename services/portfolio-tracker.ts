@@ -89,6 +89,11 @@ async function update_portfolio_from_exchange(): Promise<void> {
         Sentry.captureException(err)
         logger.error(err)
       }
+      if (portfolio.prices) {
+        try {
+          msg += ` BTCUSDT: ${portfolio.prices['BTCUSDT']}`
+        } catch (e) { /* just ignore */ }
+      }
       send_message(msg)
     } catch (err) {
       Sentry.captureException(err)

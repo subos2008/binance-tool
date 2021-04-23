@@ -91,7 +91,7 @@ async function update_portfolio_from_exchange(): Promise<void> {
       }
       if (portfolio.prices) {
         try {
-          msg += ` BTCUSDT: ${portfolio.prices['BTCUSDT']}`
+          msg += ` BTCUSDT: ${new BigNumber(portfolio.prices['BTCUSDT']).dp(0).toFixed()}`
         } catch (e) { /* just ignore */ }
       }
       send_message(msg)

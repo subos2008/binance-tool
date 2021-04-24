@@ -5,18 +5,22 @@ import { RedisClient } from 'redis';
 import { Logger } from '../../interfaces/logger'
 import { GenericOrderData } from '../../types/exchange_neutral/generic_order_data'
 import { RedisPositionsState } from '../../classes/persistent_state/redis_positions_state'
+import { PositionPublisher } from '../../classes/amqp/position-publisher'
 
 import BigNumber from "bignumber.js";
+import { timeStamp } from 'console';
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!");
 };
 
+import * as Sentry from '@sentry/node';
 export class PositionTracker {
   send_message: Function;
   logger: Logger;
   positions_state: RedisPositionsState;
+  position_publisher: PositionPublisher
 
   constructor({
     send_message,
@@ -27,6 +31,7 @@ export class PositionTracker {
     assert(send_message);
     this.send_message = send_message;
     this.positions_state = new RedisPositionsState({ logger, redis })
+    this.position_publisher = new PositionPublisher({ logger, send_message, broker_name: 'binance' })
   }
 
   async buy_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
@@ -35,14 +40,46 @@ export class PositionTracker {
     if (!account) account = 'default'
     let position_size: BigNumber = await this.positions_state.get_position_size({ exchange, account, symbol })
     if ((await position_size).isZero()) {
-      // 1.1 if not, create a new position and record the entry price and timestamp
-      this.logger.info(`New position for ${symbol}`)
-      this.send_message(`New position for ${symbol}`)
-      // TODO: create the new position in redis
-      let position_size = new BigNumber(totalBaseTradeQuantity)
-      let initial_entry_price = averageExecutionPrice ? new BigNumber(averageExecutionPrice) : undefined
-      let netQuoteBalanceChange = new BigNumber(0).minus(totalQuoteTradeQuantity)
-      this.positions_state.create_new_position({ symbol, exchange, account }, { position_size, initial_entry_price, quote_invested: netQuoteBalanceChange })
+      try {
+        this.logger.info(`New position for ${symbol}`)
+        this.send_message(`New position for ${symbol}`)
+      } catch (error) {
+        console.error(error)
+        Sentry.withScope(function (scope) {
+          scope.setTag("symbol", symbol);
+          scope.setTag("exchange", exchange);
+          if (account) scope.setTag("account", account);
+          Sentry.captureException(error);
+        });
+      }
+
+      try {
+        // 1.1 if not, create a new position and record the entry price and timestamp
+        let position_size = new BigNumber(totalBaseTradeQuantity)
+        let initial_entry_price = averageExecutionPrice ? new BigNumber(averageExecutionPrice) : undefined
+        let netQuoteBalanceChange = new BigNumber(0).minus(totalQuoteTradeQuantity)
+        this.positions_state.create_new_position({ symbol, exchange, account }, { position_size, initial_entry_price, quote_invested: netQuoteBalanceChange })
+      } catch (error) {
+        console.error(error)
+        Sentry.withScope(function (scope) {
+          scope.setTag("symbol", symbol);
+          scope.setTag("exchange", exchange);
+          if (account) scope.setTag("account", account);
+          Sentry.captureException(error);
+        });
+      }
+      
+      try {
+        this.position_publisher.publish_new_position_event({ event_type: 'NewPositionEvent', exchange_identifier: { exchange, account }, symbol, position_base_size: totalBaseTradeQuantity })
+      } catch (error) {
+        console.error(error)
+        Sentry.withScope(function (scope) {
+          scope.setTag("symbol", symbol);
+          scope.setTag("exchange", exchange);
+          if (account) scope.setTag("account", account);
+          Sentry.captureException(error);
+        });
+      }
     } else {
       // 1.2 if existing position just increase the position size
       // not sure what do do about entry price adjustments yet

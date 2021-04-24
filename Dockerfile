@@ -14,6 +14,7 @@ COPY services /app/services
 COPY interfaces /app/interfaces
 COPY types /app/types
 COPY test /app/test
+COPY events /app/events
 # COPY services-test-rig /app/services-test-rig
 COPY chai-bignumber.d.ts /app/chai-bignumber.d.ts
 COPY tsconfig.json /app/tsconfig.json

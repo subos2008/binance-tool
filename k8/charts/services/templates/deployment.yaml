@@ -290,7 +290,71 @@ spec:
           #     port: http
           env:
             - name: SENTRY_DSN
-              value: "https://fd044b9bc259422ea55a1910e3801aa8@o369902.ingest.sentry.io/5618730"
+              value: "https://f999d04298a34caa82c13839699a266f@o369902.ingest.sentry.io/5735251"
+{{- include "binance.vars" . | nindent 12 }}
+{{- include "datadog.vars" . | nindent 12 }}
+{{- include "telegram.vars" . | nindent 12 }}
+{{- include "amqp.vars" . | nindent 12 }}
+{{- include "redis.vars" . | nindent 12 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auto-position-exits
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "auto-position-exits"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "auto-position-exits"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "auto-position-exits"}'
+        ad.datadoghq.com/auto-position-exits.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "auto-position-exits"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - hostPath:
+            path: /opt/datadog-agent/run
+          name: pointerdir
+      containers:
+        - name: auto-position-exits
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["./services/auto-position-exits/auto-position-exits.ts", "--live"]
+          volumeMounts:
+            - name: pointerdir
+              mountPath: /opt/datadog-agent/run
+          # ports:
+          # - name: http
+          #   containerPort: 8081
+          #   protocol: TCP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          env:
+            - name: SENTRY_DSN
+              value: "https://b8ae7f07a03044cba474efd640e744d8@o369902.ingest.sentry.io/5735252"
 {{- include "binance.vars" . | nindent 12 }}
 {{- include "datadog.vars" . | nindent 12 }}
 {{- include "telegram.vars" . | nindent 12 }}

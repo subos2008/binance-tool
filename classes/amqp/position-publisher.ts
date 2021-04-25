@@ -44,6 +44,7 @@ export class PositionPublisher {
   }
 
   async publish_new_position_event(event: NewPositionEvent): Promise<boolean> {
+    if(!this.connection) await this.connect()
     let msg = JSON.stringify(event);
     const options = {
       expiration: event_expiration_seconds,

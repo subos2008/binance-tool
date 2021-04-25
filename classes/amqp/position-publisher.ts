@@ -7,7 +7,7 @@ import { Logger } from "../../interfaces/logger";
 
 import * as Sentry from '@sentry/node';
 
-const exchange = 'position';
+const exchange = 'positions';
 assert(exchange)
 
 import { connect, Connection } from "amqplib";

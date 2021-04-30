@@ -5,6 +5,7 @@
 import { strict as assert } from 'assert';
 const service_name = "binance-position-tracker";
 import { fromCompletedBinanceOrderData } from '../../types/exchange_neutral/generic_order_data'
+import { is_too_small_to_trade } from '../../lib/utils'
 
 
 const _ = require("lodash");
@@ -37,13 +38,15 @@ process.on("unhandledRejection", error => {
   send_message(`UnhandledPromiseRejection: ${error}`);
 });
 
-const Binance = require("binance-api-node").default;
 import { ExchangeEmulator } from "../../lib/exchange_emulator";
 import { OrderExecutionTracker } from "../../service_lib/order_execution_tracker";
 import { BinanceOrderData } from '../../interfaces/order_callbacks'
 import { PositionTracker } from './position-tracker'
 
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
+import { ExchangeIdentifier } from '../../events/shared/exchange-identifier';
+import Binance from 'binance-api-node';
+import { ExchangeInfo } from 'binance-api-node';
 set_redis_logger(logger)
 const redis = get_redis_client()
 
@@ -94,14 +97,18 @@ var { argv } = require("yargs")
   .default("live", true);
 let { live } = argv;
 
-let ee: Object;
+type GenericExchangeInterface = {
+  exchangeInfo: () => Promise<ExchangeInfo>;
+}
+
+let ee: GenericExchangeInterface;
 let position_tracker: PositionTracker;
 
 async function main() {
   if (live) {
     logger.info("Live monitoring mode");
-    assert(process.env.APIKEY)
-    assert(process.env.APISECRET)
+    if (!process.env.APIKEY) throw new Error(`APIKEY not defined`)
+    if (!process.env.APISECRET) throw new Error(`APISECRET not defined`)
     ee = Binance({
       apiKey: process.env.APIKEY,
       apiSecret: process.env.APISECRET
@@ -125,7 +132,16 @@ async function main() {
   const execSync = require("child_process").execSync;
   execSync("date -u");
 
-  position_tracker = new PositionTracker({ logger, send_message, redis })
+  // return true if the position size passed it would be considered an untradeably small balance on the exchange
+  let exchange_info = await ee.exchangeInfo() // TODO: should update this every now and then
+  let close_position_check_func = function ({ symbol, volume, price }: { symbol: string, volume: BigNumber, price: BigNumber }): boolean {
+    return is_too_small_to_trade({ symbol, volume, exchange_info, price })
+  }
+
+  position_tracker = new PositionTracker({
+    logger, send_message, redis,
+    close_position_check_func
+  })
 
   // await publisher.connect()
 

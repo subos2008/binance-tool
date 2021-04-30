@@ -23,6 +23,7 @@ export class RedisPositionsState {
   msetAsync: any;
   mgetAsync: any;
   incrbyAsync: any;
+  decrbyAsync: any;
 
   constructor({ logger, redis }: { logger: Logger, redis: RedisClient }) {
     assert(logger);
@@ -37,6 +38,7 @@ export class RedisPositionsState {
     this.msetAsync = promisify(this.redis.mset).bind(this.redis);
     this.mgetAsync = promisify(this.redis.mget).bind(this.redis);
     this.incrbyAsync = promisify(this.redis.incrby).bind(this.redis);
+    this.decrbyAsync = promisify(this.redis.decrby).bind(this.redis);
   }
 
   name_to_key({ symbol, name, exchange, account }: { symbol: string, name: string, exchange: string, account: string }) {
@@ -104,21 +106,59 @@ export class RedisPositionsState {
   async increase_position_size_by(
     { symbol, exchange, account }: { symbol: string, exchange: string, account: string },
     amount: BigNumber) {
-      try {
-        await this.incrbyAsync(
-          this.name_to_key({ symbol, exchange, account, name: "position_size" }), amount.toFixed(),
-        )
-      } catch (error) {
-        console.error(error)
-        Sentry.withScope(function (scope) {
-          scope.setTag("symbol", symbol);
-          scope.setTag("exchange", exchange);
-          scope.setTag("account", account);
-          // scope.setTag("redis.connected", this.redis.connected.toString());
-          Sentry.captureException(error);
-        });
-        throw error
-      }
+    try {
+      await this.incrbyAsync(
+        this.name_to_key({ symbol, exchange, account, name: "position_size" }), amount.toFixed(),
+      )
+    } catch (error) {
+      console.error(error)
+      Sentry.withScope(function (scope) {
+        scope.setTag("symbol", symbol);
+        scope.setTag("exchange", exchange);
+        scope.setTag("account", account);
+        // scope.setTag("redis.connected", this.redis.connected.toString());
+        Sentry.captureException(error);
+      });
+      throw error
+    }
+  }
+
+  async decrease_position_size_by(
+    { symbol, exchange, account }: { symbol: string, exchange: string, account: string },
+    amount: BigNumber): Promise<string> {
+    try {
+      return await this.decrbyAsync(
+        this.name_to_key({ symbol, exchange, account, name: "position_size" }), amount.toFixed(),
+      )
+    } catch (error) {
+      console.error(error)
+      Sentry.withScope(function (scope) {
+        scope.setTag("symbol", symbol);
+        scope.setTag("exchange", exchange);
+        scope.setTag("account", account);
+        // scope.setTag("redis.connected", this.redis.connected.toString());
+        Sentry.captureException(error);
+      });
+      throw error
+    }
+  }
+
+  async close_position({ symbol, exchange, account }: { symbol: string, exchange: string, account: string }) {
+    try {
+      await this.delAsync(this.name_to_key({ symbol, exchange, account, name: "position_size" }))
+      await this.delAsync(this.name_to_key({ symbol, exchange, account, name: "initial_entry_price" }))
+      await this.delAsync(this.name_to_key({ symbol, exchange, account, name: "netQuoteBalanceChange" }))
+    } catch (error) {
+      console.error(error)
+      Sentry.withScope(function (scope) {
+        scope.setTag("symbol", symbol);
+        scope.setTag("exchange", exchange);
+        scope.setTag("account", account);
+        // scope.setTag("redis.connected", this.redis.connected.toString());
+        Sentry.captureException(error);
+      });
+      throw error
+    }
   }
 
   // async set_order_completed(order_id: string, value: Boolean, orderStatus: string): Promise<void> {

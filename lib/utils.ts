@@ -144,6 +144,19 @@ function check_notional({ price, volume, exchange_info, symbol }: { exchange_inf
   }
 }
 
+export function is_too_small_to_trade({ price, volume, exchange_info, symbol }: { exchange_info: any, symbol: string, price: BigNumber, volume: BigNumber }): boolean {
+  try {
+    check_notional({
+      exchange_info, symbol,
+      price: munge_and_check_price({ exchange_info, symbol, price }),
+      volume: munge_and_check_quantity({ exchange_info, symbol, volume }),
+    })
+  } catch (e) {
+    return true;
+  }
+  return false;
+}
+
 module.exports = {
   base_currency_for_binance_pair,
   quote_currency_for_binance_pair,
@@ -156,5 +169,5 @@ module.exports = {
   munge_and_check_quantity,
   munge_and_check_price,
   check_notional,
-  break_up_binance_pair
+  break_up_binance_pair,
 };

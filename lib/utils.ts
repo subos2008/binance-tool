@@ -170,4 +170,5 @@ module.exports = {
   munge_and_check_price,
   check_notional,
   break_up_binance_pair,
+  is_too_small_to_trade,
 };

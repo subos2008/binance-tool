@@ -46,7 +46,6 @@ export class PositionTracker {
     let position_size: BigNumber = await this.positions_state.get_position_size({ exchange, account, symbol })
     if ((await position_size).isZero()) {
       try {
-        this.logger.info(`New position for ${symbol}`)
         this.send_message(`New position for ${symbol}`)
       } catch (error) {
         console.error(error)
@@ -88,7 +87,6 @@ export class PositionTracker {
     } else {
       // 1.2 if existing position just increase the position size
       // not sure what do do about entry price adjustments yet
-      this.logger.info(`Existing position found for ${symbol}`)
       this.send_message(`Existing position found for ${symbol}, size ${position_size}`)
       this.positions_state.increase_position_size_by({ symbol, exchange, account }, new BigNumber(totalBaseTradeQuantity))
     }
@@ -103,14 +101,11 @@ export class PositionTracker {
     if (!account) account = 'default'
     let position_size: BigNumber = await this.positions_state.get_position_size({ exchange, account, symbol })
     if ((position_size).isZero()) {
-      let msg = `Sell executed on unknown position for ${symbol}`
-      this.logger.error(msg)
-      this.send_message(msg)
+      this.send_message(`Sell executed on unknown position for ${symbol}`)
     } else {
       // 1.2 if existing position just decrease the position size
       // not sure what do do about partial exits atm
       let msg = `reducing the position size for ${symbol}`
-      this.logger.info(msg)
       this.send_message(msg)
       let { averageExecutionPrice, totalBaseTradeQuantity, totalQuoteTradeQuantity } = generic_order_data
       position_size = new BigNumber(await this.positions_state.decrease_position_size_by({ symbol, exchange, account }, new BigNumber(totalBaseTradeQuantity)))

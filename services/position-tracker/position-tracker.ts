@@ -58,8 +58,8 @@ export class PositionTracker {
         });
       }
 
+      // 1.1 if not, create a new position and record the entry price and timestamp
       try {
-        // 1.1 if not, create a new position and record the entry price and timestamp
         let position_size = new BigNumber(totalBaseTradeQuantity)
         let initial_entry_price = averageExecutionPrice ? new BigNumber(averageExecutionPrice) : undefined
         let netQuoteBalanceChange = new BigNumber(0).minus(totalQuoteTradeQuantity)

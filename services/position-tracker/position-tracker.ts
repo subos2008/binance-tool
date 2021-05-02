@@ -5,7 +5,7 @@ import { RedisClient } from 'redis';
 import { Logger } from '../../interfaces/logger'
 import { GenericOrderData } from '../../types/exchange_neutral/generic_order_data'
 import { RedisPositionsState } from '../../classes/persistent_state/redis_positions_state'
-import { PositionPublisher } from '../../classes/amqp/position-publisher'
+import { PositionPublisher } from '../../classes/amqp/positions-publisher'
 
 import BigNumber from "bignumber.js";
 import { timeStamp } from 'console';

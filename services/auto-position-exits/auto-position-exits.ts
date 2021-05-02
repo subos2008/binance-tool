@@ -66,7 +66,7 @@ export class AutoPositionExits {
     return this.positions_listener.connect()
   }
 
-  new_position_event_callback(event: NewPositionEvent) {
+  async new_position_event_callback(event: NewPositionEvent) {
     this.send_message(`Got a NewPositionEvent!`)
     this.logger.info(event)
   }

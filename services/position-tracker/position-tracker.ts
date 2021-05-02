@@ -40,10 +40,11 @@ export class PositionTracker {
   }
 
   async buy_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
-    // 1. Is this an existing position?
     let { symbol, exchange, account, averageExecutionPrice, totalBaseTradeQuantity, totalQuoteTradeQuantity } = generic_order_data
     if (!account) account = 'default'
     let position_size: BigNumber = await this.positions_state.get_position_size({ exchange, account, symbol })
+
+    // 1. Is this a new position?
     if (position_size.isZero()) {
       try {
         this.send_message(`New position for ${symbol}`)
@@ -57,7 +58,7 @@ export class PositionTracker {
         });
       }
 
-      // 1.1 if not, create a new position and record the entry price and timestamp
+      // 1.1 create a new position and record the entry price and timestamp
       try {
         let position_size = new BigNumber(totalBaseTradeQuantity)
         let initial_entry_price = averageExecutionPrice ? new BigNumber(averageExecutionPrice) : undefined
@@ -73,6 +74,7 @@ export class PositionTracker {
         });
       }
 
+      // Publish an event declaring the new position
       try {
         this.position_publisher.publish_new_position_event({ event_type: 'NewPositionEvent', exchange_identifier: { exchange, account }, symbol, position_base_size: totalBaseTradeQuantity })
       } catch (error) {

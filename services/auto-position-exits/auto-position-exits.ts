@@ -6,8 +6,6 @@ import { strict as assert } from 'assert';
 require("dotenv").config();
 const connect_options = require("../../lib/amqp/connect_options").default
 const service_name = "auto-position-exits";
-const exchange = 'positions';
-assert(exchange)
 const routing_key = 'binance'
 
 var amqp = require("amqplib/callback_api");
@@ -41,9 +39,10 @@ process.on("unhandledRejection", error => {
 import Binance from 'binance-api-node';
 import { ExchangeInfo } from 'binance-api-node';
 
-import { connect, Connection } from "amqplib";
+import { PositionsListener } from '../../classes/amqp/positions-listener';
 import { NewPositionEvent } from "../../events/position-events"
 import { ExchangeEmulator } from '../../lib/exchange_emulator';
+import { timeStamp } from 'console';
 
 type GenericExchangeInterface = {
   exchangeInfo: () => Promise<ExchangeInfo>;
@@ -53,74 +52,27 @@ export class AutoPositionExits {
   ee: Object
   logger: Logger
   send_message: (msg: string) => void
-  connection: Connection
-  channel: any
-  broker_name: string // we needed a routing key and this seems like a good one
+  positions_listener: PositionsListener
 
-  constructor({ ee, logger, send_message, broker_name }: { ee: Object, logger: Logger, send_message: (msg: string) => void, broker_name: string }) {
+  constructor({ ee, logger, send_message }: { ee: Object, logger: Logger, send_message: (msg: string) => void }) {
     this.ee = ee
     this.logger = logger
     this.send_message = send_message
-    this.broker_name = broker_name
   }
 
-  async connect() {
-    try {
-      this.connection = await connect(connect_options)
-      this.channel = await this.connection.createChannel()
-      this.channel.assertExchange(exchange, "topic", {
-        durable: false
-      });
-      this.logger.info(`Connection with AMQP server established.`)
-    } catch (err) {
-      this.logger.error(`Error connecting to amqp server`);
-      this.logger.error(err);
-      Sentry.captureException(err);
-      throw err;
-    }
+  async main() {
+    if (this.positions_listener) return
+    this.positions_listener = new PositionsListener({ logger: this.logger, send_message: this.send_message, exchange: routing_key, callbacks: this })
+    return this.positions_listener.connect()
   }
 
-  async main(queue_route = 'binance') {
-    if (!this.channel) await this.connect()
-
-    const { promisify } = require("util");
-
-
-    const createChannelAsync = promisify(this.connection.createChannel).bind(this.connection);
-    const channel = await createChannelAsync()
-
-    channel.assertExchange(exchange, "topic", { durable: false });
-
-    const assertQueueAsync = promisify(channel.assertQueue).bind(channel);
-    const q = await assertQueueAsync("", { exclusive: true })
-
-    console.log(" [*] Waiting for new messages. To exit press CTRL+C");
-
-    channel.prefetch(1);
-    channel.bindQueue(q.queue, exchange, queue_route);
-
-    const send_message = this.send_message;
-    async function message_processor(msg: any) {
-      console.log(
-        " [x] %s: '%s'",
-        msg.fields.routingKey,
-        msg.content.toString()
-      );
-      const message = JSON.parse(msg.content.toString());
-      send_message(message)
-      channel.ack(msg);
-    }
-
-    channel.consume(q.queue, message_processor, { noAck: false });
+  new_position_event_callback(event: NewPositionEvent) {
+    this.send_message(`Got a NewPositionEvent!`)
+    this.logger.info(event)
   }
 
-  // const event: NewPositionEvent = JSON.parse(msg.content.toString());
-  // this.logger.info(event)
-  // if (event.event_type === 'NewPositionEvent') {
-  //   this.
-  // }
   async shutdown_streams() {
-    throw new Error('shutdown_streams Not Implemented for AMQP listeners')
+    if(this.positions_listener) this.positions_listener.shutdown_streams()
   }
 }
 
@@ -169,7 +121,6 @@ async function main() {
     ee,
     send_message,
     logger,
-    broker_name: 'binance'
   })
 
   auto_position_exits.main().catch(error => {
@@ -185,7 +136,7 @@ async function main() {
       send_message(`Error in main loop: ${error}`);
     }
     soft_exit(1);
-  }).then(() => { logger.info('order_execution_tracker.main() returned.') });
+  })
 }
 
 main().catch(error => {
@@ -203,6 +154,7 @@ function soft_exit(exit_code: number | null = null) {
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`);
   if (exit_code) process.exitCode = exit_code;
   if (auto_position_exits) auto_position_exits.shutdown_streams();
+  logger.warn(`Do we need to close the Binance object?`)
   // if (redis) redis.quit();
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }

@@ -44,7 +44,7 @@ export class PositionTracker {
     let { symbol, exchange, account, averageExecutionPrice, totalBaseTradeQuantity, totalQuoteTradeQuantity } = generic_order_data
     if (!account) account = 'default'
     let position_size: BigNumber = await this.positions_state.get_position_size({ exchange, account, symbol })
-    if ((await position_size).isZero()) {
+    if (position_size.isZero()) {
       try {
         this.send_message(`New position for ${symbol}`)
       } catch (error) {

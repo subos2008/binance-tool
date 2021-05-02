@@ -34,24 +34,6 @@ export class PositionsListener {
     this.callbacks = callbacks
   }
 
-  async connect() {
-    try {
-      this.connection = await connect(connect_options)
-      this.channel = await this.connection.createChannel()
-      this.channel.assertExchange(amqp_exchange_name, "topic", {
-        durable: false
-      });
-      this.logger.info(`Connection with AMQP server established.`)
-    } catch (err) {
-      this.logger.error(`Error connecting to amqp server`);
-      this.logger.error(err);
-      Sentry.captureException(err);
-      throw err;
-    }
-
-    this.run(this.amqp_routing_key)
-  }
-
   private async message_processor(msg: any) {
     console.log(
       " [x] %s: '%s'",
@@ -67,28 +49,33 @@ export class PositionsListener {
     }
   }
 
-  private async run(queue_route: string) {
-    const { promisify } = require("util");
-    const createChannelAsync = promisify(this.connection.createChannel).bind(this.connection);
+  async connect() {
+    try {
 
-    const channel = await createChannelAsync()
-    channel.assertExchange(amqp_exchange_name, "topic", { durable: false });
+      this.connection = await connect(connect_options)
+      this.logger.info(`PositionsListener: Connection with AMQP server established.`)
 
-    const assertQueueAsync = promisify(channel.assertQueue).bind(channel);
-    const q = await assertQueueAsync("", { exclusive: true })
+      const { promisify } = require("util");
 
-    this.send_message(`Waiting for new events on AMQP: exchange: ${amqp_exchange_name}, route: ${queue_route}.`);
+      const createChannelAsync = promisify(this.connection.createChannel).bind(this.connection);
+      const channel = await createChannelAsync()
+      channel.assertExchange(amqp_exchange_name, "topic", { durable: false });
 
-    channel.prefetch(1);
-    channel.bindQueue(q.queue, amqp_exchange_name, queue_route);
+      const assertQueueAsync = promisify(channel.assertQueue).bind(channel);
+      const q = await assertQueueAsync("", { exclusive: true })
 
-    const send_message = this.send_message;
-    // TODO: pass ack to callback?
+      this.send_message(`PositionsListener: Waiting for new events on AMQP: exchange: ${amqp_exchange_name}, route: ${this.amqp_routing_key}.`);
 
+      channel.bindQueue(q.queue, amqp_exchange_name, this.amqp_routing_key);
 
-    channel.consume(q.queue, this.message_processor.bind(this), { noAck: false });
+      channel.consume(q.queue, this.message_processor.bind(this), { noAck: false });
+    } catch (err) {
+      this.logger.error(`PositionsListener:Error connecting to amqp server`);
+      this.logger.error(err);
+      Sentry.captureException(err);
+      throw err;
+    }
   }
-
 
   async shutdown_streams() {
     this.connection.close();

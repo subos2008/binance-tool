@@ -43,15 +43,14 @@ export class PositionsListener {
 
   async connect() {
     try {
-
       this.connection = await connect(connect_options)
       this.logger.info(`PositionsListener: Connection with AMQP server established.`)
-      const channel = await this.connection.createChannel() // hangs
-      await channel.assertExchange(amqp_exchange_name, "topic", { durable: false });
-      const q = await channel.assertQueue("", { exclusive: true })
-      channel.bindQueue(q.queue, amqp_exchange_name, this.amqp_routing_key);
-      channel.consume(q.queue, this.message_processor.bind(this), { noAck: false });
-      this.send_message(`PositionsListener: Waiting for new events on AMQP: exchange: ${amqp_exchange_name}, route: ${this.amqp_routing_key}.`);
+      this.channel = await this.connection.createChannel() // hangs
+      await this.channel.assertExchange(amqp_exchange_name, "topic", { durable: false });
+      const q = await this.channel.assertQueue("", { exclusive: true })
+      this.channel.bindQueue(q.queue, amqp_exchange_name, this.amqp_routing_key);
+      this.channel.consume(q.queue, this.message_processor.bind(this), { noAck: false });
+      this.logger.info(`PositionsListener: Waiting for new events on AMQP: exchange: ${amqp_exchange_name}, route: ${this.amqp_routing_key}.`);
     } catch (err) {
       this.logger.error(`PositionsListener:Error connecting to amqp server`);
       this.logger.error(err);

@@ -33,6 +33,7 @@ export class RedisPositionsState {
   mgetAsync: any;
   incrbyAsync: any;
   decrbyAsync: any;
+  keysAsync: any
 
   constructor({ logger, redis }: { logger: Logger, redis: RedisClient }) {
     assert(logger);
@@ -48,6 +49,7 @@ export class RedisPositionsState {
     this.mgetAsync = promisify(this.redis.mget).bind(this.redis);
     this.incrbyAsync = promisify(this.redis.incrby).bind(this.redis);
     this.decrbyAsync = promisify(this.redis.decrby).bind(this.redis);
+    this.keysAsync = promisify(this.redis.keys).bind(this.redis);
   }
 
   name_to_key({ symbol, name, exchange, account }: { symbol: string, name: string, exchange: string, account: string }) {
@@ -81,9 +83,31 @@ export class RedisPositionsState {
     }
   }
 
+  async get_sats_key({ symbol, exchange, account, key_name }: { symbol: string, exchange: string, account: string, key_name: string }): Promise<BigNumber | undefined> {
+    const key = this.name_to_key({ symbol, exchange, account, name: key_name });
+    const sats_or_null = await this.getAsync(key)
+    return sats_or_null ? new BigNumber(from_sats(sats_or_null)) : undefined
+  }
+
   async get_position_size({ symbol, exchange, account }: { symbol: string, exchange: string, account: string }): Promise<BigNumber> {
+    return await this.get_sats_key({ symbol, exchange, account, key_name: "position_size" }) || new BigNumber(0)
+  }
+
+  async get_initial_entry_price({ symbol, exchange, account }: { symbol: string, exchange: string, account: string }): Promise<BigNumber | undefined> {
+    return this.get_sats_key({ symbol, exchange, account, key_name: "initial_entry_price" })
+  }
+
+  async get_netQuoteBalanceChange({ symbol, exchange, account }: { symbol: string, exchange: string, account: string }): Promise<BigNumber | undefined> {
+    return this.get_sats_key({ symbol, exchange, account, key_name: "netQuoteBalanceChange" })
+  }
+
+  async describe_position({ symbol, exchange, account }: { symbol: string, exchange: string, account: string }): Promise<{ position_size: BigNumber | undefined, initial_entry_price: BigNumber | undefined, netQuoteBalanceChange: BigNumber | undefined }> {
     const key = this.name_to_key({ symbol, exchange, account, name: "position_size" });
-    return new BigNumber(from_sats(await this.getAsync(key) || "0"))
+    return {
+      position_size: await this.get_position_size({ symbol, exchange, account }),
+      initial_entry_price: await this.get_initial_entry_price({ symbol, exchange, account }),
+      netQuoteBalanceChange: await this.get_netQuoteBalanceChange({ symbol, exchange, account }),
+    }
   }
 
   async create_new_position(
@@ -168,5 +192,13 @@ export class RedisPositionsState {
       });
       throw error
     }
+  }
+
+  async open_position_ids() {
+    const keys = await this.keysAsync("positions:*:sats_position_size");
+    return keys.map((key: any) => {
+      let tuple = key.match(/positions:([^:]+):([^:]+):([^:]+):sats_position_size/)
+      return { exchange: tuple[1], account: tuple[2], symbol: tuple[3] }
+    })
   }
 }

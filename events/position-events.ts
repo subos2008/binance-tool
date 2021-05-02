@@ -6,4 +6,6 @@ export interface NewPositionEvent {
   symbol: string;
   // position_entry_timestamp: number
   position_base_size: string
+  position_initial_entry_price?: string
+  position_initial_quote_spent: string
 }

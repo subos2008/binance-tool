@@ -59,11 +59,14 @@ export class PositionTracker {
       }
 
       // 1.1 create a new position and record the entry price and timestamp
+      let initial_entry_price: BigNumber | undefined
       try {
-        let position_size = new BigNumber(totalBaseTradeQuantity)
-        let initial_entry_price = averageExecutionPrice ? new BigNumber(averageExecutionPrice) : undefined
-        let netQuoteBalanceChange = new BigNumber(0).minus(totalQuoteTradeQuantity)
-        this.positions_state.create_new_position({ symbol, exchange, account }, { position_size, initial_entry_price, quote_invested: netQuoteBalanceChange })
+        initial_entry_price = averageExecutionPrice ? new BigNumber(averageExecutionPrice) : undefined
+        this.positions_state.create_new_position({ symbol, exchange, account }, {
+          position_size: new BigNumber(totalBaseTradeQuantity),
+          initial_entry_price,
+          quote_invested: new BigNumber(0).minus(totalQuoteTradeQuantity)
+        })
       } catch (error) {
         console.error(error)
         Sentry.withScope(function (scope) {
@@ -76,7 +79,7 @@ export class PositionTracker {
 
       // Publish an event declaring the new position
       try {
-        this.position_publisher.publish_new_position_event({ event_type: 'NewPositionEvent', exchange_identifier: { exchange, account }, symbol, position_base_size: totalBaseTradeQuantity })
+        this.position_publisher.publish_new_position_event({ event_type: 'NewPositionEvent', exchange_identifier: { exchange, account }, symbol, position_base_size: totalBaseTradeQuantity, position_initial_quote_spent: totalQuoteTradeQuantity, position_initial_entry_price: initial_entry_price?.toFixed() })
       } catch (error) {
         console.error(error)
         Sentry.withScope(function (scope) {

@@ -77,7 +77,7 @@ export class PositionsListener {
     const assertQueueAsync = promisify(channel.assertQueue).bind(channel);
     const q = await assertQueueAsync("", { exclusive: true })
 
-    this.logger.info(`Waiting for new events on AMQP .`);
+    this.send_message(`Waiting for new events on AMQP: exchange: ${amqp_exchange_name}, route: ${queue_route}.`);
 
     channel.prefetch(1);
     channel.bindQueue(q.queue, amqp_exchange_name, queue_route);

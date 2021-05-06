@@ -2,23 +2,23 @@
 
 require("dotenv").config();
 
-import * as Sentry from '@sentry/node';
+import * as Sentry from "@sentry/node";
 Sentry.init({
-  dsn: "https://ebe019da62da46189b217c476ec1ab62@o369902.ingest.sentry.io/5326470"
+  dsn:
+    "https://ebe019da62da46189b217c476ec1ab62@o369902.ingest.sentry.io/5326470",
 });
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "cli");
   scope.setTag("cli", "positions");
 });
 
-import { Logger } from '../interfaces/logger'
+import { Logger } from "../interfaces/logger";
 const LoggerClass = require("../lib/faux_logger");
 const logger: Logger = new LoggerClass({ silent: false });
 
-import { get_redis_client, set_redis_logger } from "../lib/redis"
-set_redis_logger(logger)
-const redis = get_redis_client()
-
+import { get_redis_client, set_redis_logger } from "../lib/redis";
+set_redis_logger(logger);
+const redis = get_redis_client();
 
 import { BigNumber } from "bignumber.js";
 BigNumber.DEBUG = true; // Prevent NaN
@@ -30,37 +30,48 @@ BigNumber.prototype.valueOf = function () {
 const yargs = require("yargs");
 
 import { RedisPositionsState } from "../classes/persistent_state/redis_positions_state";
-const redis_positions = new RedisPositionsState({ logger, redis })
+const redis_positions = new RedisPositionsState({ logger, redis });
 
-async function open_position_ids() {
-  return await redis_positions.open_position_ids()
-}
+import { Position } from "../classes/position";
+import { PositionIdentifier } from "../events/shared/position-identifier";
+import { ExchangeIdentifier } from "../events/shared/exchange-identifier";
+
+const Binance = require("binance-api-node").default;
+require("dotenv").config();
+
+const c = require("ansi-colors");
 
 async function main() {
   yargs
     .strict()
-    .command(["list", "$0"], "list all positions",
+    .command(["list", "$0"], "list all positions", {}, list_positions)
+    .command(
+      "delete",
+      "delete position data from redis",
       {
-      }, list_positions)
-    .command("delete", "delete position data from redis",
-      {
-        'symbol': {
+        symbol: {
           description: "symbol",
           type: "string",
           demandOption: true,
-          choices: (await redis_positions.open_position_ids()).map((data: { symbol: string }) => data.symbol),
+          choices: (await redis_positions.open_position_ids()).map(
+            (data: { symbol: string }) => data.symbol
+          ),
         },
-        'exchange': {
+        exchange: {
           description: "exchange",
           type: "string",
-          default: 'binance',
-          choices: (await redis_positions.open_position_ids()).map((data: { exchange: string }) => data.exchange),
+          default: "binance",
+          choices: (await redis_positions.open_position_ids()).map(
+            (data: { exchange: string }) => data.exchange
+          ),
         },
-        'account': {
+        account: {
           description: "account id",
           type: "string",
-          default: 'default',
-          choices: (await redis_positions.open_position_ids()).map((data: { account: string }) => data.account),
+          default: "default",
+          choices: (await redis_positions.open_position_ids()).map(
+            (data: { account: string }) => data.account
+          ),
         },
       },
       delete_position
@@ -68,18 +79,34 @@ async function main() {
     .help()
     .alias("help", "h").argv;
 }
-main().then(() => { });
+main().then(() => {});
 
+async function get_prices_from_exchange() {
+  const ee = Binance({
+    apiKey: process.env.APIKEY,
+    apiSecret: process.env.APISECRET,
+  });
+  return await ee.prices();
+}
 async function list_positions(argv: any) {
-  let open_positions = await redis_positions.open_position_ids()
-  for (const position_tuple of open_positions) {
-    console.log(position_tuple)
-    console.log(await redis_positions.describe_position(position_tuple))
+  console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
+  let prices = await get_prices_from_exchange();
+  let open_positions = await redis_positions.open_positions();
+  for (const position_identifier of open_positions) {
+    let p = new Position({ logger, redis_positions, position_identifier });
+    await p.load_and_init({ prices });
+    let percentage = p.percentage_price_change_since_initial_entry?.dp(1);
+    let percentage_string: string = p.percentage_price_change_since_initial_entry?.isGreaterThanOrEqualTo(
+      0
+    )
+      ? percentage?.toFixed()
+      : c.red(percentage?.toFixed());
+    console.log(`${p.symbol}: ${percentage_string}`);
   }
   redis.quit();
 }
 
 async function delete_position(argv: any) {
-  await redis_positions.close_position(argv)
+  await redis_positions.close_position(argv);
   redis.quit();
 }

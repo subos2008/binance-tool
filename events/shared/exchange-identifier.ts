@@ -1,5 +1,5 @@
-export interface ExchangeIdentifier {
+export type ExchangeIdentifier = {
   exchange: string;
-  account: string;
+  account: string; // not always present
   // TODO: margin vs spot?
 }

@@ -1,0 +1,4 @@
+printWidth: 100
+semi: false
+quoteProps: 'preserve'
+trailingComma: "es5"

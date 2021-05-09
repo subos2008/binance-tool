@@ -58,7 +58,15 @@ export class AutoPositionExits {
   positions_listener: PositionsListener
   algo_utils: AlgoUtils
 
-  constructor({ ee, logger, send_message }: { ee: GenericExchangeInterface; logger: Logger; send_message: (msg: string) => void }) {
+  constructor({
+    ee,
+    logger,
+    send_message,
+  }: {
+    ee: GenericExchangeInterface
+    logger: Logger
+    send_message: (msg: string) => void
+  }) {
     this.ee = ee
     this.logger = logger
     this.send_message = send_message
@@ -98,7 +106,8 @@ export class AutoPositionExits {
     let sell_quantity = position_initial_entry_price.times(
       percentage_price_increase_to_sell_at.dividedBy(100).plus(1)
     )
-    await this.algo_utils.create_limit_sell_order({pair:symbol, price: sell_price, base_amount: sell_quantity})
+    this.logger.info(`Creating limit sell: ${symbol}, ${sell_quantity.toFixed()} at price ${sell_price.toFixed()}`)
+    await this.algo_utils.create_limit_sell_order({ pair: symbol, price: sell_price, base_amount: sell_quantity })
   }
 
   async new_position_event_callback(event: NewPositionEvent) {
@@ -113,16 +122,23 @@ export class AutoPositionExits {
     }
 
     async function sell_x_at_x(context: AutoPositionExits, amount_percentage: string, price_percentage: string) {
-      if (!event.position_initial_entry_price) throw new Error(`position_initial_entry_price not defined`)
-      await context._add_sell_order_at_percentage_above_price({
-        symbol: event.symbol,
-        exchange_identifier: event.exchange_identifier,
-        percentage_to_sell: new BigNumber(amount_percentage),
-        percentage_price_increase_to_sell_at: new BigNumber(price_percentage),
-        position_initial_entry_price: new BigNumber(event.position_initial_entry_price),
-        position_size: new BigNumber(event.position_base_size),
-      })
-      // TODO: tag these orders somewhere are being auto-exit orders
+      try {
+        if (!event.position_initial_entry_price) throw new Error(`position_initial_entry_price not defined`)
+        await context._add_sell_order_at_percentage_above_price({
+          symbol: event.symbol,
+          exchange_identifier: event.exchange_identifier,
+          percentage_to_sell: new BigNumber(amount_percentage),
+          percentage_price_increase_to_sell_at: new BigNumber(price_percentage),
+          position_initial_entry_price: new BigNumber(event.position_initial_entry_price),
+          position_size: new BigNumber(event.position_base_size),
+        })
+        this.send_message(`Created ${amount_percentage}@${price_percentage} sell order on ${event.symbol}`)
+      } catch (e) {
+        this.send_message(`Error creating ${amount_percentage}@${price_percentage} sell order on ${event.symbol}`)
+        console.log(e)
+        Sentry.captureException(e)
+      }
+      // TODO: tag these orders somewhere as being auto-exit orders
     }
 
     await sell_x_at_x(this, "10", "10")

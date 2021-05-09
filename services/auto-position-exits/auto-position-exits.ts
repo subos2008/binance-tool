@@ -103,7 +103,7 @@ export class AutoPositionExits {
     let sell_price = position_initial_entry_price.times(
       percentage_price_increase_to_sell_at.dividedBy(100).plus(1)
     )
-    let sell_quantity = position_size.times(percentage_to_sell.dividedBy(100).plus(1))
+    let sell_quantity = position_size.times(percentage_to_sell.dividedBy(100))
     this.logger.info(`Creating limit sell: ${symbol}, ${sell_quantity.toFixed()} at price ${sell_price.toFixed()}`)
     await this.algo_utils.munge_and_create_limit_sell_order({ pair: symbol, price: sell_price, base_amount: sell_quantity })
   }

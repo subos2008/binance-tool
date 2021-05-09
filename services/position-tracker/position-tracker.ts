@@ -223,7 +223,6 @@ export class PositionTracker {
     let msg = `${position.symbol} traded from ${position.initial_entry_price} to ${
       position.current_price
     }: ${position.percentage_price_change_since_initial_entry?.dp(1)}% change.`
-    Sentry.captureMessage(msg)
     this.send_message(msg)
 
     this.positions_state.close_position(position.tuple).then(() => {

@@ -6,6 +6,8 @@ import * as Sentry from "@sentry/node"
 import { RedisPositionsState } from "../classes/persistent_state/redis_positions_state"
 import { PositionIdentifier } from "../events/shared/position-identifier"
 
+import * as _ from "lodash"
+
 /*
 { exchange: 'binance', account: 'default', symbol: 'XTZBNB' }
 {
@@ -74,10 +76,7 @@ export class Position {
   get percentage_price_change_since_initial_entry(): BigNumber | undefined {
     if (!this.initial_entry_price) throw new Error(`initial_entry_price unknown`)
     if (!this.current_price) throw new Error(`current_price unknown`)
-    return this.current_price
-      .minus(this.initial_entry_price)
-      .dividedBy(this.initial_entry_price)
-      .times(100)
+    return this.current_price.minus(this.initial_entry_price).dividedBy(this.initial_entry_price).times(100)
   }
 
   async load_and_init({ prices }: { prices: { [key: string]: string } }) {
@@ -94,5 +93,12 @@ export class Position {
     const object: any = this.redis_positions.describe_position(this.position_identifier)
     if (this.prices) object.current_price = this.current_price
     return object
+  }
+
+  asObject(): string {
+    return Object.assign({}, this.object, {
+      // position_identifier: this.position_identifier,
+      current_price: this.current_price,
+    })
   }
 }

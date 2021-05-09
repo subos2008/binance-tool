@@ -105,7 +105,7 @@ export class AutoPositionExits {
     )
     let sell_quantity = position_size.times(percentage_to_sell.dividedBy(100).plus(1))
     this.logger.info(`Creating limit sell: ${symbol}, ${sell_quantity.toFixed()} at price ${sell_price.toFixed()}`)
-    await this.algo_utils.create_limit_sell_order({ pair: symbol, price: sell_price, base_amount: sell_quantity })
+    await this.algo_utils.munge_and_create_limit_sell_order({ pair: symbol, price: sell_price, base_amount: sell_quantity })
   }
 
   async new_position_event_callback(event: NewPositionEvent) {
@@ -133,7 +133,7 @@ export class AutoPositionExits {
         context.send_message(`Created ${amount_percentage}@${price_percentage} sell order on ${event.symbol}`)
       } catch (e) {
         context.send_message(
-          `Error creating ${amount_percentage}@${price_percentage} sell order on ${event.symbol}`
+          `ERROR could not create ${amount_percentage}@${price_percentage} sell order on ${event.symbol}`
         )
         console.log(e)
         Sentry.captureException(e)

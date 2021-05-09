@@ -1,4 +1,4 @@
-printWidth: 100
+printWidth: 115
 semi: false
 quoteProps: 'preserve'
 trailingComma: "es5"

@@ -130,9 +130,11 @@ export class AutoPositionExits {
           position_initial_entry_price: new BigNumber(event.position_initial_entry_price),
           position_size: new BigNumber(event.position_base_size),
         })
-        this.send_message(`Created ${amount_percentage}@${price_percentage} sell order on ${event.symbol}`)
+        context.send_message(`Created ${amount_percentage}@${price_percentage} sell order on ${event.symbol}`)
       } catch (e) {
-        this.send_message(`Error creating ${amount_percentage}@${price_percentage} sell order on ${event.symbol}`)
+        context.send_message(
+          `Error creating ${amount_percentage}@${price_percentage} sell order on ${event.symbol}`
+        )
         console.log(e)
         Sentry.captureException(e)
       }

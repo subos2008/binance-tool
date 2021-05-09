@@ -71,6 +71,8 @@ export class RedisPositionsState {
         return `${prefix}:sats_initial_entry_price`
       case "netQuoteBalanceChange":
         return `${prefix}:sats_netQuoteBalanceChange`
+      case "initial_quote_invested":
+        return `${prefix}:sats_${name}`
       case "total_quote_invested":
         return `${prefix}:sats_${name}`
       case "total_quote_withdrawn":
@@ -238,15 +240,15 @@ export class RedisPositionsState {
           }),
           to_sats(initial_entry_price?.toFixed())
         )
-      if (quote_invested) {
-        assert(quote_invested.isPositive())
-        await this.msetAsync(
-          this.name_to_key({ symbol, exchange, account, name: "netQuoteBalanceChange" }),
-          to_sats(quote_invested?.negated().toFixed()),
-          this.name_to_key({ symbol, exchange, account, name: "initial_quote_invested" }),
-          to_sats(quote_invested?.toFixed())
-        )
-      }
+      assert(quote_invested.isPositive())
+      await this.msetAsync(
+        this.name_to_key({ symbol, exchange, account, name: "netQuoteBalanceChange" }),
+        to_sats(quote_invested?.negated().toFixed()),
+        this.name_to_key({ symbol, exchange, account, name: "initial_quote_invested" }),
+        to_sats(quote_invested?.toFixed()),
+        this.name_to_key({ symbol, exchange, account, name: "total_quote_invested" }),
+        to_sats(quote_invested?.toFixed())
+      )
     } catch (error) {
       console.error(error)
       Sentry.withScope(function (scope) {

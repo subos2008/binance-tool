@@ -91,7 +91,7 @@ export class PositionTracker {
           {
             position_size: new BigNumber(totalBaseTradeQuantity),
             initial_entry_price,
-            quote_invested: new BigNumber(0).minus(totalQuoteTradeQuantity),
+            quote_invested: new BigNumber(totalQuoteTradeQuantity),
           }
         )
       } catch (error) {

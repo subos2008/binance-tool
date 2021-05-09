@@ -19,14 +19,7 @@ import * as Sentry from "@sentry/node"
 import { PositionIdentifier } from "../../events/shared/position-identifier"
 import { Position } from "../../classes/position"
 
-type check_func = ({
-  volume,
-  symbol: string,
-}: {
-  price: BigNumber
-  volume: BigNumber
-  symbol: string
-}) => boolean
+type check_func = ({ volume, symbol: string }: { price: BigNumber; volume: BigNumber; symbol: string }) => boolean
 export class PositionTracker {
   send_message: Function
   logger: Logger
@@ -69,7 +62,7 @@ export class PositionTracker {
       totalQuoteTradeQuantity,
     } = generic_order_data
     if (!account) account = "default"
-    let position_size: BigNumber = await this.positions_state.get_position_size({
+    let position_size: BigNumber|null = await this.positions_state.get_position_size({
       exchange,
       account,
       symbol,
@@ -92,9 +85,7 @@ export class PositionTracker {
       // 1.1 create a new position and record the entry price and timestamp
       let initial_entry_price: BigNumber | undefined
       try {
-        initial_entry_price = averageExecutionPrice
-          ? new BigNumber(averageExecutionPrice)
-          : undefined
+        initial_entry_price = averageExecutionPrice ? new BigNumber(averageExecutionPrice) : undefined
         this.positions_state.create_new_position(
           { symbol, exchange, account },
           {
@@ -136,10 +127,16 @@ export class PositionTracker {
       // 1.2 if existing position just increase the position size
       // not sure what do do about entry price adjustments yet
       this.send_message(`Existing position found for ${symbol}, size ${position_size}`)
-      this.positions_state.increase_position_size_by(
+      // TODO: Fuck, what is the quote currency is different on the buy/sell?
+      // TODO: positions aren't in pairs (symbols) they are in base currencies.
+      this.positions_state.adjust_position_size_by(
         { symbol, exchange, account },
-        new BigNumber(totalBaseTradeQuantity)
+        {
+          base_change: new BigNumber(totalBaseTradeQuantity),
+          quote_change: new BigNumber(totalQuoteTradeQuantity).negated(),
+        }
       )
+      position_size = null // invalidated as needs re-loading from state
     }
 
     // 3. Fire a position changed event or call a callback so we can add auto-exit 10@10 orders
@@ -193,11 +190,13 @@ export class PositionTracker {
     let msg = `reduced the position size for ${symbol}`
     this.send_message(msg)
 
-    position_size = new BigNumber(
-      await this.positions_state.decrease_position_size_by(
-        { symbol, exchange, account },
-        new BigNumber(totalBaseTradeQuantity)
-      )
+    position_size = position_size.minus(totalBaseTradeQuantity)
+    await this.positions_state.adjust_position_size_by(
+      { symbol, exchange, account },
+      {
+        base_change: new BigNumber(totalBaseTradeQuantity).negated(),
+        quote_change: new BigNumber(totalQuoteTradeQuantity),
+      }
     )
 
     if (!averageExecutionPrice) {

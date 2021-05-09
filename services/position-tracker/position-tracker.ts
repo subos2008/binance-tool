@@ -62,7 +62,7 @@ export class PositionTracker {
       totalQuoteTradeQuantity,
     } = generic_order_data
     if (!account) account = "default"
-    let position_size: BigNumber|null = await this.positions_state.get_position_size({
+    let position_size: BigNumber | null = await this.positions_state.get_position_size({
       exchange,
       account,
       symbol,
@@ -220,7 +220,9 @@ export class PositionTracker {
   }
 
   private async _close_position(position: Position) {
-    let msg = `${position.symbol} traded from ${position.initial_entry_price} to ${position.current_price}: ${position.percentage_price_change_since_initial_entry}% change.`
+    let msg = `${position.symbol} traded from ${position.initial_entry_price} to ${
+      position.current_price
+    }: ${position.percentage_price_change_since_initial_entry?.dp(1)}% change.`
     Sentry.captureMessage(msg)
     this.send_message(msg)
 

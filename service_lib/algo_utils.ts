@@ -195,7 +195,7 @@ export class AlgoUtils {
     price: BigNumber
   }) {
     let munged_price = this.munge_and_check_price({ symbol: pair, price })
-    let munged_base_amount = this.munge_amount_and_check_notionals({ pair, price, base_amount })
+    let munged_base_amount = this.munge_amount_and_check_notionals({ pair, price: munged_price, base_amount })
     return this.create_limit_sell_order({ pair, base_amount: munged_base_amount, price: munged_price })
   }
 

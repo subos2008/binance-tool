@@ -12,6 +12,7 @@ import { Logger } from "../../interfaces/logger"
 import { CandleUtils } from "../../classes/utils/candle_utils"
 import { CGMarketData } from "../../classes/utils/coin_gecko"
 
+const humanNumber = require('human-number')
 
 type SendMessageFunc = (msg: string) => void
 export class Edge56 {
@@ -66,7 +67,7 @@ export class Edge56 {
     let price = new BigNumber(candle.close)
     if (this.in_position) throw new Error(`Already in position`)
     this.in_position = true
-    this.send_message(`Position entry triggered at price: ${price.toFixed()}  MCAP ${new BigNumber(this.market_data.market_cap).toPrecision()} RANK: ${this.market_data.market_cap_rank}`)
+    this.send_message(`Position entry triggered at price: ${price.toFixed()}  MCAP ${humanNumber(new BigNumber(this.market_data.market_cap).toPrecision(2))} RANK: ${this.market_data.market_cap_rank}`)
     this.lowest_price_seen_since_entry = price
     this.entry_price = price
   }
@@ -85,7 +86,7 @@ export class Edge56 {
   }) {
     if (this.potential_new_high_detected) return
     if (new BigNumber(candle.high).isGreaterThan(this.current_high)) {
-      this.send_message(`Potential new high on ${this.symbol}. MCAP ${new BigNumber(this.market_data.market_cap).toPrecision()} RANK: ${this.market_data.market_cap_rank}`)
+      this.send_message(`Potential new high on ${this.symbol}. MCAP ${humanNumber(new BigNumber(this.market_data.market_cap).toPrecision(2))} RANK: ${this.market_data.market_cap_rank}`)
       this.potential_new_high_detected = true // just do this once per candle
     }
   }

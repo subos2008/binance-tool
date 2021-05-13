@@ -107,7 +107,7 @@ class Edge56Service {
           logger: this.logger,
           initial_candles,
           symbol,
-          send_message: send_message_factory(`${service_name} on ${symbol}: `),
+          send_message,
         })
         console.log(`Setup edge for ${symbol}`)
         await sleep(2000) // 1200 calls allowed per minute

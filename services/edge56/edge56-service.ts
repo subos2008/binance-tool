@@ -75,7 +75,7 @@ class Edge56Service {
   }
 
   async run() {
-    let limit = 100
+    let limit = 250
     let cg = new CoinGeckoAPI()
     // TODO: hmm, not all of these will be on Binance
     let market_data: CGMarketData[] = await cg.get_top_market_data({ limit })

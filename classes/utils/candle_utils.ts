@@ -46,6 +46,18 @@ export class CandleUtils {
     return high
   }
 
+  static get_highest_close_price(candles: CandleChartResult[]): BigNumber {
+    let high = new BigNumber(candles[0].close)
+    for (let i = 0; i < candles.length; i++) {
+      let candle = candles[i]
+      let daily_high_price = new BigNumber(candle.close)
+      if (daily_high_price.isGreaterThan(high)) {
+        high = daily_high_price
+      }
+    }
+    return high
+  }
+
   find_first_daily_candle_with_close_higher_than_price(
     candles: CandleChartResult[],
     price: BigNumber

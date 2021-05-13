@@ -37,7 +37,7 @@ export class Edge56 {
     symbol: string
     send_message: SendMessageFunc
   }) {
-    this.current_high = CandleUtils.get_highest_price(initial_candles)
+    this.current_high = CandleUtils.get_highest_close_price(initial_candles)
     this.symbol = symbol
     this.logger = logger
     this.send_message = send_message
@@ -96,7 +96,7 @@ export class Edge56 {
         this.lowest_price_seen_since_entry = low
         console.warn(`Drawdown is now: ${this.percentage_change_since_entry(low)}`)
       }
-    } else if (new BigNumber(candle.close).isGreaterThan(this.current_high)) {
+    } else if (new BigNumber(candle.high).isGreaterThan(this.current_high)) {
       console.log(`Entry!! at ${candle.close}, ${new Date(candle.closeTime)}`)
       this.enter_position(candle)
     }

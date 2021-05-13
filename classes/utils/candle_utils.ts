@@ -11,8 +11,7 @@ export class CandlesCollector {
   start_date: Date
   ee: Binance
 
-  constructor({ ee, symbol, start_date }: { ee: any; symbol: string; start_date: Date }) {
-    this.start_date = start_date
+  constructor({ ee }: { ee: any}) {
     this.ee = ee
   }
 
@@ -23,13 +22,13 @@ export class CandlesCollector {
   }: {
     symbol: string
     start_date: Date
-    end_date: Date
+    end_date?: Date
   }): Promise<CandleChartResult[]> {
     return this.ee.candles({
       symbol,
       interval: CandleChartInterval.ONE_DAY,
       startTime: start_date.getTime(),
-      endTime: end_date.getTime(),
+      endTime: end_date?.getTime() || new Date().getTime(),
     })
   }
 }

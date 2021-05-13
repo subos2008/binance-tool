@@ -360,3 +360,67 @@ spec:
 {{- include "telegram.vars" . | nindent 12 }}
 {{- include "amqp.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge56
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "edge56"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "edge56"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "edge56"}'
+        ad.datadoghq.com/edge56.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "edge56"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - hostPath:
+            path: /opt/datadog-agent/run
+          name: pointerdir
+      containers:
+        - name: edge56
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["./services/edge56/edge56-service.ts", "--live"]
+          volumeMounts:
+            - name: pointerdir
+              mountPath: /opt/datadog-agent/run
+          # ports:
+          # - name: http
+          #   containerPort: 8081
+          #   protocol: TCP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          env:
+            - name: SENTRY_DSN
+              value: "https://2de8658dca5b4bf18c7787cfd2deb738@o369902.ingest.sentry.io/5763740"
+{{- include "binance.vars" . | nindent 12 }}
+{{- include "datadog.vars" . | nindent 12 }}
+{{- include "telegram.vars" . | nindent 12 }}
+{{- include "amqp.vars" . | nindent 12 }}
+{{- include "redis.vars" . | nindent 12 }}

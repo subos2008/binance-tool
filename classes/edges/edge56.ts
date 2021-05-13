@@ -9,12 +9,17 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../interfaces/logger"
-import { CandlesCollector, CandleUtils } from "../../classes/utils/candle_utils"
+import { CandleUtils } from "../../classes/utils/candle_utils"
+import { CGMarketData } from "../../classes/utils/coin_gecko"
+
 
 type SendMessageFunc = (msg: string) => void
 export class Edge56 {
+  key: "high" | "close"
   current_high: BigNumber
+  current_high_candle: CandleChartResult
   latest_price: BigNumber
+  market_data: CGMarketData
 
   in_position: boolean = false
   entry_price: BigNumber
@@ -30,24 +35,38 @@ export class Edge56 {
     initial_candles,
     symbol,
     send_message,
+    key,
+    market_data
   }: {
     ee: any
     logger: Logger
     initial_candles: CandleChartResult[]
     symbol: string
     send_message: SendMessageFunc
+    key: "high" | "close",
+    market_data: CGMarketData
   }) {
-    this.current_high = CandleUtils.get_highest_close_price(initial_candles)
+    this.key = key
     this.symbol = symbol
     this.logger = logger
     this.send_message = send_message
+    this.market_data = market_data
+
+    let { candle } = CandleUtils.get_highest_candle({ candles: initial_candles, key })
+    this.set_high(candle)
+  }
+
+  private set_high(candle: CandleChartResult) {
+    this.current_high = new BigNumber(candle[this.key])
+    this.current_high_candle = candle
+    console.log(`${this.symbol} setting high to ${candle[this.key]} from ${new Date(candle.closeTime).toString()}`)
   }
 
   private async enter_position(candle: CandleChartResult | Candle) {
     let price = new BigNumber(candle.close)
     if (this.in_position) throw new Error(`Already in position`)
     this.in_position = true
-    console.log(`Position entry triggered at price: ${price.toFixed()}`)
+    this.send_message(`Position entry triggered at price: ${price.toFixed()}  MCAP ${new BigNumber(this.market_data.market_cap).toPrecision()} RANK: ${this.market_data.market_cap_rank}`)
     this.lowest_price_seen_since_entry = price
     this.entry_price = price
   }
@@ -66,7 +85,7 @@ export class Edge56 {
   }) {
     if (this.potential_new_high_detected) return
     if (new BigNumber(candle.high).isGreaterThan(this.current_high)) {
-      this.send_message(`Potential new high on ${this.symbol}`)
+      this.send_message(`Potential new high on ${this.symbol}. MCAP ${new BigNumber(this.market_data.market_cap).toPrecision()} RANK: ${this.market_data.market_cap_rank}`)
       this.potential_new_high_detected = true // just do this once per candle
     }
   }

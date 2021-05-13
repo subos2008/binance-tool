@@ -1,6 +1,7 @@
 import { Binance, CandleChartInterval, CandleChartResult } from "binance-api-node"
 
 import { BigNumber } from "bignumber.js"
+import { assert } from "console"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -11,7 +12,7 @@ export class CandlesCollector {
   start_date: Date
   ee: Binance
 
-  constructor({ ee }: { ee: any}) {
+  constructor({ ee }: { ee: any }) {
     this.ee = ee
   }
 
@@ -34,28 +35,24 @@ export class CandlesCollector {
 }
 
 export class CandleUtils {
-  static get_highest_price(candles: CandleChartResult[]): BigNumber {
-    let high = new BigNumber(candles[0].high)
+  static get_highest_candle({
+    candles,
+    key,
+  }: {
+    candles: CandleChartResult[]
+    key: "close" | "high"
+  }): { high: BigNumber; candle: CandleChartResult } {
+    let high = new BigNumber(candles[0][key])
+    let high_candle = candles[0]
     for (let i = 0; i < candles.length; i++) {
       let candle = candles[i]
-      let daily_high_price = new BigNumber(candle.high)
+      let daily_high_price = new BigNumber(candle[key])
       if (daily_high_price.isGreaterThan(high)) {
         high = daily_high_price
+        high_candle = candle
       }
     }
-    return high
-  }
-
-  static get_highest_close_price(candles: CandleChartResult[]): BigNumber {
-    let high = new BigNumber(candles[0].close)
-    for (let i = 0; i < candles.length; i++) {
-      let candle = candles[i]
-      let daily_high_price = new BigNumber(candle.close)
-      if (daily_high_price.isGreaterThan(high)) {
-        high = daily_high_price
-      }
-    }
-    return high
+    return { high, candle: high_candle }
   }
 
   find_first_daily_candle_with_close_higher_than_price(

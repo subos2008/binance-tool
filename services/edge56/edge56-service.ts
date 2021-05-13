@@ -39,7 +39,6 @@ BigNumber.prototype.valueOf = function () {
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { Edge56 } from "../../classes/edges/edge56"
 import { CoinGeckoAPI, CGMarketData } from "../../classes/utils/coin_gecko"
-import { textChangeRangeIsUnchanged } from "typescript"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -75,7 +74,7 @@ class Edge56Service {
   }
 
   async run() {
-    let limit = 250
+    let limit = 5
     let cg = new CoinGeckoAPI()
     // TODO: hmm, not all of these will be on Binance
     let market_data: CGMarketData[] = await cg.get_top_market_data({ limit })
@@ -108,11 +107,19 @@ class Edge56Service {
           initial_candles,
           symbol,
           send_message,
+          key: 'close',
+          market_data: market_data[i]
         })
         console.log(`Setup edge for ${symbol}`)
         await sleep(2000) // 1200 calls allowed per minute
       } catch (err) {
-        console.info(`Unable to load candles fro ${symbol}, probably not listed on binance`)
+        if(err.toString().includes('Invalid symbol')) {
+          console.info(`Unable to load candles for ${symbol} not listed on binance`)
+        } else {
+          Sentry.captureException(err)
+          console.error(err)
+          throw err
+        }
       }
     }
   }

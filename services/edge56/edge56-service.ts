@@ -101,6 +101,10 @@ class Edge56Service {
           symbol,
           start_date: this.start_of_bullmarket_date,
         })
+        if(initial_candles.length == 0) {
+          console.warn(`No candles loaded for ${symbol}`) 
+          throw new Error(`No candles loaded for ${symbol}`)
+        }
         this.edges[symbol] = new Edge56({
           ee: this.ee,
           logger: this.logger,

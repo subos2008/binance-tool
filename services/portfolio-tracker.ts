@@ -193,7 +193,8 @@ class PortfolioTracker {
     this.portfolio = portfolio_utils.add_quote_value_to_portfolio_balances({ portfolio: this.portfolio, quote_currency: 'BTC' }).portfolio
     this.portfolio = portfolio_utils.add_quote_value_to_portfolio_balances({ portfolio: this.portfolio, quote_currency: 'USDT' }).portfolio
     this.portfolio.btc_value = portfolio_utils.calculate_portfolio_value_in_quote_currency({ quote_currency: 'BTC', portfolio: this.portfolio }).total.toFixed(8)
-    this.portfolio.usd_value = portfolio_utils.calculate_portfolio_value_in_quote_currency({ quote_currency: 'USDT', portfolio: this.portfolio }).total.toFixed(2)
+    if(!this.portfolio.prices) throw new Error(`No prices`)
+    this.portfolio.usd_value = portfolio_utils.convert_base_to_quote_currency({ base_quantity: new BigNumber(this.portfolio.btc_value), base_currency: 'BTC', quote_currency: 'USDT', prices: this.portfolio.prices }).toFixed()
     return this.portfolio
   }
 }

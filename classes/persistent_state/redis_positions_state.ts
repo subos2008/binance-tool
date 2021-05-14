@@ -180,6 +180,40 @@ export class RedisPositionsState {
     })
   }
 
+  async get_total_quote_invested({
+    symbol,
+    exchange,
+    account,
+  }: {
+    symbol: string
+    exchange: string
+    account: string
+  }): Promise<BigNumber | undefined> {
+    return this.get_sats_key({
+      symbol,
+      exchange,
+      account,
+      key_name: "total_quote_invested",
+    })
+  }
+
+  async get_total_quote_withdrawn({
+    symbol,
+    exchange,
+    account,
+  }: {
+    symbol: string
+    exchange: string
+    account: string
+  }): Promise<BigNumber | undefined> {
+    return this.get_sats_key({
+      symbol,
+      exchange,
+      account,
+      key_name: "total_quote_withdrawn",
+    })
+  }
+
   async describe_position({
     symbol,
     exchange_identifier,
@@ -187,6 +221,8 @@ export class RedisPositionsState {
     position_size: BigNumber | undefined
     initial_entry_price: BigNumber | undefined
     netQuoteBalanceChange: BigNumber | undefined
+    total_quote_invested: BigNumber | undefined
+    total_quote_withdrawn: BigNumber | undefined
   }> {
     const key = this.name_to_key({
       symbol,
@@ -194,22 +230,17 @@ export class RedisPositionsState {
       account: exchange_identifier.account,
       name: "position_size",
     })
+    let id = {
+      symbol,
+      exchange: exchange_identifier.exchange,
+      account: exchange_identifier.account,
+    }
     return {
-      position_size: await this.get_position_size({
-        symbol,
-        exchange: exchange_identifier.exchange,
-        account: exchange_identifier.account,
-      }),
-      initial_entry_price: await this.get_initial_entry_price({
-        symbol,
-        exchange: exchange_identifier.exchange,
-        account: exchange_identifier.account,
-      }),
-      netQuoteBalanceChange: await this.get_netQuoteBalanceChange({
-        symbol,
-        exchange: exchange_identifier.exchange,
-        account: exchange_identifier.account,
-      }),
+      position_size: await this.get_position_size(id),
+      initial_entry_price: await this.get_initial_entry_price(id),
+      netQuoteBalanceChange: await this.get_netQuoteBalanceChange(id),
+      total_quote_invested: await this.get_total_quote_invested(id),
+      total_quote_withdrawn: await this.get_total_quote_withdrawn(id),
     }
   }
 
@@ -247,7 +278,9 @@ export class RedisPositionsState {
         this.name_to_key({ symbol, exchange, account, name: "initial_quote_invested" }),
         to_sats(quote_invested?.toFixed()),
         this.name_to_key({ symbol, exchange, account, name: "total_quote_invested" }),
-        to_sats(quote_invested?.toFixed())
+        to_sats(quote_invested?.toFixed()),
+        this.name_to_key({ symbol, exchange, account, name: "total_quote_withdrawn" }),
+        to_sats(new BigNumber(0))
       )
     } catch (error) {
       console.error(error)
@@ -320,6 +353,19 @@ export class RedisPositionsState {
         this.name_to_key({ symbol, exchange, account, name: "netQuoteBalanceChange" }),
         to_sats(quote_change.toFixed())
       )
+      if (quote_change.isPositive()) {
+        await this.incrbyAsync(
+          this.name_to_key({ symbol, exchange, account, name: "total_quote_invested" }),
+          to_sats(quote_change.toFixed())
+        )
+      }
+      if (quote_change.isNegative()) {
+        // Decr by a negative value
+        await this.decrbyAsync(
+          this.name_to_key({ symbol, exchange, account, name: "total_quote_withdrawn" }),
+          to_sats(quote_change.toFixed())
+        )
+      }
     } catch (error) {
       console.error(error)
       Sentry.withScope(function (scope) {
@@ -336,22 +382,11 @@ export class RedisPositionsState {
   async close_position({ symbol, exchange, account }: { symbol: string; exchange: string; account: string }) {
     try {
       await this.delAsync(this.name_to_key({ symbol, exchange, account, name: "position_size" }))
-      await this.delAsync(
-        this.name_to_key({
-          symbol,
-          exchange,
-          account,
-          name: "initial_entry_price",
-        })
-      )
-      await this.delAsync(
-        this.name_to_key({
-          symbol,
-          exchange,
-          account,
-          name: "netQuoteBalanceChange",
-        })
-      )
+      await this.delAsync(this.name_to_key({ symbol, exchange, account, name: "initial_entry_price" }))
+      await this.delAsync(this.name_to_key({ symbol, exchange, account, name: "netQuoteBalanceChange" }))
+      await this.delAsync(this.name_to_key({ symbol, exchange, account, name: "initial_quote_invested" }))
+      await this.delAsync(this.name_to_key({ symbol, exchange, account, name: "total_quote_invested" }))
+      await this.delAsync(this.name_to_key({ symbol, exchange, account, name: "total_quote_withdrawn" }))
     } catch (error) {
       console.error(error)
       Sentry.withScope(function (scope) {

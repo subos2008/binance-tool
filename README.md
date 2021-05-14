@@ -1,3 +1,12 @@
+A cluster of k8 microservices plus the original binance-tool OCO trader.
+
+The OCO trader is a bit clunky and is being ported in this repo to a bunch
+of services that automatically create positions based on the Binance order feeds
+
+Automatic exits are currently being added to new positions, like 10% sell at 10% gain
+
+
+
 ![](https://github.com/subos2008/binance-tool/workflows/DockerPublish/badge.svg)
 
 # Fails when only stopOrderId set

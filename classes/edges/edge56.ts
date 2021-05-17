@@ -93,9 +93,10 @@ export class Edge56 {
     candle: Candle
   }) {
     if (this.potential_new_high_detected) return // don't keep spamming with this alert
-    if (new BigNumber(candle.high).isGreaterThan(this.current_high)) {
+    let high = new BigNumber(candle.high)
+    if (high.isGreaterThan(this.current_high)) {
       this.send_message(
-        `${this.symbol} Potential new high. MCAP ${humanNumber(
+        `${this.symbol} Potential new high of ${high.toFixed()} since ${new Date(this.current_high_candle.closeTime).toString()}. MCAP ${humanNumber(
           new BigNumber(this.market_data.market_cap).toPrecision(2)
         )} RANK: ${this.market_data.market_cap_rank}`
       )

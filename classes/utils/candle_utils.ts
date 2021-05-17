@@ -45,8 +45,9 @@ export class LimitedLengthCandlesHistory {
     assert(this.candles.length <= this.length)
   }
 
-  get_highest_candle(key: string):FlexiCandle {
-    return CandleUtils.get_highest_candle({ candles: this.candles, key: this.key })
+  get_highest_candle(key: string): FlexiCandle {
+    let { candle } = CandleUtils.get_highest_candle({ candles: this.candles, key: this.key })
+    return candle
   }
 }
 
@@ -77,13 +78,10 @@ export class CandlesCollector {
 }
 
 export class CandleUtils {
-  static get_highest_candle({
-    candles,
-    key,
-  }: {
-    candles: FlexiCandle[]
-    key: "close" | "high"
-  }): { high: BigNumber; candle: FlexiCandle } {
+  static get_highest_candle({ candles, key }: { candles: FlexiCandle[]; key: "close" | "high" }): {
+    high: BigNumber
+    candle: FlexiCandle
+  } {
     let high = new BigNumber(candles[0][key])
     let high_candle = candles[0]
     for (let i = 0; i < candles.length; i++) {

@@ -1,4 +1,4 @@
-import { Binance, CandleChartInterval, CandleChartResult } from "binance-api-node"
+import { Binance, CandleChartInterval, CandleChartResult, Candle } from "binance-api-node"
 
 import { BigNumber } from "bignumber.js"
 import { assert } from "console"
@@ -6,6 +6,48 @@ BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
+}
+
+export type FlexiCandle = CandleChartResult | Candle
+
+export class LimitedLengthCandlesHistory {
+  candles: FlexiCandle[]
+  length: number
+  key: "close" | "high"
+
+  private limited_length_candle_array(length: number, initial_candles: FlexiCandle[]): FlexiCandle[] {
+    var array: FlexiCandle[] = initial_candles.slice(-length)
+    array.push = function () {
+      if (this.length >= length) {
+        this.shift()
+      }
+      return Array.prototype.push.apply(this, arguments)
+    }
+    return array
+  }
+
+  constructor({
+    length,
+    initial_candles,
+    key,
+  }: {
+    length: number
+    initial_candles: FlexiCandle[]
+    key: "close" | "high"
+  }) {
+    this.candles = this.limited_length_candle_array(length, initial_candles)
+    this.length = length
+    this.key = key
+  }
+
+  push(candle: FlexiCandle) {
+    this.candles.push(candle)
+    assert(this.candles.length <= this.length)
+  }
+
+  get_highest_candle(key: string):FlexiCandle {
+    return CandleUtils.get_highest_candle({ candles: this.candles, key: this.key })
+  }
 }
 
 export class CandlesCollector {
@@ -39,9 +81,9 @@ export class CandleUtils {
     candles,
     key,
   }: {
-    candles: CandleChartResult[]
+    candles: FlexiCandle[]
     key: "close" | "high"
-  }): { high: BigNumber; candle: CandleChartResult } {
+  }): { high: BigNumber; candle: FlexiCandle } {
     let high = new BigNumber(candles[0][key])
     let high_candle = candles[0]
     for (let i = 0; i < candles.length; i++) {

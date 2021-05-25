@@ -25,8 +25,9 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../interfaces/logger"
-import { CandleUtils } from "../../classes/utils/candle_utils"
+import { CandleUtils, LimitedLengthCandlesHistory } from "../../classes/utils/candle_utils"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
+import { convertToObject } from "typescript"
 
 const humanNumber = require("human-number")
 
@@ -44,15 +45,16 @@ export interface Edge56EntrySignalsCallbacks {
 }
 
 export class Edge56EntrySignals {
-  historical_candle_key: "high" | "close"
-  current_candle_key: "high" | "close"
-  historical_high_candle: CandleChartResult | Candle
-  market_data: CoinGeckoMarketData
-
   symbol: string
   logger: Logger
-  potential_new_high_detected: boolean = false
+  market_data: CoinGeckoMarketData
+
+  historical_candle_key: "high" | "close"
+  current_candle_key: "high" | "close"
+
   callbacks: Edge56EntrySignalsCallbacks
+  price_history_candles: LimitedLengthCandlesHistory
+  volume_history_candles: LimitedLengthCandlesHistory
 
   constructor({
     ee,
@@ -73,57 +75,24 @@ export class Edge56EntrySignals {
     market_data: CoinGeckoMarketData
     callbacks: Edge56EntrySignalsCallbacks
   }) {
-    this.historical_candle_key = 'high'
-    this.current_candle_key = 'close'
     this.symbol = symbol
     this.logger = logger
     this.market_data = market_data
     this.callbacks = callbacks
 
-    let { candle } = CandleUtils.get_highest_candle({ candles: initial_candles, key: this.historical_candle_key })
-    this.set_high(candle)
+    // Edge config - hardcoded as this should be static to the edge
+    this.historical_candle_key = "high"
+    this.current_candle_key = "close"
+    this.price_history_candles = new LimitedLengthCandlesHistory({
+      length: 20,
+      initial_candles,
+      key: this.historical_candle_key,
+    })
+    this.volume_history_candles = new LimitedLengthCandlesHistory({ length: 7, initial_candles, key: "volume" })
   }
 
-  // TODO: problem is I am assuming historical 'high' and 'entry high' use the same key. I could just hard code
-  // at this stage but I need to make sure checks for entry high vs maintaining historical highs are discinct especially
-  // with intial candle ingestion vs ingestion of new candles getting added. So one class does intial candles and
-  // new candles for the history and has an interface
-  private is_new_high_candle(candle: CandleChartResult | Candle) {
-    return new BigNumber(candle[this.current_candle_key]).isGreaterThanOrEqualTo(
-      this.historical_high_candle[this.historical_candle_key]
-    )
-  }
-
-  private set_high(candle: CandleChartResult | Candle) {
-    this.historical_high_candle = candle
-    console.log(
-      `${this.symbol} setting historical high to ${candle[this.historical_candle_key]} from ${new Date(
-        candle.closeTime
-      ).toString()}`
-    )
-  }
-
-  async ingest_intercandle_close_update_candle({
-    timeframe,
-    candle,
-    symbol,
-  }: {
-    timeframe: string
-    symbol: string
-    candle: Candle
-  }) {
-    if (this.potential_new_high_detected) return // don't keep spamming with this alert
-    let high = new BigNumber(candle.high)
-    if (high.isGreaterThan(this.historical_high_candle[this.historical_candle_key])) {
-      this.logger.info(
-        `${this.symbol} Potential new high of ${high.toFixed()} since ${new Date(
-          this.historical_high_candle.closeTime
-        ).toString()}. MCAP ${humanNumber(new BigNumber(this.market_data.market_cap).toPrecision(2))} RANK: ${
-          this.market_data.market_cap_rank
-        }`
-      )
-      this.potential_new_high_detected = true // just do this once per candle
-    }
+  ingest_intercandle_close_update_candle(foo: any) {
+    return
   }
 
   async ingest_new_candle({
@@ -137,13 +106,32 @@ export class Edge56EntrySignals {
   }) {
     if (timeframe !== "1d") {
       console.log(`Short timeframe candle on ${this.symbol} closed at ${candle.close}`)
+      throw `Got a short timeframe candle`
     }
-    this.potential_new_high_detected = false // reset
-    if (this.is_new_high_candle(candle)) this.set_high(candle)
-    let potential_entry_price = new BigNumber(candle[this.current_candle_key])
-    if (potential_entry_price.isGreaterThan(this.historical_high_candle[this.historical_candle_key])) {
-      console.log(`Entry signal!! at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`)
-      this.callbacks.enter_position({ symbol: this.symbol, entry_price: potential_entry_price, direction: "long" })
+
+    try {
+      let potential_entry_price = new BigNumber(candle[this.current_candle_key])
+      let potential_entry_volume = new BigNumber(candle["volume"])
+
+      if (potential_entry_price.isGreaterThan(this.price_history_candles.get_highest_value())) {
+        console.log(`Price entry signal at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`)
+        if (potential_entry_volume.isGreaterThan(this.volume_history_candles.get_highest_value())) {
+          console.log(`Volume entry signal at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`)
+
+          this.callbacks.enter_position({
+            symbol: this.symbol,
+            entry_price: potential_entry_price,
+            direction: "long",
+          })
+        }
+      }
+    } catch (e) {
+      this.logger.error(`Exception checking or entering position: ${e}`)
+      console.error(e)
+    } finally {
+      // important not to miss this - lest we corrupt the history
+      this.price_history_candles.push(candle)
+      this.volume_history_candles.push(candle)
     }
   }
 }

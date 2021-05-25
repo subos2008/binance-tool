@@ -93,7 +93,7 @@ class Edge56Service {
     direction: "long" | "short"
   }): void {
     this.send_message(
-      `Edge56 position entry triggered on ${symbol} at price ${entry_price.toFixed()} derection ${direction}`
+      `Edge56 position entry triggered on ${symbol} at price ${entry_price.toFixed()} derection ${direction}. Check MACD before entry`
     )
   }
 

@@ -5,14 +5,20 @@
 //        - in position-tracker
 // TODO: store entries made from here in redis so this service can restart, tag edge56/trendfollowing/donchen-exits
 // TOOD: signal when open positions go under/over MA200 or MA50, whichever is available
-// TODO: add coing-gekko as an exchange and the cli ability to add/adjust/set manual positions
-// TOO:how can we run processing to exits - to free up capital before we run processing of new entries? Do potential new entries get stored instead of entered? Maybe entries go on a list for manual response
+// TODO: add coin-gekko as an exchange and the cli ability to add/adjust/set manual positions
 // TODO: add to position if we are >~30% up since entry price (daily close)
-// TODO: stop out at 25% drawdown - presumably that's with just the initial position?
-// TODO: we probably want some kind of limit so we don't buy the top of a 2x spike? Or given small position size maybe we are up for that.
-// TODO: exit strat - we can do exit in a separate service if we tag positions with the edge in redis
-// TODO: don't enter if we already have a position in this symbol
-// TODO: check volume is higher than last 7 days volume for entry trigger
+
+// TODO: Entry
+// 1. Add MACD
+
+// TODO: Exits
+// 1. Stop loss: 25% or 10% from entry
+// 2. time based: if it's not up after 10 days cut it
+// 3. Chandelier
+// 4. edge short entry signal
+
+// TODO: Increase Position Size
+// 1. Breakout of Donchien channel (new high after a rnage period)
 
 import { assert, time } from "console"
 

@@ -38,7 +38,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { Edge56 } from "../../classes/edges/edge56"
-import { CoinGeckoAPI, CGMarketData } from "../../classes/utils/coin_gecko"
+import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -77,11 +77,11 @@ class Edge56Service {
     let limit = 250
     let cg = new CoinGeckoAPI()
     // TODO: hmm, not all of these will be on Binance
-    let market_data: CGMarketData[] = await cg.get_top_market_data({ limit })
+    let market_data: CoinGeckoMarketData[] = await cg.get_top_market_data({ limit })
     market_data = market_data.filter((x) => x.id !== "bitcoin")
     let coin_names = market_data.map((x) => x.symbol.toUpperCase())
     console.log(`Top ${limit} coins by market cap: ${coin_names.join(", ")} (BTC excluded)`)
-    let to_symbol = (md: CGMarketData) => md.symbol.toUpperCase() + "BTC"
+    let to_symbol = (md: CoinGeckoMarketData) => md.symbol.toUpperCase() + "BTC"
     let symbols = market_data.map(to_symbol)
 
     this.close_1d_candle_ws = this.ee.ws.candles(symbols, "1d", (candle) => {

@@ -8,7 +8,7 @@ type Response = {
   data: Object
 }
 
-export type CGMarketData = {
+export type CoinGeckoMarketData = {
   id: string
   symbol: string
   name: string
@@ -38,12 +38,12 @@ export type CGMarketData = {
 }
 
 export class CoinGeckoAPI {
-  async get_top_market_data({ limit }: { limit: number }): Promise<CGMarketData[]> {
+  async get_top_market_data({ limit }: { limit: number }): Promise<CoinGeckoMarketData[]> {
     let response: Response = await CoinGeckoClient.coins.markets({
       order: CoinGecko.ORDER.MARKET_CAP_DESC,
       per_page: limit,
     })
     if (!response.success) throw new Error(`Call to CoinGeckoClient.coins.markets failed`)
-    return response.data as CGMarketData[]
+    return response.data as CoinGeckoMarketData[]
   }
 }

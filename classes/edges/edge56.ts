@@ -10,7 +10,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { Logger } from "../../interfaces/logger"
 import { CandleUtils } from "../../classes/utils/candle_utils"
-import { CGMarketData } from "../../classes/utils/coin_gecko"
+import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 
 const humanNumber = require("human-number")
 
@@ -19,7 +19,7 @@ export class Edge56 {
   key: "high" | "close"
   current_high: BigNumber
   current_high_candle: CandleChartResult | Candle
-  market_data: CGMarketData
+  market_data: CoinGeckoMarketData
 
   in_position: boolean = false
   entry_price: BigNumber
@@ -44,7 +44,7 @@ export class Edge56 {
     symbol: string
     send_message: SendMessageFunc
     key: "high" | "close"
-    market_data: CGMarketData
+    market_data: CoinGeckoMarketData
   }) {
     this.key = key
     this.symbol = symbol

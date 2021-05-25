@@ -19,6 +19,8 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
+type SendMessageFunc = (msg: string) => void
+
 const send_message_factory = require("../../lib/telegram.js")
 
 const send_message = send_message_factory(`${service_name}: `)
@@ -37,7 +39,7 @@ BigNumber.prototype.valueOf = function () {
 // send_message("starting")
 
 import { CandlesCollector } from "../../classes/utils/candle_utils"
-import { Edge56 } from "../../classes/edges/edge56"
+import { Edge56EntrySignals, Edge56EntrySignalsCallbacks } from "../../classes/edges/edge56"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 
 process.on("unhandledRejection", (error) => {
@@ -50,28 +52,46 @@ function sleep(ms: number) {
 }
 
 class Edge56Service {
-  edges: { [Key: string]: Edge56 } = {}
+  edges: { [Key: string]: Edge56EntrySignals } = {}
   start_of_bullmarket_date: Date
   candles_collector: CandlesCollector
   ee: Binance
   logger: Logger
   close_short_timeframe_candle_ws: () => void
   close_1d_candle_ws: () => void
+  send_message: SendMessageFunc
 
   constructor({
     ee,
     start_of_bullmarket_date,
     logger,
+    send_message,
   }: {
     ee: Binance
     start_of_bullmarket_date: Date
     logger: Logger
+    send_message: SendMessageFunc
   }) {
     this.start_of_bullmarket_date = start_of_bullmarket_date
     this.candles_collector = new CandlesCollector({ ee })
     this.ee = ee
     this.logger = logger
+    this.send_message = send_message
   }
+
+  // Edge56EntrySignalsCallbacks
+  in_position(): boolean {
+    return false
+  }
+  enter_position({
+    symbol,
+    entry_price,
+    direction,
+  }: {
+    symbol: string
+    entry_price: BigNumber
+    direction: "long" | "short"
+  }): void {}
 
   async run() {
     let limit = 250
@@ -101,23 +121,22 @@ class Edge56Service {
           symbol,
           start_date: this.start_of_bullmarket_date,
         })
-        if(initial_candles.length == 0) {
-          console.warn(`No candles loaded for ${symbol}`) 
+        if (initial_candles.length == 0) {
+          console.warn(`No candles loaded for ${symbol}`)
           throw new Error(`No candles loaded for ${symbol}`)
         }
-        this.edges[symbol] = new Edge56({
+        this.edges[symbol] = new Edge56EntrySignals({
           ee: this.ee,
           logger: this.logger,
           initial_candles,
           symbol,
-          send_message,
-          key: 'close',
-          market_data: market_data[i]
+          market_data: market_data[i],
+          callbacks: this,
         })
         console.log(`Setup edge for ${symbol}`)
         await sleep(2000) // 1200 calls allowed per minute
       } catch (err) {
-        if(err.toString().includes('Invalid symbol')) {
+        if (err.toString().includes("Invalid symbol")) {
           console.info(`Unable to load candles for ${symbol} not listed on binance`)
         } else {
           Sentry.captureException(err)
@@ -150,6 +169,7 @@ async function main() {
       ee,
       start_of_bullmarket_date,
       logger,
+      send_message,
     })
     await edge56.run()
   } catch (error) {

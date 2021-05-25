@@ -91,7 +91,11 @@ class Edge56Service {
     symbol: string
     entry_price: BigNumber
     direction: "long" | "short"
-  }): void {}
+  }): void {
+    this.send_message(
+      `Edge56 position entry triggered on ${symbol} at price ${entry_price.toFixed()} derection ${direction}`
+    )
+  }
 
   async run() {
     let limit = 250

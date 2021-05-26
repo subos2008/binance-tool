@@ -18,7 +18,7 @@
 // 4. edge short entry signal
 
 // TODO: Increase Position Size
-// 1. Breakout of Donchien channel (new high after a rnage period)
+// 1. Breakout of Donchien channel (new high after a range period). The question is does a day of down followed the next day by a Donchien channel breakout count..
 
 import { assert, time } from "console"
 

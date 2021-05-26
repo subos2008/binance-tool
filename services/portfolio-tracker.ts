@@ -108,13 +108,21 @@ async function add_known_positions_to_portfolio({
       exchange,
     })
     let position: Position = new Position({ logger, redis_positions, position_identifier })
+    await position.load_and_init({prices:portfolio.prices})
     positions[symbol] = position
   }
+  portfolio.positions = positions
+  return portfolio
 }
 
 async function update_portfolio_from_exchange(): Promise<void> {
   try {
-    const portfolio = await portfolio_tracker.current_portfolio_with_prices()
+    let portfolio = await portfolio_tracker.current_portfolio_with_prices()
+    portfolio = await add_known_positions_to_portfolio({
+      portfolio,
+      account: 'default',
+      exchange:'binance',
+    })
     try {
       let msg = `B: ${portfolio.btc_value}, U: ${portfolio.usd_value}`
       try {

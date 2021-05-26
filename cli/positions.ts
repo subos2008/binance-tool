@@ -130,6 +130,7 @@ async function delete_position(argv: any) {
 
 async function describe_position(argv: any) {
   let position_identifier = create_position_identifier_from_tuple(argv)
+  console.log(position_identifier)
   let prices = await get_prices_from_exchange()
   let p = new Position({ logger, redis_positions, position_identifier })
   await p.load_and_init({ prices })

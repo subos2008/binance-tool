@@ -16,6 +16,7 @@
 // 2. time based: if it's not up after 10 days cut it
 // 3. Chandelier
 // 4. edge short entry signal
+// 5. Peter Brandt style exit: high candle, setup candle, exit: https://www.youtube.com/watch?v=kxjYGO-N1VA at 9-12 minutes
 
 // TODO: Increase Position Size
 // 1. Breakout of Donchien channel (new high after a range period). The question is does a day of down followed the next day by a Donchien channel breakout count..
@@ -87,7 +88,7 @@ export class Edge56EntrySignals {
     this.callbacks = callbacks
 
     // Edge config - hardcoded as this should be static to the edge
-    this.historical_candle_key = "high"
+    this.historical_candle_key = "close"
     this.current_candle_key = "close"
     this.price_history_candles = new LimitedLengthCandlesHistory({
       length: 20,

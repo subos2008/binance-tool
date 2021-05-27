@@ -145,7 +145,6 @@ class Edge56Service {
         } else {
           Sentry.captureException(err)
           console.error(err)
-          throw err
         }
       }
     }

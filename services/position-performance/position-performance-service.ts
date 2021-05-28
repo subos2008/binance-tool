@@ -67,9 +67,10 @@ export class PositionPerformance {
     console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
     let positions : Position[] = []
     let open_positions = await redis_positions.open_positions()
+    let prices = this.prices
     for (const position_identifier of open_positions) {
       let p = new Position({ logger, redis_positions, position_identifier })
-      await p.load_and_init({ prices: this.prices })
+      await p.load_and_init({ prices })
       positions.push(p)
     }
 

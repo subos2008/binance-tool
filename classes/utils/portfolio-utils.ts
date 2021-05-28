@@ -30,12 +30,18 @@ export class PortfolioUtils {
   // Get value of one asset in terms of another ()
   // TODO: allow conversions backwards, i.e. USDT to BTC is done via the BTCUSDT pair
   convert_base_to_quote_currency({ base_quantity, base_currency, quote_currency, prices }: { base_quantity: BigNumber, base_currency: string, quote_currency: string, prices: Prices }) {
+    if(base_currency === quote_currency) return base_quantity
     let pair = `${base_currency}${quote_currency}`;
     if (pair in prices) {
       return base_quantity.times(prices[pair]);
-    } else {
-      throw new Error(`Pair ${pair} not available when converting ${base_currency} to ${quote_currency}`)
     }
+
+    let inverse_pair = `${quote_currency}${base_currency}`;
+    if (inverse_pair in prices) {
+      return base_quantity.dividedBy(prices[inverse_pair]);
+    }
+
+    throw new Error(`Pair ${pair} not available when converting ${base_currency} to ${quote_currency}`)
   }
 
   total_balance(balance: Balance) {

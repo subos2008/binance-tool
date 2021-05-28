@@ -99,7 +99,6 @@ async function add_known_positions_to_portfolio({
 }) {
   if (!portfolio.balances) throw new Error(`No balances in portfolio`)
   if (!portfolio.prices) throw new Error(`No prices in portfolio`)
-  let symbols = Object.keys(portfolio.balances)
   let positions: { [name: string]: Position } = {}
   for (let symbol in portfolio.balances) {
     let position_identifier: PositionIdentifier = create_position_identifier_from_tuple({

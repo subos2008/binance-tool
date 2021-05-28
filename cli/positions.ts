@@ -107,6 +107,7 @@ async function get_prices_from_exchange() {
   })
   return await ee.prices()
 }
+
 async function list_positions(argv: any) {
   console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
   let prices = await get_prices_from_exchange()

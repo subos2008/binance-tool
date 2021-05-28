@@ -424,3 +424,67 @@ spec:
 {{- include "telegram.vars" . | nindent 12 }}
 {{- include "amqp.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: position-performance
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "position-performance"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "position-performance"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "position-performance"}'
+        ad.datadoghq.com/position-performance.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "position-performance"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - hostPath:
+            path: /opt/datadog-agent/run
+          name: pointerdir
+      containers:
+        - name: position-performance
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["./services/position-performance/position-performance-service.ts", "--live"]
+          volumeMounts:
+            - name: pointerdir
+              mountPath: /opt/datadog-agent/run
+          # ports:
+          # - name: http
+          #   containerPort: 8081
+          #   protocol: TCP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          env:
+            - name: SENTRY_DSN
+              value: "https://2de8658dca5b4bf18c7787cfd2deb738@o369902.ingest.sentry.io/5763740"
+{{- include "binance.vars" . | nindent 12 }}
+{{- include "datadog.vars" . | nindent 12 }}
+{{- include "telegram.vars" . | nindent 12 }}
+{{- include "amqp.vars" . | nindent 12 }}
+{{- include "redis.vars" . | nindent 12 }}

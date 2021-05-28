@@ -4,18 +4,16 @@
 
 import { strict as assert } from "assert"
 
-require("dotenv").config();
+require("dotenv").config()
 
 import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
-const service_name = 'position-performance'
+const service_name = "position-performance"
 const send_message = require("../../lib/telegram.js")(`${service_name}: `)
 
-const update_interval_seconds: number =
-  Number(process.env.UPDATE_INTERVAL_SECONDS) || 6 * 60 * 60
-
+const update_interval_seconds: number = Number(process.env.UPDATE_INTERVAL_SECONDS) || 6 * 60 * 60
 
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
 set_redis_logger(logger)
@@ -36,7 +34,7 @@ import BinanceFactory from "binance-api-node"
 import * as Sentry from "@sentry/node"
 import { PositionIdentifier } from "../../events/shared/position-identifier"
 import { Position } from "../../classes/position"
-import { Prices } from '../../interfaces/portfolio'
+import { Prices } from "../../interfaces/portfolio"
 
 export class PositionPerformance {
   send_message: Function
@@ -49,7 +47,7 @@ export class PositionPerformance {
     send_message,
     logger,
     redis,
-    ee
+    ee,
   }: {
     send_message: (msg: string) => void
     logger: Logger
@@ -57,15 +55,16 @@ export class PositionPerformance {
     ee: Binance
   }) {
     assert(logger)
+    this.ee = ee
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
     this.positions_state = new RedisPositionsState({ logger, redis })
   }
 
-  async  list_positions() {
+  async list_positions() {
     console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
-    let positions : Position[] = []
+    let positions: Position[] = []
     let open_positions = await redis_positions.open_positions()
     let prices = this.prices
     for (const position_identifier of open_positions) {
@@ -74,46 +73,45 @@ export class PositionPerformance {
       positions.push(p)
     }
 
-    function position_to_string(p:Position ){
+    function position_to_string(p: Position) {
       let percentage = p.percentage_price_change_since_initial_entry?.dp(1)
-      let percentage_string: string = percentage?.toFixed() || '?'
+      let percentage_string: string = percentage?.toFixed() || "?"
       return `${p.symbol}: ${percentage_string}`
     }
 
-    let msg = positions.map(p=>position_to_string(p)).join(', ')
-    this.send_message(msg)
+    let msg: string = positions.map((p) => position_to_string(p)).join("\n")
+    this.send_message(`\n${msg}`)
   }
 
   async update() {
     this.prices = await this.ee.prices()
+    await this.list_positions()
   }
 }
-
 
 let ee: Binance
 // let portfolio_tracker: PortfolioTracker
 // const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger, sentry: Sentry })
 
 async function main() {
-    logger.info("Live monitoring mode")
-    if(!process.env.APIKEY) throw new Error(`Missing APIKEY in ENV`)
-    if(!process.env.APISECRET) throw new Error(`Missing APISECRET in ENV`)
-    ee = BinanceFactory({
-      apiKey: process.env.APIKEY,
-      apiSecret: process.env.APISECRET,
-    })
+  logger.info("Live monitoring mode")
+  if (!process.env.APIKEY) throw new Error(`Missing APIKEY in ENV`)
+  if (!process.env.APISECRET) throw new Error(`Missing APISECRET in ENV`)
+  ee = BinanceFactory({
+    apiKey: process.env.APIKEY,
+    apiSecret: process.env.APISECRET,
+  })
 
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  let main = new PositionPerformance({ logger, send_message, ee, redis })
+  let position_performance = new PositionPerformance({ logger, send_message, ee, redis })
 
   // Update on intervals
-  function update() {
-    main.update()
-  }
-  update()
-  setInterval(update, update_interval_seconds * 1000)
+  let bound_update = position_performance.update.bind(position_performance)
+
+  bound_update()
+  setInterval(bound_update, update_interval_seconds * 1000)
 }
 
 main().catch((error) => {

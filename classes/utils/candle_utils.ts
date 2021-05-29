@@ -50,8 +50,18 @@ export class LimitedLengthCandlesHistory {
     return candle
   }
 
+  get_lowest_candle(): FlexiCandle {
+    let { candle } = CandleUtils.get_lowest_candle({ candles: this.candles, key: this.key })
+    return candle
+  }
+
   get_highest_value(): BigNumber {
     let { candle } = CandleUtils.get_highest_candle({ candles: this.candles, key: this.key })
+    return new BigNumber(candle[this.key])
+  }
+
+  get_lowest_value(): BigNumber {
+    let { candle } = CandleUtils.get_lowest_candle({ candles: this.candles, key: this.key })
     return new BigNumber(candle[this.key])
   }
 }
@@ -98,6 +108,23 @@ export class CandleUtils {
       }
     }
     return { high, candle: high_candle }
+  }
+
+  static get_lowest_candle({ candles, key }: { candles: FlexiCandle[]; key: "close" | "high" | "volume" }): {
+    low: BigNumber
+    candle: FlexiCandle
+  } {
+    let low = new BigNumber(candles[0][key])
+    let low_candle = candles[0]
+    for (let i = 0; i < candles.length; i++) {
+      let candle = candles[i]
+      let new_price = new BigNumber(candle[key])
+      if (new_price.isLessThan(low)) {
+        low = new_price
+        low_candle = candle
+      }
+    }
+    return { low, candle: low_candle }
   }
 
   find_first_daily_candle_with_close_higher_than_price(

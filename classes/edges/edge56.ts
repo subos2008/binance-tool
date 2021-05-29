@@ -23,7 +23,7 @@
 
 import { assert, time } from "console"
 
-import { Binance, Candle, CandleChartInterval, CandleChartResult } from "binance-api-node"
+import { Candle, CandleChartInterval, CandleChartResult } from "binance-api-node"
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -34,7 +34,6 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../interfaces/logger"
 import { CandleUtils, LimitedLengthCandlesHistory } from "../../classes/utils/candle_utils"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
-import { convertToObject } from "typescript"
 
 const humanNumber = require("human-number")
 
@@ -64,7 +63,6 @@ export class Edge56EntrySignals {
   volume_history_candles: LimitedLengthCandlesHistory
 
   constructor({
-    ee,
     logger,
     initial_candles,
     symbol,
@@ -73,7 +71,6 @@ export class Edge56EntrySignals {
     market_data,
     callbacks,
   }: {
-    ee: any
     logger: Logger
     initial_candles: CandleChartResult[]
     symbol: string
@@ -120,17 +117,36 @@ export class Edge56EntrySignals {
       let potential_entry_price = new BigNumber(candle[this.current_candle_key])
       let potential_entry_volume = new BigNumber(candle["volume"])
 
-      if (potential_entry_price.isGreaterThan(this.price_history_candles.get_highest_value())) {
-        console.log(`Price entry signal at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`)
-        if (potential_entry_volume.isGreaterThan(this.volume_history_candles.get_highest_value())) {
-          console.log(`Volume entry signal at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`)
+      if (potential_entry_volume.isGreaterThan(this.volume_history_candles.get_highest_value())) {
+        console.log(`Volume entry signal at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`)
+      } else {
+        return // no volume = no entry
+      }
 
-          this.callbacks.enter_position({
-            symbol: this.symbol,
-            entry_price: potential_entry_price,
-            direction: "long",
-          })
-        }
+      // check for long entry
+      if (potential_entry_price.isGreaterThan(this.price_history_candles.get_highest_value())) {
+        let direction: "long" = "long"
+        console.log(
+          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`
+        )
+        this.callbacks.enter_position({
+          symbol: this.symbol,
+          entry_price: potential_entry_price,
+          direction,
+        })
+      }
+
+      // check for short entry
+      if (potential_entry_price.isLessThan(this.price_history_candles.get_lowest_value())) {
+        let direction: "short" = "short"
+        console.log(
+          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`
+        )
+        this.callbacks.enter_position({
+          symbol: this.symbol,
+          entry_price: potential_entry_price,
+          direction,
+        })
       }
     } catch (e) {
       this.logger.error(`Exception checking or entering position: ${e}`)

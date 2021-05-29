@@ -51,7 +51,7 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-class Edge56Service {
+class Edge56Service implements Edge56EntrySignalsCallbacks {
   edges: { [Key: string]: Edge56EntrySignals } = {}
   start_of_bullmarket_date: Date
   candles_collector: CandlesCollector
@@ -98,14 +98,14 @@ class Edge56Service {
   }
 
   async run() {
-    let limit = 250
+    let limit = 105
     let cg = new CoinGeckoAPI()
-    // TODO: hmm, not all of these will be on Binance
+    // not all of these will be on Binance
     let market_data: CoinGeckoMarketData[] = await cg.get_top_market_data({ limit })
-    market_data = market_data.filter((x) => x.id !== "bitcoin")
+    // market_data = market_data.filter((x) => x.id !== "bitcoin")
     let coin_names = market_data.map((x) => x.symbol.toUpperCase())
-    console.log(`Top ${limit} coins by market cap: ${coin_names.join(", ")} (BTC excluded)`)
-    let to_symbol = (md: CoinGeckoMarketData) => md.symbol.toUpperCase() + "BTC"
+    console.log(`Top ${limit} coins by market cap: ${coin_names.join(", ")}`)
+    let to_symbol = (md: CoinGeckoMarketData) => md.symbol.toUpperCase() + "USDT"
     let symbols = market_data.map(to_symbol)
 
     this.close_1d_candle_ws = this.ee.ws.candles(symbols, "1d", (candle) => {
@@ -130,7 +130,6 @@ class Edge56Service {
           throw new Error(`No candles loaded for ${symbol}`)
         }
         this.edges[symbol] = new Edge56EntrySignals({
-          ee: this.ee,
           logger: this.logger,
           initial_candles,
           symbol,
@@ -166,11 +165,11 @@ async function main() {
   })
 
   try {
-    const start_of_bullmarket_date = new Date("2021-01-01")
+    const start_of_bullmarket_date = new Date("2021-05-01")
 
     edge56 = new Edge56Service({
       ee,
-      start_of_bullmarket_date,
+      start_of_bullmarket_date, // TODO: this should load its own candles as it has the hardcode for 20 days history
       logger,
       send_message,
     })

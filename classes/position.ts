@@ -48,14 +48,14 @@ export class Position {
 
   get tuple() {
     return {
-      symbol: this.symbol,
+      baseAsset: this.baseAsset,
       exchange: this.position_identifier.exchange_identifier.exchange,
       account: this.position_identifier.exchange_identifier.account,
     }
   }
 
-  get symbol(): string {
-    return this.position_identifier.symbol
+  get baseAsset(): string {
+    return this.position_identifier.baseAsset
   }
 
   get initial_entry_price(): BigNumber | null {
@@ -65,19 +65,21 @@ export class Position {
   // TODO: avg entry price derived from netQuote change and position size?
   // then make sure netQuote change is tracked properly
 
-  get current_price(): BigNumber | undefined {
-    return this.prices[this.symbol] ? new BigNumber(this.prices[this.symbol]) : undefined
-  }
+  // Depricated, needs a quoteAsset to compare with
+  // get current_price(): BigNumber | undefined {
+  //   return this.prices[this.symbol] ? new BigNumber(this.prices[this.symbol]) : undefined
+  // }
 
   get position_size(): BigNumber | undefined {
     return this.object?.position_size ? new BigNumber(this.object.position_size) : undefined
   }
 
-  get percentage_price_change_since_initial_entry(): BigNumber | undefined {
-    if (!this.initial_entry_price) throw new Error(`initial_entry_price unknown`)
-    if (!this.current_price) throw new Error(`current_price unknown`)
-    return this.current_price.minus(this.initial_entry_price).dividedBy(this.initial_entry_price).times(100)
-  }
+  // Depricated, needs a quoteAsset to compare with
+  // get percentage_price_change_since_initial_entry(): BigNumber | undefined {
+  //   if (!this.initial_entry_price) throw new Error(`initial_entry_price unknown`)
+  //   if (!this.current_price) throw new Error(`current_price unknown`)
+  //   return this.current_price.minus(this.initial_entry_price).dividedBy(this.initial_entry_price).times(100)
+  // }
 
   async load_and_init({ prices }: { prices: { [key: string]: string } }) {
     this.prices = prices
@@ -91,14 +93,14 @@ export class Position {
     current_price?: string
   }> {
     const object: any = this.redis_positions.describe_position(this.position_identifier)
-    if (this.prices) object.current_price = this.current_price
+    // if (this.prices) object.current_price = this.current_price
     return object
   }
 
   asObject(): string {
     return Object.assign({}, this.object, {
       // position_identifier: this.position_identifier,
-      current_price: this.current_price,
+      // current_price: this.current_price,
     })
   }
 }

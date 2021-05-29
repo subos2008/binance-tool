@@ -74,9 +74,10 @@ export class PositionPerformance {
     }
 
     function position_to_string(p: Position) {
-      let percentage = p.percentage_price_change_since_initial_entry?.dp(1)
-      let percentage_string: string = percentage?.toFixed() || "?"
-      return `${p.symbol}: ${percentage_string}`
+      // let percentage = p.percentage_price_change_since_initial_entry?.dp(1)
+      // let percentage_string: string = percentage?.toFixed() || "?"
+      // return `${p.symbol}: ${percentage_string}`
+      return `${p.baseAsset}`
     }
 
     let msg: string = positions.map((p) => position_to_string(p)).join("\n")

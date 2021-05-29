@@ -29,7 +29,9 @@ BigNumber.prototype.valueOf = function () {
 const yargs = require("yargs")
 
 import { RedisPositionsState } from "../classes/persistent_state/redis_positions_state"
+import { LegacyRedisPositionsState } from "../classes/persistent_state/legacy-redis_positions_state"
 const redis_positions = new RedisPositionsState({ logger, redis })
+const legacy_redis_positions = new RedisPositionsState({ logger, redis })
 
 import { Position } from "../classes/position"
 import { PositionIdentifier, create_position_identifier_from_tuple } from "../events/shared/position-identifier"
@@ -44,7 +46,8 @@ const c = require("ansi-colors")
 async function main() {
   yargs
     .strict()
-    .command(["list", "$0"], "list all positions", {}, list_positions)
+    .command(["list"], "list all positions", {}, list_positions)
+    .command(["list-legacy", "$0"], "list all positions", {}, legacy_list_positions)
     .command(
       "describe",
       "Describe position data from redis",
@@ -95,6 +98,31 @@ async function main() {
       },
       delete_position
     )
+    .command(
+      "delete-legacy",
+      "delete position data from redis",
+      {
+        symbol: {
+          description: "symbol",
+          type: "string",
+          demandOption: true,
+          choices: (await legacy_redis_positions.open_position_ids()).map((data: { symbol: string }) => data.symbol),
+        },
+        exchange: {
+          description: "exchange",
+          type: "string",
+          default: "binance",
+          choices: (await legacy_redis_positions.open_position_ids()).map((data: { exchange: string }) => data.exchange),
+        },
+        account: {
+          description: "account id",
+          type: "string",
+          default: "default",
+          choices: (await legacy_redis_positions.open_position_ids()).map((data: { account: string }) => data.account),
+        },
+      },
+      legacy_delete_position
+    )
     .help()
     .alias("help", "h").argv
 }
@@ -108,6 +136,15 @@ async function get_prices_from_exchange() {
   return await ee.prices()
 }
 
+async function legacy_list_positions(argv: any) {
+  console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
+  let open_positions = await legacy_redis_positions.open_positions()
+  for (const position_identifier of open_positions) {
+    console.log(position_identifier)
+  }
+  redis.quit()
+}
+
 async function list_positions(argv: any) {
   console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
   let prices = await get_prices_from_exchange()
@@ -115,11 +152,11 @@ async function list_positions(argv: any) {
   for (const position_identifier of open_positions) {
     let p = new Position({ logger, redis_positions, position_identifier })
     await p.load_and_init({ prices })
-    let percentage = p.percentage_price_change_since_initial_entry?.dp(1)
-    let percentage_string: string = p.percentage_price_change_since_initial_entry?.isGreaterThanOrEqualTo(0)
-      ? percentage?.toFixed()
-      : c.red(percentage?.toFixed())
-    console.log(`${p.symbol}: ${percentage_string}`)
+    // let percentage = p.percentage_price_change_since_initial_entry?.dp(1)
+    // let percentage_string: string = p.percentage_price_change_since_initial_entry?.isGreaterThanOrEqualTo(0)
+    //   ? percentage?.toFixed()
+    //   : c.red(percentage?.toFixed())
+    console.log(`${p.baseAsset}: unimplemented`)
   }
   redis.quit()
 }
@@ -129,17 +166,18 @@ async function delete_position(argv: any) {
   redis.quit()
 }
 
+async function legacy_delete_position(argv: any) {
+  await legacy_redis_positions.close_position(argv)
+  redis.quit()
+}
+
 async function describe_position(argv: any) {
   let position_identifier = create_position_identifier_from_tuple(argv)
   console.log(position_identifier)
   let prices = await get_prices_from_exchange()
   let p = new Position({ logger, redis_positions, position_identifier })
   await p.load_and_init({ prices })
-  let percentage = p.percentage_price_change_since_initial_entry?.dp(1)
-  let percentage_string: string = p.percentage_price_change_since_initial_entry?.isGreaterThanOrEqualTo(0)
-    ? percentage?.toFixed()
-    : c.red(percentage?.toFixed())
-  console.log(`${p.symbol}: ${percentage_string}`)
+  console.log(`${p.baseAsset}:`)
   console.log(p.asObject())
   redis.quit()
 }

@@ -100,15 +100,15 @@ async function add_known_positions_to_portfolio({
   if (!portfolio.balances) throw new Error(`No balances in portfolio`)
   if (!portfolio.prices) throw new Error(`No prices in portfolio`)
   let positions: { [name: string]: Position } = {}
-  for (let symbol in portfolio.balances) {
+  for (let baseAsset in portfolio.balances) {
     let position_identifier: PositionIdentifier = create_position_identifier_from_tuple({
-      symbol,
+      baseAsset,
       account,
       exchange,
     })
     let position: Position = new Position({ logger, redis_positions, position_identifier })
     await position.load_and_init({prices:portfolio.prices})
-    positions[symbol] = position
+    positions[baseAsset] = position
   }
   portfolio.positions = positions
   return portfolio

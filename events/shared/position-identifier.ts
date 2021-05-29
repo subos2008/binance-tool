@@ -2,17 +2,17 @@ import { ExchangeIdentifier } from "./exchange-identifier"
 
 export interface PositionIdentifier {
   exchange_identifier: ExchangeIdentifier
-  symbol: string
+  baseAsset: string
 }
 
 export function create_position_identifier_from_tuple({
-  symbol,
+  baseAsset,
   account,
   exchange,
 }: {
-  symbol: string
+  baseAsset: string
   account: string
   exchange: string
 }): PositionIdentifier {
-  return { symbol, exchange_identifier: { exchange, account } }
+  return { baseAsset, exchange_identifier: { exchange, account } }
 }

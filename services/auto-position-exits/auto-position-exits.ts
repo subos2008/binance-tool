@@ -87,19 +87,27 @@ export class AutoPositionExits {
 
   async _add_sell_order_at_percentage_above_price({
     exchange_identifier,
-    symbol,
+    baseAsset,
+    quoteAsset,
     position_initial_entry_price,
     position_size,
     percentage_to_sell,
     percentage_price_increase_to_sell_at,
   }: {
     exchange_identifier: ExchangeIdentifier
-    symbol: string
+    baseAsset: string
+    quoteAsset: string
     position_initial_entry_price: BigNumber
     position_size: BigNumber
     percentage_to_sell: BigNumber
     percentage_price_increase_to_sell_at: BigNumber
   }) {
+    let symbol = null
+    if(exchange_identifier.exchange === 'binance') {
+      symbol = `${baseAsset}${quoteAsset}`
+    } else {
+      throw new Error(`Only binance supported, not ${exchange_identifier.exchange}`)
+    }
     let sell_price = position_initial_entry_price.times(
       percentage_price_increase_to_sell_at.dividedBy(100).plus(1)
     )
@@ -114,7 +122,7 @@ export class AutoPositionExits {
 
     if (!event.position_initial_entry_price) {
       this.send_message(
-        `${event.symbol} NewPositionEvent missing position_initial_entry_price, skipping auto exit orders`
+        `${event.baseAsset} NewPositionEvent missing position_initial_entry_price, skipping auto exit orders`
       )
       return
     }
@@ -122,18 +130,20 @@ export class AutoPositionExits {
     async function sell_x_at_x(context: AutoPositionExits, amount_percentage: string, price_percentage: string) {
       try {
         if (!event.position_initial_entry_price) throw new Error(`position_initial_entry_price not defined`)
+        let quoteAsset = event.position_initial_quoteAsset
         await context._add_sell_order_at_percentage_above_price({
-          symbol: event.symbol,
+          baseAsset: event.baseAsset,
+          quoteAsset,
           exchange_identifier: event.exchange_identifier,
           percentage_to_sell: new BigNumber(amount_percentage),
           percentage_price_increase_to_sell_at: new BigNumber(price_percentage),
           position_initial_entry_price: new BigNumber(event.position_initial_entry_price),
           position_size: new BigNumber(event.position_base_size),
         })
-        context.send_message(`Created ${amount_percentage}@${price_percentage} sell order on ${event.symbol}`)
+        context.send_message(`Created ${amount_percentage}@${price_percentage} sell order on ${event.baseAsset}`)
       } catch (e) {
         context.send_message(
-          `ERROR could not create ${amount_percentage}@${price_percentage} sell order on ${event.symbol}`
+          `ERROR could not create ${amount_percentage}@${price_percentage} sell order on ${event.baseAsset}`
         )
         console.log(e)
         Sentry.captureException(e)

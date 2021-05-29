@@ -3,9 +3,10 @@ import { ExchangeIdentifier } from './shared/exchange-identifier'
 export interface NewPositionEvent {
   event_type: string;
   exchange_identifier: ExchangeIdentifier
-  symbol: string;
-  // position_entry_timestamp: number
+  baseAsset: string;
+  position_entry_timestamp: number
   position_base_size: string
   position_initial_entry_price?: string
   position_initial_quote_spent: string
+  position_initial_quoteAsset: string
 }

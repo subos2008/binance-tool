@@ -333,7 +333,7 @@ spec:
         - name: binance-position-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/binance-position-tracker/binance-position-tracker.ts", "--live"]
+          command: ["./services/position-tracker/binance-position-tracker.ts", "--live"]
           volumeMounts:
             - name: pointerdir
               mountPath: /opt/datadog-agent/run
@@ -397,7 +397,7 @@ spec:
         - name: ftx-position-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/ftx-position-tracker/ftx-position-tracker.ts", "--live"]
+          command: ["./services/position-tracker/ftx-position-tracker.ts", "--live"]
           volumeMounts:
             - name: pointerdir
               mountPath: /opt/datadog-agent/run

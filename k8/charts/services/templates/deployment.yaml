@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: order-tracker
+  name: binance-order-tracker
   labels:
 {{ include "mychart.labels" . | indent 4 }}
-    binance-tool/service: "order-tracker"
+    binance-tool/service: "binance-order-tracker"
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -16,13 +16,13 @@ spec:
       labels:
         app.kubernetes.io/name: {{ include "mychart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-        binance-tool/service: "order-tracker"
+        binance-tool/service: "binance-order-tracker"
       annotations:
-        ad.datadoghq.com/tags: '{"service": "order-tracker"}'
-        ad.datadoghq.com/order-tracker.logs: >-
+        ad.datadoghq.com/tags: '{"service": "binance-order-tracker"}'
+        ad.datadoghq.com/binance-order-tracker.logs: >-
           [{
             "source": "nodejs",
-            "service": "order-tracker"
+            "service": "binance-order-tracker"
           }]   
     spec:
     {{- with .Values.imagePullSecrets }}
@@ -34,10 +34,10 @@ spec:
             path: /opt/datadog-agent/run
           name: pointerdir
       containers:
-        - name: order-tracker
+        - name: binance-order-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/order-tracker.ts", "--live"]
+          command: ["./services/binance-order-tracker.ts", "--live"]
           volumeMounts:
             - name: pointerdir
               mountPath: /opt/datadog-agent/run

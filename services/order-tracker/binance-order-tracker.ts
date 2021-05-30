@@ -24,7 +24,7 @@ Sentry.configureScope(function (scope: any) {
 
 const send_message = require("../lib/telegram.js")("order-tracker: ");
 
-import { Logger } from '../interfaces/logger'
+import { Logger } from '../../interfaces/logger'
 const LoggerClass = require("../lib/faux_logger");
 const logger: Logger = new LoggerClass({ silent: false });
 
@@ -42,16 +42,16 @@ process.on("unhandledRejection", error => {
   send_message(`UnhandledPromiseRejection: ${error}`);
 });
 
-import { get_redis_client, set_redis_logger } from "../lib/redis"
+import { get_redis_client, set_redis_logger } from "../../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()
 
 
 const Binance = require("binance-api-node").default;
-import { OrderExecutionTracker } from "../service_lib/order_execution_tracker";
-import { OrderCallbacks, BinanceOrderData } from '../interfaces/order_callbacks'
-import { OrderState } from "../classes/persistent_state/redis_order_state";
-import { ExchangeEmulator } from "../lib/exchange_emulator";
+import { OrderExecutionTracker } from "../../service_lib/order_execution_tracker";
+import { OrderCallbacks, BinanceOrderData } from '../../interfaces/order_callbacks'
+import { OrderState } from "../../classes/persistent_state/redis_order_state";
+import { ExchangeEmulator } from "../../lib/exchange_emulator";
 
 var { argv } = require("yargs")
   .usage("Usage: $0 --live")

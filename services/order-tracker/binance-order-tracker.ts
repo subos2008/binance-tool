@@ -21,7 +21,7 @@ Sentry.configureScope(function (scope: any) {
 const send_message = require("../../lib/telegram")("order-tracker: ");
 
 import { Logger } from '../../interfaces/logger'
-const LoggerClass = require("../lib/faux_logger");
+const LoggerClass = require("../../lib/faux_logger");
 const logger: Logger = new LoggerClass({ silent: false });
 
 import { BigNumber } from "bignumber.js";

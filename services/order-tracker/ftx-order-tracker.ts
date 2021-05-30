@@ -12,10 +12,10 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "order-tracker");
 });
 
-const send_message = require("../lib/telegram.js")("order-tracker: ");
+const send_message = require("../../lib/telegram.js")("order-tracker: ");
 
 import { Logger } from '../../interfaces/logger'
-const LoggerClass = require("../lib/faux_logger");
+const LoggerClass = require("../../lib/faux_logger");
 const logger: Logger = new LoggerClass({ silent: false });
 
 import { BigNumber } from "bignumber.js";

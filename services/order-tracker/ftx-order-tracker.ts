@@ -4,19 +4,13 @@
 import { strict as assert } from 'assert';
 
 require("dotenv").config();
+assert(process.env.REDIS_HOST)
 
 import * as Sentry from '@sentry/node';
 Sentry.init({});
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "order-tracker");
 });
-
-// redis + events + binance
-
-// TODO: sentry
-// TODO: convert all the process.exit calls to be exceptions
-// TODO: add watchdog on trades stream - it can stop responding without realising
-// TODO: - in the original implementations (iirc lib around binance has been replaced)
 
 const send_message = require("../lib/telegram.js")("order-tracker: ");
 
@@ -36,10 +30,9 @@ process.on("unhandledRejection", error => {
   send_message(`UnhandledPromiseRejection: ${error}`);
 });
 
-const Binance = require("binance-api-node").default;
-import { OrderExecutionTracker } from "../../service_lib/order_execution_tracker";
-import { OrderCallbacks, BinanceOrderData } from '../../interfaces/order_callbacks'
-import { ExchangeEmulator } from "../../lib/exchange_emulator";
+import { FtxWebsocketClient } from "../../classes/exchanges/ftx/websocket-client";
+import { FtxOrderExecutionTracker } from "../../classes/exchanges/ftx/order_execution_tracker";
+import { FtxOrderCallbacks, FtxWsOrderData } from '../../interfaces/exchange/ftx/orders'
 
 var { argv } = require("yargs")
   .usage("Usage: $0 --live")
@@ -50,7 +43,7 @@ var { argv } = require("yargs")
   .default("live", false);
 let { live } = argv;
 
-let order_execution_tracker: OrderExecutionTracker | null = null
+let order_execution_tracker: FtxOrderExecutionTracker | null = null
 
 class MyOrderCallbacks {
   send_message: Function;
@@ -66,56 +59,52 @@ class MyOrderCallbacks {
     this.send_message = send_message;
   }
 
-  async order_created(order_id: string, data: BinanceOrderData): Promise<void> {
+  async order_created(order_id: string, data: FtxWsOrderData): Promise<void> {
     this.logger.info(data);
-    if (data.orderType != "MARKET")
-      this.send_message(`Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.price}.`)
+    if (data.type != "market")
+      this.send_message(`Created ${data.type.toUpperCase()} ${data.side.toUpperCase()} order on ${data.market} at ${data.price}.`)
   }
-  async order_cancelled(order_id: string, data: BinanceOrderData): Promise<void> {
-    this.send_message(`${data.orderType} ${data.side} order on ${data.symbol} at ${data.price} cancelled.`)
+  async order_cancelled(order_id: string, data: FtxWsOrderData): Promise<void> {
+    this.send_message(`${data.type.toUpperCase()} ${data.side.toUpperCase()} order on ${data.market} at ${data.price} cancelled.`)
   }
-  async order_filled(order_id: string, data: BinanceOrderData): Promise<void> {
-    this.send_message(`${data.orderType} ${data.side} order on ${data.symbol} filled at ${data.price}/${data.averageExecutionPrice}.`)
+  async order_filled(order_id: string, data: FtxWsOrderData): Promise<void> {
+    this.send_message(`${data.type.toUpperCase()} ${data.side.toUpperCase()} order on ${data.market} filled at ${data.avgFillPrice}.`)
   }
-  async order_filled_or_partially_filled(order_id: string, data: BinanceOrderData): Promise<void> {
+  async order_filled_or_partially_filled(order_id: string, data: FtxWsOrderData): Promise<void> {
     // this.send_message(`${data.side} order on ${data.symbol} filled_or_partially_filled at ${data.price}.`)
   }
 }
 
 async function main() {
-  var ee: Object;
-  if (live) {
-    logger.info("Live monitoring mode");
-    assert(process.env.APIKEY)
-    assert(process.env.APISECRET)
-    ee = Binance({
-      apiKey: process.env.APIKEY,
-      apiSecret: process.env.APISECRET
-      // getTime: xxx // time generator function, optional, defaults to () => Date.now()
-    });
-  } else {
-    logger.info("Emulated trading mode");
-    const fs = require("fs");
-    const exchange_info = JSON.parse(
-      fs.readFileSync("./test/exchange_info.json", "utf8")
-    );
-    let ee_config = {
-      starting_balances: {
-        USDT: new BigNumber("50")
-      },
-      logger,
-      exchange_info
-    };
-    ee = new ExchangeEmulator(ee_config);
+  if (!live) {
+    throw new Error(`Non-live mode not implemented for FTX`)
+  }
+  logger.info("Live monitoring mode")
+
+  if (!process.env.FTX_RO_APIKEY) throw new Error(`FTX_RO_APIKEY not defined`)
+  if (!process.env.FTX_RO_APISECRET) throw new Error(`FTX_RO_APISECRET not defined`)
+  // Prepare a ws connection (connection init is automatic once ws client is instanced)
+  const params = {
+    key: process.env.FTX_RO_APIKEY,
+    secret: process.env.FTX_RO_APISECRET,
+    // subAccountName: 'sub1',
+    // jsonParseFunc: JSON.parse
   }
 
-  const execSync = require("child_process").execSync;
-  execSync("date -u");
+  const ws = new FtxWebsocketClient(params, logger)
+
+  // append event listeners
+  ws.on("response", (msg) => logger.info("response: ", msg))
+  ws.on("error", (msg) => logger.error("err: ", msg))
+  ws.on("update", (msg) => logger.info("update: ", msg))
+
+  const execSync = require("child_process").execSync
+  execSync("date -u")
 
   let order_callbacks = new MyOrderCallbacks({ logger, send_message })
 
-  order_execution_tracker = new OrderExecutionTracker({
-    ee,
+  order_execution_tracker = new FtxOrderExecutionTracker({
+    ws,
     send_message,
     logger,
     order_callbacks
@@ -125,7 +114,7 @@ async function main() {
     Sentry.captureException(error)
     if (error.name && error.name === "FetchError") {
       logger.error(
-        `${error.name}: Likely unable to connect to Binance and/or Telegram: ${error}`
+        `${error.name}: Likely unable to connect to FTX and/or Telegram: ${error}`
       );
     } else {
       logger.error(`Error in main loop: ${error}`);

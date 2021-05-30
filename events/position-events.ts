@@ -1,10 +1,10 @@
-import { ExchangeIdentifier } from './shared/exchange-identifier'
+import { ExchangeIdentifier } from "./shared/exchange-identifier"
 
 export interface NewPositionEvent {
-  event_type: string;
+  event_type: string
   exchange_identifier: ExchangeIdentifier
-  baseAsset: string;
-  position_entry_timestamp: number
+  baseAsset: string
+  position_entry_timestamp_ms?: number
   position_base_size: string
   position_initial_entry_price?: string
   position_initial_quote_spent: string

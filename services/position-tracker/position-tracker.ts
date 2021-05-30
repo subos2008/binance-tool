@@ -21,14 +21,14 @@ import { Position } from "../../classes/position"
 
 type check_func = ({
   volume,
-  baseAsset,
-  quoteAsset,
+  price,
+  market_symbol,
 }: {
   price: BigNumber
   volume: BigNumber
-  baseAsset: string
-  quoteAsset: string
+  market_symbol: string
 }) => boolean
+
 export class PositionTracker {
   send_message: Function
   logger: Logger
@@ -125,7 +125,7 @@ export class PositionTracker {
           position_initial_quote_spent: totalQuoteTradeQuantity,
           position_initial_quoteAsset: quoteAsset,
           position_initial_entry_price: initial_entry_price?.toFixed(),
-          position_entry_timestamp: orderTime,
+          position_entry_timestamp_ms: orderTime,
         })
       } catch (error) {
         console.error(error)
@@ -180,6 +180,7 @@ export class PositionTracker {
     let {
       baseAsset,
       quoteAsset,
+      market_symbol,
       exchange,
       account,
       averageExecutionPrice,
@@ -226,8 +227,7 @@ export class PositionTracker {
     // 1.3
     if (
       this.close_position_check_func({
-        baseAsset,
-        quoteAsset,
+        market_symbol,
         volume: position_size,
         price: new BigNumber(averageExecutionPrice),
       })

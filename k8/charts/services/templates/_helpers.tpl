@@ -116,3 +116,16 @@ Environment variables
       key: TELEGRAM_CHAT_ID
       name: telegram
 {{- end -}}
+
+{{- define "ftx-ro.vars" -}}
+- name: FTX_RO_APIKEY
+  valueFrom:
+    secretKeyRef:
+      key: APIKEY
+      name: ftx-ro
+- name: FTX_RO_APISECRET
+  valueFrom:
+    secretKeyRef:
+      key: APISECRET
+      name: ftx-ro
+{{- end -}}

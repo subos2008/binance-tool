@@ -32,6 +32,11 @@ class FauxLogger {
       this.bunyan.info(...args);
     }
   }
+  notice(...args: any[]) {
+    if (!this.silent) {
+      this.bunyan.info(...args);
+    }
+  }
   error(...args: any[]) {
     if (!this.silent) {
       this.bunyan.error(...args);
@@ -43,6 +48,11 @@ class FauxLogger {
     }
   }
   debug(...args: any[]) {
+    if (!this.silent) {
+      this.bunyan.debug(...args);
+    }
+  }
+  silly(...args: any[]) {
     if (!this.silent) {
       this.bunyan.debug(...args);
     }

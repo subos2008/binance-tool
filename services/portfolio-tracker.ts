@@ -61,8 +61,6 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-send_message("starting")
-
 process.on("unhandledRejection", (error) => {
   logger.error(error)
   send_message(`UnhandledPromiseRejection: ${error}`)

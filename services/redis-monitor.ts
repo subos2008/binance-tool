@@ -22,8 +22,6 @@ import { Logger } from '../interfaces/logger'
 const LoggerClass = require("../lib/faux_logger");
 const logger: Logger = new LoggerClass({ silent: false });
 
-send_message('starting')
-
 process.on("unhandledRejection", error => {
   logger.error(error)
   send_message(`UnhandledPromiseRejection: ${error}`);

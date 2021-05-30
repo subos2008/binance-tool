@@ -141,6 +141,8 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
       } catch (err) {
         if (err.toString().includes("Invalid symbol")) {
           console.info(`Unable to load candles for ${symbol} not listed on binance`)
+        } else if (err.toString().includes("No candles loaded for")) {
+          console.warn(`Unable to load candles for ${symbol}.`)
         } else {
           Sentry.captureException(err)
           console.error(err)

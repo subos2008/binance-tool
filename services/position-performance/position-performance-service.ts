@@ -63,7 +63,7 @@ export class PositionPerformance {
   }
 
   async list_positions() {
-    console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
+    logger.warn(`This implementation uses an initial_entry_price and not an average entry price`)
     let positions: Position[] = []
     let open_positions = await redis_positions.open_positions()
     let prices = this.prices

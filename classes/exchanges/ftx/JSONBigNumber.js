@@ -364,7 +364,7 @@ meta = { // table of character substitutions
     "\\": "\\\\"
 };
 
-export function stringify(value, replacer, space) {
+ function stringify(value, replacer, space) {
 
     // The stringify method takes a value and an optional replacer, and an optional
     // space parameter, and returns a JSON text. The replacer can be a function
@@ -661,10 +661,11 @@ value = function () {
 // Set the New JSONBigNumber.parse function It will have access to all of the above
 // functions and variables.
 
-export function parse(source, reviver) {
+ function parse(source, reviver) {
     var result;
 
     text = source;
+    console.log(`Parsing: ${text}`)
     at = 0;
     ch = " ";
     result = value();
@@ -702,7 +703,7 @@ export function parse(source, reviver) {
         result;
 }
 
-export default {
+module.exports =  {
     parse: parse,
     stringify: stringify
 };

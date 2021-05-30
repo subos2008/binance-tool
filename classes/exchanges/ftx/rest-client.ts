@@ -108,12 +108,7 @@ export class RestClient {
    **/
 
   async getMarkets(): Promise<FtxMarket[]> {
-    let string_body: string = await this.requestWrapper.get("markets")
-    let result: { success: boolean; result: FtxMarket[] } = JSONBigNumber.parse(string_body)
-    if (!result.success) {
-      throw new Error(`Failed to getMarkets from FTX`)
-    }
-    return result.result
+    return this.requestWrapper.get("markets")
   }
 
   getMarket(marketName: string): GenericAPIResponse {

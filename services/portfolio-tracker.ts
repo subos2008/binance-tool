@@ -105,7 +105,7 @@ async function add_known_positions_to_portfolio({
       exchange,
     })
     let position: Position = new Position({ logger, redis_positions, position_identifier })
-    await position.load_and_init({prices:portfolio.prices})
+    await position.load_and_init({ prices: portfolio.prices })
     positions[baseAsset] = position
   }
   portfolio.positions = positions
@@ -117,8 +117,8 @@ async function update_portfolio_from_exchange(): Promise<void> {
     let portfolio = await portfolio_tracker.current_portfolio_with_prices()
     portfolio = await add_known_positions_to_portfolio({
       portfolio,
-      account: 'default',
-      exchange:'binance',
+      account: "default",
+      exchange: "binance",
     })
     try {
       let msg = `B: ${portfolio.btc_value}, U: ${portfolio.usd_value}`
@@ -250,6 +250,7 @@ class PortfolioTracker {
         quote_currency: "USDT",
         prices: this.portfolio.prices,
       })
+      .dp(0)
       .toFixed()
     return this.portfolio
   }
@@ -271,8 +272,8 @@ const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger, sentry: Sen
 async function main() {
   if (live) {
     logger.info("Live monitoring mode")
-    if(!process.env.APIKEY) throw new Error(`Missing APIKEY in ENV`)
-    if(!process.env.APISECRET) throw new Error(`Missing APISECRET in ENV`)
+    if (!process.env.APIKEY) throw new Error(`Missing APIKEY in ENV`)
+    if (!process.env.APISECRET) throw new Error(`Missing APISECRET in ENV`)
     ee = Binance({
       apiKey: process.env.APIKEY,
       apiSecret: process.env.APISECRET,

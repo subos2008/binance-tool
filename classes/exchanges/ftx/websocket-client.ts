@@ -2,8 +2,6 @@ import { EventEmitter } from "events"
 
 import { Logger } from "../../../interfaces/logger"
 
-require("JSONBigNumber.js")
-
 import {
   signMessage,
   signWsAuthenticate,
@@ -16,7 +14,7 @@ import * as WebSocket from "ws"
 import { OpenEvent, ErrorEvent, CloseEvent, MessageEvent } from "ws"
 import WsStore from "./util/WsStore"
 import { getWsAuthMessage, isWsPong } from "./util/wsMessages"
-const JSONBigNumber = require("./JSONBigNumber.js")
+const JSONBigNumber = require("./JSONBigNumber")
 
 const loggerCategory = { category: "ftx-ws" }
 

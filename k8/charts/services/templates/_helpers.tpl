@@ -121,11 +121,11 @@ Environment variables
 - name: FTX_RO_APIKEY
   valueFrom:
     secretKeyRef:
-      key: APIKEY
+      key: FTX_RO_APIKEY
       name: ftx-ro
 - name: FTX_RO_APISECRET
   valueFrom:
     secretKeyRef:
-      key: APISECRET
+      key: FTX_RO_APISECRET
       name: ftx-ro
 {{- end -}}

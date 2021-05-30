@@ -242,7 +242,7 @@ class PortfolioTracker {
     this.portfolio.btc_value = portfolio_utils
       .calculate_portfolio_value_in_quote_currency({ quote_currency: "BTC", portfolio: this.portfolio })
       .total.dp(3)
-      .toFixed(8)
+      .toFixed()
     if (!this.portfolio.prices) throw new Error(`No prices`)
     this.portfolio.usd_value = portfolio_utils
       .convert_base_to_quote_currency({

@@ -15,7 +15,7 @@ class FauxLogger {
         },
         {
           stream: process.stdout,
-          level: "debug"
+          level: "info"
         },
       ],
       // serializers: <serializers mapping>, // Optional, see "Serializers" section

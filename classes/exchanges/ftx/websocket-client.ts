@@ -351,8 +351,9 @@ export class FtxWebsocketClient extends EventEmitter {
 
   private onWsMessage(event: MessageEvent, wsKey: string) {
     console.log(`Parsing onWsMessage, event: ${event.data}`)
-
-    const msg = JSONBigNumber.parse(event.data)
+    
+    const msg = JSONBigNumber.parse(event && event.data || event)
+    console.log(msg)
 
     if (msg.channel) {
       this.onWsMessageUpdate(msg)

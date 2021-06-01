@@ -665,7 +665,6 @@ value = function () {
     var result;
 
     text = source;
-    console.log(`Parsing: ${text}`)
     at = 0;
     ch = " ";
     result = value();

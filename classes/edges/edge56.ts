@@ -118,7 +118,7 @@ export class Edge56EntrySignals {
       let potential_entry_volume = new BigNumber(candle["volume"])
 
       if (potential_entry_volume.isGreaterThan(this.volume_history_candles.get_highest_value())) {
-        console.log(`Volume entry signal at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`)
+        console.log(`Volume entry signal on ${symbol} at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`)
       } else {
         return // no volume = no entry
       }
@@ -127,7 +127,7 @@ export class Edge56EntrySignals {
       if (potential_entry_price.isGreaterThan(this.price_history_candles.get_highest_value())) {
         let direction: "long" = "long"
         console.log(
-          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`
+          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`
         )
         this.callbacks.enter_position({
           symbol: this.symbol,

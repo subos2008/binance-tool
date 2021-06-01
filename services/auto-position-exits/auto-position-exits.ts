@@ -149,9 +149,10 @@ export class AutoPositionExits {
       // TODO: tag these orders somewhere as being auto-exit orders
     }
 
-    await sell_x_at_x(this, "10", "10")
-    await sell_x_at_x(this, "15", "15")
-    await sell_x_at_x(this, "30", "28")
+    // await sell_x_at_x(this, "10", "10")
+    // await sell_x_at_x(this, "15", "15")
+    await sell_x_at_x(this, "20", "20")
+    // await sell_x_at_x(this, "30", "28")
   }
 
   async shutdown_streams() {

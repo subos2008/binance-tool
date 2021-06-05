@@ -1,8 +1,10 @@
+import BigNumber from "bignumber.js"
 import { ExchangeIdentifier } from "./exchange-identifier"
 
 export interface PositionIdentifier {
   exchange_identifier: ExchangeIdentifier
   baseAsset: string
+  baseAssetAmount?: BigNumber
 }
 
 export function create_position_identifier_from_tuple({

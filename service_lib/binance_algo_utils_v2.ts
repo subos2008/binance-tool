@@ -1,3 +1,5 @@
+/* AlgoUtils but exchangeInfo is passed in explicitly */
+
 const utils = require("../lib/utils")
 import { strict as assert } from "assert"
 const async_error_handler = require("../lib/async_error_handler")
@@ -11,12 +13,11 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../interfaces/logger"
 import { TradingRules } from "../lib/trading_rules"
 import * as Sentry from "@sentry/node"
-import { Binance, NewOcoOrder, OcoOrder, Order, OrderSide, OrderType } from "binance-api-node"
+import { NewOcoOrder, OcoOrder, OrderSide } from "binance-api-node"
 
 export class AlgoUtils {
   logger: Logger
-  ee: Binance
-  exchange_info: any
+  ee: any
 
   constructor({ logger, ee }: { logger: Logger; ee: any }) {
     assert(logger)
@@ -25,16 +26,20 @@ export class AlgoUtils {
     this.ee = ee
   }
 
-  set_exchange_info(exchange_info: any) {
-    assert(exchange_info)
-    this.exchange_info = exchange_info
-  }
-
-  munge_and_check_price({ symbol, price }: { symbol: string; price: BigNumber }) {
-    return utils.munge_and_check_price({ exchange_info: this.exchange_info, symbol, price })
+  munge_and_check_price({
+    exchange_info,
+    symbol,
+    price,
+  }: {
+    exchange_info: any
+    symbol: string
+    price: BigNumber
+  }) {
+    return utils.munge_and_check_price({ exchange_info: exchange_info, symbol, price })
   }
 
   munge_amount_and_check_notionals({
+    exchange_info,
     pair,
     base_amount,
     price,
@@ -43,6 +48,7 @@ export class AlgoUtils {
     target_price,
     limit_price,
   }: {
+    exchange_info: any
     pair: string
     base_amount: BigNumber
     price?: BigNumber
@@ -51,11 +57,11 @@ export class AlgoUtils {
     target_price?: BigNumber
     limit_price?: BigNumber
   }) {
-    assert(this.exchange_info)
+    assert(exchange_info)
     assert(pair)
     assert(base_amount)
     base_amount = utils.munge_and_check_quantity({
-      exchange_info: this.exchange_info,
+      exchange_info,
       symbol: pair,
       volume: base_amount,
     })
@@ -65,7 +71,7 @@ export class AlgoUtils {
       utils.check_notional({
         price: price,
         volume: base_amount,
-        exchange_info: this.exchange_info,
+        exchange_info,
         symbol: pair,
       })
     }
@@ -73,7 +79,7 @@ export class AlgoUtils {
       utils.check_notional({
         price: buy_price,
         volume: base_amount,
-        exchange_info: this.exchange_info,
+        exchange_info,
         symbol: pair,
       })
     }
@@ -81,7 +87,7 @@ export class AlgoUtils {
       utils.check_notional({
         price: stop_price,
         volume: base_amount,
-        exchange_info: this.exchange_info,
+        exchange_info,
         symbol: pair,
       })
     }
@@ -89,7 +95,7 @@ export class AlgoUtils {
       utils.check_notional({
         price: target_price,
         volume: base_amount,
-        exchange_info: this.exchange_info,
+        exchange_info,
         symbol: pair,
       })
     }
@@ -97,7 +103,7 @@ export class AlgoUtils {
       utils.check_notional({
         price: limit_price,
         volume: base_amount,
-        exchange_info: this.exchange_info,
+        exchange_info,
         symbol: pair,
       })
     }
@@ -152,10 +158,12 @@ export class AlgoUtils {
   }
 
   async create_limit_buy_order({
+    exchange_info,
     pair,
     base_amount,
     price,
   }: {
+    exchange_info: any
     pair: string
     base_amount: BigNumber
     price: BigNumber
@@ -164,14 +172,14 @@ export class AlgoUtils {
     assert(BigNumber.isBigNumber(base_amount))
     assert(BigNumber.isBigNumber(price))
     try {
-      base_amount = this.munge_amount_and_check_notionals({ pair, base_amount, price })
+      base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, price })
       let price_string = price.toFixed()
       let quantity = base_amount.toFixed()
       let args = {
         useServerTime: true,
         symbol: pair,
-        side: "BUY" as OrderSide,
-        type: "LIMIT" as OrderType,
+        side: "BUY",
+        type: "LIMIT",
         quantity,
         price: price_string,
       }
@@ -187,24 +195,38 @@ export class AlgoUtils {
 
   // Just munge it and do it, for those times when you don't need to know the details
   async munge_and_create_limit_sell_order({
+    exchange_info,
     pair,
     base_amount,
     price,
   }: {
+    exchange_info: any
     pair: string
     base_amount: BigNumber
     price: BigNumber
   }) {
-    let munged_price = this.munge_and_check_price({ symbol: pair, price })
-    let munged_base_amount = this.munge_amount_and_check_notionals({ pair, price: munged_price, base_amount })
-    return this.create_limit_sell_order({ pair, base_amount: munged_base_amount, price: munged_price })
+    let munged_price = this.munge_and_check_price({ exchange_info, symbol: pair, price })
+    let munged_base_amount = this.munge_amount_and_check_notionals({
+      exchange_info,
+      pair,
+      price: munged_price,
+      base_amount,
+    })
+    return this.create_limit_sell_order({
+      exchange_info,
+      pair,
+      base_amount: munged_base_amount,
+      price: munged_price,
+    })
   }
 
   async create_limit_sell_order({
+    exchange_info,
     pair,
     base_amount,
     price,
   }: {
+    exchange_info: any
     pair: string
     base_amount: BigNumber
     price: BigNumber
@@ -213,13 +235,13 @@ export class AlgoUtils {
     assert(BigNumber.isBigNumber(base_amount))
     assert(BigNumber.isBigNumber(price))
     try {
-      base_amount = this.munge_amount_and_check_notionals({ pair, base_amount, price })
+      base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, price })
       let quantity = base_amount.toFixed()
       let args = {
         useServerTime: true,
         symbol: pair,
-        side: "SELL" as OrderSide,
-        type: "LIMIT" as OrderType,
+        side: "SELL",
+        type: "LIMIT",
         quantity,
         price: price.toFixed(),
       }
@@ -232,12 +254,83 @@ export class AlgoUtils {
     }
   }
 
+  async munge_and_create_oco_order({
+    exchange_info,
+    pair,
+    base_amount,
+    target_price,
+    stop_price,
+  }: {
+    exchange_info: any
+    pair: string
+    base_amount: BigNumber
+    target_price: BigNumber
+    stop_price: BigNumber
+  }) {
+    this.logger.warn(`stop_limit price not implemented in create_oco_order for Binance`)
+    assert(pair && target_price && base_amount && stop_price)
+    assert(BigNumber.isBigNumber(base_amount))
+    assert(BigNumber.isBigNumber(target_price))
+    try {
+      // TODO: not checking price because often it is zero
+      base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, stop_price })
+      let quantity = base_amount.toFixed()
+      //   export interface NewOcoOrder {
+      //     symbol: string;
+      //     listClientOrderId?: string;
+      //     side: OrderSide;
+      //     quantity: string;
+      //     limitClientOrderId?: string;
+      //     price: string;
+      //     limitIcebergQty?: string;
+      //     stopClientOrderId?: string;
+      //     stopPrice: string;
+      //     stopLimitPrice?: string;
+      //     stopIcebergQty?: string;
+      //     stopLimitTimeInForce?: TimeInForce;
+      //     newOrderRespType?: NewOrderRespType;
+      //     recvWindow?: number;
+      //     useServerTime?: boolean;
+      // }
+      let args: NewOcoOrder = {
+        useServerTime: true,
+        symbol: pair,
+        side: "SELL" as OrderSide,
+        quantity,
+        price: target_price.toFixed(),
+        stopPrice: stop_price.toFixed(),
+      }
+      this.logger.info(
+        `${pair} Creating OCO ORDER for ${quantity} at target ${target_price.toFixed()} stop triggered at ${stop_price.toFixed()}`
+      )
+      //   export interface OcoOrder {
+      //     orderListId: number;
+      //     contingencyType: ContingencyType;
+      //     listStatusType: ListStatusType;
+      //     listOrderStatus: ListOrderStatus;
+      //     listClientOrderId: string;
+      //     transactionTime: number;
+      //     symbol: string;
+      //     orders: Order[];
+      //     orderReports: Order[];
+      // }
+      let response: OcoOrder = await this.ee.orderOco(args)
+      return response
+    } catch (error) {
+      Sentry.captureException(error)
+      async_error_handler(console, `Buy error: ${error.body}`, error)
+    }
+  }
+
+
   async create_stop_loss_limit_sell_order({
+    exchange_info,
     pair,
     base_amount,
     price,
     stop_price,
   }: {
+    exchange_info: any
     pair: string
     base_amount: BigNumber
     price: BigNumber
@@ -253,13 +346,13 @@ export class AlgoUtils {
     }
     try {
       // TODO: not checking price because often it is zero
-      base_amount = this.munge_amount_and_check_notionals({ pair, base_amount, stop_price })
+      base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, stop_price })
       let quantity = base_amount.toFixed()
       let args = {
         useServerTime: true,
         symbol: pair,
-        side: "SELL" as OrderSide,
-        type: "STOP_LOSS_LIMIT" as OrderType,
+        side: "SELL",
+        type: "STOP_LOSS_LIMIT",
         quantity,
         price: price.toFixed(),
         stopPrice: stop_price.toFixed(),
@@ -340,7 +433,7 @@ export class AlgoUtils {
     }
   }
 
-  async cancelOrder(args: { symbol: string; orderId: number }) {
+  async cancelOrder(args: { symbol: string; orderId: string }) {
     await this.ee.cancelOrder(args)
   }
 }

@@ -43,7 +43,14 @@ import { ExchangeEmulator } from "../../lib/exchange_emulator"
 import { timeStamp } from "console"
 import { PositionIdentifier } from "../../events/shared/position-identifier"
 import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
-import { AlgoUtils } from "../../service_lib/algo_utils"
+import {
+  GenericOCOOderDefinition,
+  GenericOCOOrder,
+  GenericLimitSellOrderDefinition,
+  GenericLimitSellOrder,
+  MarketUtils,
+} from "../../interfaces/exchange/generic/market-utils"
+import { createMarketUtils } from "../../classes/exchanges/factories/market-utils"
 
 type GenericExchangeInterface = {
   exchangeInfo: () => Promise<ExchangeInfo>
@@ -54,7 +61,6 @@ export class AutoPositionExits {
   logger: Logger
   send_message: (msg: string) => void
   positions_listener: PositionsListener
-  algo_utils: AlgoUtils
 
   constructor({
     ee,
@@ -68,7 +74,6 @@ export class AutoPositionExits {
     this.ee = ee
     this.logger = logger
     this.send_message = send_message
-    this.algo_utils = new AlgoUtils({ logger: this.logger, ee: this.ee })
   }
 
   async main() {
@@ -79,12 +84,11 @@ export class AutoPositionExits {
       exchange: routing_key,
       callbacks: this,
     })
-    this.algo_utils.set_exchange_info(await this.ee.exchangeInfo())
     return this.positions_listener.connect()
   }
 
   async _add_sell_order_at_percentage_above_price({
-    exchange_identifier,
+    market_utils,
     baseAsset,
     quoteAsset,
     position_initial_entry_price,
@@ -92,7 +96,7 @@ export class AutoPositionExits {
     percentage_to_sell,
     percentage_price_increase_to_sell_at,
   }: {
-    exchange_identifier: ExchangeIdentifier
+    market_utils: MarketUtils
     baseAsset: string
     quoteAsset: string
     position_initial_entry_price: BigNumber
@@ -101,17 +105,55 @@ export class AutoPositionExits {
     percentage_price_increase_to_sell_at: BigNumber
   }) {
     let symbol = null
-    if(exchange_identifier.exchange === 'binance') {
-      symbol = `${baseAsset}${quoteAsset}`
-    } else {
-      throw new Error(`Only binance supported, not ${exchange_identifier.exchange}`)
-    }
     let sell_price = position_initial_entry_price.times(
       percentage_price_increase_to_sell_at.dividedBy(100).plus(1)
     )
     let sell_quantity = position_size.times(percentage_to_sell.dividedBy(100))
     this.logger.info(`Creating limit sell: ${symbol}, ${sell_quantity.toFixed()} at price ${sell_price.toFixed()}`)
-    await this.algo_utils.munge_and_create_limit_sell_order({ pair: symbol, price: sell_price, base_amount: sell_quantity })
+    let order = await market_utils.create_limit_sell_order({
+      limit_price: sell_price,
+      base_asset_quantity: sell_quantity,
+    })
+  }
+
+  async _add_oco_sell_order_at_percentage_above_price_with_stop_loss({
+    market_utils,
+    baseAsset,
+    quoteAsset,
+    position_initial_entry_price,
+    position_size,
+    percentage_to_sell,
+    percentage_price_increase_to_sell_at,
+    stop_percentage,
+  }: {
+    market_utils: MarketUtils
+    baseAsset: string
+    quoteAsset: string
+    position_initial_entry_price: BigNumber
+    position_size: BigNumber
+    percentage_to_sell: BigNumber
+    percentage_price_increase_to_sell_at: BigNumber
+    stop_percentage: BigNumber
+  }) {
+    let symbol = null
+
+    // target profit exit
+    let sell_quantity = position_size.times(percentage_to_sell.dividedBy(100))
+    let sell_price = position_initial_entry_price.times(
+      percentage_price_increase_to_sell_at.dividedBy(100).plus(1)
+    )
+
+    // stop-limit exit
+    let stop_factor = new BigNumber(100).minus(stop_percentage).dividedBy(100)
+    let stop_trigger_price = position_initial_entry_price.times(stop_factor)
+    this.logger.info(
+      `Creating oco order: ${symbol}, target ${sell_quantity.toFixed()} at price ${sell_price.toFixed()}, stop price ${stop_trigger_price.toFixed()}`
+    )
+    await market_utils.create_oco_order({
+      target_price: sell_price,
+      stop_price: stop_trigger_price,
+      base_asset_quantity: sell_quantity,
+    })
   }
 
   async new_position_event_callback(event: NewPositionEvent) {
@@ -125,14 +167,35 @@ export class AutoPositionExits {
       return
     }
 
-    async function sell_x_at_x(context: AutoPositionExits, amount_percentage: string, price_percentage: string) {
+    let market_utils = await createMarketUtils({
+      logger: this.logger,
+      market_identifier: {
+        exchange_identifier: event.exchange_identifier,
+        base_asset: event.baseAsset,
+        quote_asset: event.position_initial_quoteAsset,
+      },
+    })
+
+    async function sell_x_at_x({
+      market_utils,
+      context,
+      amount_percentage,
+      price_percentage,
+      stop_percentage,
+    }: {
+      market_utils: MarketUtils
+      context: AutoPositionExits
+      amount_percentage: string
+      price_percentage: string
+      stop_percentage: string
+    }) {
       try {
         if (!event.position_initial_entry_price) throw new Error(`position_initial_entry_price not defined`)
         let quoteAsset = event.position_initial_quoteAsset
         await context._add_sell_order_at_percentage_above_price({
           baseAsset: event.baseAsset,
           quoteAsset,
-          exchange_identifier: event.exchange_identifier,
+          market_utils,
           percentage_to_sell: new BigNumber(amount_percentage),
           percentage_price_increase_to_sell_at: new BigNumber(price_percentage),
           position_initial_entry_price: new BigNumber(event.position_initial_entry_price),
@@ -149,10 +212,20 @@ export class AutoPositionExits {
       // TODO: tag these orders somewhere as being auto-exit orders
     }
 
+    let total_position_size = event.position_base_size
     // await sell_x_at_x(this, "10", "10")
     // await sell_x_at_x(this, "15", "15")
-    await sell_x_at_x(this, "20", "20")
+    let stop_percentage = "25"
+    await sell_x_at_x({
+      context: this,
+      amount_percentage: "20",
+      price_percentage: "20",
+      stop_percentage,
+      market_utils,
+    }) // TODO: needs to return the baseAmount in the order and the orderID - the order object
+    // await associate_orders_with_position(...) // new class PositionUtils could do this - makes a MarketUtils, adds the order and then adds the association
     // await sell_x_at_x(this, "30", "28")
+    // await set_stop_on_remainder_of_position_at(stop_percentage)
   }
 
   async shutdown_streams() {

@@ -37,9 +37,7 @@ import { ExchangeInfo } from "binance-api-node"
 import { PositionsListener } from "../../classes/amqp/positions-listener"
 import { NewPositionEvent } from "../../events/position-events"
 import { ExchangeEmulator } from "../../lib/exchange_emulator"
-import {
-  MarketUtils,
-} from "../../interfaces/exchange/generic/market-utils"
+import { MarketUtils } from "../../interfaces/exchange/generic/market-utils"
 import { createMarketUtils } from "../../classes/exchanges/factories/market-utils"
 
 type GenericExchangeInterface = {
@@ -102,7 +100,7 @@ export class AutoPositionExits {
     })
   }
 
-  async _add_oco_sell_order_at_percentage_above_price_with_stop_loss({
+  async _add_oco_order_at_percentage_above_price_with_stop_loss({
     market_utils,
     position_initial_entry_price,
     position_size,
@@ -173,12 +171,13 @@ export class AutoPositionExits {
     }) {
       try {
         if (!event.position_initial_entry_price) throw new Error(`position_initial_entry_price not defined`)
-        await context._add_sell_order_at_percentage_above_price({
+        await context._add_oco_order_at_percentage_above_price_with_stop_loss({
           market_utils,
           percentage_to_sell: new BigNumber(amount_percentage),
           percentage_price_increase_to_sell_at: new BigNumber(price_percentage),
           position_initial_entry_price: new BigNumber(event.position_initial_entry_price),
           position_size: new BigNumber(event.position_base_size),
+          stop_percentage: new BigNumber(stop_percentage),
         })
         context.send_message(`Created ${amount_percentage}@${price_percentage} sell order on ${event.baseAsset}`)
       } catch (e) {

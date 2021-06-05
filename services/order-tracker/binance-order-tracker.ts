@@ -38,7 +38,7 @@ process.on("unhandledRejection", error => {
 
 const Binance = require("binance-api-node").default;
 import { OrderExecutionTracker } from "../../service_lib/order_execution_tracker";
-import { OrderCallbacks, BinanceOrderData } from '../../interfaces/order_callbacks'
+import { BinanceOrderData } from '../../interfaces/order_callbacks'
 import { ExchangeEmulator } from "../../lib/exchange_emulator";
 
 var { argv } = require("yargs")
@@ -66,19 +66,16 @@ class MyOrderCallbacks {
     this.send_message = send_message;
   }
 
-  async order_created(order_id: string, data: BinanceOrderData): Promise<void> {
+  async order_created(data: BinanceOrderData): Promise<void> {
     this.logger.info(data);
     if (data.orderType != "MARKET")
       this.send_message(`Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.price}.`)
   }
-  async order_cancelled(order_id: string, data: BinanceOrderData): Promise<void> {
+  async order_cancelled(data: BinanceOrderData): Promise<void> {
     this.send_message(`${data.orderType} ${data.side} order on ${data.symbol} at ${data.price} cancelled.`)
   }
-  async order_filled(order_id: string, data: BinanceOrderData): Promise<void> {
+  async order_filled(data: BinanceOrderData): Promise<void> {
     this.send_message(`${data.orderType} ${data.side} order on ${data.symbol} filled at ${data.price}/${data.averageExecutionPrice}.`)
-  }
-  async order_filled_or_partially_filled(order_id: string, data: BinanceOrderData): Promise<void> {
-    // this.send_message(`${data.side} order on ${data.symbol} filled_or_partially_filled at ${data.price}.`)
   }
 }
 

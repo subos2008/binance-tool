@@ -21,9 +21,7 @@
 // TODO: Increase Position Size
 // 1. Breakout of Donchien channel (new high after a range period). The question is does a day of down followed the next day by a Donchien channel breakout count..
 
-import { assert, time } from "console"
-
-import { Candle, CandleChartInterval, CandleChartResult } from "binance-api-node"
+import { Candle, CandleChartResult } from "binance-api-node"
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -32,10 +30,8 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../interfaces/logger"
-import { CandleUtils, LimitedLengthCandlesHistory } from "../../classes/utils/candle_utils"
+import { LimitedLengthCandlesHistory } from "../../classes/utils/candle_utils"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
-
-const humanNumber = require("human-number")
 
 export interface Edge56EntrySignalsCallbacks {
   enter_position({
@@ -93,10 +89,6 @@ export class Edge56EntrySignals {
       key: this.historical_candle_key,
     })
     this.volume_history_candles = new LimitedLengthCandlesHistory({ length: 7, initial_candles, key: "volume" })
-  }
-
-  ingest_intercandle_close_update_candle(foo: any) {
-    return
   }
 
   async ingest_new_candle({

@@ -4,14 +4,10 @@
 
 import { strict as assert } from "assert"
 require("dotenv").config()
-const connect_options = require("../../lib/amqp/connect_options").default
 const service_name = "edge56"
-const routing_key = "binance"
 
 import binance from "binance-api-node"
-import { Binance, CandleChartInterval, CandleChartResult } from "binance-api-node"
-
-var amqp = require("amqplib/callback_api")
+import { Binance } from "binance-api-node"
 
 import * as Sentry from "@sentry/node"
 Sentry.init({})
@@ -112,8 +108,9 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
       let symbol = candle.symbol
       let timeframe = "1d"
       if (this.edges[symbol]) {
-        if (candle.isFinal) this.edges[symbol].ingest_new_candle({ symbol, timeframe, candle })
-        else this.edges[symbol].ingest_intercandle_close_update_candle({ symbol, timeframe, candle })
+        if (candle.isFinal) {
+          this.edges[symbol].ingest_new_candle({ symbol, timeframe, candle })
+        }
       }
     })
 
@@ -186,12 +183,3 @@ main().catch((error) => {
   console.error(error)
   console.error(`Error in main loop: ${error.stack}`)
 })
-
-function soft_exit(exit_code?: number | undefined) {
-  console.warn(`soft_exit called, exit_code: ${exit_code}`)
-  if (exit_code) console.warn(`soft_exit called with non-zero exit_code: ${exit_code}`)
-  if (exit_code) process.exitCode = exit_code
-  if (edge56) edge56.shutdown_streams()
-  // redis.quit()
-  // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
-}

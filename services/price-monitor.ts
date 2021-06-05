@@ -216,7 +216,7 @@ function soft_exit(exit_code: number | null = null) {
 
 var express = require("express");
 var app = express();
-app.get("/health", function (req: any, res: any) {
+app.get("/health", function (res: any) {
   if (service_is_healthy) res.send({ status: "OK" });
   else res.status(500).json({ status: "UNHEALTHY" });
 });

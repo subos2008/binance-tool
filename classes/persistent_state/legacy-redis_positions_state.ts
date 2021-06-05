@@ -224,12 +224,6 @@ export class LegacyRedisPositionsState {
     total_quote_invested: BigNumber | undefined
     total_quote_withdrawn: BigNumber | undefined
   }> {
-    const key = this.name_to_key({
-      symbol,
-      exchange: exchange_identifier.exchange,
-      account: exchange_identifier.account,
-      name: "position_size",
-    })
     let id = {
       symbol,
       exchange: exchange_identifier.exchange,

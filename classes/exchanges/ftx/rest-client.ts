@@ -14,8 +14,6 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-const JSONBigNumber = require("./JSONBigNumber")
-
 export type FtxMarket = {
   "name": string // "BTC-0628" (market name, symbol in Binance)
   "baseCurrency": string | null

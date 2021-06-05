@@ -1,12 +1,6 @@
-import { strict as assert } from "assert"
 import { Logger } from "../interfaces/logger"
-
-import * as Sentry from "@sentry/node"
-
 import { RedisPositionsState } from "../classes/persistent_state/redis_positions_state"
 import { PositionIdentifier } from "../events/shared/position-identifier"
-
-import * as _ from "lodash"
 
 /*
 { exchange: 'binance', account: 'default', symbol: 'XTZBNB' }

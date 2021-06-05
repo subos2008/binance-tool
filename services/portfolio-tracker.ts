@@ -27,8 +27,6 @@ const service_name = "portfolio-tracker"
 const update_portfolio_from_exchange_interval_seconds: number =
   Number(process.env.UPDATE_PORTFOLIO_FROM_EXCHANGE_INTERVAL_SECONDS) || 6 * 60 * 60
 
-const _ = require("lodash")
-
 require("dotenv").config()
 
 import * as Sentry from "@sentry/node"
@@ -182,15 +180,9 @@ class MyOrderCallbacks {
     this.send_message = send_message
   }
 
-  async order_cancelled(order_id: string, data: BinanceOrderData): Promise<void> {
-    // this.logger.info(`${data.side} order on ${data.symbol} cancelled.`)
-  }
-  async order_filled(order_id: string, data: BinanceOrderData): Promise<void> {
+  async order_filled(data: BinanceOrderData): Promise<void> {
     this.logger.info(`${data.side} order on ${data.symbol} filled.`)
     update_portfolio_from_exchange()
-  }
-  async order_filled_or_partially_filled(order_id: string, data: BinanceOrderData): Promise<void> {
-    // this.logger.info(`${data.side} order on ${data.symbol} filled_or_partially_filled.`)
   }
 }
 

@@ -11,7 +11,6 @@ const exchange = 'portfolio';
 assert(exchange)
 
 import { connect, Connection } from "amqplib";
-import BigNumber from 'bignumber.js';
 import { Portfolio } from "../../interfaces/portfolio"
 
 export class PortfolioPublisher {

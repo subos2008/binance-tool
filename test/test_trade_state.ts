@@ -6,15 +6,10 @@ const chaiBignumber = require("chai-bignumber");
 chai.use(chaiBignumber());
 
 import { TradeDefinition, TradeDefinitionInputSpec } from "../classes/specifications/trade_definition";
-import { create_new_trade, build_trade_state_for_trade_id, TradeState } from "../classes/persistent_state/redis_trade_state";
+import { create_new_trade, build_trade_state_for_trade_id } from "../classes/persistent_state/redis_trade_state";
 import { Logger } from '../interfaces/logger';
 
-function base() {
-  return { pair: "BTCUSDT", auto_size: true };
-}
-
 const Logger = require('../lib/faux_logger');
-const logger = new Logger({ silent: false });
 const null_logger = new Logger({ silent: true });
 
 var redis = require("redis-mock").createClient();

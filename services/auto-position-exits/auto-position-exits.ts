@@ -4,11 +4,8 @@
 
 import { strict as assert } from "assert"
 require("dotenv").config()
-const connect_options = require("../../lib/amqp/connect_options").default
 const service_name = "auto-position-exits"
 const routing_key = "binance"
-
-var amqp = require("amqplib/callback_api")
 
 import * as Sentry from "@sentry/node"
 Sentry.init({})
@@ -40,14 +37,7 @@ import { ExchangeInfo } from "binance-api-node"
 import { PositionsListener } from "../../classes/amqp/positions-listener"
 import { NewPositionEvent } from "../../events/position-events"
 import { ExchangeEmulator } from "../../lib/exchange_emulator"
-import { timeStamp } from "console"
-import { PositionIdentifier } from "../../events/shared/position-identifier"
-import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 import {
-  GenericOCOOderDefinition,
-  GenericOCOOrder,
-  GenericLimitSellOrderDefinition,
-  GenericLimitSellOrder,
   MarketUtils,
 } from "../../interfaces/exchange/generic/market-utils"
 import { createMarketUtils } from "../../classes/exchanges/factories/market-utils"
@@ -89,16 +79,12 @@ export class AutoPositionExits {
 
   async _add_sell_order_at_percentage_above_price({
     market_utils,
-    baseAsset,
-    quoteAsset,
     position_initial_entry_price,
     position_size,
     percentage_to_sell,
     percentage_price_increase_to_sell_at,
   }: {
     market_utils: MarketUtils
-    baseAsset: string
-    quoteAsset: string
     position_initial_entry_price: BigNumber
     position_size: BigNumber
     percentage_to_sell: BigNumber
@@ -110,7 +96,7 @@ export class AutoPositionExits {
     )
     let sell_quantity = position_size.times(percentage_to_sell.dividedBy(100))
     this.logger.info(`Creating limit sell: ${symbol}, ${sell_quantity.toFixed()} at price ${sell_price.toFixed()}`)
-    let order = await market_utils.create_limit_sell_order({
+    await market_utils.create_limit_sell_order({
       limit_price: sell_price,
       base_asset_quantity: sell_quantity,
     })
@@ -118,8 +104,6 @@ export class AutoPositionExits {
 
   async _add_oco_sell_order_at_percentage_above_price_with_stop_loss({
     market_utils,
-    baseAsset,
-    quoteAsset,
     position_initial_entry_price,
     position_size,
     percentage_to_sell,
@@ -127,8 +111,6 @@ export class AutoPositionExits {
     stop_percentage,
   }: {
     market_utils: MarketUtils
-    baseAsset: string
-    quoteAsset: string
     position_initial_entry_price: BigNumber
     position_size: BigNumber
     percentage_to_sell: BigNumber
@@ -176,7 +158,7 @@ export class AutoPositionExits {
       },
     })
 
-    async function sell_x_at_x({
+    async function sell_x_at_x_with_stop({
       market_utils,
       context,
       amount_percentage,
@@ -191,10 +173,7 @@ export class AutoPositionExits {
     }) {
       try {
         if (!event.position_initial_entry_price) throw new Error(`position_initial_entry_price not defined`)
-        let quoteAsset = event.position_initial_quoteAsset
         await context._add_sell_order_at_percentage_above_price({
-          baseAsset: event.baseAsset,
-          quoteAsset,
           market_utils,
           percentage_to_sell: new BigNumber(amount_percentage),
           percentage_price_increase_to_sell_at: new BigNumber(price_percentage),
@@ -212,11 +191,8 @@ export class AutoPositionExits {
       // TODO: tag these orders somewhere as being auto-exit orders
     }
 
-    let total_position_size = event.position_base_size
-    // await sell_x_at_x(this, "10", "10")
-    // await sell_x_at_x(this, "15", "15")
     let stop_percentage = "25"
-    await sell_x_at_x({
+    await sell_x_at_x_with_stop({
       context: this,
       amount_percentage: "20",
       price_percentage: "20",
@@ -224,7 +200,6 @@ export class AutoPositionExits {
       market_utils,
     }) // TODO: needs to return the baseAmount in the order and the orderID - the order object
     // await associate_orders_with_position(...) // new class PositionUtils could do this - makes a MarketUtils, adds the order and then adds the association
-    // await sell_x_at_x(this, "30", "28")
     // await set_stop_on_remainder_of_position_at(stop_percentage)
   }
 

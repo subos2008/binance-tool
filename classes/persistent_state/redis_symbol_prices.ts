@@ -2,10 +2,7 @@
 import * as Sentry from '@sentry/node';
 
 import { strict as assert } from 'assert';
-const { promisify, inspect } = require("util");
-var _ = require("lodash");
-
-var stringToBool = (myValue: string) => myValue === "true";
+const { promisify } = require("util");
 
 import BigNumber from 'bignumber.js';
 BigNumber.DEBUG = true; // Prevent NaN

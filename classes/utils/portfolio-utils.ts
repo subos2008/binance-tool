@@ -5,7 +5,6 @@
 import { strict as assert } from 'assert';
 
 import { BigNumber } from "bignumber.js";
-import { Balances } from 'binance-api-node';
 BigNumber.DEBUG = true; // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -106,7 +105,7 @@ export class PortfolioUtils {
 
   balances_to_string(portfolio: Portfolio, quote_currency: string): string | null {
     let quote_total = this.calculate_portfolio_value_in_quote_currency({ quote_currency, portfolio }).total
-    let { portfolio: portfolio_with_quote_values, unprocessed_balances } = this.add_quote_value_to_portfolio_balances({ portfolio, quote_currency })
+    let { portfolio: portfolio_with_quote_values } = this.add_quote_value_to_portfolio_balances({ portfolio, quote_currency })
     if (!portfolio_with_quote_values.balances) return null
     let balances = portfolio_with_quote_values.balances
       .filter(balance => balance.quote_equivalents?.[quote_currency])

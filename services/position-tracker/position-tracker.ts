@@ -8,7 +8,6 @@ import { RedisPositionsState } from "../../classes/persistent_state/redis_positi
 import { PositionPublisher } from "../../classes/amqp/positions-publisher"
 
 import BigNumber from "bignumber.js"
-import { timeStamp } from "console"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -142,14 +141,16 @@ export class PositionTracker {
       this.send_message(`Existing position found for ${baseAsset}, size ${position_size}`)
       // TODO: Fuck, what is the quote currency is different on the buy/sell?
       // TODO: positions aren't in pairs (symbols) they are in base currencies.
-      this.positions_state.adjust_position_size_by(
-        { baseAsset, exchange, account },
-        {
-          base_change: new BigNumber(totalBaseTradeQuantity),
-          quote_change: new BigNumber(totalQuoteTradeQuantity).negated(),
-          quoteAsset,
-        }
-      )
+      this.logger.error(`Adjustment of position size is not implemented`)
+      // TODO: Adjustment of position size
+      // this.positions_state.adjust_position_size_by(
+      //   { baseAsset, exchange, account },
+      //   {
+      //     base_change: new BigNumber(totalBaseTradeQuantity),
+      //     quote_change: new BigNumber(totalQuoteTradeQuantity).negated(),
+      //     quoteAsset,
+      //   }
+      // )
       position_size = null // invalidated as needs re-loading from state
     }
 
@@ -184,8 +185,8 @@ export class PositionTracker {
       exchange,
       account,
       averageExecutionPrice,
-      totalBaseTradeQuantity,
-      totalQuoteTradeQuantity, // TODO: use this
+      // totalBaseTradeQuantity,
+      // totalQuoteTradeQuantity, // TODO: use this
     } = generic_order_data
 
     if (!account) account = "default" // TODO
@@ -206,15 +207,25 @@ export class PositionTracker {
     let msg = `reduced the position size for ${baseAsset}`
     this.send_message(msg)
 
-    position_size = position_size.minus(totalBaseTradeQuantity)
-    await this.positions_state.adjust_position_size_by(
-      { baseAsset, exchange, account },
-      {
-        base_change: new BigNumber(totalBaseTradeQuantity).negated(),
-        quote_change: new BigNumber(totalQuoteTradeQuantity),
-        quoteAsset,
-      }
-    )
+    this.logger.error(`Adjustment of position size is not implemented`)
+    // TOOD: what about events for orders and association of orders with positions? Either an order has been associated 
+    // with a position before or it can be at any time later? The event that associates an order with a position and 
+    // the code that processes an order coming it are the same code
+    // TODO; and an order coming in that isn't associated with a position next time a check runs gets printed. Didn't make a 
+    // new position and not entirely sure what is that order... this reflects the current state: example adding to a position; what are
+    // the stops supposed to be for a position we have added to? 
+    // TODO: the code in autoexits that calls MarketUtils could call onto a position. Would be good on a position to have one call to move the stops 
+    // on all orders up at once. 
+    // TODO: Adjustment of position size
+    // position_size = position_size.minus(totalBaseTradeQuantity)
+    // await this.positions_state.adjust_position_size_by(
+    //   { baseAsset, exchange, account },
+    //   {
+    //     base_change: new BigNumber(totalBaseTradeQuantity).negated(),
+    //     quote_change: new BigNumber(totalQuoteTradeQuantity),
+    //     quoteAsset,
+    //   }
+    // )
 
     if (!averageExecutionPrice) {
       // TODO: set sentry context after unpacking the order (withScope)

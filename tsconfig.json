@@ -6,6 +6,8 @@
     "lib": ["es2019"],
     "module": "commonjs",
     "outDir": "out",
-    "sourceMap": true
+    "sourceMap": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
   }
 }

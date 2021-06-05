@@ -32,7 +32,6 @@ import { Binance } from "binance-api-node"
 import BinanceFactory from "binance-api-node"
 
 import * as Sentry from "@sentry/node"
-import { PositionIdentifier } from "../../events/shared/position-identifier"
 import { Position } from "../../classes/position"
 import { Prices } from "../../interfaces/portfolio"
 

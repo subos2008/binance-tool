@@ -2,8 +2,6 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
-import { strict as assert } from 'assert';
-
 const amqp_exchange_name = 'positions';
 
 const connect_options = require("../../lib/amqp/connect_options").default

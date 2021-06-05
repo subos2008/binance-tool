@@ -29,19 +29,14 @@ BigNumber.prototype.valueOf = function () {
 const yargs = require("yargs")
 
 import { RedisPositionsState } from "../classes/persistent_state/redis_positions_state"
-import { LegacyRedisPositionsState } from "../classes/persistent_state/legacy-redis_positions_state"
 const redis_positions = new RedisPositionsState({ logger, redis })
 const legacy_redis_positions = new RedisPositionsState({ logger, redis })
 
 import { Position } from "../classes/position"
-import { PositionIdentifier, create_position_identifier_from_tuple } from "../events/shared/position-identifier"
-import { ExchangeIdentifier } from "../events/shared/exchange-identifier"
-import { ExchangeEmulator } from "../lib/exchange_emulator"
+import { create_position_identifier_from_tuple } from "../events/shared/position-identifier"
 
 const Binance = require("binance-api-node").default
 require("dotenv").config()
-
-const c = require("ansi-colors")
 
 async function main() {
   yargs
@@ -136,7 +131,7 @@ async function get_prices_from_exchange() {
   return await ee.prices()
 }
 
-async function legacy_list_positions(argv: any) {
+async function legacy_list_positions() {
   console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
   let open_positions = await legacy_redis_positions.open_positions()
   for (const position_identifier of open_positions) {
@@ -145,7 +140,7 @@ async function legacy_list_positions(argv: any) {
   redis.quit()
 }
 
-async function list_positions(argv: any) {
+async function list_positions() {
   console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
   let prices = await get_prices_from_exchange()
   let open_positions = await redis_positions.open_positions()

@@ -24,9 +24,6 @@ const redis = require("redis").createClient({
 
 const { promisify } = require("util");
 const keysAsync = promisify(redis.keys).bind(redis);
-const getAsync = promisify(redis.get).bind(redis);
-const hgetallAsync = promisify(redis.hgetall).bind(redis);
-const mgetAsync = promisify(redis.mget).bind(redis);
 
 import { OrderState } from "../classes/persistent_state/redis_order_state";
 const order_state = new OrderState({ logger, redis })
@@ -36,7 +33,6 @@ async function main() {
   const keys = await keysAsync("orders:*:completed");
   // console.log(keys);
   for (const key of keys) {
-    const completed = (await getAsync(key)) === "true";
     let regex_result = key.match(/orders:([^:]+):completed/)
     try {
       const order_id = regex_result[1];

@@ -12,7 +12,6 @@ import { TradingRules } from '../lib/trading_rules'
 
 const fs = require('fs');
 
-const logger = new Logger({ silent: false });
 const null_logger = new Logger({ silent: true });
 
 const permissive_trading_rules = {
@@ -60,7 +59,7 @@ describe('PositionSizer', function () {
     it('errors if trading_rules arent supplied', function () {
       const trading_rules = undefined;
       try {
-        let { position_sizer } = setup({
+        setup({
           ee_config: {
             starting_quote_balance: BigNumber('600')
           },
@@ -78,7 +77,7 @@ describe('PositionSizer', function () {
 
   describe('_get_portfolio_value_from_exchange', function () {
     it('when only quote currency held: returns the total amount of quote currency held', async function () {
-      let { ee, position_sizer } = setup({
+      let { position_sizer } = setup({
         ee_config: {
           starting_quote_balance: BigNumber(200)
         }

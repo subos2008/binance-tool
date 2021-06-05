@@ -9,7 +9,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Binance as BinanceType, OcoOrder, Order } from "binance-api-node"
+import { Binance as BinanceType, Order } from "binance-api-node"
 import Binance from "binance-api-node"
 import { ExchangeIdentifier } from "../../../events/shared/exchange-identifier"
 import {

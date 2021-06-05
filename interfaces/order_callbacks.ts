@@ -42,8 +42,8 @@ export interface BinanceOrderData {
 }
 
 export interface OrderCallbacks {
-  order_cancelled(order_id: string, data: BinanceOrderData): Promise<void>
-  order_filled(order_id: string, data: BinanceOrderData): Promise<void>
-  order_filled_or_partially_filled(order_id: string, data: BinanceOrderData): Promise<void>
-  order_created?(order_id: string, data: BinanceOrderData): Promise<void>
+  order_cancelled?(data: BinanceOrderData): Promise<void>
+  order_filled(data: BinanceOrderData): Promise<void>
+  order_filled_or_partially_filled?(data: BinanceOrderData): Promise<void>
+  order_created?(data: BinanceOrderData): Promise<void>
 }

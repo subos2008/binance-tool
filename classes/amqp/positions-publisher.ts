@@ -11,7 +11,6 @@ const exchange = 'positions';
 assert(exchange)
 
 import { connect, Connection } from "amqplib";
-import BigNumber from 'bignumber.js';
 import { NewPositionEvent } from "../../events/position-events"
 
 export class PositionPublisher {

@@ -17,7 +17,6 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from '../../interfaces/logger'
 import { RedisClient } from 'redis'
 import { TradeDefinition, TradeDefinitionInputSpec } from '../specifications/trade_definition';
-import { assignWith } from 'lodash';
 
 enum Name {
   trade_state_schema_version = 'trade_state_schema_version',
@@ -393,7 +392,7 @@ export async function create_new_trade(params: CreateTradeParams): Promise<strin
   logger.info(inspect(trade_definition));
 
   let obj = trade_definition.serialised_to_simple_object() as TradeDefinitionInputSpec
-  obj = _.pickBy(obj, (value: any, key: string) => value !== undefined)
+  obj = _.pickBy(obj, (value: any) => value !== undefined)
   let array = null;
   let entries: Array<any> = Object.entries(obj)
   try {

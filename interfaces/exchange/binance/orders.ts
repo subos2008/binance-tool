@@ -1,9 +1,7 @@
 import { BinanceOrderData } from "../../../interfaces/order_callbacks"
-import * as _ from "lodash"
 import { assert } from "console"
 import { ExchangeInfo } from "binance-api-node"
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
-import { ExchangeUtils } from "../../../interfaces/exchange/generic/exchange-utils"
 
 
 export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info: ExchangeInfo): GenericOrderData {

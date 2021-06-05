@@ -13,12 +13,10 @@ BigNumber.prototype.valueOf = function() {
 
 import {ExchangeEmulator} from '../lib/exchange_emulator'
 const Logger = require('../lib/faux_logger');
-const { NotImplementedError, InsufficientBalanceError } = require('../lib/errors');
 const async_error_handler = require('../lib/async_error_handler');
 const utils = require('../lib/utils');
 const fs = require('fs');
 
-const logger = new Logger({ silent: false });
 const null_logger = new Logger({ silent: true });
 
 // Tests needed:
@@ -298,7 +296,7 @@ describe('ExchangeEmulator', function() {
 				});
 				let price_target = '0.8';
 				let event;
-				let clean = await ee.ws.aggTrades([ default_pair ], (msg:string) => {
+				await ee.ws.aggTrades([ default_pair ], (msg:string) => {
 					event = msg;
 				});
 				await ee.set_current_price({ symbol: default_pair, price: new BigNumber(price_target) });
@@ -502,10 +500,10 @@ describe('ExchangeEmulator', function() {
 					const base_volume = new BigNumber('1.2');
 					const limit_price = new BigNumber('0.1');
 					let user_event = {totalTradeQuantity:undefined}; // TODO: revert this typing
-					let clean = await ee.ws.user((msg:any) => {
+					await ee.ws.user((msg:any) => {
 						user_event = msg;
 					});
-					let response = await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
+					await do_limit_buy_order({ ee, amount: base_volume, price: limit_price });
 					await ee.set_current_price({ symbol: default_pair, price: limit_price });
 					expect(user_event).to.be.an('object');
 					expect(user_event.totalTradeQuantity).to.be.a('string');
@@ -569,7 +567,7 @@ describe('ExchangeEmulator', function() {
 				});
 				const base_volume = '0.8';
 				const limit_price = '0.1';
-				let response = await do_limit_sell_order({ ee, amount: base_volume, price: limit_price });
+				await do_limit_sell_order({ ee, amount: base_volume, price: limit_price });
 				expect(ee.open_orders.length).to.equal(1);
 				expect(ee.open_orders[0].type).to.equal('LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');
@@ -598,10 +596,10 @@ describe('ExchangeEmulator', function() {
 					const base_volume = new BigNumber('0.8');
 					const limit_price = new BigNumber('0.1');
 					let user_event = {totalTradeQuantity:undefined}; // TODO: revert this typing
-					let clean = await ee.ws.user((msg:any) => {
+					await ee.ws.user((msg:any) => {
 						user_event = msg;
 					});
-					let response = await do_limit_sell_order({ ee, amount: base_volume.toFixed(), price: limit_price.toFixed() });
+					await do_limit_sell_order({ ee, amount: base_volume.toFixed(), price: limit_price.toFixed() });
 					await ee.set_current_price({ symbol: default_pair, price: limit_price });
 					expect(user_event).to.be.an('object');
 					expect(user_event.totalTradeQuantity).to.be.a('string');
@@ -714,7 +712,7 @@ describe('ExchangeEmulator', function() {
 				});
 				const base_volume = new BigNumber('0.8');
 				const limit_price = new BigNumber('0.1');
-				let response = await do_stop_loss_limit_sell_order({ ee, amount: base_volume, price: limit_price });
+				await do_stop_loss_limit_sell_order({ ee, amount: base_volume, price: limit_price });
 				expect(ee.open_orders.length).to.equal(1);
 				expect(ee.open_orders[0].type).to.equal('STOP_LOSS_LIMIT');
 				expect(ee.open_orders[0].side).to.equal('SELL');

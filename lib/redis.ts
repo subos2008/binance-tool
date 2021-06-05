@@ -1,7 +1,6 @@
 import Sentry from "./sentry";
 import { Logger } from "../interfaces/logger";
 import { RedisClient } from "redis";
-var util = require('util');
 
 var client_singleton: RedisClient | undefined
 var logger: Logger

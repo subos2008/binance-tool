@@ -7,8 +7,6 @@ const service_name = "binance-position-tracker"
 import { fromCompletedBinanceOrderData } from "../../interfaces/exchange/binance/orders"
 import { is_too_small_to_trade } from "../../lib/utils"
 
-const _ = require("lodash")
-
 require("dotenv").config()
 
 import * as Sentry from "@sentry/node"
@@ -37,11 +35,10 @@ process.on("unhandledRejection", (error) => {
 
 import { ExchangeEmulator } from "../../lib/exchange_emulator"
 import { OrderExecutionTracker } from "../../service_lib/order_execution_tracker"
-import { BinanceOrderData } from "../../interfaces/order_callbacks"
+import { BinanceOrderData, OrderCallbacks } from "../../interfaces/order_callbacks"
 import { PositionTracker } from "./position-tracker"
 
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
-import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 import Binance from "binance-api-node"
 import { ExchangeInfo } from "binance-api-node"
 set_redis_logger(logger)
@@ -49,7 +46,7 @@ const redis = get_redis_client()
 
 let order_execution_tracker: OrderExecutionTracker | null = null
 
-class MyOrderCallbacks {
+class MyOrderCallbacks implements OrderCallbacks {
   send_message: Function
   logger: Logger
   position_tracker: PositionTracker
@@ -75,10 +72,7 @@ class MyOrderCallbacks {
     this.exchange_info = exchange_info
   }
 
-  async order_cancelled(order_id: string, data: BinanceOrderData): Promise<void> {
-    // this.logger.info(`${data.side} order on ${data.symbol} cancelled.`)
-  }
-  async order_filled(order_id: string, data: BinanceOrderData): Promise<void> {
+  async order_filled(data: BinanceOrderData): Promise<void> {
     let exchange_info = this.exchange_info
     if (data.side == "BUY") {
       this.logger.info(`BUY order on ${data.symbol} filled.`)
@@ -92,9 +86,6 @@ class MyOrderCallbacks {
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
       })
     }
-  }
-  async order_filled_or_partially_filled(order_id: string, data: BinanceOrderData): Promise<void> {
-    // this.logger.info(`${data.side} order on ${data.symbol} filled_or_partially_filled.`)
   }
 }
 

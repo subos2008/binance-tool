@@ -3,7 +3,6 @@ import { EventEmitter } from "events"
 import { Logger } from "../../../interfaces/logger"
 
 import {
-  signMessage,
   signWsAuthenticate,
   WSClientConfigurableOptions,
   getWsUrl,
@@ -323,7 +322,7 @@ export class FtxWebsocketClient extends EventEmitter {
     ws.onopen = (event: OpenEvent) => this.onWsOpen(event, wsKey)
     ws.onmessage = (event: MessageEvent) => this.onWsMessage(event, wsKey)
     ws.onerror = (event: ErrorEvent) => this.onWsError(event, wsKey)
-    ws.onclose = (event: CloseEvent) => this.onWsClose(event, wsKey)
+    ws.onclose = (_event: CloseEvent) => this.onWsClose(wsKey)
 
     return ws
   }
@@ -367,7 +366,7 @@ export class FtxWebsocketClient extends EventEmitter {
     }
   }
 
-  private onWsClose(event: CloseEvent, wsKey: string) {
+  private onWsClose(wsKey: string) {
     this.logger.info("Websocket connection closed", {
       ...loggerCategory,
       wsKey,
@@ -404,6 +403,7 @@ export class FtxWebsocketClient extends EventEmitter {
   }
 
   private getWsKeyForTopic(topic: any) {
+    console.warn(`topic ${topic} not used in getWsKeyForTopic... external code`)
     return wsKeyGeneral
   }
 }

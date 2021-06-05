@@ -8,10 +8,6 @@ const amqp_user = process.env.AMQP_USER // || "binance-tool";
 const amqp_password = process.env.AMQP_PASSWORD;
 const protocol = process.env.AMQP_PROTOCOL // || "amqps";
 
-const Logger = require("../../lib/faux_logger");
-// Initial logger, we re-create it below once we have the trade_id
-var logger = new Logger({ silent: false });
-
 assert(protocol)
 assert(amqp_password)
 assert(amqp_user)
@@ -35,7 +31,5 @@ const connection_options = {
   vhost,
   // ca: splitca("./ca-certificates.crt")
 }
-
-// logger.info(`AMQP hostname: ${amqp_server} port: ${port} protocol: ${protocol}`)
 
 export default connection_options;

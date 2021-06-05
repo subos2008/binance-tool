@@ -1,4 +1,4 @@
-const utils = require("../lib/utils")
+const utils = require("../lib/utils_v2")
 import { strict as assert } from "assert"
 const async_error_handler = require("../lib/async_error_handler")
 
@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../interfaces/logger"
 import { TradingRules } from "../lib/trading_rules"
 import * as Sentry from "@sentry/node"
-import { Binance, NewOcoOrder, OcoOrder, Order, OrderSide, OrderType } from "binance-api-node"
+import { Binance, OrderSide, OrderType } from "binance-api-node"
 
 export class AlgoUtils {
   logger: Logger
@@ -105,7 +105,7 @@ export class AlgoUtils {
   }
 
   split_pair(pair: string): { quote_currency: string; base_currency: string } {
-    const [total, base_currency, quote_currency] = utils.break_up_binance_pair(pair)
+    const { base_currency, quote_currency } = utils.break_up_binance_pair(pair)
     return {
       quote_currency,
       base_currency,

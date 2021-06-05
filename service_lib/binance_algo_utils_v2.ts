@@ -1,6 +1,6 @@
 /* AlgoUtils but exchangeInfo is passed in explicitly */
 
-const utils = require("../lib/utils")
+import utils from "../lib/utils"
 import { strict as assert } from "assert"
 const async_error_handler = require("../lib/async_error_handler")
 
@@ -111,7 +111,7 @@ export class AlgoUtils {
   }
 
   split_pair(pair: string): { quote_currency: string; base_currency: string } {
-    const [total, base_currency, quote_currency] = utils.break_up_binance_pair(pair)
+    const { base_currency, quote_currency } = utils.break_up_binance_pair(pair)
     return {
       quote_currency,
       base_currency,
@@ -321,7 +321,6 @@ export class AlgoUtils {
       async_error_handler(console, `Buy error: ${error.body}`, error)
     }
   }
-
 
   async create_stop_loss_limit_sell_order({
     exchange_info,

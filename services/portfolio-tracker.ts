@@ -103,7 +103,6 @@ async function add_known_positions_to_portfolio({
       exchange,
     })
     let position: Position = new Position({ logger, redis_positions, position_identifier })
-    await position.load_and_init({ prices: portfolio.prices })
     positions[baseAsset] = position
   }
   portfolio.positions = positions

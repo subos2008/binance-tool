@@ -174,7 +174,6 @@ export class PositionTracker {
     })
     let prices: { [key: string]: string } = {}
     if (averageExecutionPrice) prices[baseAsset] = averageExecutionPrice
-    await position.load_and_init({ prices })
     return position
   }
 

@@ -35,7 +35,6 @@ const legacy_redis_positions = new RedisPositionsState({ logger, redis })
 import { Position } from "../classes/position"
 import { create_position_identifier_from_tuple } from "../events/shared/position-identifier"
 
-const Binance = require("binance-api-node").default
 require("dotenv").config()
 
 async function main() {
@@ -123,13 +122,13 @@ async function main() {
 }
 main().then(() => {})
 
-async function get_prices_from_exchange() {
-  const ee = Binance({
-    apiKey: process.env.APIKEY,
-    apiSecret: process.env.APISECRET,
-  })
-  return await ee.prices()
-}
+// async function get_prices_from_exchange() {
+//   const ee = Binance({
+//     apiKey: process.env.APIKEY,
+//     apiSecret: process.env.APISECRET,
+//   })
+//   return await ee.prices()
+// }
 
 async function legacy_list_positions() {
   console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
@@ -142,15 +141,9 @@ async function legacy_list_positions() {
 
 async function list_positions() {
   console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
-  let prices = await get_prices_from_exchange()
   let open_positions = await redis_positions.open_positions()
   for (const position_identifier of open_positions) {
     let p = new Position({ logger, redis_positions, position_identifier })
-    await p.load_and_init({ prices })
-    // let percentage = p.percentage_price_change_since_initial_entry?.dp(1)
-    // let percentage_string: string = p.percentage_price_change_since_initial_entry?.isGreaterThanOrEqualTo(0)
-    //   ? percentage?.toFixed()
-    //   : c.red(percentage?.toFixed())
     console.log(`${p.baseAsset}: unimplemented`)
   }
   redis.quit()
@@ -169,10 +162,8 @@ async function legacy_delete_position(argv: any) {
 async function describe_position(argv: any) {
   let position_identifier = create_position_identifier_from_tuple(argv)
   console.log(position_identifier)
-  let prices = await get_prices_from_exchange()
   let p = new Position({ logger, redis_positions, position_identifier })
-  await p.load_and_init({ prices })
   console.log(`${p.baseAsset}:`)
-  console.log(p.asObject())
+  console.log(await p.describe_position())
   redis.quit()
 }

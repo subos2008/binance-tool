@@ -206,7 +206,7 @@ export class AutoPositionExits {
         console.error(err)
         Sentry.captureException(err)
       }
-      // await associate_orders_with_position(...) // new class PositionUtils could do this - makes a MarketUtils, adds the order and then adds the association
+      // TODO: await associate_orders_with_position(...) // new class PositionUtils could do this - makes a MarketUtils, adds the order and then adds the association
       await this._add_stop_limit_order_at_percentage_below_price({
         market_utils,
         position_initial_entry_price: new BigNumber(event.position_initial_entry_price),

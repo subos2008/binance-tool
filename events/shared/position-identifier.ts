@@ -4,7 +4,7 @@ import { ExchangeIdentifier } from "./exchange-identifier"
 export interface PositionIdentifier {
   exchange_identifier: ExchangeIdentifier
   baseAsset: string
-  baseAssetAmount?: BigNumber
+  baseAssetAmount?: BigNumber // wtf?
 }
 
 export function create_position_identifier_from_tuple({

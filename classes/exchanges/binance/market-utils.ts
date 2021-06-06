@@ -101,17 +101,20 @@ export class BinanceMarketUtils implements MarketUtils {
       price: munged_stop_price,
       base_amount: order_definition.base_asset_quantity,
     })
-    let munged_order_definition: GenericOCOOderDefinition = {
-      target_price: munged_target_price,
-      stop_price: munged_stop_price,
-      base_asset_quantity: munged_base_amount,
-    }
+    let limit_price =
+      order_definition.limit_price || get_limit_price_for_stop_order({ stop_price: order_definition.stop_price })
+    let munged_limit_price = this.algo_utils.munge_and_check_price({
+      exchange_info,
+      symbol: pair,
+      price: limit_price,
+    })
     let order: OcoOrder | undefined = await this.algo_utils.munge_and_create_oco_order({
       exchange_info,
       pair: await this.market_symbol(),
-      target_price: munged_order_definition.target_price,
-      base_amount: munged_order_definition.base_asset_quantity,
-      stop_price: munged_order_definition.stop_price,
+      target_price: munged_target_price,
+      base_amount: munged_base_amount,
+      stop_price: munged_stop_price,
+      limit_price: munged_limit_price,
     })
     if (!order) throw new Error(`Failed to create OCO order on ${await this.base_asset()}`)
     // export type OCOSubOrder = {
@@ -127,8 +130,11 @@ export class BinanceMarketUtils implements MarketUtils {
     this.logger.warn(`are OCO order SubOrder transaction quanitites always the same as the quantity passed in?`)
     return {
       order_transaction_timestamp: order.transactionTime,
-      orders: order.orders.map((o) => ({ order_id: o.orderId.toString(), client_order_id: o.clientOrderId })),
-      base_asset_quantity: munged_order_definition.base_asset_quantity,
+      orders: order.orders.map((o) => ({
+        order_id: o.orderId.toString(),
+        client_order_id: o.clientOrderId,
+        base_asset_quantity: new BigNumber(o.origQty),
+      })),
     }
   }
 

@@ -11,18 +11,19 @@ BigNumber.prototype.valueOf = function () {
 export type GenericOCOOderDefinition = {
   target_price: BigNumber
   stop_price: BigNumber
+  limit_price?: BigNumber
   base_asset_quantity: BigNumber
 }
 
 export type OCOSubOrder = {
   order_id: string
   client_order_id: string
+  base_asset_quantity: BigNumber
 }
 
 export type GenericOCOOrder = {
   order_transaction_timestamp: number,
   orders: OCOSubOrder[]
-  base_asset_quantity: BigNumber
 }
 
 export type GenericLimitSellOrderDefinition = {

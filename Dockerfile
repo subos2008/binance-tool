@@ -9,7 +9,7 @@ RUN yarn install --frozen-lockfile
 COPY lib /app/lib
 COPY classes /app/classes
 COPY service_lib /app/service_lib
-COPY service.ts /app/
+# COPY service.ts /app/
 COPY services /app/services
 COPY interfaces /app/interfaces
 COPY types /app/types
@@ -19,4 +19,4 @@ COPY events /app/events
 COPY chai-bignumber.d.ts /app/chai-bignumber.d.ts
 COPY tsconfig.json /app/tsconfig.json
 
-CMD ./service.ts
+# CMD ./service.ts

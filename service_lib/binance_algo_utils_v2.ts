@@ -269,15 +269,15 @@ export class AlgoUtils {
     stop_price: BigNumber
     limit_price: BigNumber
   }) {
-    this.logger.warn(`stop_limit price not implemented in create_oco_order for Binance`)
-    this.logger.warn(`price not munged in create_oco_order for Binance`)
     assert(pair && target_price && base_amount && stop_price && limit_price)
     assert(BigNumber.isBigNumber(base_amount))
     assert(BigNumber.isBigNumber(target_price))
     assert(BigNumber.isBigNumber(limit_price))
     try {
-      // TODO: not checking price because often it is zero
-      base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, stop_price })
+      base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, stop_price, limit_price, target_price })
+      stop_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: stop_price })
+      limit_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: limit_price })
+      target_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: target_price })
       let quantity = base_amount.toFixed()
       //   export interface NewOcoOrder {
       //     symbol: string;

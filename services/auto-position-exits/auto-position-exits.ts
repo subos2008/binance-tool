@@ -90,7 +90,9 @@ export class AutoPositionExits {
     let stop_price = position_initial_entry_price.times(
       new BigNumber(100).minus(percentage_price_decrease_to_sell_at).dividedBy(100)
     )
-    this.logger.info(`Creating limit sell: ${symbol}, ${base_asset_quantity.toFixed()} at price ${stop_price.toFixed()}`)
+    this.logger.info(
+      `Creating limit sell: ${symbol}, ${base_asset_quantity.toFixed()} at price ${stop_price.toFixed()}`
+    )
     await market_utils.create_stop_limit_sell_order({
       stop_price,
       base_asset_quantity,
@@ -188,15 +190,27 @@ export class AutoPositionExits {
 
       let stop_percentage = "25"
       let remaining_position_size = new BigNumber(event.position_base_size)
-      let oco_order = await sell_x_at_x_with_stop({
-        context: this,
-        amount_percentage: "20",
-        price_percentage: "20",
-        stop_percentage,
-        market_utils,
-      })
-      if (oco_order && oco_order.base_asset_quantity)
-        remaining_position_size = remaining_position_size.minus(oco_order.base_asset_quantity)
+      try {
+        // catch on these more complex orders separately so we still set the main stop loss exit even if they fail
+        let oco_order = await sell_x_at_x_with_stop({
+          context: this,
+          amount_percentage: "20",
+          price_percentage: "20",
+          stop_percentage,
+          market_utils,
+        })
+        if (oco_order && oco_order.orders[0].base_asset_quantity && oco_order.orders[1].base_asset_quantity) {
+          let amount_added_to_orders = BigNumber.maximum(
+            oco_order.orders[0].base_asset_quantity,
+            oco_order.orders[1].base_asset_quantity
+          )
+          remaining_position_size = remaining_position_size.minus(amount_added_to_orders)
+        }
+      } catch (err) {
+        this.send_message(`ERROR while creating x_at_x auto-exit orders on ${event.baseAsset}`)
+        console.error(err)
+        Sentry.captureException(err)
+      }
       // await associate_orders_with_position(...) // new class PositionUtils could do this - makes a MarketUtils, adds the order and then adds the association
       await this._add_stop_limit_order_at_percentage_below_price({
         market_utils,

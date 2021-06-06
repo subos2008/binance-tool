@@ -128,6 +128,8 @@ export class BinanceMarketUtils implements MarketUtils {
     //   orders: OCOSubOrder[]
     // }
     this.logger.warn(`are OCO order SubOrder transaction quanitites always the same as the quantity passed in?`)
+    this.logger.info(order.orders[0])
+    this.logger.info(order.orders[1])
     return {
       order_transaction_timestamp: order.transactionTime,
       orders: order.orders.map((o) => ({

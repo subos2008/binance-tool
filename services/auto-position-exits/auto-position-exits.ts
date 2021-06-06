@@ -90,7 +90,7 @@ export class AutoPositionExits {
       new BigNumber(100).minus(percentage_price_decrease_to_sell_at).dividedBy(100)
     )
     this.logger.info(
-      `Creating limit sell: ${await market_utils.market_symbol()}, ${base_asset_quantity.toFixed()} at price ${stop_price.toFixed()}`
+      `Creating stop limit sell: ${await market_utils.market_symbol()}, ${base_asset_quantity.toFixed()} at price ${stop_price.toFixed()}`
     )
     await market_utils.create_stop_limit_sell_order({
       stop_price,
@@ -198,12 +198,8 @@ export class AutoPositionExits {
           stop_percentage,
           market_utils,
         })
-        if (oco_order && oco_order.orders[0].base_asset_quantity && oco_order.orders[1].base_asset_quantity) {
-          let amount_added_to_orders = BigNumber.maximum(
-            oco_order.orders[0].base_asset_quantity,
-            oco_order.orders[1].base_asset_quantity
-          )
-          remaining_position_size = remaining_position_size.minus(amount_added_to_orders)
+        if (oco_order) {
+          remaining_position_size = remaining_position_size.minus(oco_order.base_asset_quantity)
         }
       } catch (err) {
         this.send_message(`ERROR while creating x_at_x auto-exit orders on ${event.baseAsset}`)

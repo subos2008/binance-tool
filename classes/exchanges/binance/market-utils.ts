@@ -127,6 +127,8 @@ export class BinanceMarketUtils implements MarketUtils {
     //   order_transaction_timestamp: number,
     //   orders: OCOSubOrder[]
     // }
+
+    // OcoOrder.orders entries only contain: symbol, orderId and clientOrderId
     this.logger.warn(`are OCO order SubOrder transaction quanitites always the same as the quantity passed in?`)
     this.logger.info(order.orders[0])
     this.logger.info(order.orders[1])
@@ -135,8 +137,8 @@ export class BinanceMarketUtils implements MarketUtils {
       orders: order.orders.map((o) => ({
         order_id: o.orderId.toString(),
         client_order_id: o.clientOrderId,
-        base_asset_quantity: new BigNumber(o.origQty),
       })),
+      base_asset_quantity: munged_base_amount,
     }
   }
 

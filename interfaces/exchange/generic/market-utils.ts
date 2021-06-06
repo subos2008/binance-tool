@@ -18,12 +18,12 @@ export type GenericOCOOderDefinition = {
 export type OCOSubOrder = {
   order_id: string
   client_order_id: string
-  base_asset_quantity: BigNumber
 }
 
 export type GenericOCOOrder = {
-  order_transaction_timestamp: number,
+  order_transaction_timestamp: number
   orders: OCOSubOrder[]
+  base_asset_quantity: BigNumber
 }
 
 export type GenericLimitSellOrderDefinition = {
@@ -56,5 +56,7 @@ export interface MarketUtils {
   market_symbol(): Promise<string>
   create_oco_order(order_definition: GenericOCOOderDefinition): Promise<GenericOCOOrder>
   // create_limit_sell_order(order_definition: GenericLimitSellOrderDefinition): Promise<GenericLimitSellOrder>
-  create_stop_limit_sell_order(order_definition: GenericStopLimitSellOrderDefinition): Promise<GenericStopLimitSellOrder>
+  create_stop_limit_sell_order(
+    order_definition: GenericStopLimitSellOrderDefinition
+  ): Promise<GenericStopLimitSellOrder>
 }

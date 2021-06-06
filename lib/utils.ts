@@ -6,7 +6,7 @@ const binance_regex = /^([A-Z]+)(BTC|USDT|BNB|TUSD)$/
 
 import * as Sentry from "@sentry/node"
 
-function break_up_binance_pair(pair: string): { total: string; base_coin: string; quote_coin: string } {
+export function break_up_binance_pair(pair: string): { total: string; base_coin: string; quote_coin: string } {
   try {
     assert(typeof pair === "string")
     const [total, base_coin, quote_coin] = pair.match(binance_regex) || []
@@ -20,13 +20,13 @@ function break_up_binance_pair(pair: string): { total: string; base_coin: string
   }
 }
 
-function base_currency_for_binance_pair(pair: string) {
+export function base_currency_for_binance_pair(pair: string) {
   const { base_coin } = break_up_binance_pair(pair)
   assert(base_coin)
   return base_coin
 }
 
-function quote_currency_for_binance_pair(pair: string) {
+export function quote_currency_for_binance_pair(pair: string) {
   const { quote_coin } = break_up_binance_pair(pair)
   assert(quote_coin)
   return quote_coin
@@ -37,13 +37,13 @@ function quote_currency_for_binance_pair(pair: string) {
 //   return base_coin;
 // }
 
-function convert_binance_pair_to_ccxt_pair(binance_pair: string) {
+export function convert_binance_pair_to_ccxt_pair(binance_pair: string) {
   return `${base_currency_for_binance_pair(binance_pair)}/${quote_currency_for_binance_pair(binance_pair)}`
 }
 
 // The amount of quote coin that can be bought, so rounds down
 // TODO: decimal places is a hardcoded constant
-function quote_volume_at_price_to_base_volume({
+export function quote_volume_at_price_to_base_volume({
   quote_volume,
   price,
 }: {
@@ -58,7 +58,7 @@ function quote_volume_at_price_to_base_volume({
 }
 
 // TODO: rounding
-function base_volume_at_price_to_quote_volume({
+export function base_volume_at_price_to_quote_volume({
   base_volume,
   price,
 }: {
@@ -71,7 +71,7 @@ function base_volume_at_price_to_quote_volume({
 }
 
 // Binance
-function roundStep(qty: BigNumber, stepSize: string) {
+export function roundStep(qty: BigNumber, stepSize: string) {
   // Integers do not require rounding
   if (Number.isInteger(qty.toNumber())) return qty
   const qtyString = qty.toFixed(16)
@@ -81,7 +81,7 @@ function roundStep(qty: BigNumber, stepSize: string) {
 }
 
 // Binance
-function roundTicks(price: BigNumber, tickSize: number) {
+export function roundTicks(price: BigNumber, tickSize: number) {
   const formatter = new Intl.NumberFormat("en-US", {
     style: "decimal",
     minimumFractionDigits: 0,
@@ -93,7 +93,7 @@ function roundTicks(price: BigNumber, tickSize: number) {
 }
 
 // Binance
-function get_symbol_filters({ exchange_info, symbol }: { exchange_info: any; symbol: string }) {
+export function get_symbol_filters({ exchange_info, symbol }: { exchange_info: any; symbol: string }) {
   // TODO: argh omg this is disgusting hardcoding of the default_pair
   let symbol_data = exchange_info.symbols.find((ei: any) => ei.symbol === symbol)
   if (!symbol_data) {
@@ -104,7 +104,7 @@ function get_symbol_filters({ exchange_info, symbol }: { exchange_info: any; sym
 }
 
 // Binance
-function munge_and_check_quantity({
+export function munge_and_check_quantity({
   exchange_info,
   symbol,
   volume,
@@ -126,7 +126,7 @@ function munge_and_check_quantity({
 }
 
 // Binance
-function munge_and_check_price({
+export function munge_and_check_price({
   exchange_info,
   symbol,
   price,
@@ -152,7 +152,7 @@ function munge_and_check_price({
 }
 
 // Binance
-function check_notional({
+export function check_notional({
   price,
   volume,
   exchange_info,
@@ -204,21 +204,3 @@ export function is_too_small_to_trade({
   }
   return false
 }
-
-module.exports = {
-  base_currency_for_binance_pair,
-  quote_currency_for_binance_pair,
-  convert_binance_pair_to_ccxt_pair,
-  // base_currency_for_ccxt_pair,
-  quote_volume_at_price_to_base_volume,
-  base_volume_at_price_to_quote_volume,
-  roundTicks,
-  roundStep,
-  munge_and_check_quantity,
-  munge_and_check_price,
-  check_notional,
-  break_up_binance_pair,
-  is_too_small_to_trade,
-}
-
-export default module.exports

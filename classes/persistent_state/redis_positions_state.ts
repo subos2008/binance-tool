@@ -294,7 +294,7 @@ export class RedisPositionsState {
       base_change,
       // quoteAsset,
       // quote_change,
-    }: { base_change: BigNumber; quote_change: BigNumber; quoteAsset: string }
+    }: { base_change: BigNumber }
   ): Promise<void> {
     // TODO: store which quote asset
     // TODO: with timeStamp. List quoteAsset, time, quanitity, usd_equiv, btc_equiv?

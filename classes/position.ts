@@ -104,22 +104,18 @@ export class Position {
   async add_order_to_position({ generic_order_data }: { generic_order_data: GenericOrderData }) {
     let {
       baseAsset,
-      quoteAsset,
+      // quoteAsset,
       exchange,
       account,
       // averageExecutionPrice,
       totalBaseTradeQuantity,
-      totalQuoteTradeQuantity, // TODO: use this
+      // totalQuoteTradeQuantity, // TODO: use this
     } = generic_order_data
     if (!account) account = "default" // TODO
-    let position_size: BigNumber = await this.position_size()
-    position_size = position_size.minus(totalBaseTradeQuantity)
     await this.redis_positions.adjust_position_size_by(
       { baseAsset, exchange, account },
       {
         base_change: new BigNumber(totalBaseTradeQuantity).negated(),
-        quote_change: new BigNumber(totalQuoteTradeQuantity),
-        quoteAsset,
       }
     )
   }

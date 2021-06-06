@@ -86,12 +86,11 @@ export class AutoPositionExits {
     base_asset_quantity: BigNumber
     percentage_price_decrease_to_sell_at: BigNumber
   }) {
-    let symbol = null
     let stop_price = position_initial_entry_price.times(
       new BigNumber(100).minus(percentage_price_decrease_to_sell_at).dividedBy(100)
     )
     this.logger.info(
-      `Creating limit sell: ${symbol}, ${base_asset_quantity.toFixed()} at price ${stop_price.toFixed()}`
+      `Creating limit sell: ${await market_utils.market_symbol()}, ${base_asset_quantity.toFixed()} at price ${stop_price.toFixed()}`
     )
     await market_utils.create_stop_limit_sell_order({
       stop_price,

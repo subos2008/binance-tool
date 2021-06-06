@@ -15,6 +15,9 @@ import { Logger } from "../interfaces/logger"
 const LoggerClass = require("../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
+let service_name = "cli"
+const send_message = require("../../lib/telegram.js")(`${service_name}: `)
+
 import { get_redis_client, set_redis_logger } from "../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()
@@ -100,19 +103,25 @@ async function main() {
           description: "symbol",
           type: "string",
           demandOption: true,
-          choices: (await legacy_redis_positions.open_position_ids()).map((data: { symbol: string }) => data.symbol),
+          choices: (await legacy_redis_positions.open_position_ids()).map(
+            (data: { symbol: string }) => data.symbol
+          ),
         },
         exchange: {
           description: "exchange",
           type: "string",
           default: "binance",
-          choices: (await legacy_redis_positions.open_position_ids()).map((data: { exchange: string }) => data.exchange),
+          choices: (await legacy_redis_positions.open_position_ids()).map(
+            (data: { exchange: string }) => data.exchange
+          ),
         },
         account: {
           description: "account id",
           type: "string",
           default: "default",
-          choices: (await legacy_redis_positions.open_position_ids()).map((data: { account: string }) => data.account),
+          choices: (await legacy_redis_positions.open_position_ids()).map(
+            (data: { account: string }) => data.account
+          ),
         },
       },
       legacy_delete_position
@@ -143,7 +152,7 @@ async function list_positions() {
   console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
   let open_positions = await redis_positions.open_positions()
   for (const position_identifier of open_positions) {
-    let p = new Position({ logger, redis_positions, position_identifier })
+    let p = new Position({ logger, send_message, redis_positions, position_identifier })
     console.log(`${p.baseAsset}: unimplemented`)
   }
   redis.quit()
@@ -162,7 +171,7 @@ async function legacy_delete_position(argv: any) {
 async function describe_position(argv: any) {
   let position_identifier = create_position_identifier_from_tuple(argv)
   console.log(position_identifier)
-  let p = new Position({ logger, redis_positions, position_identifier })
+  let p = new Position({ logger, send_message, redis_positions, position_identifier })
   console.log(`${p.baseAsset}:`)
   console.log(await p.describe_position())
   redis.quit()

@@ -73,68 +73,31 @@ export class PositionTracker {
     } = generic_order_data
 
     let position = await this.load_position_for_order(generic_order_data)
+    position.add_order_to_position({ generic_order_data })
 
-    // 1. Is this a new position?
-    if ((await position.position_size()).isZero()) {
-      try {
-        this.send_message(`New position for ${baseAsset}`)
-      } catch (error) {
-        console.error(error)
-        Sentry.withScope(function (scope) {
-          scope.setTag("baseAsset", baseAsset)
-          scope.setTag("exchange", exchange)
-          if (account) scope.setTag("account", account)
-          Sentry.captureException(error)
-        })
-      }
-
-      // 1.1 create a new position and record the entry price and timestamp
-      let initial_entry_price: BigNumber | undefined
-      try {
-        initial_entry_price = averageExecutionPrice ? new BigNumber(averageExecutionPrice) : undefined
-        this.positions_state.create_new_position(
-          position.tuple,
-          {
-            position_size: new BigNumber(totalBaseTradeQuantity),
-            initial_entry_price,
-            quote_invested: new BigNumber(totalQuoteTradeQuantity),
-          }
-        )
-      } catch (error) {
-        console.error(error)
-        Sentry.withScope(function (scope) {
-          scope.setTag("baseAsset", baseAsset)
-          scope.setTag("exchange", exchange)
-          if (account) scope.setTag("account", account)
-          Sentry.captureException(error)
-        })
-      }
-
-      // Publish an event declaring the new position
-      try {
-        this.position_publisher.publish_new_position_event({
-          event_type: "NewPositionEvent",
-          exchange_identifier: position.tuple,
-          baseAsset,
-          position_base_size: totalBaseTradeQuantity,
-          position_initial_quote_spent: totalQuoteTradeQuantity,
-          position_initial_quoteAsset: quoteAsset,
-          position_initial_entry_price: initial_entry_price?.toFixed(),
-          position_entry_timestamp_ms: orderTime,
-        })
-      } catch (error) {
-        console.error(error)
-        Sentry.withScope(function (scope) {
-          scope.setTag("baseAsset", baseAsset)
-          scope.setTag("exchange", exchange)
-          if (account) scope.setTag("account", account)
-          Sentry.captureException(error)
-        })
-      }
-    } else {
-      // 1.2 existing position
-      this.send_message(`Existing position found for ${baseAsset}`)
-      await position.add_order_to_position({ generic_order_data })
+    if (!averageExecutionPrice) {
+      throw new Error(`averageExecutionPrice not defined, unable to publish NewPositionEvent`)
+    }
+    // Publish an event declaring the new position
+    try {
+      this.position_publisher.publish_new_position_event({
+        event_type: "NewPositionEvent",
+        exchange_identifier: position.tuple,
+        baseAsset,
+        position_base_size: totalBaseTradeQuantity,
+        position_initial_quote_spent: totalQuoteTradeQuantity,
+        position_initial_quoteAsset: quoteAsset,
+        position_initial_entry_price: averageExecutionPrice,
+        position_entry_timestamp_ms: orderTime,
+      })
+    } catch (error) {
+      console.error(error)
+      Sentry.withScope(function (scope) {
+        scope.setTag("baseAsset", baseAsset)
+        scope.setTag("exchange", exchange)
+        if (account) scope.setTag("account", account)
+        Sentry.captureException(error)
+      })
     }
   }
 
@@ -157,12 +120,7 @@ export class PositionTracker {
   }
 
   async sell_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
-    let {
-      baseAsset,
-      quoteAsset,
-      market_symbol,
-      averageExecutionPrice,
-    } = generic_order_data
+    let { baseAsset, quoteAsset, market_symbol, averageExecutionPrice } = generic_order_data
 
     let position = await this.load_position_for_order(generic_order_data)
 

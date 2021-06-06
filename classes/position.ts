@@ -16,6 +16,7 @@ BigNumber.prototype.valueOf = function () {
 
 export class Position {
   logger: Logger
+  send_message: Function | undefined
   ee: any
   redis_positions: RedisPositionsState
   position_identifier: PositionIdentifier
@@ -23,14 +24,17 @@ export class Position {
 
   constructor({
     logger,
+    send_message,
     redis_positions,
     position_identifier,
   }: {
     logger: Logger
+    send_message?: Function
     redis_positions: RedisPositionsState
     position_identifier: PositionIdentifier
   }) {
     this.logger = logger
+    this.send_message = send_message
     this.redis_positions = redis_positions
     this.position_identifier = position_identifier
   }
@@ -71,7 +75,22 @@ export class Position {
     return object
   }
 
-  // adjust the position according to the order
+  // Create a new position in the state
+  // NB: does not send a NewPosition event as that would require AQMP access,
+  // We could take that as an argument. Or there are RO vs RW versions of this class
+  async create({ generic_order_data }: { generic_order_data: GenericOrderData }) {
+    if(this.send_message) this.send_message(`New position for ${generic_order_data.baseAsset}`)
+    let initial_entry_price = generic_order_data.averageExecutionPrice
+      ? new BigNumber(generic_order_data.averageExecutionPrice)
+      : undefined
+    this.redis_positions.create_new_position(this.tuple, {
+      position_size: new BigNumber(generic_order_data.totalBaseTradeQuantity),
+      initial_entry_price,
+      quote_invested: new BigNumber(generic_order_data.totalQuoteTradeQuantity),
+    })
+  }
+
+  // adjust the position according to the order, or create a new position if current size is zero
   async add_order_to_position({ generic_order_data }: { generic_order_data: GenericOrderData }) {
     let {
       baseAsset,
@@ -87,15 +106,19 @@ export class Position {
     if (baseAsset !== this.baseAsset) {
       throw new Error(`Unexpected base_asset in call to Position.add_order_to_position`)
     }
-    let base_change =
-      side === "BUY" ? new BigNumber(totalBaseTradeQuantity) : new BigNumber(totalBaseTradeQuantity).negated()
-    await this.redis_positions.adjust_position_size_by(
-      { baseAsset, exchange, account },
-      {
-        base_change,
-      }
-    )
-    // TODO: Fire a position changed event
+    if ((await this.position_size()).isZero()) {
+      this.create({ generic_order_data })
+    } else {
+      let base_change =
+        side === "BUY" ? new BigNumber(totalBaseTradeQuantity) : new BigNumber(totalBaseTradeQuantity).negated()
+      await this.redis_positions.adjust_position_size_by(
+        { baseAsset, exchange, account },
+        {
+          base_change,
+        }
+      )
+      // TODO: Fire a position changed event
+    }
   }
 
   async close() {

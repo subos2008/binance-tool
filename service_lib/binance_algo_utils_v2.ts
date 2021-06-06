@@ -260,7 +260,7 @@ export class AlgoUtils {
     base_amount,
     target_price,
     stop_price,
-    limit_price
+    limit_price,
   }: {
     exchange_info: any
     pair: string
@@ -303,7 +303,7 @@ export class AlgoUtils {
         quantity,
         price: target_price.toFixed(),
         stopPrice: stop_price.toFixed(),
-        stopLimitPrice: limit_price.toFixed()
+        stopLimitPrice: limit_price.toFixed(),
       }
       this.logger.info(
         `${pair} Creating OCO ORDER for ${quantity} at target ${target_price.toFixed()} stop triggered at ${stop_price.toFixed()}`
@@ -327,29 +327,36 @@ export class AlgoUtils {
     }
   }
 
-  async create_stop_loss_limit_sell_order({
+  async munge_and_create_stop_loss_limit_sell_order({
     exchange_info,
     pair,
     base_amount,
-    price,
     stop_price,
+    limit_price,
   }: {
     exchange_info: any
     pair: string
     base_amount: BigNumber
-    price: BigNumber
     stop_price: BigNumber
+    limit_price: BigNumber
   }) {
-    assert(pair && price && base_amount && stop_price)
+    assert(pair && stop_price && base_amount && stop_price && limit_price)
     assert(BigNumber.isBigNumber(base_amount))
-    assert(BigNumber.isBigNumber(price))
-    if (stop_price.isEqualTo(price)) {
+    assert(BigNumber.isBigNumber(stop_price))
+    assert(BigNumber.isBigNumber(limit_price))
+    if (stop_price.isEqualTo(limit_price)) {
       this.logger.warn(
         `WARNING: stop loss orders with limit and stop price the same will not fill in fast moving markets`
       )
     }
+    if (limit_price.isEqualTo(0)) {
+      this.logger.warn(
+        `WARNING: stop loss orders with limit price of 0: munging not tested`
+      )
+    }
     try {
-      // TODO: not checking price because often it is zero
+      stop_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: stop_price })
+      limit_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: limit_price })
       base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, stop_price })
       let quantity = base_amount.toFixed()
       let args = {
@@ -358,11 +365,11 @@ export class AlgoUtils {
         side: "SELL",
         type: "STOP_LOSS_LIMIT",
         quantity,
-        price: price.toFixed(),
+        price: limit_price.toFixed(),
         stopPrice: stop_price.toFixed(),
       }
       this.logger.info(
-        `${pair} Creating STOP_LOSS_LIMIT SELL ORDER for ${quantity} at ${price.toFixed()} triggered at ${stop_price.toFixed()}`
+        `${pair} Creating STOP_LOSS_LIMIT SELL ORDER for ${quantity} at ${limit_price.toFixed()} triggered at ${stop_price.toFixed()}`
       )
       let response = await this.ee.order(args)
       this.logger.info(`order id: ${response.orderId}`)

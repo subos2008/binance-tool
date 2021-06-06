@@ -17,6 +17,7 @@ BigNumber.prototype.valueOf = function () {
 import * as Sentry from "@sentry/node"
 import { PositionIdentifier } from "../../events/shared/position-identifier"
 import { Position } from "../../classes/position"
+import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 
 type check_func = ({
   volume,
@@ -190,42 +191,29 @@ export class PositionTracker {
     } = generic_order_data
 
     if (!account) account = "default" // TODO
-    let position_size: BigNumber = await this.positions_state.get_position_size({
-      exchange,
-      account,
-      baseAsset,
+
+    let exchange_identifier: ExchangeIdentifier = { exchange, account }
+    let position_identifier: PositionIdentifier = { exchange_identifier, baseAsset }
+    let position = new Position({
+      logger: this.logger,
+      redis_positions: this.positions_state,
+      position_identifier,
     })
 
     // 1. Is this an existing position?
-    if (position_size.isZero()) {
+    if ((await position.position_size()).isZero()) {
       this.send_message(`Sell executed on unknown position for ${baseAsset}`)
       return // this is our NOP
     }
 
     // 1.2 if existing position decrease the position size or close the position
-    // TODO: also maintain net quote
+
+    // TODO: the code in autoexits that calls MarketUtils could call onto a position. Would be good on a position
+    // to have one call to move the stops on all orders up at once. Position.move_all_stops_to(stop_price)
+    await position.add_order_to_position({generic_order_data})
+
     let msg = `reduced the position size for ${baseAsset}`
     this.send_message(msg)
-
-    this.logger.error(`Adjustment of position size is not implemented`)
-    // TOOD: what about events for orders and association of orders with positions? Either an order has been associated 
-    // with a position before or it can be at any time later? The event that associates an order with a position and 
-    // the code that processes an order coming it are the same code
-    // TODO; and an order coming in that isn't associated with a position next time a check runs gets printed. Didn't make a 
-    // new position and not entirely sure what is that order... this reflects the current state: example adding to a position; what are
-    // the stops supposed to be for a position we have added to? 
-    // TODO: the code in autoexits that calls MarketUtils could call onto a position. Would be good on a position to have one call to move the stops 
-    // on all orders up at once. 
-    // TODO: Adjustment of position size
-    // position_size = position_size.minus(totalBaseTradeQuantity)
-    // await this.positions_state.adjust_position_size_by(
-    //   { baseAsset, exchange, account },
-    //   {
-    //     base_change: new BigNumber(totalBaseTradeQuantity).negated(),
-    //     quote_change: new BigNumber(totalQuoteTradeQuantity),
-    //     quoteAsset,
-    //   }
-    // )
 
     if (!averageExecutionPrice) {
       // TODO: set sentry context after unpacking the order (withScope)
@@ -239,7 +227,7 @@ export class PositionTracker {
     if (
       this.close_position_check_func({
         market_symbol,
-        volume: position_size,
+        volume: await position.position_size(),
         price: new BigNumber(averageExecutionPrice),
       })
     ) {

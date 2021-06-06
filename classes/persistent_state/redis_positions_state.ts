@@ -288,50 +288,50 @@ export class RedisPositionsState {
     }
   }
 
-  // async adjust_position_size_by(
-  //   { baseAsset, exchange, account }: { baseAsset: string; exchange: string; account: string },
-  //   {
-  //     base_change,
-  //     quoteAsset,
-  //     quote_change,
-  //   }: { base_change: BigNumber; quote_change: BigNumber; quoteAsset: string }
-  // ): Promise<void> {
-  //   // TODO: store which quote asset
-  //   // TODO: with timeStamp. List quoteAsset, time, quanitity, usd_equiv, btc_equiv?
-  //   try {
-  //     await this.incrbyAsync(
-  //       this.name_to_key({ baseAsset, exchange, account, name: "position_size" }),
-  //       to_sats(base_change.toFixed())
-  //     )
-  //     // await this.incrbyAsync(
-  //     //   this.name_to_key({ baseAsset, exchange, account, name: "netQuoteBalanceChange" }),
-  //     //   to_sats(quote_change.toFixed())
-  //     // )
-  //     // if (quote_change.isPositive()) {
-  //     //   await this.incrbyAsync(
-  //     //     this.name_to_key({ baseAsset, exchange, account, name: "total_quote_invested" }),
-  //     //     to_sats(quote_change.toFixed())
-  //     //   )
-  //     // }
-  //     // if (quote_change.isNegative()) {
-  //     //   // Decr by a negative value
-  //     //   await this.decrbyAsync(
-  //     //     this.name_to_key({ baseAsset, exchange, account, name: "total_quote_withdrawn" }),
-  //     //     to_sats(quote_change.toFixed())
-  //     //   )
-  //     // }
-  //   } catch (error) {
-  //     console.error(error)
-  //     Sentry.withScope(function (scope) {
-  //       scope.setTag("baseAsset", baseAsset)
-  //       scope.setTag("exchange", exchange)
-  //       scope.setTag("account", account)
-  //       // scope.setTag("redis.connected", this.redis.connected.toString());
-  //       Sentry.captureException(error)
-  //     })
-  //     throw error
-  //   }
-  // }
+  async adjust_position_size_by(
+    { baseAsset, exchange, account }: { baseAsset: string; exchange: string; account: string },
+    {
+      base_change,
+      // quoteAsset,
+      // quote_change,
+    }: { base_change: BigNumber; quote_change: BigNumber; quoteAsset: string }
+  ): Promise<void> {
+    // TODO: store which quote asset
+    // TODO: with timeStamp. List quoteAsset, time, quanitity, usd_equiv, btc_equiv?
+    try {
+      await this.incrbyAsync(
+        this.name_to_key({ baseAsset, exchange, account, name: "position_size" }),
+        to_sats(base_change.toFixed())
+      )
+      // await this.incrbyAsync(
+      //   this.name_to_key({ baseAsset, exchange, account, name: "netQuoteBalanceChange" }),
+      //   to_sats(quote_change.toFixed())
+      // )
+      // if (quote_change.isPositive()) {
+      //   await this.incrbyAsync(
+      //     this.name_to_key({ baseAsset, exchange, account, name: "total_quote_invested" }),
+      //     to_sats(quote_change.toFixed())
+      //   )
+      // }
+      // if (quote_change.isNegative()) {
+      //   // Decr by a negative value
+      //   await this.decrbyAsync(
+      //     this.name_to_key({ baseAsset, exchange, account, name: "total_quote_withdrawn" }),
+      //     to_sats(quote_change.toFixed())
+      //   )
+      // }
+    } catch (error) {
+      console.error(error)
+      Sentry.withScope(function (scope) {
+        scope.setTag("baseAsset", baseAsset)
+        scope.setTag("exchange", exchange)
+        scope.setTag("account", account)
+        // scope.setTag("redis.connected", this.redis.connected.toString());
+        Sentry.captureException(error)
+      })
+      throw error
+    }
+  }
 
   async close_position({
     baseAsset,

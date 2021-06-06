@@ -12,6 +12,7 @@ import { PositionIdentifier } from "../events/shared/position-identifier"
 */
 
 import { BigNumber } from "bignumber.js"
+import { GenericOrderData } from "../types/exchange_neutral/generic_order_data"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -64,10 +65,6 @@ export class Position {
   //   return this.prices[this.symbol] ? new BigNumber(this.prices[this.symbol]) : undefined
   // }
 
-  get position_size(): BigNumber | undefined {
-    return this.object?.position_size ? new BigNumber(this.object.position_size) : undefined
-  }
-
   // Depricated, needs a quoteAsset to compare with
   // get percentage_price_change_since_initial_entry(): BigNumber | undefined {
   //   if (!this.initial_entry_price) throw new Error(`initial_entry_price unknown`)
@@ -78,6 +75,11 @@ export class Position {
   async load_and_init({ prices }: { prices: { [key: string]: string } }) {
     this.prices = prices
     this.object = await this.describe_position()
+  }
+
+  async position_size(): Promise<BigNumber> {
+    const object: any = this.redis_positions.describe_position(this.position_identifier)
+    return object.position_size ? new BigNumber(object.position_size) : new BigNumber(0)
   }
 
   async describe_position(): Promise<{
@@ -96,5 +98,29 @@ export class Position {
       // position_identifier: this.position_identifier,
       // current_price: this.current_price,
     })
+  }
+
+  // adjust the position according to the order
+  async add_order_to_position({ generic_order_data }: { generic_order_data: GenericOrderData }) {
+    let {
+      baseAsset,
+      quoteAsset,
+      exchange,
+      account,
+      // averageExecutionPrice,
+      totalBaseTradeQuantity,
+      totalQuoteTradeQuantity, // TODO: use this
+    } = generic_order_data
+    if (!account) account = "default" // TODO
+    let position_size: BigNumber = await this.position_size()
+    position_size = position_size.minus(totalBaseTradeQuantity)
+    await this.redis_positions.adjust_position_size_by(
+      { baseAsset, exchange, account },
+      {
+        base_change: new BigNumber(totalBaseTradeQuantity).negated(),
+        quote_change: new BigNumber(totalQuoteTradeQuantity),
+        quoteAsset,
+      }
+    )
   }
 }

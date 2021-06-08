@@ -13,11 +13,12 @@ import { Logger } from "../interfaces/logger"
 import { OrderCallbacks, BinanceOrderData } from "../interfaces/order_callbacks"
 
 import * as Sentry from "@sentry/node"
+import { Binance, ExecutionReport } from "binance-api-node"
 
 export class OrderExecutionTracker {
   send_message: Function
   logger: Logger
-  ee: any
+  ee: Binance
   closeUserWebsocket: Function
   order_state: OrderState | undefined
   order_callbacks: OrderCallbacks | undefined
@@ -32,7 +33,7 @@ export class OrderExecutionTracker {
     order_callbacks,
     print_all_trades,
   }: {
-    ee: any
+    ee: Binance
     send_message: (msg: string) => void
     logger: Logger
     order_state?: OrderState
@@ -72,16 +73,25 @@ export class OrderExecutionTracker {
   }
 
   async monitor_user_stream() {
-    this.closeUserWebsocket = await this.ee.ws.user(async (data: any) => {
+    this.closeUserWebsocket = await this.ee.ws.user(async (data: ExecutionReport) => {
       try {
         const { eventType } = data
         if (eventType !== "executionReport") {
           return
         }
-        await this.processExecutionReport(data)
+        this.processExecutionReport(data)
       } catch (error) {
-        Sentry.captureException(error)
-        let msg = `SHIT: error tracking orders for pair ${data.symbol}`
+        Sentry.withScope(function (scope) {
+          scope.setTag("operation", "processExecutionReport")
+          scope.setTag("market_symbol", data.symbol)
+          scope.setTag("side", data.side)
+          scope.setTag("orderType", data.orderType)
+          scope.setTag("orderStatus", data.orderStatus)
+          scope.setTag("executionType", data.executionType)
+          scope.setTag("orderId", data.orderId.toString())
+          Sentry.captureException(error)
+        })
+        let msg = `SHIT: error calling processExecutionReport for pair ${data.symbol}`
         this.logger.error(msg)
         this.logger.error(error)
         this.send_message(msg)
@@ -152,7 +162,8 @@ export class OrderExecutionTracker {
       // `Order was cancelled, presumably by user. Exiting.`, (orderRejectReason === "NONE happens when user cancelled)
       if (this.order_state)
         await this.order_state.set_order_cancelled(orderId, true, orderRejectReason, orderStatus)
-      if (this.order_callbacks && this.order_callbacks.order_cancelled) await this.order_callbacks.order_cancelled(data)
+      if (this.order_callbacks && this.order_callbacks.order_cancelled)
+        await this.order_callbacks.order_cancelled(data)
       return
     }
 

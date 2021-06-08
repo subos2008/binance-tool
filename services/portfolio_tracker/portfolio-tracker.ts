@@ -75,7 +75,7 @@ class PortfolioTracker implements MasterPortfolioClass {
   send_message: Function
   logger: Logger
   ee: any
-  portfolios: { [exchange: string]: Portfolio }
+  portfolios: { [exchange: string]: Portfolio } = {}
   exchanges: { [exchange: string]: PortfolioBitchClass } = {}
 
   constructor({
@@ -92,7 +92,7 @@ class PortfolioTracker implements MasterPortfolioClass {
   }
 
   async set_portfolio_for_exchange({exchange_identifier,portfolio}:{exchange_identifier:ExchangeIdentifier, portfolio:Portfolio}) {
-    // TODO: account not used in ExchangeIdentifier: default
+    // TODO: account not used in ExchangeIdentifier: default (default added so this appears in greps)
     this.portfolios[exchange_identifier.exchange] = portfolio
     this.report_current_portfolio()
   }
@@ -101,6 +101,10 @@ class PortfolioTracker implements MasterPortfolioClass {
   async report_current_portfolio() {
     try {
       let portfolio = await this.collapse_and_decorate_exchange_balances()
+      if(!portfolio) {
+        this.logger.info(`no portfolio, skipping`)
+        return
+      }
       try {
         let msg = `B: ${portfolio.btc_value}, U: ${portfolio.usd_value}`
         try {
@@ -154,6 +158,10 @@ class PortfolioTracker implements MasterPortfolioClass {
   }
 
   async collapse_and_decorate_exchange_balances() {
+    if(!this.portfolios) {
+      this.logger.warn(`No portfolios present in portfilio-tracker`)
+      return;
+    }
     let exchanges:string[] = Object.keys(this.portfolios)
     if(exchanges.length>1) throw new Error(`Multiple exchanges not implemented yet`)
     return this.decorate_portfolio(this.portfolios[exchanges[0]])

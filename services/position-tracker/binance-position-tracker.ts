@@ -33,13 +33,14 @@ process.on("unhandledRejection", (error) => {
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
-import { ExchangeEmulator } from "../../lib/exchange_emulator"
 import { OrderExecutionTracker } from "../../service_lib/order_execution_tracker"
 import { BinanceOrderData, OrderCallbacks } from "../../interfaces/order_callbacks"
 import { PositionTracker } from "./position-tracker"
 
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
-import Binance from "binance-api-node"
+import BinanceFoo from "binance-api-node"
+import { Binance } from "binance-api-node"
+
 import { ExchangeInfo } from "binance-api-node"
 set_redis_logger(logger)
 const redis = get_redis_client()
@@ -89,44 +90,17 @@ class MyOrderCallbacks implements OrderCallbacks {
   }
 }
 
-var { argv } = require("yargs")
-  .usage("Usage: $0 --live")
-  .example("$0 --live")
-  // '--live'
-  .boolean("live")
-  .describe("live", "Trade with real money")
-  .default("live", true)
-let { live } = argv
-
-type GenericExchangeInterface = {
-  exchangeInfo: () => Promise<ExchangeInfo>
-}
-
-let ee: GenericExchangeInterface
+let ee: Binance
 let position_tracker: PositionTracker
 
 async function main() {
-  if (live) {
-    logger.info("Live monitoring mode")
-    if (!process.env.APIKEY) throw new Error(`APIKEY not defined`)
-    if (!process.env.APISECRET) throw new Error(`APISECRET not defined`)
-    ee = Binance({
-      apiKey: process.env.APIKEY,
-      apiSecret: process.env.APISECRET,
-    })
-  } else {
-    logger.info("Emulated exchange mode")
-    const fs = require("fs")
-    const exchange_info = JSON.parse(fs.readFileSync("./test/exchange_info.json", "utf8"))
-    let ee_config = {
-      starting_balances: {
-        USDT: new BigNumber("50"),
-      },
-      logger,
-      exchange_info,
-    }
-    ee = new ExchangeEmulator(ee_config)
-  }
+  logger.info("Live monitoring mode")
+  if (!process.env.APIKEY) throw new Error(`APIKEY not defined`)
+  if (!process.env.APISECRET) throw new Error(`APISECRET not defined`)
+  ee = BinanceFoo({
+    apiKey: process.env.APIKEY,
+    apiSecret: process.env.APISECRET,
+  })
 
   const execSync = require("child_process").execSync
   execSync("date -u")

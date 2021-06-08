@@ -72,7 +72,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
   master: MasterPortfolioClass
   order_execution_tracker: OrderExecutionTracker
   exchange_identifier: ExchangeIdentifier
-  portfolio: Portfolio
+  portfolio: Portfolio = { balances: [] }
 
   constructor({
     send_message,
@@ -113,7 +113,10 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
     // TODO: refresh prices but maybe cache them? Or callback? and or patch in prices from this order?
     this.portfolio.prices = await this.get_prices_from_exchange()
     this.portfolio.balances = await this.get_balances_from_exchange()
-    this.master.set_portfolio_for_exchange({exchange_identifier: this.exchange_identifier, portfolio: this.portfolio})
+    this.master.set_portfolio_for_exchange({
+      exchange_identifier: this.exchange_identifier,
+      portfolio: this.portfolio,
+    })
   }
 
   async get_prices_from_exchange() {

@@ -108,15 +108,20 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
     this.order_execution_tracker.main()
   }
 
-  async order_filled(data: BinanceOrderData): Promise<void> {
-    this.logger.info(`Binance: ${data.side} order on ${data.symbol} filled.`)
-    // TODO: refresh prices but maybe cache them? Or callback? and or patch in prices from this order?
+  async update_portfolio_from_exchange() {
+    // TODO: refresh prices but maybe cache them? If at daily close we enter lots of positions it would be good not to call this repeatedly
     this.portfolio.prices = await this.get_prices_from_exchange()
     this.portfolio.balances = await this.get_balances_from_exchange()
     this.master.set_portfolio_for_exchange({
       exchange_identifier: this.exchange_identifier,
       portfolio: this.portfolio,
     })
+
+  }
+
+  async order_filled(data: BinanceOrderData): Promise<void> {
+    this.logger.info(`Binance: ${data.side} order on ${data.symbol} filled.`)
+    await this.update_portfolio_from_exchange()
   }
 
   async get_prices_from_exchange() {

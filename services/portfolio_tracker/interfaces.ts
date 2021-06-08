@@ -14,4 +14,5 @@ export interface MasterPortfolioClass {
 export interface PortfolioBitchClass {
   get_balances_from_exchange(): Promise<Balance[]>
   start(): Promise<void> // start listening for order events and submitting updated portfolios
+  update_portfolio_from_exchange(): Promise<void> // do it right now
 }

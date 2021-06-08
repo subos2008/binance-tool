@@ -204,6 +204,7 @@ async function main() {
   let portfolio_tracker = new PortfolioTracker({ logger, send_message })
   let binance = new BinancePortfolioTracker({ send_message, logger, master: portfolio_tracker })
   binance.start()
+  await binance.update_portfolio_from_exchange()
 
   await publisher.connect()
 

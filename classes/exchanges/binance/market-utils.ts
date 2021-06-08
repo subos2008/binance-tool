@@ -174,7 +174,7 @@ export class BinanceMarketUtils implements MarketUtils {
       limit_price: new BigNumber(limit_price),
       order_id: order.orderId.toString(),
       base_asset_quantity: order_definition.base_asset_quantity,
-      stop_price: new BigNumber(order.stopPrice as string),
+      stop_price: order_definition.stop_price,
     }
   }
 }

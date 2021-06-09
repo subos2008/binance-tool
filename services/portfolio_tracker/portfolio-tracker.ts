@@ -204,12 +204,11 @@ async function main() {
   let portfolio_tracker = new PortfolioTracker({ logger, send_message })
   let binance = new BinancePortfolioTracker({ send_message, logger, master: portfolio_tracker })
   binance.start()
-  await binance.update_portfolio_from_exchange()
+  await binance.update_portfolio_from_exchange() // automatically triggers report_current_portfolio
 
   await publisher.connect()
 
   setInterval(portfolio_tracker.report_current_portfolio.bind(portfolio_tracker), 1000 * 60 * 60 *6)
-  portfolio_tracker.report_current_portfolio()
 }
 
 main().catch((error) => {

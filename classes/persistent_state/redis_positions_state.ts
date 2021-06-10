@@ -262,6 +262,52 @@ export class RedisPositionsState {
     }
   }
 
+  async _patch_initial_entry_quote_asset(
+    args: id,
+    {
+      initial_entry_quote_asset,
+    }: any
+  ) {
+    try {
+      await this.msetAsync(
+        this.name_to_key({ ...args, name: "initial_entry_quote_asset" }),
+        initial_entry_quote_asset
+      )
+    } catch (error) {
+      console.error(error)
+      Sentry.withScope(function (scope) {
+        scope.setTag("baseAsset", args.baseAsset)
+        scope.setTag("exchange", args.exchange)
+        scope.setTag("account", args.account)
+        Sentry.captureException(error)
+      })
+      throw error
+    }
+  }
+
+  async _patch_initial_entry_timestamp(
+    args: id,
+    {
+      initial_entry_timestamp,
+    }: any
+  ) {
+    try {
+      await this.msetAsync(
+        this.name_to_key({ ...args, name: "initial_entry_timestamp" }),
+        initial_entry_timestamp
+      )
+    } catch (error) {
+      console.error(error)
+      Sentry.withScope(function (scope) {
+        scope.setTag("baseAsset", args.baseAsset)
+        scope.setTag("exchange", args.exchange)
+        scope.setTag("account", args.account)
+        Sentry.captureException(error)
+      })
+      throw error
+    }
+  }
+
   async adjust_position_size_by(
     { baseAsset, exchange, account }: { baseAsset: string; exchange: string; account: string },
     {

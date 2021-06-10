@@ -30,21 +30,24 @@ BigNumber.prototype.valueOf = function () {
 }
 
 const yargs = require("yargs")
+const c = require("ansi-colors")
 
 import { RedisPositionsState } from "../classes/persistent_state/redis_positions_state"
 const redis_positions = new RedisPositionsState({ logger, redis })
 const legacy_redis_positions = new RedisPositionsState({ logger, redis })
 
 import { Position } from "../classes/position"
-import { create_position_identifier_from_tuple } from "../events/shared/position-identifier"
+import { create_position_identifier_from_tuple, PositionIdentifier } from "../events/shared/position-identifier"
+import { ExchangeIdentifier } from "../events/shared/exchange-identifier"
 
 require("dotenv").config()
 
 async function main() {
   yargs
     .strict()
-    .command(["list"], "list all positions", {}, list_positions)
-    .command(["list-legacy", "$0"], "list all positions", {}, legacy_list_positions)
+    .command(["list", "$0"], "list all positions", {}, list_positions)
+    .command(["fixinate"], "custom hacks - do not run!", {}, fixinate)
+    .command(["list-legacy"], "list all positions", {}, legacy_list_positions)
     .command(
       "describe",
       "Describe position data from redis",
@@ -131,13 +134,18 @@ async function main() {
 }
 main().then(() => {})
 
-// async function get_prices_from_exchange() {
-//   const ee = Binance({
-//     apiKey: process.env.APIKEY,
-//     apiSecret: process.env.APISECRET,
-//   })
-//   return await ee.prices()
-// }
+async function get_prices_from_exchange({ exchange_identifier }: { exchange_identifier: ExchangeIdentifier }) {
+  if (exchange_identifier.exchange === "binance") {
+    const Binance = require("binance-api-node").default
+    const ee = Binance({
+      apiKey: process.env.APIKEY,
+      apiSecret: process.env.APISECRET,
+    })
+    return await ee.prices()
+  } else {
+    throw new Error(`Exchange ${exchange_identifier.exchange} not implemented`)
+  }
+}
 
 async function legacy_list_positions() {
   console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
@@ -151,9 +159,61 @@ async function legacy_list_positions() {
 async function list_positions() {
   console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
   let open_positions = await redis_positions.open_positions()
+  if (open_positions.length === 0) {
+    console.log(`No open positions`)
+    return
+  }
+  let prices = await get_prices_from_exchange({ exchange_identifier: { exchange: "binance", account: "default" } })
   for (const position_identifier of open_positions) {
-    let p = new Position({ logger, send_message, redis_positions, position_identifier })
-    console.log(`${p.baseAsset}: unimplemented`)
+    try {
+      let p = new Position({ logger, send_message, redis_positions, position_identifier })
+      let quote_asset: string = await p.initial_entry_quote_asset()
+      let percentage_change
+      let price_change_string = "(null)"
+      try {
+        let current_price: BigNumber = new BigNumber(prices[`${position_identifier.baseAsset}${quote_asset}`])
+        let entry_price: BigNumber = await p.initial_entry_price()
+        percentage_change = current_price.dividedBy(entry_price).times(100).minus(100).dp(1)
+        if (percentage_change) {
+          price_change_string = `${percentage_change.isGreaterThan(0) ? "+" : ""}${percentage_change}%`
+          if (percentage_change.isLessThan(0)) price_change_string = c.red(price_change_string)
+        }
+      } catch (e) {}
+      price_change_string = `${price_change_string} vs ${quote_asset}`
+      console.log(`${position_identifier.baseAsset}: ${price_change_string}`)
+    } catch (err) {
+      console.error(`Error processing info for ${position_identifier.baseAsset}: ${err}`)
+    }
+  }
+  redis.quit()
+}
+
+async function fixinate() {
+  console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
+  let open_positions = await redis_positions.open_positions()
+  if (open_positions.length === 0) {
+    console.log(`No open positions`)
+    return
+  }
+  for (const position_identifier of open_positions) {
+    try {
+      let p = new Position({ logger, send_message, redis_positions, position_identifier })
+      await p.initial_entry_quote_asset()
+    } catch (err) {
+      console.error(`Error processing info for ${position_identifier.baseAsset}: ${err}`)
+      if (err.toString().includes("initial_entry_quote_asset missing")) {
+        await redis_positions._patch_initial_entry_quote_asset(
+          { ...position_identifier, exchange: "binance", account: "default" },
+          { initial_entry_quote_asset: "USDT" }
+        )
+      }
+      if (err.toString().includes("initial_entry_timestamp missing")) {
+        await redis_positions._patch_initial_entry_timestamp(
+          { ...position_identifier, exchange: "binance", account: "default" },
+          { initial_entry_timestamp: Date.now() }
+        )
+      }
+    }
   }
   redis.quit()
 }

@@ -13,6 +13,7 @@ import * as Sentry from "@sentry/node"
 
 import { RedisClient } from "redis"
 import { PositionIdentifier } from "../../events/shared/position-identifier"
+import { PositionObject } from "../../classes/position"
 
 // We store as integers in redis because it uses hardware for floating point calculations
 function to_sats(input: string | BigNumber) {
@@ -24,9 +25,16 @@ function from_sats(input: string | BigNumber) {
 }
 
 const key_base = "positions-v2"
+
+type id = {
+  baseAsset: string
+  exchange: string
+  account: string
+}
+
 export class RedisPositionsState {
   logger: Logger
-  redis: any
+  redis: RedisClient
   setAsync: any
   getAsync: any
   delAsync: any
@@ -54,6 +62,10 @@ export class RedisPositionsState {
     this.keysAsync = promisify(this.redis.keys).bind(this.redis)
   }
 
+  private prefix({ baseAsset, exchange, account }: { baseAsset: string; exchange: string; account: string }) {
+    return `${key_base}:${exchange}:${account}:${baseAsset}`
+  }
+
   name_to_key({
     baseAsset,
     name,
@@ -65,22 +77,17 @@ export class RedisPositionsState {
     exchange: string
     account: string
   }) {
-    let prefix = `${key_base}:${exchange}:${account}:${baseAsset}`
+    let prefix = this.prefix({ baseAsset, exchange, account })
     switch (name) {
       case "position_size":
-        return `${prefix}:sats_position_size`
       case "initial_entry_price":
-        return `${prefix}:sats_initial_entry_price`
       case "netQuoteBalanceChange":
-        return `${prefix}:sats_netQuoteBalanceChange`
       case "initial_quote_invested":
-        return `${prefix}:sats_${name}`
       case "total_quote_invested":
-        return `${prefix}:sats_${name}`
       case "total_quote_withdrawn":
         return `${prefix}:sats_${name}`
       default:
-        throw new Error(`Unknown key name: ${name}`)
+        return `${prefix}:${name}`
     }
   }
 
@@ -129,6 +136,26 @@ export class RedisPositionsState {
     return sats_or_null ? new BigNumber(from_sats(sats_or_null)) : undefined
   }
 
+  async get_string_key(args: id, { key_name }: { key_name: string }): Promise<string | undefined> {
+    const key = this.name_to_key({ ...args, name: key_name })
+    return await this.getAsync(key)
+  }
+
+  async get_number_key({
+    baseAsset,
+    exchange,
+    account,
+    key_name,
+  }: {
+    baseAsset: string
+    exchange: string
+    account: string
+    key_name: string
+  }): Promise<number | undefined> {
+    const key = this.name_to_key({ baseAsset, exchange, account, name: key_name })
+    return Number(await this.getAsync(key))
+  }
+
   async get_position_size({
     baseAsset,
     exchange,
@@ -148,15 +175,7 @@ export class RedisPositionsState {
     )
   }
 
-  async get_initial_entry_price({
-    baseAsset,
-    exchange,
-    account,
-  }: {
-    baseAsset: string
-    exchange: string
-    account: string
-  }): Promise<BigNumber | undefined> {
+  async get_initial_entry_price({ baseAsset, exchange, account }: id): Promise<BigNumber | undefined> {
     return this.get_sats_key({
       baseAsset,
       exchange,
@@ -165,122 +184,77 @@ export class RedisPositionsState {
     })
   }
 
-  async get_netQuoteBalanceChange({
-    baseAsset,
-    exchange,
-    account,
-  }: {
-    baseAsset: string
-    exchange: string
-    account: string
-  }): Promise<BigNumber | undefined> {
-    return this.get_sats_key({
-      baseAsset,
-      exchange,
-      account,
-      key_name: "netQuoteBalanceChange",
-    })
+  async get_initial_entry_quote_asset(args: id): Promise<string | undefined> {
+    return this.get_string_key(args, { key_name: "initial_entry_quote_asset" })
   }
 
-  async get_total_quote_invested({
-    baseAsset,
-    exchange,
-    account,
-  }: {
-    baseAsset: string
-    exchange: string
-    account: string
-  }): Promise<BigNumber | undefined> {
-    return this.get_sats_key({
-      baseAsset,
-      exchange,
-      account,
-      key_name: "total_quote_invested",
-    })
+  async get_initial_entry_timestamp(args: id): Promise<number | undefined> {
+    return this.get_number_key({ ...args, key_name: "initial_entry_timestamp" })
   }
 
-  async get_total_quote_withdrawn({
-    baseAsset,
-    exchange,
-    account,
-  }: {
-    baseAsset: string
-    exchange: string
-    account: string
-  }): Promise<BigNumber | undefined> {
-    return this.get_sats_key({
-      baseAsset,
-      exchange,
-      account,
-      key_name: "total_quote_withdrawn",
-    })
+  async get_netQuoteBalanceChange(args: id): Promise<BigNumber | undefined> {
+    return this.get_sats_key({ ...args, key_name: "netQuoteBalanceChange" })
   }
 
-  async describe_position({ baseAsset, exchange_identifier }: PositionIdentifier): Promise<{
-    position_size: BigNumber | undefined
-    initial_entry_price: BigNumber | undefined
-    netQuoteBalanceChange: BigNumber | undefined
-    total_quote_invested: BigNumber | undefined
-    total_quote_withdrawn: BigNumber | undefined
-  }> {
+  async get_initial_quote_invested(args: id): Promise<BigNumber | undefined> {
+    return this.get_sats_key({ ...args, key_name: "initial_quote_invested" })
+  }
+
+  async describe_position({ baseAsset, exchange_identifier }: PositionIdentifier): Promise<PositionObject> {
     let id = {
       baseAsset,
       exchange: exchange_identifier.exchange,
       account: exchange_identifier.account,
     }
+    let initial_entry_price = await this.get_initial_entry_price(id)
+    let initial_entry_quote_asset = await this.get_initial_entry_quote_asset(id)
+    let initial_entry_timestamp = await this.get_initial_entry_timestamp(id)
+    let initial_quote_invested = await this.get_initial_quote_invested(id)
+
+    if (!initial_entry_price) throw new Error(`initial_entry_price missing from position`)
+    if (!initial_entry_quote_asset) throw new Error(`initial_entry_quote_asset missing from position`)
+    if (!initial_entry_timestamp) throw new Error(`initial_entry_timestamp missing from position`)
+    if (!initial_quote_invested) throw new Error(`initial_quote_invested missing from position`)
+
     return {
       position_size: await this.get_position_size(id),
-      initial_entry_price: await this.get_initial_entry_price(id),
-      netQuoteBalanceChange: await this.get_netQuoteBalanceChange(id),
-      total_quote_invested: await this.get_total_quote_invested(id),
-      total_quote_withdrawn: await this.get_total_quote_withdrawn(id),
+      initial_entry_price,
+      initial_entry_quote_asset,
+      initial_quote_invested,
+      initial_entry_timestamp,
     }
   }
 
   async create_new_position(
-    { baseAsset, exchange, account }: { baseAsset: string; exchange: string; account: string },
+    args: id,
     {
       position_size,
       initial_entry_price,
-      quote_invested,
-    }: {
-      position_size: BigNumber
-      initial_entry_price?: BigNumber
-      quote_invested: BigNumber
-    }
+      initial_quote_invested,
+      initial_entry_quote_asset,
+      initial_entry_timestamp,
+    }: PositionObject
   ) {
     try {
+      assert(initial_quote_invested.isPositive())
       await this.msetAsync(
-        this.name_to_key({ baseAsset, exchange, account, name: "position_size" }),
-        to_sats(position_size.toFixed())
-      )
-      if (initial_entry_price)
-        await this.msetAsync(
-          this.name_to_key({
-            baseAsset,
-            exchange,
-            account,
-            name: "initial_entry_price",
-          }),
-          to_sats(initial_entry_price?.toFixed())
-        )
-      assert(quote_invested.isPositive())
-      await this.msetAsync(
-        this.name_to_key({ baseAsset, exchange, account, name: "netQuoteBalanceChange" }),
-        to_sats(quote_invested?.negated().toFixed()),
-        this.name_to_key({ baseAsset, exchange, account, name: "initial_quote_invested" }),
-        to_sats(quote_invested?.toFixed()),
-        this.name_to_key({ baseAsset, exchange, account, name: "total_quote_invested" }),
-        to_sats(quote_invested?.toFixed()),
-        this.name_to_key({ baseAsset, exchange, account, name: "total_quote_withdrawn" }),
-        to_sats(new BigNumber(0))
+        this.name_to_key({ ...args, name: "initial_entry_timestamp" }),
+        initial_entry_timestamp,
+        this.name_to_key({ ...args, name: "position_size" }),
+        to_sats(position_size.toFixed()),
+        this.name_to_key({ ...args, name: "initial_quote_invested" }),
+        to_sats(initial_quote_invested?.toFixed()),
+        this.name_to_key({ ...args, name: "initial_entry_price" }),
+        to_sats(initial_entry_price?.toFixed()),
+        this.name_to_key({ ...args, name: "initial_entry_quote_asset" }),
+        initial_entry_quote_asset
       )
     } catch (error) {
       console.error(error)
       Sentry.withScope(function (scope) {
-        scope.setTag("baseAsset", baseAsset)
-        scope.setTag("exchange", exchange)
-        scope.setTag("account", account)
+        scope.setTag("baseAsset", args.baseAsset)
+        scope.setTag("exchange", args.exchange)
+        scope.setTag("account", args.account)
         // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(error)
       })
@@ -292,9 +266,9 @@ export class RedisPositionsState {
     { baseAsset, exchange, account }: { baseAsset: string; exchange: string; account: string },
     {
       base_change,
-      // quoteAsset,
-      // quote_change,
-    }: { base_change: BigNumber }
+    }: // quoteAsset,
+    // quote_change,
+    { base_change: BigNumber }
   ): Promise<void> {
     // TODO: store which quote asset
     // TODO: with timeStamp. List quoteAsset, time, quanitity, usd_equiv, btc_equiv?
@@ -333,28 +307,18 @@ export class RedisPositionsState {
     }
   }
 
-  async close_position({
-    baseAsset,
-    exchange,
-    account,
-  }: {
-    baseAsset: string
-    exchange: string
-    account: string
-  }) {
+  async close_position(args: id) {
     try {
-      await this.delAsync(this.name_to_key({ baseAsset, exchange, account, name: "position_size" }))
-      await this.delAsync(this.name_to_key({ baseAsset, exchange, account, name: "initial_entry_price" }))
-      await this.delAsync(this.name_to_key({ baseAsset, exchange, account, name: "netQuoteBalanceChange" }))
-      await this.delAsync(this.name_to_key({ baseAsset, exchange, account, name: "initial_quote_invested" }))
-      await this.delAsync(this.name_to_key({ baseAsset, exchange, account, name: "total_quote_invested" }))
-      await this.delAsync(this.name_to_key({ baseAsset, exchange, account, name: "total_quote_withdrawn" }))
+      let keys = await this.keysAsync(`${this.prefix(args)}:*`)
+      for (let key of keys) {
+        await this.delAsync(key)
+      }
     } catch (error) {
       console.error(error)
       Sentry.withScope(function (scope) {
-        scope.setTag("baseAsset", baseAsset)
-        scope.setTag("exchange", exchange)
-        scope.setTag("account", account)
+        scope.setTag("baseAsset", args.baseAsset)
+        scope.setTag("exchange", args.exchange)
+        scope.setTag("account", args.account)
         // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(error)
       })

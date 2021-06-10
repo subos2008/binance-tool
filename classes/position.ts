@@ -14,6 +14,14 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+export type PositionObject = {
+  initial_entry_timestamp: number
+  position_size: BigNumber
+  initial_quote_invested: BigNumber
+  initial_entry_quote_asset: string
+  initial_entry_price: BigNumber
+}
+
 export class Position {
   logger: Logger
   send_message: Function | undefined
@@ -56,6 +64,10 @@ export class Position {
     return initial_entry_price ? new BigNumber(initial_entry_price) : undefined
   }
 
+  async initial_entry_quote_asset(): Promise<string | undefined> {
+    return (await this.describe_position()).initial_entry_quote_asset
+  }
+
   async load_and_init() {
     this.object = await this.describe_position()
   }
@@ -65,12 +77,7 @@ export class Position {
     return object.position_size ? new BigNumber(object.position_size) : new BigNumber(0)
   }
 
-  async describe_position(): Promise<{
-    position_size?: BigNumber
-    initial_entry_price?: BigNumber
-    netQuoteBalanceChange?: BigNumber
-    current_price?: string
-  }> {
+  async describe_position(): Promise<PositionObject> {
     const object: any = this.redis_positions.describe_position(this.position_identifier)
     return object
   }
@@ -79,14 +86,13 @@ export class Position {
   // NB: does not send a NewPosition event as that would require AQMP access,
   // We could take that as an argument. Or there are RO vs RW versions of this class
   async create({ generic_order_data }: { generic_order_data: GenericOrderData }) {
-    if(this.send_message) this.send_message(`New position for ${generic_order_data.baseAsset}`)
-    let initial_entry_price = generic_order_data.averageExecutionPrice
-      ? new BigNumber(generic_order_data.averageExecutionPrice)
-      : undefined
+    if (this.send_message) this.send_message(`New position for ${generic_order_data.baseAsset}`)
     this.redis_positions.create_new_position(this.tuple, {
       position_size: new BigNumber(generic_order_data.totalBaseTradeQuantity),
-      initial_entry_price,
-      quote_invested: new BigNumber(generic_order_data.totalQuoteTradeQuantity),
+      initial_entry_price: new BigNumber(generic_order_data.averageExecutionPrice),
+      initial_quote_invested: new BigNumber(generic_order_data.totalQuoteTradeQuantity),
+      initial_entry_quote_asset: generic_order_data.quoteAsset,
+      initial_entry_timestamp: generic_order_data.orderTime,
     })
   }
 

@@ -4,7 +4,7 @@ import { ExchangeInfo } from "binance-api-node"
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
 
 export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info: ExchangeInfo): GenericOrderData {
-  assert(i.orderStatus && i.orderStatus == "COMPLETED")
+  assert(i.orderStatus && i.orderStatus == "COMPLETED", 'orderStatus is not COMPLETED')
 
   let symbol_info = exchange_info.symbols.find((x) => x.symbol == i.symbol)
   if (!symbol_info)

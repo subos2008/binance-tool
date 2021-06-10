@@ -16,7 +16,7 @@ const LoggerClass = require("../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
 let service_name = "cli"
-const send_message = require("../../lib/telegram.js")(`${service_name}: `)
+const send_message = require("../lib/telegram.js")(`${service_name}: `)
 
 import { get_redis_client, set_redis_logger } from "../lib/redis"
 set_redis_logger(logger)

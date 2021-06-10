@@ -102,7 +102,7 @@ export class PositionTracker {
   }
 
   private async load_position_for_order(generic_order_data: GenericOrderData): Promise<Position> {
-    let { baseAsset, exchange, account, averageExecutionPrice } = generic_order_data
+    let { baseAsset, exchange, account } = generic_order_data
 
     if (!account) account = "default" // TODO
     let position_identifier: PositionIdentifier = {
@@ -114,8 +114,6 @@ export class PositionTracker {
       redis_positions: this.positions_state,
       position_identifier,
     })
-    let prices: { [key: string]: string } = {}
-    if (averageExecutionPrice) prices[baseAsset] = averageExecutionPrice
     return position
   }
 

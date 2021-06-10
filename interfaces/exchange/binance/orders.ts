@@ -3,13 +3,16 @@ import { assert } from "console"
 import { ExchangeInfo } from "binance-api-node"
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
 
-
 export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info: ExchangeInfo): GenericOrderData {
   assert(i.orderStatus && i.orderStatus == "COMPLETED")
 
   let symbol_info = exchange_info.symbols.find((x) => x.symbol == i.symbol)
   if (!symbol_info)
     throw new Error(`No exchange_info for symbol ${i.symbol} found when converting Binance order to GenericOrder`)
+  if (!i.averageExecutionPrice)
+    throw new Error(
+      `No averageExecutionPrice for symbol ${i.symbol} found when converting Binance order to GenericOrder`
+    )
 
   return {
     exchange: "binance",

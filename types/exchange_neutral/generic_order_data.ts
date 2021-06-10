@@ -9,11 +9,11 @@ export type GenericOrderData = {
   orderType: "MARKET" | "LIMIT"
 
   orderStatus?: string // COMPLETED | PART...
-  orderTime?: number // timestamp, presume ms
+  orderTime: number // timestamp, presume ms
 
   totalBaseTradeQuantity: string // Not present in FTX
   totalQuoteTradeQuantity: string // Not present in FTX
-  averageExecutionPrice?: string // Calculated for Binance, present in FTX orders
+  averageExecutionPrice: string // Calculated for Binance, present in FTX orders
 
   // orderRejectReason?: string // we probably don't want rejected orders in generic streams
   // price?: string

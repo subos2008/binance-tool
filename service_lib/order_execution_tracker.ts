@@ -124,7 +124,7 @@ export class OrderExecutionTracker {
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
-        if (orderId) scope.setTag("orderId", orderId)
+        if (orderId) scope.setTag("orderId", orderId.toString())
         Sentry.captureException(error)
       })
     }

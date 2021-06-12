@@ -8,7 +8,7 @@ export type GenericOrderData = {
   side: "BUY" | "SELL"
   orderType: "MARKET" | "LIMIT"
 
-  orderStatus?: string // COMPLETED | PART...
+  orderStatus?: string // COMPLETED | PART... currently also FILLED for binance - mapped?
   orderTime: number // timestamp, presume ms
 
   totalBaseTradeQuantity: string // Not present in FTX

@@ -135,17 +135,12 @@ export class RedisPositionsState {
   }
 
   async describe_position(pi: PositionIdentifier): Promise<PositionObject> {
-    let initial_entry_price = await this.get_initial_entry_price(pi)
-    let initial_entry_quote_asset = await this.get_initial_entry_quote_asset(pi)
-    let initial_entry_timestamp = await this.get_initial_entry_timestamp(pi)
-    let initial_quote_invested = await this.get_initial_quote_invested(pi)
-
     return {
       position_size: await this.get_position_size(pi),
-      initial_entry_price,
-      initial_entry_quote_asset,
-      initial_quote_invested,
-      initial_entry_timestamp,
+      initial_entry_price: await this.get_initial_entry_price(pi),
+      initial_entry_quote_asset: await this.get_initial_entry_quote_asset(pi),
+      initial_quote_invested: await this.get_initial_quote_invested(pi),
+      initial_entry_timestamp: await this.get_initial_entry_timestamp(pi),
     }
   }
 

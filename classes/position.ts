@@ -28,7 +28,6 @@ export class Position {
   ee: any
   redis_positions: RedisPositionsState
   position_identifier: PositionIdentifier
-  object: any | undefined
 
   constructor({
     logger,
@@ -63,18 +62,12 @@ export class Position {
     return initial_entry_quote_asset
   }
 
-  async load_and_init() {
-    this.object = await this.describe_position()
-  }
-
   async position_size(): Promise<BigNumber> {
-    const object: any = this.redis_positions.get_position_size(this.position_identifier)
-    return object.position_size ? new BigNumber(object.position_size) : new BigNumber(0)
+    return this.redis_positions.get_position_size(this.position_identifier)
   }
 
   async describe_position(): Promise<PositionObject> {
-    const object: any = this.redis_positions.describe_position(this.position_identifier)
-    return object
+    return this.redis_positions.describe_position(this.position_identifier)
   }
 
   // Create a new position in the state

@@ -14,9 +14,10 @@ import * as Sentry from "@sentry/node"
 import { RedisClient } from "redis"
 import { PositionIdentifier } from "../../events/shared/position-identifier"
 import { PositionObject } from "../../classes/position"
+import { GenericOrderData } from "../../types/exchange_neutral/generic_order_data"
 
 // We store as integers in redis because it uses hardware for floating point calculations
-function to_sats(input: string | BigNumber) : string {
+function to_sats(input: string | BigNumber): string {
   return new BigNumber(input).times("1e8").toFixed()
 }
 
@@ -37,6 +38,8 @@ export class RedisPositionsState {
   incrbyAsync: any
   decrbyAsync: any
   keysAsync: any
+  smembersAsync: any
+  saddAsync: any
 
   constructor({ logger, redis }: { logger: Logger; redis: RedisClient }) {
     assert(logger)
@@ -53,6 +56,8 @@ export class RedisPositionsState {
     this.incrbyAsync = promisify(this.redis.incrby).bind(this.redis)
     this.decrbyAsync = promisify(this.redis.decrby).bind(this.redis)
     this.keysAsync = promisify(this.redis.keys).bind(this.redis)
+    this.smembersAsync = promisify(this.redis.smembers).bind(this.redis)
+    this.saddAsync = promisify(this.redis.sadd).bind(this.redis)
   }
 
   private prefix(pi: PositionIdentifier) {
@@ -134,6 +139,28 @@ export class RedisPositionsState {
     return this.get_sats_key(pi, { key_name: "initial_quote_invested" })
   }
 
+  private async get_object_set_key(pi: PositionIdentifier, { key_name }: { key_name: string }) {
+    let objects_as_strings: string[] = await this.smembersAsync(this.name_to_key(pi, { name: key_name }))
+    let objects = objects_as_strings.map((s) => JSON.parse(s))
+    return objects
+  }
+
+  private async add_objects_to_set_key(
+    pi: PositionIdentifier,
+    { key_name, new_objects }: { key_name: string; new_objects: any[] }
+  ): Promise<void> {
+    let strings: string[] = new_objects.map((o) => JSON.stringify(o, Object.keys(o).sort()))
+    await this.saddAsync(this.name_to_key(pi, { name: key_name }), strings)
+  }
+
+  async add_orders(pi: PositionIdentifier, orders: GenericOrderData[]): Promise<void> {
+    return this.add_objects_to_set_key(pi, { key_name: "orders", new_objects: orders })
+  }
+
+  async get_orders(pi: PositionIdentifier): Promise<GenericOrderData[]> {
+    return this.get_object_set_key(pi, { key_name: "orders" })
+  }
+
   async describe_position(pi: PositionIdentifier): Promise<PositionObject> {
     return {
       position_size: await this.get_position_size(pi),
@@ -141,6 +168,7 @@ export class RedisPositionsState {
       initial_entry_quote_asset: await this.get_initial_entry_quote_asset(pi),
       initial_quote_invested: await this.get_initial_quote_invested(pi),
       initial_entry_timestamp: await this.get_initial_entry_timestamp(pi),
+      orders: await this.get_orders(pi),
     }
   }
 
@@ -152,10 +180,12 @@ export class RedisPositionsState {
       initial_quote_invested,
       initial_entry_quote_asset,
       initial_entry_timestamp,
+      orders,
     }: PositionObject
   ) {
     try {
       assert(initial_quote_invested.isPositive())
+      await this.add_orders(pi, orders)
       await this.msetAsync(
         this.name_to_key(pi, { name: "initial_entry_timestamp" }),
         initial_entry_timestamp,

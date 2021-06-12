@@ -20,6 +20,7 @@ export type PositionObject = {
   initial_quote_invested: BigNumber
   initial_entry_quote_asset: string
   initial_entry_price: BigNumber
+  orders: GenericOrderData[]
 }
 
 export class Position {
@@ -77,18 +78,17 @@ export class Position {
       initial_quote_invested: new BigNumber(generic_order_data.totalQuoteTradeQuantity),
       initial_entry_quote_asset: generic_order_data.quoteAsset,
       initial_entry_timestamp: generic_order_data.orderTime,
+      orders: [generic_order_data],
     })
   }
 
   // adjust the position according to the order, or create a new position if current size is zero
   async add_order_to_position({ generic_order_data }: { generic_order_data: GenericOrderData }) {
-    let {
-      baseAsset,
-      side,
-      totalBaseTradeQuantity,
-    } = generic_order_data
+    let { baseAsset, side, totalBaseTradeQuantity } = generic_order_data
     if (baseAsset !== this.baseAsset) {
-      throw new Error(`Unexpected base_asset ${baseAsset} vs ${this.baseAsset} in call to Position.add_order_to_position`)
+      throw new Error(
+        `Unexpected base_asset ${baseAsset} vs ${this.baseAsset} in call to Position.add_order_to_position`
+      )
     }
     if ((await this.position_size()).isZero()) {
       await this.create({ generic_order_data }) // interestingly this would create long and short positions automatically
@@ -99,6 +99,7 @@ export class Position {
       await this.redis_positions.adjust_position_size_by(this.position_identifier, {
         base_change,
       })
+      await this.redis_positions.add_orders(this.position_identifier, [generic_order_data])
       // TODO: Fire a position changed event
     }
   }

@@ -109,14 +109,11 @@ export class PositionTracker {
       exchange_identifier: { exchange, account },
       baseAsset,
     }
-    console.log(`position_identifier in load_position_for_order:`)
-    console.log(position_identifier)
     let position = new Position({
       logger: this.logger,
       redis_positions: this.positions_state,
       position_identifier,
     })
-    console.log(`position size: ${(await position.position_size()).toFixed()}`)
     return position
   }
 
@@ -138,8 +135,7 @@ export class PositionTracker {
     // to have one call to move the stops on all orders up at once. Position.move_all_stops_to(stop_price)
     await position.add_order_to_position({ generic_order_data })
 
-    let msg = `reduced the position size for ${baseAsset}`
-    this.send_message(msg)
+    this.send_message(`Added order to position for ${baseAsset}`)
 
     if (!averageExecutionPrice) {
       // TODO: set sentry context after unpacking the order (withScope)
@@ -149,7 +145,7 @@ export class PositionTracker {
       return
     }
 
-    // 1.3
+    // 1.3 see if we should close the position
     if (
       this.close_position_check_func({
         market_symbol,

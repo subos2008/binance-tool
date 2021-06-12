@@ -34,7 +34,6 @@ const c = require("ansi-colors")
 
 import { RedisPositionsState } from "../classes/persistent_state/redis_positions_state"
 const redis_positions = new RedisPositionsState({ logger, redis })
-const legacy_redis_positions = new RedisPositionsState({ logger, redis })
 
 import { Position } from "../classes/position"
 import { create_position_identifier_from_tuple, PositionIdentifier } from "../events/shared/position-identifier"
@@ -47,28 +46,33 @@ async function main() {
     .strict()
     .command(["list", "$0"], "list all positions", {}, list_positions)
     .command(["fixinate"], "custom hacks - do not run!", {}, fixinate)
-    .command(["list-legacy"], "list all positions", {}, legacy_list_positions)
     .command(
       "describe",
       "Describe position data from redis",
       {
         symbol: {
-          description: "symbol",
+          description: "base asset, i.e. if you bought BTC-USDT this would be BTC",
           type: "string",
           demandOption: true,
-          choices: (await redis_positions.open_position_ids()).map((data: { symbol: string }) => data.symbol),
+          choices: (await redis_positions.open_positions()).map(
+            (p:PositionIdentifier) => p.baseAsset
+          ),
         },
         exchange: {
           description: "exchange",
           type: "string",
           default: "binance",
-          choices: (await redis_positions.open_position_ids()).map((data: { exchange: string }) => data.exchange),
+          choices: (await redis_positions.open_positions()).map(
+            (p:PositionIdentifier) => p.exchange_identifier.exchange
+          ),
         },
         account: {
           description: "account id",
           type: "string",
           default: "default",
-          choices: (await redis_positions.open_position_ids()).map((data: { account: string }) => data.account),
+          choices: (await redis_positions.open_positions()).map(
+            (p:PositionIdentifier) => p.exchange_identifier.account
+          ),
         },
       },
       describe_position
@@ -78,56 +82,31 @@ async function main() {
       "delete position data from redis",
       {
         symbol: {
-          description: "symbol",
+          description: "base asset, i.e. if you bought BTC-USDT this would be BTC",
           type: "string",
           demandOption: true,
-          choices: (await redis_positions.open_position_ids()).map((data: { symbol: string }) => data.symbol),
+          choices: (await redis_positions.open_positions()).map(
+            (p:PositionIdentifier) => p.baseAsset
+          ),
         },
         exchange: {
           description: "exchange",
           type: "string",
           default: "binance",
-          choices: (await redis_positions.open_position_ids()).map((data: { exchange: string }) => data.exchange),
+          choices: (await redis_positions.open_positions()).map(
+            (p:PositionIdentifier) => p.exchange_identifier.exchange
+          ),
         },
         account: {
           description: "account id",
           type: "string",
           default: "default",
-          choices: (await redis_positions.open_position_ids()).map((data: { account: string }) => data.account),
+          choices: (await redis_positions.open_positions()).map(
+            (p:PositionIdentifier) => p.exchange_identifier.account
+          ),
         },
       },
       delete_position
-    )
-    .command(
-      "delete-legacy",
-      "delete position data from redis",
-      {
-        symbol: {
-          description: "symbol",
-          type: "string",
-          demandOption: true,
-          choices: (await legacy_redis_positions.open_position_ids()).map(
-            (data: { symbol: string }) => data.symbol
-          ),
-        },
-        exchange: {
-          description: "exchange",
-          type: "string",
-          default: "binance",
-          choices: (await legacy_redis_positions.open_position_ids()).map(
-            (data: { exchange: string }) => data.exchange
-          ),
-        },
-        account: {
-          description: "account id",
-          type: "string",
-          default: "default",
-          choices: (await legacy_redis_positions.open_position_ids()).map(
-            (data: { account: string }) => data.account
-          ),
-        },
-      },
-      legacy_delete_position
     )
     .help()
     .alias("help", "h").argv
@@ -145,15 +124,6 @@ async function get_prices_from_exchange({ exchange_identifier }: { exchange_iden
   } else {
     throw new Error(`Exchange ${exchange_identifier.exchange} not implemented`)
   }
-}
-
-async function legacy_list_positions() {
-  console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
-  let open_positions = await legacy_redis_positions.open_positions()
-  for (const position_identifier of open_positions) {
-    console.log(position_identifier)
-  }
-  redis.quit()
 }
 
 async function list_positions() {
@@ -219,17 +189,12 @@ async function fixinate() {
 }
 
 async function delete_position(argv: any) {
-  await redis_positions.close_position(argv)
-  redis.quit()
-}
-
-async function legacy_delete_position(argv: any) {
-  await legacy_redis_positions.close_position(argv)
+  await redis_positions.close_position({...argv, baseAsset: argv['symbol']})
   redis.quit()
 }
 
 async function describe_position(argv: any) {
-  let position_identifier = create_position_identifier_from_tuple(argv)
+  let position_identifier = create_position_identifier_from_tuple({...argv, baseAsset: argv['symbol']})
   console.log(position_identifier)
   let p = new Position({ logger, send_message, redis_positions, position_identifier })
   console.log(`${p.baseAsset}:`)

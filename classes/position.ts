@@ -51,15 +51,11 @@ export class Position {
   }
 
   async initial_entry_price(): Promise<BigNumber> {
-    let initial_entry_price = (await this.describe_position()).initial_entry_price
-    if (!initial_entry_price) throw new Error(`initial_entry_price missing`)
-    return new BigNumber(initial_entry_price)
+    return this.redis_positions.get_initial_entry_price(this.position_identifier)
   }
 
   async initial_entry_quote_asset(): Promise<string> {
-    let initial_entry_quote_asset = (await this.describe_position()).initial_entry_quote_asset
-    if (!initial_entry_quote_asset) throw new Error(`initial_entry_quote_asset missing`)
-    return initial_entry_quote_asset
+    return this.redis_positions.get_initial_entry_quote_asset(this.position_identifier)
   }
 
   async position_size(): Promise<BigNumber> {

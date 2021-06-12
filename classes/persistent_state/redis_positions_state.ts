@@ -365,13 +365,4 @@ export class RedisPositionsState {
       return pi
     })
   }
-
-  // depricated
-  async open_position_ids() {
-    const keys = await this.keysAsync(`${key_base}:*:sats_position_size`)
-    return keys.map((key: any) => {
-      let tuple = key.match(/:([^:]+):([^:]+):([^:]+):sats_position_size/)
-      return { exchange: tuple[1], account: tuple[2], baseAsset: tuple[3] }
-    })
-  }
 }

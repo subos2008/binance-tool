@@ -15,13 +15,13 @@ export class BinancePriceGetter implements CurrentPriceGetter {
   constructor({ ee }: { ee: Binance }) {
     this.ee = ee
   }
-  
+
   async get_current_price({ market_symbol }: { market_symbol: string }): Promise<BigNumber> {
     if (!this.prices) {
       this.prices = await this.ee.prices()
       setTimeout(() => {
         this.prices = null
-      }, 60 * 1000)
+      }, 60 * 1000).unref()
     }
     return new BigNumber(this.prices[market_symbol])
   }

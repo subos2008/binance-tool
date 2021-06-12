@@ -38,6 +38,8 @@ const redis_positions = new RedisPositionsState({ logger, redis })
 import { Position } from "../classes/position"
 import { create_position_identifier_from_tuple, PositionIdentifier } from "../events/shared/position-identifier"
 import { ExchangeIdentifier } from "../events/shared/exchange-identifier"
+import { BinancePriceGetter } from "../interfaces/exchange/binance/binance-price-getter"
+import { CurrentPriceGetter } from "../interfaces/exchange/generic/price-getter"
 
 require("dotenv").config()
 
@@ -109,17 +111,34 @@ async function main() {
 }
 main().then(() => {})
 
-async function get_prices_from_exchange({ exchange_identifier }: { exchange_identifier: ExchangeIdentifier }) {
+let price_getters: { [exchange: string]: CurrentPriceGetter } = {}
+function mint_price_getter({
+  exchange_identifier,
+}: {
+  exchange_identifier: ExchangeIdentifier
+}): CurrentPriceGetter {
   if (exchange_identifier.exchange === "binance") {
     const Binance = require("binance-api-node").default
     const ee = Binance({
       apiKey: process.env.APIKEY,
       apiSecret: process.env.APISECRET,
     })
-    return await ee.prices()
+    return new BinancePriceGetter({ ee })
   } else {
     throw new Error(`Exchange ${exchange_identifier.exchange} not implemented`)
   }
+}
+async function get_current_price({
+  exchange_identifier,
+  market_symbol,
+}: {
+  exchange_identifier: ExchangeIdentifier
+  market_symbol: string
+}): Promise<BigNumber> {
+  if (!(exchange_identifier.exchange in price_getters)) {
+    price_getters[exchange_identifier.exchange] = mint_price_getter({ exchange_identifier })
+  }
+  return price_getters[exchange_identifier.exchange].get_current_price({ market_symbol })
 }
 
 async function list_positions() {
@@ -129,15 +148,18 @@ async function list_positions() {
     console.log(`No open positions`)
     return
   }
-  let prices = await get_prices_from_exchange({ exchange_identifier: { exchange: "binance", account: "default" } })
   for (const position_identifier of open_positions) {
     try {
       let p = new Position({ logger, send_message, redis_positions, position_identifier })
+      let exchange_identifier = position_identifier.exchange_identifier
       let quote_asset: string = await p.initial_entry_quote_asset()
       let percentage_change
       let price_change_string = "(null)"
       try {
-        let current_price: BigNumber = new BigNumber(prices[`${position_identifier.baseAsset}${quote_asset}`])
+        let current_price: BigNumber = await get_current_price({
+          exchange_identifier,
+          market_symbol: `${position_identifier.baseAsset}${quote_asset}`,
+        })
         let entry_price: BigNumber = await p.initial_entry_price()
         percentage_change = current_price.dividedBy(entry_price).times(100).minus(100).dp(1)
         if (percentage_change) {

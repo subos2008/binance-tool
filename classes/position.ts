@@ -47,14 +47,6 @@ export class Position {
     this.position_identifier = position_identifier
   }
 
-  get tuple() {
-    return {
-      baseAsset: this.position_identifier.baseAsset,
-      exchange: this.position_identifier.exchange_identifier.exchange,
-      account: this.position_identifier.exchange_identifier.account,
-    }
-  }
-
   get baseAsset(): string {
     return this.position_identifier.baseAsset
   }
@@ -76,7 +68,7 @@ export class Position {
   }
 
   async position_size(): Promise<BigNumber> {
-    const object: any = this.redis_positions.describe_position(this.position_identifier)
+    const object: any = this.redis_positions.get_position_size(this.position_identifier)
     return object.position_size ? new BigNumber(object.position_size) : new BigNumber(0)
   }
 
@@ -90,7 +82,7 @@ export class Position {
   // We could take that as an argument. Or there are RO vs RW versions of this class
   async create({ generic_order_data }: { generic_order_data: GenericOrderData }) {
     if (this.send_message) this.send_message(`New position for ${generic_order_data.baseAsset}`)
-    this.redis_positions.create_new_position(this.tuple, {
+    this.redis_positions.create_new_position(this.position_identifier, {
       position_size: new BigNumber(generic_order_data.totalBaseTradeQuantity),
       initial_entry_price: new BigNumber(generic_order_data.averageExecutionPrice),
       initial_quote_invested: new BigNumber(generic_order_data.totalQuoteTradeQuantity),
@@ -120,17 +112,14 @@ export class Position {
     } else {
       let base_change =
         side === "BUY" ? new BigNumber(totalBaseTradeQuantity) : new BigNumber(totalBaseTradeQuantity).negated()
-      await this.redis_positions.adjust_position_size_by(
-        { baseAsset, exchange, account },
-        {
-          base_change,
-        }
-      )
+      await this.redis_positions.adjust_position_size_by(this.position_identifier, {
+        base_change,
+      })
       // TODO: Fire a position changed event
     }
   }
 
   async close() {
-    this.redis_positions.close_position(this.tuple)
+    this.redis_positions.close_position(this.position_identifier)
   }
 }

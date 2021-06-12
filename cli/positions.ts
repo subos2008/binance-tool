@@ -54,16 +54,14 @@ async function main() {
           description: "base asset, i.e. if you bought BTC-USDT this would be BTC",
           type: "string",
           demandOption: true,
-          choices: (await redis_positions.open_positions()).map(
-            (p:PositionIdentifier) => p.baseAsset
-          ),
+          choices: (await redis_positions.open_positions()).map((p: PositionIdentifier) => p.baseAsset),
         },
         exchange: {
           description: "exchange",
           type: "string",
           default: "binance",
           choices: (await redis_positions.open_positions()).map(
-            (p:PositionIdentifier) => p.exchange_identifier.exchange
+            (p: PositionIdentifier) => p.exchange_identifier.exchange
           ),
         },
         account: {
@@ -71,7 +69,7 @@ async function main() {
           type: "string",
           default: "default",
           choices: (await redis_positions.open_positions()).map(
-            (p:PositionIdentifier) => p.exchange_identifier.account
+            (p: PositionIdentifier) => p.exchange_identifier.account
           ),
         },
       },
@@ -85,16 +83,14 @@ async function main() {
           description: "base asset, i.e. if you bought BTC-USDT this would be BTC",
           type: "string",
           demandOption: true,
-          choices: (await redis_positions.open_positions()).map(
-            (p:PositionIdentifier) => p.baseAsset
-          ),
+          choices: (await redis_positions.open_positions()).map((p: PositionIdentifier) => p.baseAsset),
         },
         exchange: {
           description: "exchange",
           type: "string",
           default: "binance",
           choices: (await redis_positions.open_positions()).map(
-            (p:PositionIdentifier) => p.exchange_identifier.exchange
+            (p: PositionIdentifier) => p.exchange_identifier.exchange
           ),
         },
         account: {
@@ -102,7 +98,7 @@ async function main() {
           type: "string",
           default: "default",
           choices: (await redis_positions.open_positions()).map(
-            (p:PositionIdentifier) => p.exchange_identifier.account
+            (p: PositionIdentifier) => p.exchange_identifier.account
           ),
         },
       },
@@ -172,16 +168,14 @@ async function fixinate() {
     } catch (err) {
       console.error(`Error processing info for ${position_identifier.baseAsset}: ${err}`)
       if (err.toString().includes("initial_entry_quote_asset missing")) {
-        await redis_positions._patch_initial_entry_quote_asset(
-          { ...position_identifier, exchange: "binance", account: "default" },
-          { initial_entry_quote_asset: "USDT" }
-        )
+        await redis_positions._patch_initial_entry_quote_asset(position_identifier, {
+          initial_entry_quote_asset: "USDT",
+        })
       }
       if (err.toString().includes("initial_entry_timestamp missing")) {
-        await redis_positions._patch_initial_entry_timestamp(
-          { ...position_identifier, exchange: "binance", account: "default" },
-          { initial_entry_timestamp: Date.now() }
-        )
+        await redis_positions._patch_initial_entry_timestamp(position_identifier, {
+          initial_entry_timestamp: Date.now(),
+        })
       }
     }
   }
@@ -189,12 +183,12 @@ async function fixinate() {
 }
 
 async function delete_position(argv: any) {
-  await redis_positions.close_position({...argv, baseAsset: argv['symbol']})
+  await redis_positions.close_position({ ...argv, baseAsset: argv["symbol"] })
   redis.quit()
 }
 
 async function describe_position(argv: any) {
-  let position_identifier = create_position_identifier_from_tuple({...argv, baseAsset: argv['symbol']})
+  let position_identifier = create_position_identifier_from_tuple({ ...argv, baseAsset: argv["symbol"] })
   console.log(position_identifier)
   let p = new Position({ logger, send_message, redis_positions, position_identifier })
   console.log(`${p.baseAsset}:`)

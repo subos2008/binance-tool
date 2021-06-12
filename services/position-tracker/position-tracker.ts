@@ -46,9 +46,9 @@ export class PositionTracker {
     redis: RedisClient
     close_position_check_func: check_func
   }) {
-    assert(logger, 'logger not set')
+    assert(logger, "logger not set")
     this.logger = logger
-    assert(send_message, 'send_message not set')
+    assert(send_message, "send_message not set")
     this.send_message = send_message
     this.positions_state = new RedisPositionsState({ logger, redis })
     this.position_publisher = new PositionPublisher({
@@ -56,7 +56,7 @@ export class PositionTracker {
       send_message,
       broker_name: "binance",
     })
-    assert(close_position_check_func, 'close_position_check_func not set')
+    assert(close_position_check_func, "close_position_check_func not set")
     this.close_position_check_func = close_position_check_func
   }
 
@@ -82,7 +82,7 @@ export class PositionTracker {
     try {
       this.position_publisher.publish_new_position_event({
         event_type: "NewPositionEvent",
-        exchange_identifier: position.tuple,
+        exchange_identifier: position.position_identifier.exchange_identifier,
         baseAsset,
         position_base_size: totalBaseTradeQuantity,
         position_initial_quote_spent: totalQuoteTradeQuantity,

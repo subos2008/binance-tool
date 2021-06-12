@@ -135,7 +135,7 @@ export class PositionTracker {
     // to have one call to move the stops on all orders up at once. Position.move_all_stops_to(stop_price)
     await position.add_order_to_position({ generic_order_data })
 
-    this.send_message(`Added order to position for ${baseAsset}`)
+    this.logger.info(`Added order to position for ${baseAsset}`)
 
     if (!averageExecutionPrice) {
       // TODO: set sentry context after unpacking the order (withScope)

@@ -130,30 +130,25 @@ export class RedisPositionsState {
     exchange: string
     account: string
     key_name: string
-  }): Promise<BigNumber | undefined> {
+  }): Promise<BigNumber> {
     const key = this.name_to_key({ baseAsset, exchange, account, name: key_name })
     const sats_or_null = await this.getAsync(key)
-    return sats_or_null ? new BigNumber(from_sats(sats_or_null)) : undefined
+    if (!sats_or_null) throw new Error(`${key} missing from position`)
+    return new BigNumber(from_sats(sats_or_null))
   }
 
-  async get_string_key(args: id, { key_name }: { key_name: string }): Promise<string | undefined> {
+  async get_string_key(args: id, { key_name }: { key_name: string }): Promise<string> {
     const key = this.name_to_key({ ...args, name: key_name })
-    return await this.getAsync(key)
+    const value = await this.getAsync(key)
+    if (!value) throw new Error(`${key} missing from position`)
+    return value
   }
 
-  async get_number_key({
-    baseAsset,
-    exchange,
-    account,
-    key_name,
-  }: {
-    baseAsset: string
-    exchange: string
-    account: string
-    key_name: string
-  }): Promise<number | undefined> {
-    const key = this.name_to_key({ baseAsset, exchange, account, name: key_name })
-    return Number(await this.getAsync(key))
+  async get_number_key(args: id, { key_name }: { key_name: string }): Promise<number | undefined> {
+    const key = this.name_to_key({ ...args, name: key_name })
+    const value = await this.getAsync(key)
+    if (!value) throw new Error(`${key} missing from position`)
+    return Number(value)
   }
 
   async get_position_size({
@@ -189,7 +184,7 @@ export class RedisPositionsState {
   }
 
   async get_initial_entry_timestamp(args: id): Promise<number | undefined> {
-    return this.get_number_key({ ...args, key_name: "initial_entry_timestamp" })
+    return this.get_number_key(args, {key_name: "initial_entry_timestamp" })
   }
 
   async get_netQuoteBalanceChange(args: id): Promise<BigNumber | undefined> {
@@ -262,12 +257,7 @@ export class RedisPositionsState {
     }
   }
 
-  async _patch_initial_entry_quote_asset(
-    args: id,
-    {
-      initial_entry_quote_asset,
-    }: any
-  ) {
+  async _patch_initial_entry_quote_asset(args: id, { initial_entry_quote_asset }: any) {
     try {
       await this.msetAsync(
         this.name_to_key({ ...args, name: "initial_entry_quote_asset" }),
@@ -285,17 +275,9 @@ export class RedisPositionsState {
     }
   }
 
-  async _patch_initial_entry_timestamp(
-    args: id,
-    {
-      initial_entry_timestamp,
-    }: any
-  ) {
+  async _patch_initial_entry_timestamp(args: id, { initial_entry_timestamp }: any) {
     try {
-      await this.msetAsync(
-        this.name_to_key({ ...args, name: "initial_entry_timestamp" }),
-        initial_entry_timestamp
-      )
+      await this.msetAsync(this.name_to_key({ ...args, name: "initial_entry_timestamp" }), initial_entry_timestamp)
     } catch (error) {
       console.error(error)
       Sentry.withScope(function (scope) {

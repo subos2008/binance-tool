@@ -116,7 +116,13 @@ async function main() {
     volume: BigNumber
     price: BigNumber
   }): boolean {
-    return is_too_small_to_trade({ symbol: market_symbol, volume, exchange_info, price })
+    let result: boolean = is_too_small_to_trade({ symbol: market_symbol, volume, exchange_info, price })
+    console.log(
+      `Checking if ${volume.toFixed()} ${market_symbol} would be too small to trade (result=${
+        result ? "yes" : "no"
+      })`
+    )
+    return result
   }
 
   position_tracker = new PositionTracker({

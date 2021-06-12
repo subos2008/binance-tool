@@ -85,20 +85,15 @@ export class Position {
     let {
       baseAsset,
       side,
-      // quoteAsset,
-      exchange,
-      account,
-      // averageExecutionPrice,
       totalBaseTradeQuantity,
-      // totalQuoteTradeQuantity, // TODO: use this
     } = generic_order_data
-    if (!account) account = "default" // TODO
     if (baseAsset !== this.baseAsset) {
-      throw new Error(`Unexpected base_asset in call to Position.add_order_to_position`)
+      throw new Error(`Unexpected base_asset ${baseAsset} vs ${this.baseAsset} in call to Position.add_order_to_position`)
     }
     if ((await this.position_size()).isZero()) {
-      this.create({ generic_order_data })
+      await this.create({ generic_order_data }) // interestingly this would create long and short positions automatically
     } else {
+      // TODO: when we add this to redis we could use a hash keyed by order number to prevent duplicate entries?
       let base_change =
         side === "BUY" ? new BigNumber(totalBaseTradeQuantity) : new BigNumber(totalBaseTradeQuantity).negated()
       await this.redis_positions.adjust_position_size_by(this.position_identifier, {

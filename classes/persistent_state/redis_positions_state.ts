@@ -16,7 +16,7 @@ import { PositionIdentifier } from "../../events/shared/position-identifier"
 import { PositionObject } from "../../classes/position"
 
 // We store as integers in redis because it uses hardware for floating point calculations
-function to_sats(input: string | BigNumber) {
+function to_sats(input: string | BigNumber) : string {
   return new BigNumber(input).times("1e8").toFixed()
 }
 
@@ -213,33 +213,12 @@ export class RedisPositionsState {
 
   async adjust_position_size_by(
     pi: PositionIdentifier,
-    {
-      base_change,
-    }: // quoteAsset,
-    // quote_change,
-    { base_change: BigNumber }
+    { base_change }: { base_change: BigNumber }
   ): Promise<void> {
-    // TODO: store which quote asset
-    // TODO: with timeStamp. List quoteAsset, time, quanitity, usd_equiv, btc_equiv?
     try {
+      console.log(`adjust_position_size_by start: ${await this.get_position_size(pi)}`)
       await this.incrbyAsync(this.name_to_key(pi, { name: "position_size" }), to_sats(base_change.toFixed()))
-      // await this.incrbyAsync(
-      //   this.name_to_key({ baseAsset, exchange, account, name: "netQuoteBalanceChange" }),
-      //   to_sats(quote_change.toFixed())
-      // )
-      // if (quote_change.isPositive()) {
-      //   await this.incrbyAsync(
-      //     this.name_to_key({ baseAsset, exchange, account, name: "total_quote_invested" }),
-      //     to_sats(quote_change.toFixed())
-      //   )
-      // }
-      // if (quote_change.isNegative()) {
-      //   // Decr by a negative value
-      //   await this.decrbyAsync(
-      //     this.name_to_key({ baseAsset, exchange, account, name: "total_quote_withdrawn" }),
-      //     to_sats(quote_change.toFixed())
-      //   )
-      // }
+      console.log(`adjust_position_size_by after: ${await this.get_position_size(pi)}`)
     } catch (error) {
       console.error(error)
       Sentry.withScope(function (scope) {
@@ -276,12 +255,10 @@ export class RedisPositionsState {
     const keys = await this.keysAsync(`${key_base}:*:sats_position_size`)
     return keys.map((key: any) => {
       let tuple = key.match(/:([^:]+):([^:]+):([^:]+):sats_position_size/)
-      console.log(`${key} => ${tuple}`)
       let pi: PositionIdentifier = {
         exchange_identifier: { exchange: tuple[1], account: tuple[2] },
         baseAsset: tuple[3],
       }
-      console.log(pi)
       return pi
     })
   }

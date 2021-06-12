@@ -109,11 +109,14 @@ export class PositionTracker {
       exchange_identifier: { exchange, account },
       baseAsset,
     }
+    console.log(`position_identifier in load_position_for_order:`)
+    console.log(position_identifier)
     let position = new Position({
       logger: this.logger,
       redis_positions: this.positions_state,
       position_identifier,
     })
+    console.log(`position size: ${(await position.position_size()).toFixed()}`)
     return position
   }
 

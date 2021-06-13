@@ -116,7 +116,6 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
       exchange_identifier: this.exchange_identifier,
       portfolio: this.portfolio,
     })
-
   }
 
   async order_filled(data: BinanceOrderData): Promise<void> {
@@ -136,7 +135,9 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
   async get_balances_from_exchange(): Promise<Balance[]> {
     try {
       let response = await this.ee.accountInfo()
-      return response.balances
+      /* Hardcode remove AGI from balances as it's dud */
+      let balances = response.balances.filter((bal) => bal.asset !== "AGI")
+      return balances
     } catch (error) {
       Sentry.captureException(error)
       throw error

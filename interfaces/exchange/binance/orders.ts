@@ -8,7 +8,6 @@ import {
   GenericOrderType,
 } from "../../../types/exchange_neutral/generic_order_data"
 import { BinanceExchangeInfoGetter } from "../../../classes/exchanges/binance/exchange-info-getter"
-import { ExchangeIdentifier } from "../../../events/shared/exchange-identifier"
 
 export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info: ExchangeInfo): GenericOrderData {
   assert(i.orderStatus && i.orderStatus == "FILLED", `orderStatus (${i.orderStatus}) is not FILLED`)
@@ -71,24 +70,20 @@ export type BinanceOrderType =
   | "TAKE_PROFIT_LIMIT"
   | "LIMIT_MAKER"
 
-export async function fromBinanceQueryOrderResult({
+export function fromBinanceQueryOrderResult({
   query_order_result,
-  exchange_info_getter,
+  exchange_info,
 }: {
-  exchange_info_getter: BinanceExchangeInfoGetter
+  exchange_info: ExchangeInfo
   query_order_result: QueryOrderResult
-}): Promise<GenericOrder> {
+}): GenericOrder {
   let i = query_order_result
-  let exchange_info: ExchangeInfo = await exchange_info_getter.get_exchange_info()
   let symbol_info = exchange_info.symbols.find((x) => x.symbol == i.symbol)
   if (!symbol_info)
     throw new Error(`No exchange_info for symbol ${i.symbol} found when converting Binance order to GenericOrder`)
 
-  if (i.orderListId !== -1) {
-    console.error(`OCO order in fromBinanceQueryOrderResult`)
-  }
-  return {
-    exchange: 'binance',
+  let generic: GenericOrder = {
+    exchange: "binance",
     exchangeOrderId: i.orderId.toString(),
     clientOrderId: i.clientOrderId,
     market_symbol: i.symbol,
@@ -99,4 +94,8 @@ export async function fromBinanceQueryOrderResult({
     orderStatus: map_binance_order_status_to_generic_order_status(i.status),
     orderTime: i.updateTime,
   }
+  if (i.orderListId !== -1) {
+    generic.exchangeOrderListId = i.orderListId.toString()
+  }
+  return generic
 }

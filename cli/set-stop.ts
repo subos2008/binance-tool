@@ -251,6 +251,39 @@ function generic_order_to_string(o: GenericOrder) {
   return `${o.exchangeOrderListId ? "OCO " : ""}${o.orderType} ${o.side}`
 }
 
+function orders_related_to_stop_price(orders: GenericOrder[], stop_price: BigNumber) {
+  let stop_orders: GenericOrder[] = orders.filter((o) => stop_price.isEqualTo(o.stopPrice))
+  let oco_list_order_ids = stop_orders.filter((o) => o.exchangeOrderListId).map((o) => o.exchangeOrderListId)
+  console.log(`oco_list_order_ids:`)
+  console.log(oco_list_order_ids)
+  let non_oco_stop_orders: GenericOrder[] = stop_orders.filter((o) => !o.exchangeOrderListId)
+  let oco_stop_orders_object: { [stop_price: string]: GenericOrder[] } = {}
+  for (const oco_list_order_id of oco_list_order_ids) {
+    if (oco_list_order_id === undefined) continue
+    oco_stop_orders_object[oco_list_order_id] = orders.filter((o) => oco_list_order_id === o.exchangeOrderListId)
+  }
+  console.log(`non_oco_stop_orders:`)
+  console.log(non_oco_stop_orders)
+  console.log(`oco_stop_orders_object:`)
+  console.log(oco_stop_orders_object)
+  return { non_oco_stop_orders, oco_stop_orders_object }
+}
+
+function chew(orders: GenericOrder[]): any {
+  let stops: string[] = [...new Set(orders.map((o) => o.stopPrice))]
+  let non_zero_stops = stops.filter((s) => !new BigNumber(s).isZero())
+
+  if (non_zero_stops.length === 1) {
+    // Make a list of stop orders and a set of OCO orders related to stop orders
+    let foo_orders = {
+      [non_zero_stops[0]]: orders_related_to_stop_price(orders, new BigNumber(non_zero_stops[0])),
+    }
+    return { non_zero_stops, foo_orders }
+  }
+
+  return { non_zero_stops }
+}
+
 async function describe_position(argv: any) {
   let { quote: quote_symbol, base: base_asset } = argv
   let exchange_identifier = { exchange: argv.exchange, account: argv.account }
@@ -268,6 +301,7 @@ async function describe_position(argv: any) {
       quote_symbol,
     })
     console.log(orders.map(generic_order_to_string))
+    console.log(chew(orders))
   } catch (err) {
     console.error(`Error processing info for ${balance.asset}: ${err}`)
     process.exit(1)

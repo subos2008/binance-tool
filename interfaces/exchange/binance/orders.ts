@@ -93,6 +93,7 @@ export function fromBinanceQueryOrderResult({
     orderType: map_binance_order_type_to_generic_order_type(i.type as BinanceOrderType),
     orderStatus: map_binance_order_status_to_generic_order_status(i.status),
     orderTime: i.updateTime,
+    stopPrice: i.stopPrice
   }
   if (i.orderListId !== -1) {
     generic.exchangeOrderListId = i.orderListId.toString()

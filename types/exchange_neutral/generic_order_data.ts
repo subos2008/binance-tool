@@ -53,6 +53,7 @@ export type GenericOrder = {
   quoteAsset: string
   side: "BUY" | "SELL"
   orderType: GenericOrderType
+  stopPrice: string // note Binance uses "0.00000000" to mean no stopPrice
 
   orderStatus?: GenericOrderStatus
   orderTime: number // timestamp, presume ms. Not on binance this seems to be last updated time (partial fills?) instead of creation time

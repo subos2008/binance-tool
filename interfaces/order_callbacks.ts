@@ -46,4 +46,5 @@ export interface OrderCallbacks {
   order_filled(data: BinanceOrderData): Promise<void>
   order_filled_or_partially_filled?(data: BinanceOrderData): Promise<void>
   order_created?(data: BinanceOrderData): Promise<void>
+  order_expired?(data: BinanceOrderData): Promise<void>
 }

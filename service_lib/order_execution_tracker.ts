@@ -167,6 +167,13 @@ export class OrderExecutionTracker {
       return
     }
 
+    // EXPIRED can happen on OCO orders when the other side hits or if a token is de-listed
+    if (orderStatus === "EXPIRED") {
+      if (this.order_callbacks && this.order_callbacks.order_expired)
+        await this.order_callbacks.order_expired(data)
+      return
+    }
+
     if (orderStatus !== "FILLED") {
       throw new Error(`Unexpected orderStatus: ${orderStatus}. Reason: ${data.r}`)
     }

@@ -1,38 +1,38 @@
-// // from: https://docs.ftx.com/#orders-2
+// from: https://docs.ftx.com/#orders-2
 
-// import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
-// import { ExchangeUtils } from "../../../interfaces/exchange/generic/exchange-utils"
-// import BigNumber from "bignumber.js"
+import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
+import { ExchangeUtils } from "../../../interfaces/exchange/generic/exchange-utils"
+import BigNumber from "bignumber.js"
 
-// export type FtxWsOrderData = {
-//   "id": number
-//   "clientId": null | string
-//   "market": string
-//   "type": "limit" | "market"
-//   "side": "buy" | "sell"
-//   "size": BigNumber
-//   "price": BigNumber
-//   "reduceOnly": boolean
-//   "ioc": boolean
-//   "postOnly": boolean
-//   "status": "closed" | string
-//   "filledSize": BigNumber
-//   "remainingSize": BigNumber
-//   "avgFillPrice": BigNumber
-// }
+export type FtxWsOrderData = {
+  "id": number
+  "clientId": null | string
+  "market": string
+  "type": "limit" | "market"
+  "side": "buy" | "sell"
+  "size": BigNumber
+  "price": BigNumber
+  "reduceOnly": boolean
+  "ioc": boolean
+  "postOnly": boolean
+  "status": "closed" | string
+  "filledSize": BigNumber
+  "remainingSize": BigNumber
+  "avgFillPrice": BigNumber
+}
 
-// export type FtxOrderWsEvent = {
-//   "channel": "orders"
-//   "data": FtxWsOrderData
-//   "type": "update"
-// }
+export type FtxOrderWsEvent = {
+  "channel": "orders"
+  "data": FtxWsOrderData
+  "type": "update"
+}
 
-// export interface FtxOrderCallbacks {
-//   order_cancelled(order_id: string, data: FtxWsOrderData): Promise<void>
-//   order_filled(order_id: string, data: FtxWsOrderData): Promise<void>
-//   order_filled_or_partially_filled(order_id: string, data: FtxWsOrderData): Promise<void>
-//   order_created?(order_id: string, data: FtxWsOrderData): Promise<void>
-// }
+export interface FtxOrderCallbacks {
+  order_cancelled(order_id: string, data: FtxWsOrderData): Promise<void>
+  order_filled(order_id: string, data: FtxWsOrderData): Promise<void>
+  order_filled_or_partially_filled(order_id: string, data: FtxWsOrderData): Promise<void>
+  order_created?(order_id: string, data: FtxWsOrderData): Promise<void>
+}
 
 // export function fromCompletedFtxOrderData(o: FtxWsOrderData, eu: ExchangeUtils): GenericOrderData {
 //   if (o.status !== "closed") {

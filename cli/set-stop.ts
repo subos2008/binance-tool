@@ -284,6 +284,12 @@ function chew(orders: GenericOrder[]): any {
   return { non_zero_stops }
 }
 
+function recreate_stop_order_with_different_stop_price(order:GenericOrder) {
+  // TODO: check order type
+  // TODO: cancel order
+  // TODO: convert and create order with new stop price
+}
+
 async function describe_position(argv: any) {
   let { quote: quote_symbol, base: base_asset } = argv
   let exchange_identifier = { exchange: argv.exchange, account: argv.account }

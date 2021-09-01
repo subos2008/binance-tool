@@ -8,7 +8,7 @@ export type FtxWsOrderData = {
   "id": number
   "clientId": null | string
   "market": string
-  "type": "limit" | "market"
+  "type": "limit" | "market" | "subscribed" // subscribed means we subscribed on the ws
   "side": "buy" | "sell"
   "size": BigNumber
   "price": BigNumber

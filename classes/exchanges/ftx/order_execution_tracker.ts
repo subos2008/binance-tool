@@ -73,6 +73,13 @@ export class FtxOrderExecutionTracker {
 
   async processExecutionReport(data: FtxWsOrderData) {
     const { id, market, avgFillPrice, price, side, status: orderStatus, type, size } = data
+
+    if(type === 'subscribed') {
+      return
+    }
+    
+    console.info(data)
+
     if(!id) {
       console.error(data)
     }

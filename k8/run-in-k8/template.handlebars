@@ -12,17 +12,10 @@ spec:
   template:
     spec:
       restartPolicy: OnFailure
-      volumes:
-        - hostPath:
-            path: /opt/datadog-agent/run
-          name: pointerdir
       containers:
       - name: {{container_name}}
         image: {{docker_image}}:latest
         command: ["./service.ts", "--trade-id", "{{trade_id}}", "--live"]
-        volumeMounts:
-          - name: pointerdir
-            mountPath: /opt/datadog-agent/run
         env:
         - name: DD_LOGS_ENABLED
           value: "true"

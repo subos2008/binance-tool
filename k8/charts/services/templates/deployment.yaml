@@ -30,17 +30,11 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       volumes:
-        - hostPath:
-            path: /opt/datadog-agent/run
-          name: pointerdir
       containers:
         - name: binance-order-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./services/order-tracker/binance-order-tracker.ts", "--live"]
-          volumeMounts:
-            - name: pointerdir
-              mountPath: /opt/datadog-agent/run
           # ports:
           # - name: http
           #   containerPort: 8081
@@ -88,17 +82,11 @@ spec:
           }]  
     spec:
       volumes:
-        - hostPath:
-            path: /opt/datadog-agent/run
-          name: pointerdir
       containers:
         - name: redis-monitor
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./services/redis-monitor.ts"]
-          volumeMounts:
-            - name: pointerdir
-              mountPath: /opt/datadog-agent/run
           env:
             - name: SENTRY_DSN
               value: "https://673cf6fd7c5e49339128d0f4bb3f37c7@o369902.ingest.sentry.io/5286786"
@@ -138,17 +126,11 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       volumes:
-        - hostPath:
-            path: /opt/datadog-agent/run
-          name: pointerdir
       containers:
         - name: portfolio-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./services/portfolio_tracker/portfolio-tracker.ts", "--live"]
-          volumeMounts:
-            - name: pointerdir
-              mountPath: /opt/datadog-agent/run
           # ports:
           # - name: http
           #   containerPort: 8081
@@ -202,17 +184,11 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       volumes:
-        - hostPath:
-            path: /opt/datadog-agent/run
-          name: pointerdir
       containers:
         - name: binance-position-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./services/position-tracker/binance-position-tracker.ts", "--live"]
-          volumeMounts:
-            - name: pointerdir
-              mountPath: /opt/datadog-agent/run
           # ports:
           # - name: http
           #   containerPort: 8081
@@ -265,18 +241,11 @@ spec:
 #       imagePullSecrets:
 #         {{- toYaml . | nindent 8 }}
 #     {{- end }}
-#       volumes:
-#         - hostPath:
-#             path: /opt/datadog-agent/run
-#           name: pointerdir
 #       containers:
 #         - name: auto-position-exits
 #           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
 #           imagePullPolicy: {{ .Values.image.pullPolicy }}
 #           command: ["./services/auto-position-exits/auto-position-exits.ts", "--live"]
-#           volumeMounts:
-#             - name: pointerdir
-#               mountPath: /opt/datadog-agent/run
 #           # ports:
 #           # - name: http
 #           #   containerPort: 8081
@@ -330,17 +299,11 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       volumes:
-        - hostPath:
-            path: /opt/datadog-agent/run
-          name: pointerdir
       containers:
         - name: edge56
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./services/edge56/edge56-service.ts", "--live"]
-          volumeMounts:
-            - name: pointerdir
-              mountPath: /opt/datadog-agent/run
           # ports:
           # - name: http
           #   containerPort: 8081
@@ -393,18 +356,11 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
     {{- end }}
-      volumes:
-        - hostPath:
-            path: /opt/datadog-agent/run
-          name: pointerdir
       containers:
         - name: position-performance
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./services/position-performance/position-performance-service.ts", "--live"]
-          volumeMounts:
-            - name: pointerdir
-              mountPath: /opt/datadog-agent/run
           # ports:
           # - name: http
           #   containerPort: 8081

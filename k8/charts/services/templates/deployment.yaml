@@ -53,104 +53,104 @@ spec:
 {{- include "binance.vars" . | nindent 12 }}
 {{- include "datadog.vars" . | nindent 12 }}
 {{- include "telegram.vars" . | nindent 12 }}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: redis-monitor
-  labels:
-{{ include "mychart.labels" . | indent 4 }}
-    binance-tool/service: "redis-monitor"
-spec:
-  replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: {{ include "mychart.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: {{ include "mychart.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
-        binance-tool/service: "redis-monitor"
-      annotations:
-        ad.datadoghq.com/tags: '{"service": "redis-monitor"}'
-        ad.datadoghq.com/redis-monitor.logs: >-
-          [{
-            "source": "nodejs",
-            "service": "redis-monitor"
-          }]  
-    spec:
-      volumes:
-      containers:
-        - name: redis-monitor
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/redis-monitor.ts"]
-          env:
-            - name: SENTRY_DSN
-              value: "https://673cf6fd7c5e49339128d0f4bb3f37c7@o369902.ingest.sentry.io/5286786"
-{{- include "datadog.vars" . | nindent 12 }}
-{{- include "redis.vars" . | nindent 12 }}
-{{- include "telegram.vars" . | nindent 12 }}
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: portfolio-tracker
-  labels:
-{{ include "mychart.labels" . | indent 4 }}
-    binance-tool/service: "portfolio-tracker"
-spec:
-  replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: {{ include "mychart.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: {{ include "mychart.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
-        binance-tool/service: "portfolio-tracker"
-      annotations:
-        ad.datadoghq.com/tags: '{"service": "portfolio-tracker"}'
-        ad.datadoghq.com/portfolio-tracker.logs: >-
-          [{
-            "source": "nodejs",
-            "service": "portfolio-tracker"
-          }]   
-    spec:
-    {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
-      volumes:
-      containers:
-        - name: portfolio-tracker
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/portfolio_tracker/portfolio-tracker.ts", "--live"]
-          # ports:
-          # - name: http
-          #   containerPort: 8081
-          #   protocol: TCP
-          # livenessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: http
-          # readinessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: http
-          env:
-            - name: SENTRY_DSN
-              value: "https://fd044b9bc259422ea55a1910e3801aa8@o369902.ingest.sentry.io/5618730"
-{{- include "binance.vars" . | nindent 12 }}
-{{- include "datadog.vars" . | nindent 12 }}
-{{- include "telegram.vars" . | nindent 12 }}
-{{- include "amqp.vars" . | nindent 12 }}
-{{- include "redis.vars" . | nindent 12 }}
+# # ---
+# # apiVersion: apps/v1
+# # kind: Deployment
+# # metadata:
+# #   name: redis-monitor
+# #   labels:
+# # {{ include "mychart.labels" . | indent 4 }}
+# #     binance-tool/service: "redis-monitor"
+# # spec:
+# #   replicas: {{ .Values.replicaCount }}
+# #   selector:
+# #     matchLabels:
+# #       app.kubernetes.io/name: {{ include "mychart.name" . }}
+# #       app.kubernetes.io/instance: {{ .Release.Name }}
+# #   template:
+# #     metadata:
+# #       labels:
+# #         app.kubernetes.io/name: {{ include "mychart.name" . }}
+# #         app.kubernetes.io/instance: {{ .Release.Name }}
+# #         binance-tool/service: "redis-monitor"
+# #       annotations:
+# #         ad.datadoghq.com/tags: '{"service": "redis-monitor"}'
+# #         ad.datadoghq.com/redis-monitor.logs: >-
+# #           [{
+# #             "source": "nodejs",
+# #             "service": "redis-monitor"
+# #           }]  
+# #     spec:
+# #       volumes:
+# #       containers:
+# #         - name: redis-monitor
+# #           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+# #           imagePullPolicy: {{ .Values.image.pullPolicy }}
+# #           command: ["./services/redis-monitor.ts"]
+# #           env:
+# #             - name: SENTRY_DSN
+# #               value: "https://673cf6fd7c5e49339128d0f4bb3f37c7@o369902.ingest.sentry.io/5286786"
+# # {{- include "datadog.vars" . | nindent 12 }}
+# # {{- include "redis.vars" . | nindent 12 }}
+# # {{- include "telegram.vars" . | nindent 12 }}
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: portfolio-tracker
+#   labels:
+# {{ include "mychart.labels" . | indent 4 }}
+#     binance-tool/service: "portfolio-tracker"
+# spec:
+#   replicas: {{ .Values.replicaCount }}
+#   selector:
+#     matchLabels:
+#       app.kubernetes.io/name: {{ include "mychart.name" . }}
+#       app.kubernetes.io/instance: {{ .Release.Name }}
+#   template:
+#     metadata:
+#       labels:
+#         app.kubernetes.io/name: {{ include "mychart.name" . }}
+#         app.kubernetes.io/instance: {{ .Release.Name }}
+#         binance-tool/service: "portfolio-tracker"
+#       annotations:
+#         ad.datadoghq.com/tags: '{"service": "portfolio-tracker"}'
+#         ad.datadoghq.com/portfolio-tracker.logs: >-
+#           [{
+#             "source": "nodejs",
+#             "service": "portfolio-tracker"
+#           }]   
+#     spec:
+#     {{- with .Values.imagePullSecrets }}
+#       imagePullSecrets:
+#         {{- toYaml . | nindent 8 }}
+#     {{- end }}
+#       volumes:
+#       containers:
+#         - name: portfolio-tracker
+#           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+#           imagePullPolicy: {{ .Values.image.pullPolicy }}
+#           command: ["./services/portfolio_tracker/portfolio-tracker.ts", "--live"]
+#           # ports:
+#           # - name: http
+#           #   containerPort: 8081
+#           #   protocol: TCP
+#           # livenessProbe:
+#           #   httpGet:
+#           #     path: /health
+#           #     port: http
+#           # readinessProbe:
+#           #   httpGet:
+#           #     path: /health
+#           #     port: http
+#           env:
+#             - name: SENTRY_DSN
+#               value: "https://fd044b9bc259422ea55a1910e3801aa8@o369902.ingest.sentry.io/5618730"
+# {{- include "binance.vars" . | nindent 12 }}
+# {{- include "datadog.vars" . | nindent 12 }}
+# {{- include "telegram.vars" . | nindent 12 }}
+# {{- include "amqp.vars" . | nindent 12 }}
+# {{- include "redis.vars" . | nindent 12 }}
 ---
 apiVersion: apps/v1
 kind: Deployment

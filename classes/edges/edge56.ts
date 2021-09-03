@@ -10,6 +10,7 @@
 
 // TODO: Entry
 // 1. Add MACD
+// 2. Short entries don't need volume as a confirmation
 
 // TODO: Exits
 // 1. Stop loss: 25% or 10% from entry
@@ -109,18 +110,28 @@ export class Edge56EntrySignals {
       let potential_entry_price = new BigNumber(candle[this.current_candle_key])
       let potential_entry_volume = new BigNumber(candle["volume"])
 
-      if (potential_entry_volume.isGreaterThan(this.volume_history_candles.get_highest_value())) {
-        console.log(`Volume entry signal on ${symbol} at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`)
-      } else {
-        return // no volume = no entry
-      }
-
       // check for long entry
       if (potential_entry_price.isGreaterThan(this.price_history_candles.get_highest_value())) {
         let direction: "long" = "long"
         console.log(
-          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`
+          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}, ${new Date(
+            candle.closeTime
+          )}`
         )
+        if (potential_entry_volume.isGreaterThan(this.volume_history_candles.get_highest_value())) {
+          console.log(
+            `Volume entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}, ${new Date(
+              candle.closeTime
+            )}`
+          )
+        } else {
+          console.log(
+            `Volume entry filter failed on ${symbol} ${direction} at ${potential_entry_price.toFixed()}, ${new Date(
+              candle.closeTime
+            )}`
+          )
+          return // no volume = no entry
+        }
         this.callbacks.enter_position({
           symbol: this.symbol,
           entry_price: potential_entry_price,

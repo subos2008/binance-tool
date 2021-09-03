@@ -77,8 +77,10 @@ export class PositionPerformance {
       return `${p.baseAsset}`
     }
 
-    let msg: string = positions.map((p) => position_to_string(p)).join("\n")
-    this.send_message(`\n${msg}`)
+    if (positions.length > 0) {
+      let msg: string = positions.map((p) => position_to_string(p)).join("\n")
+      this.send_message(`\n${msg}`)
+    }
   }
 
   async update() {

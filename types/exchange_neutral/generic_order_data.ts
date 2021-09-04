@@ -25,7 +25,7 @@ export type GenericOrderData = {
   baseAsset: string
   quoteAsset: string
   side: "BUY" | "SELL"
-  orderType: "MARKET" | "LIMIT"
+  orderType: GenericOrderType
 
   orderStatus?: GenericOrderStatus
   orderTime: number // timestamp, presume ms

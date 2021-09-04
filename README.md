@@ -1,15 +1,35 @@
-A cluster of k8 microservices plus the original binance-tool OCO trader.
+# Binance Tool
 
-The OCO trader is a bit clunky and is being ported in this repo to a bunch
-of services that automatically create positions based on the Binance order feeds
+A cluster of k8 microservices that watch exchange's websocket streams and report to telegram.
 
-Automatic exits are currently being added to new positions, like 10% sell at 10% gain
+Contains an Edge56 (momentum trading) service that watches for entries and alerts the user by message.
+
+Also contains services that watch the users orders on the exchange and tracks open positions in redis.
+
+See the commercial bot `cornix` also, that implements a lot of what we are targetting here.
+
+This repo was originally the old OCO trader that implemented OCO trades on Binance before they were natively available. That original script had lots of functionality - like position sizing based on portfolio size and stop percentage - that is yet to be ported to the services based code here.
+
+Over time this repo could do things like automatically enter trades based on entry signals with automatic position sizing and trade management. 
+
+`Trading Engine` in Asana contains the backlog for this repo.
+
+Some services currently publish to RabbitMQ but not so much on the ingestion side at the moment.
+
+## Setup
+
+You will need to add the `user` and `exchange` to AMQP that is used by some of these services.
+
+`redis` also needs to be configured.
+
 
 
 
 ![](https://github.com/subos2008/binance-tool/workflows/DockerPublish/badge.svg)
 
-# Fails when only stopOrderId set
+# The opriginal OCO order tool had output like this:
+
+`soft_entry` means orders were not set on the exchange until the target price was approached, allowing overallocation of capital to trades waiting for whichever one hit first. My trading style is now more breakout based than retrace based to less useful these days as the breakout code got removed in the OCO tracker.
 
 ```
 2020-05-11T22:16:24.51687425Z Set telegram prefix to "binance-tool: "
@@ -76,7 +96,7 @@ Didn't recognise order: 69199135 [buy: 69199135 stop: undefined target: undefine
 Could fill the order before we are finished setting it in redis. Would set to undefined maybe before 
 then setting again to the buy order id
 
-# Usage
+# Usage - original OCO tracker
 
 Beware the default behaviour is to launch a job in k8 to execute the trade. i.e. there will not be a local process or output to the terminal.
 
@@ -94,12 +114,9 @@ adds a trade_definition to redis and associated tools that take a trade_id
 and retrieve and execute that trade. This can thus be used for executing
 trades using a remote cluster.
 
-The next major step for this codebase is to split it up into services that
-can be updated from CI. At the moment each run manages a complete individual
-trade and we pray the processes never restart. This needs to be moved to a
-model where state is in Redis and the services are all restartable.
+*ED: actually the style changed again to not specifying trades per-ce but instead watching the websockets for new orders that were considered position entries and then adding very basic pre-defined stops and take-profits to those positions. i.e. SL: -20% and TP at 10%, 20% etc. However this `automatic-trade-exits` service kinda went out of vogue.
 
-First target is getting orderId's in redis.
+We did port the oco trader too to use redis as it's state store but I'm not 100% sure that code (i.e. restartable service) worked 100%.
 
 ---
 

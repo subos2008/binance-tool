@@ -15,6 +15,8 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
+const humanNumber = require("human-number")
+
 type SendMessageFunc = (msg: string) => void
 
 const send_message_factory = require("../../lib/telegram.js")
@@ -56,6 +58,7 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
   close_short_timeframe_candle_ws: () => void
   close_1d_candle_ws: () => void
   send_message: SendMessageFunc
+  market_data: CoinGeckoMarketData[]
 
   constructor({
     ee,
@@ -88,21 +91,37 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
     entry_price: BigNumber
     direction: "long" | "short"
   }): void {
+    let market_data_string = ""
+    try {
+      let md = this.market_data_for_symbol(symbol)
+      market_data_string = `RANK: ${md.market_cap_rank}, MCAP: ${humanNumber(md.market_cap)}`
+    } catch (e) {
+      this.logger.warn(`Failed to generate market_data string for ${symbol}`)
+      // This can happen if top 100 changes since boot and we refresh the cap list
+      Sentry.captureException(e)
+    }
     this.send_message(
-      `Edge56 position entry triggered on ${symbol} at price ${entry_price.toFixed()} derection ${direction}. Check MACD before entry`
+      `Edge56 position entry triggered on ${symbol} at price ${entry_price.toFixed()} derection ${direction}. Check MACD before entry. ${market_data_string}`
     )
+  }
+
+  market_data_for_symbol(symbol: string): CoinGeckoMarketData {
+    let usym = symbol.toUpperCase()
+    let data = this.market_data.find((x) => x.symbol.toUpperCase() === usym)
+    if (!data) throw new Error(`Market data for symbol ${usym} not found.`) // can happen if data updates and
+    return data
   }
 
   async run() {
     let limit = 105
     let cg = new CoinGeckoAPI()
     // not all of these will be on Binance
-    let market_data: CoinGeckoMarketData[] = await cg.get_top_market_data({ limit })
+    this.market_data = await cg.get_top_market_data({ limit })
     // market_data = market_data.filter((x) => x.id !== "bitcoin")
-    let coin_names = market_data.map((x) => x.symbol.toUpperCase())
+    let coin_names = this.market_data.map((x) => x.symbol.toUpperCase())
     console.log(`Top ${limit} coins by market cap: ${coin_names.join(", ")}`)
     let to_symbol = (md: CoinGeckoMarketData) => md.symbol.toUpperCase() + "USDT"
-    let symbols = market_data.map(to_symbol)
+    let symbols = this.market_data.map(to_symbol)
 
     this.close_1d_candle_ws = this.ee.ws.candles(symbols, "1d", (candle) => {
       let symbol = candle.symbol
@@ -114,8 +133,8 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
       }
     })
 
-    for (let i = 0; i < market_data.length; i++) {
-      let symbol = to_symbol(market_data[i])
+    for (let i = 0; i < this.market_data.length; i++) {
+      let symbol = to_symbol(this.market_data[i])
       // not all of these will be on Binance, they just throw if missing
       try {
         let initial_candles = await this.candles_collector.get_daily_candles_between({
@@ -130,7 +149,7 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
           logger: this.logger,
           initial_candles,
           symbol,
-          market_data: market_data[i],
+          market_data: this.market_data[i],
           callbacks: this,
         })
         console.log(`Setup edge for ${symbol}`)

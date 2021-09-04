@@ -56,8 +56,17 @@ class MyOrderCallbacks {
 
   async order_created(data: BinanceOrderData): Promise<void> {
     this.logger.info(data)
-    if (data.orderType != "MARKET")
-      this.send_message(`Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.price}.`)
+    if (data.orderType != "MARKET") {
+      switch (data.orderType) {
+        case "STOP_LOSS_LIMIT":
+          this.send_message(
+            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.stopPrice} to ${data.price}.`
+          )
+          break
+        default:
+          this.send_message(`Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.price}.`)
+      }
+    }
   }
   async order_cancelled(data: BinanceOrderData): Promise<void> {
     this.send_message(`${data.orderType} ${data.side} order on ${data.symbol} at ${data.price} cancelled.`)

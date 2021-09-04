@@ -32,9 +32,10 @@ export interface BinanceOrderData {
   totalTradeQuantity: string // NB: we might rename this to totalBaseTradeQuantity in exchange_neutral
   symbol: string
   side: "BUY" | "SELL"
-  orderType: "LIMIT" | "MARKET"
+  orderType: "LIMIT" | "MARKET" | "STOP_LOSS_LIMIT"
   orderRejectReason?: string
   price?: string
+  stopPrice?: string
   quantity?: string
   orderStatus?: string
   totalQuoteTradeQuantity: string

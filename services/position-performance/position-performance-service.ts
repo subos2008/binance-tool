@@ -61,24 +61,32 @@ export class PositionPerformance {
     this.positions_state = new RedisPositionsState({ logger, redis })
   }
 
+  current_price(p: Position): BigNumber {
+    let symbol = p.baseAsset + p.initial_entry_quote_asset()
+    return new BigNumber(this.prices[symbol])
+  }
+
   async list_positions() {
     logger.warn(`This implementation uses an initial_entry_price and not an average entry price`)
     let positions: Position[] = []
+    let position_strings: string[] = []
     let open_positions = await redis_positions.open_positions()
+
+    async function position_to_string(p: Position) {
+      let current_price = this.current_price(p)
+      let percentage = (await p.percentage_price_change_since_initial_entry(current_price)).dp(1)
+      let percentage_string: string = percentage?.toFixed() || "?"
+      return `${p.baseAsset}: ${percentage_string}`
+    }
+
     for (const position_identifier of open_positions) {
       let p = new Position({ logger, redis_positions, position_identifier })
       positions.push(p)
+      position_strings.push(await position_to_string(p))
     }
 
-    function position_to_string(p: Position) {
-      // let percentage = p.percentage_price_change_since_initial_entry?.dp(1)
-      // let percentage_string: string = percentage?.toFixed() || "?"
-      // return `${p.symbol}: ${percentage_string}`
-      return `${p.baseAsset}`
-    }
-
-    if (positions.length > 0) {
-      let msg: string = positions.map((p) => position_to_string(p)).join("\n")
+    if (position_strings.length > 0) {
+      let msg: string = position_strings.join("\n")
       this.send_message(`\n${msg}`)
     }
   }

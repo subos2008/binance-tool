@@ -26,7 +26,6 @@ export type PositionObject = {
 export class Position {
   logger: Logger
   send_message: Function | undefined
-  ee: any
   redis_positions: RedisPositionsState
   position_identifier: PositionIdentifier
 
@@ -102,6 +101,11 @@ export class Position {
       await this.redis_positions.add_orders(this.position_identifier, [generic_order_data])
       // TODO: Fire a position changed event
     }
+  }
+
+  async percentage_price_change_since_initial_entry(current_price: BigNumber): Promise<BigNumber> {
+    let initial_entry_price = await this.initial_entry_price()
+    return new BigNumber(current_price).minus(initial_entry_price).dividedBy(initial_entry_price).times(100)
   }
 
   async close() {

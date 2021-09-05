@@ -76,7 +76,7 @@ export class PositionPerformance {
       let current_price = this.current_price(p)
       let percentage = (await p.percentage_price_change_since_initial_entry(current_price)).dp(1)
       let percentage_string: string = percentage?.toFixed() || "?"
-      return `${p.baseAsset}: ${percentage_string}`
+      return `${p.baseAsset}: ${percentage_string}%`
     }
 
     for (const position_identifier of open_positions) {

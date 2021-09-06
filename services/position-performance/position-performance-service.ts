@@ -72,8 +72,7 @@ export class PositionPerformance {
     let position_strings: string[] = []
     let open_positions = await redis_positions.open_positions()
 
-    async function position_to_string(p: Position) {
-      let current_price = this.current_price(p)
+    async function position_to_string(current_price: BigNumber, p: Position) {
       let percentage = (await p.percentage_price_change_since_initial_entry(current_price)).dp(1)
       let percentage_string: string = percentage?.toFixed() || "?"
       return `${p.baseAsset}: ${percentage_string}%`
@@ -82,7 +81,7 @@ export class PositionPerformance {
     for (const position_identifier of open_positions) {
       let p = new Position({ logger, redis_positions, position_identifier })
       positions.push(p)
-      position_strings.push(await position_to_string(p))
+      position_strings.push(await position_to_string(this.current_price(p), p))
     }
 
     if (position_strings.length > 0) {

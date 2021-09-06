@@ -61,8 +61,10 @@ export class PositionPerformance {
     this.positions_state = new RedisPositionsState({ logger, redis })
   }
 
-  current_price(p: Position): BigNumber {
-    let symbol = p.baseAsset + p.initial_entry_quote_asset()
+  async current_price(p: Position): Promise<BigNumber> {
+    let base : string = p.baseAsset
+    let quote : string = await p.initial_entry_quote_asset()
+    let symbol = `${base}${quote}`.toUpperCase()
     return new BigNumber(this.prices[symbol])
   }
 
@@ -81,7 +83,7 @@ export class PositionPerformance {
     for (const position_identifier of open_positions) {
       let p = new Position({ logger, redis_positions, position_identifier })
       positions.push(p)
-      position_strings.push(await position_to_string(this.current_price(p), p))
+      position_strings.push(await position_to_string(await this.current_price(p), p))
     }
 
     if (position_strings.length > 0) {

@@ -100,8 +100,9 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
       // This can happen if top 100 changes since boot and we refresh the cap list
       Sentry.captureException(e)
     }
+    let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
     this.send_message(
-      `Edge56 position entry triggered on ${symbol} at price ${entry_price.toFixed()} derection ${direction}. Check MACD before entry. ${market_data_string}`
+      `${direction_string} entry triggered on ${symbol} at price ${entry_price.toFixed()}. Check MACD before entry. ${market_data_string}`
     )
   }
 

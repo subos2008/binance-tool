@@ -177,30 +177,30 @@ async function list_positions() {
 }
 
 async function fixinate() {
-  console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
-  let open_positions = await redis_positions.open_positions()
-  if (open_positions.length === 0) {
-    console.log(`No open positions`)
-    return
-  }
-  for (const position_identifier of open_positions) {
-    try {
-      let p = new Position({ logger, send_message, redis_positions, position_identifier })
-      await p.initial_entry_quote_asset()
-    } catch (err) {
-      console.error(`Error processing info for ${position_identifier.baseAsset}: ${err}`)
-      if (err.toString().includes("initial_entry_quote_asset missing")) {
-        await redis_positions._patch_initial_entry_quote_asset(position_identifier, {
-          initial_entry_quote_asset: "USDT",
-        })
-      }
-      if (err.toString().includes("initial_entry_timestamp missing")) {
-        await redis_positions._patch_initial_entry_timestamp(position_identifier, {
-          initial_entry_timestamp: Date.now(),
-        })
-      }
-    }
-  }
+  // console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
+  // let open_positions = await redis_positions.open_positions()
+  // if (open_positions.length === 0) {
+  //   console.log(`No open positions`)
+  //   return
+  // }
+  // for (const position_identifier of open_positions) {
+  //   try {
+  //     let p = new Position({ logger, send_message, redis_positions, position_identifier })
+  //     await p.initial_entry_quote_asset()
+  //   } catch (err) {
+  //     console.error(`Error processing info for ${position_identifier.baseAsset}: ${err}`)
+  //     if (err.toString().includes("initial_entry_quote_asset missing")) {
+  //       await redis_positions._patch_initial_entry_quote_asset(position_identifier, {
+  //         initial_entry_quote_asset: "USDT",
+  //       })
+  //     }
+  //     if (err.toString().includes("initial_entry_timestamp missing")) {
+  //       await redis_positions._patch_initial_entry_timestamp(position_identifier, {
+  //         initial_entry_timestamp: Date.now(),
+  //       })
+  //     }
+  //   }
+  // }
   redis.quit()
 }
 

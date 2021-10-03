@@ -3,8 +3,10 @@
 /* eslint func-names: ["warn", "as-needed"] */
 import { strict as assert } from 'assert';
 
+/**
+ * TODO: send messages to MQ
+ */
 require("dotenv").config();
-assert(process.env.REDIS_HOST)
 
 import * as Sentry from '@sentry/node';
 Sentry.init({});
@@ -12,9 +14,9 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "ftx-order-tracker");
 });
 
-const send_message = require("../../lib/telegram.js")("order-tracker: ");
+const send_message = require("../../lib/telegram.js")("ftx-order-ingestion: ");
 
-import { Logger } from '../../interfaces/logger'
+import { Logger } from '../../../../interfaces/logger'
 const LoggerClass = require("../../lib/faux_logger");
 const logger: Logger = new LoggerClass({ silent: false });
 
@@ -31,22 +33,13 @@ process.on("unhandledRejection", error => {
   Sentry.captureException(error)
 });
 
-import { FtxWebsocketClient } from "../../classes/exchanges/ftx/websocket-client";
-import { FtxOrderExecutionTracker } from "../../classes/exchanges/ftx/order_execution_tracker";
-import { FtxOrderCallbacks, FtxWsOrderData } from '../../interfaces/exchange/ftx/orders'
-
-var { argv } = require("yargs")
-  .usage("Usage: $0 --live")
-  .example("$0 --live")
-  // '--live'
-  .boolean("live")
-  .describe("live", "Trade with real money")
-  .default("live", false);
-let { live } = argv;
+import { FtxWebsocketClient } from "../../../../classes/exchanges/ftx/websocket-client";
+import { FtxOrderExecutionTracker } from "../../../../classes/exchanges/ftx/order_execution_tracker";
+import { FtxOrderCallbacks, FtxWsOrderData } from '../../../../interfaces/exchange/ftx/orders'
 
 let order_execution_tracker: FtxOrderExecutionTracker | null = null
 
-class MyOrderCallbacks {
+class MyOrderCallbacks implements FtxOrderCallbacks {
   send_message: Function;
   logger: Logger;
 
@@ -77,19 +70,12 @@ class MyOrderCallbacks {
 }
 
 async function main() {
-  if (!live) {
-    throw new Error(`Non-live mode not implemented for FTX`)
-  }
-  logger.info("Live monitoring mode")
-
   if (!process.env.FTX_RO_APIKEY) throw new Error(`FTX_RO_APIKEY not defined`)
   if (!process.env.FTX_RO_APISECRET) throw new Error(`FTX_RO_APISECRET not defined`)
   // Prepare a ws connection (connection init is automatic once ws client is instanced)
   const params = {
     key: process.env.FTX_RO_APIKEY,
     secret: process.env.FTX_RO_APISECRET,
-    // subAccountName: 'sub1',
-    // jsonParseFunc: JSON.parse
   }
 
   const ws = new FtxWebsocketClient(params, logger)

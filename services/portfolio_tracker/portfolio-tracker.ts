@@ -94,7 +94,14 @@ class PortfolioTracker implements MasterPortfolioClass {
   async set_portfolio_for_exchange({exchange_identifier,portfolio}:{exchange_identifier:ExchangeIdentifier, portfolio:Portfolio}) {
     // TODO: account not used in ExchangeIdentifier: default (default added so this appears in greps)
     this.portfolios[exchange_identifier.exchange] = portfolio
-    this.report_current_portfolio()
+    this.report_current_portfolio() // this line is going to be a problem when we have multiple exchanges
+  }
+
+  async update_and_report_portfolio() {
+    for await (const exchange of Object.values(this.exchanges)) {
+      await exchange.update_portfolio_from_exchange()
+    }
+    await this.report_current_portfolio()
   }
 
   // this is called periodically or on orders and reports on the current portfolio
@@ -208,7 +215,7 @@ async function main() {
 
   await publisher.connect()
 
-  setInterval(portfolio_tracker.report_current_portfolio.bind(portfolio_tracker), 1000 * 60 * 60 *6)
+  setInterval(portfolio_tracker.update_and_report_portfolio.bind(portfolio_tracker), 1000 * 60 * 60 *6)
 }
 
 main().catch((error) => {

@@ -3,10 +3,11 @@
 /* eslint func-names: ["warn", "as-needed"] */
 import { strict as assert } from 'assert';
 
+console.log('service starting')
+
 /**
  * TODO: send messages to MQ
  */
-require("dotenv").config();
 
 import * as Sentry from '@sentry/node';
 Sentry.init({});
@@ -14,7 +15,7 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "ftx-order-tracker");
 });
 
-const send_message = require("../../lib/telegram.js")("ftx-order-ingestion: ");
+import send_message from  '../../../../lib/telegram' 
 
 import { Logger } from '../../../../interfaces/logger'
 const LoggerClass = require("../../lib/faux_logger");

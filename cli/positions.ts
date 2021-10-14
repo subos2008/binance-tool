@@ -205,7 +205,8 @@ async function fixinate() {
 }
 
 async function delete_position(argv: any) {
-  await redis_positions.close_position({ ...argv, baseAsset: argv["symbol"] })
+  let position_identifier = create_position_identifier_from_tuple({ ...argv, baseAsset: argv["symbol"] })
+  await redis_positions.close_position(position_identifier)
   redis.quit()
 }
 

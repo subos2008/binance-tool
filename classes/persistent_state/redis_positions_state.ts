@@ -272,8 +272,8 @@ export class RedisPositionsState {
       console.error(error)
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.baseAsset)
-        scope.setTag("exchange", pi.exchange_identifier.exchange)
-        scope.setTag("account", pi.exchange_identifier.account)
+        scope.setTag("exchange", pi.exchange_identifier?.exchange)
+        scope.setTag("account", pi.exchange_identifier?.account)
         // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(error)
       })

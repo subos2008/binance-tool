@@ -22,6 +22,9 @@
 // TODO: Increase Position Size
 // 1. Breakout of Donchien channel (new high after a range period). The question is does a day of down followed the next day by a Donchien channel breakout count..
 
+// Example test code from the repo: https://github.com/anandanand84/technicalindicators/blob/master/test/directionalmovement/ADX.js
+// TODO: ADX grown indefinitely, perhaps, result is always an array
+
 import { Candle, CandleChartResult } from "binance-api-node"
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -29,12 +32,15 @@ BigNumber.DEBUG = true // Prevent NaN
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
+import { ADX } from "technicalindicators"
+const adx_period = 14
+const limadx = 14
 
 import { Logger } from "../../interfaces/logger"
 import { LimitedLengthCandlesHistory } from "../../classes/utils/candle_utils"
 
 export interface EntrySignalsCallbacks {
-  enter_position({
+  entry_signal({
     symbol,
     entry_price,
     direction,
@@ -43,19 +49,24 @@ export interface EntrySignalsCallbacks {
     entry_price: BigNumber
     direction: "long" | "short"
   }): void
+
   in_position(symbol: string): boolean
 }
+
+type ADX_RESULT_TYPE = [
+  {
+    "adx": number
+    "mdi": number
+    "pdi": number
+  }
+]
 
 export class EntrySignals {
   symbol: string
   logger: Logger
-
-  historical_candle_key: "high" | "close"
-  current_candle_key: "high" | "close"
-
-  callbacks: Edge56EntrySignalsCallbacks
-  price_history_candles: LimitedLengthCandlesHistory
-  volume_history_candles: LimitedLengthCandlesHistory
+  callbacks: EntrySignalsCallbacks
+  adx: ADX
+  color: string
 
   constructor({
     logger,
@@ -70,13 +81,29 @@ export class EntrySignals {
     symbol: string
     // historical_candle_key: "high" | "close"
     // current_candle_key: "high" | "close"
-    callbacks: Edge56EntrySignalsCallbacks
+    callbacks: EntrySignalsCallbacks
   }) {
     this.symbol = symbol
     this.logger = logger
     this.callbacks = callbacks
+    let reformed_candles: { close: number[]; high: number[]; low: number[]; period: number } = {
+      close: [],
+      high: [],
+      low: [],
+      period: adx_period,
+    }
+    initial_candles.forEach((x) => {
+      reformed_candles.low.push(parseFloat(x.low))
+      reformed_candles.close.push(parseFloat(x.close))
+      reformed_candles.high.push(parseFloat(x.high))
+    })
+    this.adx = new ADX(reformed_candles)
+    this.color = this.get_color(this.adx.getResult())
+  }
 
-    // 
+  get_color(result: ADX_RESULT_TYPE): "green" | "red" | "black" {
+    let i = result[-1]
+    return i.adx > limadx && i.pdi > i.mdi ? "green" : i.adx > limadx && i.pdi < i.mdi ? "red" : "black"
   }
 
   async ingest_new_candle({
@@ -94,61 +121,27 @@ export class EntrySignals {
       throw `Got a short timeframe candle`
     }
 
+    let entry_price = new BigNumber(candle["close"])
+
+    // TODO: ingest new candle
+    // process.exit(1)
+
+    let result: ADX_RESULT_TYPE = this.adx.getResult()
+    let color = this.get_color(result)
+    let prev_color = this.color
+
     try {
-      let potential_entry_price = new BigNumber(candle["close"])
-
-      let adx = {
-        get_color: ()=>"green"
-      }
-
-      // check for long entry
-      if (potential_entry_price.isGreaterThan(this.price_history_candles.get_highest_value())) {
-        let direction: "long" = "long"
-        console.log(
-          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}, ${new Date(
-            candle.closeTime
-          )}`
-        )
-        if (potential_entry_volume.isGreaterThan(this.volume_history_candles.get_highest_value())) {
-          console.log(
-            `Volume entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}, ${new Date(
-              candle.closeTime
-            )}`
-          )
-        } else {
-          console.log(
-            `Volume entry filter failed on ${symbol} ${direction} at ${potential_entry_price.toFixed()}, ${new Date(
-              candle.closeTime
-            )}`
-          )
-          return // no volume = no entry
-        }
-        this.callbacks.enter_position({
-          symbol: this.symbol,
-          entry_price: potential_entry_price,
-          direction,
-        })
-      }
-
-      // check for short entry
-      if (potential_entry_price.isLessThan(this.price_history_candles.get_lowest_value())) {
-        let direction: "short" = "short"
-        console.log(
-          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`
-        )
-        this.callbacks.enter_position({
-          symbol: this.symbol,
-          entry_price: potential_entry_price,
-          direction,
-        })
+      if (color === "green" && prev_color !== "green") {
+        this.callbacks.entry_signal({ symbol, entry_price, direction: "long" })
+      } else if (color === "red" && prev_color !== "red") {
+        this.callbacks.entry_signal({ symbol, entry_price, direction: "short" })
       }
     } catch (e) {
       this.logger.error(`Exception checking or entering position: ${e}`)
       console.error(e)
     } finally {
       // important not to miss this - lest we corrupt the history
-      this.price_history_candles.push(candle)
-      this.volume_history_candles.push(candle)
+      this.color = color // update history
     }
   }
 }

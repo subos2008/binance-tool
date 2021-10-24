@@ -19,11 +19,11 @@ const fs = require("fs")
 const null_logger = new Logger({ silent: true })
 const logger: Logger = null_logger
 
-import { EntrySignals, EntrySignalsCallbacks } from "../classes/edges/pure-adx"
-import { CandleChartResult } from "binance-api-node"
+import { ADX_STRING_CANDLE, EntrySignals, EntrySignalsCallbacks } from "../classes/edges/pure-adx"
 import { Logger } from "../interfaces/logger"
 import { CandlesCollector } from "../classes/utils/candle_utils"
 import { ADXInput } from "technicalindicators/declarations/directionalmovement/ADX"
+import { ADX } from "technicalindicators"
 
 const period = 14
 const input_unmunged = {
@@ -45,18 +45,16 @@ const input_unmunged = {
   period: period,
 }
 
-function munge_input(x:ADXInput) {
+function munge_input(x: ADXInput) {
   let len = x.close.length
   let res = []
   for (let i = 0; i < len; i++) {
-    let candle = {
-      high: x.close[i],
-      low: x.low[i],
-      close: x.close[i],
-      closeTime: 1e6 * (i + 1),
-  
-    } 
-    res.push(candle)
+    let candle: ADX_STRING_CANDLE = {
+      high: x.high[i].toString(),
+      low: x.low[i].toString(),
+      close: x.close[i].toString(),
+    }
+    res.push({ ...candle, closeTime: 1e6 * (i + 1) })
   }
   return res
 }
@@ -182,26 +180,43 @@ class CallbacksLog implements EntrySignalsCallbacks {
 }
 
 const symbol = "TESTPAIR"
-describe("ADX - author's dataset", function () {
-  function setup(initial_candles: CandleChartResult[]) {
-    let entry_signals = new EntrySignals({
-      logger,
-      symbol,
-      initial_candles,
-      callbacks: new CallbacksLog(),
-    })
-    return entry_signals
-  }
+describe("ADX (Average Directional Index)", function () {
+  describe("Author's dataset", function () {
+    function setup(initial_candles: ADX_STRING_CANDLE[]) {
+      let entry_signals = new EntrySignals({
+        logger,
+        symbol,
+        initial_candles,
+        callbacks: new CallbacksLog(),
+      })
+      return entry_signals
+    }
 
-  describe("no initial candles", function () {
-    it("matches all the expected output values", function () {
-      const entry_signals: EntrySignals = setup([])
-      let result = []
-      for (let i = 0; i < input.length; i++) {
-        entry_signals.ingest_new_candle({ candle: input[i], symbol, timeframe: "1d" })
-        if(entry_signals.current_result) result.push(entry_signals.current_result)
-      }
-      expect(result).to.deep.equal(expectResult)
+
+    describe("RAW ADX(initial_candles) only", function () {
+      it("matches all the expected output values", function () {
+        var adx = new ADX(input_unmunged);
+        expect(adx.getResult()).to.deep.equal(expectResult)
+      })
+    })
+
+    describe("EntrySignals(initial_candles) only", function () {
+      it("matches all the expected output values", function () {
+        const entry_signals: EntrySignals = setup(input)
+        expect(entry_signals.adx.getResult()).to.deep.equal(expectResult)
+      })
+    })
+
+    describe("no initial candles", function () {
+      it("matches all the expected output values", function () {
+        const entry_signals: EntrySignals = setup([])
+        let result = []
+        for (let i = 0; i < input.length; i++) {
+          entry_signals.ingest_new_candle({ candle: input[i], symbol, timeframe: "1d" })
+          if (entry_signals.current_result) result.push(entry_signals.current_result)
+        }
+        expect(result).to.deep.equal(expectResult)
+      })
     })
   })
 })

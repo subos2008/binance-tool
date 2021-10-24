@@ -123,7 +123,7 @@ export class EntrySignals {
   }: {
     timeframe: string
     symbol: string
-    candle: ADX_CANDLE
+    candle: ADX_STRING_CANDLE
   }) {
     if (timeframe !== "1d") {
       // Binance ws idosyncracy workaround

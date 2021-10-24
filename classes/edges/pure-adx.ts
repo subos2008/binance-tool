@@ -37,7 +37,8 @@ const adx_period = 14
 const limadx = 14
 
 import { Logger } from "../../interfaces/logger"
-import { LimitedLengthCandlesHistory } from "../../classes/utils/candle_utils"
+import { strict as assert } from "assert"
+import { ADXOutput } from "technicalindicators/declarations/directionalmovement/ADX"
 
 export interface EntrySignalsCallbacks {
   entry_signal({
@@ -53,20 +54,25 @@ export interface EntrySignalsCallbacks {
   in_position(symbol: string): boolean
 }
 
-type ADX_RESULT_TYPE = [
-  {
-    "adx": number
-    "mdi": number
-    "pdi": number
-  }
-]
+export type ADX_CANDLE = {
+  high: number
+  low: number
+  close: number
+}
 
+export type ADX_STRING_CANDLE = {
+  high: string
+  low: string
+  close: string
+}
 export class EntrySignals {
   symbol: string
   logger: Logger
   callbacks: EntrySignalsCallbacks
   adx: ADX
   color: string
+  prev_color: string
+  current_result: ADXOutput | undefined
 
   constructor({
     logger,
@@ -77,7 +83,7 @@ export class EntrySignals {
     callbacks,
   }: {
     logger: Logger
-    initial_candles: CandleChartResult[]
+    initial_candles: ADX_STRING_CANDLE[]
     symbol: string
     // historical_candle_key: "high" | "close"
     // current_candle_key: "high" | "close"
@@ -86,23 +92,27 @@ export class EntrySignals {
     this.symbol = symbol
     this.logger = logger
     this.callbacks = callbacks
-    let reformed_candles: { close: number[]; high: number[]; low: number[]; period: number } = {
+    // Sadly the adx library uses floating point
+    let reformed_candles: { close: number[]; high: number[]; low: number[]} = {
       close: [],
       high: [],
       low: [],
-      period: adx_period,
     }
     initial_candles.forEach((x) => {
       reformed_candles.low.push(parseFloat(x.low))
       reformed_candles.close.push(parseFloat(x.close))
       reformed_candles.high.push(parseFloat(x.high))
     })
-    this.adx = new ADX(reformed_candles)
-    this.color = this.get_color(this.adx.getResult())
+    this.adx = new ADX({...reformed_candles, period: adx_period})
+    try {
+      this.color = this.get_color(this.adx.getResult())
+    } catch (e) {
+      this.color = "undefined"
+    }
   }
 
-  get_color(result: ADX_RESULT_TYPE): "green" | "red" | "black" {
-    let i = result[-1]
+  get_color(i: ADXOutput): "green" | "red" | "black" {
+    console.log(i)
     return i.adx > limadx && i.pdi > i.mdi ? "green" : i.adx > limadx && i.pdi < i.mdi ? "red" : "black"
   }
 
@@ -113,7 +123,7 @@ export class EntrySignals {
   }: {
     timeframe: string
     symbol: string
-    candle: CandleChartResult | Candle
+    candle: ADX_CANDLE
   }) {
     if (timeframe !== "1d") {
       // Binance ws idosyncracy workaround
@@ -123,25 +133,21 @@ export class EntrySignals {
 
     let entry_price = new BigNumber(candle["close"])
 
-    // TODO: ingest new candle
-    // process.exit(1)
-
-    let result: ADX_RESULT_TYPE = this.adx.getResult()
-    let color = this.get_color(result)
-    let prev_color = this.color
+    this.current_result = this.adx.nextValue(candle as any)
+    if (this.current_result) {
+      this.prev_color = this.color
+      this.color = this.get_color(this.current_result)
+    }
 
     try {
-      if (color === "green" && prev_color !== "green") {
+      if (this.color === "green" && this.prev_color !== "green") {
         this.callbacks.entry_signal({ symbol, entry_price, direction: "long" })
-      } else if (color === "red" && prev_color !== "red") {
+      } else if (this.color === "red" && this.prev_color !== "red") {
         this.callbacks.entry_signal({ symbol, entry_price, direction: "short" })
       }
     } catch (e) {
       this.logger.error(`Exception checking or entering position: ${e}`)
       console.error(e)
-    } finally {
-      // important not to miss this - lest we corrupt the history
-      this.color = color // update history
     }
   }
 }

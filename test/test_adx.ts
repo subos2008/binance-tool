@@ -45,7 +45,7 @@ const input_unmunged = {
   period: period,
 }
 
-function munge_input(x: ADXInput) {
+function munge_input(x:ADXInput) {
   let len = x.close.length
   let res = []
   for (let i = 0; i < len; i++) {
@@ -54,7 +54,8 @@ function munge_input(x: ADXInput) {
       low: x.low[i],
       close: x.close[i],
       closeTime: 1e6 * (i + 1),
-    }
+  
+    } 
     res.push(candle)
   }
   return res
@@ -198,7 +199,7 @@ describe("ADX - author's dataset", function () {
       let result = []
       for (let i = 0; i < input.length; i++) {
         entry_signals.ingest_new_candle({ candle: input[i], symbol, timeframe: "1d" })
-        if (entry_signals.current_result) result.push(entry_signals.current_result)
+        if(entry_signals.current_result) result.push(entry_signals.current_result)
       }
       expect(result).to.deep.equal(expectResult)
     })

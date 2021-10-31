@@ -114,7 +114,7 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
   }
 
   async run() {
-    let limit = 105
+    let limit = 200
     let cg = new CoinGeckoAPI()
     // not all of these will be on Binance
     this.market_data = await cg.get_top_market_data({ limit })

@@ -2,6 +2,10 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
+/** Config: */
+const num_coins_to_monitor = 200
+const quote_symbol = 'USDT'.toUpperCase()
+
 import { strict as assert } from "assert"
 require("dotenv").config()
 const service_name = "edge56"
@@ -107,21 +111,22 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
   }
 
   market_data_for_symbol(symbol: string): CoinGeckoMarketData {
-    let usym = symbol.toUpperCase()
+    // TODO: make this replace use quote_symbol
+    let usym = symbol.toUpperCase().replace(/USDT$/, '')
     let data = this.market_data.find((x) => x.symbol.toUpperCase() === usym)
     if (!data) throw new Error(`Market data for symbol ${usym} not found.`) // can happen if data updates and
     return data
   }
 
   async run() {
-    let limit = 200
+    let limit = num_coins_to_monitor
     let cg = new CoinGeckoAPI()
     // not all of these will be on Binance
     this.market_data = await cg.get_top_market_data({ limit })
     // market_data = market_data.filter((x) => x.id !== "bitcoin")
     let coin_names = this.market_data.map((x) => x.symbol.toUpperCase())
     console.log(`Top ${limit} coins by market cap: ${coin_names.join(", ")}`)
-    let to_symbol = (md: CoinGeckoMarketData) => md.symbol.toUpperCase() + "USDT"
+    let to_symbol = (md: CoinGeckoMarketData) => md.symbol.toUpperCase() + quote_symbol
     let symbols = this.market_data.map(to_symbol)
 
     this.close_1d_candle_ws = this.ee.ws.candles(symbols, "1d", (candle) => {

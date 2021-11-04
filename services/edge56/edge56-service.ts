@@ -3,7 +3,7 @@
 /* eslint func-names: ["warn", "as-needed"] */
 
 /** Config: */
-const num_coins_to_monitor = 200
+const num_coins_to_monitor = 300
 const quote_symbol = 'USDT'.toUpperCase()
 
 import { strict as assert } from "assert"

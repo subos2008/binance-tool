@@ -34,6 +34,8 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
+var service_is_healthy: boolean = true;
+
 // redis + events publishing + binance
 
 // TODO: periodically verify we have the same local values as the exchange
@@ -223,15 +225,27 @@ main().catch((error) => {
   logger.error(`Error in main loop: ${error}`)
   logger.error(error)
   logger.error(`Error in main loop: ${error.stack}`)
-  soft_exit(1)
+  soft_exit(1, `Error in main loop: ${error}`)
 })
 
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
-function soft_exit(exit_code: number | null = null) {
+function soft_exit(exit_code: number | null = null, reason:string) {
   logger.warn(`soft_exit called, exit_code: ${exit_code}`)
-  if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`)
+  if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}, reason: ${reason}`)
   if (exit_code) process.exitCode = exit_code
   if (publisher) publisher.shutdown_streams()
+  service_is_healthy = false // it seems service isn't exiting on soft exit, but add this to make sure
+  Sentry.close(500)
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
+
+var express = require("express");
+var app = express();
+app.get("/health", function (res: any) {
+  if (service_is_healthy) res.send({ status: "OK" });
+  else res.status(500).json({ status: "UNHEALTHY" });
+});
+const port = "80"
+app.listen(port);
+logger.info(`Server on port ${port}`);

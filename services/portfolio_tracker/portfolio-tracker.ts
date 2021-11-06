@@ -65,13 +65,11 @@ process.on("unhandledRejection", (error) => {
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
-import { PortfolioPublisher } from "../../classes/amqp/portfolio-publisher"
 import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
 import { Portfolio, Balance } from "../../interfaces/portfolio"
 import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
 import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 
-const publisher = new PortfolioPublisher({ logger, send_message, broker_name: "binance" })
 
 class PortfolioTracker implements MasterPortfolioClass {
   send_message: Function
@@ -153,13 +151,6 @@ class PortfolioTracker implements MasterPortfolioClass {
         Sentry.captureException(err)
         logger.error(err)
       }
-
-      try {
-        await publisher.publish(portfolio)
-      } catch (err) {
-        Sentry.captureException(err)
-        logger.error(err)
-      }
     } catch (err) {
       Sentry.captureException(err)
       logger.error(err)
@@ -215,8 +206,6 @@ async function main() {
   binance.start()
   await binance.update_portfolio_from_exchange() // automatically triggers report_current_portfolio
 
-  await publisher.connect()
-
   setInterval(portfolio_tracker.update_and_report_portfolio.bind(portfolio_tracker), 1000 * 60 * 60 *6)
 }
 
@@ -234,7 +223,6 @@ function soft_exit(exit_code: number | null = null, reason:string) {
   logger.warn(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}, reason: ${reason}`)
   if (exit_code) process.exitCode = exit_code
-  if (publisher) publisher.shutdown_streams()
   service_is_healthy = false // it seems service isn't exiting on soft exit, but add this to make sure
   Sentry.close(500)
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes

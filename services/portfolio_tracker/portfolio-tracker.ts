@@ -240,9 +240,9 @@ function soft_exit(exit_code: number | null = null, reason:string) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-var express = require("express");
+import * as express from "express";
 var app = express();
-app.get("/health", function (res: any) {
+app.get("/health", function (req, res) {
   if (service_is_healthy) res.send({ status: "OK" });
   else res.status(500).json({ status: "UNHEALTHY" });
 });

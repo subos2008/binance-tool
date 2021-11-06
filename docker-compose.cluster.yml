@@ -24,8 +24,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ./services/order-tracker.ts --live=false
-    restart: on-failure
+    command: ./services/order-tracker/binance-order-tracker.ts --live=false
+    restart: never
     environment:
       - AMQP_HOST=amqp
       - AMQP_USER=guest
@@ -38,38 +38,38 @@ services:
       - redis
       - amqp
 
-  price-monitor:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: ./services/price-monitor.ts --live=false
-    restart: on-failure
-    environment:
-      - AMQP_HOST=amqp
-      - AMQP_USER=guest
-      - AMQP_PASSWORD=guest
-      - AMQP_EXCHANGE=test
-      - AMQP_VHOST=/
-      - AMQP_PROTOCOL=amqp
-      - REDIS_HOST=redis
-    depends_on: 
-      - redis
-      - amqp
+  # price-monitor:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   command: ./services/price-monitor.ts --live=false
+  #   restart: on-failure
+  #   environment:
+  #     - AMQP_HOST=amqp
+  #     - AMQP_USER=guest
+  #     - AMQP_PASSWORD=guest
+  #     - AMQP_EXCHANGE=test
+  #     - AMQP_VHOST=/
+  #     - AMQP_PROTOCOL=amqp
+  #     - REDIS_HOST=redis
+  #   depends_on: 
+  #     - redis
+  #     - amqp
 
-  redis-monitor:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    command: ./services/redis-monitor.ts
-    restart: on-failure
-    environment:
-      - AMQP_HOST=amqp
-      - AMQP_USER=guest
-      - AMQP_PASSWORD=guest
-      - AMQP_EXCHANGE=test
-      - AMQP_VHOST=/
-      - AMQP_PROTOCOL=amqp
-      - REDIS_HOST=redis
-    depends_on: 
-      - redis
+  # redis-monitor:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   command: ./services/redis-monitor.ts
+  #   restart: on-failure
+  #   environment:
+  #     - AMQP_HOST=amqp
+  #     - AMQP_USER=guest
+  #     - AMQP_PASSWORD=guest
+  #     - AMQP_EXCHANGE=test
+  #     - AMQP_VHOST=/
+  #     - AMQP_PROTOCOL=amqp
+  #     - REDIS_HOST=redis
+  #   depends_on: 
+  #     - redis
 

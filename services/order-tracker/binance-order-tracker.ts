@@ -38,7 +38,7 @@ process.on("unhandledRejection", (error) => {
 
 const BinanceFoo = require("binance-api-node").default
 import { Binance } from "binance-api-node"
-import { OrderExecutionTracker } from "../../service_lib/order_execution_tracker"
+import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData } from "../../interfaces/order_callbacks"
 
 let order_execution_tracker: OrderExecutionTracker | null = null

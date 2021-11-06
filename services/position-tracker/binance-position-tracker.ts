@@ -33,7 +33,7 @@ process.on("unhandledRejection", (error) => {
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
-import { OrderExecutionTracker } from "../../service_lib/order_execution_tracker"
+import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData, OrderCallbacks } from "../../interfaces/order_callbacks"
 import { PositionTracker } from "./position-tracker"
 

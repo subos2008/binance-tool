@@ -7,10 +7,10 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { OrderState } from "../classes/persistent_state/redis_order_state"
+import { OrderState } from "../../persistent_state/redis_order_state"
 
-import { Logger } from "../interfaces/logger"
-import { OrderCallbacks, BinanceOrderData } from "../interfaces/order_callbacks"
+import { Logger } from "../../../interfaces/logger"
+import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/order_callbacks"
 
 import * as Sentry from "@sentry/node"
 import { Binance, ExecutionReport } from "binance-api-node"

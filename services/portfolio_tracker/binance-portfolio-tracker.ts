@@ -60,7 +60,7 @@ process.on("unhandledRejection", (error) => {
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
-import { OrderExecutionTracker } from "../../service_lib/order_execution_tracker"
+import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData } from "../../interfaces/order_callbacks"
 import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 import { Balance, Portfolio } from "../../interfaces/portfolio"

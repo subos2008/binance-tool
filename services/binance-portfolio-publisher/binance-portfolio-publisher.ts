@@ -3,18 +3,21 @@
 /* eslint func-names: ["warn", "as-needed"] */
 
 // portfolio-publisher service: 
-//  Publishes the portfolio on startup and then monitoring the streams
-//  and re-publishing on any changes
+//  Publishes the portfolio to AMQP:
+//    1. on startup  
+//    2. monitoring the order streams and re-publishing on any changes
+//    3. Periodically
 //
 // On changes:
 //  1. Publishes to AMQP: portfolio with current price information
 //
-// Thoughts:
+// Thoughts/TODO:
 //  1. Could also check redis-trades matches position sizes
 //  1. Doesn't currently re-publish on deposits/withdrawals
 
+
 import { strict as assert } from "assert"
-const service_name = "portfolio-tracker"
+const service_name = "binance-portfolio-publisher"
 
 import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 
@@ -27,17 +30,6 @@ Sentry.configureScope(function (scope: any) {
 })
 
 var service_is_healthy: boolean = true;
-
-// redis + events publishing + binance
-
-// TODO: periodically verify we have the same local values as the exchange
-//        - report to sentry if we are out of sync
-
-// TODO:
-// 1. Take initial portfolio code from the position sizer
-// 2. Add stream watching code from the order tracker
-// 3. Maintain portfolio state - probably just in-process
-// 4. Publish to telegram when portfolio changes
 
 const send_message = require("../../lib/telegram.js")(`${service_name}: `)
 
@@ -54,6 +46,7 @@ BigNumber.prototype.valueOf = function () {
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
+  Sentry.captureException(error)
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 

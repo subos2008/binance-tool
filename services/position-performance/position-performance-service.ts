@@ -13,7 +13,7 @@ const logger: Logger = new LoggerClass({ silent: false })
 const service_name = "position-performance"
 const send_message = require("../../lib/telegram.js")(`${service_name}: `)
 
-const update_interval_seconds: number = Number(process.env.UPDATE_INTERVAL_SECONDS) || 6 * 60 * 60
+const update_interval_seconds: number = Number(process.env.UPDATE_INTERVAL_SECONDS) || 2 * 60 * 60
 
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
 set_redis_logger(logger)

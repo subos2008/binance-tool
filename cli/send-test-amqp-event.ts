@@ -11,12 +11,11 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("cli", "positions")
 })
 
-let service_name = "cli" // TODO
 import { Logger } from "../interfaces/logger"
 const LoggerClass = require("../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
-import { GenericPublisher } from "../classes/amqp/generic-publisher"
+import { GenericTopicPublisher } from "../classes/amqp/generic-publishers"
 
 const yargs = require("yargs")
 
@@ -32,6 +31,7 @@ async function main() {
 main().then(() => {})
 
 async function send_test_event() {
-  let pub = new GenericPublisher({ logger, event_name: "InternalConnectivityTestEvent" })
-  pub.publish(JSON.stringify({ hello: "world" }))
+  let pub = new GenericTopicPublisher({ logger, event_name: "InternalConnectivityTestEvent" })
+  await pub.publish(JSON.stringify({ hello: "world" }))
+  await pub.shutdown_streams()
 }

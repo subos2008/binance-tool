@@ -50,8 +50,8 @@ class EventLogger implements MessageProcessor {
   }
 
   async register_message_processors() {
-    let listner_factory = new ListenerFactory({ logger })
-    listner_factory.build_isolated_listener({ event_name: "InternalConnectivityTestEvent", message_processor: this })
+    let listener_factory = new ListenerFactory({ logger })
+    listener_factory.build_isolated_listener({ event_name: "InternalConnectivityTestEvent", message_processor: this })
   }
 
   async process_message(event: any) {

@@ -11,36 +11,39 @@ import * as Sentry from "@sentry/node"
 // assert(exchange)
 
 import { Channel, connect, Connection } from "amqplib"
-import { Portfolio } from "../../interfaces/portfolio"
-import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 import { MessageRouting } from "./message-routing"
 
-export class GenericPublisher {
+export class GenericTopicPublisher {
   logger: Logger
   connection: Connection
   channel: Channel
   routing_key: string
   exchange_name: string
+  durable: boolean
 
   constructor({ logger, event_name }: { logger: Logger; event_name: string }) {
     this.logger = logger
     // we needed a routing key and this seems like a good one
-    let { routing_key, exchange_name } = MessageRouting.amqp_routing({ event_name })
+    let { routing_key, exchange_name, durable } = MessageRouting.amqp_routing({ event_name })
     this.routing_key = routing_key
     this.exchange_name = exchange_name
+    this.durable = durable
+    this.logger.info(
+      `Publisher created for ${event_name} events to ${exchange_name} exchange with routing key ${routing_key}`
+    )
   }
 
   async connect() {
     try {
       if (!this.connection) {
         this.connection = await connect(connect_options)
-        if (!this.connection) throw new Error(`PortfolioPublisher: this.connection is null`)
+        if (!this.connection) throw new Error(`${this.constructor.name}: this.connection is null`)
       }
       if (!this.channel) {
         this.channel = await this.connection.createChannel()
-        if (!this.channel) throw new Error(`PortfolioPublisher: this.channel is null`)
-        this.channel.assertExchange(this.exchange_name, "topic", {
-          durable: false,
+        if (!this.channel) throw new Error(`${this.constructor.name}: this.channel is null`)
+        await this.channel.assertExchange(this.exchange_name, "topic", {
+          durable: this.durable,
         })
         this.logger.info(`Connection with AMQP server established.`)
       }
@@ -60,7 +63,7 @@ export class GenericPublisher {
       persistent: false,
       timestamp: Date.now(),
     }
-    const server_full = await this.channel.publish(this.exchange_name, this.routing_key, Buffer.from(msg), options)
+    const server_full = ! this.channel.publish(this.exchange_name, this.routing_key, Buffer.from(msg), options)
     if (server_full) {
       let msg = "AMQP reports server full when trying to publish portfolio"
       Sentry.captureMessage(msg, Sentry.Severity.Error)

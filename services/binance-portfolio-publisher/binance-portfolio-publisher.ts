@@ -58,7 +58,7 @@ import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
 import { Portfolio, Balance } from "../../interfaces/portfolio"
 import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
 
-const publisher = new PortfolioPublisher({ logger: _logger, send_message, exchange_identifier })
+const publisher = new PortfolioPublisher({ logger: _logger, send_message, exchange_identifier, event_name: 'SpotBinancePortfolio' })
 
 class PortfolioTracker implements MasterPortfolioClass {
   send_message: Function

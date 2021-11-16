@@ -10,8 +10,8 @@ import * as Sentry from "@sentry/node"
 // const exchange = "portfolio"
 // assert(exchange)
 
-import { Channel, connect, Connection } from "amqplib"
-import { MessageRouting } from "./message-routing"
+import { Channel, connect, Connection, Options } from "amqplib"
+import { MyEventNameType, MessageRouting } from "./message-routing"
 
 export class GenericTopicPublisher {
   logger: Logger
@@ -21,7 +21,7 @@ export class GenericTopicPublisher {
   exchange_name: string
   durable: boolean
 
-  constructor({ logger, event_name }: { logger: Logger; event_name: string }) {
+  constructor({ logger, event_name }: { logger: Logger; event_name: MyEventNameType }) {
     this.logger = logger
     // we needed a routing key and this seems like a good one
     let { routing_key, exchange_name, durable } = MessageRouting.amqp_routing({ event_name })
@@ -55,19 +55,15 @@ export class GenericTopicPublisher {
     }
   }
 
-  async publish(event: string): Promise<boolean> {
+  async publish(event: string, options?: Options.Publish): Promise<boolean> {
     await this.connect()
     let msg = event
-    const options = {
-      expiration: event_expiration_seconds,
-      persistent: false,
-      timestamp: Date.now(),
-    }
-    const server_full = ! this.channel.publish(this.exchange_name, this.routing_key, Buffer.from(msg), options)
+    const server_full = !this.channel.publish(this.exchange_name, this.routing_key, Buffer.from(msg), options)
     if (server_full) {
-      let msg = "AMQP reports server full when trying to publish portfolio"
+      let msg = "AMQP reports server full when trying to publish"
       Sentry.captureMessage(msg, Sentry.Severity.Error)
       this.logger.error(msg)
+      throw new Error(msg)
     }
     return server_full
   }

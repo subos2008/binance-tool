@@ -12,7 +12,7 @@ import { Channel, connect, Connection } from "amqplib"
 import { assert } from "console"
 import { Logger } from "../../interfaces/logger"
 import { MessageProcessor } from "./interfaces"
-import { MessageRouting } from "./message-routing"
+import { MessageRouting, MyEventNameType } from "./message-routing"
 
 // A Factory / router where you give it an event type and some other shit like an exchange identifier
 // and it gives you the amqp connection / queue binding that calls your callback?
@@ -27,7 +27,7 @@ import { MessageRouting } from "./message-routing"
 
 /**
  * What do we currently have in our routing?
- * - EventType
+ * - MyEventNameType
  * - ExchangeIdentifier
  * - exchange (AMQP exchange name)
  * - routing_keys
@@ -81,7 +81,7 @@ export class ListenerFactory {
     message_processor,
   }: {
     message_processor: MessageProcessor
-    event_name: string
+    event_name: MyEventNameType
   }) {
     try {
       assert(message_processor && event_name)
@@ -102,7 +102,7 @@ export class ListenerFactory {
     message_processor,
   }: {
     message_processor: MessageProcessor
-    event_name: string
+    event_name: MyEventNameType
   }) {
     // TODO: durable, exclusive, noAck, ... lots of configurable shit here...
     let { routing_key, exchange_name, exchange_type, durable } = MessageRouting.amqp_routing({ event_name })

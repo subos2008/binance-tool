@@ -34,6 +34,12 @@ process.on("unhandledRejection", (error) => {
 
 import { MessageProcessor } from "../../classes/amqp/interfaces"
 
+let region = "ap-southeast-1"
+import { PutObjectCommand, PutObjectRequest, S3Client } from "@aws-sdk/client-s3"
+const s3Client = new S3Client({ region })
+let Bucket = "binance-tool-event-storage"
+let event_name: MyEventNameType = "SpotBinancePortfolio"
+
 class EventLogger implements MessageProcessor {
   send_message: Function
   logger: Logger
@@ -51,11 +57,21 @@ class EventLogger implements MessageProcessor {
 
   async register_message_processors() {
     let listener_factory = new ListenerFactory({ logger })
-    listener_factory.build_isolated_listener({ event_name: "InternalConnectivityTestEvent", message_processor: this })
+    listener_factory.build_isolated_listener({ event_name, message_processor: this })
   }
 
   async process_message(event: any) {
-    this.logger.info(event)
+    try {
+      this.logger.info(event)
+      let Body = event.content.toString()
+      let Key = `${event_name}/${new Date()}` // ms timestamp
+      let params: PutObjectRequest = { Bucket, Key, Body }
+      const results = await s3Client.send(new PutObjectCommand(params))
+      console.log("Successfully created " + params.Key + " and uploaded it to " + params.Bucket + "/" + params.Key)
+    } catch (err) {
+      Sentry.captureException(err)
+      this.logger.error(err)
+    }
   }
 }
 
@@ -87,6 +103,7 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 }
 
 import * as express from "express"
+import { MyEventNameType } from "../../classes/amqp/message-routing"
 var app = express()
 app.get("/health", function (req, res) {
   if (service_is_healthy) res.send({ status: "OK" })

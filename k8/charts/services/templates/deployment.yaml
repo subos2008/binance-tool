@@ -491,11 +491,17 @@ spec:
           env:
             - name: SENTRY_DSN
               value: "https://2de8658dca5b4bf18c7787cfd2deb738@o369902.ingest.sentry.io/5763740"
-{{- include "binance.vars" . | nindent 12 }}
-{{- include "datadog.vars" . | nindent 12 }}
-{{- include "telegram.vars" . | nindent 12 }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  key: AWS_ACCESS_KEY_ID
+                  name: aws-event-logger
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: AWS_SECRET_ACCESS_KEY
+                  name: aws-event-logger
 {{- include "amqp.vars" . | nindent 12 }}
-{{- include "redis.vars" . | nindent 12 }}
 ---
 apiVersion: apps/v1
 kind: Deployment

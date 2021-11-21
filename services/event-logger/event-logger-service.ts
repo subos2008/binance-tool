@@ -36,6 +36,8 @@ import { MessageProcessor } from "../../classes/amqp/interfaces"
 
 let region = "ap-southeast-1"
 import { PutObjectCommand, PutObjectRequest, S3Client } from "@aws-sdk/client-s3"
+assert(process.env.AWS_ACCESS_KEY_ID)
+assert(process.env.AWS_SECRET_ACCESS_KEY)
 const s3Client = new S3Client({ region })
 let Bucket = "binance-tool-event-storage"
 let event_name: MyEventNameType = "SpotBinancePortfolio"

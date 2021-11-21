@@ -117,6 +117,14 @@ Environment variables
       name: telegram
 {{- end -}}
 
+{{- define "telegram-bot-bert.vars" -}}
+- name: TELEGRAM_KEY
+  valueFrom:
+    secretKeyRef:
+      key: TELEGRAM_KEY
+      name: telegram
+{{- end -}}
+
 {{- define "ftx-ro.vars" -}}
 - name: FTX_RO_APIKEY
   valueFrom:

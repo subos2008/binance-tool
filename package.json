@@ -8,6 +8,7 @@
     "nodemon": "./node_modules/.bin/nodemon -e js,ts ./node_modules/.bin/mocha -r ts-node/register ./test/test_*"
   },
   "dependencies": {
+    "@influxdata/influxdb-client": "^1.20.0",
     "@sentry/node": "5.15.2",
     "@types/amqplib": "^0.5.13",
     "@types/bignumber.js": "^5.0.0",

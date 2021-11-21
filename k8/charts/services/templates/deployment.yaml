@@ -549,6 +549,7 @@ spec:
             - name: SENTRY_DSN
               value: "https://2de8658dca5b4bf18c7787cfd2deb738@o369902.ingest.sentry.io/5763740" # TODO
 {{- include "amqp.vars" . | nindent 12 }}
+{{- include "influxdb.vars" . | nindent 12 }}
 ---
 apiVersion: apps/v1
 kind: Deployment

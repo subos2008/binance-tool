@@ -55,7 +55,7 @@ class EventLogger implements MessageProcessor {
   }
 
   async process_message(event: any) {
-    this.logger.info(event)
+    this.logger.info(event.content.toString())
   }
 }
 

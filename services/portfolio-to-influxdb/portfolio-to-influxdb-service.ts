@@ -65,7 +65,7 @@ class EventLogger implements MessageProcessor {
     let name = `${exchange}:${account}:spot`
     try {
       let msg = JSON.parse(event.content.toString())
-      console.log(msg)
+      // console.log(msg)
       let usd_value = msg.usd_value
       let btc_value = msg.btc_value
       const point1 = new Point(name)

@@ -69,6 +69,8 @@ export class GenericTopicPublisher {
   }
 
   async shutdown_streams() {
-    this.connection.close()
+    // Waiting for a channel close is basically a flush
+    await this.channel.close()
+    await this.connection.close()
   }
 }

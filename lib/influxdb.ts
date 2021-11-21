@@ -6,7 +6,7 @@ dotenv.config({ path: "../.env" })
 const url = process.env.INFLUXDB_HOST
 const token = process.env.INFLUXDB_TOKEN
 const orgid = process.env.INFLUXDB_ORG_ID
-const bucket = 'binance-tool' // process.env.INFLUXDB_BUCKET
+const bucket = "binance-tool" // process.env.INFLUXDB_BUCKET
 
 // const assert = require("assert");
 import * as assert from "assert"
@@ -15,16 +15,21 @@ assert(token)
 assert(orgid)
 assert(bucket)
 
-import { InfluxDB, HttpError } from "@influxdata/influxdb-client"
+import { InfluxDB, HttpError, Point } from "@influxdata/influxdb-client"
 // You can generate a Token from the "Tokens Tab" in the UI
 const writeApi = new InfluxDB({ url, token }).getWriteApi(orgid, bucket, "s")
 
 async function write(line: string) {
-   writeApi.writeRecord(line)
-   writeApi.flush()
+  writeApi.writeRecord(line)
+  writeApi.flush()
 }
 
-export default { write, flush_and_close }
+async function writePoint(point: Point) {
+  writeApi.writePoint(point)
+  writeApi.flush()
+}
+
+export default { write, flush_and_close, writePoint }
 
 async function flush_and_close() {
   // flush pending writes and close writeApi

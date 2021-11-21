@@ -32,8 +32,7 @@ process.on("unhandledRejection", (error) => {
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
-import influxdb from "../../lib/influxdb";
-
+import influxdb from "../../lib/influxdb"
 
 import { MessageProcessor } from "../../classes/amqp/interfaces"
 
@@ -57,24 +56,29 @@ class EventLogger implements MessageProcessor {
     listener_factory.build_isolated_listener({ event_name: "SpotBinancePortfolio", message_processor: this })
   }
 
-  async process_message(event: any) {
+  async process_message(event: any): Promise<void> {
     this.logger.info(event.content.toString())
 
     // Upload balances to influxdb
-    let name = `binance:default:spot`
+    let exchange = "binance"
+    let account = "default"
+    let name = `${exchange}:${account}:spot`
     try {
       let msg = JSON.parse(event.content.toString())
       console.log(msg)
-      let usd_value = msg.usd_value;
-      let btc_value = msg.btc_value;
-      let line = `${name} usd=${usd_value} btc=${btc_value}`
-      console.log(`Uploading line: ${line}`);
-      await influxdb.write(line);
+      let usd_value = msg.usd_value
+      let btc_value = msg.btc_value
+      const point1 = new Point(name)
+        .tag("example", "write.ts")
+        .floatField("usd", usd_value)
+        .floatField("btc", btc_value)
+      return influxdb.writePoint(point1) // return promise
     } catch (e) {
-      console.log(`Error "${e}" uploading ${name} to influxdb.`);
-      console.log(e);
-      Sentry.captureException(e);
-    }  }
+      console.log(`Error "${e}" uploading ${name} to influxdb.`)
+      console.log(e)
+      Sentry.captureException(e)
+    }
+  }
 }
 
 async function main() {
@@ -105,6 +109,7 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 }
 
 import * as express from "express"
+import { Point } from "@influxdata/influxdb-client"
 var app = express()
 app.get("/health", function (req, res) {
   if (service_is_healthy) res.send({ status: "OK" })

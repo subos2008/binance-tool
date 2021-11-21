@@ -66,7 +66,7 @@ class EventLogger implements MessageProcessor {
     try {
       this.logger.info(event)
       let Body = event.content.toString()
-      let Key = `${event_name}/${new Date()}` // ms timestamp
+      let Key = `${event_name}/${+new Date()}` // ms timestamp
       let params: PutObjectRequest = { Bucket, Key, Body }
       const results = await s3Client.send(new PutObjectCommand(params))
       console.log("Successfully created " + params.Key + " and uploaded it to " + params.Bucket + "/" + params.Key)

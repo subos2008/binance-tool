@@ -63,7 +63,7 @@ class EventLogger implements MessageProcessor {
     // Upload balances to influxdb
     let name = `binance:default:spot`
     try {
-      let msg = event.content.msg
+      let msg = event.content
       console.log(msg)
       let usd_value = msg.usd_value;
       let btc_value = msg.btc_value;

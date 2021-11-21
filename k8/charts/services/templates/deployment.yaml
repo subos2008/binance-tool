@@ -585,7 +585,7 @@ spec:
         - name: tg-bot-bert
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/tg-bot-bert/bert.ts", "--live"]
+          command: ["./services/tg-bot-bert-2000/bert.ts", "--live"]
           ports:
           - name: http
             containerPort: 3000

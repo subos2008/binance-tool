@@ -18,7 +18,7 @@ export class MessageRouting {
 
       case "SpotBinancePortfolio":
         return {
-          routing_key: "connectivity-test-events",
+          routing_key: "portfolio",
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,

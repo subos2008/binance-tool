@@ -82,11 +82,13 @@ export default class RequestUtil {
     }
 
     if (typeof key === "string") {
-      this.globalRequestOptions.headers[getHeader("key", options.domain)] = key
+      if (this.globalRequestOptions.headers)
+        this.globalRequestOptions.headers[getHeader("key", options.domain)] = key
     }
 
     if (typeof this.options.subAccountName === "string") {
-      this.globalRequestOptions.headers[getHeader("subaccount", options.domain)] = this.options.subAccountName
+      if (this.globalRequestOptions.headers)
+        this.globalRequestOptions.headers[getHeader("subaccount", options.domain)] = this.options.subAccountName
     }
 
     this.baseUrl = baseUrl
@@ -122,6 +124,7 @@ export default class RequestUtil {
 
   async _call(method: Method, endpoint: string, params?: string | object): GenericAPIResponse {
     const options = {
+      headers: {},
       ...this.globalRequestOptions,
       method: method,
       transformResponse: (res: string) => {

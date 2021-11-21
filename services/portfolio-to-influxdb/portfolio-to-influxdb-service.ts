@@ -67,7 +67,7 @@ class EventLogger implements MessageProcessor {
       console.log(msg)
       let usd_value = msg.usd_value;
       let btc_value = msg.btc_value;
-      let line = `${name} usd=${usd_value}  btc=${btc_value}`
+      let line = `${name} usd=${usd_value} btc=${btc_value}`
       console.log(`Uploading line: ${line}`);
       await influxdb.write(line);
     } catch (e) {

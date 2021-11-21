@@ -62,14 +62,17 @@ class EventLogger implements MessageProcessor {
     // Upload balances to influxdb
     let exchange = "binance"
     let account = "default"
-    let name = `${exchange}:${account}:spot`
+    let account_type = 'spot'
+    let name = `balance`
     try {
       let msg = JSON.parse(event.content.toString())
       // console.log(msg)
       let usd_value = msg.usd_value
       let btc_value = msg.btc_value
       const point1 = new Point(name)
-        .tag("example", "write.ts")
+        .tag("exchange", exchange)
+        .tag("account", account)
+        .tag("account_type", account)
         .floatField("usd", usd_value)
         .floatField("btc", btc_value)
       return influxdb.writePoint(point1) // return promise

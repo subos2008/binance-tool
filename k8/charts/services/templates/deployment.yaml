@@ -500,6 +500,59 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: portfolio-to-influxdb
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "portfolio-to-influxdb"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "portfolio-to-influxdb"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "portfolio-to-influxdb"}'
+        ad.datadoghq.com/portfolio-to-influxdb.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "portfolio-to-influxdb"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: portfolio-to-influxdb
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["./services/portfolio-to-influxdb/portfolio-to-influxdb-service.ts"]
+          # ports:
+          # - name: http
+          #   containerPort: 8081
+          #   protocol: TCP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          env:
+            - name: SENTRY_DSN
+              value: "https://2de8658dca5b4bf18c7787cfd2deb738@o369902.ingest.sentry.io/5763740" # TODO
+{{- include "amqp.vars" . | nindent 12 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: tg-bot-bert
   labels:
 {{ include "mychart.labels" . | indent 4 }}

@@ -155,10 +155,10 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: binance-portfolio-publisher
+  name: binance-to-amqp
   labels:
 {{ include "mychart.labels" . | indent 4 }}
-    binance-tool/service: "binance-portfolio-publisher"
+    binance-tool/service: "binance-to-amqp"
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -170,13 +170,13 @@ spec:
       labels:
         app.kubernetes.io/name: {{ include "mychart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-        binance-tool/service: "binance-portfolio-publisher"
+        binance-tool/service: "binance-to-amqp"
       annotations:
-        ad.datadoghq.com/tags: '{"service": "binance-portfolio-publisher"}'
-        ad.datadoghq.com/binance-portfolio-publisher.logs: >-
+        ad.datadoghq.com/tags: '{"service": "binance-to-amqp"}'
+        ad.datadoghq.com/binance-to-amqp.logs: >-
           [{
             "source": "nodejs",
-            "service": "binance-portfolio-publisher"
+            "service": "binance-to-amqp"
           }]   
     spec:
     {{- with .Values.imagePullSecrets }}
@@ -185,10 +185,10 @@ spec:
     {{- end }}
       volumes:
       containers:
-        - name: binance-portfolio-publisher
+        - name: binance-to-amqp
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/binance-portfolio-publisher/binance-portfolio-publisher.ts", "--live"]
+          command: ["./services/binance-to-amqp/binance-to-amqp.ts", "--live"]
           ports:
             - name: http
               containerPort: 80

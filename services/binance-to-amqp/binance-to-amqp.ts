@@ -20,7 +20,7 @@ import { strict as assert } from "assert"
 // Config
 import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 const exchange_identifier: ExchangeIdentifier = { exchange: "binance", account: "default" }
-const service_name = "binance-portfolio-publisher"
+const service_name = "binance-to-amqp"
 
 import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 
@@ -56,7 +56,7 @@ process.on("unhandledRejection", (error) => {
 import { PortfolioPublisher } from "../../classes/amqp/portfolio-publisher"
 import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
 import { Portfolio, Balance } from "../../interfaces/portfolio"
-import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
+import { BinancePortfolioTracker } from "./portfolio"
 
 const publisher = new PortfolioPublisher({ logger: _logger, send_message, exchange_identifier, event_name: 'SpotBinancePortfolio' })
 

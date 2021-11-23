@@ -22,13 +22,11 @@
 // 3. Maintain portfolio state - probably just in-process
 
 import { strict as assert } from "assert"
-const service_name = "binance-portfolio-tracker"
+const service_name = "binance-to-amqp"
 
 import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 import { Binance as BinanceType } from "binance-api-node"
 import Binance from "binance-api-node"
-
-require("dotenv").config()
 
 import * as Sentry from "@sentry/node"
 Sentry.init({})

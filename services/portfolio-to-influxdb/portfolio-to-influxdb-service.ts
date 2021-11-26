@@ -103,10 +103,10 @@ main().catch((error) => {
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code: number | null = null, reason: string) {
+  service_is_healthy = false // it seems service isn't exiting on soft exit, but add this to make sure
   logger.warn(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}, reason: ${reason}`)
   if (exit_code) process.exitCode = exit_code
-  service_is_healthy = false // it seems service isn't exiting on soft exit, but add this to make sure
   Sentry.close(500)
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }

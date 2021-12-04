@@ -11,6 +11,7 @@ import * as Sentry from "@sentry/node"
 import { Channel, connect, Connection } from "amqplib"
 import { assert } from "console"
 import { Logger } from "../../interfaces/logger"
+import { HealthAndReadinessSubsystem } from "../health_and_readiness"
 import { MessageProcessor } from "./interfaces"
 import { MessageRouting, MyEventNameType } from "./message-routing"
 
@@ -69,6 +70,7 @@ class MessageProcessorIsolator implements MessageProcessor {
 
 export class ListenerFactory {
   logger: Logger
+  health_and_readiness: HealthAndReadinessSubsystem|undefined
 
   constructor({ logger }: { logger: Logger }) {
     this.logger = logger
@@ -79,17 +81,23 @@ export class ListenerFactory {
   async build_isolated_listener({
     event_name,
     message_processor,
+    health_and_readiness
   }: {
     message_processor: MessageProcessor
     event_name: MyEventNameType
+    health_and_readiness?: HealthAndReadinessSubsystem
   }) {
+    this.health_and_readiness = health_and_readiness
     try {
       assert(message_processor && event_name)
       await this.connect({
         event_name,
         message_processor: new MessageProcessorIsolator({ event_name, message_processor, logger: this.logger }),
       })
+      this.health_and_readiness?.healthy(true)
+      this.health_and_readiness?.ready(true)
     } catch (err) {
+      this.health_and_readiness?.healthy(false)
       this.logger.error(`Error connecting MessageProcessor for event_name '${event_name}' to amqp server`)
       this.logger.error(err)
       Sentry.captureException(err)

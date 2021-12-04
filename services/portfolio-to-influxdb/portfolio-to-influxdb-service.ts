@@ -19,8 +19,6 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-var service_is_healthy: boolean = true
-
 const send_message = require("../../lib/telegram.js")(`${service_name}: `)
 
 import { Logger } from "../../interfaces/logger"
@@ -35,16 +33,34 @@ process.on("unhandledRejection", (error) => {
 import influxdb from "../../lib/influxdb"
 
 import { MessageProcessor } from "../../classes/amqp/interfaces"
+import { Point } from "@influxdata/influxdb-client"
+import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
+import { MyEventNameType } from "../../classes/amqp/message-routing"
+
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 class EventLogger implements MessageProcessor {
   send_message: Function
   logger: Logger
+  health_and_readiness: HealthAndReadiness
+  subsystem_influxdb: HealthAndReadinessSubsystem
 
-  constructor({ send_message, logger }: { send_message: (msg: string) => void; logger: Logger }) {
+  constructor({
+    send_message,
+    logger,
+    health_and_readiness,
+  }: {
+    send_message: (msg: string) => void
+    logger: Logger
+    health_and_readiness: HealthAndReadiness
+  }) {
     assert(logger)
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
+    this.health_and_readiness = health_and_readiness
+    this.subsystem_influxdb = health_and_readiness.addSubsystem({ name: "influxdb", ready: true, healthy: true })
   }
 
   async start() {
@@ -52,8 +68,18 @@ class EventLogger implements MessageProcessor {
   }
 
   async register_message_processors() {
+    let event_name: MyEventNameType = "SpotBinancePortfolio"
     let listener_factory = new ListenerFactory({ logger })
-    listener_factory.build_isolated_listener({ event_name: "SpotBinancePortfolio", message_processor: this })
+    let health_and_readiness = this.health_and_readiness.addSubsystem({
+      name: event_name,
+      ready: false,
+      healthy: false,
+    })
+    listener_factory.build_isolated_listener({
+      event_name,
+      message_processor: this,
+      health_and_readiness,
+    })
   }
 
   async process_message(event: any): Promise<void> {
@@ -62,7 +88,7 @@ class EventLogger implements MessageProcessor {
     // Upload balances to influxdb
     let exchange = "binance"
     let account = "default"
-    let account_type = 'spot'
+    let account_type = "spot"
     let name = `balance`
     try {
       let msg = JSON.parse(event.content.toString())
@@ -80,6 +106,8 @@ class EventLogger implements MessageProcessor {
       console.log(`Error "${e}" uploading ${name} to influxdb.`)
       console.log(e)
       Sentry.captureException(e)
+      this.subsystem_influxdb.healthy(false)
+      soft_exit(1, "Exeception submitting to Influxdb")
     }
   }
 }
@@ -88,7 +116,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  let foo = new EventLogger({ logger, send_message })
+  let foo = new EventLogger({ logger, send_message, health_and_readiness })
   foo.start()
 }
 
@@ -103,7 +131,7 @@ main().catch((error) => {
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code: number | null = null, reason: string) {
-  service_is_healthy = false // it seems service isn't exiting on soft exit, but add this to make sure
+  service_is_healthy.healthy(false) // it seems service isn't exiting on soft exit, but add this to make sure
   logger.error(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}, reason: ${reason}`)
   if (exit_code) process.exitCode = exit_code
@@ -112,11 +140,14 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 }
 
 import * as express from "express"
-import { Point } from "@influxdata/influxdb-client"
 var app = express()
 app.get("/health", function (req, res) {
-  if (service_is_healthy) res.send({ status: "OK" })
+  if (health_and_readiness.healthy()) res.send({ status: "OK" })
   else res.status(500).json({ status: "UNHEALTHY" })
+})
+app.get("/ready", function (req, res) {
+  if (health_and_readiness.ready()) res.send({ status: "OK" })
+  else res.status(500).json({ status: "NOT READY" })
 })
 const port = "80"
 app.listen(port)

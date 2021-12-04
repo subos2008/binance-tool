@@ -72,7 +72,7 @@ class EventLogger implements MessageProcessor {
       const point1 = new Point(name)
         .tag("exchange", exchange)
         .tag("account", account)
-        .tag("account_type", account)
+        .tag("account_type", account_type)
         .floatField("usd", usd_value)
         .floatField("btc", btc_value)
       return influxdb.writePoint(point1) // return promise

@@ -476,14 +476,14 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./services/event-logger/event-logger-service.ts", "--live"]
-          # ports:
-          # - name: http
-          #   containerPort: 8081
-          #   protocol: TCP
-          # livenessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: http
+          ports:
+          - name: http
+            containerPort: 80
+            protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
           # readinessProbe:
           #   httpGet:
           #     path: /health
@@ -539,14 +539,14 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["./services/portfolio-to-influxdb/portfolio-to-influxdb-service.ts"]
-          # ports:
-          # - name: http
-          #   containerPort: 8081
-          #   protocol: TCP
-          # livenessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: http
+          ports:
+          - name: http
+            containerPort: 80
+            protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
           # readinessProbe:
           #   httpGet:
           #     path: /health

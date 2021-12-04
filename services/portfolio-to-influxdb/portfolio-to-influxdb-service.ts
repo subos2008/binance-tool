@@ -104,7 +104,7 @@ main().catch((error) => {
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code: number | null = null, reason: string) {
   service_is_healthy = false // it seems service isn't exiting on soft exit, but add this to make sure
-  logger.warn(`soft_exit called, exit_code: ${exit_code}`)
+  logger.error(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}, reason: ${reason}`)
   if (exit_code) process.exitCode = exit_code
   Sentry.close(500)

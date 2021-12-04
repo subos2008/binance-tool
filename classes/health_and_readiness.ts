@@ -32,21 +32,20 @@ export class HealthAndReadinessSubsystem {
     this._ready = ready
   }
 
-  private foo(name: "healthy" | "ready", value?: boolean | undefined): boolean {
-    if (typeof value === "undefined") return this[`_${name}`]
-    if (value != this[`_${name}`])
-      this.logger.warn(`Subsystem ${this.name} became ${value ? `${name}` : `not ${name}`}`)
-    return this[`_${name}`]
-  }
   // if argument is undefined this is a read, if non-null sets and returns
-  ready(ready?: boolean | undefined): boolean {
-    return this.foo("ready", ready)
+  ready(value?: boolean | undefined): boolean {
+    if (typeof value === "undefined") return this._ready
+    if (value != this._ready)
+      this.logger.warn(`Subsystem ${this.name} became ${value ? `ready` : `not ready`}`)
+    return this._ready
   }
 
   // if argument is undefined this is a read, if non-null sets and returns
-  healthy(healthy?: boolean | undefined): boolean {
-    return this.foo("healthy", healthy)
-  }
+  healthy(value?: boolean | undefined): boolean {
+    if (typeof value === "undefined") return this._healthy
+    if (value != this._healthy)
+      this.logger.warn(`Subsystem ${this.name} became ${value ? `healthy` : `not healthy`}`)
+    return this._healthy  }
 }
 
 export class HealthAndReadiness {

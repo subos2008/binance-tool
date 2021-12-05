@@ -111,12 +111,13 @@ export class Edge56EntrySignals {
       let potential_entry_volume = new BigNumber(candle["volume"])
 
       // check for long entry
-      if (potential_entry_price.isGreaterThan(this.price_history_candles.get_highest_value())) {
+      let highest_price = this.price_history_candles.get_highest_value()
+      if (potential_entry_price.isGreaterThan(highest_price)) {
         let direction: "long" = "long"
         console.log(
           `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}, ${new Date(
             candle.closeTime
-          )}`
+          )}: current candle ${this.current_candle_key} at ${potential_entry_price.toFixed()} greater than ${highest_price.toFixed()}`
         )
         if (potential_entry_volume.isGreaterThan(this.volume_history_candles.get_highest_value())) {
           console.log(

@@ -1,12 +1,8 @@
-import { strict as assert } from "assert"
 import { Logger } from "../interfaces/logger"
-
-import * as Sentry from "@sentry/node"
-import { threadId } from "worker_threads"
-import { exists } from "fs"
 
 export class HealthAndReadinessSubsystem {
   logger: Logger
+  send_message: (msg: string) => void
   private _ready: boolean
   private _healthy: boolean
   parent: HealthAndReadiness
@@ -28,6 +24,9 @@ export class HealthAndReadinessSubsystem {
     ready: boolean
   }) {
     this.parent = parent
+    this.logger = logger
+    this.name = name
+    this.send_message = send_message
     this._healthy = healthy
     this._ready = ready
   }

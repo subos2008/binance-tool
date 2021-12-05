@@ -34,8 +34,7 @@ export class HealthAndReadinessSubsystem {
   // if argument is undefined this is a read, if non-null sets and returns
   ready(value?: boolean | undefined): boolean {
     if (typeof value === "undefined") return this._ready
-    if (value != this._ready)
-      this.logger.warn(`Subsystem ${this.name} became ${value ? `ready` : `not ready`}`)
+    if (value != this._ready) this.logger.warn(`Subsystem ${this.name} became ${value ? `ready` : `not ready`}`)
     return this._ready
   }
 
@@ -44,7 +43,8 @@ export class HealthAndReadinessSubsystem {
     if (typeof value === "undefined") return this._healthy
     if (value != this._healthy)
       this.logger.warn(`Subsystem ${this.name} became ${value ? `healthy` : `not healthy`}`)
-    return this._healthy  }
+    return this._healthy
+  }
 }
 
 export class HealthAndReadiness {
@@ -82,15 +82,26 @@ export class HealthAndReadiness {
     })
   }
 
-  healthy() {
-    return !Object.values(this.subsystems)
-      .map((x) => x.healthy())
-      .includes(false)
+  surmise_state_to_logger() {
+    this.logger.warn(`HealthAndReadiness status:`)
+    for (const key in this.subsystems) {
+      this.logger.warn(`${key}: healthy: ${this.subsystems[key].healthy()}, ready: ${this.subsystems[key].ready()}`)
+    }
   }
 
-  ready() {
-    return !Object.values(this.subsystems)
+  healthy(): boolean {
+    let healthy = !Object.values(this.subsystems)
+      .map((x) => x.healthy())
+      .includes(false)
+    if (!healthy) this.surmise_state_to_logger()
+    return healthy
+  }
+
+  ready(): boolean {
+    let ready = !Object.values(this.subsystems)
       .map((x) => x.ready())
       .includes(false)
+    if (!ready) this.surmise_state_to_logger()
+    return ready
   }
 }

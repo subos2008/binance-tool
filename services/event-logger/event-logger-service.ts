@@ -40,33 +40,35 @@ assert(process.env.AWS_ACCESS_KEY_ID)
 assert(process.env.AWS_SECRET_ACCESS_KEY)
 const s3Client = new S3Client({ region })
 let Bucket = "binance-tool-event-storage"
-let event_name: MyEventNameType = "SpotBinancePortfolio"
 
+let listener_factory = new ListenerFactory({ logger })
 class EventLogger implements MessageProcessor {
   send_message: Function
   logger: Logger
+  event_name: MyEventNameType
 
-  constructor({ send_message, logger }: { send_message: (msg: string) => void; logger: Logger }) {
+  constructor({
+    send_message,
+    logger,
+    event_name,
+  }: {
+    send_message: (msg: string) => void
+    logger: Logger
+    event_name: MyEventNameType
+  }) {
     assert(logger)
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-  }
-
-  async start() {
-    await this.register_message_processors()
-  }
-
-  async register_message_processors() {
-    let listener_factory = new ListenerFactory({ logger })
-    listener_factory.build_isolated_listener({ event_name, message_processor: this })
+    this.event_name = event_name
+    listener_factory.build_isolated_listener({ event_name, message_processor: this }) // Add arbitrary data argument
   }
 
   async process_message(event: any) {
     try {
       this.logger.info(event)
       let Body = event.content.toString()
-      let Key = `${event_name}/${+new Date()}` // ms timestamp
+      let Key = `${this.event_name}/${+new Date()}` // ms timestamp
       let params: PutObjectRequest = { Bucket, Key, Body }
       const results = await s3Client.send(new PutObjectCommand(params))
       console.log("Successfully created " + params.Key + " and uploaded it to " + params.Bucket + "/" + params.Key)
@@ -81,8 +83,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  let foo = new EventLogger({ logger, send_message })
-  foo.start()
+  new EventLogger({ logger, send_message, event_name: "SpotBinancePortfolio" })
 }
 
 main().catch((error) => {

@@ -103,6 +103,7 @@ class EventLogger implements MessageProcessor {
         .floatField("usd", usd_value)
         .floatField("btc", btc_value)
       await influxdb.writePoint(point1)
+      channel.ack(event)
       // need to ACK
     } catch (e) {
       console.log(`Error "${e}" uploading ${name} to influxdb.`)

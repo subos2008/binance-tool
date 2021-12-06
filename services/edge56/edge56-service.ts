@@ -4,7 +4,7 @@
 
 /** Config: */
 const num_coins_to_monitor = 500
-const quote_symbol = 'USDT'.toUpperCase()
+const quote_symbol = "USDT".toUpperCase()
 
 import { strict as assert } from "assert"
 require("dotenv").config()
@@ -12,6 +12,7 @@ const service_name = "edge56"
 
 import binance from "binance-api-node"
 import { Binance } from "binance-api-node"
+const exchange = "binance"
 
 import * as Sentry from "@sentry/node"
 Sentry.init({})
@@ -43,6 +44,8 @@ BigNumber.prototype.valueOf = function () {
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { Edge56EntrySignals, Edge56EntrySignalsCallbacks } from "../../classes/edges/edge56"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
+import { Edge56Parameters, Edge56PositionEntrySignal } from "../../events/shared/edge56-position-entry"
+import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -51,6 +54,13 @@ process.on("unhandledRejection", (error) => {
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+let publisher: GenericTopicPublisher = new GenericTopicPublisher({ logger, event_name: "Edge56EntrySignal" })
+
+const edge56_parameters: Edge56Parameters = {
+  days_of_price_history: 20,
+  long_highest_volume_in_days: 7,
 }
 
 class Edge56Service implements Edge56EntrySignalsCallbacks {
@@ -95,24 +105,81 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
     entry_price: BigNumber
     direction: "long" | "short"
   }): void {
+    let market_data_for_symbol: CoinGeckoMarketData | undefined
     let market_data_string = ""
     try {
-      let md = this.market_data_for_symbol(symbol)
-      market_data_string = `RANK: ${md.market_cap_rank}, MCAP: ${humanNumber(md.market_cap)}`
+      market_data_for_symbol = this.market_data_for_symbol(symbol)
+      market_data_string = `RANK: ${market_data_for_symbol.market_cap_rank}, MCAP: ${humanNumber(
+        market_data_for_symbol.market_cap
+      )}`
     } catch (e) {
       this.logger.warn(`Failed to generate market_data string for ${symbol}`)
       // This can happen if top 100 changes since boot and we refresh the cap list
       Sentry.captureException(e)
     }
-    let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
-    this.send_message(
-      `${direction_string} entry triggered on ${symbol} at price ${entry_price.toFixed()}. Check MACD before entry. ${market_data_string}`
-    )
+    try {
+      let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
+      this.send_message(
+        `${direction_string} entry triggered on ${symbol} at price ${entry_price.toFixed()}. Check MACD before entry. ${market_data_string}`
+      )
+    } catch (e) {
+      this.logger.warn(`Failed to publish to telegram for ${symbol}`)
+      // This can happen if top 100 changes since boot and we refresh the cap list
+      Sentry.captureException(e)
+    }
+    try {
+      this.publish_entry_to_amqp({
+        symbol,
+        entry_price,
+        direction,
+        market_data_for_symbol,
+      })
+    } catch (e) {
+      this.logger.warn(`Failed to publish to AMQP for ${symbol}`)
+      // This can happen if top 100 changes since boot and we refresh the cap list
+      Sentry.captureException(e)
+    }
+  }
+
+  publish_entry_to_amqp({
+    symbol,
+    entry_price,
+    direction,
+    market_data_for_symbol,
+  }: {
+    symbol: string
+    entry_price: BigNumber
+    direction: "long" | "short"
+    market_data_for_symbol: CoinGeckoMarketData | undefined
+  }) {
+    let event: Edge56PositionEntrySignal = {
+      version: "v1",
+      market_identifier: {
+        version: "v2",
+        exchange_identifier: { version: "v2", exchange },
+        symbol,
+      },
+      event_type: "Edge56EntrySignal",
+      edge56_parameters,
+      edge56_entry_signal: {
+        direction,
+        entry_price: entry_price.toFixed(),
+      },
+      extra: {
+        CoinGeckoMarketData: market_data_for_symbol,
+      },
+    }
+    const options = {
+      // expiration: event_expiration_seconds,
+      persistent: true,
+      timestamp: Date.now(),
+    }
+    publisher.publish(JSON.stringify(event), options)
   }
 
   market_data_for_symbol(symbol: string): CoinGeckoMarketData {
     // TODO: make this replace use quote_symbol
-    let usym = symbol.toUpperCase().replace(/USDT$/, '')
+    let usym = symbol.toUpperCase().replace(/USDT$/, "")
     let data = this.market_data.find((x) => x.symbol.toUpperCase() === usym)
     if (!data) throw new Error(`Market data for symbol ${usym} not found.`) // can happen if data updates and
     return data
@@ -157,6 +224,7 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
           symbol,
           market_data: this.market_data[i],
           callbacks: this,
+          edge56_parameters,
         })
         console.log(`Setup edge for ${symbol}`)
         await sleep(2000) // 1200 calls allowed per minute
@@ -197,6 +265,7 @@ async function main() {
       logger,
       send_message,
     })
+    await publisher.connect()
     await edge56.run()
   } catch (error) {
     console.error(error)

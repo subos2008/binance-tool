@@ -33,6 +33,7 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../interfaces/logger"
 import { LimitedLengthCandlesHistory } from "../../classes/utils/candle_utils"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
+import { Edge56Parameters } from "../../events/shared/edge56-position-entry"
 
 export interface Edge56EntrySignalsCallbacks {
   enter_position({
@@ -52,8 +53,8 @@ export class Edge56EntrySignals {
   logger: Logger
   market_data: CoinGeckoMarketData
 
-  historical_candle_key: "high" | "close"
-  current_candle_key: "high" | "close"
+  historical_candle_key: "close"
+  current_candle_key: "close" // short entry code is probably broken with "high"
 
   callbacks: Edge56EntrySignalsCallbacks
   price_history_candles: LimitedLengthCandlesHistory
@@ -63,33 +64,31 @@ export class Edge56EntrySignals {
     logger,
     initial_candles,
     symbol,
-    // historical_candle_key,
-    // current_candle_key,
     market_data,
     callbacks,
+    edge56_parameters
   }: {
     logger: Logger
     initial_candles: CandleChartResult[]
     symbol: string
-    // historical_candle_key: "high" | "close"
-    // current_candle_key: "high" | "close"
     market_data: CoinGeckoMarketData
     callbacks: Edge56EntrySignalsCallbacks
+    edge56_parameters: Edge56Parameters
   }) {
     this.symbol = symbol
     this.logger = logger
     this.market_data = market_data
     this.callbacks = callbacks
 
-    // Edge config - hardcoded as this should be static to the edge
+    // Edge config - hardcoded as this should be static to the edge - short entry code expects close 
     this.historical_candle_key = "close"
     this.current_candle_key = "close"
     this.price_history_candles = new LimitedLengthCandlesHistory({
-      length: 20,
+      length: edge56_parameters.days_of_price_history,
       initial_candles,
       key: this.historical_candle_key,
     })
-    this.volume_history_candles = new LimitedLengthCandlesHistory({ length: 7, initial_candles, key: "volume" })
+    this.volume_history_candles = new LimitedLengthCandlesHistory({ length: edge56_parameters.long_highest_volume_in_days, initial_candles, key: "volume" })
   }
 
   async ingest_new_candle({

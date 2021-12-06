@@ -36,6 +36,7 @@ import { MessageProcessor } from "../../classes/amqp/interfaces"
 import { Point } from "@influxdata/influxdb-client"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
+import { Channel } from "amqplib"
 
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
@@ -82,7 +83,7 @@ class EventLogger implements MessageProcessor {
     })
   }
 
-  async process_message(event: any): Promise<void> {
+  async process_message(event: any, channel: Channel): Promise<void> {
     this.logger.info(event.content.toString())
 
     // Upload balances to influxdb
@@ -101,7 +102,8 @@ class EventLogger implements MessageProcessor {
         .tag("account_type", account_type)
         .floatField("usd", usd_value)
         .floatField("btc", btc_value)
-      return influxdb.writePoint(point1) // return promise
+      await influxdb.writePoint(point1)
+      // need to ACK
     } catch (e) {
       console.log(`Error "${e}" uploading ${name} to influxdb.`)
       console.log(e)

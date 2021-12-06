@@ -55,10 +55,10 @@ class MessageProcessorIsolator implements MessageProcessor {
     this.message_processor = message_processor
     this.logger = logger
   }
-  async process_message(event: any): Promise<void> {
+  async process_message(event: any, channel: Channel): Promise<void> {
     // TODO: sentry scope
     try {
-      return this.message_processor.process_message(event)
+      return this.message_processor.process_message(event, channel)
     } catch (error) {
       // Eat any exceptions to prevent this handler from affecting the process
       // Designed for having multiple independent listeners in one process
@@ -70,7 +70,7 @@ class MessageProcessorIsolator implements MessageProcessor {
 
 export class ListenerFactory {
   logger: Logger
-  health_and_readiness: HealthAndReadinessSubsystem|undefined
+  health_and_readiness: HealthAndReadinessSubsystem | undefined
 
   constructor({ logger }: { logger: Logger }) {
     this.logger = logger
@@ -81,7 +81,7 @@ export class ListenerFactory {
   async build_isolated_listener({
     event_name,
     message_processor,
-    health_and_readiness
+    health_and_readiness,
   }: {
     message_processor: MessageProcessor
     event_name: MyEventNameType
@@ -121,7 +121,10 @@ export class ListenerFactory {
     await channel.assertExchange(exchange_name, exchange_type, { durable })
     const q = await channel.assertQueue("", { exclusive: true })
     channel.bindQueue(q.queue, exchange_name, routing_key)
-    channel.consume(q.queue, message_processor.process_message.bind(message_processor), { noAck: false })
+    let wrapper_func = function (event: any) {
+      message_processor.process_message(event, channel)
+    }
+    channel.consume(q.queue, wrapper_func, { noAck: false })
     this.logger.info(
       `ListenerFactory: Waiting for new '${event_name}' events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}.`
     )

@@ -84,6 +84,7 @@ async function main() {
   execSync("date -u")
 
   new EventLogger({ logger, send_message, event_name: "SpotBinancePortfolio" })
+  new EventLogger({ logger, send_message, event_name: "Edge56EntrySignal" })
 }
 
 main().catch((error) => {

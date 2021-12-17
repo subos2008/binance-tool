@@ -85,6 +85,7 @@ async function main() {
 
   new EventLogger({ logger, send_message, event_name: "SpotBinancePortfolio" })
   new EventLogger({ logger, send_message, event_name: "Edge56EntrySignal" })
+  new EventLogger({ logger, send_message, event_name: "SpotBinanceOrder" })
 }
 
 main().catch((error) => {
@@ -110,8 +111,12 @@ import * as express from "express"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 var app = express()
 app.get("/health", function (req, res) {
-  if (service_is_healthy) res.send({ status: "OK" })
-  else res.status(500).json({ status: "UNHEALTHY" })
+  if (service_is_healthy) {
+    res.send({ status: "OK" })
+  } else {
+    logger.error(`Service unhealthy`)
+    res.status(500).json({ status: "UNHEALTHY" })
+  }
 })
 const port = "80"
 app.listen(port)

@@ -490,7 +490,7 @@ spec:
           #     port: http
           env:
             - name: SENTRY_DSN
-              value: "https://2de8658dca5b4bf18c7787cfd2deb738@o369902.ingest.sentry.io/5763740"
+              value: "https://dce61fe61fb842f5ab591bf27920e484@o369902.ingest.sentry.io/6111712"
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -553,7 +553,7 @@ spec:
           #     port: http
           env:
             - name: SENTRY_DSN
-              value: "https://2de8658dca5b4bf18c7787cfd2deb738@o369902.ingest.sentry.io/5763740" # TODO
+              value: "https://eef07174512a4c75a326ed7e28165240@o369902.ingest.sentry.io/6111716"
 {{- include "amqp.vars" . | nindent 12 }}
 {{- include "influxdb.vars" . | nindent 12 }}
 ---

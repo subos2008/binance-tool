@@ -19,4 +19,6 @@ COPY events /app/events
 COPY chai-bignumber.d.ts /app/chai-bignumber.d.ts
 COPY tsconfig.json /app/tsconfig.json
 
+RUN ./node_modules/.bin/tsc
+
 # CMD ./service.ts

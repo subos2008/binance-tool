@@ -52,7 +52,7 @@ jobs:
 
     # !!!!
     # needs: test
-    needs: [compile, test]
+    needs: [test]
 
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
@@ -88,7 +88,7 @@ jobs:
           docker push $IMAGE_ID:$(echo $GITHUB_SHA | head -c7)
 
   deploy:
-    needs: push
+    needs: [compile, push]
 
     runs-on: ubuntu-latest
 

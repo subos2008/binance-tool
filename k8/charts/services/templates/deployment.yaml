@@ -34,7 +34,7 @@ spec:
         - name: binance-order-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/order-tracker/binance-order-tracker.ts", "--live"]
+          command: ["node", "./out/./services/order-tracker/binance-order-tracker", "--live"]
           # ports:
           # - name: http
           #   containerPort: 8081
@@ -86,7 +86,7 @@ spec:
 # #         - name: redis-monitor
 # #           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
 # #           imagePullPolicy: {{ .Values.image.pullPolicy }}
-# #           command: ["./services/redis-monitor.ts"]
+# #           command: ["node", "./out/./services/redis-monitor"]
 # #           env:
 # #             - name: SENTRY_DSN
 # #               value: "https://673cf6fd7c5e49339128d0f4bb3f37c7@o369902.ingest.sentry.io/5286786"
@@ -130,7 +130,7 @@ spec:
         - name: portfolio-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/portfolio_tracker/portfolio-tracker.ts", "--live"]
+          command: ["node", "./out/./services/portfolio_tracker/portfolio-tracker", "--live"]
           ports:
             - name: http
               containerPort: 80
@@ -188,7 +188,7 @@ spec:
         - name: binance-to-amqp
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/binance-to-amqp/binance-to-amqp.ts", "--live"]
+          command: ["node", "./out/./services/binance-to-amqp/binance-to-amqp", "--live"]
           ports:
             - name: http
               containerPort: 80
@@ -246,7 +246,7 @@ spec:
         - name: binance-position-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/position-tracker/binance-position-tracker.ts", "--live"]
+          command: ["node", "./out/./services/position-tracker/binance-position-tracker", "--live"]
           # ports:
           # - name: http
           #   containerPort: 8081
@@ -303,7 +303,7 @@ spec:
 #         - name: auto-position-exits
 #           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
 #           imagePullPolicy: {{ .Values.image.pullPolicy }}
-#           command: ["./services/auto-position-exits/auto-position-exits.ts", "--live"]
+#           command: ["node", "./out/./services/auto-position-exits/auto-position-exits", "--live"]
 #           # ports:
 #           # - name: http
 #           #   containerPort: 8081
@@ -361,7 +361,7 @@ spec:
         - name: edge56
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/edge56/edge56-service.ts", "--live"]
+          command: ["node", "./out/./services/edge56/edge56-service", "--live"]
           # ports:
           # - name: http
           #   containerPort: 8081
@@ -418,7 +418,7 @@ spec:
         - name: position-performance
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/position-performance/position-performance-service.ts", "--live"]
+          command: ["node", "./out/./services/position-performance/position-performance-service", "--live"]
           # ports:
           # - name: http
           #   containerPort: 8081
@@ -475,7 +475,7 @@ spec:
         - name: event-logger
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/event-logger/event-logger-service.ts", "--live"]
+          command: ["node", "./out/./services/event-logger/event-logger-service", "--live"]
           ports:
           - name: http
             containerPort: 80
@@ -538,7 +538,7 @@ spec:
         - name: portfolio-to-influxdb
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/portfolio-to-influxdb/portfolio-to-influxdb-service.ts"]
+          command: ["node", "./out/./services/portfolio-to-influxdb/portfolio-to-influxdb-service"]
           ports:
           - name: http
             containerPort: 80
@@ -592,7 +592,7 @@ spec:
         - name: tg-bot-bert
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/tg-bot-bert-2000/bert.ts", "--live"]
+          command: ["node", "./out/./services/tg-bot-bert-2000/bert", "--live"]
           ports:
           - name: http
             containerPort: 3000

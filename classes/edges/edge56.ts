@@ -22,6 +22,8 @@
 // TODO: Increase Position Size
 // 1. Breakout of Donchien channel (new high after a range period). The question is does a day of down followed the next day by a Donchien channel breakout count..
 
+import { assert } from "console"
+
 import { Candle, CandleChartResult } from "binance-api-node"
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -31,7 +33,6 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../interfaces/logger"
-import { LimitedLengthCandlesHistory } from "../../classes/utils/candle_utils"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { Edge56Parameters } from "../../events/shared/edge56-position-entry"
 
@@ -48,17 +49,98 @@ export interface Edge56EntrySignalsCallbacks {
   in_position(symbol: string): boolean
 }
 
+export interface EdgeCandle {
+  // The candle interface required by this edge
+  close: string
+  open: string
+  volume: string
+}
+
+class LimitedLengthCandlesHistory {
+  private candles: EdgeCandle[]
+  length: number
+
+  // Patch an array object with overrided push() function
+  private limited_length_candle_array(length: number, initial_candles: EdgeCandle[]): EdgeCandle[] {
+    var array: EdgeCandle[] = initial_candles.slice(-length)
+    array.push = function () {
+      if (this.length >= length) {
+        this.shift()
+      }
+      return Array.prototype.push.apply(this, arguments)
+    }
+    return array
+  }
+
+  constructor({ length, initial_candles }: { length: number; initial_candles: EdgeCandle[] }) {
+    this.candles = this.limited_length_candle_array(length, initial_candles)
+    this.length = length
+  }
+
+  push(candle: EdgeCandle) {
+    this.candles.push(candle)
+    assert(this.candles.length <= this.length)
+  }
+
+  get_highest_body_value(): { high: BigNumber; candle: EdgeCandle } {
+    function candle_high_body_value(candle: EdgeCandle) {
+      return BigNumber.max(candle["open"], candle["close"])
+    }
+    let high = candle_high_body_value(this.candles[0])
+    let high_candle = this.candles[0]
+    for (let i = 0; i < this.candles.length; i++) {
+      let candle = this.candles[i]
+      let candle_high_price = candle_high_body_value(candle)
+      if (candle_high_price.isGreaterThan(high)) {
+        high = candle_high_price
+        high_candle = candle
+      }
+    }
+    return { high, candle: high_candle }
+  }
+
+  get_lowest_body_value(): { low: BigNumber; candle: EdgeCandle } {
+    function candle_low_body_value(candle: EdgeCandle) {
+      return BigNumber.min(candle["open"], candle["close"])
+    }
+    let low = candle_low_body_value(this.candles[0])
+    let low_candle = this.candles[0]
+    for (let i = 0; i < this.candles.length; i++) {
+      let candle = this.candles[i]
+      let candle_low_price = candle_low_body_value(candle)
+      if (candle_low_price.isLessThan(low)) {
+        low = candle_low_price
+        low_candle = candle
+      }
+    }
+    return { low, candle: low_candle }
+  }
+
+  get_highest_volume(): { volume_high: BigNumber; candle: EdgeCandle } {
+    function candle_volume(candle: EdgeCandle) {
+      return new BigNumber(candle["volume"])
+    }
+    let volume_high: BigNumber = candle_volume(this.candles[0])
+    let high_candle: EdgeCandle = this.candles[0]
+    for (let i = 0; i < this.candles.length; i++) {
+      let i_candle = this.candles[i]
+      let i_volume = candle_volume(i_candle)
+      if (i_volume.isGreaterThan(volume_high)) {
+        volume_high = i_volume
+        high_candle = i_candle
+      }
+    }
+    return { volume_high, candle: high_candle }
+  }
+}
+
 export class Edge56EntrySignals {
   symbol: string
   logger: Logger
   market_data: CoinGeckoMarketData
 
-  historical_candle_key: "close"
-  current_candle_key: "close" // short entry code is probably broken with "high"
-
   callbacks: Edge56EntrySignalsCallbacks
   price_history_candles: LimitedLengthCandlesHistory
-  volume_history_candles: LimitedLengthCandlesHistory
 
   constructor({
     logger,
@@ -66,7 +148,7 @@ export class Edge56EntrySignals {
     symbol,
     market_data,
     callbacks,
-    edge56_parameters
+    edge56_parameters,
   }: {
     logger: Logger
     initial_candles: CandleChartResult[]
@@ -80,15 +162,11 @@ export class Edge56EntrySignals {
     this.market_data = market_data
     this.callbacks = callbacks
 
-    // Edge config - hardcoded as this should be static to the edge - short entry code expects close 
-    this.historical_candle_key = "close"
-    this.current_candle_key = "close"
+    // Edge config - hardcoded as this should be static to the edge - short entry code expects close
     this.price_history_candles = new LimitedLengthCandlesHistory({
       length: edge56_parameters.days_of_price_history,
       initial_candles,
-      key: this.historical_candle_key,
     })
-    this.volume_history_candles = new LimitedLengthCandlesHistory({ length: edge56_parameters.long_highest_volume_in_days, initial_candles, key: "volume" })
   }
 
   async ingest_new_candle({
@@ -98,7 +176,7 @@ export class Edge56EntrySignals {
   }: {
     timeframe: string
     symbol: string
-    candle: CandleChartResult | Candle
+    candle: EdgeCandle
   }) {
     if (timeframe !== "1d") {
       console.log(`Short timeframe candle on ${this.symbol} closed at ${candle.close}`)
@@ -106,30 +184,22 @@ export class Edge56EntrySignals {
     }
 
     try {
-      let potential_entry_price = new BigNumber(candle[this.current_candle_key])
+      let potential_entry_price = new BigNumber(candle["close"])
       let potential_entry_volume = new BigNumber(candle["volume"])
 
+      let direction: "long" | "short" | undefined = undefined
+
       // check for long entry
-      let highest_price = this.price_history_candles.get_highest_value()
+      let { high: highest_price } = this.price_history_candles.get_highest_body_value()
       if (potential_entry_price.isGreaterThan(highest_price)) {
-        let direction: "long" = "long"
+        direction = "long"
         console.log(
-          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}, ${new Date(
-            candle.closeTime
-          )}: current candle ${this.current_candle_key} at ${potential_entry_price.toFixed()} greater than ${highest_price.toFixed()}`
+          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: greater than ${highest_price.toFixed()}`
         )
-        if (potential_entry_volume.isGreaterThan(this.volume_history_candles.get_highest_value())) {
-          console.log(
-            `Volume entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}, ${new Date(
-              candle.closeTime
-            )}`
-          )
+        if (potential_entry_volume.isGreaterThan(this.price_history_candles.get_highest_volume().volume_high)) {
+          console.log(`Volume entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}`)
         } else {
-          console.log(
-            `Volume entry filter failed on ${symbol} ${direction} at ${potential_entry_price.toFixed()}, ${new Date(
-              candle.closeTime
-            )}`
-          )
+          console.log(`Volume entry filter failed on ${symbol} ${direction} at ${potential_entry_price.toFixed()}`)
           return // no volume = no entry
         }
         this.callbacks.enter_position({
@@ -140,10 +210,10 @@ export class Edge56EntrySignals {
       }
 
       // check for short entry
-      if (potential_entry_price.isLessThan(this.price_history_candles.get_lowest_value())) {
+      if (potential_entry_price.isLessThan(this.price_history_candles.get_lowest_body_value().low)) {
         let direction: "short" = "short"
         console.log(
-          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}, ${new Date(candle.closeTime)}`
+          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}`
         )
         this.callbacks.enter_position({
           symbol: this.symbol,
@@ -157,7 +227,6 @@ export class Edge56EntrySignals {
     } finally {
       // important not to miss this - lest we corrupt the history
       this.price_history_candles.push(candle)
-      this.volume_history_candles.push(candle)
     }
   }
 }

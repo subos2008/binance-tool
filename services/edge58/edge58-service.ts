@@ -83,12 +83,10 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
 
   constructor({
     ee,
-    start_of_bullmarket_date,
     logger,
     send_message,
   }: {
     ee: Binance
-    start_of_bullmarket_date: Date
     logger: Logger
     send_message: SendMessageFunc
   }) {
@@ -270,11 +268,8 @@ async function main() {
   })
 
   try {
-    const start_of_bullmarket_date = new Date("2021-05-01")
-
     edge58 = new Edge58Service({
       ee,
-      start_of_bullmarket_date, // TODO: this should load its own candles as it has the hardcode for 20 days history
       logger,
       send_message,
     })

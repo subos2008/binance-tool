@@ -3,6 +3,7 @@ export type MyEventNameType =
   | "SpotBinancePortfolio"
   | "Edge56EntrySignal"
   | "SpotBinanceOrder"
+  | "Edge58EntrySignal"
 
 export class MessageRouting {
   static amqp_routing({ event_name }: { event_name: MyEventNameType }): {
@@ -31,6 +32,14 @@ export class MessageRouting {
       case "Edge56EntrySignal":
         return {
           routing_key: "edge56",
+          exchange_name: "binance-tool",
+          exchange_type: "topic",
+          durable: false,
+        }
+
+      case "Edge58EntrySignal":
+        return {
+          routing_key: "edge58",
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,

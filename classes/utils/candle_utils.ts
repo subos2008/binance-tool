@@ -90,6 +90,25 @@ export class CandlesCollector {
       endTime: end_date?.getTime() || new Date().getTime(),
     })
   }
+
+  async get_candles_between({
+    symbol,
+    start_date,
+    end_date,
+    timeframe,
+  }: {
+    symbol: string
+    start_date: Date
+    end_date?: Date
+    timeframe: "1w"
+  }): Promise<CandleChartResult[]> {
+    return this.ee.candles({
+      symbol,
+      interval: CandleChartInterval.ONE_WEEK,
+      startTime: start_date.getTime(),
+      endTime: end_date?.getTime() || new Date().getTime(),
+    })
+  }
 }
 
 export class CandleUtils {

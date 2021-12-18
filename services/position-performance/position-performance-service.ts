@@ -11,7 +11,7 @@ const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
 const service_name = "position-performance"
-const send_message = require("../../lib/telegram.js")(`${service_name}: `)
+// const send_message = require("../../lib/telegram.js")(`${service_name}: `)
 
 const update_interval_seconds: number = Number(process.env.UPDATE_INTERVAL_SECONDS) || 2 * 60 * 60
 
@@ -36,7 +36,7 @@ import { Position } from "../../classes/position"
 import { Prices } from "../../interfaces/portfolio"
 
 export class PositionPerformance {
-  send_message: Function
+  send_message: (msg: string) => void
   logger: Logger
   positions_state: RedisPositionsState
   ee: Binance
@@ -62,8 +62,8 @@ export class PositionPerformance {
   }
 
   async current_price(p: Position): Promise<BigNumber> {
-    let base : string = p.baseAsset
-    let quote : string = await p.initial_entry_quote_asset()
+    let base: string = p.baseAsset
+    let quote: string = await p.initial_entry_quote_asset()
     let symbol = `${base}${quote}`.toUpperCase()
     return new BigNumber(this.prices[symbol])
   }
@@ -115,6 +115,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
+  const send_message = require("../../lib/telegram.js")(`${service_name}: `)
   let position_performance = new PositionPerformance({ logger, send_message, ee, redis })
 
   // Update on intervals

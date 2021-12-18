@@ -28,7 +28,7 @@
 
 // import binance, { CancelOrderResult } from "binance-api-node"
 // import { Binance, CandleChartInterval, CandleChartResult } from "binance-api-node"
-// import { CandlesCollector, LimitedLengthCandlesHistory, CandleUtils } from "../../classes/utils/candle_utils"
+// import { CandlesCollector, CandleUtils } from "../../classes/utils/candle_utils"
 
 // import { assert } from "console"
 

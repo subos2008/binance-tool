@@ -491,7 +491,7 @@ spec:
           #     port: http
           env:
             - name: SENTRY_DSN
-              value: "https://2de8658dca5b4bf18c7787cfd2deb738@o369902.ingest.sentry.io/5763740"
+              value: "https://783401c8afe74f84a28d8482f756e380@o369902.ingest.sentry.io/6112675"
 {{- include "binance.vars" . | nindent 12 }}
 {{- include "datadog.vars" . | nindent 12 }}
 {{- include "telegram.vars" . | nindent 12 }}

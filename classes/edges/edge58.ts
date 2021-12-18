@@ -11,6 +11,8 @@ import { LimitedLengthCandlesHistory } from "../../classes/utils/candle_utils"
 import { Edge58Parameters } from "../../events/shared/edge58-position-entry"
 
 export interface Edge58EntrySignalsCallbacks {
+  // We might have different filters on enter position or add to position
+  // Maybe we should add the entry candle info here too
   enter_position({
     symbol,
     entry_price,

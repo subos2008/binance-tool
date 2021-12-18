@@ -5,6 +5,9 @@
 /**
  * somewhere we need a service that knows if we are in a position so it diferentiates between
  * adding to position vs opening a position and moves the stops
+ *
+ * Test: new listing with less than 2 weeks of price history
+ * - don't enter or set stops on massive candles - but we can add to position on them? Add this to doc and ask M.
  */
 
 /** Config: */

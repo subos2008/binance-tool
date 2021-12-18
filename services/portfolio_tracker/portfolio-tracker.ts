@@ -47,7 +47,6 @@ var service_is_healthy: boolean = true;
 // 3. Maintain portfolio state - probably just in-process
 // 4. Publish to telegram when portfolio changes
 
-const send_message = require("../../lib/telegram.js")(`${service_name}: `)
 
 import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
@@ -62,6 +61,7 @@ BigNumber.prototype.valueOf = function () {
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
+  const send_message = require("../../lib/telegram.js")(`${service_name}: `)
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
@@ -72,7 +72,7 @@ import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 
 
 class PortfolioTracker implements MasterPortfolioClass {
-  send_message: Function
+  send_message: (msg: string) => void
   logger: Logger
   ee: any
   portfolios: { [exchange: string]: Portfolio } = {}
@@ -127,7 +127,7 @@ class PortfolioTracker implements MasterPortfolioClass {
             /* just ignore */
           }
         }
-        send_message(msg)
+        this.send_message(msg)
       } catch (err) {
         Sentry.captureException(err)
         logger.error(err)
@@ -145,7 +145,7 @@ class PortfolioTracker implements MasterPortfolioClass {
             prices: portfolio.prices,
           })
           if (bnb_balance_in_usd.isLessThan(trigger))
-            send_message(`Free BNB balance in USDT fell below ${trigger.toString()}`)
+            this.send_message(`Free BNB balance in USDT fell below ${trigger.toString()}`)
         }
       } catch (err) {
         Sentry.captureException(err)
@@ -201,6 +201,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
+  const send_message = require("../../lib/telegram.js")(`${service_name}: `)
   let portfolio_tracker = new PortfolioTracker({ logger, send_message })
   let binance = new BinancePortfolioTracker({ send_message, logger, master: portfolio_tracker })
   binance.start()

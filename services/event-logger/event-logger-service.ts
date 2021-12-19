@@ -65,7 +65,7 @@ class EventLogger implements MessageProcessor {
     listener_factory.build_isolated_listener({ event_name, message_processor: this }) // Add arbitrary data argument
   }
 
-  async process_message(event: any) {
+  async process_message(event: any, channel: Channel) {
     try {
       this.logger.info(event)
       let Body = event.content.toString()
@@ -73,6 +73,7 @@ class EventLogger implements MessageProcessor {
       let params: PutObjectRequest = { Bucket, Key, Body }
       const results = await s3Client.send(new PutObjectCommand(params))
       console.log("Successfully created " + params.Key + " and uploaded it to " + params.Bucket + "/" + params.Key)
+      channel.ack(event)
     } catch (err) {
       Sentry.captureException(err)
       this.logger.error(err)
@@ -111,6 +112,7 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 
 import * as express from "express"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
+import { Channel } from "amqplib"
 var app = express()
 app.get("/health", function (req, res) {
   if (service_is_healthy) {

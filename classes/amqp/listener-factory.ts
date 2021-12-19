@@ -87,22 +87,27 @@ export class ListenerFactory {
     event_name: MyEventNameType
     health_and_readiness?: HealthAndReadinessSubsystem
   }) {
-    this.health_and_readiness = health_and_readiness
-    try {
-      assert(message_processor && event_name)
-      await this.connect({
-        event_name,
-        message_processor: new MessageProcessorIsolator({ event_name, message_processor, logger: this.logger }),
-      })
-      this.health_and_readiness?.healthy(true)
-      this.health_and_readiness?.ready(true)
-    } catch (err) {
-      this.health_and_readiness?.healthy(false)
-      this.logger.error(`Error connecting MessageProcessor for event_name '${event_name}' to amqp server`)
-      this.logger.error(err)
-      Sentry.captureException(err)
-      // throw err // don't throw when setting up isolated infrastructure
-    }
+    Sentry.withScope(async (scope) => {
+      scope.setTag("event_name", event_name)
+      // TODO: err these health_and_readiness should be internal to the listeners I think
+      this.logger.warn(`health_and_readiness logic perhaps incorrect`)
+      this.health_and_readiness = health_and_readiness
+      try {
+        assert(message_processor && event_name)
+        await this.connect({
+          event_name,
+          message_processor: new MessageProcessorIsolator({ event_name, message_processor, logger: this.logger }),
+        })
+        this.health_and_readiness?.healthy(true)
+        this.health_and_readiness?.ready(true)
+      } catch (err) {
+        this.health_and_readiness?.healthy(false)
+        this.logger.error(`Error connecting MessageProcessor for event_name '${event_name}' to amqp server`)
+        this.logger.error(err)
+        Sentry.captureException(err)
+        // throw err // don't throw when setting up isolated infrastructure
+      }
+    })
   }
 
   private async connect({

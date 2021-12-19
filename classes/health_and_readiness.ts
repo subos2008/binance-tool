@@ -41,8 +41,14 @@ export class HealthAndReadinessSubsystem {
   // if argument is undefined this is a read, if non-null sets and returns
   healthy(value?: boolean | undefined): boolean {
     if (typeof value === "undefined") return this._healthy
-    if (value != this._healthy)
+    if (value != this._healthy) {
       this.logger.warn(`Subsystem ${this.name} became ${value ? `healthy` : `not healthy`}`)
+      try {
+        if (!value) this.send_message(`subsystem ${this.name} became unhealthy`)
+      } catch (e) {
+        this.logger.error(`unable to send_message to report service as going unhealthy`)
+      }
+    }
     return this._healthy
   }
 }
@@ -85,7 +91,9 @@ export class HealthAndReadiness {
   surmise_state_to_logger() {
     this.logger.warn(`HealthAndReadiness status:`)
     for (const key in this.subsystems) {
-      this.logger.warn(`${key}: healthy: ${this.subsystems[key].healthy()}, ready: ${this.subsystems[key].ready()}`)
+      this.logger.warn(
+        `${key}: healthy: ${this.subsystems[key].healthy()}, ready: ${this.subsystems[key].ready()}`
+      )
     }
   }
 

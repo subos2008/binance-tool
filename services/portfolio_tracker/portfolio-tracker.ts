@@ -59,6 +59,10 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+const foo = require("../../lib/telegram.js")(`${service_name}: `)
+foo(`Hi, I'm Dave`)
+
+
 process.on("unhandledRejection", (error) => {
   logger.error(error)
   const send_message = require("../../lib/telegram.js")(`${service_name}: `)

@@ -59,13 +59,11 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-const foo = require("../../lib/telegram.js")(`${service_name}: `)
-foo(`Hi, I'm Dave`)
-
+import {SendMessage} from '../../lib/telegram-v2'
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
-  const send_message = require("../../lib/telegram.js")(`${service_name}: `)
+  const send_message = new SendMessage({service_name,logger}).build()
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
@@ -205,7 +203,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  const send_message = require("../../lib/telegram.js")(`${service_name}: `)
+  const send_message = new SendMessage({service_name,logger}).build()
   let portfolio_tracker = new PortfolioTracker({ logger, send_message })
   let binance = new BinancePortfolioTracker({ send_message, logger, master: portfolio_tracker })
   binance.start()

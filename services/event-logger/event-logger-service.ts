@@ -21,11 +21,12 @@ Sentry.configureScope(function (scope: any) {
 
 var service_is_healthy: boolean = true
 
-const send_message = require("../../lib/telegram.js")(`${service_name}: `)
-
 import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
+
+import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)

@@ -15,11 +15,12 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-const send_message = require("../../lib/telegram.js")(`${service_name}: `)
-
 import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
+
+import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN

@@ -3,6 +3,8 @@
 /* eslint func-names: ["warn", "as-needed"] */
 import { strict as assert } from 'assert';
 
+const service_name = 'redis-monitor'
+
 require("dotenv").config();
 assert(process.env.REDIS_HOST)
 // assert(process.env.REDIS_PASSWORD)
@@ -16,11 +18,12 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "redis-monitor");
 });
 
-const send_message = require("../lib/telegram.js")("redis-monitor: ");
-
 import { Logger } from '../interfaces/logger'
 const LoggerClass = require("../lib/faux_logger");
 const logger: Logger = new LoggerClass({ silent: false });
+
+import { SendMessage, SendMessageFunc } from "../lib/telegram-v2"
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 process.on("unhandledRejection", error => {
   logger.error(error)

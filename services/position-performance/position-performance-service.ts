@@ -11,7 +11,6 @@ const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
 const service_name = "position-performance"
-// const send_message = require("../../lib/telegram.js")(`${service_name}: `)
 
 const update_interval_seconds: number = Number(process.env.UPDATE_INTERVAL_SECONDS) || 2 * 60 * 60
 
@@ -34,6 +33,7 @@ import BinanceFactory from "binance-api-node"
 import * as Sentry from "@sentry/node"
 import { Position } from "../../classes/position"
 import { Prices } from "../../interfaces/portfolio"
+import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 
 export class PositionPerformance {
   send_message: (msg: string) => void
@@ -115,7 +115,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  const send_message = require("../../lib/telegram.js")(`${service_name}: `)
+  const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   let position_performance = new PositionPerformance({ logger, send_message, ee, redis })
 
   // Update on intervals

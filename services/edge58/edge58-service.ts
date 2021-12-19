@@ -30,15 +30,12 @@ Sentry.configureScope(function (scope: any) {
 
 const humanNumber = require("human-number")
 
-type SendMessageFunc = (msg: string) => void
-
-const send_message_factory = require("../../lib/telegram.js")
-
-const send_message = send_message_factory(`${service_name}: `)
-
 import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
+
+import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -46,8 +43,6 @@ BigNumber.DEBUG = true // Prevent NaN
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
-
-// send_message("starting")
 
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { Edge58EntrySignals, Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58"
@@ -94,6 +89,7 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
     this.ee = ee
     this.logger = logger
     this.send_message = send_message
+    this.send_message('service re-starting')
   }
 
   enter_position({

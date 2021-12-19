@@ -22,11 +22,7 @@ Sentry.configureScope(function (scope: any) {
 
 const humanNumber = require("human-number")
 
-type SendMessageFunc = (msg: string) => void
-
-const send_message_factory = require("../../lib/telegram.js")
-
-const send_message = send_message_factory(`${service_name}: `)
+import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 
 import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
@@ -39,8 +35,6 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-// send_message("starting")
-
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { Edge56EntrySignals, Edge56EntrySignalsCallbacks } from "../../classes/edges/edge56"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
@@ -49,6 +43,7 @@ import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
+  const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
@@ -90,6 +85,7 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
     this.ee = ee
     this.logger = logger
     this.send_message = send_message
+    this.send_message("service re-starting")
   }
 
   // Edge56EntrySignalsCallbacks
@@ -258,6 +254,7 @@ async function main() {
 
   try {
     const start_of_bullmarket_date = new Date("2021-05-01")
+    const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
     edge56 = new Edge56Service({
       ee,

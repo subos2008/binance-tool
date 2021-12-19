@@ -29,13 +29,11 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-const send_message = require("../../lib/telegram.js")(`${service_name}: `)
+import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 
 import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
 const _logger: Logger = new LoggerClass({ silent: false })
-
-
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -53,6 +51,7 @@ process.on("unhandledRejection", (error) => {
 import { BinancePortfolioToAMQP } from "./portfolio"
 
 let logger = _logger
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 const health = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health.addSubsystem({ name: "global", ready: true, healthy: true })

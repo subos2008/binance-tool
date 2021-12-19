@@ -44,6 +44,8 @@ import {
   Edge58EntrySignal,
   Edge58ExitSignal,
 } from "../../events/shared/edge58-position-entry"
+import { PositionChangeEvents } from "../../events/shared/position-change-events"
+import { MarketIdentifier_V2 } from "../../events/shared/market-identifier"
 
 /**
  * Configuration
@@ -63,14 +65,14 @@ let _end_date = new Date("2019-04-15")
 
 class PositionEventLogAnalyser {
   logger: Logger
-  events: Edge58Events[] = []
+  events: PositionChangeEvents[] = []
 
-  constructor({ logger, events }: { logger: Logger; events: Edge58Events[] }) {
+  constructor({ logger, events }: { logger: Logger; events: PositionChangeEvents[] }) {
     this.logger = logger
     this.events = events
   }
 
-  run(){
+  run() {
     for (const event of this.events) {
       this.logger.info(event)
     }
@@ -79,6 +81,7 @@ class PositionEventLogAnalyser {
 class PositionTracker implements Edge58EntrySignalsCallbacks {
   logger: Logger
   event_log: Edge58Events[] = []
+  events: PositionChangeEvents[] = []
 
   symbol: string | undefined
   position_size = new BigNumber(0)
@@ -150,14 +153,16 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
     entry_price: BigNumber
     direction: "long" | "short"
   }) {
+    let market_identifier: MarketIdentifier_V2 = {
+      version: "v2",
+      exchange_identifier: { version: "v2", exchange },
+      symbol,
+    }
+
     let event: Edge58EntrySignal = {
       event_type: "Edge58EntrySignal",
       version: "v1",
-      market_identifier: {
-        version: "v2",
-        exchange_identifier: { version: "v2", exchange },
-        symbol,
-      },
+      market_identifier,
       edge58_parameters,
       edge58_entry_signal: {
         direction,
@@ -165,6 +170,17 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
       },
     }
     this.event_log.push(event)
+
+    /**
+     * Convert Edge58EntrySignal to PositionEntryExecutionLog
+     */
+    this.events.push({
+      version: "v1",
+      event_type: "PositionEntryExecutionLog",
+      market_identifier,
+      direction,
+      entry_price: event.edge58_entry_signal.entry_price,
+    })
   }
 
   private push_stopped_out_event({
@@ -178,14 +194,16 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
     direction: "long" | "short"
     symbol: string
   }) {
+    let market_identifier: MarketIdentifier_V2 = {
+      version: "v2",
+      exchange_identifier: { version: "v2", exchange },
+      symbol,
+    }
+
     let event: Edge58ExitSignal = {
       event_type: "Edge58ExitSignal",
       version: "v1",
-      market_identifier: {
-        version: "v2",
-        exchange_identifier: { version: "v2", exchange },
-        symbol,
-      },
+      market_identifier,
       edge58_parameters,
       edge58_exit_signal: {
         signal: "stopped_out",
@@ -197,6 +215,18 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
       },
     }
     this.event_log.push(event)
+
+    /**
+     * Convert Edge58ExitSignal to PositionExitExecutionLog
+     */
+    this.events.push({
+      version: "v1",
+      event_type: "PositionExitExecutionLog",
+      market_identifier,
+      direction,
+      signal: "stopped_out",
+      exit_price: event.edge58_exit_signal.exit_price,
+    })
   }
 }
 
@@ -270,7 +300,7 @@ class Edge58Backtester {
         }
         edge.ingest_new_candle({ symbol, timeframe, candle })
       }
-      let analyser = new PositionEventLogAnalyser({ logger: this.logger, events: this.tracker.event_log })
+      let analyser = new PositionEventLogAnalyser({ logger: this.logger, events: this.tracker.events })
       analyser.run()
     } catch (err) {
       if (err.toString().includes("Invalid symbol")) {

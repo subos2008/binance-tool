@@ -116,7 +116,7 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
     try {
       let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
       this.send_message(
-        `${direction_string} entry triggered on ${symbol} at price ${entry_price.toFixed()}. Check MACD before entry. ${market_data_string}`
+        `${direction_string} entry triggered on ${symbol} at price ${entry_price.toFixed()}. before entry check: ADX, entry candle <35%. ${market_data_string}`
       )
     } catch (e) {
       this.logger.warn(`Failed to publish to telegram for ${symbol}`)

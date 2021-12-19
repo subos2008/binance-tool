@@ -22,7 +22,6 @@ Sentry.configureScope(function (scope: any) {
 
 const humanNumber = require("human-number")
 
-import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 
 import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
@@ -40,6 +39,7 @@ import { Edge56EntrySignals, Edge56EntrySignalsCallbacks } from "../../classes/e
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { Edge56Parameters, Edge56PositionEntrySignal } from "../../events/shared/edge56-position-entry"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
+import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)

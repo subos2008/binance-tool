@@ -7,6 +7,8 @@ import { Logger } from "../interfaces/logger"
 const fetch = require("node-fetch")
 const Sentry = require("@sentry/node")
 
+export type SendMessageFunc = (msg: string) => Promise<void>
+
 export class SendMessage {
   service_name: string
   logger: Logger
@@ -15,7 +17,7 @@ export class SendMessage {
     this.logger = logger
   }
 
-  build(): (msg: string) => Promise<void> {
+  build(): SendMessageFunc {
     if (!process.env.TELEGRAM_KEY || !process.env.TELEGRAM_CHAT_ID) {
       this.logger.error("Telegram message delivery not configured.")
       throw new Error(`TELEGRAM_KEY and/or TELEGRAM_CHAT_ID not set`)

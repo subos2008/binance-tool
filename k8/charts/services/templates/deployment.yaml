@@ -533,7 +533,7 @@ spec:
         - name: event-logger
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/event-logger/event-logger-service.ts", "--live"]
+          command: ["node", "./out/services/event-logger/event-logger-service", "--live"]
           ports:
           - name: http
             containerPort: 80
@@ -597,7 +597,7 @@ spec:
         - name: portfolio-to-influxdb
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/portfolio-to-influxdb/portfolio-to-influxdb-service.ts"]
+          command: ["node", "./out/services/portfolio-to-influxdb/portfolio-to-influxdb-service"]
           ports:
           - name: http
             containerPort: 80

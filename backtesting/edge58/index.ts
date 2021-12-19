@@ -38,7 +38,12 @@ const logger: Logger = new LoggerClass({ silent: false })
 import { Edge58EntrySignals, Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58"
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import BigNumber from "bignumber.js"
-import { Edge58Parameters, Edge58PositionEntrySignal } from "../../events/shared/edge58-position-entry"
+import {
+  Edge58Events,
+  Edge58Parameters,
+  Edge58EntrySignal,
+  Edge58ExitSignal,
+} from "../../events/shared/edge58-position-entry"
 
 /**
  * Configuration
@@ -56,29 +61,77 @@ let _end_date = new Date("2019-04-15")
  * ------------------------------------------------------------
  */
 
+class PositionEventLogAnalyser {
+  logger: Logger
+  events: Edge58Events[] = []
+
+  constructor({ logger, events }: { logger: Logger; events: Edge58Events[] }) {
+    this.logger = logger
+    this.events = events
+  }
+
+  run(){
+    for (const event of this.events) {
+      this.logger.info(event)
+    }
+  }
+}
 class PositionTracker implements Edge58EntrySignalsCallbacks {
+  logger: Logger
+  event_log: Edge58Events[] = []
+
+  symbol: string | undefined
   position_size = new BigNumber(0)
   direction: "short" | "long" | undefined = undefined
-  logger: Logger
-  event_log: Edge58PositionEntrySignal[] = []
+  stop_price: BigNumber | undefined
 
   constructor({ logger }: { logger: Logger }) {
     this.logger = logger
   }
 
+  stopped_out() {
+    if (!this.direction) throw new Error("direction was not defined")
+    if (!this.stop_price) throw new Error("direction was not defined")
+    if (!this.symbol) throw new Error("symbol was not defined")
+
+    let stop_price = this.stop_price
+    let position_size = this.position_size
+    let direction = this.direction
+    let symbol = this.symbol
+
+    this.position_size = new BigNumber(0)
+    this.direction = undefined
+    this.stop_price = undefined
+    this.symbol = undefined
+
+    this.push_stopped_out_event({
+      position_size,
+      direction,
+      stop_price,
+      symbol,
+    })
+  }
+
+  // TODO: add enter_position and add_to_position booleans to this so we can use it for
+  // both entering and adding to position depending on filters in the Edge class
   enter_position({
     symbol,
     entry_price,
     direction,
+    stop_price,
   }: {
     symbol: string
     entry_price: BigNumber
     direction: "long" | "short"
     logger: Logger
+    stop_price: BigNumber
   }): void {
     if (this.position_size.isGreaterThan(0) || this.direction) {
       throw new Error(`enter position called when already in a position`)
     }
+
+    this.stop_price = stop_price
+
     let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
     this.logger.info(`${direction_string} entry triggered on ${symbol} at price ${entry_price.toFixed()}`)
     this.push_entry_event({
@@ -97,18 +150,50 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
     entry_price: BigNumber
     direction: "long" | "short"
   }) {
-    let event: Edge58PositionEntrySignal = {
+    let event: Edge58EntrySignal = {
+      event_type: "Edge58EntrySignal",
       version: "v1",
       market_identifier: {
         version: "v2",
         exchange_identifier: { version: "v2", exchange },
         symbol,
       },
-      event_type: "Edge58EntrySignal",
       edge58_parameters,
       edge58_entry_signal: {
         direction,
         entry_price: entry_price.toFixed(),
+      },
+    }
+    this.event_log.push(event)
+  }
+
+  private push_stopped_out_event({
+    position_size,
+    direction,
+    stop_price,
+    symbol,
+  }: {
+    position_size: BigNumber
+    stop_price: BigNumber
+    direction: "long" | "short"
+    symbol: string
+  }) {
+    let event: Edge58ExitSignal = {
+      event_type: "Edge58ExitSignal",
+      version: "v1",
+      market_identifier: {
+        version: "v2",
+        exchange_identifier: { version: "v2", exchange },
+        symbol,
+      },
+      edge58_parameters,
+      edge58_exit_signal: {
+        signal: "stopped_out",
+        direction,
+        exit_price: stop_price.toFixed(),
+      },
+      position: {
+        position_size: position_size.toFixed(),
       },
     }
     this.event_log.push(event)
@@ -169,8 +254,24 @@ class Edge58Backtester {
         edge58_parameters,
       })
       for (const candle of candles) {
+        if (this.tracker.direction == "long") {
+          let candle_low_price = new BigNumber(candle.low)
+          if (!this.tracker.stop_price) throw new Error("stop_price is undefined")
+          if (candle_low_price.isLessThanOrEqualTo(this.tracker.stop_price)) {
+            this.tracker.stopped_out()
+          }
+        }
+        if (this.tracker.direction == "short") {
+          let candle_high_price = new BigNumber(candle.high)
+          if (!this.tracker.stop_price) throw new Error("stop_price is undefined")
+          if (candle_high_price.isGreaterThanOrEqualTo(this.tracker.stop_price)) {
+            this.tracker.stopped_out()
+          }
+        }
         edge.ingest_new_candle({ symbol, timeframe, candle })
       }
+      let analyser = new PositionEventLogAnalyser({ logger: this.logger, events: this.tracker.event_log })
+      analyser.run()
     } catch (err) {
       if (err.toString().includes("Invalid symbol")) {
         console.info(`Unable to load candles for ${symbol} not listed on binance`)

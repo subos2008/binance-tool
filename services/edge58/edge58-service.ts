@@ -47,7 +47,7 @@ BigNumber.prototype.valueOf = function () {
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { Edge58EntrySignals, Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
-import { Edge58Parameters, Edge58PositionEntrySignal } from "../../events/shared/edge58-position-entry"
+import { Edge58Parameters, Edge58EntrySignal } from "../../events/shared/edge58-position-entry"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 
 process.on("unhandledRejection", (error) => {
@@ -148,7 +148,7 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
     direction: "long" | "short"
     market_data_for_symbol: CoinGeckoMarketData | undefined
   }) {
-    let event: Edge58PositionEntrySignal = {
+    let event: Edge58EntrySignal = {
       version: "v1",
       market_identifier: {
         version: "v2",

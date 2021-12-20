@@ -10,6 +10,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { Logger } from "../../interfaces/logger"
 import { Edge58Parameters } from "../../events/shared/edge58-position-entry"
+import { CandleInfo_OC } from "../utils/candle_utils"
 
 export interface Candle {
   open: string
@@ -131,8 +132,7 @@ export class Edge58EntrySignals {
   }
 
   is_large_candle_body(candle: Candle) {
-    this.logger.warn(`Large candle detection not implemented - tests`)
-    return false
+    return new CandleInfo_OC(candle).percentage_change().abs().isGreaterThanOrEqualTo(35)
   }
 
   is_adx_the_right_colour_to_enter(direction: "long" | "short"): boolean {

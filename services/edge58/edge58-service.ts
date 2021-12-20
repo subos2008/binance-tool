@@ -76,23 +76,15 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
   send_message: SendMessageFunc
   market_data: CoinGeckoMarketData[]
 
-  constructor({
-    ee,
-    logger,
-    send_message,
-  }: {
-    ee: Binance
-    logger: Logger
-    send_message: SendMessageFunc
-  }) {
+  constructor({ ee, logger, send_message }: { ee: Binance; logger: Logger; send_message: SendMessageFunc }) {
     this.candles_collector = new CandlesCollector({ ee })
     this.ee = ee
     this.logger = logger
     this.send_message = send_message
-    this.send_message('service re-starting')
+    this.send_message("service re-starting")
   }
 
-  enter_position({
+  enter_or_add_to_position({
     symbol,
     entry_price,
     direction,
@@ -214,7 +206,7 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
           timeframe,
           symbol,
           start_date,
-          end_date
+          end_date,
         })
         if (initial_candles.length == 0) {
           // prob just means not listed on Binance
@@ -246,6 +238,7 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
         }
       }
     }
+    this.logger.info(`Edges initialised for ${Object.keys(this.edges).length} symbols.`)
   }
 
   shutdown_streams() {

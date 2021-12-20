@@ -235,6 +235,7 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
         }
       }
     }
+    this.logger.info(`Edges initialised for ${Object.keys(this.edges).length} symbols.`)
   }
 
   shutdown_streams() {

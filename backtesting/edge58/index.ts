@@ -117,17 +117,21 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
 
   // TODO: add enter_position and add_to_position booleans to this so we can use it for
   // both entering and adding to position depending on filters in the Edge class
-  enter_position({
+  enter_or_add_to_position({
     symbol,
     entry_price,
     direction,
     stop_price,
+    enter_position_ok,
+    add_to_position_ok,
   }: {
     symbol: string
     entry_price: BigNumber
     direction: "long" | "short"
     logger: Logger
     stop_price: BigNumber
+    enter_position_ok: boolean
+    add_to_position_ok: boolean
   }): void {
     if (this.position_size.isGreaterThan(0) || this.direction) {
       throw new Error(`enter position called when already in a position`)

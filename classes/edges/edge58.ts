@@ -82,14 +82,18 @@ class LimitedLengthCandlesHistory {
 export interface Edge58EntrySignalsCallbacks {
   // We might have different filters on enter position or add to position
   // Maybe we should add the entry candle info here too
-  enter_position({
+  enter_or_add_to_position({
     symbol,
     entry_price,
     direction,
+    enter_position_ok,
+    add_to_position_ok,
   }: {
     symbol: string
     entry_price: BigNumber
     direction: "long" | "short"
+    enter_position_ok: boolean
+    add_to_position_ok: boolean
   }): void
 }
 
@@ -126,6 +130,11 @@ export class Edge58EntrySignals {
     })
   }
 
+  is_large_candle_body(candle:Candle) {
+    this.logger.warn(`Large candle detection not implemented - tests`)
+    return false
+  }
+
   async ingest_new_candle({ timeframe, candle, symbol }: { timeframe: string; symbol: string; candle: Candle }) {
     if (timeframe !== this.edge58_parameters.candle_timeframe) {
       console.log(`Short timeframe ${timeframe} candle on ${this.symbol} closed at ${candle.close}`)
@@ -135,6 +144,8 @@ export class Edge58EntrySignals {
     try {
       let potential_entry_price = new BigNumber(candle["close"])
       let direction: "long" | "short" | undefined = undefined
+      let enter_position_ok: boolean | undefined = undefined
+      let add_to_position_ok: boolean | undefined = undefined
 
       // check for long entry
       if (potential_entry_price.isGreaterThan(this.price_history_candles.get_highest_body_value().high)) {
@@ -148,12 +159,16 @@ export class Edge58EntrySignals {
 
       if (direction) {
         this.logger.info(
-          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: current candle "close" at ${potential_entry_price.toFixed()}`
+          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: current candle "close" at ${potential_entry_price.toFixed()}: enter_position_ok: ${enter_position_ok} add_to_position_ok: ${add_to_position_ok}`
         )
-        this.callbacks.enter_position({
+        if(enter_position_ok === undefined) throw new Error('enter_position_ok not calculated')
+        if(add_to_position_ok === undefined) throw new Error('add_to_position_ok not calculated')
+        this.callbacks.enter_or_add_to_position({
           symbol: this.symbol,
           entry_price: potential_entry_price,
           direction,
+          enter_position_ok,
+          add_to_position_ok,
         })
       }
     } catch (e) {

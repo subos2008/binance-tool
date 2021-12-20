@@ -130,9 +130,14 @@ export class Edge58EntrySignals {
     })
   }
 
-  is_large_candle_body(candle:Candle) {
+  is_large_candle_body(candle: Candle) {
     this.logger.warn(`Large candle detection not implemented - tests`)
     return false
+  }
+
+  is_adx_the_right_colour_to_enter(direction: "long" | "short"): boolean {
+    this.logger.warn(`ADX direction is not implemented - tests`)
+    return true
   }
 
   async ingest_new_candle({ timeframe, candle, symbol }: { timeframe: string; symbol: string; candle: Candle }) {
@@ -150,19 +155,23 @@ export class Edge58EntrySignals {
       // check for long entry
       if (potential_entry_price.isGreaterThan(this.price_history_candles.get_highest_body_value().high)) {
         direction = "long"
+        enter_position_ok = !this.is_large_candle_body(candle) && this.is_adx_the_right_colour_to_enter(direction)
+        add_to_position_ok = true // no filters on this
       }
 
       // check for short entry
       if (potential_entry_price.isLessThan(this.price_history_candles.get_lowest_body_value().low)) {
         direction = "short"
+        enter_position_ok = !this.is_large_candle_body(candle) && this.is_adx_the_right_colour_to_enter(direction)
+        add_to_position_ok = true // no filters on this
       }
 
       if (direction) {
         this.logger.info(
           `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: current candle "close" at ${potential_entry_price.toFixed()}: enter_position_ok: ${enter_position_ok} add_to_position_ok: ${add_to_position_ok}`
         )
-        if(enter_position_ok === undefined) throw new Error('enter_position_ok not calculated')
-        if(add_to_position_ok === undefined) throw new Error('add_to_position_ok not calculated')
+        if (enter_position_ok === undefined) throw new Error("enter_position_ok not calculated")
+        if (add_to_position_ok === undefined) throw new Error("add_to_position_ok not calculated")
         this.callbacks.enter_or_add_to_position({
           symbol: this.symbol,
           entry_price: potential_entry_price,

@@ -261,7 +261,7 @@ class Edge58Backtester {
 
     try {
       // Last N closed weekly candles exist between N+1 weeks ago and now
-      start_date.setDate(start_date.getDate() + (edge58_parameters.candles_of_price_history + 1) * 7)
+      start_date.setDate(start_date.getDate() - (edge58_parameters.candles_of_price_history + 1) * 7)
       let candles = await this.candles_collector.get_candles_between({
         timeframe,
         symbol,

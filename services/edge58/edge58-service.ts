@@ -239,6 +239,7 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
       }
     }
     this.logger.info(`Edges initialised for ${Object.keys(this.edges).length} symbols.`)
+    this.send_message(`initialised for ${Object.keys(this.edges).length} symbols.`)
   }
 
   shutdown_streams() {

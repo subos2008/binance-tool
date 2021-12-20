@@ -14,6 +14,12 @@ export interface MiniCloseOpenOnlyCandle {
 }
 
 export type FlexiCandle = CandleChartResult | Candle
+export type Candle_OHLC = {
+  low: string
+  high: string
+  open: string
+  close: string
+}
 
 export class CandlesCollector {
   start_date: Date
@@ -66,8 +72,6 @@ export class CandlesCollector {
  * */
 
 export class CandleUtils {
-
-
   static get_lowest_candle({ candles, key }: { candles: FlexiCandle[]; key: "close" | "high" | "volume" }): {
     low: BigNumber
     candle: FlexiCandle
@@ -97,5 +101,24 @@ export class CandleUtils {
       }
     }
     throw new Error("No higher daily close price found")
+  }
+}
+
+export class CandleInfo {
+  candle: Candle_OHLC
+  constructor(candle: Candle_OHLC) {
+    this.candle = candle
+  }
+  is_short_candle(): boolean {
+    return new BigNumber(this.candle.close).isLessThan(this.candle.open)
+  }
+  is_long_candle(): boolean {
+    return !this.is_short_candle()
+  }
+  percentage_change(): BigNumber {
+    let open = new BigNumber(this.candle.open)
+    let close = new BigNumber(this.candle.close)
+    let diff = close.minus(open)
+    return close.dividedBy(open).minus(1).times(100).dp(2)
   }
 }

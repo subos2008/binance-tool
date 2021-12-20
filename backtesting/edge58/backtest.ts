@@ -33,7 +33,7 @@ Sentry.configureScope(function (scope: any) {
 
 import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
-const logger: Logger = new LoggerClass({ silent: false })
+const logger: Logger = new LoggerClass({ silent: false, template: { name: 'edge58' } })
 
 import { Edge58EntrySignals, Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58"
 import { CandlesCollector } from "../../classes/utils/candle_utils"
@@ -74,10 +74,11 @@ class PositionEventLogAnalyser {
 
   run() {
     for (const event of this.events) {
-      this.logger.info(event)
+      this.logger.info(event.event_type)
     }
   }
 }
+
 class PositionTracker implements Edge58EntrySignalsCallbacks {
   logger: Logger
   event_log: Edge58Events[] = []
@@ -92,7 +93,12 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
     this.logger = logger
   }
 
+  in_position(): boolean {
+    return this.direction ? true : false
+  }
+
   stopped_out() {
+    this.logger.error(`Stopped out`)
     if (!this.direction) throw new Error("direction was not defined")
     if (!this.stop_price) throw new Error("direction was not defined")
     if (!this.symbol) throw new Error("symbol was not defined")
@@ -102,102 +108,6 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
     let direction = this.direction
     let symbol = this.symbol
 
-    this.position_size = new BigNumber(0)
-    this.direction = undefined
-    this.stop_price = undefined
-    this.symbol = undefined
-
-    this.push_stopped_out_event({
-      position_size,
-      direction,
-      stop_price,
-      symbol,
-    })
-  }
-
-  // TODO: add enter_position and add_to_position booleans to this so we can use it for
-  // both entering and adding to position depending on filters in the Edge class
-  enter_or_add_to_position({
-    symbol,
-    entry_price,
-    direction,
-    stop_price,
-    enter_position_ok,
-    add_to_position_ok,
-  }: {
-    symbol: string
-    entry_price: BigNumber
-    direction: "long" | "short"
-    logger: Logger
-    stop_price: BigNumber
-    enter_position_ok: boolean
-    add_to_position_ok: boolean
-  }): void {
-    if (this.position_size.isGreaterThan(0) || this.direction) {
-      throw new Error(`enter position called when already in a position`)
-    }
-
-    this.stop_price = stop_price
-
-    let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
-    this.logger.info(`${direction_string} entry triggered on ${symbol} at price ${entry_price.toFixed()}`)
-    this.push_entry_event({
-      symbol,
-      entry_price,
-      direction,
-    })
-  }
-
-  private push_entry_event({
-    symbol,
-    entry_price,
-    direction,
-  }: {
-    symbol: string
-    entry_price: BigNumber
-    direction: "long" | "short"
-  }) {
-    let market_identifier: MarketIdentifier_V2 = {
-      version: "v2",
-      exchange_identifier: { version: "v2", exchange },
-      symbol,
-    }
-
-    let event: Edge58EntrySignal = {
-      event_type: "Edge58EntrySignal",
-      version: "v1",
-      market_identifier,
-      edge58_parameters,
-      edge58_entry_signal: {
-        direction,
-        entry_price: entry_price.toFixed(),
-      },
-    }
-    this.event_log.push(event)
-
-    /**
-     * Convert Edge58EntrySignal to PositionEntryExecutionLog
-     */
-    this.events.push({
-      version: "v1",
-      event_type: "PositionEntryExecutionLog",
-      market_identifier,
-      direction,
-      entry_price: event.edge58_entry_signal.entry_price,
-    })
-  }
-
-  private push_stopped_out_event({
-    position_size,
-    direction,
-    stop_price,
-    symbol,
-  }: {
-    position_size: BigNumber
-    stop_price: BigNumber
-    direction: "long" | "short"
-    symbol: string
-  }) {
     let market_identifier: MarketIdentifier_V2 = {
       version: "v2",
       exchange_identifier: { version: "v2", exchange },
@@ -220,16 +130,110 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
     }
     this.event_log.push(event)
 
+    this.position_size = new BigNumber(0)
+    this.direction = undefined
+    this.stop_price = undefined
+    this.symbol = undefined
+
+    this.push_stopped_out_execution_event(event)
+  }
+
+  // TODO: add enter_position and add_to_position booleans to this so we can use it for
+  // both entering and adding to position depending on filters in the Edge class
+  enter_or_add_to_position({
+    symbol,
+    entry_price,
+    direction,
+    stop_price,
+    enter_position_ok,
+    add_to_position_ok,
+  }: {
+    symbol: string
+    entry_price: BigNumber
+    direction: "long" | "short"
+    logger: Logger
+    stop_price: BigNumber
+    enter_position_ok: boolean
+    add_to_position_ok: boolean
+  }): void {
+    let market_identifier: MarketIdentifier_V2 = {
+      version: "v2",
+      exchange_identifier: { version: "v2", exchange },
+      symbol,
+    }
+
+    let event: Edge58EntrySignal = {
+      event_type: "Edge58EntrySignal",
+      version: "v1",
+      market_identifier,
+      edge58_parameters,
+      edge58_entry_signal: {
+        direction,
+        entry_price: entry_price.toFixed(),
+      },
+      add_to_position_ok,
+      enter_position_ok,
+    }
+    this.event_log.push(event)
+
+    this.stop_price = stop_price
+
+    if (this.in_position()) {
+      if (this.direction != direction) {
+        this.logger.warn(
+          `signal to go ${direction} when already in a ${this.direction} position. This should be difficult / unlikely to see. Skipping signal. Taking no action and waiting for stop out. Maybe check stops?`
+        )
+        return
+      }
+
+      if (add_to_position_ok) {
+        this.push_add_to_position_execution_event(event)
+      }
+    } else {
+      if (enter_position_ok) {
+        this.push_entry_execution_event(event)
+      }
+    }
+  }
+
+  private push_entry_execution_event(event: Edge58EntrySignal) {
+    /**
+     * Convert Edge58EntrySignal to PositionEntryExecutionLog
+     */
+    this.events.push({
+      version: "v1",
+      event_type: "PositionEntryExecutionLog",
+      market_identifier: event.market_identifier,
+      direction: event.edge58_entry_signal.direction,
+      entry_price: event.edge58_entry_signal.entry_price,
+    })
+  }
+
+  private push_add_to_position_execution_event(event: Edge58EntrySignal) {
+    /**
+     * Convert Edge58EntrySignal to PositionEntryExecutionLog
+     */
+    this.events.push({
+      version: "v1",
+      event_type: "PositionIncreaseExecutionLog",
+      market_identifier: event.market_identifier,
+      direction: event.edge58_entry_signal.direction,
+      entry_price: event.edge58_entry_signal.entry_price,
+    })
+  }
+
+  private push_stopped_out_execution_event(event: Edge58ExitSignal) {
     /**
      * Convert Edge58ExitSignal to PositionExitExecutionLog
      */
     this.events.push({
       version: "v1",
       event_type: "PositionExitExecutionLog",
-      market_identifier,
-      direction,
+      market_identifier: event.market_identifier,
+      direction: event.edge58_exit_signal.direction,
       signal: "stopped_out",
       exit_price: event.edge58_exit_signal.exit_price,
+      position_size: event.position.position_size,
     })
   }
 }
@@ -274,10 +278,12 @@ class Edge58Backtester {
       /**
        * Split out the initial price history and pass it as initial_candles, the rest we pass in as if they are fresh new candles
        */
-      let initial_candles = candles.splice(0, edge58_parameters.candles_of_price_history - 1)
-      if (initial_candles.length > edge58_parameters.candles_of_price_history) {
+      let initial_candles = candles.splice(0, edge58_parameters.candles_of_price_history)
+      if (initial_candles.length != edge58_parameters.candles_of_price_history) {
         // we must have picked up some partial candles
-        this.logger.error(`Wrong number of candles for ${symbol}`)
+        this.logger.error(
+          `Wrong number of candles for ${symbol}: got ${initial_candles.length}, expected ${edge58_parameters.candles_of_price_history}`
+        )
         throw new Error(`Wrong number of candles for ${symbol}`)
       }
       edge = new Edge58EntrySignals({

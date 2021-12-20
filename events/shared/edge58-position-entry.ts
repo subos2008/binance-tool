@@ -20,6 +20,8 @@ export interface Edge58EntrySignal {
   extra?: {
     CoinGeckoMarketData?: CoinGeckoMarketData
   }
+  add_to_position_ok: boolean
+  enter_position_ok: boolean
 }
 
 export interface Edge58ExitSignal {

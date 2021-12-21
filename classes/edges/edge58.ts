@@ -7,6 +7,7 @@ BigNumber.DEBUG = true // Prevent NaN
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
+const moment = require("moment")
 
 import { Logger } from "../../interfaces/logger"
 import { Edge58Parameters } from "../../events/shared/edge58-position-entry"
@@ -15,8 +16,9 @@ import { CandleInfo_OC } from "../utils/candle_utils"
 export interface Candle {
   open: string
   close: string
-  // low: string // wicks needed for stops
-  // high: string
+  closeTime: number // candle close timestamp
+  low: string // wicks needed for stops
+  high: string // wicks needed for stops
 }
 
 class LimitedLengthCandlesHistory {
@@ -89,12 +91,16 @@ export interface Edge58EntrySignalsCallbacks {
     direction,
     enter_position_ok,
     add_to_position_ok,
+    entry_candle_close_timestamp_ms,
+    stop_price,
   }: {
     symbol: string
     entry_price: BigNumber
     direction: "long" | "short"
     enter_position_ok: boolean
     add_to_position_ok: boolean
+    entry_candle_close_timestamp_ms: number
+    stop_price: BigNumber
   }): void
 }
 
@@ -135,12 +141,57 @@ export class Edge58EntrySignals {
     return new CandleInfo_OC(candle).percentage_change().abs().isGreaterThanOrEqualTo(35)
   }
 
+  get_stop_percentage(candle: Candle, direction: "long" | "short"): BigNumber {
+    const large_wick_threshold_as_percentage_of_body = 35 // TODO: make edge config params (string)
+    const no_wick_stop_pcnt = 0
+    const small_wick_stop_pcnt = 5
+    const large_wick_stop_pcnt = 10
+    if (direction === "long") {
+      // wick is low to min(open, close)
+      let wick_size = BigNumber.min(candle.open, candle.close).minus(candle.low)
+      if (wick_size.isZero()) return new BigNumber(no_wick_stop_pcnt)
+      if (wick_size.isNegative()) throw new Error(`negative wick_size`)
+      let body_size = BigNumber.max(candle.open, candle.close).minus(BigNumber.min(candle.open, candle.close))
+      let wick_pcnt = wick_size.dividedBy(body_size).times(100)
+      if (wick_pcnt.isGreaterThanOrEqualTo(large_wick_threshold_as_percentage_of_body))
+        return new BigNumber(large_wick_stop_pcnt)
+      return new BigNumber(small_wick_stop_pcnt)
+    }
+    if (direction === "short") {
+      // wick is max(open, close) to high
+      let wick_size = new BigNumber(candle.high).minus(BigNumber.max(candle.open, candle.close))
+      if (wick_size.isZero()) return new BigNumber(no_wick_stop_pcnt)
+      if (wick_size.isNegative()) throw new Error(`negative wick_size`)
+      let body_size = BigNumber.max(candle.open, candle.close).minus(BigNumber.min(candle.open, candle.close))
+      let wick_pcnt = wick_size.dividedBy(body_size).times(100)
+      if (wick_pcnt.isGreaterThanOrEqualTo(large_wick_threshold_as_percentage_of_body))
+        return new BigNumber(large_wick_stop_pcnt)
+      return new BigNumber(small_wick_stop_pcnt)
+    }
+    throw new Error(`unknown direction: ${direction}`)
+  }
+
+  get_stop_price(candle: Candle, direction: "long" | "short"): BigNumber {
+    let stop_percentage = this.get_stop_percentage(candle, direction)
+    if (direction === "long") {
+      // stop price X% under the low
+      return new BigNumber(candle.low).times(new BigNumber(100).minus(stop_percentage).div(100))
+    }
+    if (direction === "short") {
+      // stop price X% above the high
+      return new BigNumber(candle.high).times(new BigNumber(100).plus(stop_percentage).div(100))
+    }
+    throw new Error(`unknown direction: ${direction}`)
+  }
+
   is_adx_the_right_colour_to_enter(direction: "long" | "short"): boolean {
-    this.logger.warn(`ADX direction is not implemented - tests`)
+    // this.logger.warn(`ADX direction is not implemented - tests`)
     return true
   }
 
   async ingest_new_candle({ timeframe, candle, symbol }: { timeframe: string; symbol: string; candle: Candle }) {
+    this.logger.info(`INGESTING CANDLE ${moment(candle.closeTime).format("YYYY MMM DD")} ${candle.close}`)
+
     if (timeframe !== this.edge58_parameters.candle_timeframe) {
       console.log(`Short timeframe ${timeframe} candle on ${this.symbol} closed at ${candle.close}`)
       throw new Error(`Got a short timeframe candle`)
@@ -178,11 +229,14 @@ export class Edge58EntrySignals {
           direction,
           enter_position_ok,
           add_to_position_ok,
+          entry_candle_close_timestamp_ms: candle.closeTime,
+          stop_price: this.get_stop_price(candle, direction),
         })
       }
     } catch (e) {
       this.logger.error(`Exception checking or entering position: ${e}`)
       console.error(e)
+      throw e
     } finally {
       // important not to miss this - lest we corrupt the history
       this.price_history_candles.push(candle)

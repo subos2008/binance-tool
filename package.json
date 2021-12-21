@@ -32,6 +32,7 @@
     "handlebars": "^4.7.6",
     "human-number": "^1.0.6",
     "lodash": "^4.17.15",
+    "moment": "^2.29.1",
     "node-fetch": "^2.3.0",
     "nodemon": "^2.0.3",
     "redis": "2.8.0",

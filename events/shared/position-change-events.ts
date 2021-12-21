@@ -1,7 +1,10 @@
 import { ExchangeIdentifier } from "./exchange-identifier"
 import { MarketIdentifier_V2 } from "./market-identifier"
 
-export type PositionChangeEvents = PositionEntryExecutionLog | PositionExitExecutionLog | PositionIncreaseExecutionLog
+export type PositionChangeEvents =
+  | PositionEntryExecutionLog
+  | PositionExitExecutionLog
+  | PositionIncreaseExecutionLog
 
 export interface PositionEntryExecutionLog {
   version: "v1"
@@ -9,6 +12,9 @@ export interface PositionEntryExecutionLog {
   market_identifier: MarketIdentifier_V2
   direction: "long" | "short"
   entry_price: string
+  entry_candle_close_timestamp_ms: number
+  stop_price: string
+  order_executed: { base_amount: string; quote_amount: string }
 }
 export interface PositionIncreaseExecutionLog {
   version: "v1"
@@ -16,6 +22,9 @@ export interface PositionIncreaseExecutionLog {
   market_identifier: MarketIdentifier_V2
   direction: "long" | "short"
   entry_price: string
+  entry_candle_close_timestamp_ms: number
+  stop_price: string
+  order_executed: { base_amount: string; quote_amount: string }
 }
 
 export interface PositionExitExecutionLog {
@@ -26,4 +35,5 @@ export interface PositionExitExecutionLog {
   direction: "long" | "short"
   exit_price: string
   position_size: string
+  exit_candle_close_timestamp_ms: number
 }

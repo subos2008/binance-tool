@@ -22,6 +22,8 @@ export interface Edge58EntrySignal {
   }
   add_to_position_ok: boolean
   enter_position_ok: boolean
+  entry_candle_close_timestamp_ms: number
+  stop_price: string
 }
 
 export interface Edge58ExitSignal {
@@ -37,4 +39,5 @@ export interface Edge58ExitSignal {
   position: {
     position_size: string
   }
+  exit_candle_close_timestamp_ms: number
 }

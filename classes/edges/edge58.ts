@@ -141,34 +141,27 @@ export class Edge58EntrySignals {
     return new CandleInfo_OC(candle).percentage_change().abs().isGreaterThanOrEqualTo(35)
   }
 
+  /* Direction chooses the wick, when short we set the stop above the top wick */
   get_stop_percentage(candle: Candle, direction: "long" | "short"): BigNumber {
-    const large_wick_threshold_as_percentage_of_body = 35 // TODO: make edge config params (string)
-    const no_wick_stop_pcnt = 0
-    const small_wick_stop_pcnt = 5
-    const large_wick_stop_pcnt = 10
+    let stops = this.edge58_parameters.stops
+    let wick_size: BigNumber
     if (direction === "long") {
       // wick is low to min(open, close)
-      let wick_size = BigNumber.min(candle.open, candle.close).minus(candle.low)
-      if (wick_size.isZero()) return new BigNumber(no_wick_stop_pcnt)
-      if (wick_size.isNegative()) throw new Error(`negative wick_size`)
-      let body_size = BigNumber.max(candle.open, candle.close).minus(BigNumber.min(candle.open, candle.close))
-      let wick_pcnt = wick_size.dividedBy(body_size).times(100)
-      if (wick_pcnt.isGreaterThanOrEqualTo(large_wick_threshold_as_percentage_of_body))
-        return new BigNumber(large_wick_stop_pcnt)
-      return new BigNumber(small_wick_stop_pcnt)
-    }
-    if (direction === "short") {
+      wick_size = BigNumber.min(candle.open, candle.close).minus(candle.low)
+    } else if (direction === "short") {
       // wick is max(open, close) to high
-      let wick_size = new BigNumber(candle.high).minus(BigNumber.max(candle.open, candle.close))
-      if (wick_size.isZero()) return new BigNumber(no_wick_stop_pcnt)
-      if (wick_size.isNegative()) throw new Error(`negative wick_size`)
-      let body_size = BigNumber.max(candle.open, candle.close).minus(BigNumber.min(candle.open, candle.close))
-      let wick_pcnt = wick_size.dividedBy(body_size).times(100)
-      if (wick_pcnt.isGreaterThanOrEqualTo(large_wick_threshold_as_percentage_of_body))
-        return new BigNumber(large_wick_stop_pcnt)
-      return new BigNumber(small_wick_stop_pcnt)
-    }
-    throw new Error(`unknown direction: ${direction}`)
+      wick_size = new BigNumber(candle.high).minus(BigNumber.max(candle.open, candle.close))
+    } else throw new Error(`unknown direction: ${direction}`)
+
+    if (wick_size.isNegative()) throw new Error(`negative wick_size`)
+    let body_size = BigNumber.max(candle.open, candle.close).minus(BigNumber.min(candle.open, candle.close))
+    let wick_pcnt = wick_size.dividedBy(body_size).times(100)
+
+    if (wick_pcnt.isGreaterThan(stops.wick_definitions_percentages_of_body.large_wick_greater_than))
+      return new BigNumber(stops.stop_percentages.large_wick)
+    if (wick_pcnt.isLessThan(stops.wick_definitions_percentages_of_body.minimal_wick_less_than))
+      return new BigNumber(stops.stop_percentages.minimal_wick)
+    return new BigNumber(stops.stop_percentages.default)
   }
 
   get_stop_price(candle: Candle, direction: "long" | "short"): BigNumber {

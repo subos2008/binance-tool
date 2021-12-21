@@ -5,6 +5,18 @@ import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 export type Edge58Parameters = {
   candle_timeframe: "1w"
   candles_of_price_history: 2 // compare the newly closed candle with the previous N weeks
+  stops: {
+    wick_definitions_percentages_of_body: { // Percentags of wick to body that define each wick size
+      'minimal_wick_less_than': "5",
+      // 'medium_wick': 
+      'large_wick_greater_than': "10"
+    }
+    stop_percentages: { // stop percentage to use to each wick size
+      'minimal_wick': "4", // 3-5% suggested
+      'default': "6" // 5-8% suggested
+      'large_wick': "12" // 10-15% suggested
+    }
+  }
 }
 
 export type Edge58Events = Edge58EntrySignal | Edge58ExitSignal

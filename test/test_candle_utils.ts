@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function() {
 	throw Error('BigNumber .valueOf called!');
 };
 
-import { CandleInfo } from "../classes/utils/candle_utils"
+import { CandleInfo_OC } from "../classes/utils/candle_utils"
 
 import { Logger } from "../interfaces/logger"
 const LoggerClass = require("../lib/faux_logger")
@@ -31,14 +31,14 @@ const tv_long_candle = { // +19.06% delta on TV
   low: "43.11",
 }
 
-describe("CandleInfo", function () {
+describe("CandleInfo_OC", function () {
   describe("percentage_change", function () {
     it("gives correct percentage on tv short candle", function () {
-      let info = new CandleInfo(tv_short_candle)
+      let info = new CandleInfo_OC(tv_short_candle)
       expect(info.percentage_change()).to.be.bignumber.equal("-20.39")
     })
     it("gives correct percentage on tv long candle", function () {
-      let info = new CandleInfo(tv_long_candle)
+      let info = new CandleInfo_OC(tv_long_candle)
       expect(info.percentage_change()).to.be.bignumber.equal("19.01") // Actually TV says 19.06
     })
   })

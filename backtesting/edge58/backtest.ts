@@ -57,6 +57,17 @@ const _symbol = `BTC${quote_symbol}`
 const edge58_parameters: Edge58Parameters = {
   candles_of_price_history: 2,
   candle_timeframe: "1w",
+  stops: {
+    wick_definitions_percentages_of_body: {
+      "minimal_wick_less_than": "5",
+      "large_wick_greater_than": "10",
+    },
+    stop_percentages: {
+      "minimal_wick": "4",
+      "default": "6",
+      "large_wick": "12",
+    },
+  },
 }
 let _start_date = new Date("2017-12-20")
 let _end_date = new Date("2019-08-20")

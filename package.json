@@ -5,7 +5,8 @@
   "scripts": {
     "test": "TS_NODE_PROJECT=./tsconfig.json ./node_modules/.bin/mocha --forbid-only -r ts-node/register ./test/test_*",
     "test-only": "./node_modules/.bin/mocha -r ts-node/register ./test/test_*",
-    "nodemon": "./node_modules/.bin/nodemon -e js,ts ./node_modules/.bin/mocha -r ts-node/register ./test/test_*"
+    "nodemon": "./node_modules/.bin/nodemon -e js,ts ./node_modules/.bin/mocha -r ts-node/register ./test/test_*",
+    "backtest_edge58": "./backtesting/edge58/backtest.ts 2>/dev/null | ./node_modules/.bin/bunyan -o simple"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.42.0",

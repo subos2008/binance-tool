@@ -9,9 +9,11 @@ BigNumber.prototype.valueOf = function () {
 }
 const moment = require("moment")
 
-import { Logger } from "../../interfaces/logger"
-import { Edge58Parameters } from "../../events/shared/edge58-position-entry"
-import { CandleInfo_OC } from "../utils/candle_utils"
+import { Logger } from "../../../interfaces/logger"
+import { Edge58EntrySignal, Edge58Parameters_V1 } from "../../../events/shared/edge58"
+import { CandleInfo_OC } from "../../utils/candle_utils"
+import { MarketIdentifier_V2 } from "../../../events/shared/market-identifier"
+import { Edge56PositionEntrySignal } from "../../../events/shared/edge56-position-entry"
 
 export interface Candle {
   open: string
@@ -83,25 +85,7 @@ class LimitedLengthCandlesHistory {
 }
 
 export interface Edge58EntrySignalsCallbacks {
-  // We might have different filters on enter position or add to position
-  // Maybe we should add the entry candle info here too
-  enter_or_add_to_position({
-    symbol,
-    entry_price,
-    direction,
-    enter_position_ok,
-    add_to_position_ok,
-    entry_candle_close_timestamp_ms,
-    stop_price,
-  }: {
-    symbol: string
-    entry_price: BigNumber
-    direction: "long" | "short"
-    enter_position_ok: boolean
-    add_to_position_ok: boolean
-    entry_candle_close_timestamp_ms: number
-    stop_price: BigNumber
-  }): void
+  enter_or_add_to_position(event: Edge58EntrySignal): void
 }
 
 export class Edge58EntrySignals {
@@ -110,7 +94,8 @@ export class Edge58EntrySignals {
 
   callbacks: Edge58EntrySignalsCallbacks
   price_history_candles: LimitedLengthCandlesHistory
-  edge58_parameters: Edge58Parameters
+  edge58_parameters: Edge58Parameters_V1
+  market_identifier: MarketIdentifier_V2
 
   constructor({
     logger,
@@ -118,17 +103,20 @@ export class Edge58EntrySignals {
     symbol,
     callbacks,
     edge58_parameters,
+    market_identifier,
   }: {
     logger: Logger
     initial_candles: Candle[]
     symbol: string
     callbacks: Edge58EntrySignalsCallbacks
-    edge58_parameters: Edge58Parameters
+    edge58_parameters: Edge58Parameters_V1
+    market_identifier: MarketIdentifier_V2
   }) {
     this.symbol = symbol
     this.logger = logger
     this.callbacks = callbacks
     this.edge58_parameters = edge58_parameters
+    this.market_identifier = market_identifier
 
     // Edge config - hardcoded as this should be static to the edge - short entry code expects close
     this.price_history_candles = new LimitedLengthCandlesHistory({
@@ -211,20 +199,27 @@ export class Edge58EntrySignals {
       }
 
       if (direction) {
+        let stop_price = this.get_stop_price(candle, direction).toFixed()
         this.logger.info(
-          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: current candle "close" at ${potential_entry_price.toFixed()}: enter_position_ok: ${enter_position_ok} add_to_position_ok: ${add_to_position_ok}`
+          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: current candle "close" at ${potential_entry_price.toFixed()}: enter_position_ok: ${enter_position_ok} add_to_position_ok: ${add_to_position_ok}, stop_price: ${stop_price}`
         )
         if (enter_position_ok === undefined) throw new Error("enter_position_ok not calculated")
         if (add_to_position_ok === undefined) throw new Error("add_to_position_ok not calculated")
-        this.callbacks.enter_or_add_to_position({
-          symbol: this.symbol,
-          entry_price: potential_entry_price,
-          direction,
+        let event: Edge58EntrySignal = {
+          version: "v1",
+          market_identifier: this.market_identifier,
+          event_type: "Edge58EntrySignal",
+          edge58_parameters: this.edge58_parameters,
+          edge58_entry_signal: {
+            direction,
+            entry_price: potential_entry_price.toFixed(),
+          },
           enter_position_ok,
           add_to_position_ok,
           entry_candle_close_timestamp_ms: candle.closeTime,
-          stop_price: this.get_stop_price(candle, direction),
-        })
+          stop_price,
+        }
+        this.callbacks.enter_or_add_to_position(event)
       }
     } catch (e) {
       this.logger.error(`Exception checking or entering position: ${e}`)

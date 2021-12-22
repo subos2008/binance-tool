@@ -37,15 +37,10 @@ const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false, template: { name: "edge58" } })
 const moment = require("moment")
 
-import { Edge58EntrySignals, Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58"
+import { Edge58EntrySignals, Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58/edge58"
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import BigNumber from "bignumber.js"
-import {
-  Edge58Events,
-  Edge58Parameters,
-  Edge58EntrySignal,
-  Edge58ExitSignal,
-} from "../../events/shared/edge58-position-entry"
+import { Edge58Events, Edge58Parameters_V1, Edge58EntrySignal, Edge58ExitSignal } from "../../events/shared/edge58"
 import { PositionChangeEvents } from "../../events/shared/position-change-events"
 import { MarketIdentifier_V2 } from "../../events/shared/market-identifier"
 
@@ -54,7 +49,8 @@ import { MarketIdentifier_V2 } from "../../events/shared/market-identifier"
  */
 const quote_symbol = "USDT".toUpperCase()
 const _symbol = `BTC${quote_symbol}`
-const edge58_parameters: Edge58Parameters = {
+const edge58_parameters: Edge58Parameters_V1 = {
+  version: "v1",
   candles_of_price_history: 2,
   candle_timeframe: "1w",
   stops: {
@@ -72,6 +68,11 @@ const edge58_parameters: Edge58Parameters = {
 let _start_date = new Date("2017-12-20")
 let _end_date = new Date("2019-08-20")
 
+let market_identifier: MarketIdentifier_V2 = {
+  version: "v2",
+  exchange_identifier: { version: "v2", exchange },
+  symbol: _symbol,
+}
 /**
  * ------------------------------------------------------------
  */
@@ -183,45 +184,12 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
 
   // TODO: add enter_position and add_to_position booleans to this so we can use it for
   // both entering and adding to position depending on filters in the Edge class
-  enter_or_add_to_position({
-    symbol,
-    entry_price,
-    direction,
-    stop_price,
-    enter_position_ok,
-    add_to_position_ok,
-    entry_candle_close_timestamp_ms,
-  }: {
-    symbol: string
-    entry_price: BigNumber
-    direction: "long" | "short"
-    logger: Logger
-    stop_price: BigNumber
-    enter_position_ok: boolean
-    add_to_position_ok: boolean
-    entry_candle_close_timestamp_ms: number
-  }): void {
-    let market_identifier: MarketIdentifier_V2 = {
-      version: "v2",
-      exchange_identifier: { version: "v2", exchange },
-      symbol,
-    }
-
-    let event: Edge58EntrySignal = {
-      event_type: "Edge58EntrySignal",
-      version: "v1",
-      market_identifier,
-      edge58_parameters,
-      edge58_entry_signal: {
-        direction,
-        entry_price: entry_price.toFixed(),
-      },
-      add_to_position_ok,
-      enter_position_ok,
-      entry_candle_close_timestamp_ms,
-      stop_price: stop_price.toFixed(),
-    }
+  enter_or_add_to_position(event: Edge58EntrySignal): void {
     this.event_log.push(event)
+    let direction = event.edge58_entry_signal.direction
+    let entry_price = event.edge58_entry_signal.entry_price
+    let symbol = event.market_identifier.symbol
+    let stop_price = event.stop_price
 
     if (this.in_position()) {
       if (this.direction != direction) {
@@ -231,7 +199,7 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
         return
       }
 
-      if (add_to_position_ok) {
+      if (event.add_to_position_ok) {
         this.logger.info(`Adding to ${direction} position`)
         let base_amount: BigNumber = this.fixed_position_size
         let quote_amount: BigNumber = this.fixed_position_size.dividedBy(entry_price)
@@ -243,11 +211,11 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
         /**
          * Update Position Info *************** TODO *********************
          */
-        this.stop_price = stop_price
+        this.stop_price = new BigNumber(stop_price)
         this.position_size = this.position_size.plus(quote_amount)
       }
     } else {
-      if (enter_position_ok) {
+      if (event.enter_position_ok) {
         this.logger.info(`Entering ${direction}`)
         let base_amount: BigNumber = this.fixed_position_size
         let quote_amount: BigNumber = this.fixed_position_size.dividedBy(entry_price)
@@ -258,7 +226,7 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
         /**
          * Update Position Info *************** TODO *********************
          */
-        this.stop_price = stop_price
+        this.stop_price = new BigNumber(stop_price)
         this.direction = direction
         this.symbol = symbol
         this.position_size = this.fixed_position_size.dividedBy(entry_price)
@@ -372,6 +340,7 @@ class Edge58Backtester {
       symbol,
       callbacks: this.tracker,
       edge58_parameters,
+      market_identifier,
     })
     let timeframe = edge58_parameters.candle_timeframe
     for (const candle of candles) {

@@ -5,7 +5,7 @@ import * as chai from "chai"
 const chaiBignumber = require("chai-bignumber")
 chai.use(chaiBignumber())
 
-import { Edge58EntrySignals, Edge58EntrySignalsCallbacks } from "../classes/edges/edge58"
+import { Edge58EntrySignals, Edge58EntrySignalsCallbacks } from "../classes/edges/edge58/edge58"
 import { create_new_trade, build_trade_state_for_trade_id } from "../classes/persistent_state/redis_trade_state"
 import { MiniCloseOpenOnlyCandle } from "../classes/utils/candle_utils"
 
@@ -23,7 +23,16 @@ afterEach(function (done) {
   redis.quit(done)
 })
 
-let default_parameters: Edge58Parameters = {
+let symbol = "BTCUSDT"
+let exchange = "tests"
+let market_identifier: MarketIdentifier_V2 = {
+  version: "v2",
+  exchange_identifier: { version: "v2", exchange },
+  symbol,
+}
+
+let default_parameters: Edge58Parameters_V1 = {
+  version: "v1",
   candle_timeframe: "1w",
   candles_of_price_history: 2,
   stops: {
@@ -40,8 +49,9 @@ let default_parameters: Edge58Parameters = {
 }
 
 import * as candles from "./candles/BTCUSDT-2017-12-20"
-import { Edge58Parameters } from "../events/shared/edge58-position-entry"
+import { Edge58Parameters_V1 } from "../events/shared/edge58"
 import { Edge56EntrySignalsCallbacks } from "../classes/edges/edge56"
+import { MarketIdentifier_V2 } from "../events/shared/market-identifier"
 
 let closeTime = 1000
 function build_candle(open: number, high: number, low: number, close: number) {
@@ -113,7 +123,14 @@ describe("Edge58EntrySignals", function () {
           },
         },
       })
-      let edge = new Edge58EntrySignals({ logger, initial_candles: [], symbol, callbacks, edge58_parameters })
+      let edge = new Edge58EntrySignals({
+        logger,
+        initial_candles: [],
+        symbol,
+        callbacks,
+        edge58_parameters,
+        market_identifier,
+      })
       return { logger, symbol, callbacks, edge58_parameters, edge }
     }
 
@@ -125,8 +142,12 @@ describe("Edge58EntrySignals", function () {
       })
       it("returns correct amount with minimal wick", async function () {
         let { edge } = setup()
-        expect(edge.get_stop_percentage(build_candle(100, 200, 99, 200), direction),'upper').to.bignumber.equal("4")
-        expect(edge.get_stop_percentage(build_candle(100, 200, 96, 200), direction),'lower').to.bignumber.equal("4")
+        expect(edge.get_stop_percentage(build_candle(100, 200, 99, 200), direction), "upper").to.bignumber.equal(
+          "4"
+        )
+        expect(edge.get_stop_percentage(build_candle(100, 200, 96, 200), direction), "lower").to.bignumber.equal(
+          "4"
+        )
       })
       it("returns correct amount with large wick", async function () {
         let { edge } = setup()
@@ -153,8 +174,12 @@ describe("Edge58EntrySignals", function () {
       })
       it("returns correct amount with large wick", async function () {
         let { edge } = setup()
-        expect(edge.get_stop_percentage(build_candle(200, 211, 100, 100), direction), "first").to.bignumber.equal("12")
-        expect(edge.get_stop_percentage(build_candle(200, 299, 100, 100), direction), "second").to.bignumber.equal("12")
+        expect(edge.get_stop_percentage(build_candle(200, 211, 100, 100), direction), "first").to.bignumber.equal(
+          "12"
+        )
+        expect(edge.get_stop_percentage(build_candle(200, 299, 100, 100), direction), "second").to.bignumber.equal(
+          "12"
+        )
       })
       it("returns correct amount with middle wick", async function () {
         let { edge } = setup()

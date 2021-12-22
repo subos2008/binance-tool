@@ -45,10 +45,11 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { CandlesCollector } from "../../classes/utils/candle_utils"
-import { Edge58EntrySignals, Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58"
+import { Edge58EntrySignals, Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58/edge58"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
-import { Edge58Parameters, Edge58EntrySignal } from "../../events/shared/edge58-position-entry"
+import { Edge58Parameters_V1, Edge58EntrySignal } from "../../events/shared/edge58"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
+import { Edge56PositionEntrySignal } from "../../events/shared/edge56-position-entry"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -61,9 +62,21 @@ function sleep(ms: number) {
 
 let publisher: GenericTopicPublisher = new GenericTopicPublisher({ logger, event_name: "Edge58EntrySignal" })
 
-const edge58_parameters: Edge58Parameters = {
+const edge58_parameters: Edge58Parameters_V1 = {
+  version: "v1",
   candles_of_price_history: 2,
   candle_timeframe: "1w",
+  stops: {
+    wick_definitions_percentages_of_body: {
+      "minimal_wick_less_than": "5",
+      "large_wick_greater_than": "10",
+    },
+    stop_percentages: {
+      "minimal_wick": "4",
+      "default": "6",
+      "large_wick": "12",
+    },
+  },
 }
 
 class Edge58Service implements Edge58EntrySignalsCallbacks {
@@ -84,15 +97,11 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
     this.send_message("service re-starting")
   }
 
-  enter_or_add_to_position({
-    symbol,
-    entry_price,
-    direction,
-  }: {
-    symbol: string
-    entry_price: BigNumber
-    direction: "long" | "short"
-  }): void {
+  enter_or_add_to_position(event: Edge58EntrySignal): void {
+    let symbol = event.market_identifier.symbol
+    let direction = event.edge58_entry_signal.direction
+    let entry_price = event.edge58_entry_signal.entry_price
+
     let market_data_for_symbol: CoinGeckoMarketData | undefined
     let market_data_string = ""
     try {
@@ -108,7 +117,7 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
     try {
       let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
       this.send_message(
-        `${direction_string} entry triggered on ${symbol} at price ${entry_price.toFixed()}. before entry check: ADX, entry candle <35%. ${market_data_string}`
+        `${direction_string} entry triggered on ${symbol} at price ${entry_price}. before entry check: ADX, entry candle <35%. ${market_data_string}`
       )
     } catch (e) {
       this.logger.warn(`Failed to publish to telegram for ${symbol}`)
@@ -116,12 +125,7 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
       Sentry.captureException(e)
     }
     try {
-      this.publish_entry_to_amqp({
-        symbol,
-        entry_price,
-        direction,
-        market_data_for_symbol,
-      })
+      this.publish_entry_to_amqp({ ...event, extra: { CoinGeckoMarketData: market_data_for_symbol } })
     } catch (e) {
       this.logger.warn(`Failed to publish to AMQP for ${symbol}`)
       // This can happen if top 100 changes since boot and we refresh the cap list
@@ -129,34 +133,7 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
     }
   }
 
-  publish_entry_to_amqp({
-    symbol,
-    entry_price,
-    direction,
-    market_data_for_symbol,
-  }: {
-    symbol: string
-    entry_price: BigNumber
-    direction: "long" | "short"
-    market_data_for_symbol: CoinGeckoMarketData | undefined
-  }) {
-    let event: Edge58EntrySignal = {
-      version: "v1",
-      market_identifier: {
-        version: "v2",
-        exchange_identifier: { version: "v2", exchange },
-        symbol,
-      },
-      event_type: "Edge58EntrySignal",
-      edge58_parameters,
-      edge58_entry_signal: {
-        direction,
-        entry_price: entry_price.toFixed(),
-      },
-      extra: {
-        CoinGeckoMarketData: market_data_for_symbol,
-      },
-    }
+  publish_entry_to_amqp(event: Edge58EntrySignal) {
     const options = {
       // expiration: event_expiration_seconds,
       persistent: true,
@@ -224,6 +201,11 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
           symbol,
           callbacks: this,
           edge58_parameters,
+          market_identifier: {
+            version: "v2",
+            exchange_identifier: { version: "v2", exchange },
+            symbol,
+          },
         })
         console.log(`Setup edge for ${symbol}`)
         await sleep(2000) // 1200 calls allowed per minute

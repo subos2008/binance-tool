@@ -61,7 +61,6 @@ export class ADX_Indicator {
     }
 
     let adx_period = adx_parameters.adx_period
-    let limadx = adx_parameters.limadx
 
     initial_candles.forEach((x) => {
       reformed_candles.low.push(parseFloat(x.low))
@@ -89,6 +88,10 @@ export class ADX_Indicator {
     return false
   }
 
+  current_color() {
+    return this.color
+  }
+
   async ingest_new_candle({
     timeframe,
     candle,
@@ -104,7 +107,7 @@ export class ADX_Indicator {
       throw `Got a short timeframe candle`
     }
 
-    this.current_result = this.adx.nextValue(candle as any)
+    this.current_result = this.adx.nextValue(Number(candle.close))
     if (this.current_result) {
       // why if? what if undefined? not ready to signal yet?
       this.prev_color = this.color

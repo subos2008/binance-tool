@@ -53,6 +53,7 @@ export class Edge58EntrySignals {
     this.callbacks = callbacks
     this.edge58_parameters = edge58_parameters
     this.market_identifier = market_identifier
+    this.logger.info(`Edge58EntrySignals provided with ${initial_candles.length} initial_candles`)
     this.adx_indicator = new ADX_Indicator({
       logger,
       symbol,
@@ -111,8 +112,8 @@ export class Edge58EntrySignals {
   }
 
   is_adx_the_right_colour_to_enter(direction: "long" | "short"): boolean {
-    // this.logger.warn(`ADX direction is not implemented - tests`)
-    return true
+    this.logger.info(`Current ADX color: ${this.adx_indicator.current_color()}`)
+    return this.adx_indicator.can_enter(direction)
   }
 
   async ingest_new_candle({ timeframe, candle, symbol }: { timeframe: string; symbol: string; candle: Candle }) {
@@ -132,16 +133,20 @@ export class Edge58EntrySignals {
       // check for long entry
       if (potential_entry_price.isGreaterThan(this.price_history_candles.get_highest_body_value().high)) {
         direction = "long"
-        enter_position_ok = !this.is_large_candle_body(candle) && this.is_adx_the_right_colour_to_enter(direction)
-        add_to_position_ok = true // no filters on this
       }
 
       // check for short entry
       if (potential_entry_price.isLessThan(this.price_history_candles.get_lowest_body_value().low)) {
         direction = "short"
-        enter_position_ok = !this.is_large_candle_body(candle) && this.is_adx_the_right_colour_to_enter(direction)
-        add_to_position_ok = true // no filters on this
       }
+
+      // update ADX before considering other logic
+      this.adx_indicator.ingest_new_candle({ timeframe, symbol, candle })
+
+      if (!direction) throw new Error(`direction unknown: ${direction}`)
+
+      enter_position_ok = !this.is_large_candle_body(candle) && this.is_adx_the_right_colour_to_enter(direction)
+      add_to_position_ok = true // no filters on this
 
       if (direction) {
         let stop_price = this.get_stop_price(candle, direction).toFixed()

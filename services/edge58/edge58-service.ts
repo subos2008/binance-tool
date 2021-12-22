@@ -50,7 +50,6 @@ import { Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58/interfac
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { Edge58Parameters_V1, Edge58EntrySignal } from "../../events/shared/edge58"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
-import { Edge56PositionEntrySignal } from "../../events/shared/edge56-position-entry"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -79,8 +78,12 @@ const edge58_parameters: Edge58Parameters_V1 = {
     },
   },
   entry_filters: {
-    candle_body_percentage_considered_too_large: '35'
-  }
+    candle_body_percentage_considered_too_large: "35",
+    adx_parameters: {
+      adx_period: 14,
+      limadx: 14,
+    },
+  },
 }
 
 class Edge58Service implements Edge58EntrySignalsCallbacks {

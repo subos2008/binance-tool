@@ -1,6 +1,6 @@
-import { ExchangeIdentifier } from "./exchange-identifier"
 import { MarketIdentifier_V2 } from "./market-identifier"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
+import {ADX_parameters} from '../../classes/indicators/adx'
 
 export type Edge58Parameters_V1 = {
   version: "v1"
@@ -20,6 +20,7 @@ export type Edge58Parameters_V1 = {
   }
   entry_filters:{
     candle_body_percentage_considered_too_large: "35"
+    adx_parameters: ADX_parameters
   }
 }
 

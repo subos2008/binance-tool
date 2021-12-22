@@ -47,6 +47,10 @@ let default_parameters: Edge58Parameters_V1 = {
   },
   entry_filters: {
     candle_body_percentage_considered_too_large: "35",
+    adx_parameters: {
+      adx_period: 14,
+      limadx: 14,
+    },
   },
 }
 

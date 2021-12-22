@@ -10,7 +10,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { ADX } from "technicalindicators"
 
-import { Logger } from "../../../interfaces/logger"
+import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
 import { ADXOutput } from "technicalindicators/declarations/directionalmovement/ADX"
 
@@ -33,6 +33,10 @@ export class ADX_Indicator {
   prev_color: string
   current_result: ADXOutput | undefined
   adx_parameters: ADX_parameters
+
+  static required_initial_candles(adx_parameters: ADX_parameters) {
+    return Math.max(adx_parameters.limadx, adx_parameters.adx_period) // TODO: this is probably wrong
+  }
 
   constructor({
     logger,
@@ -81,7 +85,7 @@ export class ADX_Indicator {
   can_enter(direction: "long" | "short") {
     if (direction === "long" && this.color === "green") return true
     if (direction === "short" && this.color === "red") return true
-    if(!this.color) this.logger.warn(`ADX indicator not ready`)
+    if (!this.color) this.logger.warn(`ADX indicator not ready`)
     return false
   }
 

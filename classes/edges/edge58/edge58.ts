@@ -12,11 +12,9 @@ import { Logger } from "../../../interfaces/logger"
 import { Edge58EntrySignal, Edge58Parameters_V1 } from "../../../events/shared/edge58"
 import { CandleInfo_OC } from "../../utils/candle_utils"
 import { MarketIdentifier_V2 } from "../../../events/shared/market-identifier"
-import { ADX_Indicator } from "./adx"
+import { ADX_Indicator } from "../../indicators/adx"
 import { LimitedLengthCandlesHistory } from "./limited_length_candles_history"
-import { Candle,Edge58EntrySignalsCallbacks } from "./interfaces"
-
-
+import { Candle, Edge58EntrySignalsCallbacks } from "./interfaces"
 
 export class Edge58EntrySignals {
   symbol: string
@@ -26,6 +24,14 @@ export class Edge58EntrySignals {
   price_history_candles: LimitedLengthCandlesHistory
   edge58_parameters: Edge58Parameters_V1
   market_identifier: MarketIdentifier_V2
+  adx_indicator: ADX_Indicator
+
+  static required_initial_candles(edge58_parameters: Edge58Parameters_V1) {
+    return Math.max(
+      edge58_parameters.candles_of_price_history,
+      ADX_Indicator.required_initial_candles(edge58_parameters.entry_filters.adx_parameters)
+    )
+  }
 
   constructor({
     logger,
@@ -47,6 +53,12 @@ export class Edge58EntrySignals {
     this.callbacks = callbacks
     this.edge58_parameters = edge58_parameters
     this.market_identifier = market_identifier
+    this.adx_indicator = new ADX_Indicator({
+      logger,
+      symbol,
+      adx_parameters: edge58_parameters.entry_filters.adx_parameters,
+      initial_candles,
+    })
 
     // Edge config - hardcoded as this should be static to the edge - short entry code expects close
     this.price_history_candles = new LimitedLengthCandlesHistory({

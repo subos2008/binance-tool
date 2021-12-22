@@ -135,7 +135,7 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
   fixed_position_size = new BigNumber(300) // TODO: make config
 
   symbol: string | undefined
-  position_size = new BigNumber(0)
+  position_size = new BigNumber(0) // TODO: probably should remove this
   direction: "short" | "long" | undefined = undefined
   stop_price: BigNumber | undefined
 
@@ -330,13 +330,14 @@ class Edge58Backtester {
     /**
      * Split out the initial price history and pass it as initial_candles, the rest we pass in as if they are fresh new candles
      */
-    let initial_candles = candles.splice(0, edge58_parameters.candles_of_price_history)
-    if (initial_candles.length != edge58_parameters.candles_of_price_history) {
+    // Add ADX here - more initial candles, presumably.?
+    let required_initial_candles = Edge58EntrySignals.required_initial_candles(edge58_parameters)
+    let initial_candles = candles.splice(0, required_initial_candles)
+    if (initial_candles.length != required_initial_candles) {
       // we must have picked up some partial candles
-      this.logger.error(
-        `Wrong number of candles for ${symbol}: got ${initial_candles.length}, expected ${edge58_parameters.candles_of_price_history}`
-      )
-      throw new Error(`Wrong number of candles for ${symbol}`)
+      let msg = `Wrong number of initial_candles for ${symbol}: got ${initial_candles.length}, expected ${required_initial_candles}`
+      this.logger.error(msg)
+      throw new Error(msg)
     }
     this.logger.info(
       `Feeding in ${candles.length} post initial_candles, starting at close ${new Date(
@@ -379,9 +380,11 @@ class Edge58Backtester {
     this.logger.info(`Symbol: ${symbol}`)
     this.logger.info(`Start date: ${start_date}`)
     this.logger.info(`End date: ${end_date}`)
+    let required_initial_candles = Edge58EntrySignals.required_initial_candles(edge58_parameters)
+
     try {
       // Last N closed weekly candles exist between N+1 weeks ago and now
-      start_date.setDate(start_date.getDate() - (edge58_parameters.candles_of_price_history + 1) * 7)
+      start_date.setDate(start_date.getDate() - (required_initial_candles + 1) * 7)
       let candles = await this.candles_collector.get_candles_between({
         timeframe,
         symbol,

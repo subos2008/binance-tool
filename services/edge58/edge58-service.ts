@@ -185,11 +185,15 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
         // Last N closed weekly candles exist between N+1 weeks ago and now
         let start_date = new Date()
         let end_date = new Date(start_date)
-        start_date.setDate(start_date.getDate() + (edge58_parameters.candles_of_price_history + 1) * 7)
+        let candles_preload_start_date = new Date(start_date)
+        candles_preload_start_date.setDate(
+          candles_preload_start_date.getDate() -
+            (Edge58EntrySignals.required_initial_candles(edge58_parameters) + 1) * 7
+        )
         let initial_candles = await this.candles_collector.get_candles_between({
           timeframe,
           symbol,
-          start_date,
+          start_date: candles_preload_start_date,
           end_date,
         })
         if (initial_candles.length == 0) {

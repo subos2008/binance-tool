@@ -1,6 +1,6 @@
-import { MarketIdentifier_V2 } from "./market-identifier"
-import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
-import {ADX_parameters} from '../../classes/indicators/adx'
+import { MarketIdentifier_V2 } from "../../../events/shared/market-identifier"
+import { CoinGeckoMarketData } from "../../utils/coin_gecko"
+import {ADX_parameters} from '../../indicators/adx'
 
 export type Edge58Parameters_V1 = {
   version: "v1"

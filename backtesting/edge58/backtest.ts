@@ -42,7 +42,7 @@ import { Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58/interfac
 
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import BigNumber from "bignumber.js"
-import { Edge58Events, Edge58Parameters_V1, Edge58EntrySignal, Edge58ExitSignal } from "../../events/shared/edge58"
+import { Edge58Events, Edge58Parameters_V1, Edge58EntrySignal, Edge58ExitSignal } from "../../classes/edges/edge58/events"
 import { PositionChangeEvents } from "../../events/shared/position-change-events"
 import { MarketIdentifier_V2 } from "../../events/shared/market-identifier"
 

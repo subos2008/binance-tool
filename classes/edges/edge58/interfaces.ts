@@ -1,4 +1,4 @@
-import { Edge58EntrySignal } from "../../../events/shared/edge58"
+import { Edge58EntrySignal } from "./events"
 
 
 export interface Candle {

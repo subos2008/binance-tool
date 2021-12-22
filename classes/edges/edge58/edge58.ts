@@ -9,7 +9,7 @@ BigNumber.prototype.valueOf = function () {
 const moment = require("moment")
 
 import { Logger } from "../../../interfaces/logger"
-import { Edge58EntrySignal, Edge58Parameters_V1 } from "../../../events/shared/edge58"
+import { Edge58EntrySignal, Edge58Parameters_V1 } from "./events"
 import { CandleInfo_OC } from "../../utils/candle_utils"
 import { MarketIdentifier_V2 } from "../../../events/shared/market-identifier"
 import { ADX_Indicator } from "../../indicators/adx"

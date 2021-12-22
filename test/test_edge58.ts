@@ -55,7 +55,7 @@ let default_parameters: Edge58Parameters_V1 = {
 }
 
 import * as candles from "./candles/BTCUSDT-2017-12-20"
-import { Edge58Parameters_V1 } from "../events/shared/edge58"
+import { Edge58Parameters_V1 } from "../classes/edges/edge58/events"
 import { Edge56EntrySignalsCallbacks } from "../classes/edges/edge56"
 import { MarketIdentifier_V2 } from "../events/shared/market-identifier"
 

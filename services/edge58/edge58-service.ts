@@ -48,7 +48,7 @@ import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { Edge58EntrySignals } from "../../classes/edges/edge58/edge58"
 import { Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58/interfaces"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
-import { Edge58Parameters_V1, Edge58EntrySignal } from "../../events/shared/edge58"
+import { Edge58Parameters_V1, Edge58EntrySignal } from "../../classes/edges/edge58/events"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 
 process.on("unhandledRejection", (error) => {

@@ -18,6 +18,9 @@ export type Edge58Parameters_V1 = {
       'large_wick': "12" // 10-15% suggested
     }
   }
+  entry_filters:{
+    candle_body_percentage_considered_too_large: "35"
+  }
 }
 
 export type Edge58Events = Edge58EntrySignal | Edge58ExitSignal

@@ -46,6 +46,9 @@ let default_parameters: Edge58Parameters_V1 = {
       "large_wick": "12",
     },
   },
+  entry_filters: {
+    candle_body_percentage_considered_too_large: "35",
+  },
 }
 
 import * as candles from "./candles/BTCUSDT-2017-12-20"

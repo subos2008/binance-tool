@@ -126,7 +126,10 @@ export class Edge58EntrySignals {
   }
 
   is_large_candle_body(candle: Candle) {
-    return new CandleInfo_OC(candle).percentage_change().abs().isGreaterThanOrEqualTo(35)
+    return new CandleInfo_OC(candle)
+      .percentage_change()
+      .abs()
+      .isGreaterThanOrEqualTo(this.edge58_parameters.entry_filters.candle_body_percentage_considered_too_large)
   }
 
   /* Direction chooses the wick, when short we set the stop above the top wick */

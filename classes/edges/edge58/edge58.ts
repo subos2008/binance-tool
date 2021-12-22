@@ -1,6 +1,5 @@
 import { assert } from "console"
 
-// import { Candle, CandleChartResult } from "binance-api-node"
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -13,80 +12,11 @@ import { Logger } from "../../../interfaces/logger"
 import { Edge58EntrySignal, Edge58Parameters_V1 } from "../../../events/shared/edge58"
 import { CandleInfo_OC } from "../../utils/candle_utils"
 import { MarketIdentifier_V2 } from "../../../events/shared/market-identifier"
-import { Edge56PositionEntrySignal } from "../../../events/shared/edge56-position-entry"
+import { ADX_Indicator } from "./adx"
+import { LimitedLengthCandlesHistory } from "./limited_length_candles_history"
+import { Candle,Edge58EntrySignalsCallbacks } from "./interfaces"
 
-export interface Candle {
-  open: string
-  close: string
-  closeTime: number // candle close timestamp
-  low: string // wicks needed for stops
-  high: string // wicks needed for stops
-}
 
-class LimitedLengthCandlesHistory {
-  private candles: Candle[]
-  length: number
-
-  // Patch an array object with overrided push() function
-  private limited_length_candle_array(length: number, initial_candles: Candle[]): Candle[] {
-    var array: Candle[] = initial_candles.slice(-length)
-    array.push = function () {
-      if (this.length >= length) {
-        this.shift()
-      }
-      return Array.prototype.push.apply(this, arguments)
-    }
-    return array
-  }
-
-  constructor({ length, initial_candles }: { length: number; initial_candles: Candle[] }) {
-    this.candles = this.limited_length_candle_array(length, initial_candles)
-    this.length = length
-  }
-
-  push(candle: Candle) {
-    this.candles.push(candle)
-    assert(this.candles.length <= this.length)
-  }
-
-  get_highest_body_value(): { high: BigNumber; candle: Candle } {
-    function candle_high_body_value(candle: Candle) {
-      return BigNumber.max(candle["open"], candle["close"])
-    }
-    let high = candle_high_body_value(this.candles[0])
-    let high_candle = this.candles[0]
-    for (let i = 0; i < this.candles.length; i++) {
-      let candle = this.candles[i]
-      let candle_high_price = candle_high_body_value(candle)
-      if (candle_high_price.isGreaterThan(high)) {
-        high = candle_high_price
-        high_candle = candle
-      }
-    }
-    return { high, candle: high_candle }
-  }
-
-  get_lowest_body_value(): { low: BigNumber; candle: Candle } {
-    function candle_low_body_value(candle: Candle) {
-      return BigNumber.min(candle["open"], candle["close"])
-    }
-    let low = candle_low_body_value(this.candles[0])
-    let low_candle = this.candles[0]
-    for (let i = 0; i < this.candles.length; i++) {
-      let candle = this.candles[i]
-      let candle_low_price = candle_low_body_value(candle)
-      if (candle_low_price.isLessThan(low)) {
-        low = candle_low_price
-        low_candle = candle
-      }
-    }
-    return { low, candle: low_candle }
-  }
-}
-
-export interface Edge58EntrySignalsCallbacks {
-  enter_or_add_to_position(event: Edge58EntrySignal): void
-}
 
 export class Edge58EntrySignals {
   symbol: string

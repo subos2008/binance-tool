@@ -37,7 +37,9 @@ const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false, template: { name: "edge58" } })
 const moment = require("moment")
 
-import { Edge58EntrySignals, Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58/edge58"
+import { Edge58EntrySignals } from "../../classes/edges/edge58/edge58"
+import { Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58/interfaces"
+
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import BigNumber from "bignumber.js"
 import { Edge58Events, Edge58Parameters_V1, Edge58EntrySignal, Edge58ExitSignal } from "../../events/shared/edge58"

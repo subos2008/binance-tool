@@ -5,9 +5,8 @@ import * as chai from "chai"
 const chaiBignumber = require("chai-bignumber")
 chai.use(chaiBignumber())
 
-import { Edge58EntrySignals, Edge58EntrySignalsCallbacks } from "../classes/edges/edge58/edge58"
-import { create_new_trade, build_trade_state_for_trade_id } from "../classes/persistent_state/redis_trade_state"
-import { MiniCloseOpenOnlyCandle } from "../classes/utils/candle_utils"
+import { Edge58EntrySignals } from "../classes/edges/edge58/edge58"
+import { Edge58EntrySignalsCallbacks } from "../classes/edges/edge58/interfaces"
 
 import { Logger } from "../interfaces/logger"
 const LoggerClass = require("../lib/faux_logger")

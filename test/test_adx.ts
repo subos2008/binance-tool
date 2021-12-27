@@ -1,5 +1,11 @@
 /// <reference types="../chai-bignumber" />
 
+/**
+ * This tests the raw underlying library - just to make sure we are integrating it properly.
+ * 
+ * Mirrors the authors tests
+ */
+
 import { expect } from "chai"
 import * as chai from "chai"
 import { BigNumber } from "bignumber.js"

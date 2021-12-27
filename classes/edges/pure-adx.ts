@@ -112,7 +112,7 @@ export class EntrySignals {
   }
 
   get_color(i: ADXOutput): "green" | "red" | "black" {
-    console.log(i)
+    // console.log(i)
     return i.adx > limadx && i.pdi > i.mdi ? "green" : i.adx > limadx && i.pdi < i.mdi ? "red" : "black"
   }
 
@@ -127,7 +127,7 @@ export class EntrySignals {
   }) {
     if (timeframe !== "1d") {
       // Binance ws idosyncracy workaround
-      console.log(`Short timeframe candle on ${this.symbol} closed at ${candle.close}`)
+      // console.log(`Short timeframe candle on ${this.symbol} closed at ${candle.close}`)
       throw `Got a short timeframe candle`
     }
 

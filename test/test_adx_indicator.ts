@@ -23,6 +23,7 @@ import { ADX } from "technicalindicators"
 
 const adx_parameters: ADX_parameters = {
   adx_period: 14,
+  limadx: 14 // TODO: not used, only used when converting to a color
 }
 
 const input_unmunged = {
@@ -164,7 +165,7 @@ const expectResult = [
 ]
 
 const symbol = "TESTPAIR"
-describe("ADX (Average Directional Index)", function () {
+describe("ADX_Indicator", function () {
   describe("Author's dataset", function () {
     function setup(initial_candles: ADX_STRING_CANDLE[]) {
       return new ADX_Indicator({ adx_parameters, initial_candles, logger, symbol })

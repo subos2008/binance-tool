@@ -22,7 +22,7 @@ export type ADX_STRING_CANDLE = {
 
 export type ADX_parameters = {
   adx_period: 14
-  limadx: 14
+  limadx: 14 // think this is limit_adx, the boundary when black becomes red/green
 }
 
 export class ADX_Indicator {
@@ -69,15 +69,15 @@ export class ADX_Indicator {
     })
     this.adx = new ADX({ ...reformed_candles, period: adx_period })
     try {
-      this.color = this.get_color(this.adx.getResult())
+      this.color = this._get_color(this.adx.getResult())
     } catch (e) {
       this.color = "undefined"
     }
   }
 
-  get_color(i: ADXOutput): "green" | "red" | "black" {
+  _get_color(i: ADXOutput): "green" | "red" | "black" {
     let limadx = this.adx_parameters.limadx
-    console.log(i)
+    // console.log(i)
     return i.adx > limadx && i.pdi > i.mdi ? "green" : i.adx > limadx && i.pdi < i.mdi ? "red" : "black"
   }
 
@@ -107,11 +107,13 @@ export class ADX_Indicator {
       throw `Got a short timeframe candle`
     }
 
-    this.current_result = this.adx.nextValue(Number(candle.close))
+    // typescript objects to passing a string candle here but passing a number doesn't work,
+    // Passing an ADX_STRING_CANDLE does work
+    this.current_result = this.adx.nextValue(candle as any) 
     if (this.current_result) {
       // why if? what if undefined? not ready to signal yet?
       this.prev_color = this.color
-      this.color = this.get_color(this.current_result)
+      this.color = this._get_color(this.current_result)
     }
   }
 }

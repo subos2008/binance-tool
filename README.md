@@ -14,16 +14,15 @@ Over time this repo could do things like automatically enter trades based on ent
 
 `Trading Engine` in Asana contains the backlog for this repo.
 
-Some services currently publish to RabbitMQ but not so much on the ingestion side at the moment.
+Services that listed to the Binance user websockets publish to RabbitMQ. There is an event storage generic service that stores events in S3. See `classes/amqp/message-routing.ts` for events.
 
 ## Setup
+
+Adding secrets can be done with the scripts here if you have a `.env` with the values in.
 
 You will need to add the `user` and `exchange` to AMQP that is used by some of these services.
 
 `redis` also needs to be configured.
-
-
-
 
 ![](https://github.com/subos2008/binance-tool/workflows/DockerPublish/badge.svg)
 

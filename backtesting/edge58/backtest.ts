@@ -119,6 +119,7 @@ class PositionEventLogAnalyser {
   fixed_position_size: BigNumber // each entry or add is this size
   events: PositionChangeEvents[] = []
   current_trade: Trade | undefined
+  capital_required_to_execute_all_trades: BigNumber = new BigNumber(0)
 
   constructor({
     logger,
@@ -174,7 +175,18 @@ class PositionEventLogAnalyser {
         default:
           throw new Error(`Unknown event_type`)
       }
+      if (this.current_trade)
+        this.capital_required_to_execute_all_trades = BigNumber.max(
+          this.capital_required_to_execute_all_trades,
+          this.current_trade.amount_invested
+        )
     }
+    let x_fixed_investment_amount = this.capital_required_to_execute_all_trades.dividedBy(fixed_position_size)
+    this.logger.info(
+      `Capital required to invest in all trades is ${x_fixed_investment_amount.dp(
+        0
+      )} times fixed investment size (${this.capital_required_to_execute_all_trades})`
+    )
   }
 }
 

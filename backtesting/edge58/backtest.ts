@@ -55,7 +55,7 @@ import { MarketIdentifier_V2 } from "../../events/shared/market-identifier"
  * Configuration
  */
 const quote_symbol = "USDT".toUpperCase()
-const _symbol = `BTC${quote_symbol}`
+const _symbol = `LINK${quote_symbol}`
 let fixed_position_size = new BigNumber(300)
 const edge58_parameters: Edge58Parameters_V1 = {
   version: "v1",
@@ -81,7 +81,7 @@ const edge58_parameters: Edge58Parameters_V1 = {
   },
 }
 let _start_date = new Date("2017-12-20")
-let _end_date = new Date("2019-08-20")
+let _end_date = new Date()
 
 let market_identifier: MarketIdentifier_V2 = {
   version: "v2",

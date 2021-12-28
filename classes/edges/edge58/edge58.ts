@@ -1,5 +1,9 @@
 import { assert } from "console"
 
+/**
+ * Todo - add pinbar exits - we don't add on pinbars, maybe we do move stops
+ */
+
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion

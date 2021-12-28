@@ -42,7 +42,12 @@ import { Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58/interfac
 
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import BigNumber from "bignumber.js"
-import { Edge58Events, Edge58Parameters_V1, Edge58EntrySignal, Edge58ExitSignal } from "../../classes/edges/edge58/events"
+import {
+  Edge58Events,
+  Edge58Parameters_V1,
+  Edge58EntrySignal,
+  Edge58ExitSignal,
+} from "../../classes/edges/edge58/events"
 import { PositionChangeEvents } from "../../events/shared/position-change-events"
 import { MarketIdentifier_V2 } from "../../events/shared/market-identifier"
 
@@ -51,6 +56,7 @@ import { MarketIdentifier_V2 } from "../../events/shared/market-identifier"
  */
 const quote_symbol = "USDT".toUpperCase()
 const _symbol = `BTC${quote_symbol}`
+let fixed_position_size = new BigNumber(300)
 const edge58_parameters: Edge58Parameters_V1 = {
   version: "v1",
   candles_of_price_history: 2,
@@ -86,13 +92,46 @@ let market_identifier: MarketIdentifier_V2 = {
  * ------------------------------------------------------------
  */
 
+class Trade {
+  amount_invested: BigNumber
+  position_size: BigNumber
+
+  constructor({ amount_invested, price }: { amount_invested: BigNumber; price: BigNumber }) {
+    this.amount_invested = amount_invested
+    this.position_size = amount_invested.dividedBy(price)
+  }
+
+  add_to_position({ amount_invested, price }: { amount_invested: BigNumber; price: BigNumber }) {
+    this.amount_invested = this.amount_invested.plus(amount_invested)
+    this.position_size = this.position_size.plus(amount_invested.dividedBy(price))
+  }
+
+  exit_position({ price }: { price: BigNumber }) {
+    let returns = this.position_size.times(price)
+    let profit_loss = returns.minus(this.amount_invested)
+    let percentage_profit_loss = profit_loss.dividedBy(this.amount_invested).times(100)
+    return { returns, profit_loss, percentage_profit_loss }
+  }
+}
+
 class PositionEventLogAnalyser {
   logger: Logger
+  fixed_position_size: BigNumber // each entry or add is this size
   events: PositionChangeEvents[] = []
+  current_trade: Trade | undefined
 
-  constructor({ logger, events }: { logger: Logger; events: PositionChangeEvents[] }) {
+  constructor({
+    logger,
+    events,
+    fixed_position_size,
+  }: {
+    logger: Logger
+    events: PositionChangeEvents[]
+    fixed_position_size: BigNumber
+  }) {
     this.logger = logger
     this.events = events
+    this.fixed_position_size = fixed_position_size
   }
 
   run() {
@@ -100,6 +139,10 @@ class PositionEventLogAnalyser {
       let direction = event.direction === "long" ? "LONG " : "SHORT"
       switch (event.event_type) {
         case "PositionEntryExecutionLog":
+          this.current_trade = new Trade({
+            amount_invested: this.fixed_position_size,
+            price: new BigNumber(event.entry_price),
+          })
           this.logger.info(
             `ENTRY ${moment(event.entry_candle_close_timestamp_ms).format("YYYY MMM DD")} ${direction} at ${
               event.entry_price
@@ -107,6 +150,11 @@ class PositionEventLogAnalyser {
           )
           break
         case "PositionIncreaseExecutionLog":
+          if (!this.current_trade) throw new Error(`Not in position`)
+          this.current_trade.add_to_position({
+            amount_invested: this.fixed_position_size,
+            price: new BigNumber(event.entry_price),
+          })
           this.logger.info(
             `ADD   ${moment(event.entry_candle_close_timestamp_ms).format("YYYY MMM DD")} ${direction} at ${
               event.entry_price
@@ -114,10 +162,13 @@ class PositionEventLogAnalyser {
           )
           break
         case "PositionExitExecutionLog":
+          if (!this.current_trade) throw new Error(`Not in position`)
+          let exit_info = this.current_trade.exit_position({ price: new BigNumber(event.exit_price) })
+          this.current_trade = undefined
           this.logger.info(
             `EXIT  ${moment(event.exit_candle_close_timestamp_ms).format("YYYY MMM DD")} ${direction} at ${
               event.exit_price
-            }`
+            }, ABS P/L: ${exit_info.profit_loss.dp(0)}, %P/L: ${exit_info.percentage_profit_loss.dp(1)}`
           )
           break
         default:
@@ -372,7 +423,11 @@ class Edge58Backtester {
 
       edge.ingest_new_candle({ symbol, timeframe, candle })
     }
-    let analyser = new PositionEventLogAnalyser({ logger: this.logger, events: this.tracker.events })
+    let analyser = new PositionEventLogAnalyser({
+      logger: this.logger,
+      events: this.tracker.events,
+      fixed_position_size,
+    })
     analyser.run()
   }
 

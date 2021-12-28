@@ -124,6 +124,9 @@ export class Edge58EntrySignals {
       throw new Error(`Got a short timeframe candle`)
     }
 
+    // update ADX before considering other logic
+    this.adx_indicator.ingest_new_candle({ timeframe, symbol, candle })
+
     try {
       let potential_entry_price = new BigNumber(candle["close"])
       let direction: "long" | "short" | undefined = undefined
@@ -140,10 +143,10 @@ export class Edge58EntrySignals {
         direction = "short"
       }
 
-      // update ADX before considering other logic
-      this.adx_indicator.ingest_new_candle({ timeframe, symbol, candle })
-
-      if (!direction) throw new Error(`direction unknown: ${direction}`)
+      if (!direction) {
+        this.logger.info(`No action for candle closing ${new Date(candle.closeTime).toISOString()}`)
+        return
+      }
 
       enter_position_ok = !this.is_large_candle_body(candle) && this.is_adx_the_right_colour_to_enter(direction)
       add_to_position_ok = true // no filters on this

@@ -21,8 +21,8 @@ export type ADX_STRING_CANDLE = {
 }
 
 export type ADX_parameters = {
-  adx_period: 14
-  limadx: 14 // think this is limit_adx, the boundary when black becomes red/green
+  adx_period: number
+  limadx: number // think this is limit_adx, the boundary when black becomes red/green
 }
 
 export class ADX_Indicator {
@@ -101,12 +101,6 @@ export class ADX_Indicator {
     symbol: string
     candle: ADX_STRING_CANDLE
   }) {
-    if (timeframe !== "1d") {
-      // Binance ws idosyncracy workaround
-      console.log(`Short timeframe candle on ${this.symbol} closed at ${candle.close}`)
-      throw `Got a short timeframe candle`
-    }
-
     // typescript objects to passing a string candle here but passing a number doesn't work,
     // Passing an ADX_STRING_CANDLE does work
     this.current_result = this.adx.nextValue(candle as any) 

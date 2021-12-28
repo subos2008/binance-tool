@@ -120,7 +120,7 @@ export class Edge58EntrySignals {
     this.logger.info(`INGESTING CANDLE ${moment(candle.closeTime).format("YYYY MMM DD")} ${candle.close}`)
 
     if (timeframe !== this.edge58_parameters.candle_timeframe) {
-      console.log(`Short timeframe ${timeframe} candle on ${this.symbol} closed at ${candle.close}`)
+      this.logger.warn(`Short timeframe ${timeframe} candle on ${this.symbol} closed at ${candle.close}`)
       throw new Error(`Got a short timeframe candle`)
     }
 

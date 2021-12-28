@@ -332,6 +332,7 @@ class Edge58Backtester {
      */
     // Add ADX here - more initial candles, presumably.?
     let required_initial_candles = Edge58EntrySignals.required_initial_candles(edge58_parameters)
+    this.logger.info(`Initial candles requested: ${required_initial_candles}`)
     let initial_candles = candles.splice(0, required_initial_candles)
     if (initial_candles.length != required_initial_candles) {
       // we must have picked up some partial candles

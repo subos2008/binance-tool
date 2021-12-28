@@ -20,6 +20,13 @@ export type ADX_STRING_CANDLE = {
   close: string
 }
 
+/**
+ * From TV pinescript:
+ * lenadx = input(14, minval=1, title="DI Length")
+ * lensig = input(14, title="ADX Smoothing", minval=1, maxval=50)
+ * limadx = input(18, minval=1, title="ADX MA Active")
+ * In our library length sets all the len(gth) values
+ */
 export type ADX_parameters = {
   adx_period: number
   limadx: number // think this is limit_adx, the boundary when black becomes red/green

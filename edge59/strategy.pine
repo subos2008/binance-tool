@@ -1,0 +1,135 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © bford
+
+strategy(title="Edge 59", overlay=true, pyramiding = 2)
+
+// START STUDY
+
+// ADX
+// OG: E59 was 14,14,17,10 - but first visual test I did was with defaults 14,14,18,34 - and this worked really well
+lenadx = input(14, minval=1, title="DI Length")
+lensig = input(14, title="ADX Smoothing", minval=1, maxval=50)
+limadx = input(17, minval=1, title="ADX MA Active")
+len = input(10, minval=1, title="Length")
+up = change(high)
+down = -change(low)
+trur = rma(tr, lenadx)
+plus = fixnan(100 * rma(up > down and up > 0 ? up : 0, lenadx) / trur)
+minus = fixnan(100 * rma(down > up and down > 0 ? down : 0, lenadx) / trur)
+sum = plus + minus 
+adx = 100 * rma(abs(plus - minus) / (sum == 0 ? 1 : sum), lensig)
+macol = adx > limadx and plus > minus ? lime : adx > limadx and plus < minus ? red :black
+src = input(close, title="Source")
+out = wma(src, len)
+plot(out, color=macol, title="MA", linewidth= 3)
+adx_long_filter = macol == lime 
+adx_short_filter = macol == red
+
+// New Price Highs/Lows
+// source is hidden
+
+// Trend Follower
+matype= 'EMA'
+prd = input(20, title = "Period to Check Trend", minval = 5)
+maprd = input(20, title = "MA Period", minval = 2)
+rateinp = input(1, title = "Trend Channel Rate %", minval = 0.1, step = 0.1)
+ulinreg = input(true, title = "Use Linear Regression")
+linprd = input(5, title = "Linear Regression Period", minval = 2)
+
+rate = rateinp / 100
+pricerange = highest(280) - lowest(280)
+chan = pricerange * rate
+    
+gettrend(len)=>
+    masrc = matype == 'EMA' ? ema(close, len) : matype == 'RMA' ? rma(close, len) : matype == 'VWMA' ? vwma(close, len) : matype == 'WMA' ? wma(close, len) : sma(close, len)
+    ma = ulinreg ? linreg(masrc, linprd, 0) : masrc
+    
+    hh = highest(ma, prd)
+    ll = lowest(ma, prd)
+    diff = abs(hh - ll)
+    
+    trend = iff(diff > chan, iff(ma > ll + chan, 1, iff(ma < hh - chan, -1, 0)), 0)
+    _ret = trend * diff / chan
+    _ret
+
+trend = gettrend(maprd)
+
+trandchanged = trend - nz(trend[1])
+tcol =  trend > 0 ? trandchanged> 0 ? #00FF00ff : trandchanged <= 0 ? #00FF006f : #00FF00af :
+  trend < 0 ? trandchanged < 0 ? #FF0000ff: trandchanged >= 0 ? #FF00006f : #FF0000af : na
+
+trend_follower_long_filter = tcol == #00FF00ff
+trend_follower_short_filter  = tcol == #FF0000ff
+
+
+
+// 21 Days high/low body prices
+num_breakout_days = input(14, minval=1, title="Number of Days (Close Breakout)")
+lowest_body = min(lowest(close, num_breakout_days)[1],lowest(open, num_breakout_days)[1])
+highest_body = max(highest(close, num_breakout_days)[1],highest(open, num_breakout_days)[1])
+long_entry_signal = close > highest_body and close > open
+short_entry_signal = close < lowest_body and close < open
+// debug
+plot(lowest_body)
+plot(highest_body)
+
+// Combine Filters
+
+long_filter = adx_long_filter and trend_follower_long_filter
+short_filter = adx_short_filter and trend_follower_short_filter
+
+long_entry = long_filter and long_entry_signal
+short_entry = short_filter and short_entry_signal
+
+// Plots
+
+// DEBUG: New Price High Lows (unfiltered entry signals)
+// plotarrow(long_entry_signal, colorup = green)
+// plotarrow(-short_entry_signal, colordown = red)
+
+// Filters
+plotarrow(long_filter, colorup = green, transp= 60)
+plotarrow(-short_filter, colordown = red, transp=60)
+
+// Filtered Entry (actual edge signal)
+plotarrow(long_entry, colorup = green)
+plotarrow(-short_entry, colordown = red)
+// Study exit API
+// long_entry and short_entry: entry signal with filters applied
+// long_filter and short_filter: entry/stay in position filters are active: close position whenever this is false
+
+// END of STUDY
+
+// START of STRATEGY
+
+// Entry and Exit
+
+// Stops - 5-10% for each individual entry
+long_stop_price = close * 0.9
+short_stop_price = close *1.1
+// note we might need to cancel stop orders manually when we exit
+
+position_size = 1
+
+// Entry is crossunder/over of lowest_body/highest_body, when = matching long/short_filter
+// long entry
+strategy.entry("long", strategy.long, position_size, when=long_entry)
+// short entry
+strategy.entry("short", strategy.short, position_size, when=short_entry)
+// TODO: add stops with:  strategy.exit
+// TODO: this is not adding to positions
+
+
+// close_all when filters dont match trade direction
+strategy.close('long', when=not long_filter)
+strategy.close('short', when=not short_filter)
+plot(strategy.position_size)
+
+
+//scratch
+// if (not long_filter)
+//     strategy.exit("long_trailing_stop", "long", trail_points = 4000, trail_offset = 1500)
+// if (not short_filter)
+//     strategy.exit("short_trailing_stop", "short", trail_points = 4000, trail_offset = 1500)
+
+

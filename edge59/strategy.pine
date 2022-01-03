@@ -123,7 +123,7 @@ strategy.entry("short", strategy.short, position_size, when=short_entry)
 // close_all when filters dont match trade direction
 strategy.close('long', when=not long_filter)
 strategy.close('short', when=not short_filter)
-plot(strategy.position_size)
+// plot(strategy.position_size)
 
 
 //scratch

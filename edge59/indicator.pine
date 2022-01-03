@@ -1,56 +1,55 @@
-//@version=2
+//@version=5
 
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © bford
 
-study(title="Edge 59", overlay=true)
+indicator(title="Edge 59", overlay=true)
 
-// START STUDY
+// START of INDICATOR
 
 // ADX
 // OG: E59 was 14,14,17,10 - but first visual test I did was with defaults 14,14,18,34 - and this worked really well
-lenadx = input(14, minval=1, title="DI Length")
-lensig = input(14, title="ADX Smoothing", minval=1, maxval=50)
-limadx = input(17, minval=1, title="ADX MA Active")
-len = input(10, minval=1, title="Length")
-up = change(high)
-down = -change(low)
-trur = rma(tr, lenadx)
-plus = fixnan(100 * rma(up > down and up > 0 ? up : 0, lenadx) / trur)
-minus = fixnan(100 * rma(down > up and down > 0 ? down : 0, lenadx) / trur)
+lenadx = input.int(14, minval=1, title="DI Length")
+lensig = input.int(14, title="ADX Smoothing", minval=1, maxval=50)
+limadx = input.int(17, minval=1, title="ADX MA Active")
+len = input.int(10, minval=1, title="Length")
+up = ta.change(high)
+down = -ta.change(low)
+trur = ta.rma(ta.tr, lenadx) // TODO: what is 'tr' here?
+plus = fixnan(100 * ta.rma(up > down and up > 0 ? up : 0, lenadx) / trur)
+minus = fixnan(100 * ta.rma(down > up and down > 0 ? down : 0, lenadx) / trur)
 sum = plus + minus 
-adx = 100 * rma(abs(plus - minus) / (sum == 0 ? 1 : sum), lensig)
-macol = adx > limadx and plus > minus ? lime : adx > limadx and plus < minus ? red :black
+adx = 100 * ta.rma(math.abs(plus - minus) / (sum == 0 ? 1 : sum), lensig)
+macol = adx > limadx and plus > minus ? color.lime : adx > limadx and plus < minus ? color.red :color.black
 src = input(close, title="Source")
-out = wma(src, len)
+out = ta.wma(src, len)
 plot(out, color=macol, title="MA", linewidth= 3)
-adx_long_filter = macol == lime 
-adx_short_filter = macol == red
-
-// New Price Highs/Lows
-// source is hidden
+adx_long_filter = macol == color.lime 
+adx_short_filter = macol == color.red
 
 // Trend Follower
 matype= 'EMA'
-prd = input(20, title = "Period to Check Trend", minval = 5)
-maprd = input(20, title = "MA Period", minval = 2)
-rateinp = input(1, title = "Trend Channel Rate %", minval = 0.1, step = 0.1)
-ulinreg = input(true, title = "Use Linear Regression")
-linprd = input(5, title = "Linear Regression Period", minval = 2)
+prd = input.int(20, title = "Period to Check Trend", minval = 5)
+maprd = input.int(20, title = "MA Period", minval = 2)
+rateinp = input.float(1, title = "Trend Channel Rate %", minval = 0.1, step = 0.1)
+ulinreg = input.bool(true, title = "Use Linear Regression")
+linprd = input.int(5, title = "Linear Regression Period", minval = 2)
 
 rate = rateinp / 100
-pricerange = highest(280) - lowest(280)
+pricerange = ta.highest(280) - ta.lowest(280) // TODO: what are these hardcoded 280's?
 chan = pricerange * rate
     
 gettrend(len)=>
-    masrc = matype == 'EMA' ? ema(close, len) : matype == 'RMA' ? rma(close, len) : matype == 'VWMA' ? vwma(close, len) : matype == 'WMA' ? wma(close, len) : sma(close, len)
-    ma = ulinreg ? linreg(masrc, linprd, 0) : masrc
+    masrc = matype == 'EMA' ? ta.ema(close, len) : matype == 'RMA' ? ta.rma(close, len) : matype == 'VWMA' ? ta.vwma(close, len) : matype == 'WMA' ? ta.wma(close, len) : ta.sma(close, len)
+    ma = ulinreg ? ta.linreg(masrc, linprd, 0) : masrc
     
-    hh = highest(ma, prd)
-    ll = lowest(ma, prd)
-    diff = abs(hh - ll)
+    hh = ta.highest(ma, prd)
+    ll = ta.lowest(ma, prd)
+    diff = math.abs(hh - ll)
     
-    trend = iff(diff > chan, iff(ma > ll + chan, 1, iff(ma < hh - chan, -1, 0)), 0)
+    inner = ma < hh - chan ? -1 : 0
+    middle = ma > ll + chan ? 1 : inner
+    trend = diff > chan ? middle : 0
     _ret = trend * diff / chan
     _ret
 
@@ -66,9 +65,9 @@ trend_follower_short_filter  = tcol == #FF0000ff
 
 
 // 21 Days high/low body prices
-num_breakout_days = input(14, minval=1, title="Number of Days (Close Breakout)")
-lowest_body = min(lowest(close, num_breakout_days)[1],lowest(open, num_breakout_days)[1])
-highest_body = max(highest(close, num_breakout_days)[1],highest(open, num_breakout_days)[1])
+num_breakout_days = input.int(14, minval=1, title="Number of Days (Close Breakout)")
+lowest_body = math.min(ta.lowest(close, num_breakout_days)[1],ta.lowest(open, num_breakout_days)[1])
+highest_body = math.max(ta.highest(close, num_breakout_days)[1],ta.highest(open, num_breakout_days)[1])
 long_entry_signal = close > highest_body and close > open
 short_entry_signal = close < lowest_body and close < open
 // debug
@@ -86,19 +85,19 @@ short_entry = short_filter and short_entry_signal
 // Plots
 
 // DEBUG: New Price High Lows (unfiltered entry signals)
-// plotarrow(long_entry_signal, colorup = green)
-// plotarrow(-short_entry_signal, colordown = red)
+// plotarrow(long_entry_signal, colorup = color.green)
+// plotarrow(-short_entry_signal, colordown = color.red)
 
 // Filters
-plotarrow(long_filter, colorup = green, transp= 60)
-plotarrow(-short_filter, colordown = red, transp=60)
+plotarrow(long_filter?1:0, colorup = color.green, transp= 60)
+plotarrow(short_filter?-1:0, colordown = color.red, transp=60)
 
 // Filtered Entry (actual edge signal)
-plotarrow(long_entry, colorup = green)
-plotarrow(-short_entry, colordown = red)
+plotarrow(long_entry?1:0, colorup = color.green)
+plotarrow(short_entry?-1:0, colordown = color.red)
 // Study exit API
 // long_entry and short_entry: entry signal with filters applied
 // long_filter and short_filter: entry/stay in position filters are active: close position whenever this is false
 
-// END of STUDY
+// END of INDICATOR
 

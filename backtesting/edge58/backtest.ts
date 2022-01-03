@@ -120,6 +120,7 @@ class PositionEventLogAnalyser {
   events: PositionChangeEvents[] = []
   current_trade: Trade | undefined
   capital_required_to_execute_all_trades: BigNumber = new BigNumber(0)
+  total_profit_loss: BigNumber = new BigNumber(0)
 
   constructor({
     logger,
@@ -166,6 +167,7 @@ class PositionEventLogAnalyser {
           if (!this.current_trade) throw new Error(`Not in position`)
           let exit_info = this.current_trade.exit_position({ price: new BigNumber(event.exit_price) })
           this.current_trade = undefined
+          this.total_profit_loss = this.total_profit_loss.plus(exit_info.profit_loss)
           this.logger.info(
             `EXIT  ${moment(event.exit_candle_close_timestamp_ms).format("YYYY MMM DD")} ${direction} at ${
               event.exit_price
@@ -183,10 +185,11 @@ class PositionEventLogAnalyser {
     }
     let x_fixed_investment_amount = this.capital_required_to_execute_all_trades.dividedBy(fixed_position_size)
     this.logger.info(
-      `Capital required to invest in all trades is ${x_fixed_investment_amount.dp(
-        0
-      )} times fixed investment size (${this.capital_required_to_execute_all_trades})`
+      `Capital required to invest in all trades is ${
+        this.capital_required_to_execute_all_trades
+      } (${x_fixed_investment_amount.dp(0)} times fixed investment size)`
     )
+    this.logger.info(`Total P/L: ${this.total_profit_loss.dp(0)}`)
   }
 }
 
@@ -366,7 +369,7 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
   }
 }
 
-class Edge58Backtester {
+export class Edge58Backtester {
   candles_collector: CandlesCollector
   ee: Binance
   logger: Logger

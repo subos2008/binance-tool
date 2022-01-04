@@ -22,7 +22,6 @@ Sentry.configureScope(function (scope: any) {
 
 const humanNumber = require("human-number")
 
-
 import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
@@ -116,7 +115,9 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
     try {
       let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
       this.send_message(
-        `${direction_string} entry triggered on ${symbol} at price ${entry_price.toFixed()}. Check MACD before entry. ${market_data_string}`
+        `${direction_string} entry triggered on ${symbol} at ${
+          edge56_parameters.days_of_price_history
+        }d price ${entry_price.toFixed()}. Check MACD before entry. ${market_data_string}`
       )
     } catch (e) {
       this.logger.warn(`Failed to publish to telegram for ${symbol}`)

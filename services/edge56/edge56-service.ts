@@ -53,8 +53,8 @@ function sleep(ms: number) {
 let publisher: GenericTopicPublisher = new GenericTopicPublisher({ logger, event_name: "Edge56EntrySignal" })
 
 const edge56_parameters: Edge56Parameters = {
-  days_of_price_history: 14,
-  long_highest_volume_in_days: 7,
+  days_of_price_history: 22,
+  // long_highest_volume_in_days: 0,
 }
 
 class Edge56Service implements Edge56EntrySignalsCallbacks {

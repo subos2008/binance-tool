@@ -116,22 +116,22 @@ class LimitedLengthCandlesHistory {
     return { low, candle: low_candle }
   }
 
-  get_highest_volume(): { volume_high: BigNumber; candle: EdgeCandle } {
-    function candle_volume(candle: EdgeCandle) {
-      return new BigNumber(candle["volume"])
-    }
-    let volume_high: BigNumber = candle_volume(this.candles[0])
-    let high_candle: EdgeCandle = this.candles[0]
-    for (let i = 0; i < this.candles.length; i++) {
-      let i_candle = this.candles[i]
-      let i_volume = candle_volume(i_candle)
-      if (i_volume.isGreaterThan(volume_high)) {
-        volume_high = i_volume
-        high_candle = i_candle
-      }
-    }
-    return { volume_high, candle: high_candle }
-  }
+  // get_highest_volume(): { volume_high: BigNumber; candle: EdgeCandle } {
+  //   function candle_volume(candle: EdgeCandle) {
+  //     return new BigNumber(candle["volume"])
+  //   }
+  //   let volume_high: BigNumber = candle_volume(this.candles[0])
+  //   let high_candle: EdgeCandle = this.candles[0]
+  //   for (let i = 0; i < this.candles.length; i++) {
+  //     let i_candle = this.candles[i]
+  //     let i_volume = candle_volume(i_candle)
+  //     if (i_volume.isGreaterThan(volume_high)) {
+  //       volume_high = i_volume
+  //       high_candle = i_candle
+  //     }
+  //   }
+  //   return { volume_high, candle: high_candle }
+  // }
 }
 
 export class Edge56EntrySignals {
@@ -185,7 +185,7 @@ export class Edge56EntrySignals {
 
     try {
       let potential_entry_price = new BigNumber(candle["close"])
-      let potential_entry_volume = new BigNumber(candle["volume"])
+      // let potential_entry_volume = new BigNumber(candle["volume"])
 
       let direction: "long" | "short" | undefined = undefined
 
@@ -196,12 +196,12 @@ export class Edge56EntrySignals {
         console.log(
           `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: greater than ${highest_price.toFixed()}`
         )
-        if (potential_entry_volume.isGreaterThan(this.price_history_candles.get_highest_volume().volume_high)) {
-          console.log(`Volume entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}`)
-        } else {
-          console.log(`Volume entry filter failed on ${symbol} ${direction} at ${potential_entry_price.toFixed()}`)
-          return // no volume = no entry
-        }
+        // if (potential_entry_volume.isGreaterThan(this.price_history_candles.get_highest_volume().volume_high)) {
+        //   console.log(`Volume entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}`)
+        // } else {
+        //   console.log(`Volume entry filter failed on ${symbol} ${direction} at ${potential_entry_price.toFixed()}`)
+        //   return // no volume = no entry
+        // }
         this.callbacks.enter_position({
           symbol: this.symbol,
           entry_price: potential_entry_price,

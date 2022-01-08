@@ -39,6 +39,7 @@
     "redis": "2.8.0",
     "talib": "^1.1.4",
     "technicalindicators": "https://github.com/subos2008/technicalindicators.git",
+    "telegraf": "^4.5.2",
     "ts-node": "^8.8.2",
     "typescript": ">=2.7",
     "ws": "^7.4.6",

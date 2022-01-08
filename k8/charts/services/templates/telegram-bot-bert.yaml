@@ -63,4 +63,9 @@ spec:
           env:
             - name: SENTRY_DSN
               value: "https://2de8658dca5b4bf18c7787cfd2deb738@o369902.ingest.sentry.io/5763740" # TODO update
+            - name: TELEGRAM_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: TELEGRAM_KEY
+                  name: telegram-bot-bert
 {{- include "telegram-bot-bert.vars" . | nindent 12 }}

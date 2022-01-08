@@ -8,13 +8,18 @@ indicator(title="Edge 60", overlay=true)
 
 // 21 Days high/low body prices
 num_breakout_days = input.int(21, minval=1, title="Number of Days (Close Breakout)")
-lowest_body = math.min(ta.lowest(close, num_breakout_days)[1],ta.lowest(open, num_breakout_days)[1])
-highest_body = math.max(ta.highest(close, num_breakout_days)[1],ta.highest(open, num_breakout_days)[1])
-long_entry_signal = close > highest_body and close > open
-short_entry_signal = close < lowest_body and close < open
+// lowest_body = math.min(ta.lowest(close, num_breakout_days)[1],ta.lowest(open, num_breakout_days)[1])
+// highest_body = math.max(ta.highest(close, num_breakout_days)[1],ta.highest(open, num_breakout_days)[1])
+
+lowest_low = ta.lowest(low, num_breakout_days)[1]
+highest_high = ta.highest(high, num_breakout_days)[1]
+
+long_entry_signal = close > highest_high
+short_entry_signal = close < lowest_low
+
 // debug
-plot(lowest_body)
-plot(highest_body)
+plot(lowest_low)
+plot(highest_high)
 
 plotarrow(long_entry_signal?1:0, colorup = color.green)
 plotarrow(short_entry_signal?-1:0, colordown = color.red)

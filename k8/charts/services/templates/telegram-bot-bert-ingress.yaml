@@ -6,7 +6,7 @@ metadata:
     kubernetes.io/ingress.class: nginx
 spec:
   rules:
-  - host: "hw1.ryancocks.net"
+  - host: "bert.ryancocks.net"
     http:
       paths:
       - pathType: Prefix

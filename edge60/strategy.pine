@@ -30,6 +30,8 @@ plotarrow(short_entry_signal?-1:0, colordown = color.red)
 
 
 
+
+
 // START of STRATEGY
 
 // Entry and Exit
@@ -39,7 +41,8 @@ plotarrow(short_entry_signal?-1:0, colordown = color.red)
 // short_stop_price = close *1.1
 // note we might need to cancel stop orders manually when we exit
 
-position_size = 1
+max_ordersize=math.floor(strategy.equity/close) // To dynamically calculate the order size as the account equity increases or decreases.
+position_size = max_ordersize
 
 // Entry is crossunder/over of lowest_body/highest_body, when = matching long/short_filter
 // long entry

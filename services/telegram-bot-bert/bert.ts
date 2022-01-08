@@ -1,11 +1,25 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
+const service_name = "telegram-bot-bert"
+
+import * as Sentry from "@sentry/node"
+Sentry.init({})
+Sentry.configureScope(function (scope: any) {
+  scope.setTag("service", service_name)
+})
+
+var service_is_healthy: boolean = true
+
+import { Logger } from "../../interfaces/logger"
+const LoggerClass = require("../../lib/faux_logger")
+const logger: Logger = new LoggerClass({ silent: false })
 
 import * as express from "express"
 var app = express()
 var bodyParser = require("body-parser")
 const axios = require("axios")
+
 
 app.use(bodyParser.json()) // for parsing application/json
 app.use(
@@ -13,6 +27,15 @@ app.use(
     extended: true,
   })
 ) // for parsing application/x-www-form-urlencoded
+
+app.get("/health", function (req, res) {
+  if (service_is_healthy) {
+    res.send({ status: "OK" })
+  } else {
+    logger.error(`Service unhealthy`)
+    res.status(500).json({ status: "UNHEALTHY" })
+  }
+})
 
 //This is the route the API will call
 app.post("/new-message", function (req, res) {

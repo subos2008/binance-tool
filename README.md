@@ -26,6 +26,11 @@ You will need to add the `user` and `exchange` to AMQP that is used by some of t
 
 ![](https://github.com/subos2008/binance-tool/workflows/DockerPublish/badge.svg)
 
+
+# Ingress and Certs
+
+https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nginx-ingress-on-digitalocean-kubernetes-using-helm
+
 # The opriginal OCO order tool had output like this:
 
 `soft_entry` means orders were not set on the exchange until the target price was approached, allowing overallocation of capital to trades waiting for whichever one hit first. My trading style is now more breakout based than retrace based to less useful these days as the breakout code got removed in the OCO tracker.

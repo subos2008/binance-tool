@@ -71,7 +71,7 @@ export class EntrySignals {
   callbacks: EntrySignalsCallbacks
   adx: ADX
   color: string
-  prev_color: string
+  prev_color: string | undefined
   current_result: ADXOutput | undefined
 
   constructor({

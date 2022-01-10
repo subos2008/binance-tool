@@ -15,8 +15,8 @@ import { MyEventNameType, MessageRouting } from "./message-routing"
 
 export class GenericTopicPublisher {
   logger: Logger
-  connection: Connection
-  channel: Channel
+  connection: Connection | undefined
+  channel: Channel | undefined
   routing_key: string
   exchange_name: string
   durable: boolean
@@ -58,6 +58,7 @@ export class GenericTopicPublisher {
   async publish(event: string, options?: Options.Publish): Promise<boolean> {
     await this.connect()
     let msg = event
+    if(!this.channel) throw new Error("not connected to channel when publish() called")
     const server_full = !this.channel.publish(this.exchange_name, this.routing_key, Buffer.from(msg), options)
     if (server_full) {
       let msg = "AMQP reports server full when trying to publish"

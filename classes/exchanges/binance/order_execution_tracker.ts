@@ -19,7 +19,7 @@ export class OrderExecutionTracker {
   send_message: Function
   logger: Logger
   ee: Binance
-  closeUserWebsocket: Function
+  closeUserWebsocket: Function | undefined
   order_state: OrderState | undefined
   order_callbacks: OrderCallbacks | undefined
   print_all_trades: boolean = false

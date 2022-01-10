@@ -19,7 +19,7 @@ export class FtxOrderExecutionTracker {
   send_message: Function
   logger: Logger
   ws: FtxWebsocketClient
-  closeUserWebsocket: Function
+  closeUserWebsocket: Function | undefined
   order_callbacks: FtxOrderCallbacks | undefined
   print_all_trades: boolean = true
 

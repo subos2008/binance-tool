@@ -44,7 +44,7 @@ export class TradeDefinition {
   max_quote_amount_to_buy: BigNumber | undefined
   soft_entry: Boolean
   auto_size: Boolean
-  munged: MungedPrices
+  munged: MungedPrices | undefined
   unmunged: { buy_price?: BigNumber | undefined, stop_price?: BigNumber | undefined, target_price?: BigNumber | undefined } = {}
 
   set_exchange_info(exchange_info: any) {
@@ -121,6 +121,7 @@ export class TradeDefinition {
 
   print_trade_for_user(trading_rules?: TradingRules) {
     try {
+      if(!this.munged) throw new Error("munged prices not available in print_trade_for_user")
       let { buy_price, stop_price, target_price } = this.munged;
       if (trading_rules) {
         this.logger.info(

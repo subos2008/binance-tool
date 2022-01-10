@@ -466,9 +466,9 @@ export class Edge58Backtester {
       fs.writeFileSync("./candles.json", JSON.stringify(candles))
       await this.run_candles({ symbol, candles })
     } catch (err) {
-      if (err.toString().includes("Invalid symbol")) {
+      if ((err as any).toString().includes("Invalid symbol")) {
         console.info(`Unable to load candles for ${symbol} not listed on binance`)
-      } else if (err.toString().includes("No candles loaded for")) {
+      } else if ((err as any).toString().includes("No candles loaded for")) {
         console.warn(`Unable to load candles for ${symbol}.`)
       }
       Sentry.captureException(err)

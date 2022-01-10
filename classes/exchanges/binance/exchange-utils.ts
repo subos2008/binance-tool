@@ -21,8 +21,6 @@ export class BinanceExchangeUtils implements ExchangeUtils {
   logger: Logger
   algo_utils: AlgoUtils
   exchange_identifier: ExchangeIdentifier
-  _base_asset: string
-  _quote_asset: string
   _exchange_info: any
 
   constructor({ logger, exchange_identifier }: { logger: Logger; exchange_identifier: ExchangeIdentifier }) {

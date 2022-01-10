@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/node';
 export class BinancePriceMonitor {
   logger: Logger
   send_message: (msg: string) => void
-  closeTradesWebSocket: (() => void) | null
+  closeTradesWebSocket: (() => void) | undefined
   ee: any
   price_event_callback: (symbol: string, price: string, raw: any) => Promise<void>
 
@@ -23,7 +23,7 @@ export class BinancePriceMonitor {
     if (this.closeTradesWebSocket) {
       this.logger.info(`Shutting down streams`);
       this.closeTradesWebSocket();
-      this.closeTradesWebSocket = null
+      this.closeTradesWebSocket = undefined
     }
   }
 

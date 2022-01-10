@@ -19,7 +19,7 @@ export interface PositionsEventsCallbacks {
 export class PositionsListener {
   logger: Logger
   send_message: (msg: string) => void
-  connection: Connection
+  connection: Connection | undefined
   channel: any
   amqp_routing_key: string
   callbacks: PositionsEventsCallbacks
@@ -58,6 +58,6 @@ export class PositionsListener {
   }
 
   async shutdown_streams() {
-    this.connection.close();
+    if(this.connection) this.connection.close();
   }
 }

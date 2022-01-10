@@ -26,7 +26,6 @@ export type Candle_OC = {
 }
 
 export class CandlesCollector {
-  start_date: Date
   ee: Binance
 
   constructor({ ee }: { ee: any }) {

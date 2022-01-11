@@ -9,6 +9,7 @@
     "module": "commonjs",
     "outDir": "out",
     "sourceMap": true,
+    "strict": true,
     // "noUnusedLocals": true,
     // "noUnusedParameters": true,
 

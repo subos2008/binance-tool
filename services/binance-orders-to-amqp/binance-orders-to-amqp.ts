@@ -65,7 +65,7 @@ async function main() {
     })
     let portfolio_to_amqp = new BinanceSpotOrdersToAMQP({ send_message, logger, health_and_readiness })
     await portfolio_to_amqp.start()
-  } catch (error) {
+  } catch (error: any) {
     Sentry.captureException(error)
     logger.error(`Error connecting to exchange: ${error}`)
     logger.error(error)
@@ -82,9 +82,9 @@ main().catch((error) => {
   logger.error(`Error in main loop: ${error.stack}`)
 })
 
-import * as express from "express"
+import express, { Request, Response } from "express"
 var app = express()
-app.get("/health", function (req, res) {
+app.get("/health", function (req: Request, res: Response) {
   if (health.healthy()) res.send({ status: "OK" })
   else res.status(500).json({ status: "UNHEALTHY" })
 })

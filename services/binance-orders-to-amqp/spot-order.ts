@@ -35,8 +35,8 @@ const exchange_identifier = { exchange: "binance", account: "default" }
 
 export class BinanceOrderPublisher {
   logger: Logger
-  closeTradesWebSocket: (() => void) | null
-  connection: Connection
+  closeTradesWebSocket: (() => void) | undefined
+  connection: Connection | undefined
   channel: any
   pub: GenericTopicPublisher
   event_name: MyEventNameType

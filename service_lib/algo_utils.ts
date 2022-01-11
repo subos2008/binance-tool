@@ -227,7 +227,7 @@ export class AlgoUtils {
       let response = await this.ee.order(args)
       this.logger.info(`order id: ${response.orderId}`)
       return response
-    } catch (error) {
+    } catch (error: any) {
       async_error_handler(console, `Buy error: ${error.body}`, error)
     }
   }
@@ -270,7 +270,7 @@ export class AlgoUtils {
       let response = await this.ee.order(args)
       this.logger.info(`order id: ${response.orderId}`)
       return response
-    } catch (error) {
+    } catch (error: any) {
       Sentry.captureException(error)
       async_error_handler(console, `Buy error: ${error.body}`, error)
     }
@@ -302,7 +302,7 @@ export class AlgoUtils {
       let response = await this.ee.order(args)
       this.logger.info(`Exchange order id: ${response.orderId}, requested ${orderId}`)
       return response
-    } catch (error) {
+    } catch (error: any) {
       Sentry.captureException(error)
       async_error_handler(console, `Market Buy error: ${error.body}`, error)
     }
@@ -334,7 +334,7 @@ export class AlgoUtils {
       let response = await this.ee.order(args)
       this.logger.info(`Exchange order id: ${response.orderId}, requested ${orderId}`)
       return response
-    } catch (error) {
+    } catch (error: any) {
       Sentry.captureException(error)
       async_error_handler(console, `Market sell error: ${error.body}`, error)
     }

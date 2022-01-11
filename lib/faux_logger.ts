@@ -1,21 +1,22 @@
-var bunyan = require('bunyan');
+var bunyan = require("bunyan")
 
-class FauxLogger {
+export class Logger {
   silent: boolean
   bunyan: any
-  constructor({ silent, template }: { silent: boolean, template: object } = { silent: false, template: {} }) {
-    this.silent = silent;
+  constructor({ silent, template }: { silent: boolean; template?: object } = { silent: false, template: {} }) {
+    if (!template) template = {}
+    this.silent = silent
     let args = {
-      name: 'bunyan_stream_name',  // Required
+      name: "bunyan_stream_name", // Required
       // level: <level name or number>,      // Optional, see "Levels" section
       streams: [
         {
           stream: process.stderr,
-          level: "warn"
+          level: "warn",
         },
         {
           stream: process.stdout,
-          level: "info"
+          level: "info",
         },
       ],
       // serializers: <serializers mapping>, // Optional, see "Serializers" section
@@ -24,39 +25,39 @@ class FauxLogger {
       // Any other fields are added to all log records as is.
       // foo: 'bar',
     }
-    this.bunyan = bunyan.createLogger({ ...args, ...template });
+    this.bunyan = bunyan.createLogger({ ...args, ...template })
   }
 
   info(...args: any[]) {
     if (!this.silent) {
-      this.bunyan.info(...args);
+      this.bunyan.info(...args)
     }
   }
   notice(...args: any[]) {
     if (!this.silent) {
-      this.bunyan.info(...args);
+      this.bunyan.info(...args)
     }
   }
   error(...args: any[]) {
     if (!this.silent) {
-      this.bunyan.error(...args);
+      this.bunyan.error(...args)
     }
   }
   warn(...args: any[]) {
     if (!this.silent) {
-      this.bunyan.warn(...args);
+      this.bunyan.warn(...args)
     }
   }
   debug(...args: any[]) {
     if (!this.silent) {
-      this.bunyan.debug(...args);
+      this.bunyan.debug(...args)
     }
   }
   silly(...args: any[]) {
     if (!this.silent) {
-      this.bunyan.debug(...args);
+      this.bunyan.debug(...args)
     }
   }
 }
 
-module.exports = FauxLogger;
+module.exports = Logger

@@ -21,7 +21,7 @@ export class LimitedLengthCandlesHistory {
       if (this.length >= length) {
         this.shift()
       }
-      return Array.prototype.push.apply(this, arguments)
+      return Array.prototype.push.apply(this, arguments as any)
     }
     return array
   }

@@ -13,7 +13,7 @@ import { Logger } from "../../../interfaces/logger"
 import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/order_callbacks"
 
 import * as Sentry from "@sentry/node"
-import { Binance, ExecutionReport } from "binance-api-node"
+import { Binance, ExecutionReport, UserDataStreamEvent } from "binance-api-node"
 
 export class OrderExecutionTracker {
   send_message: Function
@@ -73,7 +73,8 @@ export class OrderExecutionTracker {
   }
 
   async monitor_user_stream() {
-    this.closeUserWebsocket = await this.ee.ws.user(async (data: ExecutionReport) => {
+    this.closeUserWebsocket = await this.ee.ws.user(async (_data: UserDataStreamEvent) => {
+      let data : ExecutionReport = _data as ExecutionReport
       try {
         const { eventType } = data
         if (eventType !== "executionReport") {

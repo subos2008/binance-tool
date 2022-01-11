@@ -249,7 +249,7 @@ export class AlgoUtils {
       let response = await this.ee.order(args)
       this.logger.info(`order id: ${response.orderId}`)
       return response
-    } catch (error) {
+    } catch (error: any) {
       async_error_handler(console, `Buy error: ${error.body}`, error)
     }
   }
@@ -274,7 +274,14 @@ export class AlgoUtils {
     assert(BigNumber.isBigNumber(target_price))
     assert(BigNumber.isBigNumber(limit_price))
     try {
-      base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, stop_price, limit_price, target_price })
+      base_amount = this.munge_amount_and_check_notionals({
+        exchange_info,
+        pair,
+        base_amount,
+        stop_price,
+        limit_price,
+        target_price,
+      })
       stop_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: stop_price })
       limit_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: limit_price })
       target_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: target_price })
@@ -321,7 +328,7 @@ export class AlgoUtils {
       // }
       let response: OcoOrder = await this.ee.orderOco(args)
       return response
-    } catch (error) {
+    } catch (error: any) {
       Sentry.captureException(error)
       async_error_handler(console, `Buy error: ${error.body}`, error)
     }
@@ -350,9 +357,7 @@ export class AlgoUtils {
       )
     }
     if (limit_price.isEqualTo(0)) {
-      this.logger.warn(
-        `WARNING: stop loss orders with limit price of 0: munging not tested`
-      )
+      this.logger.warn(`WARNING: stop loss orders with limit price of 0: munging not tested`)
     }
     try {
       stop_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: stop_price })
@@ -374,7 +379,7 @@ export class AlgoUtils {
       let response = await this.ee.order(args)
       this.logger.info(`order id: ${response.orderId}`)
       return response
-    } catch (error) {
+    } catch (error: any) {
       Sentry.captureException(error)
       async_error_handler(console, `Buy error: ${error.body}`, error)
     }
@@ -406,7 +411,7 @@ export class AlgoUtils {
       let response = await this.ee.order(args)
       this.logger.info(`Exchange order id: ${response.orderId}, requested ${orderId}`)
       return response
-    } catch (error) {
+    } catch (error: any) {
       Sentry.captureException(error)
       async_error_handler(console, `Market Buy error: ${error.body}`, error)
     }
@@ -438,7 +443,7 @@ export class AlgoUtils {
       let response = await this.ee.order(args)
       this.logger.info(`Exchange order id: ${response.orderId}, requested ${orderId}`)
       return response
-    } catch (error) {
+    } catch (error: any) {
       Sentry.captureException(error)
       async_error_handler(console, `Market sell error: ${error.body}`, error)
     }

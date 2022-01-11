@@ -40,7 +40,7 @@ export class PositionPerformance {
   logger: Logger
   positions_state: RedisPositionsState
   ee: Binance
-  prices: Prices
+  prices: Prices | undefined
 
   constructor({
     send_message,
@@ -65,6 +65,7 @@ export class PositionPerformance {
     let base: string = p.baseAsset
     let quote: string = await p.initial_entry_quote_asset()
     let symbol = `${base}${quote}`.toUpperCase()
+    if (!this.prices) throw new Error("prices not initialised")
     return new BigNumber(this.prices[symbol])
   }
 

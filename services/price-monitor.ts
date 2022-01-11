@@ -215,9 +215,9 @@ function soft_exit(exit_code: number | null = null) {
 }
 
 
-var express = require("express");
-var app = express();
-app.get("/health", function (res: any) {
+import express, { Request, Response } from "express"
+var app = express()
+app.get("/health", function (req: Request, res: Response) {
   if (service_is_healthy) res.send({ status: "OK" });
   else res.status(500).json({ status: "UNHEALTHY" });
 });

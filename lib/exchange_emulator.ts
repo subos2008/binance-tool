@@ -45,10 +45,10 @@ class Order {
   side: string
   price: string
   stopPrice: string | undefined
-  _base_currency: string
-  _quote_currency: string
-  orderStatus: string
-  executedQty: string
+  _base_currency: string | undefined
+  _quote_currency: string | undefined
+  orderStatus: string | undefined
+  executedQty: string | undefined
 
   constructor({
     origQty,
@@ -82,6 +82,7 @@ class Order {
       this._quote_currency = quote_currency
       this._base_currency = base_currency
     }
+    if (!this._base_currency) throw new Error(`Unable to determine base_currency for ${this.symbol}`)
     return this._base_currency
   }
   get quote_currency() {
@@ -91,6 +92,7 @@ class Order {
       this._quote_currency = quote_currency
       this._base_currency = base_currency
     }
+    if (!this._quote_currency) throw new Error(`Unable to determine quote_currency for ${this.symbol}`)
     return this._quote_currency
   }
 }
@@ -106,7 +108,7 @@ export class ExchangeEmulator {
   ws: any
   user_cb: any // callback
   agg_trades_cb: any // callback
-  agg_trades_watched_pairs: string[]
+  agg_trades_watched_pairs: string[] | undefined
   known_prices: { [key: string]: BigNumber }
 
   get next_order_id(): string {
@@ -691,7 +693,7 @@ export class ExchangeEmulator {
 
   async send_ws_trades_events(trade: any) {
     if (this.agg_trades_cb) {
-      if (this.agg_trades_watched_pairs.includes(trade.symbol)) await this.agg_trades_cb(trade)
+      if (this.agg_trades_watched_pairs?.includes(trade.symbol)) await this.agg_trades_cb(trade)
     }
   }
 }

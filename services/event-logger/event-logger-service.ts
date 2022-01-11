@@ -110,11 +110,11 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-import * as express from "express"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { Channel } from "amqplib"
+import express, { Request, Response } from "express"
 var app = express()
-app.get("/health", function (req, res) {
+app.get("/health", function (req: Request, res: Response) {
   if (service_is_healthy) {
     res.send({ status: "OK" })
   } else {

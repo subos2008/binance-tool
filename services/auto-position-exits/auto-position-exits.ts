@@ -49,7 +49,7 @@ export class AutoPositionExits {
   ee: GenericExchangeInterface
   logger: Logger
   send_message: (msg: string) => void
-  positions_listener: PositionsListener
+  positions_listener: PositionsListener | undefined
 
   constructor({
     ee,

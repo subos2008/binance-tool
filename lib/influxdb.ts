@@ -8,8 +8,8 @@ const token = process.env.INFLUXDB_TOKEN
 const orgid = process.env.INFLUXDB_ORG_ID
 const bucket = "binance-tool" // process.env.INFLUXDB_BUCKET
 
-// const assert = require("assert");
-import * as assert from "assert"
+import { strict as assert } from 'assert';
+
 assert(url)
 assert(token)
 assert(orgid)

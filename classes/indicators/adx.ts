@@ -37,7 +37,7 @@ export class ADX_Indicator {
   logger: Logger
   adx: ADX
   color: string
-  prev_color: string
+  prev_color: string | undefined
   current_result: ADXOutput | undefined
   adx_parameters: ADX_parameters
 

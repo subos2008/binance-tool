@@ -61,8 +61,8 @@ import { HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 // Let's keep this code, could become part of ensuring same format events accross exchanges
 export class PortfolioPublisher {
   logger: Logger
-  closeTradesWebSocket: (() => void) | null
-  connection: Connection
+  closeTradesWebSocket: (() => void) | undefined
+  connection: Connection | undefined
   channel: any
   pub: GenericTopicPublisher
   event_name: MyEventNameType
@@ -302,7 +302,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
   async start() {
     try {
       await this.publisher.connect()
-    } catch (error) {
+    } catch (error: any) {
       Sentry.captureException(error)
       this.logger.error(`Error connecting to AMQP: ${error}`)
       this.logger.error(error)

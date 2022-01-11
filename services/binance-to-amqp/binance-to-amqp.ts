@@ -60,16 +60,15 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  
   try {
     let health_and_readiness = health.addSubsystem({
-      name: 'binance-portfolio-to-amqp',
+      name: "binance-portfolio-to-amqp",
       ready: false,
       healthy: false,
     })
     let portfolio_to_amqp = new BinancePortfolioToAMQP({ send_message, logger, health_and_readiness })
     await portfolio_to_amqp.start()
-  } catch (error) {
+  } catch (error: any) {
     Sentry.captureException(error)
     logger.error(`Error connecting to exchange: ${error}`)
     logger.error(error)
@@ -86,9 +85,9 @@ main().catch((error) => {
   logger.error(`Error in main loop: ${error.stack}`)
 })
 
-import * as express from "express"
+import express, { Request, Response } from "express"
 var app = express()
-app.get("/health", function (req, res) {
+app.get("/health", function (req: Request, res: Response) {
   if (health.healthy()) res.send({ status: "OK" })
   else res.status(500).json({ status: "UNHEALTHY" })
 })

@@ -34,7 +34,7 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-var service_is_healthy: boolean = true;
+var service_is_healthy: boolean = true
 
 // redis + events publishing + binance
 
@@ -47,7 +47,6 @@ var service_is_healthy: boolean = true;
 // 3. Maintain portfolio state - probably just in-process
 // 4. Publish to telegram when portfolio changes
 
-
 import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
@@ -59,11 +58,11 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import {SendMessage} from '../../lib/telegram-v2'
+import { SendMessage } from "../../lib/telegram-v2"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
-  const send_message = new SendMessage({service_name,logger}).build()
+  const send_message = new SendMessage({ service_name, logger }).build()
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
@@ -72,7 +71,6 @@ import { Portfolio, Balance } from "../../interfaces/portfolio"
 import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
 import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 
-
 class PortfolioTracker implements MasterPortfolioClass {
   send_message: (msg: string) => void
   logger: Logger
@@ -80,20 +78,20 @@ class PortfolioTracker implements MasterPortfolioClass {
   portfolios: { [exchange: string]: Portfolio } = {}
   exchanges: { [exchange: string]: PortfolioBitchClass } = {}
 
-  constructor({
-    send_message,
-    logger,
-  }: {
-    send_message: (msg: string) => void
-    logger: Logger
-  }) {
+  constructor({ send_message, logger }: { send_message: (msg: string) => void; logger: Logger }) {
     assert(logger)
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
   }
 
-  async set_portfolio_for_exchange({exchange_identifier,portfolio}:{exchange_identifier:ExchangeIdentifier, portfolio:Portfolio}) {
+  async set_portfolio_for_exchange({
+    exchange_identifier,
+    portfolio,
+  }: {
+    exchange_identifier: ExchangeIdentifier
+    portfolio: Portfolio
+  }) {
     // TODO: account not used in ExchangeIdentifier: default (default added so this appears in greps)
     this.portfolios[exchange_identifier.exchange] = portfolio
     this.report_current_portfolio() // this line is going to be a problem when we have multiple exchanges
@@ -110,7 +108,7 @@ class PortfolioTracker implements MasterPortfolioClass {
   async report_current_portfolio() {
     try {
       let portfolio = await this.collapse_and_decorate_exchange_balances()
-      if(!portfolio) {
+      if (!portfolio) {
         this.logger.info(`no portfolio, skipping`)
         return
       }
@@ -160,16 +158,16 @@ class PortfolioTracker implements MasterPortfolioClass {
   }
 
   async collapse_and_decorate_exchange_balances() {
-    if(!this.portfolios) {
+    if (!this.portfolios) {
       this.logger.warn(`No portfolios present in portfilio-tracker`)
-      return;
+      return
     }
-    let exchanges:string[] = Object.keys(this.portfolios)
-    if(exchanges.length>1) throw new Error(`Multiple exchanges not implemented yet`)
+    let exchanges: string[] = Object.keys(this.portfolios)
+    if (exchanges.length > 1) throw new Error(`Multiple exchanges not implemented yet`)
     return this.decorate_portfolio(this.portfolios[exchanges[0]])
   }
 
-  async decorate_portfolio(portfolio: Portfolio) : Promise<Portfolio> {
+  async decorate_portfolio(portfolio: Portfolio): Promise<Portfolio> {
     portfolio = portfolio_utils.add_quote_value_to_portfolio_balances({
       // TODO: convert to list
       portfolio,
@@ -203,13 +201,13 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  const send_message = new SendMessage({service_name,logger}).build()
+  const send_message = new SendMessage({ service_name, logger }).build()
   let portfolio_tracker = new PortfolioTracker({ logger, send_message })
   let binance = new BinancePortfolioTracker({ send_message, logger, master: portfolio_tracker })
   binance.start()
   await binance.update_portfolio_from_exchange() // automatically triggers report_current_portfolio
 
-  setInterval(portfolio_tracker.update_and_report_portfolio.bind(portfolio_tracker), 1000 * 60 * 60 *6)
+  setInterval(portfolio_tracker.update_and_report_portfolio.bind(portfolio_tracker), 1000 * 60 * 60 * 6)
 }
 
 main().catch((error) => {
@@ -222,7 +220,7 @@ main().catch((error) => {
 
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
-function soft_exit(exit_code: number | null = null, reason:string) {
+function soft_exit(exit_code: number | null = null, reason: string) {
   service_is_healthy = false // it seems service isn't exiting on soft exit, but add this to make sure
   logger.warn(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}, reason: ${reason}`)
@@ -231,12 +229,12 @@ function soft_exit(exit_code: number | null = null, reason:string) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-import * as express from "express";
-var app = express();
-app.get("/health", function (req, res) {
-  if (service_is_healthy) res.send({ status: "OK" });
-  else res.status(500).json({ status: "UNHEALTHY" });
-});
+import express, { Request, Response } from "express"
+var app = express()
+app.get("/health", function (req: Request, res: Response) {
+  if (service_is_healthy) res.send({ status: "OK" })
+  else res.status(500).json({ status: "UNHEALTHY" })
+})
 const port = "80"
-app.listen(port);
-logger.info(`Server on port ${port}`);
+app.listen(port)
+logger.info(`Server on port ${port}`)

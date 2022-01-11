@@ -91,10 +91,10 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
   candles_collector: CandlesCollector
   ee: Binance
   logger: Logger
-  close_short_timeframe_candle_ws: () => void
-  close_candle_ws: () => void
+  close_short_timeframe_candle_ws: (() => void) | undefined
+  close_candle_ws: (() => void) | undefined
   send_message: SendMessageFunc
-  market_data: CoinGeckoMarketData[]
+  market_data: CoinGeckoMarketData[] | undefined
 
   constructor({ ee, logger, send_message }: { ee: Binance; logger: Logger; send_message: SendMessageFunc }) {
     this.candles_collector = new CandlesCollector({ ee })
@@ -152,6 +152,7 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
   market_data_for_symbol(symbol: string): CoinGeckoMarketData {
     // TODO: make this replace use quote_symbol
     let usym = symbol.toUpperCase().replace(/USDT$/, "")
+    if (!this.market_data) throw new Error(`Market data not initialised`) // can happen if data updates and
     let data = this.market_data.find((x) => x.symbol.toUpperCase() === usym)
     if (!data) throw new Error(`Market data for symbol ${usym} not found.`) // can happen if data updates and
     return data
@@ -220,7 +221,7 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
         })
         console.log(`Setup edge for ${symbol}`)
         await sleep(2000) // 1200 calls allowed per minute
-      } catch (err) {
+      } catch (err: any) {
         if (err.toString().includes("Invalid symbol")) {
           console.info(`Unable to load candles for ${symbol} not listed on binance`)
         } else if (err.toString().includes("No candles loaded for")) {

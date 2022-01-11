@@ -15,8 +15,7 @@ import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
-import * as express from "express"
-import { Request, Response } from 'express'
+import express, { Request, Response } from "express"
 import { Telegraf } from 'telegraf'
 
 const token = process.env.TELEGRAM_KEY
@@ -34,7 +33,8 @@ app.use(
   })
 ) // for parsing application/x-www-form-urlencoded
 
-app.get("/health", function (req, res) {
+var app = express()
+app.get("/health", function (req: Request, res: Response) {
   if (service_is_healthy) {
     res.send({ status: "OK" })
   } else {

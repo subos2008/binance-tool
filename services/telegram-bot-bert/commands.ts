@@ -41,49 +41,23 @@ export class Commands {
     // Set the bot response
     // Order is important
     bot.help((ctx) => ctx.replyWithHTML(help_text))
-    bot.command("spot", Commands.spot)
-    bot.on("text", (ctx) => ctx.replyWithHTML("<b>Hello?</b>"))
-
-    const parser = require("yargs")
-      .usage("/<cmd> [args]")
-      .command(
-        "spot [op] [asset] [edge]",
-        "welcome ter yargs!",
-        (yargs: any) => {
-          yargs
-            .positional("op", {
-              type: "string",
-              choices: ["long", "close"],
-              describe: "whether to buy (long) or close an open position",
-            })
-            .positional("asset", {
-              type: "string",
-              choices: ["long", "close"],
-              describe: "whether to buy (long) or close an open position",
-            })
-            .positional("edge", {
-              type: "string",
-              choices: ["edge60"],
-              describe: "name of the edge signal we are trading",
-            })
-        },
-        function (argv: any) {
-          console.log("hello", argv.op, "welcome to yargs!")
-        }
-      )
-      .demand(1)
-      .strict()
-      .help()
-    // .epilog("To the moon")
+    // bot.command("spot", Commands.spot)
+    bot.on("text", async (ctx) => ctx.message.text)
   }
 
-  static spot(context: Context) {
+  async text_to_command(ctx: MatchedContext<Context<Update>, "text">) {
+    let args = split_spot_message(ctx.message.text)
+
+  }
+
+  static spot(ctx: Context) {
     // run the yargs parser on the inbound slack command.
-    parser.parse(req.body.text || "", context, (err, argv, output) => {
-      if (err) logger.error(err.message)
-      if (output) argv.respond(output)
-    })
-    let args
+    if (!ctx.message) {
+      ctx.replyWithHTML("<i>No message?</i>")
+      return
+    }
+    let args = split_spot_message(ctx.message.text)
+    let [cmd, asset, edge] = args
     /**
      * Get open positions, ---- this is to check we aren't already in a position
      * check we aren't in a position, ---- this is to check we aren't already in a position

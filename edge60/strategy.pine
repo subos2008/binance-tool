@@ -14,8 +14,8 @@ num_breakout_days = input.int(21, minval=1, title="Number of Days (Close Breakou
 lowest_low = ta.lowest(low, num_breakout_days)[1]
 highest_high = ta.highest(high, num_breakout_days)[1]
 
-long_entry_signal = close > highest_high
-short_entry_signal = close < lowest_low
+long_entry_signal = high > highest_high
+short_entry_signal = low < lowest_low
 
 // debug
 plot(lowest_low)
@@ -42,6 +42,8 @@ plotarrow(short_entry_signal?-1:0, colordown = color.red)
 // note we might need to cancel stop orders manually when we exit
 
 max_ordersize=math.floor(strategy.equity/close) // To dynamically calculate the order size as the account equity increases or decreases.
+if(max_ordersize) < 0
+    max_ordersize := 0
 position_size = max_ordersize
 
 // Entry is crossunder/over of lowest_body/highest_body, when = matching long/short_filter

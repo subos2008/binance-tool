@@ -7,7 +7,7 @@ strategy(title="Edge 60", overlay=true)
 // START of INDICATOR
 
 // 21 Days high/low body prices
-num_breakout_days = input.int(21, minval=1, title="Number of Days (Close Breakout)")
+num_breakout_days = input.int(22, minval=1, title="Number of Days (Close Breakout)")
 // lowest_body = math.min(ta.lowest(close, num_breakout_days)[1],ta.lowest(open, num_breakout_days)[1])
 // highest_body = math.max(ta.highest(close, num_breakout_days)[1],ta.highest(open, num_breakout_days)[1])
 

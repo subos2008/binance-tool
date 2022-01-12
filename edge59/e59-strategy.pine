@@ -1,9 +1,8 @@
 //@version=5
-
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 // © bford
 
-indicator(title="Edge 59", overlay=true)
+strategy(title="Edge 59", overlay=true)
 
 // START of INDICATOR
 
@@ -62,20 +61,14 @@ tcol =  trend > 0 ? trandchanged> 0 ? #00FF00ff : trandchanged <= 0 ? #00FF006f 
 trend_follower_long_filter = tcol == #00FF00ff
 trend_follower_short_filter  = tcol == #FF0000ff
 
-// 21 Days high/low body prices
-num_breakout_days = input.int(14, minval=1, title="Number of Days (Close Breakout)")
+// 22 Days high/low body prices
+num_breakout_days = input.int(22, minval=1, title="Number of Days (Close Breakout)")
 
-// Body
-// lowest_body = math.min(ta.lowest(close, num_breakout_days)[1],ta.lowest(open, num_breakout_days)[1])
-// highest_body = math.max(ta.highest(close, num_breakout_days)[1],ta.highest(open, num_breakout_days)[1])
-// long_entry_signal = close > highest_body and close > open
-// short_entry_signal = close < lowest_body and close < open
-
-// Wicks
 lowest_low = ta.lowest(low, num_breakout_days)[1]
 highest_high = ta.highest(high, num_breakout_days)[1]
-long_entry_signal = close > highest_high
-short_entry_signal = close < lowest_low
+
+long_entry_signal = high > highest_high
+short_entry_signal = low < lowest_low
 
 // debug
 plot(lowest_low)
@@ -107,4 +100,39 @@ plotarrow(short_entry?-1:0, colordown = color.red)
 // long_filter and short_filter: entry/stay in position filters are active: close position whenever this is false
 
 // END of INDICATOR
+
+
+// START of STRATEGY
+
+// Entry and Exit
+
+// Stops - 5-10% for each individual entry
+long_stop_price = close * 0.9
+short_stop_price = close *1.1
+// note we might need to cancel stop orders manually when we exit
+
+max_ordersize=math.floor(strategy.equity/close) // To dynamically calculate the order size as the account equity increases or decreases.
+position_size = max_ordersize
+
+// Entry is crossunder/over of lowest_body/highest_body, when = matching long/short_filter
+// long entry
+strategy.entry("long", strategy.long, position_size, when=long_entry)
+// short entry
+strategy.entry("short", strategy.short, position_size, when=short_entry)
+// TODO: add stops with:  strategy.exit
+// TODO: this is not adding to positions
+
+
+// close_all when filters dont match trade direction
+strategy.close('long', when=not long_filter)
+strategy.close('short', when=not short_filter)
+// plot(strategy.position_size)
+
+
+//scratch
+// if (not long_filter)
+//     strategy.exit("long_trailing_stop", "long", trail_points = 4000, trail_offset = 1500)
+// if (not short_filter)
+//     strategy.exit("short_trailing_stop", "short", trail_points = 4000, trail_offset = 1500)
+
 

@@ -1,13 +1,6 @@
-import { Telegraf, Context } from "telegraf"
+import { Telegraf, Context, NarrowedContext, Types } from "telegraf"
 import { Logger } from "../../interfaces/logger"
-import { BinanceSpotExecutionEngine } from "./execution-engine"
-import { Positions } from "./positions"
-import { TradeAbstractionService } from "./trade-abstraction-service"
-
-/**
- * Config
- */
-let global_quote_asset = "BSUD"
+import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction-service/client/tas-client"
 
 let help_text = `
 All trades are vs USD, the backend decides which USD evivalent asset to use, could be USDT or BUSD, etc
@@ -27,37 +20,59 @@ To close an open long spot position:
  * Probably add session here later
  */
 export class Commands {
-  spot_trades: TradeAbstractionService
+  tas_client: SpotTradeAbstractionServiceClient
+  logger:Logger
 
   constructor({ bot, logger }: { bot: Telegraf; logger: Logger }) {
-    let spot_ee = new BinanceSpotExecutionEngine({ logger })
-    let spot_positions = new Positions({ logger, ee: spot_ee })
-    this.spot_trades = new TradeAbstractionService({
-      logger,
-      ee: spot_ee,
-      quote_asset: global_quote_asset,
-      positions: spot_positions,
-    })
+    this.logger = logger
+    this.tas_client = new SpotTradeAbstractionServiceClient({ logger })
     // Set the bot response
     // Order is important
     bot.help((ctx) => ctx.replyWithHTML(help_text))
     // bot.command("spot", Commands.spot)
-    bot.on("text", async (ctx) => ctx.message.text)
+    bot.on("text", this.text_to_command.bind(this))
   }
 
-  async text_to_command(ctx: MatchedContext<Context<Update>, "text">) {
-    let args = split_spot_message(ctx.message.text)
-
+  async text_to_command(ctx: NarrowedContext<Context, Types.MountMap["text"]>) {
+    let args = split_message(ctx.message.text)
+    if (args[0] == "/spot") {
+      await this.spot(ctx, args.slice(1))
+    } else if(args[0] == "/positions") {
+      await this.list_positions(ctx, args.slice(1))
+    } else {
+      ctx.reply(ctx.message.text)
+    }
   }
 
-  static spot(ctx: Context) {
-    // run the yargs parser on the inbound slack command.
-    if (!ctx.message) {
-      ctx.replyWithHTML("<i>No message?</i>")
+  async list_positions(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
+    let postions = await this.tas_client.positions()
+    this.logger.info(`Positions from TAS:`)
+    this.logger.info(postions)
+    ctx.reply(postions.toString())
+  }
+
+  async spot(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
+    let [command, asset, edge] = args
+    asset = asset.toUpperCase()
+    let valid_commands = ["long", "close"]
+    if (!valid_commands.includes(command)) {
+      ctx.replyWithHTML(`Invalid command for /spot '${command}, valid commands are ${valid_commands.join(", ")}`)
       return
     }
-    let args = split_spot_message(ctx.message.text)
-    let [cmd, asset, edge] = args
+    if (!edge.match(/edge\d+/)) {
+      ctx.replyWithHTML(`Invalid format for edge '${edge}', expected something like edge60`)
+      return
+    }
+    let msg = `${edge.toUpperCase()}: ${command} on ${asset}`
+    ctx.reply(msg)
+
+    try {
+      // this.tas_client.go_spot_long({ base_asset: asset }, ctx.reply.bind(ctx))
+      ctx.reply(`Looks like it succeeded?`)
+      ctx.reply(`not implemented?`)
+    } catch (error) {
+      ctx.reply(`Looks like it failed, see log for error`)
+    }
     /**
      * Get open positions, ---- this is to check we aren't already in a position
      * check we aren't in a position, ---- this is to check we aren't already in a position
@@ -72,6 +87,6 @@ export class Commands {
 /**
  * Utility
  */
-function split_spot_message(msg: string) {
-  let args = msg.split(/ /)
+function split_message(msg: string) {
+  return msg.split(/ /)
 }

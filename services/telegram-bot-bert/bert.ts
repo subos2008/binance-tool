@@ -3,6 +3,8 @@
 /* eslint func-names: ["warn", "as-needed"] */
 const service_name = "telegram-bot-bert"
 
+// require("dotenv").config()
+
 import * as Sentry from "@sentry/node"
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
@@ -16,11 +18,17 @@ const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
 import express, { Request, Response } from "express"
-import { Telegraf } from 'telegraf'
+import { Telegraf } from "telegraf"
+import { Commands } from "./commands"
 
 const token = process.env.TELEGRAM_KEY
 if (token === undefined) {
-  throw new Error('TELEGRAM_KEY must be provided!')
+  throw new Error("TELEGRAM_KEY must be provided!")
+}
+
+const TAS_URL = process.env.TRADE_ABSTRACTION_SERVICE_URL
+if (TAS_URL === undefined) {
+  throw new Error("TRADE_ABSTRACTION_SERVICE_URL must be provided!")
 }
 
 var app = express()
@@ -44,18 +52,26 @@ app.get("/health", function (req: Request, res: Response) {
 })
 
 const bot = new Telegraf(token)
+const commands = new Commands({ bot, logger })
 
-// Set the bot response
-bot.on('text', (ctx) => ctx.replyWithHTML('<b>Hello</b>'))
+// Register logger middleware
+bot.use((ctx, next) => {
+  const start = Date.now()
+  return next().then(() => {
+    const ms = Date.now() - start
+    console.log("response time %sms", ms)
+  })
+})
 
 const secretPath = `/telegraf/${bot.secretPathComponent()}`
 
 // Set telegram webhook
 // npm install -g localtunnel && lt --port 3000
-bot.telegram.setWebhook(`https://bert.ryancocks.net${secretPath}`)
+bot.telegram.setWebhook(`https://average-owl-23.loca.lt${secretPath}`)
 app.use(bot.webhookCallback(secretPath))
 
 // Finally, start our server
+// $  npm install -g localtunnel && lt --port 3000
 app.listen(3000, function () {
   console.log("Telegram app listening on port 3000!")
 })

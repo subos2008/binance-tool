@@ -68,4 +68,6 @@ spec:
                 secretKeyRef:
                   key: TELEGRAM_KEY
                   name: telegram-bot-bert
+            - name: TRADE_ABSTRACTION_SERVICE_URL
+              value: "http://spot-trade-abstraction-service/"
 {{- include "telegram-bot-bert.vars" . | nindent 12 }}

@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: spot-trade-abstraction
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+  selector:
+    app: spot-trade-abstraction
+---    
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spot-trade-abstraction
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "spot-trade-abstraction"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app: spot-trade-abstraction
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "spot-trade-abstraction"
+        app: spot-trade-abstraction
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "spot-trade-abstraction"}'
+        ad.datadoghq.com/spot-trade-abstraction.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "spot-trade-abstraction"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: spot-trade-abstraction
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "./out/./services/spot-trade-abstraction/tas"]
+          ports:
+          - name: http
+            containerPort: 3000
+            protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          env:
+            - name: SENTRY_DSN
+              value: "https://5a68a728462448d08b613731e9e51d0d@o369902.ingest.sentry.io/6151233"

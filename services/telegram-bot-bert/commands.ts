@@ -1,6 +1,6 @@
 import { Telegraf, Context, NarrowedContext, Types } from "telegraf"
 import { Logger } from "../../interfaces/logger"
-import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction-service/client/tas-client"
+import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/client/tas-client"
 
 let help_text = `
 All trades are vs USD, the backend decides which USD evivalent asset to use, could be USDT or BUSD, etc

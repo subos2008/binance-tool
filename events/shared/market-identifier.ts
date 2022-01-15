@@ -1,4 +1,4 @@
-import { ExchangeIdentifier, ExchangeIdentifier_V2 } from "./exchange-identifier"
+import { ExchangeIdentifier, ExchangeIdentifier_V2, ExchangeIdentifier_V3 } from "./exchange-identifier"
 
 export interface MarketIdentifier {
   exchange_identifier: ExchangeIdentifier
@@ -9,6 +9,13 @@ export interface MarketIdentifier {
 export interface MarketIdentifier_V2 {
   version: "v2"
   exchange_identifier: ExchangeIdentifier_V2
+  base_asset?: string
+  quote_asset?: string
+  symbol: string
+}
+export interface MarketIdentifier_V3 {
+  version: "v3"
+  exchange_identifier: ExchangeIdentifier_V3
   base_asset?: string
   quote_asset?: string
   symbol: string

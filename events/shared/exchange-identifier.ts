@@ -1,12 +1,15 @@
 export type ExchangeIdentifier = {
   exchange: string;
-  account: string; // not always present
-  // TODO: margin vs spot?
+  account: string; // not always present - this was supposed to be the user_id/account_id
 }
 
 export type ExchangeIdentifier_V2 = {
   version: 'v2'
   exchange: string;
-  // account: string; // not always present
-  // TODO: account_type: "margin" | "spot"
+}
+
+export type ExchangeIdentifier_V3 = {
+  version: 'v3'
+  exchange: string;
+  type: "margin" | "spot"
 }

@@ -67,7 +67,7 @@ async function main() {
   try {
     const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
     const binance_spot_ee = new BinanceSpotExecutionEngine({ logger })
-    const positions_persistance: PositionsPersistance = new RedisPositionsStateAdapter({logger})
+    const positions_persistance: PositionsPersistance = new RedisPositionsStateAdapter({ logger })
     const positions = new Positions({ logger, ee: binance_spot_ee, positions_persistance })
     tas = new TradeAbstractionService({
       positions,
@@ -77,6 +77,11 @@ async function main() {
     })
     app.get("/positions", function (req: Request, res: Response) {
       res.send(tas.open_positions())
+    })
+    // Finally, start our server
+    // $  npm install -g localtunnel && lt --port 3000
+    app.listen(3000, function () {
+      console.log("Telegram app listening on port 3000!")
     })
     // await publisher.connect()
   } catch (error) {

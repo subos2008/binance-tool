@@ -72,7 +72,6 @@ app.use(
   })
 ) // for parsing application/x-www-form-urlencoded
 
-var app = express()
 app.get("/health", function (req: Request, res: Response) {
   if (service_is_healthy) {
     res.send({ status: "OK" })

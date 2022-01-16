@@ -87,7 +87,7 @@ async function main() {
 
   new EventLogger({ logger, send_message, event_name: "SpotBinancePortfolio" })
   new EventLogger({ logger, send_message, event_name: "Edge56EntrySignal" })
-  new EventLogger({ logger, send_message, event_name: "Edge58EntrySignal" })
+  new EventLogger({ logger, send_message, event_name: "Edge60EntrySignal" })
   new EventLogger({ logger, send_message, event_name: "SpotBinanceOrder" })
 }
 

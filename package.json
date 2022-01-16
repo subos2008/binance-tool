@@ -30,6 +30,7 @@
     "coingecko-api": "^1.0.10",
     "dotenv": "^6.0.0",
     "express": "^4.17.1",
+    "express-winston": "^4.2.0",
     "flow-maintained": "^0.2.4",
     "handlebars": "^4.7.6",
     "human-number": "^1.0.6",
@@ -43,6 +44,7 @@
     "telegraf": "^4.5.2",
     "ts-node": "^8.8.2",
     "typescript": ">=2.7",
+    "winston": "^3.4.0",
     "ws": "^7.4.6",
     "yargs": "^11.0.0"
   },

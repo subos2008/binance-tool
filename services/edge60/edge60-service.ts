@@ -92,7 +92,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
   in_position(): boolean {
     return false
   }
-  enter_position({
+  async enter_position({
     symbol,
     entry_price,
     direction,
@@ -100,7 +100,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     symbol: string
     entry_price: BigNumber
     direction: "long" | "short"
-  }): void {
+  }): Promise<void> {
     let market_data_for_symbol: CoinGeckoMarketData | undefined
     let market_data_string = ""
     try {
@@ -113,12 +113,17 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       // This can happen if top 100 changes since boot and we refresh the cap list
       Sentry.captureException(e)
     }
+    let previous_direction = await this.direction_persistance.get_direction(symbol)
+    this.direction_persistance.set_direction(symbol, direction)
+    let entry_filter = previous_direction && previous_direction != direction
     try {
       let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
       this.send_message(
         `${direction_string} entry triggered on ${symbol} at ${
           edge60_parameters.days_of_price_history
-        }d price ${entry_price.toFixed()}. Check trend reversal. ${market_data_string}`
+        }d price ${entry_price.toFixed()}. Check trend reversal, previous direction: ${previous_direction}${
+          entry_filter ? "HIT!" : ""
+        }. ${market_data_string}`
       )
     } catch (e) {
       this.logger.warn(`Failed to publish to telegram for ${symbol}`)
@@ -126,12 +131,14 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       Sentry.captureException(e)
     }
     try {
-      this.publish_entry_to_amqp({
-        symbol,
-        entry_price,
-        direction,
-        market_data_for_symbol,
-      })
+      if (entry_filter) {
+        this.publish_entry_to_amqp({
+          symbol,
+          entry_price,
+          direction,
+          market_data_for_symbol,
+        })
+      }
     } catch (e) {
       this.logger.warn(`Failed to publish to AMQP for ${symbol}`)
       // This can happen if top 100 changes since boot and we refresh the cap list
@@ -152,6 +159,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
   }) {
     let event: Edge60PositionEntrySignal = {
       version: "v1",
+      edge: "edge60",
       market_identifier: {
         version: "v3",
         exchange_identifier: { version: "v3", exchange, type: "spot" },
@@ -279,7 +287,7 @@ async function main() {
       ee,
       logger,
       send_message,
-      direction_persistance: new DirectionPersistance({logger, prefix: `${service_name}/spot/binance/`}),
+      direction_persistance: new DirectionPersistance({ logger, prefix: `${service_name}/spot/binance/` }),
     })
     await publisher.connect()
     await edge60.run()

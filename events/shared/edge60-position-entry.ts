@@ -7,6 +7,7 @@ export type Edge60Parameters = {
 
 export interface Edge60PositionEntrySignal {
   version: "v1"
+  edge: "edge60"
   event_type: "Edge60EntrySignal"
   market_identifier: MarketIdentifier_V3
   edge60_parameters: Edge60Parameters

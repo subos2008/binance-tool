@@ -7,11 +7,11 @@ import { get_redis_client, set_redis_logger } from "../../lib/redis"
 export type Direction = "short" | "long" // Redis returns null for unset
 
 export class DirectionPersistance {
-  logger: Logger
-  redis: RedisClient
-  prefix: string
-  setAsync: any
-  getAsync: any
+  private logger: Logger
+  private redis: RedisClient
+  private prefix: string
+  private setAsync: any
+  private getAsync: any
 
   constructor({ logger, prefix }: { logger: Logger; prefix: string }) {
     this.logger = logger
@@ -22,15 +22,15 @@ export class DirectionPersistance {
     this.getAsync = promisify(this.redis.get).bind(this.redis)
   }
 
-  private _market_to_key(market: MarketIdentifier_V3): string {
-    return `${this.prefix}/signal_direction/${market.symbol.toUpperCase()}`
+  private _market_to_key(symbol: string): string {
+    return `${this.prefix}/signal_direction/${symbol.toUpperCase()}`
   }
 
-  async set_direction(market: MarketIdentifier_V3, direction: Direction) {
-    this.setAsync(this._market_to_key(market), direction)
+  async set_direction(symbol: string, direction: Direction) {
+    this.setAsync(this._market_to_key(symbol), direction)
   }
 
-  async get_direction(market: MarketIdentifier_V3): Promise<Direction | null> {
-    return this.getAsync(this._market_to_key(market))
+  async get_direction(symbol: string): Promise<Direction | null> {
+    return this.getAsync(this._market_to_key(symbol))
   }
 }

@@ -4,6 +4,7 @@ export type MyEventNameType =
   | "Edge56EntrySignal"
   | "SpotBinanceOrder"
   | "Edge58EntrySignal"
+  | "Edge60EntrySignal"
 
 export class MessageRouting {
   static amqp_routing({ event_name }: { event_name: MyEventNameType }): {

@@ -28,6 +28,7 @@ export class SpotTradeAbstractionServiceClient {
 
   async _call(method: Method, endpoint: string, params?: string | object): Promise<any> {
     const options = {
+      url: endpoint,
       headers: {},
       method: method,
       transformResponse: (res: string) => {

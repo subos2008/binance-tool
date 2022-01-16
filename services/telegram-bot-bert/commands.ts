@@ -47,8 +47,9 @@ export class Commands {
   async list_positions(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
     let postions = await this.tas_client.positions()
     this.logger.info(`Positions from TAS:`)
-    this.logger.info(postions)
-    ctx.reply(postions.toString())
+    let json = JSON.stringify(postions)
+    this.logger.info(json)
+    ctx.reply(json)
   }
 
   async spot(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {

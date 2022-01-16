@@ -109,6 +109,14 @@ export class SpotPositions {
     //   }else{
     //     this.positions_persistance.cancel_reserved_position()
     //   }
+  
+      /**
+     * Get the position size, -- this can be hardcoded, just needs price or to specify quote amount to spend
+     * Try and execute a buy on that position size
+     * Create sell order at the stop price for any amount that was executed for the buy
+     */
+
+  
   }
 
   async open_positions() {

@@ -67,6 +67,7 @@ const secretPath = `/telegraf/${bot.secretPathComponent()}`
 // Set telegram webhook
 // npm install -g localtunnel && lt --port 3000
 bot.telegram.setWebhook(`https://bert.ryancocks.net${secretPath}`)
+logger.info(`Secret path: ${secretPath}`)
 app.use(bot.webhookCallback(secretPath))
 
 // Finally, start our server

@@ -109,14 +109,27 @@ export class SpotPositions {
     //   }else{
     //     this.positions_persistance.cancel_reserved_position()
     //   }
-  
-      /**
+
+    /**
      * Get the position size, -- this can be hardcoded, just needs price or to specify quote amount to spend
      * Try and execute a buy on that position size
      * Create sell order at the stop price for any amount that was executed for the buy
      */
+  }
 
-  
+  /* Open both does the order execution/tracking, sizing, and maintains redis */
+  close_position({
+    quote_asset,
+    base_asset,
+    direction,
+    edge,
+  }: {
+    quote_asset: string
+    base_asset: string
+    direction: string
+    edge: string
+  }) {
+    this.send_message(`Closing Spot position in ${base_asset} from ${quote_asset}, edge ${edge} [NOT IMPLEMENTED]`)
   }
 
   async open_positions() {

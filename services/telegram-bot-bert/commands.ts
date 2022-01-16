@@ -73,22 +73,50 @@ export class Commands {
     }
 
     try {
-      let result = await this.go_spot_long(ctx, { asset, edge })
-      ctx.reply(`Looks like it succeeded?`)
-      ctx.reply(`not implemented?`)
+      if (command == "long") {
+        let result = await this.open_spot_long(ctx, { asset, edge })
+        ctx.reply(`Looks like it succeeded?`)
+        ctx.reply(`not implemented?`)
+      }
+
+      if (command == "close") {
+        let result = await this.close_spot_long(ctx, { asset, edge })
+        ctx.reply(`Looks like it succeeded?`)
+        ctx.reply(`not implemented?`)
+      }
     } catch (error) {
       ctx.reply(`Looks like it failed, see log for error`)
     }
     // ctx.replyWithHTML("<i>Are you sure?</i>")
   }
 
-  async go_spot_long(
+  async open_spot_long(
     ctx: NarrowedContext<Context, Types.MountMap["text"]>,
     { asset, edge }: { asset: string; edge: string }
   ) {
-    let msg = `${edge.toUpperCase()}: go_spot_long on ${asset}`
+    let msg = `${edge.toUpperCase()}: opening spot long on ${asset}`
     ctx.reply(msg)
-    let result: string = await this.tas_client.go_spot_long({ base_asset: asset, edge, direction: "long" })
+    let result: string = await this.tas_client.open_spot_long({
+      base_asset: asset,
+      edge,
+      direction: "long",
+      action: "open",
+    })
+    return result
+  }
+
+  async close_spot_long(
+    ctx: NarrowedContext<Context, Types.MountMap["text"]>,
+    { asset, edge }: { asset: string; edge: string }
+  ) {
+    let msg = `${edge.toUpperCase()}: closing spot long on ${asset} [probably not implemented?]`
+    ctx.reply(msg)
+    let result: string = await this.tas_client.close_spot_long({
+      base_asset: asset,
+      edge,
+      direction: "long",
+      action: "close",
+    })
     return result
   }
 }

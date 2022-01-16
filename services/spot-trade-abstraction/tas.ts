@@ -35,7 +35,11 @@ process.on("unhandledRejection", (error) => {
 })
 
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
-import { TradeAbstractionGoLongCommand, TradeAbstractionService } from "./trade-abstraction-service"
+import {
+  TradeAbstractionCloseLongCommand,
+  TradeAbstractionOpenLongCommand,
+  TradeAbstractionService,
+} from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine } from "./execution-engine"
 import { SpotPositions } from "./spot-positions"
 import { SpotPositionsPersistance } from "./spot-positions-persistance"
@@ -92,17 +96,33 @@ let tas: TradeAbstractionService = new TradeAbstractionService({
 app.get("/positions", async function (req: Request, res: Response) {
   res.json(await tas.open_positions())
 })
-app.post("/spot/go_long", async function (req: Request, res: Response) {
+
+app.post("/spot/long", async function (req: Request, res: Response) {
   let edge = req.params.edge
   let base_asset = req.params.base_asset
   assert(edge)
   assert(base_asset)
-  let cmd: TradeAbstractionGoLongCommand = {
+  let cmd: TradeAbstractionOpenLongCommand = {
     edge,
     direction: "long",
+    action: "open",
     base_asset,
   }
-  res.json(await tas.go_spot_long(cmd, send_message))
+  res.json(await tas.open_spot_long(cmd, send_message))
+})
+
+app.post("/spot/close", async function (req: Request, res: Response) {
+  let edge = req.params.edge
+  let base_asset = req.params.base_asset
+  assert(edge)
+  assert(base_asset)
+  let cmd: TradeAbstractionCloseLongCommand = {
+    edge,
+    direction: "long",
+    action: "close",
+    base_asset,
+  }
+  res.json(await tas.close_spot_long(cmd, send_message))
 })
 
 // Finally, start our server

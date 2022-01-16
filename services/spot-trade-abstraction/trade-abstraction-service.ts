@@ -12,10 +12,18 @@ import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { SendMessageFunc } from "../../lib/telegram-v2"
 import { SpotPositionIdentifier } from "./spot-interfaces"
 
-export interface TradeAbstractionGoLongCommand {
+export interface TradeAbstractionOpenLongCommand {
   base_asset: string
   edge: string
   direction: "long"
+  action: "open"
+}
+
+export interface TradeAbstractionCloseLongCommand {
+  base_asset: string
+  edge: string
+  direction: "long"
+  action: "close"
 }
 
 // Mehran wants us to have 30-50% stop on Edge60
@@ -52,8 +60,9 @@ export class TradeAbstractionService {
 
   // or signal_long
   // Spot so we can only be long or no-position
-  async go_spot_long(cmd: TradeAbstractionGoLongCommand, send_message: (msg: string) => void) {
+  async open_spot_long(cmd: TradeAbstractionOpenLongCommand, send_message: (msg: string) => void) {
     assert.equal(cmd.direction, "long")
+    assert.equal(cmd.action, "open")
     /** TODO: We want this check and entry to be atomic, while we only trade one edge it's less important */
     this.logger.warn(`Position entry is not atomic with check for existing position`)
     let existing_spot_position_size: BigNumber = await this.positions.exisiting_position_size({
@@ -68,6 +77,27 @@ export class TradeAbstractionService {
     }
 
     this.positions.open_position({ quote_asset: this.quote_asset, ...cmd })
+  }
+
+  // or signal_short or signal_exit/close
+  // Spot so we can only be long or no-position
+  async close_spot_long(cmd: TradeAbstractionCloseLongCommand, send_message: (msg: string) => void) {
+    assert.equal(cmd.direction, "long")
+    assert.equal(cmd.action, "close")
+
+    this.logger.warn(`Position exit is not atomic with check for existing position`)
+    let existing_spot_position_size: BigNumber = await this.positions.exisiting_position_size({
+      base_asset: cmd.base_asset,
+    })
+
+    if (existing_spot_position_size.isGreaterThan(0)) {
+      this.positions.close_position({ quote_asset: this.quote_asset, ...cmd })
+    }
+
+    let msg = `There is no known long spot position on ${cmd.base_asset}, skipping`
+    this.logger.warn(msg)
+    send_message(msg)
+    throw new Error(msg) // turn this into a 3xx or 4xx
   }
 
   async open_positions(): Promise<SpotPositionIdentifier[]> {

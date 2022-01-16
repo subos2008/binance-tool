@@ -58,11 +58,15 @@ export class CandlesCollector {
     symbol: string
     start_date: Date
     end_date?: Date
-    timeframe: "1w"
+    timeframe: "1w" | "1d"
   }): Promise<CandleChartResult[]> {
+    let interval
+    if (timeframe == "1w") interval = CandleChartInterval.ONE_WEEK
+    if (timeframe == "1d") interval = CandleChartInterval.ONE_DAY
+    if (!interval) throw new Error(`Interval ${interval} not implemented`)
     return this.ee.candles({
       symbol,
-      interval: CandleChartInterval.ONE_WEEK,
+      interval,
       startTime: start_date.getTime(),
       endTime: end_date?.getTime() || new Date().getTime(),
     })

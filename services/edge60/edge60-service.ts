@@ -39,6 +39,7 @@ import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_geck
 import { Edge60EntrySignals, Edge60EntrySignalsCallbacks } from "../../classes/edges/edge60"
 import { Edge60Parameters, Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
+import { DirectionPersistance } from "./direction-persistance"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -59,7 +60,6 @@ const edge60_parameters: Edge60Parameters = {
 
 class Edge60Service implements Edge60EntrySignalsCallbacks {
   edges: { [Key: string]: Edge60EntrySignals } = {}
-  start_of_bullmarket_date: Date
   candles_collector: CandlesCollector
   ee: Binance
   logger: Logger
@@ -67,24 +67,25 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
   close_1d_candle_ws: (() => void) | undefined
   send_message: SendMessageFunc
   market_data: CoinGeckoMarketData[] | undefined
+  direction_persistance: DirectionPersistance
 
   constructor({
     ee,
-    start_of_bullmarket_date,
     logger,
     send_message,
+    direction_persistance,
   }: {
     ee: Binance
-    start_of_bullmarket_date: Date
     logger: Logger
     send_message: SendMessageFunc
+    direction_persistance: DirectionPersistance
   }) {
-    this.start_of_bullmarket_date = start_of_bullmarket_date
     this.candles_collector = new CandlesCollector({ ee })
     this.ee = ee
     this.logger = logger
     this.send_message = send_message
     this.send_message("service re-starting")
+    this.direction_persistance = direction_persistance
   }
 
   // Edge60EntrySignalsCallbacks
@@ -155,7 +156,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         version: "v3",
         exchange_identifier: { version: "v3", exchange, type: "spot" },
         symbol,
-        base_asset: this.base_asset_for_symbol(symbol)
+        base_asset: this.base_asset_for_symbol(symbol),
       },
       event_type: "Edge60EntrySignal",
       edge60_parameters,
@@ -210,14 +211,23 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       }
     })
 
+    let required_initial_candles = Edge60EntrySignals.required_initial_candles(edge60_parameters)
     for (let i = 0; i < this.market_data.length; i++) {
       let symbol = to_symbol(this.market_data[i])
       // not all of these will be on Binance, they just throw if missing
       try {
-        let initial_candles = await this.candles_collector.get_daily_candles_between({
+        // Last N closed weekly candles exist between N+1 weeks ago and now
+        let start_date = new Date()
+        let end_date = new Date(start_date)
+        let candles_preload_start_date = new Date(start_date)
+        candles_preload_start_date.setDate(candles_preload_start_date.getDate() - (required_initial_candles + 1))
+        let initial_candles = await this.candles_collector.get_candles_between({
+          timeframe: "1d",
           symbol,
-          start_date: this.start_of_bullmarket_date,
+          start_date: candles_preload_start_date,
+          end_date,
         })
+
         if (initial_candles.length == 0) {
           console.warn(`No candles loaded for ${symbol}`)
           throw new Error(`No candles loaded for ${symbol}`)
@@ -230,7 +240,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
           callbacks: this,
           edge60_parameters,
         })
-        console.log(`Setup edge for ${symbol}`)
+        console.log(`Setup edge for ${symbol} with ${initial_candles.length} initial candles`)
         await sleep(2000) // 1200 calls allowed per minute
       } catch (err: any) {
         if (err.toString().includes("Invalid symbol")) {
@@ -263,14 +273,13 @@ async function main() {
   })
 
   try {
-    const start_of_bullmarket_date = new Date("2021-05-01")
     const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
     edge60 = new Edge60Service({
       ee,
-      start_of_bullmarket_date, // TODO: this should load its own candles as it has the hardcode for 20 days history
       logger,
       send_message,
+      direction_persistance: new DirectionPersistance({logger, prefix: `${service_name}/spot/binance/`}),
     })
     await publisher.connect()
     await edge60.run()

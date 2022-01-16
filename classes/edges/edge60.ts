@@ -137,6 +137,10 @@ export class Edge60EntrySignals {
     })
   }
 
+  static required_initial_candles(edge60_parameters: Edge60Parameters) {
+    return Math.max(edge60_parameters.days_of_price_history)
+  }
+
   async ingest_new_candle({
     timeframe,
     candle,
@@ -181,7 +185,9 @@ export class Edge60EntrySignals {
       // check for short entry
       if (low.isLessThan(lowest_price)) {
         direction = "short"
-        console.log(`Price entry signal ${direction} at ${potential_entry_price.toFixed()}: less than ${lowest_price.toFixed()}`)
+        console.log(
+          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}: less than ${lowest_price.toFixed()}`
+        )
         this.callbacks.enter_position({
           symbol: this.symbol,
           entry_price: potential_entry_price,

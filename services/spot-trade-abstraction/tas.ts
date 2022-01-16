@@ -95,7 +95,7 @@ async function main() {
       quote_asset /* global */,
     })
     app.get("/positions", function (req: Request, res: Response) {
-      res.send(tas.open_positions())
+      res.json(tas.open_positions())
     })
     // Finally, start our server
     // $  npm install -g localtunnel && lt --port 3000

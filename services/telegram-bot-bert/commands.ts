@@ -67,25 +67,25 @@ export class Commands {
       ctx.replyWithHTML(`Invalid format for edge '${edge}', expected something like edge60`)
       return
     }
-    let result:string = await this.tas_client.go_spot_long({ base_asset: asset, edge, direction: "long" })
-    let msg = `${edge.toUpperCase()}: ${command} on ${asset}: ${result}`
-    ctx.reply(msg)
 
     try {
-      // this.tas_client.go_spot_long({ base_asset: asset }, ctx.reply.bind(ctx))
+      let result = await this.go_spot_long(ctx, { asset, edge })
       ctx.reply(`Looks like it succeeded?`)
       ctx.reply(`not implemented?`)
     } catch (error) {
       ctx.reply(`Looks like it failed, see log for error`)
     }
-    /**
-     * Get open positions, ---- this is to check we aren't already in a position
-     * check we aren't in a position, ---- this is to check we aren't already in a position
-     * Get the position size, -- this can be hardcoded, just needs price or to specify quote amount to spend
-     * Try and execute a buy on that position size
-     * Create sell order at the stop price for any amount that was executed for the buy
-     */
     // ctx.replyWithHTML("<i>Are you sure?</i>")
+  }
+
+  async go_spot_long(
+    ctx: NarrowedContext<Context, Types.MountMap["text"]>,
+    { asset, edge }: { asset: string; edge: string }
+  ) {
+    let msg = `${edge.toUpperCase()}: go_spot_long on ${asset}`
+    ctx.reply(msg)
+    let result: string = await this.tas_client.go_spot_long({ base_asset: asset, edge, direction: "long" })
+    return result
   }
 }
 

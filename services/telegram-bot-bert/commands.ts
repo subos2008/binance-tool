@@ -21,7 +21,7 @@ To close an open long spot position:
  */
 export class Commands {
   tas_client: SpotTradeAbstractionServiceClient
-  logger:Logger
+  logger: Logger
 
   constructor({ bot, logger }: { bot: Telegraf; logger: Logger }) {
     this.logger = logger
@@ -37,7 +37,7 @@ export class Commands {
     let args = split_message(ctx.message.text)
     if (args[0] == "/spot") {
       await this.spot(ctx, args.slice(1))
-    } else if(args[0] == "/positions") {
+    } else if (args[0] == "/positions") {
       await this.list_positions(ctx, args.slice(1))
     } else {
       ctx.reply(ctx.message.text)
@@ -46,11 +46,12 @@ export class Commands {
 
   async list_positions(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
     let postions = await this.tas_client.positions()
-    this.logger.info(`Positions from TAS:`)
-    console.log(postions)
-    let json = JSON.stringify(postions)
-    this.logger.info(json)
-    ctx.reply(json)
+    let msg = 
+      postions.map(
+        (pi) => `${pi.exchange_identifier.exchange} ${pi.exchange_identifier.type} ${pi.base_asset.toUpperCase()}`
+      ).join("\n")
+    
+    ctx.reply(msg)
   }
 
   async spot(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {

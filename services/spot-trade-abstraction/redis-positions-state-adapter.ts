@@ -37,8 +37,9 @@ export class RedisPositionsStateAdapter implements PositionsPersistance {
     position_initialisation_data: PositionInitialisationData
   ): Promise<void> {}
 
-  async open_positions(): Promise<any> {
+  async open_positions(): Promise<PositionIdentifier[]> {
     let legacy_pis: PositionIdentifier[] = await this.legacy.open_positions()
+    console.log(legacy_pis)
     return legacy_pis
   }
 }

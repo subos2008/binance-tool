@@ -38,9 +38,9 @@ export class MessageRouting {
           durable: false,
         }
 
-      case "Edge58EntrySignal":
+      case "Edge60EntrySignal":
         return {
-          routing_key: "edge58",
+          routing_key: "edge60",
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,

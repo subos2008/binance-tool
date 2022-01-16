@@ -1,18 +1,23 @@
-import {
-  PositionsPersistance,
-  PositionReservationCommand,
-  ReservedPosition,
-  PositionInitialisationData,
-} from "./positions-persistance"
+import { BigNumber } from "bignumber.js"
+BigNumber.DEBUG = true // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function () {
+  throw Error("BigNumber .valueOf called!")
+}
+
+import { SpotPositionsPersistance, SpotPositionInitialisationData } from "./spot-positions-persistance"
 
 import { Logger } from "../../interfaces/logger"
 
 import { RedisPositionsState } from "../../classes/persistent_state/redis_positions_state"
 import { RedisClient } from "redis"
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
-import { PositionIdentifier } from "../../events/shared/position-identifier"
+import { PositionIdentifier as LegacyPositionIdentifier } from "../../events/shared/position-identifier"
+import { PositionObject as LegacyPositionObject } from "../../classes/position"
+import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
+import { SpotPositionIdentifier } from "./spot-interfaces"
 
-export class RedisPositionsStateAdapter implements PositionsPersistance {
+export class RedisPositionsStateAdapter implements SpotPositionsPersistance {
   logger: Logger
   legacy: RedisPositionsState
 
@@ -23,22 +28,33 @@ export class RedisPositionsStateAdapter implements PositionsPersistance {
     this.legacy = new RedisPositionsState({ logger, redis })
   }
 
-  async reserve_position_if_not_already_existing(
-    cmd: PositionReservationCommand
-  ): Promise<ReservedPosition | null> {
-    return null
+  async initialise_position(
+    pi: SpotPositionIdentifier,
+    position_initialisation_data: SpotPositionInitialisationData
+  ): Promise<void> {
+    let _pi: LegacyPositionIdentifier = {
+      baseAsset: pi.base_asset,
+      exchange_identifier: { account: "default", ...pi.exchange_identifier },
+    }
+    let po: LegacyPositionObject = position_initialisation_data
+    await this.legacy.create_new_position(_pi, po)
   }
-  async cancel_reserved_position(reserved_position: ReservedPosition): Promise<void> {}
-  /** setup_reserved_position: once the orders have executed and we have a position, call this
-   * to make it real
-   */
-  async setup_reserved_position(
-    reserved_position: ReservedPosition,
-    position_initialisation_data: PositionInitialisationData
-  ): Promise<void> {}
 
-  async open_positions(): Promise<PositionIdentifier[]> {
-    let legacy_pis: PositionIdentifier[] = await this.legacy.open_positions()
+  async in_position(pi: SpotPositionIdentifier): Promise<boolean> {
+    return (await this.position_size(pi)).isGreaterThan(0)
+  }
+
+  async position_size(pi: SpotPositionIdentifier): Promise<BigNumber> {
+    if (!pi.base_asset) throw new Error(`Must set base_asset in the market identifier to check position_size`)
+    let _pi: LegacyPositionIdentifier = {
+      baseAsset: pi.base_asset,
+      exchange_identifier: { account: "default", ...pi.exchange_identifier },
+    }
+    return this.legacy.get_position_size(_pi)
+  }
+
+  async open_positions(): Promise<LegacyPositionIdentifier[]> {
+    let legacy_pis: LegacyPositionIdentifier[] = await this.legacy.open_positions()
     console.log(legacy_pis)
     return legacy_pis
   }

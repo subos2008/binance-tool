@@ -1,11 +1,20 @@
+import { BigNumber } from "bignumber.js"
+BigNumber.DEBUG = true // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function () {
+  throw Error("BigNumber .valueOf called!")
+}
+
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
-import { Positions } from "./positions"
+import { SpotPositions } from "./spot-positions"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { SendMessageFunc } from "../../lib/telegram-v2"
 
 export interface TradeAbstractionGoLongCommand {
   base_asset: string
+  edge: string
+  direction: "long"
 }
 
 // Mehran wants us to have 30-50% stop on Edge60
@@ -19,7 +28,7 @@ export class TradeAbstractionService {
   logger: Logger
   send_message: SendMessageFunc
   quote_asset: string
-  private positions: Positions // query state of existing open positions
+  private positions: SpotPositions // query state of existing open positions
 
   constructor({
     logger,
@@ -30,7 +39,7 @@ export class TradeAbstractionService {
     logger: Logger
     send_message: SendMessageFunc
     quote_asset: string
-    positions: Positions
+    positions: SpotPositions
   }) {
     assert(logger)
     this.logger = logger
@@ -42,34 +51,22 @@ export class TradeAbstractionService {
 
   // or signal_long
   // Spot so we can only be long or no-position
-  go_spot_long(cmd: TradeAbstractionGoLongCommand, send_message: (msg: string) => void) {
-    // let market: MarketIdentifier_V3 = this.positions.get_market_identifier_for({
-    //   quote_asset: this.quote_asset,
-    //   base_asset: cmd.base_asset,
-    // })
+  async go_spot_long(cmd: TradeAbstractionGoLongCommand, send_message: (msg: string) => void) {
+    assert.equal(cmd.direction, "long")
+    /** TODO: We want this check and entry to be atomic, while we only trade one edge it's less important */
+    this.logger.warn(`Position entry is not atomic with check for existing position`)
+    let existing_spot_position_size: BigNumber = await this.positions.exisiting_position_size({
+      base_asset: cmd.base_asset,
+    })
 
-    // /** We want this check and entry to be atomic, while we only trade one edge it's less important */
-    // let existing_position = this.positions.in_position(market) // this should be an array - actually no becuase we give a MarketIdentifier_V3 which should be unique per account
+    if (existing_spot_position_size.isGreaterThan(0)) {
+      let msg = `Already in long spot position on ${cmd.base_asset}, skipping`
+      this.logger.warn(msg)
+      send_message(msg)
+      throw new Error(msg)
+    }
 
-    // if (existing_position) {
-    //   if (existing_position.direction == "long") {
-    //     let msg = `Already in long spot position on ${cmd.base_asset}, skipping`
-    //     this.logger.warn(msg)
-    //     send_message(msg)
-    //     throw new Error(msg)
-    //   } else {
-    //     throw new Error(
-    //       `Unexpected direction ${existing_position.direction} in existing spot position for ${market.symbol}`
-    //     )
-    //   }
-    // }
-    // let quote_amount = this.position_size()
-    // // this.ee.market_buy_spot({
-    // //   //   base_amount,
-    // //   pair: market.symbol,
-    // //   //   orderId,
-    // // })
-    // this.positions.open_positions()
+    this.positions.open_position({ quote_asset: this.quote_asset, ...cmd })
   }
 
   async open_positions() {

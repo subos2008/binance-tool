@@ -37,8 +37,8 @@ process.on("unhandledRejection", (error) => {
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 import { TradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine } from "./execution-engine"
-import { Positions } from "./positions"
-import { PositionsPersistance } from "./positions-persistance"
+import { SpotPositions } from "./spot-positions"
+import { SpotPositionsPersistance } from "./spot-positions-persistance"
 import { RedisPositionsStateAdapter } from "./redis-positions-state-adapter"
 
 import express, { Request, Response } from "express"
@@ -86,8 +86,8 @@ async function main() {
   try {
     const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
     const binance_spot_ee = new BinanceSpotExecutionEngine({ logger })
-    const positions_persistance: PositionsPersistance = new RedisPositionsStateAdapter({ logger })
-    const positions = new Positions({ logger, ee: binance_spot_ee, positions_persistance })
+    const positions_persistance: SpotPositionsPersistance = new RedisPositionsStateAdapter({ logger })
+    const positions = new SpotPositions({ logger, ee: binance_spot_ee, positions_persistance })
     tas = new TradeAbstractionService({
       positions,
       logger,

@@ -29,6 +29,7 @@ export interface SpotExecutionEngine {
     base_asset: string
   }): MarketIdentifier_V3
   market_buy_by_quote_quantity(args: SpotMarketBuyByQuoteQuantityCommand): Promise<void>
+  get_exchange_identifier(): ExchangeIdentifier_V3
 }
 
 // Binance Keys

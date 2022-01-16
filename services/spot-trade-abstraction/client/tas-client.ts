@@ -19,6 +19,8 @@ export class SpotTradeAbstractionServiceClient {
 
   async positions() {
     let response = this._call("GET", new URL("/positions", TAS_URL).toString())
+    console.log(`Returned positions:`)
+    console.log(response)
     return response
   }
 

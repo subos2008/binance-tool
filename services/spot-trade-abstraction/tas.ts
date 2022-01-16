@@ -79,35 +79,22 @@ app.get("/health", function (req: Request, res: Response) {
   }
 })
 
-let tas: TradeAbstractionService
-async function main() {
-  try {
-    const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-    const binance_spot_ee = new BinanceSpotExecutionEngine({ logger })
-    const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsStateAdapter({ logger })
-    const positions = new SpotPositions({ logger, ee: binance_spot_ee, positions_persistance })
-    tas = new TradeAbstractionService({
-      positions,
-      logger,
-      send_message,
-      quote_asset /* global */,
-    })
-    app.get("/positions", async function (req: Request, res: Response) {
-      res.json(await tas.open_positions())
-    })
-    // Finally, start our server
-    // $  npm install -g localtunnel && lt --port 3000
-    app.listen(3000, function () {
-      console.log("Telegram app listening on port 3000!")
-    })
-    // await publisher.connect()
-  } catch (error) {
-    console.error(error)
-  }
-}
-
-main().catch((error) => {
-  console.error(`Error in main loop: ${error}`)
-  console.error(error)
-  console.error(`Error in main loop: ${error.stack}`)
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+const binance_spot_ee = new BinanceSpotExecutionEngine({ logger })
+const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsStateAdapter({ logger })
+const positions = new SpotPositions({ logger, ee: binance_spot_ee, positions_persistance })
+let tas: TradeAbstractionService = new TradeAbstractionService({
+  positions,
+  logger,
+  send_message,
+  quote_asset /* global */,
 })
+app.get("/positions", async function (req: Request, res: Response) {
+  res.json(await tas.open_positions())
+})
+// Finally, start our server
+// $  npm install -g localtunnel && lt --port 3000
+app.listen(3000, function () {
+  console.log("Telegram app listening on port 3000!")
+})
+// await publisher.connect()

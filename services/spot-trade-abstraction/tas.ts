@@ -42,26 +42,24 @@ import { SpotPositionsPersistance } from "./spot-positions-persistance"
 import { RedisPositionsStateAdapter } from "./redis-positions-state-adapter"
 
 import express, { Request, Response } from "express"
-const winston = require('winston')
-const expressWinston = require('express-winston');
-
+const winston = require("winston")
+const expressWinston = require("express-winston")
 
 var app = express()
 
-app.use(expressWinston.logger({
-  transports: [
-    new winston.transports.Console()
-  ],
-  format: winston.format.combine(
-    winston.format.colorize(),
-    winston.format.json()
-  ),
-  meta: true, // optional: control whether you want to log the meta data about the request (default to true)
-  msg: "HTTP {{req.method}} {{req.url}}", // optional: customize the default logging message. E.g. "{{res.statusCode}} {{req.method}} {{res.responseTime}}ms {{req.url}}"
-  expressFormat: true, // Use the default Express/morgan request formatting. Enabling this will override any msg if true. Will only output colors with colorize set to true
-  colorize: false, // Color the text and status code, using the Express/morgan color palette (text: gray, status: default green, 3XX cyan, 4XX yellow, 5XX red).
-  ignoreRoute: function (req: Request, res: Response) { return req.path == '/health'; } // optional: allows to skip some log messages based on request and/or response
-}));
+app.use(
+  expressWinston.logger({
+    transports: [new winston.transports.Console()],
+    format: winston.format.combine(winston.format.colorize(), winston.format.json()),
+    meta: true, // optional: control whether you want to log the meta data about the request (default to true)
+    msg: "HTTP {{req.method}} {{req.url}}", // optional: customize the default logging message. E.g. "{{res.statusCode}} {{req.method}} {{res.responseTime}}ms {{req.url}}"
+    expressFormat: true, // Use the default Express/morgan request formatting. Enabling this will override any msg if true. Will only output colors with colorize set to true
+    colorize: false, // Color the text and status code, using the Express/morgan color palette (text: gray, status: default green, 3XX cyan, 4XX yellow, 5XX red).
+    ignoreRoute: function (req: Request, res: Response) {
+      return req.path == "/health"
+    }, // optional: allows to skip some log messages based on request and/or response
+  })
+)
 
 var bodyParser = require("body-parser")
 
@@ -94,8 +92,8 @@ async function main() {
       send_message,
       quote_asset /* global */,
     })
-    app.get("/positions", function (req: Request, res: Response) {
-      res.json(tas.open_positions())
+    app.get("/positions", async function (req: Request, res: Response) {
+      res.json(await tas.open_positions())
     })
     // Finally, start our server
     // $  npm install -g localtunnel && lt --port 3000

@@ -69,5 +69,5 @@ spec:
                   key: TELEGRAM_KEY
                   name: telegram-bot-bert
             - name: TRADE_ABSTRACTION_SERVICE_URL
-              value: "http://spot-trade-abstraction-service/"
+              value: "http://spot-trade-abstraction"
 {{- include "telegram-bot-bert.vars" . | nindent 12 }}

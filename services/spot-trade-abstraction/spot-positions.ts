@@ -4,6 +4,7 @@ import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { SpotExecutionEngine } from "./execution-engine"
 import { SpotPositionsPersistance } from "./spot-positions-persistance"
 import { SpotPositionIdentifier } from "./spot-interfaces"
+import { SendMessageFunc } from "../../lib/telegram-v2"
 
 interface Position {
   direction: "long" | "short"
@@ -22,6 +23,7 @@ export interface OpenPositionCommand {}
 export class SpotPositions {
   logger: Logger
   ee: SpotExecutionEngine
+  send_message: SendMessageFunc
 
   positions_persistance: SpotPositionsPersistance
 
@@ -29,16 +31,19 @@ export class SpotPositions {
     logger,
     ee,
     positions_persistance,
+    send_message,
   }: {
     logger: Logger
     ee: SpotExecutionEngine
     positions_persistance: SpotPositionsPersistance
+    send_message: SendMessageFunc
   }) {
     assert(logger)
     this.logger = logger
     assert(ee)
     this.ee = ee
     this.positions_persistance = positions_persistance
+    this.send_message = send_message
   }
 
   in_position({ base_asset }: { base_asset: string }) {
@@ -72,6 +77,7 @@ export class SpotPositions {
     direction: string
     edge: string
   }) {
+    this.send_message(`Opening Spot position in ${base_asset} from ${quote_asset}, edge ${edge} [NOT IMPLEMENTED]`)
     //   /**
     //    * Atomic open / set placeholder for position entry
     //    *  - add tradeID and have a timeout so if not opened with a real position soon it reverts to a clear spot?

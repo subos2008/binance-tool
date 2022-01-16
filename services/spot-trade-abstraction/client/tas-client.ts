@@ -9,6 +9,7 @@ if (!TAS_URL.startsWith("http")) {
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"
 import { Logger } from "../../../interfaces/logger"
 import { SpotPositionIdentifier } from "../spot-interfaces"
+import { TradeAbstractionGoLongCommand } from "../trade-abstraction-service"
 const JSONBigNumber = require("./JSONBigNumber")
 
 export class SpotTradeAbstractionServiceClient {
@@ -20,6 +21,13 @@ export class SpotTradeAbstractionServiceClient {
 
   async positions(): Promise<SpotPositionIdentifier[]> {
     let response = await this._call("GET", new URL("/positions", TAS_URL).toString())
+    console.log(`Returned positions:`)
+    console.log(response)
+    return response
+  }
+
+  async go_spot_long(cmd: TradeAbstractionGoLongCommand): Promise<string> {
+    let response = await this._call("GET", new URL("/positions", TAS_URL).toString(), cmd)
     console.log(`Returned positions:`)
     console.log(response)
     return response

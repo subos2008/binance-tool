@@ -64,7 +64,7 @@ export class TradeAbstractionService {
       let msg = `Already in long spot position on ${cmd.base_asset}, skipping`
       this.logger.warn(msg)
       send_message(msg)
-      throw new Error(msg)
+      throw new Error(msg) // turn this into a 3xx or 4xx
     }
 
     this.positions.open_position({ quote_asset: this.quote_asset, ...cmd })

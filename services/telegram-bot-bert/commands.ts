@@ -46,11 +46,12 @@ export class Commands {
 
   async list_positions(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
     let postions = await this.tas_client.positions()
-    let msg = 
-      postions.map(
+    let msg = postions
+      .map(
         (pi) => `${pi.exchange_identifier.exchange} ${pi.exchange_identifier.type} ${pi.base_asset.toUpperCase()}`
-      ).join("\n")
-    
+      )
+      .join("\n")
+
     ctx.reply(msg)
   }
 
@@ -66,7 +67,8 @@ export class Commands {
       ctx.replyWithHTML(`Invalid format for edge '${edge}', expected something like edge60`)
       return
     }
-    let msg = `${edge.toUpperCase()}: ${command} on ${asset}`
+    let result:string = await this.tas_client.go_spot_long({ base_asset: asset, edge, direction: "long" })
+    let msg = `${edge.toUpperCase()}: ${command} on ${asset}: ${result}`
     ctx.reply(msg)
 
     try {

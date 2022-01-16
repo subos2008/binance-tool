@@ -35,7 +35,7 @@ process.on("unhandledRejection", (error) => {
 })
 
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
-import { TradeAbstractionService } from "./trade-abstraction-service"
+import { TradeAbstractionGoLongCommand, TradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine } from "./execution-engine"
 import { SpotPositions } from "./spot-positions"
 import { SpotPositionsPersistance } from "./spot-positions-persistance"
@@ -82,7 +82,7 @@ app.get("/health", function (req: Request, res: Response) {
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 const binance_spot_ee = new BinanceSpotExecutionEngine({ logger })
 const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsStateAdapter({ logger })
-const positions = new SpotPositions({ logger, ee: binance_spot_ee, positions_persistance })
+const positions = new SpotPositions({ logger, ee: binance_spot_ee, positions_persistance, send_message })
 let tas: TradeAbstractionService = new TradeAbstractionService({
   positions,
   logger,
@@ -92,6 +92,19 @@ let tas: TradeAbstractionService = new TradeAbstractionService({
 app.get("/positions", async function (req: Request, res: Response) {
   res.json(await tas.open_positions())
 })
+app.post("/spot/go_long", async function (req: Request, res: Response) {
+  let edge = req.params.edge
+  let base_asset = req.params.base_asset
+  assert(edge)
+  assert(base_asset)
+  let cmd: TradeAbstractionGoLongCommand = {
+    edge,
+    direction: "long",
+    base_asset,
+  }
+  res.json(await tas.go_spot_long(cmd, send_message))
+})
+
 // Finally, start our server
 // $  npm install -g localtunnel && lt --port 3000
 app.listen(3000, function () {

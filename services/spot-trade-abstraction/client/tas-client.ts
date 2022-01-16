@@ -8,6 +8,7 @@ if (!TAS_URL.startsWith("http")) {
 
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"
 import { Logger } from "../../../interfaces/logger"
+import { SpotPositionIdentifier } from "../spot-interfaces"
 const JSONBigNumber = require("./JSONBigNumber")
 
 export class SpotTradeAbstractionServiceClient {
@@ -17,7 +18,7 @@ export class SpotTradeAbstractionServiceClient {
     this.logger = logger
   }
 
-  async positions(): Promise<any> {
+  async positions(): Promise<SpotPositionIdentifier[]> {
     let response = await this._call("GET", new URL("/positions", TAS_URL).toString())
     console.log(`Returned positions:`)
     console.log(response)

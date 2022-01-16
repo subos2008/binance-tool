@@ -39,7 +39,7 @@ import { TradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine } from "./execution-engine"
 import { SpotPositions } from "./spot-positions"
 import { SpotPositionsPersistance } from "./spot-positions-persistance"
-import { RedisPositionsStateAdapter } from "./redis-positions-state-adapter"
+import { SpotRedisPositionsStateAdapter } from "./redis-positions-state-adapter"
 
 import express, { Request, Response } from "express"
 const winston = require("winston")
@@ -84,7 +84,7 @@ async function main() {
   try {
     const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
     const binance_spot_ee = new BinanceSpotExecutionEngine({ logger })
-    const positions_persistance: SpotPositionsPersistance = new RedisPositionsStateAdapter({ logger })
+    const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsStateAdapter({ logger })
     const positions = new SpotPositions({ logger, ee: binance_spot_ee, positions_persistance })
     tas = new TradeAbstractionService({
       positions,

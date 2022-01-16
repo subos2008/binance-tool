@@ -17,7 +17,7 @@ import { PositionObject as LegacyPositionObject } from "../../classes/position"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { SpotPositionIdentifier } from "./spot-interfaces"
 
-export class RedisPositionsStateAdapter implements SpotPositionsPersistance {
+export class SpotRedisPositionsStateAdapter implements SpotPositionsPersistance {
   logger: Logger
   legacy: RedisPositionsState
 
@@ -53,9 +53,12 @@ export class RedisPositionsStateAdapter implements SpotPositionsPersistance {
     return this.legacy.get_position_size(_pi)
   }
 
-  async open_positions(): Promise<LegacyPositionIdentifier[]> {
+  async open_positions(): Promise<SpotPositionIdentifier[]> {
     let legacy_pis: LegacyPositionIdentifier[] = await this.legacy.open_positions()
     console.log(legacy_pis)
-    return legacy_pis
+    return legacy_pis.map((x) => ({
+      base_asset: x.baseAsset,
+      exchange_identifier: { exchange: x.exchange_identifier.exchange, type: "spot", version: "v3" },
+    }))
   }
 }

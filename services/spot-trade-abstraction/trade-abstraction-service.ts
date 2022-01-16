@@ -10,6 +10,7 @@ import { strict as assert } from "assert"
 import { SpotPositions } from "./spot-positions"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { SendMessageFunc } from "../../lib/telegram-v2"
+import { SpotPositionIdentifier } from "./spot-interfaces"
 
 export interface TradeAbstractionGoLongCommand {
   base_asset: string
@@ -69,7 +70,7 @@ export class TradeAbstractionService {
     this.positions.open_position({ quote_asset: this.quote_asset, ...cmd })
   }
 
-  async open_positions() {
+  async open_positions(): Promise<SpotPositionIdentifier[]> {
     return this.positions.open_positions()
   }
 }

@@ -7,7 +7,7 @@ const quote_asset = "BUSD".toUpperCase()
 
 import { strict as assert } from "assert"
 require("dotenv").config()
-const service_name = "trade-abstraction-service"
+const service_name = "spot-trade-abstraction"
 
 import * as Sentry from "@sentry/node"
 Sentry.init({})

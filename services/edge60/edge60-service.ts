@@ -287,7 +287,7 @@ async function main() {
       ee,
       logger,
       send_message,
-      direction_persistance: new DirectionPersistance({ logger, prefix: `${service_name}/spot/binance/` }),
+      direction_persistance: new DirectionPersistance({ logger, prefix: `${service_name}/spot/binance` }),
     })
     await publisher.connect()
     await edge60.run()

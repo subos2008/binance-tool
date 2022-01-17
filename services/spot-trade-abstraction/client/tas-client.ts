@@ -12,6 +12,12 @@ import { SpotPositionIdentifier } from "../spot-interfaces"
 import { TradeAbstractionCloseLongCommand, TradeAbstractionOpenLongCommand } from "../trade-abstraction-service"
 const JSONBigNumber = require("./JSONBigNumber")
 
+import * as Sentry from "@sentry/node"
+Sentry.init({})
+Sentry.configureScope(function (scope: any) {
+  scope.setTag("class", "SpotTradeAbstractionServiceClient")
+})
+
 export class SpotTradeAbstractionServiceClient {
   logger: Logger
 
@@ -54,17 +60,19 @@ export class SpotTradeAbstractionServiceClient {
         return JSONBigNumber.parse(res)
       },
       json: false, // avoid parsing json with the built in libs as they use floating point numbers
-      params
+      params,
     }
 
-    return axios(options).then((response) => {
+    try {
+      let response = await axios(options)
       if (response.status == 200) {
         return response.data
       }
-
       throw response
-    })
-    // .catch((e) => this.parseException(e))
+    } catch (error) {
+      Sentry.captureException(error)
+      this.logger.error(error)
+      throw error
+    }
   }
 }
-

@@ -1,10 +1,11 @@
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
-import { SpotExecutionEngine } from "./execution-engine"
+import { SpotExecutionEngine, SpotMarketBuyByQuoteQuantityCommand } from "./execution-engine"
 import { SpotPositionsPersistance } from "./spot-positions-persistance"
 import { SpotPositionIdentifier } from "./spot-interfaces"
 import { SendMessageFunc } from "../../lib/telegram-v2"
+import { PositionSizer } from "./position-sizer"
 
 interface Position {
   direction: "long" | "short"
@@ -24,6 +25,7 @@ export class SpotPositions {
   logger: Logger
   ee: SpotExecutionEngine
   send_message: SendMessageFunc
+  position_sizer: PositionSizer
 
   positions_persistance: SpotPositionsPersistance
 
@@ -32,11 +34,13 @@ export class SpotPositions {
     ee,
     positions_persistance,
     send_message,
+    position_sizer,
   }: {
     logger: Logger
     ee: SpotExecutionEngine
     positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
+    position_sizer: PositionSizer
   }) {
     assert(logger)
     this.logger = logger
@@ -44,6 +48,7 @@ export class SpotPositions {
     this.ee = ee
     this.positions_persistance = positions_persistance
     this.send_message = send_message
+    this.position_sizer = position_sizer
   }
 
   in_position({ base_asset }: { base_asset: string }) {
@@ -65,19 +70,9 @@ export class SpotPositions {
     return this.ee.get_market_identifier_for(args)
   }
 
-  /* Open both does the order execution/tracking, sizing, and maintains redis */
-  open_position({
-    quote_asset,
-    base_asset,
-    direction,
-    edge,
-  }: {
-    quote_asset: string
-    base_asset: string
-    direction: string
-    edge: string
-  }) {
-    this.send_message(`Opening Spot position in ${base_asset} from ${quote_asset}, edge ${edge} [NOT IMPLEMENTED]`)
+  /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
+  async open_position(args: { quote_asset: string; base_asset: string; direction: string; edge: string }) {
+    this.send_message(`Opening Spot position in ${args.base_asset} from ${args.quote_asset}, edge ${args.edge}`)
     //   /**
     //    * Atomic open / set placeholder for position entry
     //    *  - add tradeID and have a timeout so if not opened with a real position soon it reverts to a clear spot?
@@ -95,7 +90,12 @@ export class SpotPositions {
     //       throw new Error(`Failed to reserve position`)
     //     }
     //   }
-    //   let {executed_base_quantity} = this.ee.market_buy()
+    let quote_amount = await this.position_sizer.position_size_in_quote_asset(args)
+    let cmd: SpotMarketBuyByQuoteQuantityCommand = {
+      market_identifier: this.get_market_identifier_for(args),
+      quote_amount,
+    }
+    let { executed_quote_quantity } = await this.ee.market_buy_by_quote_quantity(cmd)
     //   if(executed_base_quantity.isGreaterThanZero()) {
     //     let position:Position = {
     //       direction,
@@ -117,7 +117,7 @@ export class SpotPositions {
      */
   }
 
-  /* Open both does the order execution/tracking, sizing, and maintains redis */
+  /* Close both does [eventually] the order execution/tracking, and maintains redis */
   close_position({
     quote_asset,
     base_asset,

@@ -5,7 +5,7 @@ import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 /** Configuration */
 let fixed_position_size = {
   quote_asset: "BUSD",
-  quote_amount: new BigNumber(200),
+  quote_amount: new BigNumber(70),
 }
 
 import { BigNumber } from "bignumber.js"
@@ -15,7 +15,10 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-export class FixedPositionSizer {
+export interface PositionSizer {
+  position_size_in_quote_asset(args: { base_asset: string; quote_asset: string }): Promise<BigNumber>
+}
+export class FixedPositionSizer implements PositionSizer {
   logger: Logger
 
   constructor({ logger }: { logger: Logger }) {
@@ -23,10 +26,14 @@ export class FixedPositionSizer {
     this.logger = logger
   }
 
-  private position_size({ base_asset, quote_asset }: { base_asset: string; quote_asset: string }): {
-    quote_amount: BigNumber
-  } {
+  async position_size_in_quote_asset({
+    base_asset,
+    quote_asset,
+  }: {
+    base_asset: string
+    quote_asset: string
+  }): Promise<BigNumber> {
     assert(fixed_position_size.quote_asset === quote_asset)
-    return { quote_amount: fixed_position_size.quote_amount }
+    return fixed_position_size.quote_amount
   }
 }

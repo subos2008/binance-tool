@@ -13,7 +13,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-interface SpotMarketBuyByQuoteQuantityCommand {
+export interface SpotMarketBuyByQuoteQuantityCommand {
   market_identifier: MarketIdentifier_V3
   quote_amount: BigNumber
 }
@@ -28,7 +28,9 @@ export interface SpotExecutionEngine {
     quote_asset: string
     base_asset: string
   }): MarketIdentifier_V3
-  market_buy_by_quote_quantity(args: SpotMarketBuyByQuoteQuantityCommand): Promise<void>
+  market_buy_by_quote_quantity(
+    args: SpotMarketBuyByQuoteQuantityCommand
+  ): Promise<{ executed_quote_quantity: BigNumber }>
   get_exchange_identifier(): ExchangeIdentifier_V3
 }
 
@@ -76,8 +78,17 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     }
   }
 
-  async market_buy_by_quote_quantity(args: SpotMarketBuyByQuoteQuantityCommand) {
-    // this.utils.create_market_buy_order()
+  async market_buy_by_quote_quantity(
+    cmd: SpotMarketBuyByQuoteQuantityCommand
+  ): Promise<{ executed_quote_quantity: BigNumber }> {
+    let result = await this.utils.create_market_buy_order_by_quote_amount({
+      pair: cmd.market_identifier.symbol,
+      quote_amount: cmd.quote_amount,
+    })
+    if (result) {
+      return { executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty) }
+    }
+    return { executed_quote_quantity: new BigNumber(0) }
   }
 
   open_stop_limit_order(args: BinanceSpotStopLimitOrderCommand) {}

@@ -13,11 +13,12 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../interfaces/logger"
 import { TradingRules } from "../lib/trading_rules"
 import * as Sentry from "@sentry/node"
-import { NewOcoOrder, OcoOrder, OrderSide } from "binance-api-node"
+import { NewOcoOrder, NewOrder, OcoOrder, OrderSide } from "binance-api-node"
+import { Binance as BinanceType } from "binance-api-node"
 
 export class AlgoUtils {
   logger: Logger
-  ee: any
+  ee: BinanceType
 
   constructor({ logger, ee }: { logger: Logger; ee: any }) {
     assert(logger)
@@ -175,7 +176,7 @@ export class AlgoUtils {
       base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, price })
       let price_string = price.toFixed()
       let quantity = base_amount.toFixed()
-      let args = {
+      let args: NewOrder = {
         useServerTime: true,
         symbol: pair,
         side: "BUY",
@@ -237,7 +238,7 @@ export class AlgoUtils {
     try {
       base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, price })
       let quantity = base_amount.toFixed()
-      let args = {
+      let args: NewOrder = {
         useServerTime: true,
         symbol: pair,
         side: "SELL",
@@ -364,7 +365,7 @@ export class AlgoUtils {
       limit_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: limit_price })
       base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, stop_price })
       let quantity = base_amount.toFixed()
-      let args = {
+      let args: NewOrder = {
         useServerTime: true,
         symbol: pair,
         side: "SELL",
@@ -417,6 +418,38 @@ export class AlgoUtils {
     }
   }
 
+  async create_market_buy_order_by_quote_amount({
+    quote_amount,
+    pair,
+    orderId,
+  }: {
+    quote_amount: BigNumber
+    pair: string
+    orderId?: string | undefined
+  }) {
+    assert(pair)
+    assert(quote_amount)
+    assert(BigNumber.isBigNumber(quote_amount))
+    try {
+      let quoteOrderQty = quote_amount.toFixed()
+      let args: any = {
+        useServerTime: true,
+        side: "BUY",
+        symbol: pair,
+        type: "MARKET",
+        quoteOrderQty,
+      }
+      if (orderId) args.newClientOrderId = orderId
+      this.logger.info(`Creating MARKET BUY ORDER for quoteOrderQty ${quoteOrderQty} ${pair}`)
+      let response = await this.ee.order(args)
+      this.logger.info(`Exchange order id: ${response.orderId}, requested ${orderId}`)
+      return response
+    } catch (error: any) {
+      Sentry.captureException(error)
+      async_error_handler(console, `Market Buy error: ${error.body}`, error)
+    }
+  }
+
   async create_market_sell_order({
     base_amount,
     pair,
@@ -449,7 +482,7 @@ export class AlgoUtils {
     }
   }
 
-  async cancelOrder(args: { symbol: string; orderId: string }) {
+  async cancelOrder(args: { symbol: string; orderId: number }) {
     await this.ee.cancelOrder(args)
   }
 }

@@ -47,6 +47,7 @@ import { SpotPositionsPersistance } from "./spot-positions-persistance"
 import { SpotRedisPositionsStateAdapter } from "./redis-positions-state-adapter"
 
 import express, { Request, Response } from "express"
+import { FixedPositionSizer } from "./position-sizer"
 const winston = require("winston")
 const expressWinston = require("express-winston")
 
@@ -87,7 +88,14 @@ app.get("/health", function (req: Request, res: Response) {
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 const binance_spot_ee = new BinanceSpotExecutionEngine({ logger })
 const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsStateAdapter({ logger })
-const positions = new SpotPositions({ logger, ee: binance_spot_ee, positions_persistance, send_message })
+const position_sizer = new FixedPositionSizer({ logger })
+const positions = new SpotPositions({
+  logger,
+  ee: binance_spot_ee,
+  positions_persistance,
+  send_message,
+  position_sizer,
+})
 let tas: TradeAbstractionService = new TradeAbstractionService({
   positions,
   logger,

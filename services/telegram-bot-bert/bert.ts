@@ -50,6 +50,9 @@ app.get("/health", function (req: Request, res: Response) {
   }
 })
 
+/**
+ * Docs: https://telegraf.js.org/
+ */
 const bot = new Telegraf(token)
 const commands = new Commands({ bot, logger })
 
@@ -74,3 +77,6 @@ app.use(bot.webhookCallback(secretPath))
 app.listen(3000, function () {
   console.log("Telegram app listening on port 3000!")
 })
+
+process.once("SIGINT", () => bot.stop("SIGINT"))
+process.once("SIGTERM", () => bot.stop("SIGTERM"))

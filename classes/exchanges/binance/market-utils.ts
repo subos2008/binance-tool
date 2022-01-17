@@ -145,12 +145,13 @@ export class BinanceMarketUtils implements MarketUtils {
   async create_limit_sell_order(
     order_definition: GenericLimitSellOrderDefinition
   ): Promise<GenericLimitSellOrder> {
-    let order: Order = await this.algo_utils.munge_and_create_limit_sell_order({
+    let order: Order | undefined = await this.algo_utils.munge_and_create_limit_sell_order({
       exchange_info: await this.exchange_info(),
       pair: await this.market_symbol(),
       price: order_definition.limit_price,
       base_amount: order_definition.base_asset_quantity,
     })
+    if (!order) throw new Error(`Failed to create_limit_sell_order`)
     return {
       limit_price: new BigNumber(order.price),
       order_id: order.orderId.toString(),
@@ -163,13 +164,14 @@ export class BinanceMarketUtils implements MarketUtils {
   ): Promise<GenericStopLimitSellOrder> {
     let limit_price =
       order_definition.limit_price || get_limit_price_for_stop_order({ stop_price: order_definition.stop_price })
-    let order: Order = await this.algo_utils.munge_and_create_stop_loss_limit_sell_order({
+    let order: Order | undefined = await this.algo_utils.munge_and_create_stop_loss_limit_sell_order({
       exchange_info: await this.exchange_info(),
       pair: await this.market_symbol(),
       limit_price,
       base_amount: order_definition.base_asset_quantity,
       stop_price: order_definition.stop_price,
     })
+    if (!order) throw new Error(`Failed to create_stop_limit_sell_order`)
     return {
       limit_price: new BigNumber(limit_price),
       order_id: order.orderId.toString(),

@@ -44,7 +44,7 @@ export interface EdgeCandle {
 
 class LimitedLengthCandlesHistory {
   private candles: EdgeCandle[]
-  length: number
+  private length: number
 
   // Patch an array object with overrided push() function
   private limited_length_candle_array(length: number, initial_candles: EdgeCandle[]): EdgeCandle[] {
@@ -61,6 +61,14 @@ class LimitedLengthCandlesHistory {
   constructor({ length, initial_candles }: { length: number; initial_candles: EdgeCandle[] }) {
     this.candles = this.limited_length_candle_array(length, initial_candles)
     this.length = length
+  }
+
+  full(): boolean {
+    return this.candles.length >= this.length
+  }
+
+  current_number_of_stored_candles(): number {
+    return this.candles.length
   }
 
   push(candle: EdgeCandle) {
@@ -163,6 +171,13 @@ export class Edge60EntrySignals {
       let { low: lowest_price } = this.price_history_candles.get_lowest_value()
 
       let direction: "long" | "short" | undefined = undefined
+
+      if (!this.price_history_candles.full()) {
+        this.logger.info(
+          `${symbol}: insufficient candles of history, currently ${this.price_history_candles.current_number_of_stored_candles()}`
+        )
+        return // should execute finally block
+      }
 
       // Check for entry signal in both directions and ignore
       if (high.isGreaterThan(highest_price) && low.isLessThan(lowest_price)) {

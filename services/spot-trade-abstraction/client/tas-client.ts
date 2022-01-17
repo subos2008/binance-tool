@@ -27,14 +27,14 @@ export class SpotTradeAbstractionServiceClient {
   }
 
   async open_spot_long(cmd: TradeAbstractionOpenLongCommand): Promise<string> {
-    let response = await this._call("GET", new URL("/spot/long", TAS_URL).toString(), cmd)
+    let response = await this._call("POST", new URL("/spot/long", TAS_URL).toString(), cmd)
     console.log(`Returned positions:`)
     console.log(response)
     return response
   }
 
   async close_spot_long(cmd: TradeAbstractionCloseLongCommand): Promise<string> {
-    let response = await this._call("GET", new URL("/spot/close", TAS_URL).toString(), cmd)
+    let response = await this._call("POST", new URL("/spot/close", TAS_URL).toString(), cmd)
     console.log(`Returned positions:`)
     console.log(response)
     return response
@@ -54,13 +54,7 @@ export class SpotTradeAbstractionServiceClient {
         return JSONBigNumber.parse(res)
       },
       json: false, // avoid parsing json with the built in libs as they use floating point numbers
-    }
-
-    if (method === "GET") {
-      // const serialisedParams = serializeParamPayload(isGetRequest, params, this.options.strict_param_validation)
-      // options.url += serialisedParams
-    } else {
-      // options.data = params
+      params
     }
 
     return axios(options).then((response) => {
@@ -73,3 +67,4 @@ export class SpotTradeAbstractionServiceClient {
     // .catch((e) => this.parseException(e))
   }
 }
+

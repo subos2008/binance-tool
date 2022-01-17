@@ -2,12 +2,6 @@ import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 
-/** Configuration */
-let fixed_position_size = {
-  quote_asset: "BUSD",
-  quote_amount: new BigNumber(70),
-}
-
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -15,6 +9,11 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+/** Configuration */
+let fixed_position_size = {
+  quote_asset: "BUSD",
+  quote_amount: new BigNumber(70),
+}
 export interface PositionSizer {
   position_size_in_quote_asset(args: { base_asset: string; quote_asset: string }): Promise<BigNumber>
 }

@@ -44,13 +44,18 @@ export class Commands {
   }
 
   async text_to_command(ctx: NarrowedContext<Context, Types.MountMap["text"]>) {
-    let args = split_message(ctx.message.text)
-    if (args[0] == "/spot") {
-      await this.spot(ctx, args.slice(1))
-    } else if (args[0] == "/positions") {
-      await this.list_positions(ctx, args.slice(1))
-    } else {
-      ctx.reply(ctx.message.text)
+    try {
+      let args = split_message(ctx.message.text)
+      if (args[0] == "/spot") {
+        await this.spot(ctx, args.slice(1))
+      } else if (args[0] == "/positions") {
+        await this.list_positions(ctx, args.slice(1))
+      } else {
+        // Not a command - just people speaking in a channel
+        // ctx.reply(ctx.message.text)
+      }
+    } catch (error) {
+      ctx.reply(`Internal error 🤪`)
     }
   }
 

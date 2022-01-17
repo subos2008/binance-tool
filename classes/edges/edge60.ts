@@ -166,13 +166,15 @@ export class Edge60EntrySignals {
 
       // Check for entry signal in both directions and ignore
       if (high.isGreaterThan(highest_price) && low.isLessThan(lowest_price)) {
-        throw new Error(`Price entry signal both long and short, skipping: ${symbol}`)
+        let msg = `Price entry signal both long and short, skipping: ${symbol}`
+        this.logger.warn(msg)
+        throw new Error(msg)
       }
 
       // check for long entry
       if (high.isGreaterThan(highest_price)) {
         direction = "long"
-        console.log(
+        this.logger.info(
           `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: greater than ${highest_price.toFixed()}`
         )
         this.callbacks.enter_position({
@@ -185,7 +187,7 @@ export class Edge60EntrySignals {
       // check for short entry
       if (low.isLessThan(lowest_price)) {
         direction = "short"
-        console.log(
+        this.logger.info(
           `Price entry signal ${direction} at ${potential_entry_price.toFixed()}: less than ${lowest_price.toFixed()}`
         )
         this.callbacks.enter_position({
@@ -193,6 +195,14 @@ export class Edge60EntrySignals {
           entry_price: potential_entry_price,
           direction,
         })
+      }
+
+      if (direction === undefined) {
+        this.logger.info(
+          `No signal on ${symbol}: ${high.toFixed()} not higher than ${
+            highest_price.toFixed
+          } and ${low.toFixed()} not lower than ${lowest_price.toFixed()}`
+        )
       }
     } catch (e) {
       this.logger.error(`Exception checking or entering position: ${e}`)

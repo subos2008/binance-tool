@@ -71,19 +71,19 @@ export class Commands {
   }
 
   async spot(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
-    let [command, asset, edge] = args
-    asset = asset.toUpperCase()
-    let valid_commands = ["long", "close"]
-    if (!valid_commands.includes(command)) {
-      ctx.replyWithHTML(`Invalid command for /spot '${command}, valid commands are ${valid_commands.join(", ")}`)
-      return
-    }
-    if (!edge || !edge.match(/edge\d+/)) {
-      ctx.replyWithHTML(`Invalid format for edge '${edge}', expected something like edge60`)
-      return
-    }
-
     try {
+      let [command, asset, edge] = args
+      asset = asset.toUpperCase()
+      let valid_commands = ["long", "close"]
+      if (!valid_commands.includes(command)) {
+        ctx.replyWithHTML(`Invalid command for /spot '${command}, valid commands are ${valid_commands.join(", ")}`)
+        return
+      }
+      if (!edge || !edge.match(/edge\d+/)) {
+        ctx.replyWithHTML(`Invalid format for edge '${edge}', expected something like edge60`)
+        return
+      }
+
       if (command == "long") {
         let result = await this.open_spot_long(ctx, { asset, edge })
         ctx.reply(`Looks like it succeeded?`)

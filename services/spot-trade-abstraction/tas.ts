@@ -29,6 +29,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 process.on("unhandledRejection", (error) => {
+  Sentry.captureException(error)
   logger.error(error)
   const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   send_message(`UnhandledPromiseRejection: ${error}`)

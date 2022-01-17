@@ -2,6 +2,12 @@ import { Telegraf, Context, NarrowedContext, Types } from "telegraf"
 import { Logger } from "../../interfaces/logger"
 import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/client/tas-client"
 
+import * as Sentry from "@sentry/node"
+Sentry.init({})
+// Sentry.configureScope(function (scope: any) {
+//   scope.setTag("service", service_name)
+// })
+
 let help_text = `
 All trades are vs USD, the backend decides which USD evivalent asset to use, could be USDT or BUSD, etc
 
@@ -85,6 +91,7 @@ export class Commands {
         ctx.reply(`not implemented?`)
       }
     } catch (error) {
+      Sentry.captureException(error)
       ctx.reply(`Looks like it failed, see log for error`)
     }
     // ctx.replyWithHTML("<i>Are you sure?</i>")

@@ -21,6 +21,12 @@ import { Logger } from "../../interfaces/logger"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { Edge60Parameters } from "../../events/shared/edge60-position-entry"
 
+import * as Sentry from "@sentry/node"
+Sentry.init({})
+// Sentry.configureScope(function (scope: any) {
+//   scope.setTag("service", service_name)
+// })
+
 export interface Edge60EntrySignalsCallbacks {
   enter_position({
     symbol,
@@ -222,6 +228,7 @@ export class Edge60EntrySignals {
     } catch (e) {
       this.logger.error(`Exception checking or entering position: ${e}`)
       console.error(e)
+      Sentry.captureException(e)
     } finally {
       // important not to miss this - lest we corrupt the history
       this.price_history_candles.push(candle)

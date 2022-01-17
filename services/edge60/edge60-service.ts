@@ -42,6 +42,7 @@ import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { DirectionPersistance } from "./direction-persistance"
 
 process.on("unhandledRejection", (error) => {
+  Sentry.captureException(error)
   logger.error(error)
   const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   send_message(`UnhandledPromiseRejection: ${error}`)
@@ -293,10 +294,12 @@ async function main() {
     await edge60.run()
   } catch (error) {
     console.error(error)
+    Sentry.captureException(error)
   }
 }
 
 main().catch((error) => {
+  Sentry.captureException(error)
   console.error(`Error in main loop: ${error}`)
   console.error(error)
   console.error(`Error in main loop: ${error.stack}`)

@@ -204,17 +204,6 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     let coin_names = this.market_data.map((x) => x.symbol.toUpperCase())
     console.log(`Top ${limit} coins by market cap: ${coin_names.join(", ")}`)
     let to_symbol = (md: CoinGeckoMarketData) => md.symbol.toUpperCase() + quote_symbol
-    let symbols = this.market_data.map(to_symbol)
-
-    this.close_1d_candle_ws = this.ee.ws.candles(symbols, "1d", (candle) => {
-      let symbol = candle.symbol
-      let timeframe = "1d"
-      if (this.edges[symbol]) {
-        if (candle.isFinal) {
-          this.edges[symbol].ingest_new_candle({ symbol, timeframe, candle })
-        }
-      }
-    })
 
     let required_initial_candles = Edge60EntrySignals.required_initial_candles(edge60_parameters)
     for (let i = 0; i < this.market_data.length; i++) {
@@ -258,8 +247,19 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         }
       }
     }
-    this.logger.info(`Edges initialised for ${Object.keys(this.edges).length} symbols.`)
-    this.send_message(`initialised for ${Object.keys(this.edges).length} symbols.`)
+    let valid_symbols = Object.keys(this.edges)
+    this.logger.info(`Edges initialised for ${valid_symbols.length} symbols.`)
+    this.send_message(`initialised for ${valid_symbols.length} symbols.`)
+
+    this.close_1d_candle_ws = this.ee.ws.candles(valid_symbols, "1d", (candle) => {
+      let symbol = candle.symbol
+      let timeframe = "1d"
+      if (this.edges[symbol]) {
+        if (candle.isFinal) {
+          this.edges[symbol].ingest_new_candle({ symbol, timeframe, candle })
+        }
+      }
+    })
   }
 
   shutdown_streams() {

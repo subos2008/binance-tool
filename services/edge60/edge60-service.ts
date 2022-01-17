@@ -56,7 +56,6 @@ let publisher: GenericTopicPublisher = new GenericTopicPublisher({ logger, event
 
 const edge60_parameters: Edge60Parameters = {
   days_of_price_history: 22,
-  // long_highest_volume_in_days: 0,
 }
 
 class Edge60Service implements Edge60EntrySignalsCallbacks {
@@ -89,10 +88,6 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     this.direction_persistance = direction_persistance
   }
 
-  // Edge60EntrySignalsCallbacks
-  in_position(): boolean {
-    return false
-  }
   async enter_position({
     symbol,
     entry_price,
@@ -163,6 +158,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       edge: "edge60",
       market_identifier: {
         version: "v3",
+        // TODO: pull exchange_identifier from ee
         exchange_identifier: { version: "v3", exchange, type: "spot" },
         symbol,
         base_asset: this.base_asset_for_symbol(symbol),

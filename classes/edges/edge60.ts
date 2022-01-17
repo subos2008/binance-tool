@@ -37,7 +37,6 @@ export interface Edge60EntrySignalsCallbacks {
     entry_price: BigNumber
     direction: "long" | "short"
   }): void
-  in_position(symbol: string): boolean
 }
 
 export interface EdgeCandle {
@@ -45,7 +44,6 @@ export interface EdgeCandle {
   close: string
   low: string
   high: string
-  volume: string
 }
 
 class LimitedLengthCandlesHistory {

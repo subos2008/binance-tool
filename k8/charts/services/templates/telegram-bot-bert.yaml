@@ -62,7 +62,7 @@ spec:
           #     port: http
           env:
             - name: SENTRY_DSN
-              value: "https://2de8658dca5b4bf18c7787cfd2deb738@o369902.ingest.sentry.io/5763740" # TODO update
+              value: "https://d9432d76fae6438b87ca9bf63e5b098d@o369902.ingest.sentry.io/6152177"
             - name: TELEGRAM_KEY
               valueFrom:
                 secretKeyRef:

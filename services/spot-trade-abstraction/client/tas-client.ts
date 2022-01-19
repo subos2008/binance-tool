@@ -49,10 +49,10 @@ export class SpotTradeAbstractionServiceClient {
   /**
    * @private Make a HTTP request to a specific endpoint. Private endpoints are automatically signed.
    */
-
   async _call(method: Method, endpoint: string, params?: string | object): Promise<any> {
     const options = {
       url: endpoint,
+      timeout: 10 * 1000, // ms, 1000 = 1 second
       headers: {},
       method: method,
       transformResponse: (res: string) => {

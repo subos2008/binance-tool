@@ -103,35 +103,47 @@ let tas: TradeAbstractionService = new TradeAbstractionService({
   quote_asset /* global */,
 })
 app.get("/positions", async function (req: Request, res: Response) {
-  res.json(await tas.open_positions())
+  try {
+    res.status(200).json(await tas.open_positions())
+  } catch (error) {
+    res.status(500)
+  }
 })
 
 app.post("/spot/long", async function (req: Request, res: Response) {
-  let edge = req.params.edge
-  let base_asset = req.params.base_asset
-  assert(edge)
-  assert(base_asset)
-  let cmd: TradeAbstractionOpenLongCommand = {
-    edge,
-    direction: "long",
-    action: "open",
-    base_asset,
+  try {
+    let edge = req.params.edge
+    let base_asset = req.params.base_asset
+    assert(edge)
+    assert(base_asset)
+    let cmd: TradeAbstractionOpenLongCommand = {
+      edge,
+      direction: "long",
+      action: "open",
+      base_asset,
+    }
+    res.status(200).json(await tas.open_spot_long(cmd, send_message))
+  } catch (error) {
+    res.status(500)
   }
-  res.json(await tas.open_spot_long(cmd, send_message))
 })
 
 app.post("/spot/close", async function (req: Request, res: Response) {
-  let edge = req.params.edge
-  let base_asset = req.params.base_asset
-  assert(edge)
-  assert(base_asset)
-  let cmd: TradeAbstractionCloseLongCommand = {
-    edge,
-    direction: "long",
-    action: "close",
-    base_asset,
+  try {
+    let edge = req.params.edge
+    let base_asset = req.params.base_asset
+    assert(edge)
+    assert(base_asset)
+    let cmd: TradeAbstractionCloseLongCommand = {
+      edge,
+      direction: "long",
+      action: "close",
+      base_asset,
+    }
+    res.json(await tas.close_spot_long(cmd, send_message))
+  } catch (error) {
+    res.status(500)
   }
-  res.json(await tas.close_spot_long(cmd, send_message))
 })
 
 // Finally, start our server

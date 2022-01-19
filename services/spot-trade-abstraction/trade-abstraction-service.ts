@@ -60,7 +60,7 @@ export class TradeAbstractionService {
 
   // or signal_long
   // Spot so we can only be long or no-position
-  async open_spot_long(cmd: TradeAbstractionOpenLongCommand, send_message: (msg: string) => void) {
+  async open_spot_long(cmd: TradeAbstractionOpenLongCommand, send_message: (msg: string) => void) : Promise<object> {
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
     /** TODO: We want this check and entry to be atomic, while we only trade one edge it's less important */
@@ -76,7 +76,7 @@ export class TradeAbstractionService {
       throw new Error(msg) // turn this into a 3xx or 4xx
     }
 
-    this.positions.open_position({ quote_asset: this.quote_asset, ...cmd })
+    return await this.positions.open_position({ quote_asset: this.quote_asset, ...cmd })
   }
 
   // or signal_short or signal_exit/close

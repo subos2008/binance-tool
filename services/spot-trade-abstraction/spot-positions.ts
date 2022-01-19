@@ -6,6 +6,7 @@ import { SpotPositionsPersistance } from "./spot-positions-persistance"
 import { SpotPositionIdentifier } from "./spot-interfaces"
 import { SendMessageFunc } from "../../lib/telegram-v2"
 import { PositionSizer } from "./position-sizer"
+import BigNumber from "bignumber.js"
 
 interface Position {
   direction: "long" | "short"
@@ -71,8 +72,13 @@ export class SpotPositions {
   }
 
   /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
-  async open_position(args: { quote_asset: string; base_asset: string; direction: string; edge: string }) {
-    this.send_message(`Opening Spot position in ${args.base_asset} from ${args.quote_asset}, edge ${args.edge}`)
+  async open_position(args: {
+    quote_asset: string
+    base_asset: string
+    direction: string
+    edge: string
+  }): Promise<{ executed_quote_quantity: string }> {
+    // this.send_message(`Opening Spot position in ${args.base_asset} from ${args.quote_asset}, edge ${args.edge}`)
     //   /**
     //    * Atomic open / set placeholder for position entry
     //    *  - add tradeID and have a timeout so if not opened with a real position soon it reverts to a clear spot?
@@ -95,7 +101,10 @@ export class SpotPositions {
       market_identifier: this.get_market_identifier_for(args),
       quote_amount,
     }
-    let { executed_quote_quantity } = await this.ee.market_buy_by_quote_quantity(cmd)
+    // let result = await this.ee.market_buy_by_quote_quantity(cmd)
+    let result = { executed_quote_quantity: new BigNumber(0) }
+    let { executed_quote_quantity } = result
+    return { executed_quote_quantity: executed_quote_quantity.toFixed() }
     //   if(executed_base_quantity.isGreaterThanZero()) {
     //     let position:Position = {
     //       direction,

@@ -33,14 +33,14 @@ export class SpotTradeAbstractionServiceClient {
   }
 
   async open_spot_long(cmd: TradeAbstractionOpenLongCommand): Promise<string> {
-    let response = await this._call("POST", new URL("/spot/long", TAS_URL).toString(), cmd)
+    let response = await this._call("GET", new URL("/spot/long", TAS_URL).toString(), cmd)
     console.log(`Returned open_spot_long:`)
     console.log(response)
     return response
   }
 
   async close_spot_long(cmd: TradeAbstractionCloseLongCommand): Promise<string> {
-    let response = await this._call("POST", new URL("/spot/close", TAS_URL).toString(), cmd)
+    let response = await this._call("GET", new URL("/spot/close", TAS_URL).toString(), cmd)
     console.log(`Returned close_spot_long:`)
     console.log(response)
     return response

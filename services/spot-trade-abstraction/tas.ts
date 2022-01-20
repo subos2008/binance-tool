@@ -110,12 +110,14 @@ app.get("/positions", async function (req: Request, res: Response) {
   }
 })
 
-app.post("/spot/long", async function (req: Request, res: Response) {
+app.get("/spot/long", async function (req: Request, res: Response) {
   try {
     let edge = req.params.edge
     let base_asset = req.params.base_asset
     assert(edge)
     assert(base_asset)
+    assert(req.params.direction === "long")
+    assert(req.params.action === "open")
     let cmd: TradeAbstractionOpenLongCommand = {
       edge,
       direction: "long",
@@ -128,7 +130,7 @@ app.post("/spot/long", async function (req: Request, res: Response) {
   }
 })
 
-app.post("/spot/close", async function (req: Request, res: Response) {
+app.get("/spot/close", async function (req: Request, res: Response) {
   try {
     let edge = req.params.edge
     let base_asset = req.params.base_asset

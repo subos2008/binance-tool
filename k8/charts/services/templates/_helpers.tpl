@@ -122,7 +122,7 @@ Environment variables
   valueFrom:
     secretKeyRef:
       key: TELEGRAM_KEY
-      name: telegram
+      name: telegram-bot-bert
 {{- end -}}
 
 {{- define "ftx-ro.vars" -}}

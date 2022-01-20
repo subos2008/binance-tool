@@ -72,3 +72,4 @@ spec:
               value: "http://spot-trade-abstraction"
             - name: DEBUG
               value: "telegraf:*"
+{{- include "telegram-bot-bert.vars" . | nindent 12 }}

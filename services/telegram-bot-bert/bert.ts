@@ -75,7 +75,7 @@ bot.use((ctx, next) => {
   })
 })
 
-const secretPath = `/telegraf/omg/${bot.secretPathComponent()}`
+const secretPath = `/telegraf/bert/${bot.secretPathComponent()}`
 
 // Set telegram webhook
 // npm install -g localtunnel && lt --port 3000

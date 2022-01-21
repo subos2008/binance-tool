@@ -82,10 +82,20 @@ const secretPath = `/telegraf/bert/${bot.secretPathComponent()}`
 bot.telegram.setWebhook(`https://bert.ryancocks.net${secretPath}`)
 app.use(bot.webhookCallback(secretPath))
 
+// bot.launch({
+//   webhook: {
+//     hookPath: secretPath,
+//     domain: 'bert.ryancocks.net', // required
+//     port: 80,
+//     cb: app // Express integration,
+//     tlsOptions: ... hmm, how do I force https?
+//   }
+// })
+
 // Finally, start our server
 // $  npm install -g localtunnel && lt --port 3000
 app.listen(3000, function () {
-  console.log("Telegram app listening on port 3000!")
+  console.log("Telegram app listening on port 3000! (Note service/ingress port is different)")
 })
 
 process.once("SIGINT", () => bot.stop("SIGINT"))

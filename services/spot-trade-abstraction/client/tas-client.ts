@@ -68,7 +68,7 @@ export class SpotTradeAbstractionServiceClient {
       if (response.status == 200) {
         return response.data
       }
-      throw response
+      throw new Error(`Bad response code calling${options.url}, response: ${response}`)
     } catch (error) {
       Sentry.captureException(error)
       this.logger.error(error)

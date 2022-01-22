@@ -45,28 +45,12 @@ app.use(
   })
 ) // for parsing application/x-www-form-urlencoded
 
-// Need to get this working with bot.launch
-// app.get("/health", function (req: Request, res: Response) {
-//   if (service_is_healthy) {
-//     res.send({ status: "OK" })
-//   } else {
-//     logger.error(`Service unhealthy`)
-//     res.status(500).json({ status: "UNHEALTHY" })
-//   }
-// })
-
-/**
- * Docs: https://telegraf.js.org/
- */
-const bot = new Telegraf(token)
-const commands = new Commands({ bot, logger })
-
 /**
  * Error handler: not we are told not to just eat all the exceptions in the README.
  * Especially we shouldn't eat TimeoutError - but that's exactly the one I want to eat,
  * Because it causes infinite retries of messages
  */
-bot.catch((error) => {
+ bot.catch((error) => {
   Sentry.captureException(error)
   logger.error(error)
   throw error // docs suggest not to eat errors, let's rethrow until we understand why
@@ -90,6 +74,24 @@ bot.use((ctx, next) => {
   return next().then(() => {
   })
 })
+
+// Need to get this working with bot.launch
+// app.get("/health", function (req: Request, res: Response) {
+//   if (service_is_healthy) {
+//     res.send({ status: "OK" })
+//   } else {
+//     logger.error(`Service unhealthy`)
+//     res.status(500).json({ status: "UNHEALTHY" })
+//   }
+// })
+
+/**
+ * Docs: https://telegraf.js.org/
+ */
+const bot = new Telegraf(token)
+const commands = new Commands({ bot, logger })
+
+
 
 const secretPath = `/telegraf/bert/${bot.secretPathComponent()}`
 

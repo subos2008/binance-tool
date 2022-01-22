@@ -5,8 +5,8 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 3000
-    targetPort: 3000
+  - port: 80
+    targetPort: 80
   selector:
     app: telegram-bot-bert
 ---    
@@ -50,7 +50,7 @@ spec:
           command: ["node", "./out/./services/telegram-bot-bert/bert"]
           ports:
           - name: http
-            containerPort: 3000
+            containerPort: 80
             protocol: TCP
           # livenessProbe:
           #   httpGet:

@@ -7,7 +7,7 @@ const service_name = "telegram-bot-bert"
 
 // As this is an exposed ingress service, prevent stack traces in express renders
 process.env.NODE_ENV = "production"
-process.env.PORT = "3000"
+process.env.PORT = "80"
 
 import * as Sentry from "@sentry/node"
 Sentry.init({})

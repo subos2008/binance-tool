@@ -46,7 +46,7 @@ import { SpotPositions } from "./spot-positions"
 import { SpotPositionsPersistance } from "./spot-positions-persistance"
 import { SpotRedisPositionsStateAdapter } from "./redis-positions-state-adapter"
 
-import express, { Request, Response } from "express"
+import express, { NextFunction, Request, Response } from "express"
 import { FixedPositionSizer } from "./position-sizer"
 const winston = require("winston")
 const expressWinston = require("express-winston")
@@ -102,15 +102,16 @@ let tas: TradeAbstractionService = new TradeAbstractionService({
   send_message,
   quote_asset /* global */,
 })
-app.get("/positions", async function (req: Request, res: Response) {
+app.get("/positions", async function (req: Request, res: Response, next: NextFunction) {
   try {
     res.status(200).json(await tas.open_positions())
   } catch (error) {
     res.status(500)
+    next(error)
   }
 })
 
-app.get("/spot/long", async function (req: Request, res: Response) {
+app.get("/spot/long", async function (req: Request, res: Response, next: NextFunction) {
   try {
     let edge = req.params.edge
     let base_asset = req.params.base_asset
@@ -127,10 +128,11 @@ app.get("/spot/long", async function (req: Request, res: Response) {
     res.status(200).json(await tas.open_spot_long(cmd, send_message))
   } catch (error) {
     res.status(500)
+    next(error)
   }
 })
 
-app.get("/spot/close", async function (req: Request, res: Response) {
+app.get("/spot/close", async function (req: Request, res: Response, next: NextFunction) {
   try {
     let edge = req.params.edge
     let base_asset = req.params.base_asset
@@ -145,6 +147,7 @@ app.get("/spot/close", async function (req: Request, res: Response) {
     res.json(await tas.close_spot_long(cmd, send_message))
   } catch (error) {
     res.status(500)
+    next(error)
   }
 })
 

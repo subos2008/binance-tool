@@ -87,6 +87,7 @@ const secretPath = `/telegraf/bert/${bot.secretPathComponent()}`
 // app.use(bot.webhookCallback(secretPath))
 
 bot.launch({
+  dropPendingUpdates: true,
   webhook: {
     hookPath: secretPath,
     domain: "bert.ryancocks.net", // required

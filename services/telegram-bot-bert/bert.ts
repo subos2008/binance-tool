@@ -99,9 +99,9 @@ bot.launch({
 
 // Finally, start our server
 // $  npm install -g localtunnel && lt --port 3000
-app.listen(process.env.PORT, function () {
-  console.log("Telegram app listening on port 3000! (Note service/ingress port is different)")
-})
+// app.listen(process.env.PORT, function () {
+//   console.log("Telegram app listening on port 3000! (Note service/ingress port is different)")
+// })
 
 process.once("SIGINT", () => bot.stop("SIGINT"))
 process.once("SIGTERM", () => bot.stop("SIGTERM"))

@@ -113,13 +113,13 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
 
 app.get("/spot/long", async function (req: Request, res: Response, next: NextFunction) {
   try {
-    console.log(req.params)
-    let edge = req.params.edge
-    let base_asset = req.params.base_asset
+    let { edge, base_asset, action, direction } = req.query
     assert(edge)
+    assert(typeof edge == "string")
     assert(base_asset)
-    assert(req.params.direction === "long")
-    assert(req.params.action === "open")
+    assert(typeof base_asset == "string")
+    assert(direction === "long")
+    assert(action === "open")
     let cmd: TradeAbstractionOpenLongCommand = {
       edge,
       direction: "long",

@@ -45,14 +45,15 @@ app.use(
   })
 ) // for parsing application/x-www-form-urlencoded
 
-app.get("/health", function (req: Request, res: Response) {
-  if (service_is_healthy) {
-    res.send({ status: "OK" })
-  } else {
-    logger.error(`Service unhealthy`)
-    res.status(500).json({ status: "UNHEALTHY" })
-  }
-})
+// Need to get this working with bot.launch
+// app.get("/health", function (req: Request, res: Response) {
+//   if (service_is_healthy) {
+//     res.send({ status: "OK" })
+//   } else {
+//     logger.error(`Service unhealthy`)
+//     res.status(500).json({ status: "UNHEALTHY" })
+//   }
+// })
 
 /**
  * Docs: https://telegraf.js.org/

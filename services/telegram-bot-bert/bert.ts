@@ -69,6 +69,7 @@ const commands = new Commands({ bot, logger })
 bot.catch((error) => {
   Sentry.captureException(error)
   logger.error(error)
+  throw error // docs suggest not to eat errors, let's rethrow until we understand why
 })
 
 // Register logger middleware
@@ -77,6 +78,16 @@ bot.use((ctx, next) => {
   return next().then(() => {
     const ms = Date.now() - start
     console.log("response time %sms", ms)
+  })
+})
+
+// Register authorisation middleware
+// How to implement? We can null message and not call next(), return instead
+bot.use((ctx, next) => {
+  let user = ctx.from
+  console.log(`message from ${user}`)
+  // if(['slyph'].includes(user as string))
+  return next().then(() => {
   })
 })
 

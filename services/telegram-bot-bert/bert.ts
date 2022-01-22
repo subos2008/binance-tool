@@ -5,6 +5,10 @@ const service_name = "telegram-bot-bert"
 
 // require("dotenv").config()
 
+// As this is an exposed ingress service, prevent stack traces in express renders
+process.env.NODE_ENV = "production"
+process.env.PORT = "3000"
+
 import * as Sentry from "@sentry/node"
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
@@ -85,16 +89,16 @@ const secretPath = `/telegraf/bert/${bot.secretPathComponent()}`
 bot.launch({
   webhook: {
     hookPath: secretPath,
-    domain: 'bert.ryancocks.net', // required
-    port: 80,
+    domain: "bert.ryancocks.net", // required
+    port: Number(process.env.PORT),
     cb: app, // Express integration,
-    tlsOptions: {} // ... hmm, how do I force https?
-  }
+    tlsOptions: {}, // ... hmm, how do I force https?
+  },
 })
 
 // Finally, start our server
 // $  npm install -g localtunnel && lt --port 3000
-app.listen(3000, function () {
+app.listen(process.env.PORT, function () {
   console.log("Telegram app listening on port 3000! (Note service/ingress port is different)")
 })
 

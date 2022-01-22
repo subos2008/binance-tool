@@ -94,7 +94,7 @@ bot.launch({
     domain: "bert.ryancocks.net", // required
     port: Number(process.env.PORT),
     cb: app, // Express integration,
-    tlsOptions: {}, // ... hmm, how do I force https?
+    // tlsOptions: {}, // ... hmm, how do I force https? https is done by the ingress
   },
 })
 

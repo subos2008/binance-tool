@@ -24,6 +24,10 @@ To close an open long spot position:
 To view open positions:
 
   /positions
+
+To check the bot is listening:
+
+  /hi
 `
 
 /**
@@ -39,7 +43,7 @@ export class Commands {
     // Set the bot response
     // Order is important
     bot.help((ctx) => ctx.replyWithHTML(help_text))
-    bot.command("hello", (ctx) => ctx.reply("Yep, I'm here!"))
+    bot.command("hi", (ctx) => ctx.reply("Yep, I'm here!"))
     // bot.command("spot", Commands.spot)
     bot.on("text", this.text_to_command.bind(this))
   }

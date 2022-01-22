@@ -113,6 +113,7 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
 
 app.get("/spot/long", async function (req: Request, res: Response, next: NextFunction) {
   try {
+    console.log(req.params)
     let edge = req.params.edge
     let base_asset = req.params.base_asset
     assert(edge)

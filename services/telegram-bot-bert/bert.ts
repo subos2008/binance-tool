@@ -46,6 +46,12 @@ app.use(
 ) // for parsing application/x-www-form-urlencoded
 
 /**
+ * Docs: https://telegraf.js.org/
+ */
+ const bot = new Telegraf(token)
+ const commands = new Commands({ bot, logger })
+
+/**
  * Error handler: not we are told not to just eat all the exceptions in the README.
  * Especially we shouldn't eat TimeoutError - but that's exactly the one I want to eat,
  * Because it causes infinite retries of messages
@@ -85,11 +91,7 @@ bot.use((ctx, next) => {
 //   }
 // })
 
-/**
- * Docs: https://telegraf.js.org/
- */
-const bot = new Telegraf(token)
-const commands = new Commands({ bot, logger })
+
 
 
 

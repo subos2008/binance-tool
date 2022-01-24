@@ -82,6 +82,19 @@ Environment variables
       name: binance
 {{- end -}}
 
+{{- define "binance-cluster-spot-tas.vars" -}}
+- name: BINANCE_API_KEY
+  valueFrom:
+    secretKeyRef:
+      key: BINANCE_API_KEY
+      name: binance-cluster-spot-tas
+- name: BINANCE_API_SECRET
+  valueFrom:
+    secretKeyRef:
+      key: BINANCE_API_SECRET
+      name: binance-cluster-spot-tas
+{{- end -}}
+
 {{- define "datadog.vars" -}}
 - name: DD_LOGS_ENABLED
   value: "true"

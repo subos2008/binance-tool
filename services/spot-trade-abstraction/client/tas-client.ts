@@ -11,6 +11,7 @@ import { Logger } from "../../../interfaces/logger"
 import { SpotPositionIdentifier } from "../spot-interfaces"
 import { TradeAbstractionCloseLongCommand, TradeAbstractionOpenLongCommand } from "../trade-abstraction-service"
 const JSONBigNumber = require("./JSONBigNumber")
+import { URL } from "url"
 
 import * as Sentry from "@sentry/node"
 Sentry.init({})

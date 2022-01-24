@@ -21,10 +21,8 @@ export class SpotRedisPositionsStateAdapter implements SpotPositionsPersistance 
   logger: Logger
   legacy: RedisPositionsState
 
-  constructor({ logger }: { logger: Logger }) {
+  constructor({ logger ,redis}: { logger: Logger, redis:RedisClient }) {
     this.logger = logger
-    set_redis_logger(logger)
-    let redis: RedisClient = get_redis_client()
     this.legacy = new RedisPositionsState({ logger, redis })
   }
 

@@ -48,6 +48,7 @@ import { SpotRedisPositionsStateAdapter } from "./redis-positions-state-adapter"
 
 import express, { NextFunction, Request, Response } from "express"
 import { FixedPositionSizer } from "./position-sizer"
+import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "./interim-meta-data-storage"
 const winston = require("winston")
 const expressWinston = require("express-winston")
 
@@ -85,16 +86,26 @@ app.get("/health", function (req: Request, res: Response) {
   }
 })
 
+import { get_redis_client, set_redis_logger } from "../../lib/redis"
+import { RedisClient } from "redis"
+set_redis_logger(logger)
+let redis: RedisClient = get_redis_client()
+
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 const binance_spot_ee = new BinanceSpotExecutionEngine({ logger })
-const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsStateAdapter({ logger })
+const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsStateAdapter({ logger, redis })
 const position_sizer = new FixedPositionSizer({ logger })
+const interim_spot_positions_metadata_persistant_storage = new RedisInterimSpotPositionsMetaDataPersistantStorage({
+  logger,
+  redis,
+})
 const positions = new SpotPositions({
   logger,
   ee: binance_spot_ee,
   positions_persistance,
   send_message,
   position_sizer,
+  interim_spot_positions_metadata_persistant_storage,
 })
 let tas: TradeAbstractionService = new TradeAbstractionService({
   positions,

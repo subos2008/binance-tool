@@ -86,16 +86,29 @@ export class SpotPositions {
   }
 
   /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
+
   async open_position(args: {
     quote_asset: string
     base_asset: string
     direction: string
     edge: string
-  }): Promise<{ executed_quote_quantity: string }> {
-    if (args.edge !== "edge60") {
-      this.send_message(`Only edge60 permitted at the moment`)
-      throw new Error(`Only edge60 permitted at the moment`)
+  }): Promise<{ executed_quote_quantity: string; stop_order_id: string | number }> {
+    var edge_percentage_stop
+
+    switch (args.edge) {
+      case "edge60":
+        edge_percentage_stop = new BigNumber(7)
+        break
+
+      default:
+        this.send_message(`Only edge60 permitted at the moment`)
+        throw new Error(`Only edge60 permitted at the moment`)
+        break
     }
+
+    /**
+     * TODO: Make this trading rules instead
+     */
 
     /**
      * Check if already in a position
@@ -105,6 +118,12 @@ export class SpotPositions {
       this.send_message(msg)
       throw new Error(msg)
     }
+
+    /**
+     * Get the position size, -- this can be hardcoded, just needs price or to specify quote amount to spend
+     * Try and execute a buy on that position size
+     * Create sell order at the stop price for any amount that was executed for the buy
+     */
 
     this.send_message(`Opening Spot position in ${args.base_asset} using ${args.quote_asset}, edge ${args.edge}`)
 
@@ -116,7 +135,6 @@ export class SpotPositions {
     let buy_result = await this.ee.market_buy_by_quote_quantity(cmd)
     let { executed_quote_quantity, executed_price, executed_base_quantity } = buy_result
 
-    const edge_percentage_stop = new BigNumber(7)
     let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
     let stop_price = executed_price.times(stop_price_factor)
 
@@ -136,13 +154,7 @@ export class SpotPositions {
       order_id.toString()
     )
 
-    return { executed_quote_quantity: executed_quote_quantity.toFixed() }
-
-    /**
-     * Get the position size, -- this can be hardcoded, just needs price or to specify quote amount to spend
-     * Try and execute a buy on that position size
-     * Create sell order at the stop price for any amount that was executed for the buy
-     */
+    return { executed_quote_quantity: executed_quote_quantity.toFixed(), stop_order_id: order_id }
   }
 
   /* Close both does [eventually] the order execution/tracking, and maintains redis */

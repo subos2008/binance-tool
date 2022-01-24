@@ -7,6 +7,8 @@ import { SpotPositionIdentifier } from "./spot-interfaces"
 import { SendMessageFunc } from "../../lib/telegram-v2"
 import { PositionSizer } from "./position-sizer"
 import BigNumber from "bignumber.js"
+import { InterimSpotPositionsMetaDataPersistantStorage } from "./trade-abstraction-service"
+import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
 
 interface Position {
   direction: "long" | "short"
@@ -27,6 +29,7 @@ export class SpotPositions {
   ee: SpotExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
+  interim_spot_positions_metadata_persistant_storage: InterimSpotPositionsMetaDataPersistantStorage
 
   positions_persistance: SpotPositionsPersistance
 
@@ -36,12 +39,14 @@ export class SpotPositions {
     positions_persistance,
     send_message,
     position_sizer,
+    interim_spot_positions_metadata_persistant_storage,
   }: {
     logger: Logger
     ee: SpotExecutionEngine
     positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
     position_sizer: PositionSizer
+    interim_spot_positions_metadata_persistant_storage: InterimSpotPositionsMetaDataPersistantStorage
   }) {
     assert(logger)
     this.logger = logger
@@ -50,6 +55,7 @@ export class SpotPositions {
     this.positions_persistance = positions_persistance
     this.send_message = send_message
     this.position_sizer = position_sizer
+    this.interim_spot_positions_metadata_persistant_storage = interim_spot_positions_metadata_persistant_storage
   }
 
   in_position({ base_asset }: { base_asset: string }) {
@@ -71,6 +77,10 @@ export class SpotPositions {
     return this.ee.get_market_identifier_for(args)
   }
 
+  private get_exchange_identifier(): ExchangeIdentifier_V3 {
+    return this.ee.get_exchange_identifier()
+  }
+
   /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
   async open_position(args: {
     quote_asset: string
@@ -78,46 +88,43 @@ export class SpotPositions {
     direction: string
     edge: string
   }): Promise<{ executed_quote_quantity: string }> {
-    // this.send_message(`Opening Spot position in ${args.base_asset} from ${args.quote_asset}, edge ${args.edge}`)
-    //   /**
-    //    * Atomic open / set placeholder for position entry
-    //    *  - add tradeID and have a timeout so if not opened with a real position soon it reverts to a clear spot?
-    //    *
-    //    * Open:
-    //    * - throws if position is already open
-    //    * - otherwise
-    //    *
-    //    *  */
-    //   let trade_id = this.ee.get_new_trade_id()
-    //   let reserved_position : ReservedPosition
-    //   try {
-    //     reserved_position = this.positions_persistance.reserve_position_if_not_already_existing({trade_id})
-    //     if(/** didn't get a reserved position */) {
-    //       throw new Error(`Failed to reserve position`)
-    //     }
-    //   }
+    if (args.edge !== "edge60") {
+      this.send_message(`Only edge60 permitted at the moment`)
+      throw new Error(`Only edge60 permitted at the moment`)
+    }
+
+    /**
+     * Check if already in a position
+     */
+    if (await this.in_position(args)) {
+      let msg = `Already in position on ${args.base_asset}`
+      this.send_message(msg)
+      throw new Error(msg)
+    }
+
+    this.send_message(`Opening Spot position in ${args.base_asset} using ${args.quote_asset}, edge ${args.edge}`)
+
     let quote_amount = await this.position_sizer.position_size_in_quote_asset(args)
     let cmd: SpotMarketBuyByQuoteQuantityCommand = {
       market_identifier: this.get_market_identifier_for(args),
       quote_amount,
     }
-    // let result = await this.ee.market_buy_by_quote_quantity(cmd)
-    let result = { executed_quote_quantity: new BigNumber(0) }
-    let { executed_quote_quantity } = result
+    let buy_result = await this.ee.market_buy_by_quote_quantity(cmd)
+    let { executed_quote_quantity, executed_price } = buy_result
+
+    const edge_percentage_stop = new BigNumber(7)
+    let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
+    let stop_price = executed_price.times(stop_price_factor)
+
+    let stop_result = await this.ee.stop_market_sell(cmd, stop_price)
+    let { order_id } = stop_result
+    let spot_position_identifier: SpotPositionIdentifier = {
+      exchange_identifier: this.get_exchange_identifier(),
+      base_asset: args.base_asset,
+    }
+    this.interim_spot_positions_metadata_persistant_storage.set_stop_order_id(spot_position_identifier, order_id)
+
     return { executed_quote_quantity: executed_quote_quantity.toFixed() }
-    //   if(executed_base_quantity.isGreaterThanZero()) {
-    //     let position:Position = {
-    //       direction,
-    //       edge,
-    //       quantity: executed_base_quantity
-    //     }
-    //     this.positions_persistance.setup_reserved_position(reserved_position, position)
-    //     this.ee.set_stop_for_position()
-    //     // may not be a full sized position
-    //     return {trade_id, position}
-    //   }else{
-    //     this.positions_persistance.cancel_reserved_position()
-    //   }
 
     /**
      * Get the position size, -- this can be hardcoded, just needs price or to specify quote amount to spend

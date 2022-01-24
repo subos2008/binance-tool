@@ -19,9 +19,10 @@ export class BinancePriceGetter implements CurrentPriceGetter {
   async get_current_price({ market_symbol }: { market_symbol: string }): Promise<BigNumber> {
     if (!this.prices) {
       this.prices = await this.ee.prices()
-      setTimeout(() => {
+      let timer : NodeJS.Timeout = setTimeout(() => {
         this.prices = null
-      }, 60 * 1000).unref()
+      }, 60 * 1000)
+      timer.unref()
     }
     return new BigNumber(this.prices[market_symbol])
   }

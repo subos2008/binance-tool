@@ -18,6 +18,12 @@ export interface SpotMarketBuyByQuoteQuantityCommand {
   quote_amount: BigNumber
 }
 
+export interface SpotStopMarketSellCommand {
+  market_identifier: MarketIdentifier_V3
+  base_amount: BigNumber
+  trigger_price: BigNumber
+}
+
 interface BinanceSpotStopLimitOrderCommand {}
 
 export interface SpotExecutionEngine {
@@ -28,10 +34,14 @@ export interface SpotExecutionEngine {
     quote_asset: string
     base_asset: string
   }): MarketIdentifier_V3
+
   market_buy_by_quote_quantity(
     args: SpotMarketBuyByQuoteQuantityCommand
-  ): Promise<{ executed_quote_quantity: BigNumber }>
+  ): Promise<{ executed_quote_quantity: BigNumber; executed_price: BigNumber; executed_base_quantity: BigNumber }>
+
   get_exchange_identifier(): ExchangeIdentifier_V3
+
+  stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<{ order_id: string | number }>
 }
 
 // Binance Keys
@@ -80,15 +90,31 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
 
   async market_buy_by_quote_quantity(
     cmd: SpotMarketBuyByQuoteQuantityCommand
-  ): Promise<{ executed_quote_quantity: BigNumber }> {
+  ): Promise<{
+    executed_quote_quantity: BigNumber
+    executed_base_quantity: BigNumber
+    executed_price: BigNumber
+  }> {
     let result = await this.utils.create_market_buy_order_by_quote_amount({
       pair: cmd.market_identifier.symbol,
       quote_amount: cmd.quote_amount,
     })
     if (result) {
-      return { executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty) }
+      return {
+        executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
+        executed_base_quantity: new BigNumber(result.executedQty),
+      }
     }
-    return { executed_quote_quantity: new BigNumber(0) }
+    throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)
+  }
+
+  async stop_market_sell(cmd: SpotStopMarketSellCommand) {
+    let result = await this.utils.create_stop_market_sell_order({
+      exchange_info: this.get_exchange_identifier(),
+      base_amount: cmd.base_amount,
+      pair: cmd.market_identifier.symbol,
+    })
+    return result
   }
 
   open_stop_limit_order(args: BinanceSpotStopLimitOrderCommand) {}

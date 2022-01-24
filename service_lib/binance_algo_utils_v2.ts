@@ -12,7 +12,7 @@ BigNumber.prototype.valueOf = function () {
 }
 import { Logger } from "../interfaces/logger"
 import { TradingRules } from "../lib/trading_rules"
-import * as Sentry from "@sentry/node"
+import Sentry from "../lib/sentry"
 import { NewOcoOrder, NewOrder, OcoOrder, OrderSide } from "binance-api-node"
 import { Binance as BinanceType } from "binance-api-node"
 
@@ -479,6 +479,44 @@ export class AlgoUtils {
     } catch (error: any) {
       Sentry.captureException(error)
       async_error_handler(console, `Market sell error: ${error.body}`, error)
+    }
+  }
+
+  // this may not exist on spot markets
+  // let type = "STOP_LOSS";
+
+  async create_stop_market_sell_order({
+    exchange_info,
+    pair,
+    base_amount,
+  }: {
+    exchange_info: any
+    pair: string
+    base_amount: BigNumber
+  }): Promise<{
+    order_id: string | number
+  }> {
+    // assert(this need to be  a stop limit sell order at least)
+    assert(pair && base_amount)
+    assert(BigNumber.isBigNumber(base_amount))
+    try {
+      base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount })
+      let quantity = base_amount.toFixed()
+      let args: NewOrder = {
+        useServerTime: true,
+        symbol: pair,
+        side: "SELL",
+        type: "STOP_MARKET",
+        quantity,
+      }
+      this.logger.info(`${pair} Creating STOP_MARKET SELL ORDER for ${quantity}`)
+      let response = await this.ee.order(args)
+      this.logger.info(`order id: ${response.orderId}`)
+      return { order_id: response.orderId }
+    } catch (error: any) {
+      // Sentry.captureException(error)
+      console.error(error)
+      throw error
     }
   }
 

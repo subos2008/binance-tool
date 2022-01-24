@@ -489,10 +489,12 @@ export class AlgoUtils {
     exchange_info,
     pair,
     base_amount,
+    stop_trigger_price,
   }: {
     exchange_info: ExchangeInfo
     pair: string
     base_amount: BigNumber
+    stop_trigger_price: BigNumber
   }): Promise<{
     order_id: string | number
   }> {
@@ -500,14 +502,20 @@ export class AlgoUtils {
     assert(pair && base_amount)
     assert(BigNumber.isBigNumber(base_amount))
     try {
-      base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount })
+      base_amount = this.munge_amount_and_check_notionals({
+        exchange_info,
+        pair,
+        base_amount,
+        stop_price: stop_trigger_price,
+      })
       let quantity = base_amount.toFixed()
       let args: NewOrder = {
         useServerTime: true,
         symbol: pair,
         side: "SELL",
-        type: "STOP_MARKET",
+        type: "STOP_LOSS",
         quantity,
+        stopPrice: stop_trigger_price.toFixed(),
       }
       this.logger.info(`${pair} Creating STOP_MARKET SELL ORDER for ${quantity}`)
       let response = await this.ee.order(args)

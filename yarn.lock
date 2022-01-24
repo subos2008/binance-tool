@@ -1242,10 +1242,9 @@ bignumber.js@^8.1.1:
   resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-8.1.1.tgz#4b072ae5aea9c20f6730e4e5d529df1271c4d885"
   integrity sha512-QD46ppGintwPGuL1KqmwhR0O+N2cZUg8JG/VzwI2e28sM9TqHjQB10lI4QAaMHVbLzwVLLAwEglpKPViWX+5NQ==
 
-binance-api-node@^0.10.0:
+"binance-api-node@https://github.com/subos2008/binance-api-node.git":
   version "0.10.49"
-  resolved "https://registry.yarnpkg.com/binance-api-node/-/binance-api-node-0.10.49.tgz#143b3a8a5e020e6252f0f148ca489199be13ebcb"
-  integrity sha512-1cE+Zam8jHQRQXJdsIZUBg0oln5Nrx9O+N3SjjYPj42EWzf2FjRA5UcLM2olMOBTqSwd8HdHs8no346DzbguxQ==
+  resolved "https://github.com/subos2008/binance-api-node.git#b1cfe2b27b494c68b5203b835d2be795621bdc21"
   dependencies:
     isomorphic-fetch "^2.2.1"
     isomorphic-ws "^4.0.1"
@@ -4431,7 +4430,12 @@ write@^0.2.1:
   dependencies:
     mkdirp "^0.5.1"
 
-ws@^7.2.0, ws@^7.4.6:
+ws@^7.2.0:
+  version "7.5.6"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.6.tgz#e59fc509fb15ddfb65487ee9765c5a51dec5fe7b"
+  integrity sha512-6GLgCqo2cy2A2rjCNFlxQS6ZljG/coZfZXclldI8FB/1G3CCI36Zd8xy2HrFVACi8tfk5XrgLQEk+P0Tnz9UcA==
+
+ws@^7.4.6:
   version "7.4.6"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.4.6.tgz#5654ca8ecdeee47c33a9a4bf6d28e2be2980377c"
   integrity sha512-YmhHDO4MzaDLB+M9ym/mDA5z0naX8j7SIlT8f8z+I0VtzsRbekxEutHSme7NPS2qE8StCYQNUnfWdXta/Yu85A==

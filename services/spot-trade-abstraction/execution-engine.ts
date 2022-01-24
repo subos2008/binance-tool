@@ -45,12 +45,12 @@ export interface SpotExecutionEngine {
 }
 
 // Binance Keys
-assert(process.env.APIKEY)
-assert(process.env.APISECRET)
+assert(process.env.BINANCE_API_KEY)
+assert(process.env.BINANCE_API_SECRET)
 
 var ee: Binance = binance({
-  apiKey: process.env.APIKEY,
-  apiSecret: process.env.APISECRET,
+  apiKey: process.env.BINANCE_API_KEY,
+  apiSecret: process.env.BINANCE_API_SECRET,
 })
 
 export class BinanceSpotExecutionEngine implements SpotExecutionEngine {

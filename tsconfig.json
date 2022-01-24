@@ -5,7 +5,7 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "target": "es6",
-    "lib": ["es2019", "dom"],
+    "lib": ["es2019"],
     "module": "commonjs",
     "outDir": "out",
     "sourceMap": true,
@@ -13,8 +13,7 @@
     "allowJs": true
     // "noUnusedLocals": true,
     // "noUnusedParameters": true,
-
-  },
+  }
   // "include": ["src/**/*"],
   // "exclude": ["node_modules", "**/*.spec.ts"]
 }

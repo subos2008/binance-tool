@@ -49,8 +49,8 @@ assert(process.env.APIKEY)
 assert(process.env.APISECRET)
 
 var ee: Binance = binance({
-  apiKey: process.env.APIKEY || "foo",
-  apiSecret: process.env.APISECRET || "foo",
+  apiKey: process.env.APIKEY,
+  apiSecret: process.env.APISECRET,
 })
 
 export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
@@ -117,6 +117,4 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     })
     return result
   }
-
-  open_stop_limit_order(args: BinanceSpotStopLimitOrderCommand) {}
 }

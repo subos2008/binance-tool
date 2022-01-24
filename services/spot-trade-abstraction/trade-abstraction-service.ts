@@ -8,7 +8,6 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
 import { SpotPositions } from "./spot-positions"
-import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { SendMessageFunc } from "../../lib/telegram-v2"
 import { SpotPositionIdentifier } from "./spot-interfaces"
 
@@ -26,9 +25,10 @@ export interface TradeAbstractionCloseLongCommand {
   action: "close"
 }
 
-// Mehran wants us to have 30-50% stop on Edge60
-// Plan is Edge60 for selected major markets
-// and edge59 for alts generally
+export interface InterimSpotPositionsMetaDataPersistantStorage {
+  set_stop_order_id(spot_position_identifier: SpotPositionIdentifier, order_id: string): Promise<void>
+  get_stop_order_id(spot_position_identifier: SpotPositionIdentifier): Promise<string | null>
+}
 
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands
@@ -60,7 +60,10 @@ export class TradeAbstractionService {
 
   // or signal_long
   // Spot so we can only be long or no-position
-  async open_spot_long(cmd: TradeAbstractionOpenLongCommand, send_message: (msg: string) => void) : Promise<object> {
+  async open_spot_long(
+    cmd: TradeAbstractionOpenLongCommand,
+    send_message: (msg: string) => void
+  ): Promise<object> {
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
     /** TODO: We want this check and entry to be atomic, while we only trade one edge it's less important */

@@ -4,9 +4,10 @@ import { strict as assert } from "assert"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
 import binance from "binance-api-node"
-import { Binance } from "binance-api-node"
+import { Binance, ExchangeInfo } from "binance-api-node"
 
 import { BigNumber } from "bignumber.js"
+import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -56,11 +57,13 @@ var ee: Binance = binance({
 export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
   utils: AlgoUtils
   logger: Logger
+  ei_getter: BinanceExchangeInfoGetter
 
   constructor({ logger }: { logger: Logger }) {
     assert(logger)
     this.logger = logger
     this.utils = new AlgoUtils({ logger, ee /* note global variable */ })
+    this.ei_getter = new BinanceExchangeInfoGetter({ ee })
   }
 
   get_exchange_identifier(): ExchangeIdentifier_V3 {
@@ -69,6 +72,10 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       exchange: "binance",
       type: "spot",
     }
+  }
+
+  async get_exchange_info(): Promise<ExchangeInfo> {
+    return await this.ei_getter.get_exchange_info()
   }
 
   // Used when storing things like Position state
@@ -88,9 +95,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     }
   }
 
-  async market_buy_by_quote_quantity(
-    cmd: SpotMarketBuyByQuoteQuantityCommand
-  ): Promise<{
+  async market_buy_by_quote_quantity(cmd: SpotMarketBuyByQuoteQuantityCommand): Promise<{
     executed_quote_quantity: BigNumber
     executed_base_quantity: BigNumber
     executed_price: BigNumber
@@ -103,7 +108,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       return {
         executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
         executed_base_quantity: new BigNumber(result.executedQty),
-        executed_price: new BigNumber(result.price)
+        executed_price: new BigNumber(result.price),
       }
     }
     throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)
@@ -111,7 +116,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
 
   async stop_market_sell(cmd: SpotStopMarketSellCommand) {
     let result = await this.utils.create_stop_market_sell_order({
-      exchange_info: this.get_exchange_identifier(),
+      exchange_info: await this.get_exchange_info(),
       base_amount: cmd.base_amount,
       pair: cmd.market_identifier.symbol,
     })

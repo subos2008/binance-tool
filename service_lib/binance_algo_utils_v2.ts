@@ -13,7 +13,7 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../interfaces/logger"
 import { TradingRules } from "../lib/trading_rules"
 import Sentry from "../lib/sentry"
-import { NewOcoOrder, NewOrder, OcoOrder, OrderSide } from "binance-api-node"
+import { ExchangeInfo, NewOcoOrder, NewOrder, OcoOrder, OrderSide } from "binance-api-node"
 import { Binance as BinanceType } from "binance-api-node"
 
 export class AlgoUtils {
@@ -32,7 +32,7 @@ export class AlgoUtils {
     symbol,
     price,
   }: {
-    exchange_info: any
+    exchange_info: ExchangeInfo
     symbol: string
     price: BigNumber
   }) {
@@ -49,7 +49,7 @@ export class AlgoUtils {
     target_price,
     limit_price,
   }: {
-    exchange_info: any
+    exchange_info: ExchangeInfo
     pair: string
     base_amount: BigNumber
     price?: BigNumber
@@ -164,7 +164,7 @@ export class AlgoUtils {
     base_amount,
     price,
   }: {
-    exchange_info: any
+    exchange_info: ExchangeInfo
     pair: string
     base_amount: BigNumber
     price: BigNumber
@@ -201,7 +201,7 @@ export class AlgoUtils {
     base_amount,
     price,
   }: {
-    exchange_info: any
+    exchange_info: ExchangeInfo
     pair: string
     base_amount: BigNumber
     price: BigNumber
@@ -227,7 +227,7 @@ export class AlgoUtils {
     base_amount,
     price,
   }: {
-    exchange_info: any
+    exchange_info: ExchangeInfo
     pair: string
     base_amount: BigNumber
     price: BigNumber
@@ -263,7 +263,7 @@ export class AlgoUtils {
     stop_price,
     limit_price,
   }: {
-    exchange_info: any
+    exchange_info: ExchangeInfo
     pair: string
     base_amount: BigNumber
     target_price: BigNumber
@@ -342,7 +342,7 @@ export class AlgoUtils {
     stop_price,
     limit_price,
   }: {
-    exchange_info: any
+    exchange_info: ExchangeInfo
     pair: string
     base_amount: BigNumber
     stop_price: BigNumber
@@ -490,7 +490,7 @@ export class AlgoUtils {
     pair,
     base_amount,
   }: {
-    exchange_info: any
+    exchange_info: ExchangeInfo
     pair: string
     base_amount: BigNumber
   }): Promise<{

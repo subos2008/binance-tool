@@ -66,6 +66,10 @@ export class Commands {
 
   async list_positions(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
     let postions = await this.tas_client.positions()
+    if (postions.length == 0) {
+      ctx.reply(`No open positions.`)
+      return
+    }
     let msg = postions
       .map(
         (pi) => `${pi.exchange_identifier.exchange} ${pi.exchange_identifier.type} ${pi.base_asset.toUpperCase()}`

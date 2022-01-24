@@ -8,7 +8,7 @@ var service_is_healthy: boolean = true;
 
 const timeout_seconds = Number(process.env.WATCHDOG_TIMEOUT_SECONDS || "3600")
 
-const _ = require("lodash");
+// const _ = require("lodash");
 
 require("dotenv").config();
 assert(process.env.REDIS_HOST)
@@ -166,28 +166,30 @@ async function update_monitors_if_active_pairs_have_changed() {
   // Removed the BTC hack as it makes the AMQP stats look like it's dropping all the prices
   // messages as unroutable
   // active_pairs.add("BTCUSDT") // We want the system under some stress so always add this
-  if (!_.isEqual(currently_monitored_pairs, active_pairs)) {
-    logger.info(`Active Pairs: ${Array.from(active_pairs)}`)
-    send_message(`Active Pairs: ${Array.from(active_pairs)}`)
-    logger.info(`currently_monitored_pairs: ${Array.from(currently_monitored_pairs)}`)
-    if (Array.from(currently_monitored_pairs).length != 0) {
-      // let's die to change the monitored pairs, we will be restarted and can cleanly monitor the new 
-      // set from a fresh process. We can investigate cleanly replacing monitors later at our
-      // leasure
-      try {
-        const message = `Changing to monitor: ${Array.from(active_pairs).join(', ')}`
-        logger.info(message)
-        send_message(message)
-        logger.warn('Exiting to replace monitors')
-      } finally {
-        soft_exit(0)
-        throw new Error('list of pairs to monitor has changed')
-      }
-    }
-    currently_monitored_pairs = active_pairs
-    monitor = new BinancePriceMonitor(logger, send_message, ee, price_event_callback)
-    monitor.monitor_pairs(Array.from(active_pairs))
-  }
+
+  throw new Error(`lodash removed atm`)
+  // if (!_.isEqual(currently_monitored_pairs, active_pairs)) {
+  //   logger.info(`Active Pairs: ${Array.from(active_pairs)}`)
+  //   send_message(`Active Pairs: ${Array.from(active_pairs)}`)
+  //   logger.info(`currently_monitored_pairs: ${Array.from(currently_monitored_pairs)}`)
+  //   if (Array.from(currently_monitored_pairs).length != 0) {
+  //     // let's die to change the monitored pairs, we will be restarted and can cleanly monitor the new 
+  //     // set from a fresh process. We can investigate cleanly replacing monitors later at our
+  //     // leasure
+  //     try {
+  //       const message = `Changing to monitor: ${Array.from(active_pairs).join(', ')}`
+  //       logger.info(message)
+  //       send_message(message)
+  //       logger.warn('Exiting to replace monitors')
+  //     } finally {
+  //       soft_exit(0)
+  //       throw new Error('list of pairs to monitor has changed')
+  //     }
+  //   }
+  //   currently_monitored_pairs = active_pairs
+  //   monitor = new BinancePriceMonitor(logger, send_message, ee, price_event_callback)
+  //   monitor.monitor_pairs(Array.from(active_pairs))
+  // }
 }
 
 main().catch(error => {

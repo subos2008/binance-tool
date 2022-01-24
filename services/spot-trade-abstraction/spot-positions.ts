@@ -1,7 +1,11 @@
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
-import { SpotExecutionEngine, SpotMarketBuyByQuoteQuantityCommand } from "./execution-engine"
+import {
+  SpotExecutionEngine,
+  SpotMarketBuyByQuoteQuantityCommand,
+  SpotStopMarketSellCommand,
+} from "./execution-engine"
 import { SpotPositionsPersistance } from "./spot-positions-persistance"
 import { SpotPositionIdentifier } from "./spot-interfaces"
 import { SendMessageFunc } from "../../lib/telegram-v2"
@@ -110,19 +114,27 @@ export class SpotPositions {
       quote_amount,
     }
     let buy_result = await this.ee.market_buy_by_quote_quantity(cmd)
-    let { executed_quote_quantity, executed_price } = buy_result
+    let { executed_quote_quantity, executed_price, executed_base_quantity } = buy_result
 
     const edge_percentage_stop = new BigNumber(7)
     let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
     let stop_price = executed_price.times(stop_price_factor)
 
-    let stop_result = await this.ee.stop_market_sell(cmd, stop_price)
+    let stop_cmd: SpotStopMarketSellCommand = {
+      market_identifier: cmd.market_identifier,
+      base_amount: executed_base_quantity,
+      trigger_price: stop_price,
+    }
+    let stop_result = await this.ee.stop_market_sell(stop_cmd)
     let { order_id } = stop_result
     let spot_position_identifier: SpotPositionIdentifier = {
       exchange_identifier: this.get_exchange_identifier(),
       base_asset: args.base_asset,
     }
-    this.interim_spot_positions_metadata_persistant_storage.set_stop_order_id(spot_position_identifier, order_id)
+    this.interim_spot_positions_metadata_persistant_storage.set_stop_order_id(
+      spot_position_identifier,
+      order_id.toString()
+    )
 
     return { executed_quote_quantity: executed_quote_quantity.toFixed() }
 

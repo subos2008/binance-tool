@@ -119,6 +119,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       exchange_info: await this.get_exchange_info(),
       base_amount: cmd.base_amount,
       pair: cmd.market_identifier.symbol,
+      stop_trigger_price: cmd.trigger_price
     })
     return result
   }

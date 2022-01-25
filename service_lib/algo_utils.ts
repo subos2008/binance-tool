@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../interfaces/logger"
 import { TradingRules } from "../lib/trading_rules"
 import * as Sentry from "@sentry/node"
-import { Binance, OrderSide, OrderType } from "binance-api-node"
+import { Binance, NewOrderSpot, OrderSide, OrderType } from "binance-api-node"
 
 export class AlgoUtils {
   logger: Logger
@@ -167,11 +167,11 @@ export class AlgoUtils {
       base_amount = this.munge_amount_and_check_notionals({ pair, base_amount, price })
       let price_string = price.toFixed()
       let quantity = base_amount.toFixed()
-      let args = {
+      let args: NewOrderSpot = {
         useServerTime: true,
         symbol: pair,
-        side: "BUY" as OrderSide,
-        type: "LIMIT" as OrderType,
+        side: "BUY",
+        type: OrderType.LIMIT,
         quantity,
         price: price_string,
       }
@@ -215,11 +215,11 @@ export class AlgoUtils {
     try {
       base_amount = this.munge_amount_and_check_notionals({ pair, base_amount, price })
       let quantity = base_amount.toFixed()
-      let args = {
+      let args: NewOrderSpot = {
         useServerTime: true,
         symbol: pair,
         side: "SELL" as OrderSide,
-        type: "LIMIT" as OrderType,
+        type: OrderType.LIMIT,
         quantity,
         price: price.toFixed(),
       }
@@ -255,11 +255,11 @@ export class AlgoUtils {
       // TODO: not checking price because often it is zero
       base_amount = this.munge_amount_and_check_notionals({ pair, base_amount, stop_price })
       let quantity = base_amount.toFixed()
-      let args = {
+      let args: NewOrderSpot = {
         useServerTime: true,
         symbol: pair,
         side: "SELL" as OrderSide,
-        type: "STOP_LOSS_LIMIT" as OrderType,
+        type: OrderType.STOP_LOSS_LIMIT,
         quantity,
         price: price.toFixed(),
         stopPrice: stop_price.toFixed(),

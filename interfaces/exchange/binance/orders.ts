@@ -1,6 +1,6 @@
 import { BinanceOrderData } from "../../../interfaces/order_callbacks"
 import { strict as assert } from "assert"
-import { ExchangeInfo, OrderStatus, QueryOrderResult } from "binance-api-node"
+import { ExchangeInfo, OrderStatus, OrderStatus_LT, QueryOrderResult } from "binance-api-node"
 import {
   GenericOrder,
   GenericOrderData,
@@ -49,7 +49,7 @@ function map_binance_order_type_to_generic_order_type(i: BinanceOrderType): Gene
   throw new Error(`Do not know how to map binance order type ${i} to generic order type`)
 }
 
-function map_binance_order_status_to_generic_order_status(i: OrderStatus): GenericOrderStatus {
+function map_binance_order_status_to_generic_order_status(i: OrderStatus | OrderStatus_LT): GenericOrderStatus {
   if (i === "CANCELED") return "CANCELED"
   if (i === "EXPIRED") return "EXPIRED"
   if (i === "FILLED") return "FILLED"
@@ -93,7 +93,7 @@ export function fromBinanceQueryOrderResult({
     orderType: map_binance_order_type_to_generic_order_type(i.type as BinanceOrderType),
     orderStatus: map_binance_order_status_to_generic_order_status(i.status),
     orderTime: i.updateTime,
-    stopPrice: i.stopPrice
+    stopPrice: i.stopPrice,
   }
   if (i.orderListId !== -1) {
     generic.exchangeOrderListId = i.orderListId.toString()

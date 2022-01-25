@@ -13,7 +13,15 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../interfaces/logger"
 import { TradingRules } from "../lib/trading_rules"
 import Sentry from "../lib/sentry"
-import { ExchangeInfo, NewOcoOrder, NewOrder, OcoOrder, OrderSide } from "binance-api-node"
+import {
+  ExchangeInfo,
+  NewOcoOrder,
+  NewOrderSL,
+  NewOrderSpot,
+  OcoOrder,
+  OrderSide,
+  OrderType,
+} from "binance-api-node"
 import { Binance as BinanceType } from "binance-api-node"
 
 export class AlgoUtils {
@@ -176,11 +184,11 @@ export class AlgoUtils {
       base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, price })
       let price_string = price.toFixed()
       let quantity = base_amount.toFixed()
-      let args: NewOrder = {
+      let args: NewOrderSpot = {
         useServerTime: true,
         symbol: pair,
         side: "BUY",
-        type: "LIMIT",
+        type: OrderType.LIMIT,
         quantity,
         price: price_string,
       }
@@ -238,11 +246,11 @@ export class AlgoUtils {
     try {
       base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, price })
       let quantity = base_amount.toFixed()
-      let args: NewOrder = {
+      let args: NewOrderSpot = {
         useServerTime: true,
         symbol: pair,
         side: "SELL",
-        type: "LIMIT",
+        type: OrderType.LIMIT,
         quantity,
         price: price.toFixed(),
       }
@@ -365,11 +373,11 @@ export class AlgoUtils {
       limit_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: limit_price })
       base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, stop_price })
       let quantity = base_amount.toFixed()
-      let args: NewOrder = {
+      let args: NewOrderSpot = {
         useServerTime: true,
         symbol: pair,
         side: "SELL",
-        type: "STOP_LOSS_LIMIT",
+        type: OrderType.STOP_LOSS_LIMIT,
         quantity,
         price: limit_price.toFixed(),
         stopPrice: stop_price.toFixed(),
@@ -479,52 +487,6 @@ export class AlgoUtils {
     } catch (error: any) {
       Sentry.captureException(error)
       async_error_handler(console, `Market sell error: ${error.body}`, error)
-    }
-  }
-
-  // this may not exist on spot markets
-  // let type = "STOP_LOSS";
-
-  async create_stop_market_sell_order({
-    exchange_info,
-    pair,
-    base_amount,
-    stop_trigger_price,
-  }: {
-    exchange_info: ExchangeInfo
-    pair: string
-    base_amount: BigNumber
-    stop_trigger_price: BigNumber
-  }): Promise<{
-    order_id: string | number
-  }> {
-    // assert(this need to be  a stop limit sell order at least)
-    assert(pair && base_amount)
-    assert(BigNumber.isBigNumber(base_amount))
-    try {
-      base_amount = this.munge_amount_and_check_notionals({
-        exchange_info,
-        pair,
-        base_amount,
-        stop_price: stop_trigger_price,
-      })
-      let quantity = base_amount.toFixed()
-      let args: NewOrder = {
-        useServerTime: true,
-        symbol: pair,
-        side: "SELL",
-        type: "STOP_LOSS",
-        quantity,
-        stopPrice: stop_trigger_price.toFixed(),
-      }
-      this.logger.info(`${pair} Creating STOP_MARKET SELL ORDER for ${quantity}`)
-      let response = await this.ee.order(args)
-      this.logger.info(`order id: ${response.orderId}`)
-      return { order_id: response.orderId }
-    } catch (error: any) {
-      // Sentry.captureException(error)
-      console.error(error)
-      throw error
     }
   }
 

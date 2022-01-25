@@ -31,7 +31,7 @@ export class RedisInterimSpotPositionsMetaDataPersistantStorage
   }
 
   private _key(pi: SpotPositionIdentifier) {
-    return `RedisInterimSpotPositionsMetaDataPersistantStorage/${pi.exchange_identifier.exchange}/${pi.exchange_identifier.type}/${pi.base_asset}/stop_order_id`
+    return `RedisInterimSpotPositionsMetaDataPersistantStorage:${pi.exchange_identifier.exchange}:${pi.exchange_identifier.type}:${pi.base_asset}:stop_order_id`
   }
   async set_stop_order_id(spot_position_identifier: SpotPositionIdentifier, order_id: string): Promise<void> {
     this.setAsync(this._key(spot_position_identifier), order_id)

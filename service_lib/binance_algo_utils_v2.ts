@@ -368,6 +368,9 @@ export class AlgoUtils {
     if (limit_price.isEqualTo(0)) {
       this.logger.warn(`WARNING: stop loss orders with limit price of 0: munging not tested`)
     }
+    this.logger.info(
+      `Pre-munge: ${pair} Creating STOP_LOSS_LIMIT SELL ORDER for ${base_amount.toFixed()} at ${limit_price.toFixed()} triggered at ${stop_price.toFixed()}`
+    )
     try {
       stop_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: stop_price })
       limit_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: limit_price })

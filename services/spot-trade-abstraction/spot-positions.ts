@@ -137,6 +137,9 @@ export class SpotPositions {
 
     let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
     let stop_price = executed_price.times(stop_price_factor)
+    this.logger.info(
+      `Calculated stop price of ${stop_price.toFixed()} given buy executed price of ${executed_price.toFixed()}`
+    )
 
     let stop_cmd: SpotStopMarketSellCommand = {
       market_identifier: cmd.market_identifier,

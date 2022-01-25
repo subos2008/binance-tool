@@ -108,7 +108,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       return {
         executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
         executed_base_quantity: new BigNumber(result.executedQty),
-        executed_price: new BigNumber(result.price),
+        executed_price: new BigNumber(result.executedQty).dividedBy(result.cummulativeQuoteQty),
       }
     }
     throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)

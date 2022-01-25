@@ -28,7 +28,7 @@ export class AlgoUtils {
   logger: Logger
   ee: BinanceType
 
-  constructor({ logger, ee }: { logger: Logger; ee: any }) {
+  constructor({ logger, ee }: { logger: Logger; ee: BinanceType }) {
     assert(logger)
     this.logger = logger
     assert(ee)

@@ -114,13 +114,18 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)
   }
 
+  /** implemented as a stop_limit */
   async stop_market_sell(cmd: SpotStopMarketSellCommand) {
-    let result = await this.utils.create_stop_market_sell_order({
+    let result = await this.utils.munge_and_create_stop_loss_limit_sell_order({
       exchange_info: await this.get_exchange_info(),
-      base_amount: cmd.base_amount,
       pair: cmd.market_identifier.symbol,
-      stop_trigger_price: cmd.trigger_price
+      base_amount: cmd.base_amount,
+      stop_price: cmd.trigger_price,
+      limit_price: cmd.trigger_price.times(0.8),
     })
-    return result
+    if (!result?.orderId) {
+      throw new Error(`Failed to create stop order`)
+    }
+    return { order_id: result?.orderId }
   }
 }

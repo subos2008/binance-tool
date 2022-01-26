@@ -152,7 +152,7 @@ export class SpotPositions {
       exchange_identifier: this.get_exchange_identifier(),
       base_asset: args.base_asset,
     }
-    this.interim_spot_positions_metadata_persistant_storage.set_stop_order_id(
+    await this.interim_spot_positions_metadata_persistant_storage.set_stop_order_id(
       spot_position_identifier,
       order_id.toString()
     )
@@ -161,7 +161,7 @@ export class SpotPositions {
   }
 
   /* Close both does [eventually] the order execution/tracking, and maintains redis */
-  close_position({
+  async close_position({
     quote_asset,
     base_asset,
     direction,
@@ -173,6 +173,29 @@ export class SpotPositions {
     edge: string
   }) {
     this.send_message(`Closing Spot position in ${base_asset} from ${quote_asset}, edge ${edge} [NOT IMPLEMENTED]`)
+
+    /**
+     * 1. Get stop order id and cancel it
+     * 2. market sell position
+     */
+
+    let spot_position_identifier: SpotPositionIdentifier = {
+      exchange_identifier: this.get_exchange_identifier(),
+      base_asset,
+    }
+    let stop_order_id: string | null =
+      await this.interim_spot_positions_metadata_persistant_storage.get_stop_order_id(spot_position_identifier)
+
+    let symbol = this.ee.get_market_identifier_for({ quote_asset, base_asset }).symbol
+    if (stop_order_id) {
+      this.ee.cancel_order({
+        order_id: stop_order_id,
+        symbol,
+      })
+    }
+
+    let base_amount = await this.exisiting_position_size({ base_asset })
+    this.ee.market_sell({ symbol, base_amount })
   }
 
   async open_positions() {

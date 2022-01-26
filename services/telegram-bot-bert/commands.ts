@@ -96,13 +96,11 @@ export class Commands {
       if (command == "long") {
         let result = await this.open_spot_long(ctx, { asset, edge })
         ctx.reply(`Looks like it succeeded?`)
-        ctx.reply(`not implemented?`)
       }
 
       if (command == "close") {
         let result = await this.close_spot_long(ctx, { asset, edge })
         ctx.reply(`Looks like it succeeded?`)
-        ctx.reply(`not implemented?`)
       }
     } catch (error) {
       Sentry.captureException(error)
@@ -130,7 +128,7 @@ export class Commands {
     ctx: NarrowedContext<Context, Types.MountMap["text"]>,
     { asset, edge }: { asset: string; edge: string }
   ) {
-    let msg = `${edge.toUpperCase()}: closing spot long on ${asset} [probably not implemented?]`
+    let msg = `${edge.toUpperCase()}: closing spot long on ${asset}`
     ctx.reply(msg)
     let result: string = await this.tas_client.close_spot_long({
       base_asset: asset,

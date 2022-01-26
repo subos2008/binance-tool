@@ -89,18 +89,15 @@ export class TradeAbstractionService {
     assert.equal(cmd.action, "close")
 
     this.logger.warn(`Position exit is not atomic with check for existing position`)
-    let existing_spot_position_size: BigNumber = await this.positions.exisiting_position_size({
-      base_asset: cmd.base_asset,
-    })
-
-    if (existing_spot_position_size.isGreaterThan(0)) {
+    if (await this.positions.in_position({ base_asset: cmd.base_asset })) {
       this.positions.close_position({ quote_asset: this.quote_asset, ...cmd })
+      return
     }
 
     let msg = `There is no known long spot position on ${cmd.base_asset}, skipping`
     this.logger.warn(msg)
     send_message(msg)
-    throw new Error(msg) // turn this into a 3xx or 4xx
+    throw new Error(msg) // turn this into a 3xx or 4xx - 404?
   }
 
   async open_positions(): Promise<SpotPositionIdentifier[]> {

@@ -146,17 +146,22 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
 
 app.get("/spot/close", async function (req: Request, res: Response, next: NextFunction) {
   try {
-    let edge = req.params.edge
-    let base_asset = req.params.base_asset
+    let { edge, base_asset, action, direction } = req.query
     assert(edge)
     assert(base_asset)
+    assert(edge)
+    assert(typeof edge == "string")
+    assert(base_asset)
+    assert(typeof base_asset == "string")
+    assert(direction === "long")
+    assert(action === "close")
     let cmd: TradeAbstractionCloseLongCommand = {
       edge,
       direction: "long",
       action: "close",
       base_asset,
     }
-    res.json(await tas.close_spot_long(cmd, send_message))
+    res.status(200).json(await tas.close_spot_long(cmd, send_message))
   } catch (error) {
     res.status(500)
     next(error)

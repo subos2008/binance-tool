@@ -468,7 +468,7 @@ export class AlgoUtils {
   }: {
     base_amount: BigNumber
     pair: string
-    orderId: string | undefined
+    orderId?: string
   }) {
     assert(pair)
     assert(base_amount)

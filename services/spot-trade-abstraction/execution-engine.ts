@@ -8,6 +8,7 @@ import { Binance, ExchangeInfo } from "binance-api-node"
 
 import { BigNumber } from "bignumber.js"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
+import { symbolName } from "typescript"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -43,6 +44,10 @@ export interface SpotExecutionEngine {
   get_exchange_identifier(): ExchangeIdentifier_V3
 
   stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<{ order_id: string | number }>
+
+  cancel_order(args: { order_id: string; symbol: string }): Promise<void>
+
+  market_sell(args: { symbol: string; base_amount: BigNumber }): Promise<void>
 }
 
 // Binance Keys
@@ -127,5 +132,13 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       throw new Error(`Failed to create stop order`)
     }
     return { order_id: result?.orderId }
+  }
+
+  async cancel_order({ order_id, symbol }: { symbol: string; order_id: string }): Promise<void> {
+    this.utils.cancelOrder({ symbol, orderId: Number(order_id) })
+  }
+
+  async market_sell(args: { symbol: string; base_amount: BigNumber }): Promise<void> {
+    this.utils.create_market_sell_order({ base_amount: args.base_amount, pair: args.symbol })
   }
 }

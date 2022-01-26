@@ -198,6 +198,10 @@ export class SpotPositions {
           order_id: stop_order_id,
           symbol,
         })
+      } else {
+        let msg = `${prefix} No stop order found`
+        this.logger.info(msg)
+        this.send_message(msg)
       }
     } catch (error) {
       let msg = `Failed to cancel stop order on ${symbol} - was it cancelled manually?`

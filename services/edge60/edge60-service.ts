@@ -4,7 +4,7 @@
 
 /** Config: */
 const num_coins_to_monitor = 500
-const quote_symbol = "BUSD".toUpperCase()
+const quote_symbol = "USDT".toUpperCase()
 
 import { strict as assert } from "assert"
 require("dotenv").config()

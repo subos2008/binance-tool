@@ -494,6 +494,6 @@ export class AlgoUtils {
   }
 
   async cancelOrder(args: { symbol: string; orderId: number }) {
-    await this.ee.cancelOrder(args)
+    return await this.ee.cancelOrder(args)
   }
 }

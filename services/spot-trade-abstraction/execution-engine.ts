@@ -3,7 +3,7 @@ import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
-import binance from "binance-api-node"
+import binance, { CancelOrderResult, Order } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
 
 import { BigNumber } from "bignumber.js"
@@ -45,7 +45,7 @@ export interface SpotExecutionEngine {
 
   stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<{ order_id: string | number }>
 
-  cancel_order(args: { order_id: string; symbol: string }): Promise<void>
+  cancel_order(args: { order_id: string; symbol: string }): Promise<CancelOrderResult>
 
   market_sell(args: { symbol: string; base_amount: BigNumber }): Promise<void>
 }
@@ -134,11 +134,29 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     return { order_id: result?.orderId }
   }
 
-  async cancel_order({ order_id, symbol }: { symbol: string; order_id: string }): Promise<void> {
-    this.utils.cancelOrder({ symbol, orderId: Number(order_id) })
+  async cancel_order({ order_id, symbol }: { symbol: string; order_id: string }): Promise<CancelOrderResult> {
+    let result = await this.utils.cancelOrder({ symbol, orderId: Number(order_id) })
+    if (result.status === "CANCELED") {
+      this.logger.info(`Sucesfully cancelled order ${order_id}`)
+      return result
+    }
+    let msg = `Failed to cancel order ${order_id} on ${symbol}, status ${result.status}`
+    this.logger.warn(result)
+    throw new Error(msg)
   }
 
   async market_sell(args: { symbol: string; base_amount: BigNumber }): Promise<void> {
-    this.utils.create_market_sell_order({ base_amount: args.base_amount, pair: args.symbol })
+    let order: Order | undefined = await this.utils.create_market_sell_order({
+      base_amount: args.base_amount,
+      pair: args.symbol,
+    })
+    if (order && order.orderId) {
+      // looks like success
+      return
+    }
+    let msg = `Failed to create market sell order for ${args.symbol}`
+    this.logger.warn(msg)
+    this.logger.info(order)
+    throw new Error(msg)
   }
 }

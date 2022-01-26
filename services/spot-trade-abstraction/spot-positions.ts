@@ -13,6 +13,7 @@ import { PositionSizer } from "./position-sizer"
 import BigNumber from "bignumber.js"
 import { InterimSpotPositionsMetaDataPersistantStorage } from "./trade-abstraction-service"
 import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
+import Sentry from "../../lib/sentry"
 
 interface Position {
   direction: "long" | "short"
@@ -171,8 +172,8 @@ export class SpotPositions {
     base_asset: string
     direction: string
     edge: string
-  }) {
-    this.send_message(`Closing Spot position in ${base_asset} from ${quote_asset}, edge ${edge} [NOT IMPLEMENTED]`)
+  }): Promise<boolean> {
+    let prefix: string = `Closing ${edge}:${base_asset} spot position:`
 
     /**
      * 1. Get stop order id and cancel it
@@ -183,22 +184,48 @@ export class SpotPositions {
       exchange_identifier: this.get_exchange_identifier(),
       base_asset,
     }
-    let stop_order_id: string | null =
-      await this.interim_spot_positions_metadata_persistant_storage.get_stop_order_id(spot_position_identifier)
 
     let symbol = this.ee.get_market_identifier_for({ quote_asset, base_asset }).symbol
-    if (stop_order_id) {
-      this.ee.cancel_order({
-        order_id: stop_order_id,
-        symbol,
-      })
+
+    try {
+      /** Cancel stop order if there is one */
+      let stop_order_id: string | null =
+        await this.interim_spot_positions_metadata_persistant_storage.get_stop_order_id(spot_position_identifier)
+
+      if (stop_order_id) {
+        this.send_message(`${prefix} cancelling stop order ${stop_order_id} on ${symbol}`)
+        await this.ee.cancel_order({
+          order_id: stop_order_id,
+          symbol,
+        })
+      }
+    } catch (error) {
+      let msg = `Failed to cancel stop order on ${symbol} - was it cancelled manually?`
+      this.logger.warn(msg)
+      this.logger.warn(error)
+      Sentry.captureException(error)
+      this.send_message(msg)
     }
 
-    let base_amount = await this.exisiting_position_size({ base_asset })
-    this.ee.market_sell({ symbol, base_amount })
+    // Continue even if the attempt to cancel the stop order fails
+
+    try {
+      /** Exit the position */
+      let base_amount = await this.exisiting_position_size({ base_asset })
+      await this.ee.market_sell({ symbol, base_amount }) // throws if it fails
+      // let executed_amount = // .. actually we might not have this info immediately
+      return true // success, really we just have this here to verify that every other code path throws
+    } catch (error) {
+      let msg = `Failed to exit position on ${symbol}`
+      this.logger.warn(msg)
+      this.logger.warn(error)
+      Sentry.captureException(error)
+      this.send_message(msg)
+      throw error
+    }
   }
 
   async open_positions() {
-    return this.positions_persistance.open_positions()
+    return await this.positions_persistance.open_positions()
   }
 }

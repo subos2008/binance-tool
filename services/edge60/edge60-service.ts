@@ -111,34 +111,55 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     }
     let previous_direction = await this.direction_persistance.get_direction(symbol)
     this.direction_persistance.set_direction(symbol, direction)
-    let entry_filter = previous_direction && previous_direction != direction
-    try {
-      let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
+    let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
+
+    if (previous_direction === null) {
       this.send_message(
-        `${direction_string} entry triggered on ${symbol} at ${
-          edge60_parameters.days_of_price_history
-        }d price ${entry_price.toFixed()}. Check trend reversal, previous direction: ${previous_direction}${
-          entry_filter ? "HIT!" : ""
-        }. ${market_data_string}`
+        `possible ${direction_string} entry signal on ${symbol} - check manually if this is a trend reversal.`
       )
-    } catch (e) {
-      this.logger.warn(`Failed to publish to telegram for ${symbol}`)
-      // This can happen if top 100 changes since boot and we refresh the cap list
-      Sentry.captureException(e)
+      return
     }
-    try {
-      if (entry_filter) {
+
+    let direction_change = previous_direction && previous_direction != direction
+    let entry_filter = direction_change
+    if (entry_filter) {
+      try {
+        let days = edge60_parameters.days_of_price_history
+        this.send_message(
+          `trend reverasl ${direction_string} entry signal on ${symbol} at ${days}d price ${entry_price.toFixed()}. ${market_data_string}`
+        )
+      } catch (e) {
+        this.logger.warn(`Failed to publish to telegram for ${symbol}`)
+        // This can happen if top 100 changes since boot and we refresh the cap list
+        Sentry.captureException(e)
+      }
+      try {
         this.publish_entry_to_amqp({
           symbol,
           entry_price,
           direction,
+          previous_direction,
           market_data_for_symbol,
         })
+      } catch (e) {
+        this.logger.warn(`Failed to publish to AMQP for ${symbol}`)
+        // This can happen if top 100 changes since boot and we refresh the cap list
+        Sentry.captureException(e)
       }
-    } catch (e) {
-      this.logger.warn(`Failed to publish to AMQP for ${symbol}`)
-      // This can happen if top 100 changes since boot and we refresh the cap list
-      Sentry.captureException(e)
+    } else {
+      try {
+        this.send_message(
+          `price triggered on ${symbol} at ${
+            edge60_parameters.days_of_price_history
+          }d price ${entry_price.toFixed()}. Check trend reversal, previous direction: ${previous_direction}${
+            entry_filter ? "HIT!" : ""
+          }. ${market_data_string}`
+        )
+      } catch (e) {
+        this.logger.warn(`Failed to publish to telegram for ${symbol}`)
+        // This can happen if top 100 changes since boot and we refresh the cap list
+        Sentry.captureException(e)
+      }
     }
   }
 
@@ -146,11 +167,13 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     symbol,
     entry_price,
     direction,
+    previous_direction,
     market_data_for_symbol,
   }: {
     symbol: string
     entry_price: BigNumber
     direction: "long" | "short"
+    previous_direction: "long" | "short"
     market_data_for_symbol: CoinGeckoMarketData | undefined
   }) {
     let event: Edge60PositionEntrySignal = {
@@ -170,6 +193,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         entry_price: entry_price.toFixed(),
       },
       extra: {
+        previous_direction,
         CoinGeckoMarketData: market_data_for_symbol,
       },
     }

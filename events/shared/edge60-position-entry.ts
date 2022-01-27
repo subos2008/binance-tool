@@ -16,6 +16,7 @@ export interface Edge60PositionEntrySignal {
     entry_price: string
   }
   extra?: {
+    previous_direction?: "long" | "short"
     CoinGeckoMarketData?: CoinGeckoMarketData
   }
 }

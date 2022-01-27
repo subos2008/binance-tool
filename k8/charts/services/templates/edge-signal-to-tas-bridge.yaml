@@ -47,7 +47,7 @@ spec:
         - name: edge-signal-to-tas-bridge
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["node", "./out/./services/edge-signal-to-tas-bridge/tas"]
+          command: ["node", "./out/./services/edge-signal-to-tas-bridge/edge-signal-to-tas-bridge"]
           ports:
           - name: http
             containerPort: 3000

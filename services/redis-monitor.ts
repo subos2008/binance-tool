@@ -27,6 +27,7 @@ const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).
 
 process.on("unhandledRejection", error => {
   logger.error(error)
+  Sentry.captureException(error)
   send_message(`UnhandledPromiseRejection: ${error}`);
 });
 

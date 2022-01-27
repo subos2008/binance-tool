@@ -53,6 +53,7 @@ import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
+  Sentry.captureException(error)
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 

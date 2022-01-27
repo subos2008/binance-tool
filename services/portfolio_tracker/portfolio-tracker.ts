@@ -62,6 +62,7 @@ import { SendMessage } from "../../lib/telegram-v2"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
+  Sentry.captureException(error)
   const send_message = new SendMessage({ service_name, logger }).build()
   send_message(`UnhandledPromiseRejection: ${error}`)
 })

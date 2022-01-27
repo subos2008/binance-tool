@@ -42,8 +42,8 @@ import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { DirectionPersistance } from "./direction-persistance"
 
 process.on("unhandledRejection", (error) => {
-  Sentry.captureException(error)
   logger.error(error)
+  Sentry.captureException(error)
   const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   send_message(`UnhandledPromiseRejection: ${error}`)
 })

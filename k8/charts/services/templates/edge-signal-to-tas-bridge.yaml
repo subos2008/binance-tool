@@ -6,7 +6,7 @@ spec:
   type: ClusterIP
   ports:
   - port: 80
-    targetPort: 3000
+    targetPort: 80
   selector:
     app: edge-signal-to-tas-bridge
 ---    
@@ -50,7 +50,7 @@ spec:
           command: ["node", "./out/./services/edge-signal-to-tas-bridge/edge-signal-to-tas-bridge"]
           ports:
           - name: http
-            containerPort: 3000
+            containerPort: 80
             protocol: TCP
           livenessProbe:
             httpGet:

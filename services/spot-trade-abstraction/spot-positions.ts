@@ -93,7 +93,12 @@ export class SpotPositions {
     base_asset: string
     direction: string
     edge: string
-  }): Promise<{ executed_quote_quantity: string; stop_order_id: string | number; executed_price: BigNumber }> {
+  }): Promise<{
+    executed_quote_quantity: string
+    stop_order_id: string | number
+    executed_price: BigNumber
+    stop_price: BigNumber
+  }> {
     var edge_percentage_stop
 
     switch (args.edge) {
@@ -149,6 +154,7 @@ export class SpotPositions {
     }
     let stop_result = await this.ee.stop_market_sell(stop_cmd)
     let { order_id } = stop_result
+    stop_price = stop_result.stop_price
     let spot_position_identifier: SpotPositionIdentifier = {
       exchange_identifier: this.get_exchange_identifier(),
       base_asset: args.base_asset,
@@ -158,7 +164,12 @@ export class SpotPositions {
       order_id.toString()
     )
 
-    return { executed_quote_quantity: executed_quote_quantity.toFixed(), stop_order_id: order_id, executed_price }
+    return {
+      executed_quote_quantity: executed_quote_quantity.toFixed(),
+      stop_order_id: order_id,
+      executed_price,
+      stop_price,
+    }
   }
 
   /* Close both does [eventually] the order execution/tracking, and maintains redis */

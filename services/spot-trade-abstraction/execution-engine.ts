@@ -43,7 +43,7 @@ export interface SpotExecutionEngine {
 
   get_exchange_identifier(): ExchangeIdentifier_V3
 
-  stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<{ order_id: string | number }>
+  stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<{ order_id: string | number; stop_price: BigNumber }>
 
   cancel_order(args: { order_id: string; symbol: string }): Promise<CancelOrderResult>
 
@@ -131,7 +131,8 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     if (!result?.orderId) {
       throw new Error(`Failed to create stop order`)
     }
-    return { order_id: result?.orderId }
+    let stop_price = result.stopPrice ? new BigNumber(result.stopPrice) : cmd.trigger_price
+    return { order_id: result.orderId, stop_price }
   }
 
   async cancel_order({ order_id, symbol }: { symbol: string; order_id: string }): Promise<CancelOrderResult> {

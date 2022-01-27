@@ -83,7 +83,7 @@ export class TradeAbstractionService {
     this.send_message(
       `Entered ${cmd.direction}=long position on ${cmd.edge}:${
         cmd.base_asset
-      } at price ${result.executed_price.toFixed()}, created stop at .. need to return this`
+      } at price ${result.executed_price.toFixed()}, created stop at ${result.stop_price.toFixed()}`
     )
     return result
   }

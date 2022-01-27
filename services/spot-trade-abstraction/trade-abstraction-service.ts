@@ -79,7 +79,13 @@ export class TradeAbstractionService {
       throw new Error(msg) // turn this into a 3xx or 4xx
     }
 
-    return await this.positions.open_position({ quote_asset: this.quote_asset, ...cmd })
+    let result = await this.positions.open_position({ quote_asset: this.quote_asset, ...cmd })
+    this.send_message(
+      `Entered ${cmd.direction}=long position on ${cmd.edge}:${
+        cmd.base_asset
+      } at price ${result.executed_price.toFixed()}, created stop at .. need to return this`
+    )
+    return result
   }
 
   // or signal_short or signal_exit/close

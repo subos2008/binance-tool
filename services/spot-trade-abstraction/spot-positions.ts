@@ -93,7 +93,7 @@ export class SpotPositions {
     base_asset: string
     direction: string
     edge: string
-  }): Promise<{ executed_quote_quantity: string; stop_order_id: string | number }> {
+  }): Promise<{ executed_quote_quantity: string; stop_order_id: string | number; executed_price: BigNumber }> {
     var edge_percentage_stop
 
     switch (args.edge) {
@@ -158,7 +158,7 @@ export class SpotPositions {
       order_id.toString()
     )
 
-    return { executed_quote_quantity: executed_quote_quantity.toFixed(), stop_order_id: order_id }
+    return { executed_quote_quantity: executed_quote_quantity.toFixed(), stop_order_id: order_id, executed_price }
   }
 
   /* Close both does [eventually] the order execution/tracking, and maintains redis */

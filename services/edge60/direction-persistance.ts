@@ -33,7 +33,7 @@ export class DirectionPersistance {
   }
 
   private _market_to_key(symbol: string): string {
-    return `${this.prefix}/signal_direction/${symbol.toUpperCase()}`
+    return `${this.prefix}:signal_direction:${symbol.toUpperCase()}`
   }
 
   async set_direction(symbol: string, direction: Direction) {

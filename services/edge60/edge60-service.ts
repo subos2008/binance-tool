@@ -305,7 +305,7 @@ async function main() {
       send_message,
       direction_persistance: new DirectionPersistance({
         logger,
-        prefix: `${service_name}/spot/binance`,
+        prefix: `${service_name}:spot:binance:usd_quote`,
         send_message,
       }),
     })

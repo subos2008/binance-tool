@@ -218,9 +218,7 @@ export class Edge60EntrySignals {
 
       if (direction === undefined) {
         this.logger.info(
-          `No signal on ${symbol}: ${high.toFixed()} not higher than ${
-            highest_price.toFixed()
-          } and ${low.toFixed()} not lower than ${lowest_price.toFixed()}`
+          `${symbol}: No signal H: ${high.toFixed()} vs ${highest_price.toFixed()} L: ${low.toFixed()} vs ${lowest_price.toFixed()}`
         )
       }
     } catch (e) {

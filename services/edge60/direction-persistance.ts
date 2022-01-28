@@ -42,11 +42,11 @@ export class DirectionPersistance {
     if (previous_direction === null) {
       this.send_message(`Initialising edge60 direction for ${symbol} to ${direction}`)
     }
-    this.setAsync(this._market_to_key(symbol), direction)
+    await this.setAsync(this._market_to_key(symbol), direction)
   }
 
   async get_direction(symbol: string): Promise<Direction | null> {
-    let direction = this.getAsync(this._market_to_key(symbol))
+    let direction = await this.getAsync(this._market_to_key(symbol))
     this.logger.info(`Loaded direction ${direction} for ${symbol}`)
     return direction
   }

@@ -194,7 +194,7 @@ export class Edge60EntrySignals {
       if (high.isGreaterThan(highest_price)) {
         direction = "long"
         this.logger.info(
-          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: greater than ${highest_price.toFixed()}`
+          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: ${high.toFixed()} greater than ${highest_price.toFixed()}`
         )
         this.callbacks.enter_position({
           symbol: this.symbol,
@@ -207,7 +207,7 @@ export class Edge60EntrySignals {
       if (low.isLessThan(lowest_price)) {
         direction = "short"
         this.logger.info(
-          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}: less than ${lowest_price.toFixed()}`
+          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}: ${low.toFixed()} less than ${lowest_price.toFixed()}`
         )
         this.callbacks.enter_position({
           symbol: this.symbol,

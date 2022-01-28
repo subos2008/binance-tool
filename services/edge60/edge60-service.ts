@@ -149,11 +149,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     } else {
       try {
         this.send_message(
-          `price triggered on ${symbol} at ${
-            edge60_parameters.days_of_price_history
-          }d price ${entry_price.toFixed()}. Check trend reversal, previous direction: ${previous_direction}${
-            entry_filter ? "HIT!" : ""
-          }. ${market_data_string}`
+          `${symbol} ${direction} price triggered but not trend reversal`
         )
       } catch (e) {
         this.logger.warn(`Failed to publish to telegram for ${symbol}`)

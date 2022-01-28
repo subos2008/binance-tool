@@ -97,6 +97,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     entry_price: BigNumber
     direction: "long" | "short"
   }): Promise<void> {
+    let base_asset = this.base_asset_for_symbol(symbol)
     let market_data_for_symbol: CoinGeckoMarketData | undefined
     let market_data_string = ""
     try {
@@ -109,8 +110,8 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       // This can happen if top 100 changes since boot and we refresh the cap list
       Sentry.captureException(e)
     }
-    let previous_direction = await this.direction_persistance.get_direction(symbol)
-    this.direction_persistance.set_direction(symbol, direction)
+    let previous_direction = await this.direction_persistance.get_direction(base_asset)
+    this.direction_persistance.set_direction(base_asset, direction)
     let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
 
     if (previous_direction === null) {
@@ -148,9 +149,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       }
     } else {
       try {
-        this.send_message(
-          `${symbol} ${direction} price triggered but not trend reversal`
-        )
+        this.send_message(`${symbol} ${direction} price triggered but not trend reversal`)
       } catch (e) {
         this.logger.warn(`Failed to publish to telegram for ${symbol}`)
         // This can happen if top 100 changes since boot and we refresh the cap list

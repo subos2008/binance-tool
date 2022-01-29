@@ -51,7 +51,7 @@ export class SpotRedisPositionsStateAdapter implements SpotPositionsPersistance 
     return this.legacy.get_position_size(_pi)
   }
 
-  async open_positions(): Promise<SpotPositionIdentifier[]> {
+  async list_open_positions(): Promise<SpotPositionIdentifier[]> {
     let legacy_pis: LegacyPositionIdentifier[] = await this.legacy.open_positions()
     console.log(legacy_pis)
     return legacy_pis.map((x) => ({

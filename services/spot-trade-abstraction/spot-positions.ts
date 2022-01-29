@@ -241,6 +241,6 @@ export class SpotPositions {
   }
 
   async open_positions() {
-    return await this.positions_persistance.open_positions()
+    return await this.positions_persistance.list_open_positions()
   }
 }

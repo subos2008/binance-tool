@@ -58,7 +58,7 @@ export interface SpotPositionsPersistance {
     position_initialisation_data: SpotPositionInitialisationData
   ): Promise<void>
 
-  open_positions(): Promise<SpotPositionIdentifier[]>
+  list_open_positions(): Promise<SpotPositionIdentifier[]>
   position_size(pi: SpotPositionIdentifier): Promise<BigNumber>
 
   /* hacky*/

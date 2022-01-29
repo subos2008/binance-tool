@@ -30,9 +30,9 @@ if (token === undefined) {
   throw new Error("TELEGRAM_KEY must be provided!")
 }
 
-const TAS_URL = process.env.TRADE_ABSTRACTION_SERVICE_URL
+const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
 if (TAS_URL === undefined) {
-  throw new Error("TRADE_ABSTRACTION_SERVICE_URL must be provided!")
+  throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
 }
 
 var app = express()

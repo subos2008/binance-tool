@@ -1,9 +1,9 @@
-const TAS_URL = process.env.TRADE_ABSTRACTION_SERVICE_URL
+const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
 if (TAS_URL === undefined) {
-  throw new Error("TRADE_ABSTRACTION_SERVICE_URL must be provided!")
+  throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
 }
 if (!TAS_URL.startsWith("http")) {
-  throw new Error("TRADE_ABSTRACTION_SERVICE_URL should contain http/s!")
+  throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL should contain http/s!")
 }
 
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"

@@ -32,12 +32,12 @@ BigNumber.prototype.valueOf = function () {
 const yargs = require("yargs")
 const c = require("ansi-colors")
 
-import { RedisPositionsState } from "../classes/persistent_state/redis_positions_state"
-const redis_positions = new RedisPositionsState({ logger, redis })
+import { RedisSpotPositionsState } from "../classes/persistent_state/redis-spot-positions-state-v3"
+const redis_positions = new RedisSpotPositionsState({ logger, redis })
 
 import { Position } from "../classes/position"
-import { create_position_identifier_from_tuple, PositionIdentifier } from "../events/shared/position-identifier"
-import { ExchangeIdentifier } from "../events/shared/exchange-identifier"
+import { create_position_identifier_from_tuple, SpotPositionIdentifier_V3 } from "../events/shared/position-identifier"
+import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
 import { BinancePriceGetter } from "../interfaces/exchange/binance/binance-price-getter"
 import { CurrentPriceGetter } from "../interfaces/exchange/generic/price-getter"
 
@@ -56,14 +56,14 @@ async function main() {
           description: "base asset, i.e. if you bought BTC-USDT this would be BTC",
           type: "string",
           demandOption: true,
-          choices: (await redis_positions.open_positions()).map((p: PositionIdentifier) => p.baseAsset),
+          choices: (await redis_positions.open_positions()).map((p: SpotPositionIdentifier_V3) => p.base_asset),
         },
         exchange: {
           description: "exchange",
           type: "string",
           default: "binance",
           choices: (await redis_positions.open_positions()).map(
-            (p: PositionIdentifier) => p.exchange_identifier.exchange
+            (p: SpotPositionIdentifier_V3) => p.exchange_identifier.exchange
           ),
         },
         account: {
@@ -71,7 +71,7 @@ async function main() {
           type: "string",
           default: "default",
           choices: (await redis_positions.open_positions()).map(
-            (p: PositionIdentifier) => p.exchange_identifier.account
+            (p: SpotPositionIdentifier_V3) => p.exchange_identifier.account
           ),
         },
       },
@@ -85,14 +85,14 @@ async function main() {
           description: "base asset, i.e. if you bought BTC-USDT this would be BTC",
           type: "string",
           demandOption: true,
-          choices: (await redis_positions.open_positions()).map((p: PositionIdentifier) => p.baseAsset),
+          choices: (await redis_positions.open_positions()).map((p: SpotPositionIdentifier_V3) => p.base_asset),
         },
         exchange: {
           description: "exchange",
           type: "string",
           default: "binance",
           choices: (await redis_positions.open_positions()).map(
-            (p: PositionIdentifier) => p.exchange_identifier.exchange
+            (p: SpotPositionIdentifier_V3) => p.exchange_identifier.exchange
           ),
         },
         account: {
@@ -100,7 +100,7 @@ async function main() {
           type: "string",
           default: "default",
           choices: (await redis_positions.open_positions()).map(
-            (p: PositionIdentifier) => p.exchange_identifier.account
+            (p: SpotPositionIdentifier_V3) => p.exchange_identifier.account
           ),
         },
       },
@@ -115,7 +115,7 @@ let price_getters: { [exchange: string]: CurrentPriceGetter } = {}
 function mint_price_getter({
   exchange_identifier,
 }: {
-  exchange_identifier: ExchangeIdentifier
+  exchange_identifier: ExchangeIdentifier_V3
 }): CurrentPriceGetter {
   if (exchange_identifier.exchange === "binance") {
     const Binance = require("binance-api-node").default
@@ -132,7 +132,7 @@ async function get_current_price({
   exchange_identifier,
   market_symbol,
 }: {
-  exchange_identifier: ExchangeIdentifier
+  exchange_identifier: ExchangeIdentifier_V3
   market_symbol: string
 }): Promise<BigNumber> {
   if (!(exchange_identifier.exchange in price_getters)) {
@@ -158,7 +158,7 @@ async function list_positions() {
       try {
         let current_price: BigNumber = await get_current_price({
           exchange_identifier,
-          market_symbol: `${position_identifier.baseAsset}${quote_asset}`,
+          market_symbol: `${position_identifier.base_asset}${quote_asset}`,
         })
         let entry_price: BigNumber = await p.initial_entry_price()
         percentage_change = current_price.dividedBy(entry_price).times(100).minus(100).dp(1)
@@ -168,9 +168,9 @@ async function list_positions() {
         }
       } catch (e) {}
       price_change_string = `${price_change_string} vs ${quote_asset}`
-      console.log(`${position_identifier.baseAsset}: ${price_change_string}`)
+      console.log(`${position_identifier.base_asset}: ${price_change_string}`)
     } catch (err) {
-      console.error(`Error processing info for ${position_identifier.baseAsset}: ${err}`)
+      console.error(`Error processing info for ${position_identifier.base_asset}: ${err}`)
     }
   }
   redis.quit()
@@ -188,7 +188,7 @@ async function fixinate() {
   //     let p = new Position({ logger, send_message, redis_positions, position_identifier })
   //     await p.initial_entry_quote_asset()
   //   } catch (err) {
-  //     console.error(`Error processing info for ${position_identifier.baseAsset}: ${err}`)
+  //     console.error(`Error processing info for ${position_identifier.base_asset}: ${err}`)
   //     if (err.toString().includes("initial_entry_quote_asset missing")) {
   //       await redis_positions._patch_initial_entry_quote_asset(position_identifier, {
   //         initial_entry_quote_asset: "USDT",

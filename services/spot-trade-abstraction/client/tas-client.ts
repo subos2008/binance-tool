@@ -51,25 +51,26 @@ export class SpotTradeAbstractionServiceClient {
    * @private Make a HTTP request to a specific endpoint. Private endpoints are automatically signed.
    */
   async _call(method: Method, endpoint: string, params?: string | object): Promise<any> {
-    const options = {
-      url: endpoint,
-      timeout: 10 * 1000, // ms, 1000 = 1 second
-      headers: {},
-      method: method,
-      transformResponse: (res: string) => {
-        // Do your own parsing here if needed ie JSON.parse(res);
-        return JSONBigNumber.parse(res)
-      },
-      json: false, // avoid parsing json with the built in libs as they use floating point numbers
-      params,
-    }
-
     try {
+      const options = {
+        url: endpoint,
+        timeout: 10 * 1000, // ms, 1000 = 1 second
+        headers: {},
+        method: method,
+        transformResponse: (res: string) => {
+          // Do your own parsing here if needed ie JSON.parse(res);
+          return JSONBigNumber.parse(res)
+        },
+        json: false, // avoid parsing json with the built in libs as they use floating point numbers
+        params,
+      }
+
       let response = await axios(options)
+      console.log(response)
       if (response.status == 200) {
         return response.data
       }
-      throw new Error(`Bad response code calling${options.url}, response: ${response}`)
+      throw new Error(`Bad response code calling ${options.url}, response: ${response}`)
     } catch (error) {
       Sentry.captureException(error)
       this.logger.error(error)

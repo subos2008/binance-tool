@@ -167,6 +167,8 @@ export class Edge60EntrySignals {
       throw `Got a short timeframe candle`
     }
 
+    this.logger.info({ signal: "new_candle", symbol }, `${symbol} ingesting new candle`)
+
     try {
       let potential_entry_price = new BigNumber(candle["close"])
       let high = new BigNumber(candle["high"])

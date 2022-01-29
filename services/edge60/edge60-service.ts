@@ -100,6 +100,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     let base_asset = this.base_asset_for_symbol(symbol)
     let market_data_for_symbol: CoinGeckoMarketData | undefined
     let market_data_string = ""
+
     try {
       market_data_for_symbol = this.market_data_for_symbol(symbol)
       market_data_string = `RANK: ${market_data_for_symbol.market_cap_rank}, MCAP: ${humanNumber(
@@ -126,9 +127,9 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     if (entry_filter) {
       try {
         let days = edge60_parameters.days_of_price_history
-        this.send_message(
-          `trend reverasl ${direction_string} entry signal on ${symbol} at ${days}d price ${entry_price.toFixed()}. ${market_data_string}`
-        )
+        let msg = `trend reverasl ${direction_string} entry signal on ${symbol} at ${days}d price ${entry_price.toFixed()}. ${market_data_string}`
+        this.logger.info({ signal: "entry", direction, symbol }, msg)
+        this.send_message(msg)
       } catch (e) {
         this.logger.warn(`Failed to publish to telegram for ${symbol}`)
         // This can happen if top 100 changes since boot and we refresh the cap list

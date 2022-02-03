@@ -35,17 +35,19 @@ process.on("unhandledRejection", (error) => {
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
+import { get_redis_client, set_redis_logger } from "../../lib/redis"
+set_redis_logger(logger)
+const redis = get_redis_client()
+
 import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData, OrderCallbacks } from "../../interfaces/order_callbacks"
 import { SpotPositionTracker } from "./position-tracker"
 
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
 import BinanceFoo from "binance-api-node"
 import { Binance } from "binance-api-node"
-
 import { ExchangeInfo } from "binance-api-node"
-set_redis_logger(logger)
-const redis = get_redis_client()
+
+
 
 let order_execution_tracker: OrderExecutionTracker | null = null
 

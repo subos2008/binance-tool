@@ -27,6 +27,8 @@ const logger: Logger = new LoggerClass({ silent: false })
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
+import { RedisClient } from "redis"
+
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -40,35 +42,68 @@ process.on("unhandledRejection", (error) => {
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
+import { get_redis_client, set_redis_logger } from "../../lib/redis"
+
 const BinanceFoo = require("binance-api-node").default
 import { Binance } from "binance-api-node"
 import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData } from "../../interfaces/order_callbacks"
+import { AuthorisedEdgeType } from "../../events/shared/position-identifier"
+import { OrderToEdgeMapper } from "../../classes/persistent_state/order-to-edge-mapper"
 
 let order_execution_tracker: OrderExecutionTracker | null = null
 
 class MyOrderCallbacks {
   send_message: Function
   logger: Logger
+  order_to_edge_mapper: OrderToEdgeMapper | undefined
 
-  constructor({ send_message, logger }: { send_message: (msg: string) => void; logger: Logger }) {
+  constructor({
+    send_message,
+    logger,
+    redis,
+  }: {
+    send_message: (msg: string) => void
+    logger: Logger
+    redis: RedisClient | undefined
+  }) {
     assert(logger)
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
+    if (redis) this.order_to_edge_mapper = new OrderToEdgeMapper({ logger, redis })
+  }
+
+  async get_edge_for_order(data: BinanceOrderData): Promise<AuthorisedEdgeType | undefined> {
+    let edge = undefined
+    try {
+      if (!this.order_to_edge_mapper)
+        throw new Error(`OrderToEdgeMapper not initialised, maybe redis was down at startup`)
+      edge = await this.order_to_edge_mapper.get_edge_for_order(data.orderId)
+    } catch (error) {
+      this.logger.warn(error)
+      // Non fatal there are valid times for this
+      Sentry.captureException(error)
+    }
+    this.logger.info(`Loaded edge for order ${data.orderId}: ${edge} (undefined/unknown can be valid here)`)
+    return undefined
   }
 
   async order_created(data: BinanceOrderData): Promise<void> {
     this.logger.info(data)
+    let edge: AuthorisedEdgeType | undefined = await this.get_edge_for_order(data)
+
     if (data.orderType != "MARKET") {
       switch (data.orderType) {
         case "STOP_LOSS_LIMIT":
           this.send_message(
-            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.stopPrice} to ${data.price}.`
+            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.stopPrice} to ${data.price} (edge: ${edge}).`
           )
           break
         default:
-          this.send_message(`Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.price}.`)
+          this.send_message(
+            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.price} (edge: ${edge}).`
+          )
       }
     }
   }
@@ -96,7 +131,16 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  let order_callbacks = new MyOrderCallbacks({ logger, send_message })
+  let redis: RedisClient | undefined
+  try {
+    set_redis_logger(logger)
+    redis = get_redis_client()
+  } catch (error) {
+    // We don't want redis failures to take down this logger service
+    // redis is just used to print the edge for information
+  }
+
+  let order_callbacks = new MyOrderCallbacks({ logger, send_message, redis })
 
   order_execution_tracker = new OrderExecutionTracker({
     ee,

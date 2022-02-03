@@ -111,12 +111,20 @@ export class SpotPositionTracker {
   private async load_position_for_order(generic_order_data: GenericOrderData): Promise<Position> {
     let { baseAsset, exchange_identifier, orderId } = generic_order_data
 
+    let edge: AuthorisedEdgeType | undefined
     try {
       /* We can expect this to error, certainly initally as we have stops already open,
       Any manually created orders will also throw here */
-      let edge: AuthorisedEdgeType = await this.order_to_edge_mapper.get_edge_for_order(orderId)
-    } catch (error) {}
+      edge = await this.order_to_edge_mapper.get_edge_for_order(orderId)
+    } catch (error) {
+      /* Hmm, what do we do by default if an order doesn't have an edge...
+      ... we could set it to undefined the string for now perhaps?
+      ... I mean it will always happen with manual orders...
+      'unknown'? */
+      this.logger.warn(`Unknown edge for orderId ${orderId}`)
+    }
 
+    if (!edge) edge = "unknown"
     let position_identifier: SpotPositionIdentifier_V3 = {
       exchange_identifier: generic_order_data.exchange_identifier,
       base_asset: baseAsset,

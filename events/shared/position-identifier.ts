@@ -9,7 +9,7 @@ export function create_position_identifier_from_tuple({
   edge,
 }: {
   baseAsset: string
-  account: 'default'
+  account: "default"
   exchange: string
   exchange_type: "spot"
   edge: AuthorisedEdgeType
@@ -23,7 +23,8 @@ export function create_position_identifier_from_tuple({
   }
 }
 
-export type AuthorisedEdgeType = "edge60"
+// We need unknown for manual orders where we have no information
+export type AuthorisedEdgeType = "edge60" | "unknown"
 
 export interface SpotPositionIdentifier_V3 {
   exchange_identifier: ExchangeIdentifier_V3 // yeah exchange, not market, for spot - but market for futures

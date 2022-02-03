@@ -50,6 +50,8 @@ process.on("unhandledRejection", (error) => {
 
 import { BinanceSpotOrdersToAMQP } from "./spot-order"
 
+import { get_redis_client, set_redis_logger } from "../../lib/redis"
+
 const health = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health.addSubsystem({ name: "global", ready: true, healthy: true })
 
@@ -57,13 +59,22 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
+  let redis: RedisClient | undefined
+  try {
+    set_redis_logger(logger)
+    redis = get_redis_client()
+  } catch (error) {
+    // We don't want redis failures to take down this service
+    // redis is only used for edge information
+  }
+
   try {
     let health_and_readiness = health.addSubsystem({
       name: "binance-orders-to-amqp",
       ready: false,
       healthy: false,
     })
-    let portfolio_to_amqp = new BinanceSpotOrdersToAMQP({ send_message, logger, health_and_readiness })
+    let portfolio_to_amqp = new BinanceSpotOrdersToAMQP({ send_message, logger, health_and_readiness, redis })
     await portfolio_to_amqp.start()
   } catch (error: any) {
     Sentry.captureException(error)
@@ -83,6 +94,7 @@ main().catch((error) => {
 })
 
 import express, { Request, Response } from "express"
+import { RedisClient } from "redis"
 var app = express()
 app.get("/health", function (req: Request, res: Response) {
   if (health.healthy()) res.send({ status: "OK" })

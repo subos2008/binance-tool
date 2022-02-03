@@ -71,38 +71,21 @@ class MyOrderCallbacks {
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-    if (redis) this.order_to_edge_mapper = new OrderToEdgeMapper({ logger, redis })
-  }
-
-  async get_edge_for_order(data: BinanceOrderData): Promise<AuthorisedEdgeType | undefined> {
-    let edge = undefined
-    try {
-      if (!this.order_to_edge_mapper)
-        throw new Error(`OrderToEdgeMapper not initialised, maybe redis was down at startup`)
-      edge = await this.order_to_edge_mapper.get_edge_for_order(data.orderId)
-    } catch (error) {
-      this.logger.warn(error)
-      // Non fatal there are valid times for this
-      Sentry.captureException(error)
-    }
-    this.logger.info(`Loaded edge for order ${data.orderId}: ${edge} (undefined/unknown can be valid here)`)
-    return undefined
   }
 
   async order_created(data: BinanceOrderData): Promise<void> {
     this.logger.info(data)
-    let edge: AuthorisedEdgeType | undefined = await this.get_edge_for_order(data)
 
     if (data.orderType != "MARKET") {
       switch (data.orderType) {
         case "STOP_LOSS_LIMIT":
           this.send_message(
-            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.stopPrice} to ${data.price} (edge: ${edge}).`
+            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.stopPrice} to ${data.price} (edge: ${data.edge}).`
           )
           break
         default:
           this.send_message(
-            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.price} (edge: ${edge}).`
+            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.price} (edge: ${data.edge}).`
           )
       }
     }
@@ -147,6 +130,7 @@ async function main() {
     send_message,
     logger,
     order_callbacks,
+    redis
   })
 
   order_execution_tracker

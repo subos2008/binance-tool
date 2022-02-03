@@ -26,6 +26,8 @@
 //   totalQuoteTradeQuantity: string;
 // }
 
+import { AuthorisedEdgeType } from "../events/shared/position-identifier";
+
 export interface BinanceOrderData {
   orderId: string
   orderTime: number
@@ -40,6 +42,7 @@ export interface BinanceOrderData {
   orderStatus?: string
   totalQuoteTradeQuantity: string
   averageExecutionPrice?: string // Added by us
+  edge?: AuthorisedEdgeType // Added by us
 }
 
 export interface OrderCallbacks {

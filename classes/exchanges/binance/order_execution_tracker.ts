@@ -14,6 +14,9 @@ import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/order_call
 
 import * as Sentry from "@sentry/node"
 import { Binance, ExecutionReport, UserDataStreamEvent } from "binance-api-node"
+import { RedisClient } from "redis"
+import { OrderToEdgeMapper } from "../../persistent_state/order-to-edge-mapper"
+import { AuthorisedEdgeType } from "../../../events/shared/position-identifier"
 
 export class OrderExecutionTracker {
   send_message: Function
@@ -23,6 +26,7 @@ export class OrderExecutionTracker {
   order_state: OrderState | undefined
   order_callbacks: OrderCallbacks | undefined
   print_all_trades: boolean = false
+  order_to_edge_mapper: OrderToEdgeMapper | undefined
 
   // All numbers are expected to be passed in as strings
   constructor({
@@ -32,6 +36,7 @@ export class OrderExecutionTracker {
     order_state,
     order_callbacks,
     print_all_trades,
+    redis,
   }: {
     ee: Binance
     send_message: (msg: string) => void
@@ -39,6 +44,7 @@ export class OrderExecutionTracker {
     order_state?: OrderState
     order_callbacks?: OrderCallbacks
     print_all_trades?: boolean
+    redis?: RedisClient
   }) {
     assert(logger)
     this.logger = logger
@@ -55,6 +61,13 @@ export class OrderExecutionTracker {
     process.on("exit", () => {
       this.shutdown_streams()
     })
+
+    if (redis) {
+      this.order_to_edge_mapper = new OrderToEdgeMapper({ logger, redis })
+      this.logger.info(`Initialised OrderToEdgeMapper`)
+    } else {
+      this.logger.warn(`No OrderToEdgeMapper available`)
+    }
   }
 
   async main() {
@@ -74,7 +87,7 @@ export class OrderExecutionTracker {
 
   async monitor_user_stream() {
     this.closeUserWebsocket = await this.ee.ws.user(async (_data: UserDataStreamEvent) => {
-      let data : ExecutionReport = _data as ExecutionReport
+      let data: ExecutionReport = _data as ExecutionReport
       try {
         const { eventType } = data
         if (eventType !== "executionReport") {
@@ -98,6 +111,21 @@ export class OrderExecutionTracker {
         this.send_message(msg)
       }
     })
+  }
+
+  async get_edge_for_order(data: BinanceOrderData): Promise<AuthorisedEdgeType | undefined> {
+    let edge = undefined
+    try {
+      if (!this.order_to_edge_mapper)
+        throw new Error(`OrderToEdgeMapper not initialised, maybe redis was down at startup`)
+      edge = await this.order_to_edge_mapper.get_edge_for_order(data.orderId)
+    } catch (error) {
+      this.logger.warn(error)
+      // Non fatal there are valid times for this
+      Sentry.captureException(error)
+    }
+    this.logger.info(`Loaded edge for order ${data.orderId}: ${edge} (undefined/unknown can be valid here)`)
+    return undefined
   }
 
   async processExecutionReport(data: any) {
@@ -130,65 +158,92 @@ export class OrderExecutionTracker {
       })
     }
 
-    if (this.print_all_trades) {
-      this.logger.info(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`)
-      this.logger.info(
-        `..price: ${price}, quantity: ${quantity}, averageExecutionPrice: ${data.averageExecutionPrice}`
-      )
+    let edge: AuthorisedEdgeType | undefined
+    try {
+      /** Add edge if known */
+      edge = await this.get_edge_for_order(data)
+      data.edge = edge
+    } catch (error) {
+      this.logger.error(error)
+      Sentry.withScope(function (scope) {
+        scope.setTag("operation", "processExecutionReport")
+        scope.setTag("pair", symbol)
+        if (orderId) scope.setTag("orderId", orderId.toString())
+        Sentry.captureException(error)
+      })
     }
 
-    if (orderStatus === "NEW") {
-      // Originally orders were all first added here but as we re-architect they will become
-      // more likely to pre-exist
-      if (this.order_state) await this.order_state.add_new_order(orderId, { symbol, side, orderType })
-      if (this.order_callbacks && this.order_callbacks.order_created)
-        await this.order_callbacks.order_created(data)
-      return
-    }
+    try {
+      if (this.print_all_trades) {
+        this.logger.info(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`)
+        this.logger.info(
+          `..price: ${price}, quantity: ${quantity}, averageExecutionPrice: ${data.averageExecutionPrice}`
+        )
+      }
 
-    if (orderStatus === "PARTIALLY_FILLED") {
+      if (orderStatus === "NEW") {
+        // Originally orders were all first added here but as we re-architect they will become
+        // more likely to pre-exist
+        if (this.order_state) await this.order_state.add_new_order(orderId, { symbol, side, orderType })
+        if (this.order_callbacks && this.order_callbacks.order_created)
+          await this.order_callbacks.order_created(data)
+        return
+      }
+
+      if (orderStatus === "PARTIALLY_FILLED") {
+        if (this.order_state)
+          await this.order_state.set_total_executed_quantity(
+            orderId,
+            new BigNumber(totalTradeQuantity),
+            false,
+            orderStatus
+          )
+        if (this.order_callbacks && this.order_callbacks.order_filled_or_partially_filled)
+          await this.order_callbacks.order_filled_or_partially_filled(data)
+        return
+      }
+
+      if (orderStatus === "CANCELED" /*&& orderRejectReason === "NONE"*/) {
+        // `Order was cancelled, presumably by user. Exiting.`, (orderRejectReason === "NONE happens when user cancelled)
+        if (this.order_state)
+          await this.order_state.set_order_cancelled(orderId, true, orderRejectReason, orderStatus)
+        if (this.order_callbacks && this.order_callbacks.order_cancelled)
+          await this.order_callbacks.order_cancelled(data)
+        return
+      }
+
+      // EXPIRED can happen on OCO orders when the other side hits or if a token is de-listed
+      if (orderStatus === "EXPIRED") {
+        if (this.order_callbacks && this.order_callbacks.order_expired)
+          await this.order_callbacks.order_expired(data)
+        return
+      }
+
+      if (orderStatus !== "FILLED") {
+        throw new Error(`Unexpected orderStatus: ${orderStatus}. Reason: ${data.r}`)
+      }
+
       if (this.order_state)
         await this.order_state.set_total_executed_quantity(
           orderId,
           new BigNumber(totalTradeQuantity),
-          false,
+          true,
           orderStatus
         )
       if (this.order_callbacks && this.order_callbacks.order_filled_or_partially_filled)
         await this.order_callbacks.order_filled_or_partially_filled(data)
-      return
+      if (this.order_callbacks) await this.order_callbacks.order_filled(data)
+    } catch (error) {
+      this.logger.error(error)
+      Sentry.withScope(function (scope) {
+        scope.setTag("operation", "processExecutionReport")
+        scope.setTag("pair", symbol)
+        if (edge) scope.setTag("edge", edge)
+        if (orderId) scope.setTag("orderId", orderId.toString())
+        Sentry.captureException(error)
+      })
+      throw error
     }
-
-    if (orderStatus === "CANCELED" /*&& orderRejectReason === "NONE"*/) {
-      // `Order was cancelled, presumably by user. Exiting.`, (orderRejectReason === "NONE happens when user cancelled)
-      if (this.order_state)
-        await this.order_state.set_order_cancelled(orderId, true, orderRejectReason, orderStatus)
-      if (this.order_callbacks && this.order_callbacks.order_cancelled)
-        await this.order_callbacks.order_cancelled(data)
-      return
-    }
-
-    // EXPIRED can happen on OCO orders when the other side hits or if a token is de-listed
-    if (orderStatus === "EXPIRED") {
-      if (this.order_callbacks && this.order_callbacks.order_expired)
-        await this.order_callbacks.order_expired(data)
-      return
-    }
-
-    if (orderStatus !== "FILLED") {
-      throw new Error(`Unexpected orderStatus: ${orderStatus}. Reason: ${data.r}`)
-    }
-
-    if (this.order_state)
-      await this.order_state.set_total_executed_quantity(
-        orderId,
-        new BigNumber(totalTradeQuantity),
-        true,
-        orderStatus
-      )
-    if (this.order_callbacks && this.order_callbacks.order_filled_or_partially_filled)
-      await this.order_callbacks.order_filled_or_partially_filled(data)
-    if (this.order_callbacks) await this.order_callbacks.order_filled(data)
   }
 
   // Event Listeners

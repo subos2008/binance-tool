@@ -30,6 +30,7 @@ import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { Connection } from "amqplib"
+import { RedisClient } from "redis"
 
 const exchange_identifier = { exchange: "binance", account: "default" }
 
@@ -92,10 +93,12 @@ export class BinanceSpotOrdersToAMQP {
     send_message,
     logger,
     health_and_readiness,
+    redis,
   }: {
     send_message: (msg: string) => void
     logger: Logger
     health_and_readiness: HealthAndReadinessSubsystem
+    redis?: RedisClient
   }) {
     assert(logger)
     this.logger = logger
@@ -113,6 +116,7 @@ export class BinanceSpotOrdersToAMQP {
       send_message,
       logger,
       order_callbacks: this,
+      redis
     })
 
     this.publisher = new BinanceOrderPublisher({

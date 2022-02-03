@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: binance-orders-to-amqp
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "binance-orders-to-amqp"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "binance-orders-to-amqp"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "binance-orders-to-amqp"}'
+        ad.datadoghq.com/binance-orders-to-amqp.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "binance-orders-to-amqp"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+      containers:
+        - name: binance-orders-to-amqp
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "./out/./services/binance-orders-to-amqp/binance-orders-to-amqp", "--live"]
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          env:
+            - name: SENTRY_DSN
+              value: "https://39c6f58d63334b43bf0986cf24d863a5@o369902.ingest.sentry.io/6114372"
+{{- include "binance.vars" . | nindent 12 }}
+{{- include "datadog.vars" . | nindent 12 }}
+{{- include "telegram.vars" . | nindent 12 }}
+{{- include "amqp.vars" . | nindent 12 }}
+{{- include "redis.vars" . | nindent 12 }}

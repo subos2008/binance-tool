@@ -47,8 +47,6 @@ import BinanceFoo from "binance-api-node"
 import { Binance } from "binance-api-node"
 import { ExchangeInfo } from "binance-api-node"
 
-
-
 let order_execution_tracker: OrderExecutionTracker | null = null
 
 class MyOrderCallbacks implements OrderCallbacks {
@@ -80,13 +78,13 @@ class MyOrderCallbacks implements OrderCallbacks {
   async order_filled(data: BinanceOrderData): Promise<void> {
     let exchange_info = this.exchange_info
     if (data.side == "BUY") {
-      this.logger.info(`BUY order on ${data.symbol} filled.`)
+      this.logger.info(`BUY order on ${data.symbol} filled (edge: ${data.edge}).`)
       this.position_tracker.buy_order_filled({
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
       })
     }
     if (data.side == "SELL") {
-      this.logger.info(`SELL order on ${data.symbol} filled.`)
+      this.logger.info(`SELL order on ${data.symbol} filled (edge: ${data.edge}).`)
       this.position_tracker.sell_order_filled({
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
       })
@@ -145,6 +143,7 @@ async function main() {
     send_message,
     logger,
     order_callbacks,
+    redis,
   })
   order_execution_tracker
     .main()

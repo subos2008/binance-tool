@@ -62,10 +62,21 @@ process.on("unhandledRejection", (error) => {
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
+import { get_redis_client, set_redis_logger } from "../../lib/redis"
+let redis: RedisClient | undefined
+try {
+  set_redis_logger(logger)
+  redis = get_redis_client()
+} catch (error) {
+  // We don't want redis failures to take down this service
+  // redis is only used for edge information
+}
+
 import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData } from "../../interfaces/order_callbacks"
 import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 import { Balance, Portfolio } from "../../interfaces/portfolio"
+import { RedisClient } from "redis"
 
 export class BinancePortfolioTracker implements PortfolioBitchClass {
   send_message: Function
@@ -103,6 +114,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
       send_message,
       logger,
       order_callbacks: this,
+      redis,
     })
   }
 

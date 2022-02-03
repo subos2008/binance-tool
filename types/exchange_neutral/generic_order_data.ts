@@ -8,7 +8,7 @@ export type GenericOrderStatus =
   | "PARTIALLY_FILLED"
   | "PENDING_CANCEL"
   | "REJECTED" // direct binance mapping
-  
+
 export type GenericOrderType =
   | "LIMIT"
   | "MARKET"
@@ -36,6 +36,8 @@ export type GenericOrderData = {
   averageExecutionPrice: string // Calculated for Binance, present in FTX orders
 
   usd_equivalent_value?: string
+
+  edge?: string
 
   // orderRejectReason?: string // we probably don't want rejected orders in generic streams
   // price?: string

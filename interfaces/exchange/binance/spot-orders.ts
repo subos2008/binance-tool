@@ -32,6 +32,7 @@ export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info
     totalQuoteTradeQuantity: i.totalQuoteTradeQuantity,
     averageExecutionPrice: i.averageExecutionPrice,
     orderTime: i.orderTime,
+    edge: i.edge,
   }
   if (i.orderStatus)
     generic.orderStatus = map_binance_order_status_to_generic_order_status(i.orderStatus as OrderStatus)
@@ -77,6 +78,8 @@ export function fromBinanceQueryOrderResult({
   exchange_info: ExchangeInfo
   query_order_result: QueryOrderResult
 }): GenericOrder {
+  console.warn(`Not adding edge info in fromBinanceQueryOrderResult`)
+
   let i = query_order_result
   let symbol_info = exchange_info.symbols.find((x) => x.symbol == i.symbol)
   if (!symbol_info)

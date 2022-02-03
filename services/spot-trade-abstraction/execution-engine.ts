@@ -76,6 +76,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       version: "v3",
       exchange: "binance",
       type: "spot",
+      account: "default",
     }
   }
 

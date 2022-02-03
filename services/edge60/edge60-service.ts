@@ -178,7 +178,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       market_identifier: {
         version: "v3",
         // TODO: pull exchange_identifier from ee
-        exchange_identifier: { version: "v3", exchange, type: "spot" },
+        exchange_identifier: { version: "v3", exchange, type: "spot" ,account: 'default'},
         symbol,
         base_asset: this.base_asset_for_symbol(symbol),
       },

@@ -12,5 +12,5 @@ export type ExchangeIdentifier_V3 = {
   version: "v3"
   exchange: string
   type: "margin" | "spot"
-  account?: string // we will want this eventually - PositionPersistance is ready for it
+  account: 'default' // we will want this eventually - PositionPersistance is ready for it
 }

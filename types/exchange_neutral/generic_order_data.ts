@@ -1,3 +1,5 @@
+import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
+
 export type GenericOrderStatus =
   | "CANCELED"
   | "EXPIRED"
@@ -18,8 +20,7 @@ export type GenericOrderType =
 
 export type GenericOrderData = {
   // OG, created to map completed / filled orders to
-  exchange: string // name / slug of the exchange
-  account?: string // account identifier on the exchange
+  exchange_identifier: ExchangeIdentifier_V3
   orderId: string // as provided by the exchange
   market_symbol: string // pair etc - included but only use it to pass back to the exchange/ExchangeUtils as an opaque slug
   baseAsset: string
@@ -43,8 +44,7 @@ export type GenericOrderData = {
 
 export type GenericOrder = {
   // created to map orders open on an exchange to
-  exchange: string // name / slug of the exchange
-  account?: string // account identifier on the exchange
+  exchange_identifier: ExchangeIdentifier_V3
   exchangeOrderId: string // as provided by the exchange
   exchangeOrderListId?: string // as provided by the exchange (for OCO orders)
   clientOrderId: string // the one we provided to the exchange if we can set/choose it

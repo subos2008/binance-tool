@@ -18,8 +18,8 @@ import { get_redis_client, set_redis_logger } from "../../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()
 import { RedisClient } from "redis"
-import { RedisPositionsState } from "../../classes/persistent_state/redis_positions_state"
-const redis_positions = new RedisPositionsState({ logger, redis })
+import { RedisSpotPositionsState } from "../../classes/persistent_state/redis-spot-positions-state-v3"
+const redis_positions = new RedisSpotPositionsState({ logger, redis })
 
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -38,7 +38,7 @@ import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 export class PositionPerformance {
   send_message: (msg: string) => void
   logger: Logger
-  positions_state: RedisPositionsState
+  positions_state: RedisSpotPositionsState
   ee: Binance
   prices: Prices | undefined
 
@@ -58,7 +58,7 @@ export class PositionPerformance {
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-    this.positions_state = new RedisPositionsState({ logger, redis })
+    this.positions_state = new RedisSpotPositionsState({ logger, redis })
   }
 
   async current_price(p: Position): Promise<BigNumber> {

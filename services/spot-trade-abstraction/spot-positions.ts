@@ -14,14 +14,7 @@ import BigNumber from "bignumber.js"
 import { InterimSpotPositionsMetaDataPersistantStorage } from "./trade-abstraction-service"
 import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
 import Sentry from "../../lib/sentry"
-
-interface Position {
-  direction: "long" | "short"
-  quantity: string
-  edge: string
-}
-
-export interface OpenPositionCommand {}
+import { SpotPositionsQuery_V3 } from "../../events/shared/position-identifier"
 
 /**
  * If this does the tracking in redis and the exchange orders things get a log cleaner
@@ -240,7 +233,24 @@ export class SpotPositions {
     }
   }
 
-  async open_positions() {
+  async open_positions() :Promise<SpotPositionIdentifier[]>{
     return await this.positions_persistance.list_open_positions()
+  }
+
+  async query_open_positions(pq: SpotPositionsQuery_V3):Promise<SpotPositionIdentifier[]> {
+    let positions = await this.open_positions()
+    /**
+     * export interface SpotPositionsQuery_V3 {
+        exchange_identifier: ExchangeIdentifier_V3
+        edge?: AuthorisedEdgeType // if edge is null return an array if there are multiple open positions
+        base_asset: string
+      }
+     */
+    // should all the above be optional? Except that spot is implicit
+    // is open_positions already by exchange? if not filter by it
+    // base asset certainly we filter by, that would mean spot anyway as it's base_asset instead of market already
+    // edge we filter by if it is provided
+    throw new Error(`not implemented`)
+    return positions
   }
 }

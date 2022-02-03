@@ -4,7 +4,7 @@
 
 import { strict as assert } from "assert"
 const service_name = "binance-position-tracker"
-import { fromCompletedBinanceOrderData } from "../../interfaces/exchange/binance/orders"
+import { fromCompletedBinanceOrderData } from "../../interfaces/exchange/binance/spot-orders"
 import { is_too_small_to_trade } from "../../lib/utils"
 
 require("dotenv").config()
@@ -37,7 +37,7 @@ process.on("unhandledRejection", (error) => {
 
 import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData, OrderCallbacks } from "../../interfaces/order_callbacks"
-import { PositionTracker } from "./position-tracker"
+import { SpotPositionTracker } from "./position-tracker"
 
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
 import BinanceFoo from "binance-api-node"
@@ -52,7 +52,7 @@ let order_execution_tracker: OrderExecutionTracker | null = null
 class MyOrderCallbacks implements OrderCallbacks {
   send_message: Function
   logger: Logger
-  position_tracker: PositionTracker
+  position_tracker: SpotPositionTracker
   exchange_info: ExchangeInfo
 
   constructor({
@@ -63,7 +63,7 @@ class MyOrderCallbacks implements OrderCallbacks {
   }: {
     send_message: (msg: string) => void
     logger: Logger
-    position_tracker: PositionTracker
+    position_tracker: SpotPositionTracker
     exchange_info: ExchangeInfo
   }) {
     assert(logger)
@@ -93,7 +93,7 @@ class MyOrderCallbacks implements OrderCallbacks {
 }
 
 let ee: Binance
-let position_tracker: PositionTracker
+let position_tracker: SpotPositionTracker
 
 async function main() {
   logger.info("Live monitoring mode")
@@ -127,7 +127,7 @@ async function main() {
     return result
   }
 
-  position_tracker = new PositionTracker({
+  position_tracker = new SpotPositionTracker({
     logger,
     send_message,
     redis,

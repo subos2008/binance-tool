@@ -1,4 +1,4 @@
-import { BinanceOrderData } from "../../../interfaces/order_callbacks"
+import { BinanceOrderData } from "../../order_callbacks"
 import { strict as assert } from "assert"
 import { ExchangeInfo, OrderStatus, OrderStatus_LT, QueryOrderResult } from "binance-api-node"
 import {
@@ -21,7 +21,7 @@ export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info
     )
 
   let generic: GenericOrderData = {
-    exchange: "binance",
+    exchange_identifier: { version: "v3", exchange: "binance", type: "spot", account: "default" },
     orderId: i.orderId,
     market_symbol: i.symbol,
     baseAsset: symbol_info.baseAsset,
@@ -83,7 +83,7 @@ export function fromBinanceQueryOrderResult({
     throw new Error(`No exchange_info for symbol ${i.symbol} found when converting Binance order to GenericOrder`)
 
   let generic: GenericOrder = {
-    exchange: "binance",
+    exchange_identifier: { type: "spot", exchange: "binance", version: "v3", account: "default" },
     exchangeOrderId: i.orderId.toString(),
     clientOrderId: i.clientOrderId,
     market_symbol: i.symbol,

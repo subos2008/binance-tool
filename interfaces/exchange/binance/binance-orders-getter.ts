@@ -9,7 +9,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { fromBinanceQueryOrderResult } from "../../../interfaces/exchange/binance/orders"
+import { fromBinanceQueryOrderResult } from "./spot-orders"
 import { BinanceExchangeInfoGetter } from "../../../classes/exchanges/binance/exchange-info-getter"
 
 export class BinanceOrdersGetter implements OrdersGetter {

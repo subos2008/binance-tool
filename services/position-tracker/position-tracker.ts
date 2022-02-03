@@ -4,8 +4,9 @@ import { RedisClient } from "redis"
 
 import { Logger } from "../../interfaces/logger"
 import { GenericOrderData } from "../../types/exchange_neutral/generic_order_data"
-import { RedisPositionsState } from "../../classes/persistent_state/redis_positions_state"
+import { RedisSpotPositionsState } from "../../classes/persistent_state/redis-spot-positions-state-v3"
 import { PositionPublisher } from "../../classes/amqp/positions-publisher"
+import { OrderToEdgeMapper } from "../../classes/persistent_state/order-to-edge-mapper"
 
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -15,7 +16,11 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import * as Sentry from "@sentry/node"
-import { PositionIdentifier } from "../../events/shared/position-identifier"
+import {
+  AuthorisedEdgeType,
+  SpotPositionIdentifier_V3,
+  SpotPositionsQuery_V3,
+} from "../../events/shared/position-identifier"
 import { Position } from "../../classes/position"
 
 type check_func = ({
@@ -28,12 +33,13 @@ type check_func = ({
   market_symbol: string
 }) => boolean
 
-export class PositionTracker {
+export class SpotPositionTracker {
   send_message: Function
   logger: Logger
-  positions_state: RedisPositionsState
+  positions_state: RedisSpotPositionsState
   position_publisher: PositionPublisher
   close_position_check_func: check_func
+  order_to_edge_mapper: OrderToEdgeMapper
 
   constructor({
     send_message,
@@ -50,7 +56,7 @@ export class PositionTracker {
     this.logger = logger
     assert(send_message, "send_message not set")
     this.send_message = send_message
-    this.positions_state = new RedisPositionsState({ logger, redis })
+    this.positions_state = new RedisSpotPositionsState({ logger, redis })
     this.position_publisher = new PositionPublisher({
       logger,
       send_message,
@@ -58,14 +64,14 @@ export class PositionTracker {
     })
     assert(close_position_check_func, "close_position_check_func not set")
     this.close_position_check_func = close_position_check_func
+    this.order_to_edge_mapper = new OrderToEdgeMapper({ logger, redis })
   }
 
   async buy_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
     let {
+      exchange_identifier,
       baseAsset,
       quoteAsset,
-      exchange,
-      account,
       averageExecutionPrice,
       totalBaseTradeQuantity,
       totalQuoteTradeQuantity,
@@ -94,20 +100,27 @@ export class PositionTracker {
       console.error(error)
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", baseAsset)
-        scope.setTag("exchange", exchange)
-        if (account) scope.setTag("account", account)
+        scope.setTag("exchange", exchange_identifier.exchange)
+        scope.setTag("account", exchange_identifier.account)
         Sentry.captureException(error)
       })
     }
   }
 
+  /** this needs edge folding into it somehow... */
   private async load_position_for_order(generic_order_data: GenericOrderData): Promise<Position> {
-    let { baseAsset, exchange, account } = generic_order_data
+    let { baseAsset, exchange_identifier, orderId } = generic_order_data
 
-    if (!account) account = "default" // TODO
-    let position_identifier: PositionIdentifier = {
-      exchange_identifier: { exchange, account },
-      baseAsset,
+    try {
+      /* We can expect this to error, certainly initally as we have stops already open,
+      Any manually created orders will also throw here */
+      let edge: AuthorisedEdgeType = await this.order_to_edge_mapper.get_edge_for_order(orderId)
+    } catch (error) {}
+
+    let position_identifier: SpotPositionIdentifier_V3 = {
+      exchange_identifier: generic_order_data.exchange_identifier,
+      base_asset: baseAsset,
+      edge,
     }
     let position = new Position({
       logger: this.logger,

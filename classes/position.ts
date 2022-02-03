@@ -1,10 +1,11 @@
 /* Realtime Presumably Redis backed access to Position data, loading and mutation thereof
  * Direct access to the Redis state exists in other classes atm and we are trying to move it all here
+ * Should be SpotPosition 
  */
 
 import { Logger } from "../interfaces/logger"
-import { RedisPositionsState } from "../classes/persistent_state/redis_positions_state"
-import { PositionIdentifier } from "../events/shared/position-identifier"
+import { RedisSpotPositionsState } from "../classes/persistent_state/redis-spot-positions-state-v3"
+import { SpotPositionIdentifier_V3 } from "../events/shared/position-identifier"
 
 import { BigNumber } from "bignumber.js"
 import { GenericOrderData } from "../types/exchange_neutral/generic_order_data"
@@ -26,8 +27,8 @@ export type PositionObject = {
 export class Position {
   logger: Logger
   send_message: Function | undefined
-  redis_positions: RedisPositionsState
-  position_identifier: PositionIdentifier
+  redis_positions: RedisSpotPositionsState
+  position_identifier: SpotPositionIdentifier_V3
 
   constructor({
     logger,
@@ -37,8 +38,8 @@ export class Position {
   }: {
     logger: Logger
     send_message?: Function
-    redis_positions: RedisPositionsState
-    position_identifier: PositionIdentifier
+    redis_positions: RedisSpotPositionsState
+    position_identifier: SpotPositionIdentifier_V3
   }) {
     this.logger = logger
     this.send_message = send_message
@@ -47,7 +48,7 @@ export class Position {
   }
 
   get baseAsset(): string {
-    return this.position_identifier.baseAsset
+    return this.position_identifier.base_asset
   }
 
   async initial_entry_price(): Promise<BigNumber> {

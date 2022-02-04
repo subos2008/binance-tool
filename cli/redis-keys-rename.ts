@@ -12,8 +12,8 @@ import { RedisClient } from "redis"
 //     edge60/spot/binance/signal_direction/XMRBUSD
 
 // These should be equivalent
-let redis_regexp = "edge60:spot:binance:signal_direction:*"
-let regexp = new RegExp(`edge60:spot:binance:signal_direction:(.*)`)
+let redis_regexp = "edge60:spot:binance:signal_direction:usd_quote:*"
+let regexp = new RegExp(`edge60:spot:binance:signal_direction:usd_quote:(.*)`)
 
 export class Foo {
   redis: RedisClient
@@ -41,10 +41,10 @@ export class Foo {
 
   translate_key(key: string): string {
     // remove USDT/BUSD, swap / for :, remove double slash?
-    key = key.replace("//", "/")
+    // key = key.replace(":signal_direction:usd_quote:", ":usd_quote:signal_direction:")
     let res = key.match(regexp)
-    console.log(key)
-    console.log(res)
+    // console.log(key)
+    // console.log(res)
     if (!res) {
       console.log(key)
       console.log(res)
@@ -66,8 +66,9 @@ export class Foo {
     for (const key of keys) {
       const direction: string = await this.getAsync(key)
       let new_key = this.translate_key(key)
-      let current = await this.getAsync(key)
-      if (current) continue
+      console.log(`${key} -> ${new_key}`)
+      let new_key_value = await this.getAsync(new_key)
+      if (new_key_value) continue // don't overwrite keys that exist at the destination
       this.setAsync(new_key, direction)
       console.info(`Set ${new_key} to ${direction}`)
       this.delAsync(key)

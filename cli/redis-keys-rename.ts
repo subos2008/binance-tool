@@ -10,11 +10,11 @@ const { promisify } = require("util")
 import { RedisClient } from "redis"
 
 // These should be equivalent
-let redis_regexp = "C98"
-let regexp = new RegExp(`(C98)`)
+let redis_regexp = "positions-v2:binance:default:*"
+let regexp = new RegExp(`positions-v2:binance:default:(.*):(.*)`)
 
 // Dangerous code in this file - do not execute
-process.exit(1)
+// process.exit(1)
 
 export class Foo {
   redis: RedisClient
@@ -52,34 +52,37 @@ export class Foo {
       throw new Error("failed to match")
     }
     let market = res[1]
+    let subkey = res[2]
     if (!market) {
       console.log(key)
       throw new Error("no symbol")
     }
-    market = market.replace(/USDT$/, "").replace(/BUSD$/, "")
-    market = market.replace("/", ":")
-    return `fubar:spot:binance:usd_quote:signal_direction:${market}`
+    return `positions-v3:spot:binance:default:${market}:undefined:${subkey}`
   }
 
   async run() {
     let nop = false
-    let keys = await this.keys()
-    const result: string[] = []
+    let keys: string[] = await this.keys()
     for (const key of keys) {
-      const direction: string = await this.getAsync(key)
-      let new_key = this.translate_key(key)
-      console.log(`${key} -> ${new_key}`)
-      let new_key_value = await this.getAsync(new_key)
-      if (nop) continue
-      if (new_key_value) {
-        this.delAsync(key)
-        continue // don't overwrite keys that exist at the destination
+      try {
+        const direction: string = await this.getAsync(key)
+        if (key.endsWith(":orders")) continue
+        let new_key = this.translate_key(key)
+        console.log(`${key} -> ${new_key}`)
+        let new_key_value = await this.getAsync(new_key)
+        if (nop) continue
+        if (new_key_value) {
+          this.delAsync(key)
+          continue // don't overwrite keys that exist at the destination
+        }
+        await this.setAsync(new_key, direction)
+        console.info(`Set ${new_key} to ${direction}`)
+        // this.delAsync(key)
+      } catch (error) {
+        console.error(`Error processing key ${key}`)
+        console.error(error)
       }
-      this.setAsync(new_key, direction)
-      console.info(`Set ${new_key} to ${direction}`)
-      this.delAsync(key)
     }
-    return result
   }
 }
 

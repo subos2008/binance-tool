@@ -16,7 +16,7 @@
 //  1. Doesn't currently re-publish on deposits/withdrawals
 
 // Config
-const service_name = "binance-to-amqp"
+const service_name = "binance-portfolio-to-amqp"
 
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
 

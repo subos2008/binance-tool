@@ -24,7 +24,7 @@
 // 3. Maintain portfolio state - probably just in-process
 
 import { strict as assert } from "assert"
-const service_name = "binance-to-amqp"
+const service_name = "binance-portfolio-to-amqp"
 const event_expiration_seconds = "60"
 
 import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"

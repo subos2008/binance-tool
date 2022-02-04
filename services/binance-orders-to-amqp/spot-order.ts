@@ -3,7 +3,7 @@
 /* eslint func-names: ["warn", "as-needed"] */
 
 import { strict as assert } from "assert"
-const service_name = "binance-to-amqp"
+const service_name = "binance-orders-to-amqp"
 
 import { Binance as BinanceType } from "binance-api-node"
 import Binance from "binance-api-node"

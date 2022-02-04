@@ -46,6 +46,11 @@ import { SpotPositionTracker } from "./position-tracker"
 import BinanceFoo from "binance-api-node"
 import { Binance } from "binance-api-node"
 import { ExchangeInfo } from "binance-api-node"
+import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
+import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
+import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
+import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "../spot-trade-abstraction/interim-meta-data-storage"
 
 let order_execution_tracker: OrderExecutionTracker | null = null
 
@@ -92,23 +97,13 @@ class MyOrderCallbacks implements OrderCallbacks {
   }
 }
 
-let ee: Binance
 let position_tracker: SpotPositionTracker
 
 async function main() {
-  logger.info("Live monitoring mode")
-  if (!process.env.APIKEY) throw new Error(`APIKEY not defined`)
-  if (!process.env.APISECRET) throw new Error(`APISECRET not defined`)
-  ee = BinanceFoo({
-    apiKey: process.env.APIKEY,
-    apiSecret: process.env.APISECRET,
-  })
-
-  const execSync = require("child_process").execSync
-  execSync("date -u")
+  const ee = new BinanceSpotExecutionEngine({ logger })
+  let exchange_info = await ee.get_exchange_info() // TODO: should update this every now and then
 
   // return true if the position size passed it would be considered an untradeably small balance on the exchange
-  let exchange_info = await ee.exchangeInfo() // TODO: should update this every now and then
   let close_position_check_func = function ({
     market_symbol,
     volume,
@@ -126,12 +121,27 @@ async function main() {
     )
     return result
   }
+  const interim_spot_positions_metadata_persistant_storage =
+    new RedisInterimSpotPositionsMetaDataPersistantStorage({
+      logger,
+      redis,
+    })
+  const spot_positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsState({ logger, redis })
+  const spot_positions_query = new SpotPositionsQuery({
+    logger,
+    positions_persistance: spot_positions_persistance,
+    send_message,
+    exchange_identifier: ee.get_exchange_identifier(),
+    interim_spot_positions_metadata_persistant_storage,
+  })
 
   position_tracker = new SpotPositionTracker({
     logger,
     send_message,
     redis,
     close_position_check_func,
+    spot_positions_query,
+    spot_positions_persistance,
   })
 
   // await publisher.connect()
@@ -139,7 +149,7 @@ async function main() {
   // Update when any order completes
   let order_callbacks = new MyOrderCallbacks({ logger, send_message, position_tracker, exchange_info })
   order_execution_tracker = new OrderExecutionTracker({
-    ee,
+    ee: ee.get_raw_binance_ee(),
     send_message,
     logger,
     order_callbacks,

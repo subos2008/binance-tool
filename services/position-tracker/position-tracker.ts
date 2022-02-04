@@ -1,13 +1,3 @@
-import { strict as assert } from "assert"
-
-import { RedisClient } from "redis"
-
-import { Logger } from "../../interfaces/logger"
-import { GenericOrderData } from "../../types/exchange_neutral/generic_order_data"
-import { RedisSpotPositionsState } from "../../classes/persistent_state/redis-spot-positions-state-v3"
-import { PositionPublisher } from "../../classes/amqp/positions-publisher"
-import { OrderToEdgeMapper } from "../../classes/persistent_state/order-to-edge-mapper"
-
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -16,13 +6,22 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import * as Sentry from "@sentry/node"
+import { strict as assert } from "assert"
+
+import { RedisClient } from "redis"
+import { Logger } from "../../interfaces/logger"
+import { GenericOrderData } from "../../types/exchange_neutral/generic_order_data"
+import { PositionPublisher } from "../../classes/amqp/positions-publisher"
+import { OrderToEdgeMapper } from "../../classes/persistent_state/order-to-edge-mapper"
 import {
   AuthorisedEdgeType,
   check_edge,
   SpotPositionIdentifier_V3,
   SpotPositionsQuery_V3,
-} from "../../events/shared/position-identifier"
-import { Position } from "../../classes/position"
+} from "../../classes/spot/abstractions/position-identifier"
+import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
+import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
+import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 
 type check_func = ({
   volume,
@@ -37,27 +36,32 @@ type check_func = ({
 export class SpotPositionTracker {
   send_message: Function
   logger: Logger
-  positions_state: RedisSpotPositionsState
   position_publisher: PositionPublisher
   close_position_check_func: check_func
   order_to_edge_mapper: OrderToEdgeMapper
+  spot_positions_query: SpotPositionsQuery
+  spot_positions_persistance: SpotPositionsPersistance
 
   constructor({
     send_message,
     logger,
     redis,
     close_position_check_func,
+    spot_positions_query,
+    spot_positions_persistance,
   }: {
     send_message: (msg: string) => void
     logger: Logger
     redis: RedisClient
     close_position_check_func: check_func
+    spot_positions_query: SpotPositionsQuery
+    spot_positions_persistance: SpotPositionsPersistance
   }) {
     assert(logger, "logger not set")
     this.logger = logger
     assert(send_message, "send_message not set")
     this.send_message = send_message
-    this.positions_state = new RedisSpotPositionsState({ logger, redis })
+    this.spot_positions_query = spot_positions_query
     this.position_publisher = new PositionPublisher({
       logger,
       send_message,
@@ -66,6 +70,7 @@ export class SpotPositionTracker {
     assert(close_position_check_func, "close_position_check_func not set")
     this.close_position_check_func = close_position_check_func
     this.order_to_edge_mapper = new OrderToEdgeMapper({ logger, redis })
+    this.spot_positions_persistance = spot_positions_persistance
   }
 
   async buy_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
@@ -80,7 +85,7 @@ export class SpotPositionTracker {
     } = generic_order_data
 
     let position = await this.load_position_for_order(generic_order_data)
-    position.add_order_to_position({ generic_order_data })
+    position.add_order_to_position({ generic_order_data }) // this would have created it if it didn't exist - from the order data
 
     if (!averageExecutionPrice) {
       throw new Error(`averageExecutionPrice not defined, unable to publish NewPositionEvent`)
@@ -108,9 +113,8 @@ export class SpotPositionTracker {
     }
   }
 
-  /** this needs edge folding into it somehow... */
-  private async load_position_for_order(generic_order_data: GenericOrderData): Promise<Position> {
-    let { baseAsset, exchange_identifier, orderId } = generic_order_data
+  private async load_position_for_order(generic_order_data: GenericOrderData): Promise<SpotPosition> {
+    let { baseAsset, orderId } = generic_order_data
 
     let edge: AuthorisedEdgeType | undefined
     try {
@@ -126,12 +130,7 @@ export class SpotPositionTracker {
       base_asset: baseAsset,
       edge: check_edge(edge),
     }
-    let position = new Position({
-      logger: this.logger,
-      redis_positions: this.positions_state,
-      position_identifier,
-    })
-    return position
+    return this.spot_positions_query.position(position_identifier)
   }
 
   async sell_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
@@ -170,7 +169,7 @@ export class SpotPositionTracker {
         price: new BigNumber(averageExecutionPrice),
       })
     ) {
-      await position.close()
+      await this.spot_positions_persistance.delete_position(position.position_identifier)
       this.send_message(`closed position: ${position.baseAsset} to ${quoteAsset}`)
     }
   }

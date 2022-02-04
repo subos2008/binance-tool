@@ -18,8 +18,6 @@ import { get_redis_client, set_redis_logger } from "../../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()
 import { RedisClient } from "redis"
-import { RedisSpotPositionsState } from "../../classes/persistent_state/redis-spot-positions-state-v3"
-const redis_positions = new RedisSpotPositionsState({ logger, redis })
 
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -31,37 +29,47 @@ import { Binance } from "binance-api-node"
 import BinanceFactory from "binance-api-node"
 
 import * as Sentry from "@sentry/node"
-import { Position } from "../../classes/position"
+import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
 import { Prices } from "../../interfaces/portfolio"
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
+import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
+import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
+import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "../spot-trade-abstraction/interim-meta-data-storage"
+import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
+import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
 
 export class PositionPerformance {
   send_message: (msg: string) => void
   logger: Logger
-  positions_state: RedisSpotPositionsState
-  ee: Binance
+  spot_positions_persistance: SpotPositionsPersistance
+  spot_positions_query: SpotPositionsQuery
+  ee: BinanceSpotExecutionEngine
   prices: Prices | undefined
 
   constructor({
     send_message,
     logger,
-    redis,
+    spot_positions_persistance,
+    spot_positions_query,
     ee,
   }: {
     send_message: (msg: string) => void
     logger: Logger
-    redis: RedisClient
-    ee: Binance
+    spot_positions_persistance: SpotPositionsPersistance
+    spot_positions_query: SpotPositionsQuery
+    ee: BinanceSpotExecutionEngine
   }) {
     assert(logger)
     this.ee = ee
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-    this.positions_state = new RedisSpotPositionsState({ logger, redis })
+    this.spot_positions_persistance = spot_positions_persistance
+    this.spot_positions_query = spot_positions_query
   }
 
-  async current_price(p: Position): Promise<BigNumber> {
+  async current_price(p: SpotPosition): Promise<BigNumber> {
     let base: string = p.baseAsset
     let quote: string = await p.initial_entry_quote_asset()
     let symbol = `${base}${quote}`.toUpperCase()
@@ -71,11 +79,11 @@ export class PositionPerformance {
 
   async list_positions() {
     logger.warn(`This implementation uses an initial_entry_price and not an average entry price`)
-    let positions: Position[] = []
+    let positions: SpotPosition[] = []
     let position_strings: string[] = []
-    let open_positions = await redis_positions.open_positions()
+    let open_positions = await this.spot_positions_persistance.list_open_positions()
 
-    async function position_to_string(current_price: BigNumber, p: Position) {
+    async function position_to_string(current_price: BigNumber, p: SpotPosition) {
       let initial_entry_price = await p.initial_entry_price()
       let percentage = (await p.percentage_price_change_since_initial_entry(current_price)).dp(1)
       let percentage_string: string = percentage?.toFixed() || "?"
@@ -83,7 +91,7 @@ export class PositionPerformance {
     }
 
     for (const position_identifier of open_positions) {
-      let p = new Position({ logger, redis_positions, position_identifier })
+      let p = await this.spot_positions_query.position(position_identifier)
       positions.push(p)
       position_strings.push(await position_to_string(await this.current_price(p), p))
     }
@@ -95,29 +103,37 @@ export class PositionPerformance {
   }
 
   async update() {
-    this.prices = await this.ee.prices()
+    let ee: Binance = this.ee.get_raw_binance_ee()
+    this.prices = await ee.prices()
     await this.list_positions()
   }
 }
 
-let ee: Binance
-// let portfolio_tracker: PortfolioTracker
-// const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger, sentry: Sentry })
-
 async function main() {
-  logger.info("Live monitoring mode")
-  if (!process.env.APIKEY) throw new Error(`Missing APIKEY in ENV`)
-  if (!process.env.APISECRET) throw new Error(`Missing APISECRET in ENV`)
-  ee = BinanceFactory({
-    apiKey: process.env.APIKEY,
-    apiSecret: process.env.APISECRET,
+  const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+  const spot_positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsState({ logger, redis })
+  const interim_spot_positions_metadata_persistant_storage =
+    new RedisInterimSpotPositionsMetaDataPersistantStorage({
+      logger,
+      redis,
+    })
+  const binance = new BinanceSpotExecutionEngine({ logger })
+
+  const spot_positions_query = new SpotPositionsQuery({
+    logger,
+    exchange_identifier: binance.get_exchange_identifier(),
+    positions_persistance: spot_positions_persistance,
+    send_message,
+    interim_spot_positions_metadata_persistant_storage,
   })
 
-  const execSync = require("child_process").execSync
-  execSync("date -u")
-
-  const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-  let position_performance = new PositionPerformance({ logger, send_message, ee, redis })
+  let position_performance = new PositionPerformance({
+    logger,
+    send_message,
+    ee: binance,
+    spot_positions_persistance,
+    spot_positions_query,
+  })
 
   // Update on intervals
   let bound_update = position_performance.update.bind(position_performance)

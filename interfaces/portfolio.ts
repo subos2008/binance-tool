@@ -1,4 +1,4 @@
-import { Position } from "../classes/position"
+import { SpotPosition } from "../classes/spot/abstractions/spot-position"
 // import { ExchangeIdentifier } from "../events/shared/exchange-identifier";
 
 export interface Balance {
@@ -14,9 +14,9 @@ export interface Prices {
 }
 
 export interface Portfolio {
-  usd_value?: string;
-  btc_value?: string;
+  usd_value?: string
+  btc_value?: string
   balances: Balance[]
   prices?: Prices
-  positions?: { [name: string]: Position }
+  positions?: { [name: string]: SpotPosition }
 }

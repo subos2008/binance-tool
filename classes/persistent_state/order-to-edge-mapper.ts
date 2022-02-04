@@ -1,5 +1,5 @@
 import { RedisClient } from "redis"
-import { AuthorisedEdgeType, check_edge } from "../../events/shared/position-identifier"
+import { AuthorisedEdgeType, check_edge } from "../spot/abstractions/position-identifier"
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
 import { promisify } from "util"

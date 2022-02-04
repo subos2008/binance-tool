@@ -1,28 +1,33 @@
-import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
-import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
+
+import Sentry from "../../../lib/sentry"
+
+import { Logger } from "../../../interfaces/logger"
+import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
 import {
   SpotExecutionEngine,
   SpotMarketBuyByQuoteQuantityCommand,
   SpotStopMarketSellCommand,
-} from "./execution-engine"
-import { SpotPositionsPersistance } from "./spot-positions-persistance"
-import { SpotPositionIdentifier } from "./spot-interfaces"
-import { SendMessageFunc } from "../../lib/telegram-v2"
-import { PositionSizer } from "./position-sizer"
+} from "../exchanges/interfaces/spot-execution-engine"
+import { SpotPositionsPersistance } from "../persistence/interface/spot-positions-persistance"
+import { SendMessageFunc } from "../../../lib/telegram-v2"
+import { PositionSizer } from "../../../services/spot-trade-abstraction/fixed-position-sizer"
 import BigNumber from "bignumber.js"
-import { InterimSpotPositionsMetaDataPersistantStorage } from "./trade-abstraction-service"
-import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
-import Sentry from "../../lib/sentry"
-import { check_edge, SpotPositionsQuery_V3 } from "../../events/shared/position-identifier"
+import { InterimSpotPositionsMetaDataPersistantStorage } from "../../../services/spot-trade-abstraction/trade-abstraction-service"
+import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
+import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../abstractions/position-identifier"
 
 /**
- * If this does the tracking in redis and the exchange orders things get a log cleaner
+ * If this does the execution of spot position entry/exit
+ *
+ * It is a low level class intended to be used by the TAS
+ *
+ * If you want to open positions in a safe way protected by the trading rules, use the tas-client instead
  *
  * Note this is instantiated with a particular exchange, the exchange identifier is
  * fixed at instantiation
  */
-export class SpotPositions {
+export class SpotPositionsExecution {
   logger: Logger
   ee: SpotExecutionEngine
   send_message: SendMessageFunc
@@ -56,17 +61,19 @@ export class SpotPositions {
     this.interim_spot_positions_metadata_persistant_storage = interim_spot_positions_metadata_persistant_storage
   }
 
-  in_position({ base_asset }: { base_asset: string }) {
+  in_position({ base_asset, edge }: { base_asset: string; edge: AuthorisedEdgeType }) {
     return this.positions_persistance.in_position({
       base_asset,
       exchange_identifier: this.ee.get_exchange_identifier(),
+      edge,
     })
   }
 
-  exisiting_position_size({ base_asset }: { base_asset: string }) {
+  exisiting_position_size({ base_asset, edge }: { base_asset: string; edge: AuthorisedEdgeType }) {
     return this.positions_persistance.position_size({
       base_asset,
       exchange_identifier: this.ee.get_exchange_identifier(),
+      edge,
     })
   }
 
@@ -85,7 +92,7 @@ export class SpotPositions {
     quote_asset: string
     base_asset: string
     direction: string
-    edge: string
+    edge: AuthorisedEdgeType
   }): Promise<{
     executed_quote_quantity: string
     stop_order_id: string | number
@@ -151,9 +158,10 @@ export class SpotPositions {
     let stop_result = await this.ee.stop_market_sell(stop_cmd)
     let { order_id } = stop_result
     stop_price = stop_result.stop_price
-    let spot_position_identifier: SpotPositionIdentifier = {
+    let spot_position_identifier: SpotPositionIdentifier_V3 = {
       exchange_identifier: this.get_exchange_identifier(),
       base_asset: args.base_asset,
+      edge: args.edge,
     }
     await this.interim_spot_positions_metadata_persistant_storage.set_stop_order_id(
       spot_position_identifier,
@@ -178,8 +186,9 @@ export class SpotPositions {
     quote_asset: string
     base_asset: string
     direction: string
-    edge: string
+    edge: AuthorisedEdgeType
   }): Promise<boolean> {
+    assert.equal(direction, "long") // spot positions are always long
     let prefix: string = `Closing ${edge}:${base_asset} spot position:`
 
     /**
@@ -187,9 +196,10 @@ export class SpotPositions {
      * 2. market sell position
      */
 
-    let spot_position_identifier: SpotPositionIdentifier = {
+    let spot_position_identifier: SpotPositionIdentifier_V3 = {
       exchange_identifier: this.get_exchange_identifier(),
       base_asset,
+      edge,
     }
 
     let symbol = this.ee.get_market_identifier_for({ quote_asset, base_asset }).symbol
@@ -222,7 +232,7 @@ export class SpotPositions {
 
     try {
       /** Exit the position */
-      let base_amount = await this.exisiting_position_size({ base_asset })
+      let base_amount = await this.exisiting_position_size({ base_asset, edge })
       await this.ee.market_sell({ symbol, base_amount }) // throws if it fails
       // let executed_amount = // .. actually we might not have this info immediately
       return true // success, really we just have this here to verify that every other code path throws
@@ -234,26 +244,5 @@ export class SpotPositions {
       this.send_message(msg)
       throw error
     }
-  }
-
-  async open_positions(): Promise<SpotPositionIdentifier[]> {
-    return await this.positions_persistance.list_open_positions()
-  }
-
-  async query_open_positions(pq: SpotPositionsQuery_V3): Promise<SpotPositionIdentifier[]> {
-    let positions = await this.open_positions()
-    /**
-     * export interface SpotPositionsQuery_V3 {
-        exchange_identifier: ExchangeIdentifier_V3
-        edge?: AuthorisedEdgeType // if edge is null return an array if there are multiple open positions
-        base_asset: string
-      }
-     */
-    // should all the above be optional? Except that spot is implicit
-    // is open_positions already by exchange? if not filter by it
-    // base asset certainly we filter by, that would mean spot anyway as it's base_asset instead of market already
-    // edge we filter by if it is provided
-    throw new Error(`not implemented`)
-    return positions
   }
 }

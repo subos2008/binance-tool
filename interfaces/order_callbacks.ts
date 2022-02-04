@@ -26,7 +26,7 @@
 //   totalQuoteTradeQuantity: string;
 // }
 
-import { AuthorisedEdgeType } from "../events/shared/position-identifier";
+import { AuthorisedEdgeType } from "../classes/spot/abstractions/position-identifier";
 
 export interface BinanceOrderData {
   orderId: string

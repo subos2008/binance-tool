@@ -7,9 +7,15 @@ BigNumber.prototype.valueOf = function () {
 
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
-import { SpotPositions } from "./spot-positions"
+import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { SendMessageFunc } from "../../lib/telegram-v2"
-import { SpotPositionIdentifier } from "./spot-interfaces"
+import {
+  AuthorisedEdgeType,
+  check_edge,
+  SpotPositionIdentifier_V3,
+} from "../../classes/spot/abstractions/position-identifier"
+import { SpotExecutionEngine } from "../../classes/spot/exchanges/interfaces/spot-execution-engine"
+import { SpotPositionsExecution } from "../../classes/spot/execution/spot-positions-execution"
 
 export interface TradeAbstractionOpenLongCommand {
   base_asset: string
@@ -26,8 +32,8 @@ export interface TradeAbstractionCloseLongCommand {
 }
 
 export interface InterimSpotPositionsMetaDataPersistantStorage {
-  set_stop_order_id(spot_position_identifier: SpotPositionIdentifier, order_id: string): Promise<void>
-  get_stop_order_id(spot_position_identifier: SpotPositionIdentifier): Promise<string | null>
+  set_stop_order_id(spot_position_identifier: SpotPositionIdentifier_V3, order_id: string): Promise<void>
+  get_stop_order_id(spot_position_identifier: SpotPositionIdentifier_V3): Promise<string | null>
 }
 
 /**
@@ -37,18 +43,21 @@ export class TradeAbstractionService {
   logger: Logger
   send_message: SendMessageFunc
   quote_asset: string
-  private positions: SpotPositions // query state of existing open positions
+  private positions: SpotPositionsQuery // query state of existing open positions
+  private spot_ee: SpotPositionsExecution
 
   constructor({
     logger,
     send_message,
     quote_asset,
     positions,
+    spot_ee
   }: {
     logger: Logger
     send_message: SendMessageFunc
     quote_asset: string
-    positions: SpotPositions
+    positions: SpotPositionsQuery
+    spot_ee: SpotPositionsExecution
   }) {
     assert(logger)
     this.logger = logger
@@ -56,6 +65,7 @@ export class TradeAbstractionService {
     this.quote_asset = quote_asset
     this.positions = positions
     this.send_message = send_message
+    this.spot_ee = spot_ee
   }
 
   // or signal_long
@@ -66,10 +76,12 @@ export class TradeAbstractionService {
   ): Promise<object> {
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
+    let edge: AuthorisedEdgeType = check_edge(cmd.edge)
     /** TODO: We want this check and entry to be atomic, while we only trade one edge it's less important */
     this.logger.warn(`Position entry is not atomic with check for existing position`)
     let existing_spot_position_size: BigNumber = await this.positions.exisiting_position_size({
       base_asset: cmd.base_asset,
+      edge,
     })
 
     if (existing_spot_position_size.isGreaterThan(0)) {
@@ -79,7 +91,7 @@ export class TradeAbstractionService {
       throw new Error(msg) // turn this into a 3xx or 4xx
     }
 
-    let result = await this.positions.open_position({ quote_asset: this.quote_asset, ...cmd })
+    let result = await this.spot_ee.open_position({ quote_asset: this.quote_asset, ...cmd, edge })
     this.send_message(
       `Entered ${cmd.direction}=long position on ${cmd.edge}:${
         cmd.base_asset
@@ -93,10 +105,11 @@ export class TradeAbstractionService {
   async close_spot_long(cmd: TradeAbstractionCloseLongCommand, send_message: (msg: string) => void) {
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "close")
+    let edge = check_edge(cmd.edge)
 
     this.logger.warn(`Position exit is not atomic with check for existing position`)
-    if (await this.positions.in_position({ base_asset: cmd.base_asset })) {
-      this.positions.close_position({ quote_asset: this.quote_asset, ...cmd })
+    if (await this.positions.in_position({ base_asset: cmd.base_asset, edge })) {
+      this.spot_ee.close_position({ quote_asset: this.quote_asset, ...cmd, edge })
       return
     }
 
@@ -106,7 +119,7 @@ export class TradeAbstractionService {
     throw new Error(msg) // turn this into a 3xx or 4xx - 404?
   }
 
-  async open_positions(): Promise<SpotPositionIdentifier[]> {
+  async open_positions(): Promise<SpotPositionIdentifier_V3[]> {
     return this.positions.open_positions()
   }
 }

@@ -1,4 +1,4 @@
-import { ExchangeIdentifier_V3 } from "./exchange-identifier"
+import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 
 import * as Sentry from "@sentry/node"
 Sentry.init({})

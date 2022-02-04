@@ -41,13 +41,13 @@ import {
   TradeAbstractionOpenLongCommand,
   TradeAbstractionService,
 } from "./trade-abstraction-service"
-import { BinanceSpotExecutionEngine } from "./execution-engine"
-import { SpotPositions } from "./spot-positions"
-import { SpotPositionsPersistance } from "./spot-positions-persistance"
-import { SpotRedisPositionsState } from "./redis-spot-positions-state-v3"
+import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
+import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
+import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
 
 import express, { NextFunction, Request, Response } from "express"
-import { FixedPositionSizer } from "./position-sizer"
+import { FixedPositionSizer } from "./fixed-position-sizer"
 import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "./interim-meta-data-storage"
 const winston = require("winston")
 const expressWinston = require("express-winston")
@@ -88,6 +88,7 @@ app.get("/health", function (req: Request, res: Response) {
 
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
 import { RedisClient } from "redis"
+import { SpotPositionsExecution } from "../../classes/spot/execution/spot-positions-execution"
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
 
@@ -99,19 +100,27 @@ const interim_spot_positions_metadata_persistant_storage = new RedisInterimSpotP
   logger,
   redis,
 })
-const positions = new SpotPositions({
+const positions = new SpotPositionsQuery({
   logger,
-  ee: binance_spot_ee,
   positions_persistance,
   send_message,
-  position_sizer,
   interim_spot_positions_metadata_persistant_storage,
+  exchange_identifier: binance_spot_ee.get_exchange_identifier(),
+})
+const spot_ee: SpotPositionsExecution = new SpotPositionsExecution({
+  logger,
+  position_sizer,
+  positions_persistance,
+  interim_spot_positions_metadata_persistant_storage,
+  ee: binance_spot_ee,
+  send_message,
 })
 let tas: TradeAbstractionService = new TradeAbstractionService({
   positions,
   logger,
   send_message,
   quote_asset /* global */,
+  spot_ee,
 })
 app.get("/positions", async function (req: Request, res: Response, next: NextFunction) {
   try {

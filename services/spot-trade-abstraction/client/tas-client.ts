@@ -8,12 +8,12 @@ if (!TAS_URL.startsWith("http")) {
 
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"
 import { Logger } from "../../../interfaces/logger"
-import { SpotPositionIdentifier } from "../spot-interfaces"
 import { TradeAbstractionCloseLongCommand, TradeAbstractionOpenLongCommand } from "../trade-abstraction-service"
 const JSONBigNumber = require("./JSONBigNumber")
 import { URL } from "url"
 
 import * as Sentry from "@sentry/node"
+import { SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
   scope.setTag("class", "SpotTradeAbstractionServiceClient")
@@ -26,7 +26,7 @@ export class SpotTradeAbstractionServiceClient {
     this.logger = logger
   }
 
-  async positions(): Promise<SpotPositionIdentifier[]> {
+  async positions(): Promise<SpotPositionIdentifier_V3[]> {
     let response = await this._call("GET", new URL("/positions", TAS_URL).toString())
     console.log(`Returned positions:`)
     console.log(response)

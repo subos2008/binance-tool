@@ -48,7 +48,7 @@ const BinanceFoo = require("binance-api-node").default
 import { Binance } from "binance-api-node"
 import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData } from "../../interfaces/order_callbacks"
-import { AuthorisedEdgeType } from "../../events/shared/position-identifier"
+import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
 import { OrderToEdgeMapper } from "../../classes/persistent_state/order-to-edge-mapper"
 
 let order_execution_tracker: OrderExecutionTracker | null = null

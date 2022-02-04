@@ -20,7 +20,7 @@ const send_message = require("../lib/telegram.js")(`${service_name}: `)
 
 import { get_redis_client, set_redis_logger } from "../lib/redis"
 set_redis_logger(logger)
-const redis = get_redis_client()
+const redis: RedisClient = get_redis_client()
 
 // if(!redis.connected) throw new Error(`Redis not connected`)
 
@@ -34,76 +34,108 @@ BigNumber.prototype.valueOf = function () {
 const yargs = require("yargs")
 const c = require("ansi-colors")
 
-import { RedisSpotPositionsState } from "../classes/persistent_state/redis-spot-positions-state-v3"
-const redis_positions = new RedisSpotPositionsState({ logger, redis })
-
-import { Position } from "../classes/position"
-import { create_position_identifier_from_tuple, SpotPositionIdentifier_V3 } from "../events/shared/position-identifier"
+import { SpotPositionsQuery } from "../classes/spot/abstractions/spot-positions-query"
+import { SpotPositionsPersistance } from "../classes/spot/persistence/interface/spot-positions-persistance"
+// import { Position } from "../classes/position"
+import { SpotPositionIdentifier_V3, SpotPositionsQuery_V3 } from "../classes/spot/abstractions/position-identifier"
 import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
 import { BinancePriceGetter } from "../interfaces/exchange/binance/binance-price-getter"
 import { CurrentPriceGetter } from "../interfaces/exchange/generic/price-getter"
+import { SpotRedisPositionsState } from "../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
+
+/** Naughty */
+import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "../services/spot-trade-abstraction/interim-meta-data-storage"
+import { RedisClient } from "redis"
 
 require("dotenv").config()
+
+const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsState({ logger, redis })
+const interim_spot_positions_metadata_persistant_storage = new RedisInterimSpotPositionsMetaDataPersistantStorage({
+  logger,
+  redis,
+})
 
 async function main() {
   yargs
     .strict()
-    .command(["list", "$0"], "list all positions", {}, list_positions)
-    .command(["fixinate"], "custom hacks - do not run!", {}, fixinate)
     .command(
-      "describe",
-      "Describe position data from redis",
+      ["list", "$0"],
+      "list all positions",
       {
-        symbol: {
-          description: "base asset, i.e. if you bought BTC-USDT this would be BTC",
-          type: "string",
-          demandOption: true,
-          choices: (await redis_positions.open_positions()).map((p: SpotPositionIdentifier_V3) => p.base_asset),
-        },
         exchange: {
           description: "exchange",
           type: "string",
           default: "binance",
-          choices: (await redis_positions.open_positions()).map(
-            (p: SpotPositionIdentifier_V3) => p.exchange_identifier.exchange
-          ),
+          choices: ["binance"],
         },
         account: {
           description: "account id",
           type: "string",
           default: "default",
-          choices: (await redis_positions.open_positions()).map(
-            (p: SpotPositionIdentifier_V3) => p.exchange_identifier.account
-          ),
+          choices: ["default"],
+        },
+        exchange_type: {
+          description: "exchange type",
+          type: "string",
+          default: "spot",
+          choices: ["spot"],
         },
       },
-      describe_position
+      list_positions
     )
+    .command(["fixinate"], "custom hacks - do not run!", {}, fixinate)
+    .command("describe", "Describe position data from redis", {
+      symbol: {
+        description: "base asset, i.e. if you bought BTC-USDT this would be BTC",
+        type: "string",
+        demandOption: true,
+      },
+      exchange: {
+        description: "exchange",
+        type: "string",
+        default: "binance",
+        choices: ["binance"],
+      },
+      account: {
+        description: "account id",
+        type: "string",
+        default: "default",
+        choices: ["default"],
+      },
+      exchange_type: {
+        description: "exchange type",
+        type: "string",
+        default: "spot",
+        choices: ["spot"],
+      },
+      describe_position,
+    })
     .command(
       "delete",
-      "delete position data from redis",
+      "delete position data directly from redis. This is low level.",
       {
         symbol: {
           description: "base asset, i.e. if you bought BTC-USDT this would be BTC",
           type: "string",
           demandOption: true,
-          choices: (await redis_positions.open_positions()).map((p: SpotPositionIdentifier_V3) => p.base_asset),
         },
         exchange: {
           description: "exchange",
           type: "string",
           default: "binance",
-          choices: (await redis_positions.open_positions()).map(
-            (p: SpotPositionIdentifier_V3) => p.exchange_identifier.exchange
-          ),
+          choices: ["binance"],
         },
         account: {
           description: "account id",
           type: "string",
           default: "default",
-          choices: (await redis_positions.open_positions()).map(
-            (p: SpotPositionIdentifier_V3) => p.exchange_identifier.account
-          ),
+          choices: ["default"],
+        },
+        exchange_type: {
+          description: "exchange type",
+          type: "string",
+          default: "spot",
+          choices: ["spot"],
         },
       },
       delete_position
@@ -143,16 +175,32 @@ async function get_current_price({
   return price_getters[exchange_identifier.exchange].get_current_price({ market_symbol })
 }
 
-async function list_positions() {
+async function list_positions({
+  exchange,
+  exchange_type,
+  account,
+}: {
+  exchange: string
+  exchange_type: string
+  account: string
+}) {
+  if (exchange_type !== "spot") throw new Error(`Not implemented`)
+  const spot_positions_query = new SpotPositionsQuery({
+    logger,
+    positions_persistance,
+    send_message,
+    interim_spot_positions_metadata_persistant_storage,
+    exchange_identifier: { exchange, type: exchange_type, account, version: "v3" },
+  })
   console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
-  let open_positions = await redis_positions.open_positions()
+  let open_positions: SpotPositionIdentifier_V3[] = await spot_positions_query.open_positions()
   if (open_positions.length === 0) {
     console.log(`No open positions`)
     return
   }
   for (const position_identifier of open_positions) {
     try {
-      let p = new Position({ logger, send_message, redis_positions, position_identifier })
+      let p = await spot_positions_query.position(position_identifier)
       let exchange_identifier = position_identifier.exchange_identifier
       let quote_asset: string = await p.initial_entry_quote_asset()
       let percentage_change
@@ -168,9 +216,15 @@ async function list_positions() {
           price_change_string = `${percentage_change.isGreaterThan(0) ? "+" : ""}${percentage_change}%`
           if (percentage_change.isLessThan(0)) price_change_string = c.red(price_change_string)
         }
-      } catch (e) {}
+      } catch (error) {
+        console.error(error)
+      }
       price_change_string = `${price_change_string} vs ${quote_asset}`
-      console.log(`${position_identifier.base_asset}: ${price_change_string}`)
+      let pi = position_identifier
+      let ei = position_identifier.exchange_identifier
+      console.log(
+        `${pi.base_asset}: ${price_change_string} (${ei.type}:${ei.exchange}:${ei.account}, edge ${pi.edge})`
+      )
     } catch (err) {
       console.error(`Error processing info for ${position_identifier.base_asset}: ${err}`)
     }
@@ -180,24 +234,24 @@ async function list_positions() {
 
 async function fixinate() {
   // console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
-  // let open_positions = await redis_positions.open_positions()
+  // let open_positions = await positions.open_positions()
   // if (open_positions.length === 0) {
   //   console.log(`No open positions`)
   //   return
   // }
   // for (const position_identifier of open_positions) {
   //   try {
-  //     let p = new Position({ logger, send_message, redis_positions, position_identifier })
+  //     let p = new Position({ logger, send_message, positions, position_identifier })
   //     await p.initial_entry_quote_asset()
   //   } catch (err) {
   //     console.error(`Error processing info for ${position_identifier.base_asset}: ${err}`)
   //     if (err.toString().includes("initial_entry_quote_asset missing")) {
-  //       await redis_positions._patch_initial_entry_quote_asset(position_identifier, {
+  //       await positions._patch_initial_entry_quote_asset(position_identifier, {
   //         initial_entry_quote_asset: "USDT",
   //       })
   //     }
   //     if (err.toString().includes("initial_entry_timestamp missing")) {
-  //       await redis_positions._patch_initial_entry_timestamp(position_identifier, {
+  //       await positions._patch_initial_entry_timestamp(position_identifier, {
   //         initial_entry_timestamp: Date.now(),
   //       })
   //     }
@@ -207,16 +261,43 @@ async function fixinate() {
 }
 
 async function delete_position(argv: any) {
-  let position_identifier = create_position_identifier_from_tuple({ ...argv, baseAsset: argv["symbol"] })
-  await redis_positions.close_position(position_identifier)
+  let position_identifier = argv // sorry Mum
+  await positions_persistance.delete_position(position_identifier)
   redis.quit()
 }
 
-async function describe_position(argv: any) {
-  let position_identifier = create_position_identifier_from_tuple({ ...argv, baseAsset: argv["symbol"] })
-  console.log(position_identifier)
-  let p = new Position({ logger, send_message, redis_positions, position_identifier })
-  console.log(`${p.baseAsset}:`)
-  console.log(await p.describe_position())
+async function describe_position({
+  exchange,
+  exchange_type,
+  account,
+  edge,
+  symbol,
+}: {
+  exchange: string
+  account: string
+  exchange_type: string
+  edge: string
+  symbol: string
+}) {
+  if (exchange_type !== "spot") throw new Error(`Not implemented`)
+
+  const exchange_identifier: ExchangeIdentifier_V3 = { exchange, type: exchange_type, account, version: "v3" }
+  let query: SpotPositionsQuery_V3 = { exchange_identifier, base_asset: symbol }
+  const spot_positions_query = new SpotPositionsQuery({
+    logger,
+    positions_persistance,
+    send_message,
+    interim_spot_positions_metadata_persistant_storage,
+    exchange_identifier: { exchange, type: exchange_type, account, version: "v3" },
+  })
+  let position_identifiers: SpotPositionIdentifier_V3[] = await spot_positions_query.query_open_positions(query)
+  console.log(`position_identifiers:`)
+  console.log(position_identifiers)
+  // change to PositionQuery
+  for (const position_identifier of position_identifiers) {
+    let p = await spot_positions_query.position(position_identifier)
+    console.log(`${p.base_asset}:`)
+    console.log(await p.describe_position())
+  }
   redis.quit()
 }

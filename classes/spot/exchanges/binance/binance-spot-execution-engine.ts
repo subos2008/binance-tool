@@ -1,54 +1,26 @@
-import { AlgoUtils } from "../../service_lib/binance_algo_utils_v2"
-import { Logger } from "../../interfaces/logger"
+import { AlgoUtils } from "../../../../service_lib/binance_algo_utils_v2"
+import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
-import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
-import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
+import { MarketIdentifier_V3 } from "../../../../events/shared/market-identifier"
+import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import binance, { CancelOrderResult, Order } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
+import { BinanceExchangeInfoGetter } from "../../../exchanges/binance/exchange-info-getter"
 
 import { BigNumber } from "bignumber.js"
-import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
-import { symbolName } from "typescript"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-export interface SpotMarketBuyByQuoteQuantityCommand {
-  market_identifier: MarketIdentifier_V3
-  quote_amount: BigNumber
-}
-
-export interface SpotStopMarketSellCommand {
-  market_identifier: MarketIdentifier_V3
-  base_amount: BigNumber
-  trigger_price: BigNumber
-}
-
 interface BinanceSpotStopLimitOrderCommand {}
 
-export interface SpotExecutionEngine {
-  get_market_identifier_for({
-    quote_asset,
-    base_asset,
-  }: {
-    quote_asset: string
-    base_asset: string
-  }): MarketIdentifier_V3
-
-  market_buy_by_quote_quantity(
-    args: SpotMarketBuyByQuoteQuantityCommand
-  ): Promise<{ executed_quote_quantity: BigNumber; executed_price: BigNumber; executed_base_quantity: BigNumber }>
-
-  get_exchange_identifier(): ExchangeIdentifier_V3
-
-  stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<{ order_id: string | number; stop_price: BigNumber }>
-
-  cancel_order(args: { order_id: string; symbol: string }): Promise<CancelOrderResult>
-
-  market_sell(args: { symbol: string; base_amount: BigNumber }): Promise<void>
-}
+import {
+  SpotExecutionEngine,
+  SpotStopMarketSellCommand,
+  SpotMarketBuyByQuoteQuantityCommand,
+} from "../interfaces/spot-execution-engine"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)
@@ -78,6 +50,10 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       type: "spot",
       account: "default",
     }
+  }
+
+  get_raw_binance_ee() {
+    return ee
   }
 
   async get_exchange_info(): Promise<ExchangeInfo> {
@@ -136,11 +112,11 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     return { order_id: result.orderId, stop_price }
   }
 
-  async cancel_order({ order_id, symbol }: { symbol: string; order_id: string }): Promise<CancelOrderResult> {
+  async cancel_order({ order_id, symbol }: { symbol: string; order_id: string }): Promise<void> {
     let result = await this.utils.cancelOrder({ symbol, orderId: Number(order_id) })
     if (result.status === "CANCELED") {
       this.logger.info(`Sucesfully cancelled order ${order_id}`)
-      return result
+      return
     }
     let msg = `Failed to cancel order ${order_id} on ${symbol}, status ${result.status}`
     this.logger.warn(result)

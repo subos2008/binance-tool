@@ -1,7 +1,7 @@
 import { strict as assert } from "assert"
 const { promisify } = require("util")
 
-import { Logger } from "../../interfaces/logger"
+import { Logger } from "../../../../../interfaces/logger"
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -12,10 +12,10 @@ BigNumber.prototype.valueOf = function () {
 import * as Sentry from "@sentry/node"
 
 import { RedisClient } from "redis"
-import { SpotPositionIdentifier_V3, check_edge } from "../../events/shared/position-identifier"
-import { PositionObject } from "../position"
-import { GenericOrderData } from "../../types/exchange_neutral/generic_order_data"
-import { SpotPositionInitialisationData } from "../../services/spot-trade-abstraction/spot-positions-persistance"
+import { SpotPositionIdentifier_V3, check_edge } from "../../../abstractions/position-identifier"
+import { SpotPositionObject } from "../../../abstractions/spot-position"
+import { GenericOrderData } from "../../../../../types/exchange_neutral/generic_order_data"
+import { SpotPositionInitialisationData } from "../../interface/spot-positions-persistance"
 
 // We store as integers in redis because it uses hardware for floating point calculations
 function to_sats(input: string | BigNumber): string {
@@ -173,7 +173,7 @@ export class RedisSpotPositionsState {
     return this.get_object_set_key(pi, { key_name: "orders" })
   }
 
-  async describe_position(pi: SpotPositionIdentifier_V3): Promise<PositionObject> {
+  async describe_position(pi: SpotPositionIdentifier_V3): Promise<SpotPositionObject> {
     return {
       position_size: await this.get_position_size(pi),
       initial_entry_price: await this.get_initial_entry_price(pi),
@@ -278,7 +278,7 @@ export class RedisSpotPositionsState {
     }
   }
 
-  async close_position(pi: SpotPositionIdentifier_V3) {
+  async delete_position(pi: SpotPositionIdentifier_V3) {
     try {
       let keys = await this.keysAsync(`${this.prefix(pi)}:*`)
       for (let key of keys) {

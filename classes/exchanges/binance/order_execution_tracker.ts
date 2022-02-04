@@ -16,7 +16,7 @@ import * as Sentry from "@sentry/node"
 import { Binance, ExecutionReport, UserDataStreamEvent } from "binance-api-node"
 import { RedisClient } from "redis"
 import { OrderToEdgeMapper } from "../../persistent_state/order-to-edge-mapper"
-import { AuthorisedEdgeType, check_edge } from "../../../events/shared/position-identifier"
+import { AuthorisedEdgeType, check_edge } from "../../spot/abstractions/position-identifier"
 
 export class OrderExecutionTracker {
   send_message: Function

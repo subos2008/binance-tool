@@ -50,7 +50,7 @@ spec:
           env:
             - name: SENTRY_DSN
               value: "https://fdceaf9d5e984c6aad15f6ec0301f1f5@o369902.ingest.sentry.io/5286784"
+{{- include "telegram.vars" . | nindent 12 }}
 {{- include "binance.vars" . | nindent 12 }}
 {{- include "datadog.vars" . | nindent 12 }}
-{{- include "telegram.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}

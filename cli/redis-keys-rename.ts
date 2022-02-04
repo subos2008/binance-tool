@@ -9,8 +9,6 @@ const { promisify } = require("util")
 
 import { RedisClient } from "redis"
 
-//     edge60/spot/binance/signal_direction/XMRBUSD
-
 // These should be equivalent
 let redis_regexp = "C98"
 let regexp = new RegExp(`(C98)`)
@@ -60,7 +58,7 @@ export class Foo {
     }
     market = market.replace(/USDT$/, "").replace(/BUSD$/, "")
     market = market.replace("/", ":")
-    return `edge60:spot:binance:usd_quote:signal_direction:${market}`
+    return `fubar:spot:binance:usd_quote:signal_direction:${market}`
   }
 
   async run() {

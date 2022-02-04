@@ -1,5 +1,5 @@
 import { RedisClient } from "redis"
-import { AuthorisedEdgeType } from "../../events/shared/position-identifier"
+import { AuthorisedEdgeType, check_edge } from "../../events/shared/position-identifier"
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
 import { promisify } from "util"
@@ -33,6 +33,6 @@ export class OrderToEdgeMapper {
   async get_edge_for_order(order_id: OrderId): Promise<AuthorisedEdgeType> {
     let edge = await this.getAsync(this._key(order_id))
     if (!edge) throw new Error(`No edge known for order ${order_id}`)
-    return edge as AuthorisedEdgeType
+    return check_edge(edge)
   }
 }

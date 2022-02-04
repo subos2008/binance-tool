@@ -117,8 +117,8 @@ export class SpotPositionTracker {
       /* We can expect this to error, certainly initally as we have stops already open,
       Any manually created orders will also throw here */
       edge = await this.order_to_edge_mapper.get_edge_for_order(orderId)
-    } catch (error) {
-      this.logger.warn(`Unknown edge for orderId ${orderId}`)
+    } catch (error: any) {
+      this.logger.warn(`Exception determining edge for orderId ${orderId}: ${error.toString()}`)
     }
 
     let position_identifier: SpotPositionIdentifier_V3 = {

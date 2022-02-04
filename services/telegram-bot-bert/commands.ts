@@ -43,7 +43,10 @@ export class Commands {
     // Set the bot response
     // Order is important
     bot.help((ctx) => ctx.replyWithHTML(help_text))
-    bot.command("hi", (ctx) => ctx.reply("Yep, I'm here!"))
+    bot.command("hi", (ctx) => {
+      ctx.reply("Yep, I'm here!")
+      console.info(JSON.stringify(ctx))
+    })
     // bot.command("spot", Commands.spot)
     bot.on("text", this.text_to_command.bind(this))
   }

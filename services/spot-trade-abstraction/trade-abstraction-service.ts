@@ -100,7 +100,7 @@ export class TradeAbstractionService {
       return
     }
 
-    let msg = `There is no known long spot position on ${cmd.base_asset}, skipping`
+    let msg = `There is no known long spot position on ${cmd.base_asset}, skipping close request`
     this.logger.warn(msg)
     send_message(msg)
     throw new Error(msg) // turn this into a 3xx or 4xx - 404?

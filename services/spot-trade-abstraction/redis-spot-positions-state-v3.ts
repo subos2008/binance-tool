@@ -18,7 +18,7 @@ import { Logger } from "../../interfaces/logger"
 import { RedisSpotPositionsState } from "../../classes/persistent_state/redis-spot-positions-state-v3"
 import { RedisClient } from "redis"
 import { SpotPositionIdentifier_V3 } from "../../events/shared/position-identifier"
-import { PositionObject as LegacyPositionObject } from "../../classes/position"
+import { PositionObject } from "../../classes/position"
 
 export class SpotRedisPositionsState implements SpotPositionsPersistance {
   logger: Logger
@@ -33,8 +33,7 @@ export class SpotRedisPositionsState implements SpotPositionsPersistance {
     pi: SpotPositionIdentifier_V3,
     position_initialisation_data: SpotPositionInitialisationData
   ): Promise<void> {
-    let po: LegacyPositionObject = position_initialisation_data
-    await this.state.create_new_position(pi, po)
+    await this.state.create_new_position(pi, position_initialisation_data)
   }
 
   async in_position(pi: SpotPositionIdentifier_V3): Promise<boolean> {

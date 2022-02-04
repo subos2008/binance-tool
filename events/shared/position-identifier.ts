@@ -1,6 +1,7 @@
-import BigNumber from "bignumber.js"
-import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "./exchange-identifier"
+import { ExchangeIdentifier_V3 } from "./exchange-identifier"
 
+import * as Sentry from "@sentry/node"
+Sentry.init({})
 export function create_position_identifier_from_tuple({
   baseAsset,
   account,
@@ -24,8 +25,16 @@ export function create_position_identifier_from_tuple({
 }
 
 // We need unknown for manual orders where we have no information
-export type AuthorisedEdgeType = "edge60" | "unknown"
+export type AuthorisedEdgeType = "edge60" | "undefined"
 
+export function check_edge(edge: string | undefined): AuthorisedEdgeType {
+  if (!edge) return "undefined"
+  if (edge === "edge60") return "edge60"
+  let msg = `Unauthorised edge: ${edge}`
+  console.error(msg)
+  Sentry.captureException(new Error(msg))
+  return edge as AuthorisedEdgeType
+}
 export interface SpotPositionIdentifier_V3 {
   exchange_identifier: ExchangeIdentifier_V3 // yeah exchange, not market, for spot - but market for futures
   edge: AuthorisedEdgeType

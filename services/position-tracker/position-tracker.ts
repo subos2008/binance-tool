@@ -18,6 +18,7 @@ BigNumber.prototype.valueOf = function () {
 import * as Sentry from "@sentry/node"
 import {
   AuthorisedEdgeType,
+  check_edge,
   SpotPositionIdentifier_V3,
   SpotPositionsQuery_V3,
 } from "../../events/shared/position-identifier"
@@ -117,18 +118,13 @@ export class SpotPositionTracker {
       Any manually created orders will also throw here */
       edge = await this.order_to_edge_mapper.get_edge_for_order(orderId)
     } catch (error) {
-      /* Hmm, what do we do by default if an order doesn't have an edge...
-      ... we could set it to undefined the string for now perhaps?
-      ... I mean it will always happen with manual orders...
-      'unknown'? */
       this.logger.warn(`Unknown edge for orderId ${orderId}`)
     }
 
-    if (!edge) edge = "unknown"
     let position_identifier: SpotPositionIdentifier_V3 = {
       exchange_identifier: generic_order_data.exchange_identifier,
       base_asset: baseAsset,
-      edge,
+      edge: check_edge(edge),
     }
     let position = new Position({
       logger: this.logger,

@@ -1,11 +1,11 @@
 /* Realtime Presumably Redis backed access to Position data, loading and mutation thereof
  * Direct access to the Redis state exists in other classes atm and we are trying to move it all here
- * Should be SpotPosition 
+ * Should be SpotPosition
  */
 
 import { Logger } from "../interfaces/logger"
 import { RedisSpotPositionsState } from "../classes/persistent_state/redis-spot-positions-state-v3"
-import { SpotPositionIdentifier_V3 } from "../events/shared/position-identifier"
+import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../events/shared/position-identifier"
 
 import { BigNumber } from "bignumber.js"
 import { GenericOrderData } from "../types/exchange_neutral/generic_order_data"
@@ -22,6 +22,7 @@ export type PositionObject = {
   initial_entry_quote_asset: string
   initial_entry_price: BigNumber
   orders: GenericOrderData[]
+  edge: AuthorisedEdgeType
 }
 
 export class Position {
@@ -72,6 +73,7 @@ export class Position {
   // We could take that as an argument. Or there are RO vs RW versions of this class
   async create({ generic_order_data }: { generic_order_data: GenericOrderData }) {
     if (this.send_message) this.send_message(`New position for ${generic_order_data.baseAsset}`)
+    if (!generic_order_data.edge) throw new Error(`Refusing to create position for unknown edge`)
     this.redis_positions.create_new_position(this.position_identifier, {
       position_size: new BigNumber(generic_order_data.totalBaseTradeQuantity),
       initial_entry_price: new BigNumber(generic_order_data.averageExecutionPrice),
@@ -79,6 +81,7 @@ export class Position {
       initial_entry_quote_asset: generic_order_data.quoteAsset,
       initial_entry_timestamp: generic_order_data.orderTime,
       orders: [generic_order_data],
+      edge: check_edge(generic_order_data.edge),
     })
   }
 

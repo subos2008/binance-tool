@@ -12,9 +12,10 @@ BigNumber.prototype.valueOf = function () {
 import * as Sentry from "@sentry/node"
 
 import { RedisClient } from "redis"
-import { SpotPositionIdentifier_V3 } from "../../events/shared/position-identifier"
+import { SpotPositionIdentifier_V3, check_edge } from "../../events/shared/position-identifier"
 import { PositionObject } from "../position"
 import { GenericOrderData } from "../../types/exchange_neutral/generic_order_data"
+import { SpotPositionInitialisationData } from "../../services/spot-trade-abstraction/spot-positions-persistance"
 
 // We store as integers in redis because it uses hardware for floating point calculations
 function to_sats(input: string | BigNumber): string {
@@ -61,7 +62,7 @@ export class RedisSpotPositionsState {
   }
 
   private prefix(pi: SpotPositionIdentifier_V3) {
-    assert(pi.exchange_identifier.type === "spot")
+    assert.equal(pi.exchange_identifier.type, "spot")
     let account = pi.exchange_identifier.account || "default"
     /* This needs to match the regexp in open_positions() */
     return `${key_base}:spot:${pi.exchange_identifier.exchange}:${account}:${pi.base_asset}:${pi.edge}`
@@ -75,6 +76,7 @@ export class RedisSpotPositionsState {
       case "initial_quote_invested":
       case "total_quote_invested":
       case "total_quote_withdrawn":
+      case "edge":
         return `${prefix}:sats_${name}`
       default:
         return `${prefix}:${name}`
@@ -145,6 +147,10 @@ export class RedisSpotPositionsState {
     return this.get_sats_key(pi, { key_name: "initial_quote_invested" })
   }
 
+  async get_edge(pi: SpotPositionIdentifier_V3): Promise<string> {
+    return this.get_string_key(pi, { key_name: "edge" })
+  }
+
   private async get_object_set_key(pi: SpotPositionIdentifier_V3, { key_name }: { key_name: string }) {
     let objects_as_strings: string[] = await this.smembersAsync(this.name_to_key(pi, { name: key_name }))
     let objects = objects_as_strings.map((s) => JSON.parse(s))
@@ -175,6 +181,7 @@ export class RedisSpotPositionsState {
       initial_quote_invested: await this.get_initial_quote_invested(pi),
       initial_entry_timestamp: await this.get_initial_entry_timestamp(pi),
       orders: await this.get_orders(pi),
+      edge: check_edge(await this.get_edge(pi)),
     }
   }
 
@@ -187,7 +194,8 @@ export class RedisSpotPositionsState {
       initial_entry_quote_asset,
       initial_entry_timestamp,
       orders,
-    }: PositionObject
+      edge,
+    }: SpotPositionInitialisationData
   ) {
     try {
       assert(initial_quote_invested.isPositive())
@@ -202,7 +210,9 @@ export class RedisSpotPositionsState {
         this.name_to_key(pi, { name: "initial_entry_price" }),
         to_sats(initial_entry_price?.toFixed()),
         this.name_to_key(pi, { name: "initial_entry_quote_asset" }),
-        initial_entry_quote_asset
+        initial_entry_quote_asset,
+        this.name_to_key(pi, { name: "edge" }),
+        edge
       )
     } catch (error) {
       console.error(error)
@@ -288,14 +298,16 @@ export class RedisSpotPositionsState {
   }
 
   async open_positions(): Promise<SpotPositionIdentifier_V3[]> {
-    const keys = await this.keysAsync(`${key_base}:*:sats_position_size`)
-    return keys.map((key: any) => {
+    const keys: string[] = await this.keysAsync(`${key_base}:*:sats_position_size`)
+    this.logger.debug(`Loaded ${keys.length} matching keys from redis`)
+    return keys.map((key: string) => {
       //`${key_base}:spot:${exchange}:${account}:${base_asset}:${pi.edge}`
       let tuple = key.match(/:spot:([^:]+):([^:]+):([^:]+):([^:]+):sats_position_size/)
+      if (!tuple) throw new Error(`Key '${key} did not match regexp`)
       let pi: SpotPositionIdentifier_V3 = {
         exchange_identifier: { exchange: tuple[1], account: tuple[2], version: "v3", type: "spot" },
         base_asset: tuple[3],
-        edge: tuple[4],
+        edge: check_edge(tuple[4]),
       }
       return pi
     })

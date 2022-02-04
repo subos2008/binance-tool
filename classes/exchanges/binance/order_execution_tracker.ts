@@ -16,7 +16,7 @@ import * as Sentry from "@sentry/node"
 import { Binance, ExecutionReport, UserDataStreamEvent } from "binance-api-node"
 import { RedisClient } from "redis"
 import { OrderToEdgeMapper } from "../../persistent_state/order-to-edge-mapper"
-import { AuthorisedEdgeType } from "../../../events/shared/position-identifier"
+import { AuthorisedEdgeType, check_edge } from "../../../events/shared/position-identifier"
 
 export class OrderExecutionTracker {
   send_message: Function
@@ -113,7 +113,7 @@ export class OrderExecutionTracker {
     })
   }
 
-  async get_edge_for_order(data: BinanceOrderData): Promise<AuthorisedEdgeType | undefined> {
+  async get_edge_for_order(data: BinanceOrderData): Promise<AuthorisedEdgeType> {
     let edge = undefined
     try {
       if (!this.order_to_edge_mapper)
@@ -124,8 +124,11 @@ export class OrderExecutionTracker {
       // Non fatal there are valid times for this
       Sentry.captureException(error)
     }
-    this.logger.info(`Loaded edge for order ${data.orderId}: ${edge} (undefined/unknown can be valid here)`)
-    return undefined
+    edge = check_edge(edge)
+    this.logger.info(
+      `Loaded edge for order ${data.orderId}: ${edge} (undefined can be valid here for manually created orders)`
+    )
+    return edge
   }
 
   async processExecutionReport(data: any) {

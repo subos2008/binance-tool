@@ -22,6 +22,8 @@ import { get_redis_client, set_redis_logger } from "../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()
 
+// if(!redis.connected) throw new Error(`Redis not connected`)
+
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion

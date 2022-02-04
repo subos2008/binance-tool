@@ -88,7 +88,7 @@ export class Commands {
         ctx.replyWithHTML(`Invalid command for /spot '${command}, valid commands are ${valid_commands.join(", ")}`)
         return
       }
-      if (!edge || !edge.match(/edge\d+/)) {
+      if (!edge || !edge.match(/edge\d+|undefined/)) {
         ctx.replyWithHTML(`Invalid format for edge '${edge}', expected something like edge60`)
         return
       }

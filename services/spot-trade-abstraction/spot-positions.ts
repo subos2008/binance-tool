@@ -14,7 +14,7 @@ import BigNumber from "bignumber.js"
 import { InterimSpotPositionsMetaDataPersistantStorage } from "./trade-abstraction-service"
 import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
 import Sentry from "../../lib/sentry"
-import { SpotPositionsQuery_V3 } from "../../events/shared/position-identifier"
+import { check_edge, SpotPositionsQuery_V3 } from "../../events/shared/position-identifier"
 
 /**
  * If this does the tracking in redis and the exchange orders things get a log cleaner
@@ -94,14 +94,17 @@ export class SpotPositions {
   }> {
     var edge_percentage_stop
 
+    args.edge = check_edge(args.edge)
     switch (args.edge) {
       case "edge60":
+      case "undefined":
         edge_percentage_stop = new BigNumber(7)
         break
 
       default:
-        this.send_message(`Only edge60 permitted at the moment`)
-        throw new Error(`Only edge60 permitted at the moment`)
+        let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
+        this.send_message(msg)
+        throw new Error(msg)
         break
     }
 
@@ -233,11 +236,11 @@ export class SpotPositions {
     }
   }
 
-  async open_positions() :Promise<SpotPositionIdentifier[]>{
+  async open_positions(): Promise<SpotPositionIdentifier[]> {
     return await this.positions_persistance.list_open_positions()
   }
 
-  async query_open_positions(pq: SpotPositionsQuery_V3):Promise<SpotPositionIdentifier[]> {
+  async query_open_positions(pq: SpotPositionsQuery_V3): Promise<SpotPositionIdentifier[]> {
     let positions = await this.open_positions()
     /**
      * export interface SpotPositionsQuery_V3 {

@@ -37,7 +37,7 @@ const redis_positions = new RedisSpotPositionsState({ logger, redis })
 
 import { Position } from "../classes/position"
 import { create_position_identifier_from_tuple, SpotPositionIdentifier_V3 } from "../events/shared/position-identifier"
-import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
 import { BinancePriceGetter } from "../interfaces/exchange/binance/binance-price-getter"
 import { CurrentPriceGetter } from "../interfaces/exchange/generic/price-getter"
 

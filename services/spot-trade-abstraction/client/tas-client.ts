@@ -50,7 +50,7 @@ export class SpotTradeAbstractionServiceClient {
   /**
    * @private Make a HTTP request to a specific endpoint. Private endpoints are automatically signed.
    */
-  async _call(method: Method, endpoint: string, params?: string | object): Promise<any> {
+  private async _call(method: Method, endpoint: string, params?: string | object): Promise<any> {
     try {
       const options = {
         url: endpoint,

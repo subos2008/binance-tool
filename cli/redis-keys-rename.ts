@@ -12,8 +12,11 @@ import { RedisClient } from "redis"
 //     edge60/spot/binance/signal_direction/XMRBUSD
 
 // These should be equivalent
-let redis_regexp = "edge60:spot:binance:signal_direction:usd_quote:*"
-let regexp = new RegExp(`edge60:spot:binance:signal_direction:usd_quote:(.*)`)
+let redis_regexp = "C98"
+let regexp = new RegExp(`(C98)`)
+
+// Dangerous code in this file - do not execute
+process.exit(1)
 
 export class Foo {
   redis: RedisClient
@@ -61,6 +64,7 @@ export class Foo {
   }
 
   async run() {
+    let nop = false
     let keys = await this.keys()
     const result: string[] = []
     for (const key of keys) {
@@ -68,7 +72,11 @@ export class Foo {
       let new_key = this.translate_key(key)
       console.log(`${key} -> ${new_key}`)
       let new_key_value = await this.getAsync(new_key)
-      if (new_key_value) continue // don't overwrite keys that exist at the destination
+      if (nop) continue
+      if (new_key_value) {
+        this.delAsync(key)
+        continue // don't overwrite keys that exist at the destination
+      }
       this.setAsync(new_key, direction)
       console.info(`Set ${new_key} to ${direction}`)
       this.delAsync(key)

@@ -89,7 +89,7 @@ export class Commands {
         return
       }
       if (!edge || !edge.match(/edge\d+|undefined/)) {
-        ctx.replyWithHTML(`Invalid format for edge '${edge}', expected something like edge60`)
+        ctx.replyWithHTML(`Invalid format for edge '${edge}', expected something like edgeNN`)
         return
       }
 

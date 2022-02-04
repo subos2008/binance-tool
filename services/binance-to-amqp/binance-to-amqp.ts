@@ -15,7 +15,6 @@
 //  1. Could also check redis-trades matches position sizes
 //  1. Doesn't currently re-publish on deposits/withdrawals
 
-
 // Config
 const service_name = "binance-to-amqp"
 
@@ -50,8 +49,19 @@ process.on("unhandledRejection", (error) => {
 
 import { BinancePortfolioToAMQP } from "./portfolio"
 
-let logger = _logger
+let logger: Logger = _logger
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+
+let redis: RedisClient | undefined
+try {
+  set_redis_logger(logger)
+  redis = get_redis_client()
+} catch (error) {
+  // We don't want redis failures to take down this logger service
+  // redis is just used to print the edge for information
+  logger.error(error)
+  Sentry.captureException(error)
+}
 
 const health = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health.addSubsystem({ name: "global", ready: true, healthy: true })
@@ -66,7 +76,7 @@ async function main() {
       ready: false,
       healthy: false,
     })
-    let portfolio_to_amqp = new BinancePortfolioToAMQP({ send_message, logger, health_and_readiness })
+    let portfolio_to_amqp = new BinancePortfolioToAMQP({ send_message, logger, health_and_readiness, redis })
     await portfolio_to_amqp.start()
   } catch (error: any) {
     Sentry.captureException(error)
@@ -86,6 +96,8 @@ main().catch((error) => {
 })
 
 import express, { Request, Response } from "express"
+import { RedisClient } from "redis"
+import { get_redis_client, set_redis_logger } from "../../lib/redis"
 var app = express()
 app.get("/health", function (req: Request, res: Response) {
   if (health.healthy()) res.send({ status: "OK" })

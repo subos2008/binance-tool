@@ -57,6 +57,7 @@ import { Balance, Portfolio } from "../../interfaces/portfolio"
 
 import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
 import { HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
+import { RedisClient } from "redis"
 
 // Let's keep this code, could become part of ensuring same format events accross exchanges
 export class PortfolioPublisher {
@@ -257,10 +258,12 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
     send_message,
     logger,
     health_and_readiness,
+    redis,
   }: {
     send_message: (msg: string) => void
     logger: Logger
     health_and_readiness: HealthAndReadinessSubsystem
+    redis?: RedisClient
   }) {
     assert(logger)
     this.logger = logger
@@ -296,6 +299,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
       send_message,
       logger,
       order_callbacks: this,
+      redis,
     })
   }
 

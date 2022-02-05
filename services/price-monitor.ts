@@ -13,8 +13,8 @@ const timeout_seconds = Number(process.env.WATCHDOG_TIMEOUT_SECONDS || "3600")
 require("dotenv").config();
 assert(process.env.REDIS_HOST)
 // assert(process.env.REDIS_PASSWORD)
-// assert(process.env.APIKEY)
-// assert(process.env.APISECRET)
+// assert(process.env.BINANCE_API_KEY)
+// assert(process.env.BINANCE_API_SECRET)
 
 import * as Sentry from '@sentry/node';
 Sentry.init({});
@@ -111,11 +111,11 @@ var ee: Object;
 async function main() {
   if (live) {
     logger.info("Live monitoring mode");
-    assert(process.env.APIKEY)
-    assert(process.env.APISECRET)
+    assert(process.env.BINANCE_API_KEY)
+    assert(process.env.BINANCE_API_SECRET)
     ee = Binance({
-      apiKey: process.env.APIKEY,
-      apiSecret: process.env.APISECRET
+      apiKey: process.env.BINANCE_API_KEY,
+      apiSecret: process.env.BINANCE_API_SECRET
     });
   } else {
     logger.info("Emulated exchange mode");

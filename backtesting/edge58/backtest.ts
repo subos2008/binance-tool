@@ -480,11 +480,11 @@ export class Edge58Backtester {
 
 let edge58: Edge58Backtester | null
 async function main() {
-  assert(process.env.APIKEY)
-  assert(process.env.APISECRET)
+  assert(process.env.BINANCE_API_KEY)
+  assert(process.env.BINANCE_API_SECRET)
   var ee: Binance = binance({
-    apiKey: process.env.APIKEY || "foo",
-    apiSecret: process.env.APISECRET || "foo",
+    apiKey: process.env.BINANCE_API_KEY || "foo",
+    apiSecret: process.env.BINANCE_API_SECRET || "foo",
   })
 
   edge58 = new Edge58Backtester({ ee, logger })

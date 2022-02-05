@@ -245,11 +245,11 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
 
 let edge58: Edge58Service | null
 async function main() {
-  assert(process.env.APIKEY)
-  assert(process.env.APISECRET)
+  assert(process.env.BINANCE_API_KEY)
+  assert(process.env.BINANCE_API_SECRET)
   var ee: Binance = binance({
-    apiKey: process.env.APIKEY || "foo",
-    apiSecret: process.env.APISECRET || "foo",
+    apiKey: process.env.BINANCE_API_KEY || "foo",
+    apiSecret: process.env.BINANCE_API_SECRET || "foo",
   })
 
   try {

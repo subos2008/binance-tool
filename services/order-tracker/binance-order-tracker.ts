@@ -103,11 +103,11 @@ class MyOrderCallbacks {
 async function main() {
   var ee: Binance
   logger.info("Live monitoring mode")
-  assert(process.env.APIKEY)
-  assert(process.env.APISECRET)
+  assert(process.env.BINANCE_API_KEY)
+  assert(process.env.BINANCE_API_SECRET)
   ee = BinanceFoo({
-    apiKey: process.env.APIKEY,
-    apiSecret: process.env.APISECRET,
+    apiKey: process.env.BINANCE_API_KEY,
+    apiSecret: process.env.BINANCE_API_SECRET,
     // getTime: xxx // time generator function, optional, defaults to () => Date.now()
   })
 

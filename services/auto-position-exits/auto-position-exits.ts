@@ -243,11 +243,11 @@ async function main() {
   var ee: GenericExchangeInterface
   if (live) {
     logger.info("Live monitoring mode")
-    if (!process.env.APIKEY) throw new Error(`APIKEY not defined`)
-    if (!process.env.APISECRET) throw new Error(`APISECRET not defined`)
+    if (!process.env.BINANCE_API_KEY) throw new Error(`BINANCE_API_KEY not defined`)
+    if (!process.env.BINANCE_API_SECRET) throw new Error(`BINANCE_API_SECRET not defined`)
     ee = Binance({
-      apiKey: process.env.APIKEY,
-      apiSecret: process.env.APISECRET,
+      apiKey: process.env.BINANCE_API_KEY,
+      apiSecret: process.env.BINANCE_API_SECRET,
       // getTime: xxx // time generator function, optional, defaults to () => Date.now()
     })
   } else {

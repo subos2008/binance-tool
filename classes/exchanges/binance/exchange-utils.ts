@@ -26,12 +26,12 @@ export class BinanceExchangeUtils implements ExchangeUtils {
   constructor({ logger, exchange_identifier }: { logger: Logger; exchange_identifier: ExchangeIdentifier }) {
     this.logger = logger
     this.exchange_identifier = exchange_identifier
-    if (!process.env.APIKEY) throw new Error(`APIKEY not defined`)
-    if (!process.env.APISECRET) throw new Error(`APISECRET not defined`)
+    if (!process.env.BINANCE_API_KEY) throw new Error(`BINANCE_API_KEY not defined`)
+    if (!process.env.BINANCE_API_SECRET) throw new Error(`BINANCE_API_SECRET not defined`)
     logger.warn(`ee derived from env vars and not ExchangeIdentifier`)
     this.ee = Binance({
-      apiKey: process.env.APIKEY,
-      apiSecret: process.env.APISECRET,
+      apiKey: process.env.BINANCE_API_KEY,
+      apiSecret: process.env.BINANCE_API_SECRET,
     })
     this.algo_utils = new AlgoUtils({ logger: this.logger, ee: this.ee })
   }

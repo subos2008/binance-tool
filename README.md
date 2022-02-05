@@ -289,8 +289,8 @@ _There's a github workflow also_
 create a `.env` file:
 
 ```bash
-APIKEY=
-APISECRET=
+BINANCE_API_KEY=
+BINANCE_API_SECRET=
 TELEGRAM_KEY=
 TELEGRAM_CHAT_ID=
 # warning DOCKER_REGISTRY is hardcoded in run-in-k8.sh
@@ -378,8 +378,8 @@ Create a file called `.env` in the checked out folder.
 Add your [Binance API key](https://support.binance.com/hc/en-us/articles/360002502072-How-to-create-API) in the following format. Replace `BINANCE_API_KEY` with your API key and `BINANCE_API_SECRET` with your API secret.
 
 <pre>
-APIKEY=<b>BINANCE_API_KEY</b>
-APISECRET=<b>BINANCE_API_SECRET</b>
+BINANCE_API_KEY=<b>BINANCE_API_KEY</b>
+BINANCE_API_SECRET=<b>BINANCE_API_SECRET</b>
 </pre>
 
 If you want alerts via Telegram you must also add your `TELEGRAM_KEY` and `TELEGRAM_CHAT_ID` in the same style. Starting instructions for this can be found [here](https://stackoverflow.com/questions/32423837/telegram-bot-how-to-get-a-group-chat-id). Pull requests welcome to improve these instructions.

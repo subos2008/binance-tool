@@ -70,15 +70,15 @@ Environment variables
 {{- end -}}
 
 {{- define "binance.vars" -}}
-- name: APIKEY
+- name: BINANCE_API_KEY
   valueFrom:
     secretKeyRef:
-      key: APIKEY
+      key: BINANCE_API_KEY
       name: binance
-- name: APISECRET
+- name: BINANCE_API_SECRET
   valueFrom:
     secretKeyRef:
-      key: APISECRET
+      key: BINANCE_API_SECRET
       name: binance
 {{- end -}}
 

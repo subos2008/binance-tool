@@ -112,8 +112,8 @@ function get_ee(): Binance {
   if (_ee) return _ee
   const Binance = require("binance-api-node").default
   const ee = Binance({
-    apiKey: process.env.APIKEY,
-    apiSecret: process.env.APISECRET,
+    apiKey: process.env.BINANCE_API_KEY,
+    apiSecret: process.env.BINANCE_API_SECRET,
   })
   _ee = ee
   return ee

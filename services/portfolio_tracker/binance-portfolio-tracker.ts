@@ -103,11 +103,11 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
     this.send_message = send_message
     logger.info("Live monitoring mode")
     this.exchange_identifier = { exchange: "binance", account: "default" }
-    if (!process.env.APIKEY) throw new Error(`Missing APIKEY in ENV`)
-    if (!process.env.APISECRET) throw new Error(`Missing APISECRET in ENV`)
+    if (!process.env.BINANCE_API_KEY) throw new Error(`Missing BINANCE_API_KEY in ENV`)
+    if (!process.env.BINANCE_API_SECRET) throw new Error(`Missing BINANCE_API_SECRET in ENV`)
     this.ee = Binance({
-      apiKey: process.env.APIKEY,
-      apiSecret: process.env.APISECRET,
+      apiKey: process.env.BINANCE_API_KEY,
+      apiSecret: process.env.BINANCE_API_SECRET,
     })
     this.order_execution_tracker = new OrderExecutionTracker({
       ee: this.ee,

@@ -32,8 +32,10 @@ export function check_edge(edge: string | undefined): AuthorisedEdgeType {
     Sentry.captureException(new Error(`check_edge: undefined value passed in`))
     return "undefined"
   }
+  // if (edge === "edge60") return "edge60" HACK
   if (edge === "edge60") {
-    return edge
+    console.warn(`Hack to map edge60 to undefined triggered`)
+    return "undefined" // HACK
   }
   let msg = `Unauthorised edge: ${edge}`
   console.error(msg)

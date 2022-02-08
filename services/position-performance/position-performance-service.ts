@@ -87,7 +87,7 @@ export class PositionPerformance {
       let initial_entry_price = await p.initial_entry_price()
       let percentage = (await p.percentage_price_change_since_initial_entry(current_price)).dp(1)
       let percentage_string: string = percentage?.toFixed() || "?"
-      return `${p.baseAsset}: ${percentage_string}%`
+      return `${p.baseAsset}: ${percentage_string}% (entry: ${initial_entry_price.toFixed()})`
     }
 
     for (const position_identifier of open_positions) {
@@ -97,7 +97,7 @@ export class PositionPerformance {
     }
 
     if (position_strings.length > 0) {
-      let msg: string = position_strings.join(", ")
+      let msg: string = position_strings.join("\n")
       this.send_message(`\n${msg}`)
     }
   }

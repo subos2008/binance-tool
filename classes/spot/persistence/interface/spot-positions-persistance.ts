@@ -68,6 +68,7 @@ export interface SpotPositionsPersistance {
   position_size(pi: SpotPositionIdentifier_V3): Promise<BigNumber>
   initial_entry_price(pi: SpotPositionIdentifier_V3): Promise<BigNumber>
   initial_entry_quote_asset(pi: SpotPositionIdentifier_V3): Promise<string>
+  edge(pi: SpotPositionIdentifier_V3): Promise<string>
 
   /* hacky*/
   in_position(pi: SpotPositionIdentifier_V3): Promise<boolean>

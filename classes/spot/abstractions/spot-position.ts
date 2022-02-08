@@ -81,6 +81,10 @@ export class SpotPosition {
     return this.spot_positions_persistance.as_spot_position_object(this.position_identifier)
   }
 
+  async edge(): Promise<AuthorisedEdgeType> {
+    return check_edge(await this.spot_positions_persistance.edge(this.position_identifier))
+  }
+
   // // Create a new position in the state
   // // NB: does not send a NewPosition event as that would require AQMP access,
   // // We could take that as an argument. Or there are RO vs RW versions of this class

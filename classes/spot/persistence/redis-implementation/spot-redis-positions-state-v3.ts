@@ -60,6 +60,10 @@ export class SpotRedisPositionsState implements SpotPositionsPersistance {
     return this.state.get_initial_entry_quote_asset(pi)
   }
 
+  async edge(pi: SpotPositionIdentifier_V3): Promise<string> {
+    return this.state.get_edge(pi)
+  }
+
   async as_spot_position_object(pi: SpotPositionIdentifier_V3): Promise<SpotPositionObject> {
     return this.state.describe_position(pi)
   }

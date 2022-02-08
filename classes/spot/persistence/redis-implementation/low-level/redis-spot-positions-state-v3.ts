@@ -77,7 +77,7 @@ export class RedisSpotPositionsState {
       case "total_quote_invested":
       case "total_quote_withdrawn":
       case "edge":
-        return `${prefix}:sats_${name}`
+        return `${prefix}:sats_${name}` // oops left a sats in
       default:
         return `${prefix}:${name}`
     }

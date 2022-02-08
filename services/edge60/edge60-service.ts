@@ -149,13 +149,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         Sentry.captureException(e)
       }
     } else {
-      try {
-        this.send_message(`${symbol} ${direction} price triggered but not trend reversal`)
-      } catch (e) {
-        this.logger.warn(`Failed to publish to telegram for ${symbol}`)
-        // This can happen if top 100 changes since boot and we refresh the cap list
-        Sentry.captureException(e)
-      }
+      this.logger.info(`${symbol} ${direction} price triggered but not trend reversal`)
     }
   }
 
@@ -178,7 +172,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       market_identifier: {
         version: "v3",
         // TODO: pull exchange_identifier from ee
-        exchange_identifier: { version: "v3", exchange, type: "spot" ,account: 'default'},
+        exchange_identifier: { version: "v3", exchange, type: "spot", account: "default" },
         symbol,
         base_asset: this.base_asset_for_symbol(symbol),
       },

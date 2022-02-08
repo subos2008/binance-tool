@@ -12,7 +12,7 @@ BigNumber.prototype.valueOf = function () {
 /** Configuration */
 let fixed_position_size = {
   quote_asset: "BUSD",
-  quote_amount: new BigNumber(70),
+  quote_amount: new BigNumber(150),
 }
 export interface PositionSizer {
   position_size_in_quote_asset(args: { base_asset: string; quote_asset: string }): Promise<BigNumber>

@@ -107,7 +107,7 @@ class Edge60EntrySignalToSpotTasBridge implements MessageProcessor {
       let result: string | undefined
       switch (signal.edge60_entry_signal.direction) {
         case "long":
-          send_message(`long signal, attempting to open ${edge} spot long position on ${base_asset}`)
+          this.logger.info(`long signal, attempting to open ${edge} spot long position on ${base_asset}`)
           result = await this.tas_client.open_spot_long({
             base_asset,
             edge,
@@ -118,7 +118,7 @@ class Edge60EntrySignalToSpotTasBridge implements MessageProcessor {
           break
         case "short":
           try {
-            send_message(`short signal, attempting to close any ${edge} spot long position on ${base_asset}`)
+            this.logger.info(`short signal, attempting to close any ${edge} spot long position on ${base_asset}`)
             result = await this.tas_client.close_spot_long({
               base_asset,
               edge,

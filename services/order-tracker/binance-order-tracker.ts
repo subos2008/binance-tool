@@ -99,7 +99,7 @@ class MyOrderCallbacks {
 
   async order_cancelled(data: BinanceOrderData): Promise<void> {
     let price: string = data.price ? new BigNumber(data.price).toFixed() : "(null)"
-    this.send_message(`${data.symbol} ${data.orderType} ${data.side} at ${price} cancelled.`)
+    this.send_message(`${data.symbol} ${data.orderType} ${data.side} at ${price} cancelled  (edge: ${data.edge})`)
   }
 
   async order_filled(data: BinanceOrderData): Promise<void> {
@@ -108,7 +108,7 @@ class MyOrderCallbacks {
       ? new BigNumber(data.averageExecutionPrice).toFixed()
       : "(null)"
     this.send_message(
-      `${data.symbol} ${data.orderType} ${data.side} filled at ${price}/${averageExecutionPrice}.`
+      `${data.symbol} ${data.orderType} ${data.side} filled at ${price}/${averageExecutionPrice}  (edge: ${data.edge})`
     )
   }
 }

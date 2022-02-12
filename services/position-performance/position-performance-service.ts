@@ -26,7 +26,6 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Binance } from "binance-api-node"
-import BinanceFactory from "binance-api-node"
 
 import * as Sentry from "@sentry/node"
 import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
@@ -36,7 +35,6 @@ import { SpotPositionsPersistance } from "../../classes/spot/persistence/interfa
 import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "../spot-trade-abstraction/interim-meta-data-storage"
-import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
 
 export class PositionPerformance {

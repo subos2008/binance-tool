@@ -7,8 +7,6 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { OrderState } from "../../persistent_state/redis_order_state"
-
 import { Logger } from "../../../interfaces/logger"
 import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/order_callbacks"
 
@@ -23,7 +21,6 @@ export class OrderExecutionTracker {
   logger: Logger
   ee: Binance
   closeUserWebsocket: Function | undefined
-  order_state: OrderState | undefined
   order_callbacks: OrderCallbacks | undefined
   print_all_trades: boolean = false
   order_to_edge_mapper: OrderToEdgeMapper | undefined
@@ -33,7 +30,6 @@ export class OrderExecutionTracker {
     ee, // binance-api-node API
     send_message,
     logger,
-    order_state,
     order_callbacks,
     print_all_trades,
     redis,
@@ -41,7 +37,6 @@ export class OrderExecutionTracker {
     ee: Binance
     send_message: (msg: string) => void
     logger: Logger
-    order_state?: OrderState
     order_callbacks?: OrderCallbacks
     print_all_trades?: boolean
     redis?: RedisClient
@@ -50,7 +45,6 @@ export class OrderExecutionTracker {
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-    this.order_state = order_state
     this.order_callbacks = order_callbacks
     assert(ee)
     this.ee = ee
@@ -187,20 +181,12 @@ export class OrderExecutionTracker {
       if (orderStatus === "NEW") {
         // Originally orders were all first added here but as we re-architect they will become
         // more likely to pre-exist
-        if (this.order_state) await this.order_state.add_new_order(orderId, { symbol, side, orderType })
         if (this.order_callbacks && this.order_callbacks.order_created)
           await this.order_callbacks.order_created(data)
         return
       }
 
       if (orderStatus === "PARTIALLY_FILLED") {
-        if (this.order_state)
-          await this.order_state.set_total_executed_quantity(
-            orderId,
-            new BigNumber(totalTradeQuantity),
-            false,
-            orderStatus
-          )
         if (this.order_callbacks && this.order_callbacks.order_filled_or_partially_filled)
           await this.order_callbacks.order_filled_or_partially_filled(data)
         return
@@ -208,8 +194,6 @@ export class OrderExecutionTracker {
 
       if (orderStatus === "CANCELED" /*&& orderRejectReason === "NONE"*/) {
         // `Order was cancelled, presumably by user. Exiting.`, (orderRejectReason === "NONE happens when user cancelled)
-        if (this.order_state)
-          await this.order_state.set_order_cancelled(orderId, true, orderRejectReason, orderStatus)
         if (this.order_callbacks && this.order_callbacks.order_cancelled)
           await this.order_callbacks.order_cancelled(data)
         return
@@ -226,13 +210,6 @@ export class OrderExecutionTracker {
         throw new Error(`Unexpected orderStatus: ${orderStatus}. Reason: ${data.r}`)
       }
 
-      if (this.order_state)
-        await this.order_state.set_total_executed_quantity(
-          orderId,
-          new BigNumber(totalTradeQuantity),
-          true,
-          orderStatus
-        )
       if (this.order_callbacks && this.order_callbacks.order_filled_or_partially_filled)
         await this.order_callbacks.order_filled_or_partially_filled(data)
       if (this.order_callbacks) await this.order_callbacks.order_filled(data)

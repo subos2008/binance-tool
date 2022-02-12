@@ -34,7 +34,6 @@ process.on("unhandledRejection", error => {
 import { get_redis_client, set_redis_logger } from "../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()
-import { TradeState } from '../classes/persistent_state/redis_trade_state'
 import { SymbolPrices } from "../classes/persistent_state/redis_symbol_prices";
 const symbol_prices = new SymbolPrices({ logger, redis, exchange_name: 'binance', seconds: 5 * 60 })
 
@@ -54,49 +53,11 @@ function ping() {
 import { RedisTrades } from "../classes/persistent_state/redis_trades";
 const redis_trades = new RedisTrades({ logger, redis })
 
-async function check_positions() : Promise<void> {
-  // Get all active trades
-  let trade_ids = await redis_trades.get_active_trade_ids()
-
-  let prices_available_check_ok = true
-  for (const trade_id of trade_ids) {
-    try {
-      let trade_state = new TradeState({ logger, redis, trade_id })
-      let trade_definition = await trade_state.get_trade_definition()
-      // determine if we expect them to have a position or not - based on prices
-      // alert if:
-      // 1. no price stored
-      // 2. not in position when we should be
-      // 3. visa versa
-      let symbol = trade_definition.pair
-      let current_price = await symbol_prices.get_price(symbol)
-      if ( typeof current_price == 'undefined' ){
-        prices_available_check_ok = false
-        throw new Error(`Symbol ${symbol} has no price in redis but has active trade_id ${trade_id}`)
-      }
-
-      // TODO: note when we add checks that poll the exchange here we might want to put the timeout back
-      // up. Checking prices in redis can be frequent but we want to be careful polling Binance
-
-    } catch (err) {
-      Sentry.captureException(err)
-      logger.error(`Exception in check_poitions for trade ${trade_id}`)
-      logger.error(err)
-    }
-  }
-
-  if(prices_available_check_ok) {
-    logger.info(`Prices in Redis Check: OK`)
-  } else {
-    logger.error(`Prices in Redis Check: FAILED`)
-  }
-}
 
 async function main() {
   const execSync = require("child_process").execSync;
   execSync("date -u");
   setInterval(ping, connection_check_interval_seconds * 1000);
-  setInterval(check_positions, check_positions_interval_seconds * 1000);
 }
 
 // TODO: exceptions / sentry

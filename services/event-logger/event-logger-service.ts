@@ -90,6 +90,8 @@ async function main() {
   new EventLogger({ logger, send_message, event_name: "Edge56EntrySignal" })
   new EventLogger({ logger, send_message, event_name: "Edge60EntrySignal" })
   new EventLogger({ logger, send_message, event_name: "SpotBinanceOrder" })
+  new EventLogger({ logger, send_message, event_name: "SpotPositionOpened" })
+  new EventLogger({ logger, send_message, event_name: "SpotPositionClosed" })
 }
 
 main().catch((error) => {

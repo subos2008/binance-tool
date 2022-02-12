@@ -150,6 +150,7 @@ export class RedisSpotPositionsState {
     return this.get_string_key(pi, { key_name: "initial_entry_quote_asset" })
   }
 
+  // ms
   async get_initial_entry_timestamp(pi: SpotPositionIdentifier_V3): Promise<number> {
     return this.get_number_key(pi, { key_name: "initial_entry_timestamp" })
   }

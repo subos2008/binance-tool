@@ -61,6 +61,10 @@ export class SpotRedisPositionsState implements SpotPositionsPersistance {
     return this.state.get_initial_entry_quote_asset(pi)
   }
 
+  async initial_entry_timestamp_ms(pi: SpotPositionIdentifier_V3): Promise<number> {
+    return this.state.get_initial_entry_timestamp(pi)
+  }
+
   async edge(pi: SpotPositionIdentifier_V3): Promise<string> {
     return this.state.get_edge(pi)
   }
@@ -84,6 +88,10 @@ export class SpotRedisPositionsState implements SpotPositionsPersistance {
   /** this means filled orders that we should use to update the position state/info */
   async add_orders(pi: SpotPositionIdentifier_V3, orders: GenericOrderData[]): Promise<void> {
     return this.state.add_orders(pi, orders)
+  }
+
+  async orders(pi: SpotPositionIdentifier_V3): Promise<GenericOrderData[]> {
+    return this.state.get_orders(pi)
   }
 
   /**

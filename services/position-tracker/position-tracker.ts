@@ -10,6 +10,7 @@ import { strict as assert } from "assert"
 
 import { RedisClient } from "redis"
 import { Logger } from "../../interfaces/logger"
+import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { GenericOrderData } from "../../types/exchange_neutral/generic_order_data"
 import { PositionPublisher } from "../../classes/amqp/positions-publisher"
 import {
@@ -22,6 +23,10 @@ import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 import { OrderContextPersistence } from "../../classes/spot/persistence/interface/order-context-persistence"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import {
+  SpotPositionClosedEvent_V1,
+  SpotPositionPublisher,
+} from "../../classes/spot/abstractions/spot-position-publisher"
 
 type check_func = ({
   volume,
@@ -41,6 +46,8 @@ export class SpotPositionTracker {
   order_context_persistence: OrderContextPersistence
   spot_positions_query: SpotPositionsQuery
   spot_positions_persistance: SpotPositionsPersistance
+  spot_position_publisher: SpotPositionPublisher
+  health_and_readiness: HealthAndReadiness
 
   constructor({
     send_message,
@@ -49,6 +56,7 @@ export class SpotPositionTracker {
     close_position_check_func,
     spot_positions_query,
     spot_positions_persistance,
+    health_and_readiness,
   }: {
     send_message: (msg: string) => void
     logger: Logger
@@ -56,6 +64,7 @@ export class SpotPositionTracker {
     close_position_check_func: check_func
     spot_positions_query: SpotPositionsQuery
     spot_positions_persistance: SpotPositionsPersistance
+    health_and_readiness: HealthAndReadiness
   }) {
     assert(logger, "logger not set")
     this.logger = logger
@@ -71,6 +80,16 @@ export class SpotPositionTracker {
     this.close_position_check_func = close_position_check_func
     this.order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
     this.spot_positions_persistance = spot_positions_persistance
+    this.health_and_readiness = health_and_readiness
+    let health_and_readiness_subsystem = health_and_readiness.addSubsystem({
+      name: "spot-position-publisher",
+      ready: false,
+      healthy: false,
+    })
+    this.spot_position_publisher = new SpotPositionPublisher({
+      logger,
+      health_and_readiness: health_and_readiness_subsystem,
+    })
   }
 
   async buy_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
@@ -140,8 +159,9 @@ export class SpotPositionTracker {
   async sell_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
     let { baseAsset, quoteAsset, market_symbol, averageExecutionPrice } = generic_order_data
 
-    let position = await this.load_position_for_order(generic_order_data)
+    let position: SpotPosition = await this.load_position_for_order(generic_order_data)
     this.logger.info(position)
+    let edge = await position.edge()
 
     // 1. Is this an existing position?
     if ((await position.position_size()).isZero()) {
@@ -159,6 +179,7 @@ export class SpotPositionTracker {
 
     if (!averageExecutionPrice) {
       // TODO: set sentry context after unpacking the order (withScope)
+      // .. really? Can't we use current price as a backup? ..
       let msg = `averageExecutionPrice not supplied, unable to determine if ${baseAsset} position should be closed.`
       Sentry.captureMessage(msg)
       this.send_message(msg)
@@ -166,6 +187,7 @@ export class SpotPositionTracker {
     }
 
     // 1.3 see if we should close the position
+    // maybe this could be position.is_closed()
     if (
       this.close_position_check_func({
         market_symbol,
@@ -175,6 +197,20 @@ export class SpotPositionTracker {
     ) {
       await this.spot_positions_persistance.delete_position(position.position_identifier)
       this.send_message(`closed position: ${position.baseAsset} to ${quoteAsset}`)
+      try {
+        let event: SpotPositionClosedEvent_V1 = {
+          event_type: "SpotPositionClosedEvent",
+          version: 1,
+          edge,
+          orders: await position.orders(),
+          initial_entry_timestamp_ms: await position.initial_entry_timestamp_ms(),
+          position_closed_timestamp_ms: generic_order_data.orderTime,
+        }
+        await this.spot_position_publisher.publish_closed(event)
+      } catch (error) {
+        this.logger.error(error)
+        Sentry.captureException(error)
+      }
     }
   }
 }

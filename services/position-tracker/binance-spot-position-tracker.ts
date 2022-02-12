@@ -48,6 +48,7 @@ import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-im
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { HealthAndReadiness } from "../../classes/health_and_readiness"
 
 let order_execution_tracker: OrderExecutionTracker | null = null
 
@@ -101,6 +102,9 @@ async function main() {
 
   const ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
   let exchange_info = await ee.get_exchange_info() // TODO: should update this every now and then
+  const health = new HealthAndReadiness({ logger, send_message })
+  const service_is_healthy = health.addSubsystem({ name: "global", ready: true, healthy: true })
+
 
   // return true if the position size passed it would be considered an untradeably small balance on the exchange
   let close_position_check_func = function ({

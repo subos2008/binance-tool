@@ -74,6 +74,10 @@ export class SpotPosition {
     return this.spot_positions_persistance.initial_entry_quote_asset(this.position_identifier)
   }
 
+  async initial_entry_timestamp_ms(): Promise<number> {
+    return await this.spot_positions_persistance.initial_entry_timestamp_ms(this.position_identifier)
+  }
+
   async position_size(): Promise<BigNumber> {
     return this.spot_positions_persistance.position_size(this.position_identifier)
   }
@@ -84,6 +88,10 @@ export class SpotPosition {
 
   async edge(): Promise<AuthorisedEdgeType> {
     return check_edge(await this.spot_positions_persistance.edge(this.position_identifier))
+  }
+
+  async orders(): Promise<GenericOrderData[]> {
+    return await this.spot_positions_persistance.orders(this.position_identifier)
   }
 
   // // Create a new position in the state

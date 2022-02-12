@@ -79,9 +79,15 @@ class MyOrderCallbacks {
     if (data.orderType != "MARKET") {
       switch (data.orderType) {
         case "STOP_LOSS_LIMIT":
-          this.send_message(
-            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.stopPrice} to ${data.price} (edge: ${data.edge}).`
-          )
+          if (data.isOrderWorking) {
+            this.send_message(
+              `Triggered ${data.symbol} ${data.orderType} (edge: ${data.edge}).`
+            )
+          } else {
+            this.send_message(
+              `Created ${data.symbol} ${data.orderType} at ${data.stopPrice} to ${data.price} (edge: ${data.edge}).`
+            )
+          }
           break
         default:
           this.send_message(
@@ -130,7 +136,7 @@ async function main() {
     send_message,
     logger,
     order_callbacks,
-    redis
+    redis,
   })
 
   order_execution_tracker

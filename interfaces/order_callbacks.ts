@@ -21,7 +21,7 @@
 //   commission: string;
 //   commissionAsset: string;
 //   tradeId: number;
-//   isOrderWorking: boolean;
+//   isOrderWorking: boolean; // for stop loss limits this is false on creation and true once triggered
 //   isBuyerMaker: boolean;
 //   totalQuoteTradeQuantity: string;
 // }
@@ -35,6 +35,7 @@ export interface BinanceOrderData {
   symbol: string
   side: "BUY" | "SELL"
   orderType: "LIMIT" | "MARKET" | "STOP_LOSS_LIMIT"
+  isOrderWorking: boolean; // for stop loss limits this is false on creation and true once triggered
   orderRejectReason?: string
   price?: string
   stopPrice?: string

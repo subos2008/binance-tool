@@ -93,7 +93,7 @@ export class TradeAbstractionService {
 
     let result = await this.spot_ee.open_position({ quote_asset: this.quote_asset, ...cmd, edge })
     this.send_message(
-      `Entered ${cmd.direction}=long position on ${cmd.edge}:${
+      `Entered ${cmd.direction} position on ${cmd.edge}:${
         cmd.base_asset
       } at price ${result.executed_price.toFixed()}, created stop at ${result.stop_price.toFixed()}`
     )

@@ -95,7 +95,7 @@ export class SpotPositionsExecution {
     edge: AuthorisedEdgeType
   }): Promise<{
     executed_quote_quantity: string
-    stop_order_id: string | number
+    stop_order_id: string | number | undefined
     executed_price: BigNumber
     stop_price: BigNumber
   }> {
@@ -150,27 +150,38 @@ export class SpotPositionsExecution {
       `Calculated stop price of ${stop_price.toFixed()} given buy executed price of ${executed_price.toFixed()}`
     )
 
+    let stop_order_id: string | number | undefined
     let stop_cmd: SpotStopMarketSellCommand = {
       market_identifier: cmd.market_identifier,
       base_amount: executed_base_quantity,
       trigger_price: stop_price,
     }
-    let stop_result = await this.ee.stop_market_sell(stop_cmd)
-    let { order_id } = stop_result
-    stop_price = stop_result.stop_price
-    let spot_position_identifier: SpotPositionIdentifier_V3 = {
-      exchange_identifier: this.get_exchange_identifier(),
-      base_asset: args.base_asset,
-      edge: args.edge,
+    try {
+      let stop_result = await this.ee.stop_market_sell(stop_cmd)
+      stop_order_id = stop_result.order_id
+      stop_price = stop_result.stop_price
+      let spot_position_identifier: SpotPositionIdentifier_V3 = {
+        exchange_identifier: this.get_exchange_identifier(),
+        base_asset: args.base_asset,
+        edge: args.edge,
+      }
+      await this.interim_spot_positions_metadata_persistant_storage.set_stop_order_id(
+        spot_position_identifier,
+        stop_order_id.toString()
+      )
+    } catch (error) {
+      Sentry.captureException(error)
+      this.send_message(
+        `Failed to create stop limit order for ${args.edge}:${args.base_asset} on ${
+          stop_cmd.market_identifier.symbol
+        } at ${stop_price.toFixed()}`
+      )
+      throw error
     }
-    await this.interim_spot_positions_metadata_persistant_storage.set_stop_order_id(
-      spot_position_identifier,
-      order_id.toString()
-    )
 
     return {
       executed_quote_quantity: executed_quote_quantity.toFixed(),
-      stop_order_id: order_id,
+      stop_order_id,
       executed_price,
       stop_price,
     }

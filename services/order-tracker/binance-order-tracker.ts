@@ -75,33 +75,40 @@ class MyOrderCallbacks {
 
   async order_created(data: BinanceOrderData): Promise<void> {
     this.logger.info(data)
+    let price: string = data.price ? new BigNumber(data.price).toFixed() : "(null)"
+    let stopPrice: string = data.stopPrice ? new BigNumber(data.stopPrice).toFixed() : "(null)"
 
     if (data.orderType != "MARKET") {
       switch (data.orderType) {
         case "STOP_LOSS_LIMIT":
           if (data.isOrderWorking) {
-            this.send_message(
-              `Triggered ${data.symbol} ${data.orderType} (edge: ${data.edge}).`
-            )
+            this.send_message(`Triggered ${data.symbol} ${data.orderType} (edge: ${data.edge}).`)
           } else {
             this.send_message(
-              `Created ${data.symbol} ${data.orderType} at ${data.stopPrice} to ${data.price} (edge: ${data.edge}).`
+              `Created ${data.symbol} ${data.orderType} at ${stopPrice} to ${price} (edge: ${data.edge}).`
             )
           }
           break
         default:
           this.send_message(
-            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${data.price} (edge: ${data.edge}).`
+            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${price} (edge: ${data.edge}).`
           )
       }
     }
   }
+
   async order_cancelled(data: BinanceOrderData): Promise<void> {
-    this.send_message(`${data.orderType} ${data.side} order on ${data.symbol} at ${data.price} cancelled.`)
+    let price: string = data.price ? new BigNumber(data.price).toFixed() : "(null)"
+    this.send_message(`${data.symbol} ${data.orderType} ${data.side} at ${price} cancelled.`)
   }
+
   async order_filled(data: BinanceOrderData): Promise<void> {
+    let price: string = data.price ? new BigNumber(data.price).toFixed() : "(null)"
+    let averageExecutionPrice: string = data.averageExecutionPrice
+      ? new BigNumber(data.averageExecutionPrice).toFixed()
+      : "(null)"
     this.send_message(
-      `${data.orderType} ${data.side} order on ${data.symbol} filled at ${data.price}/${data.averageExecutionPrice}.`
+      `${data.symbol} ${data.orderType} ${data.side} filled at ${price}/${averageExecutionPrice}.`
     )
   }
 }

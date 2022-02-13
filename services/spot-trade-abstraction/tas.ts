@@ -149,6 +149,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
     } else {
       res.status(500)
     }
+    res.json({ msg: "failed" })
     next(error)
   }
 })

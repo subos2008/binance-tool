@@ -111,7 +111,7 @@ export class OrderExecutionTracker {
     })
   }
 
-  async get_edge_for_order(data: BinanceOrderData): Promise<AuthorisedEdgeType> {
+  async get_order_context_for_order(data: BinanceOrderData): Promise<OrderContext_V1> {
     let order_context: OrderContext_V1 | undefined = undefined
     try {
       order_context = await this.order_context_persistence.get_order_context_for_order({
@@ -122,12 +122,12 @@ export class OrderExecutionTracker {
       this.logger.info(
         `Loaded edge for order ${data.order_id}: ${edge} (undefined can be valid here for manually created orders)`
       )
-      return edge
+      return order_context
     } catch (error) {
       // Non fatal there are valid times for this like manually created orders
       this.logger.warn(error)
-      Sentry.captureException(error)
-      return check_edge(undefined)
+      // Sentry.captureException(error)
+      throw error
     }
   }
 
@@ -164,11 +164,13 @@ export class OrderExecutionTracker {
       })
     }
 
+    // This bit of code is horrible
     let edge: AuthorisedEdgeType | undefined
     try {
-      /** Add edge if known */
-      edge = await this.get_edge_for_order(data)
-      data.edge = edge
+      /** Add edge and order_context if known */
+      let order_context: OrderContext_V1 = await this.get_order_context_for_order(data)
+      data.order_context = order_context
+      data.edge = order_context.edge
     } catch (error) {
       this.logger.error(error)
       Sentry.withScope(function (scope) {
@@ -177,6 +179,8 @@ export class OrderExecutionTracker {
         if (order_id) scope.setTag("order_id", order_id)
         Sentry.captureException(error)
       })
+      edge = check_edge(undefined)
+      data.edge = edge
     }
 
     try {

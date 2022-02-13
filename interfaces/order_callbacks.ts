@@ -27,6 +27,7 @@
 // }
 
 import { AuthorisedEdgeType } from "../classes/spot/abstractions/position-identifier"
+import { OrderContext_V1 } from "../classes/spot/exchanges/interfaces/spot-execution-engine";
 
 export interface BinanceOrderData {
   order_id: string
@@ -44,6 +45,7 @@ export interface BinanceOrderData {
   totalQuoteTradeQuantity: string
   averageExecutionPrice?: string // Added by us
   edge?: AuthorisedEdgeType // Added by us
+  order_context?: OrderContext_V1 // Added by us
 }
 
 export interface OrderCallbacks {

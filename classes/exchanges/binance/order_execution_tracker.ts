@@ -11,7 +11,7 @@ import { Logger } from "../../../interfaces/logger"
 import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/order_callbacks"
 
 import * as Sentry from "@sentry/node"
-import { Binance, ExecutionReport, UserDataStreamEvent } from "binance-api-node"
+import { Binance, EventType, ExecutionReport, UserDataStreamEvent } from "binance-api-node"
 import { RedisClient } from "redis"
 import { OrderToEdgeMapper } from "../../persistent_state/order-to-edge-mapper"
 import { AuthorisedEdgeType, check_edge } from "../../spot/abstractions/position-identifier"
@@ -81,6 +81,7 @@ export class OrderExecutionTracker {
 
   async monitor_user_stream() {
     this.closeUserWebsocket = await this.ee.ws.user(async (_data: UserDataStreamEvent) => {
+      if (!(_data.eventType === EventType.EXECUTION_REPORT)) return
       let data: ExecutionReport = _data as ExecutionReport
       try {
         const { eventType } = data

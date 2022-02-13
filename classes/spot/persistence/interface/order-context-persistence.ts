@@ -8,7 +8,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { OrderContext_V1 } from "../../exchanges/interfaces/spot-execution-engine"
-type OrderId = string
+export type OrderId = string
 
 export interface OrderContextPersistence {
   set_order_context_for_order(args: {

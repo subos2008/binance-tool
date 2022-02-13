@@ -23,6 +23,7 @@ import { RedisClient } from "redis"
 import { SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
 import { SpotPositionObject } from "../../abstractions/spot-position"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
+import { OrderId } from "../interface/order-context-persistence"
 
 export class SpotRedisPositionsState implements SpotPositionsPersistance {
   logger: Logger
@@ -79,7 +80,17 @@ export class SpotRedisPositionsState implements SpotPositionsPersistance {
   ): Promise<void> {
     return this.state.adjust_position_size_by(pi, { base_change })
   }
+
+  /** this means filled orders that we should use to update the position state/info */
   async add_orders(pi: SpotPositionIdentifier_V3, orders: GenericOrderData[]): Promise<void> {
     return this.state.add_orders(pi, orders)
+  }
+
+  /** 
+   * this is a bit hacky, edge60 wants to know what its stop order is when cancelling the order
+   * so this is our not-over-architected way of storing an order_id that needs to be cancelled
+   */
+  async set_stop_order(pi: SpotPositionIdentifier_V3, order_id: OrderId): Promise<void> {
+    return this.state.set_stop_order(pi, order_id)
   }
 }

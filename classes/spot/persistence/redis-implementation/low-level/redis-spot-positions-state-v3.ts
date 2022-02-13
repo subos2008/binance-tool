@@ -16,6 +16,7 @@ import { SpotPositionIdentifier_V3, check_edge } from "../../../abstractions/pos
 import { SpotPositionObject } from "../../../abstractions/spot-position"
 import { GenericOrderData } from "../../../../../types/exchange_neutral/generic_order_data"
 import { SpotPositionInitialisationData } from "../../interface/spot-positions-persistance"
+import { OrderId } from "../../interface/order-context-persistence"
 
 // We store as integers in redis because it uses hardware for floating point calculations
 function to_sats(input: string | BigNumber): string {
@@ -114,6 +115,16 @@ export class RedisSpotPositionsState {
     const value = await this.getAsync(key)
     if (!value) throw new Error(`${key} missing from position`)
     return value
+  }
+
+  async set_string_key(
+    pi: SpotPositionIdentifier_V3,
+    { key_name }: { key_name: string },
+    value: string
+  ): Promise<void> {
+    const key = this.name_to_key(pi, { name: key_name })
+    await this.setAsync(key, value)
+    console.log(`Set ${key} to ${value}`)
   }
 
   async get_number_key(pi: SpotPositionIdentifier_V3, { key_name }: { key_name: string }): Promise<number> {
@@ -276,6 +287,10 @@ export class RedisSpotPositionsState {
       })
       throw error
     }
+  }
+
+  async set_stop_order(pi: SpotPositionIdentifier_V3, order_id: OrderId) {
+    return this.set_string_key(pi, { key_name: "stop_order_id" }, order_id.toString())
   }
 
   async delete_position(pi: SpotPositionIdentifier_V3) {

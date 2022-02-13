@@ -2,7 +2,6 @@
 
 import * as utils from "../../../../../lib/utils"
 import { strict as assert } from "assert"
-const async_error_handler = require("../lib/async_error_handler")
 
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -271,7 +270,10 @@ export class AlgoUtils {
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (error: any) {
-      async_error_handler(console, `Buy error: ${error.body}`, error)
+      console.error(`Buy error: ${error.body}`)
+      console.error(error)
+      Sentry.captureException(error)
+      throw error
     }
   }
 
@@ -446,7 +448,9 @@ export class AlgoUtils {
       return response
     } catch (error: any) {
       Sentry.captureException(error)
-      async_error_handler(console, `Market Buy error: ${error.body}`, error)
+      console.error(`Market Buy error: ${error.body}`)
+      console.error(error)
+      throw error
     }
   }
 
@@ -479,7 +483,9 @@ export class AlgoUtils {
       return response
     } catch (error: any) {
       Sentry.captureException(error)
-      async_error_handler(console, `Market Buy error: ${error.body}`, error)
+      console.error(`Market buy error: ${error.body}`)
+      console.error(error)
+      throw error
     }
   }
 
@@ -512,7 +518,9 @@ export class AlgoUtils {
       return response
     } catch (error: any) {
       Sentry.captureException(error)
-      async_error_handler(console, `Market sell error: ${error.body}`, error)
+      console.error(`Market sell error: ${error.body}`)
+      console.error(error)
+      throw error
     }
   }
 

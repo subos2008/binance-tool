@@ -15,6 +15,7 @@ import { Binance, EventType, ExecutionReport, UserDataStreamEvent } from "binanc
 import { RedisClient } from "redis"
 import { OrderToEdgeMapper } from "../../persistent_state/order-to-edge-mapper"
 import { AuthorisedEdgeType, check_edge } from "../../spot/abstractions/position-identifier"
+import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 
 export class OrderExecutionTracker {
   send_message: Function
@@ -24,6 +25,12 @@ export class OrderExecutionTracker {
   order_callbacks: OrderCallbacks | undefined
   print_all_trades: boolean = false
   order_to_edge_mapper: OrderToEdgeMapper | undefined
+  exchange_identifier: ExchangeIdentifier_V3 = {
+    type: "spot",
+    exchange: "binance",
+    account: "default",
+    version: "v3",
+  }
 
   // All numbers are expected to be passed in as strings
   constructor({
@@ -113,7 +120,7 @@ export class OrderExecutionTracker {
     try {
       if (!this.order_to_edge_mapper)
         throw new Error(`OrderToEdgeMapper not initialised, maybe redis was down at startup`)
-      edge = await this.order_to_edge_mapper.get_edge_for_order(data.orderId)
+      edge = await this.order_to_edge_mapper.get_edge_for_order(this.exchange_identifier, data.orderId)
     } catch (error) {
       this.logger.warn(error)
       // Non fatal there are valid times for this

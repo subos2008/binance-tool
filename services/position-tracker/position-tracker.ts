@@ -120,7 +120,7 @@ export class SpotPositionTracker {
     try {
       /* We can expect this to error, certainly initally as we have stops already open,
       Any manually created orders will also throw here */
-      edge = await this.order_to_edge_mapper.get_edge_for_order(orderId)
+      edge = await this.order_to_edge_mapper.get_edge_for_order(generic_order_data.exchange_identifier, orderId)
     } catch (error: any) {
       this.logger.warn(`Exception determining edge for orderId ${orderId}: ${error.toString()}`)
     }

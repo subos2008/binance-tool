@@ -3,6 +3,10 @@ import { AuthorisedEdgeType, check_edge } from "../spot/abstractions/position-id
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
 import { promisify } from "util"
+import {
+  ExchangeIdentifier_V3,
+  exchange_identifier_to_redis_key_snippet,
+} from "../../events/shared/exchange-identifier"
 
 type OrderId = string
 
@@ -22,16 +26,23 @@ export class OrderToEdgeMapper {
     this.setAsync = promisify(this.redis.set).bind(this.redis)
   }
 
-  private _key(order_id: OrderId): string {
-    return `OrderToEdgeMapper:${order_id}`
+  private _key(exchange_identifier: ExchangeIdentifier_V3, order_id: OrderId): string {
+    return `OrderToEdgeMapper:${exchange_identifier_to_redis_key_snippet(exchange_identifier)}:${order_id}`
   }
 
-  async set_edge_for_order(order_id: OrderId, edge: AuthorisedEdgeType) {
-    await this.setAsync(this._key(order_id), edge)
+  async set_edge_for_order(
+    exchange_identifier: ExchangeIdentifier_V3,
+    order_id: OrderId,
+    edge: AuthorisedEdgeType
+  ) {
+    await this.setAsync(this._key(exchange_identifier, order_id), edge)
   }
 
-  async get_edge_for_order(order_id: OrderId): Promise<AuthorisedEdgeType> {
-    let edge = await this.getAsync(this._key(order_id))
+  async get_edge_for_order(
+    exchange_identifier: ExchangeIdentifier_V3,
+    order_id: OrderId
+  ): Promise<AuthorisedEdgeType> {
+    let edge = await this.getAsync(this._key(exchange_identifier, order_id))
     if (!edge) throw new Error(`No edge known for order ${order_id}`)
     return check_edge(edge)
   }

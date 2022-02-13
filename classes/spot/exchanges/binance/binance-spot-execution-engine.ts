@@ -1,4 +1,4 @@
-import { AlgoUtils } from "../../../../service_lib/binance_algo_utils_v2"
+import { AlgoUtils } from "./_internal/binance_algo_utils_v2"
 import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { MarketIdentifier_V3 } from "../../../../events/shared/market-identifier"

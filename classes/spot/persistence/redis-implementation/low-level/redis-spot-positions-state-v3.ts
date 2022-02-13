@@ -193,6 +193,7 @@ export class RedisSpotPositionsState {
       initial_entry_timestamp: await this.get_initial_entry_timestamp(pi),
       orders: await this.get_orders(pi),
       edge: check_edge(await this.get_edge(pi)),
+      stop_order_id: await this.get_stop_order(pi),
     }
   }
 

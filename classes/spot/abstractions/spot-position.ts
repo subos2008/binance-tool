@@ -32,6 +32,7 @@ export type SpotPositionObject = {
   initial_entry_price: BigNumber
   orders: GenericOrderData[]
   edge: AuthorisedEdgeType
+  stop_order_id?: string
 }
 
 export class SpotPosition {

@@ -5,7 +5,7 @@ import Sentry from "../../../lib/sentry"
 import { Logger } from "../../../interfaces/logger"
 import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
 import {
-  OrderContext,
+  OrderContext_V1,
   SpotExecutionEngine,
   SpotMarketBuyByQuoteQuantityCommand,
   SpotStopMarketSellCommand,
@@ -138,7 +138,7 @@ export class SpotPositionsExecution {
     this.send_message(`Opening Spot position in ${args.base_asset} using ${args.quote_asset}, edge ${args.edge}`)
 
     let quote_amount = await this.position_sizer.position_size_in_quote_asset(args)
-    let order_context: OrderContext = { edge: args.edge }
+    let order_context: OrderContext_V1 = { edge: args.edge, object_type: "OrderContext", version: 1 }
     let cmd: SpotMarketBuyByQuoteQuantityCommand = {
       order_context,
       market_identifier: this.get_market_identifier_for(args),
@@ -249,7 +249,7 @@ export class SpotPositionsExecution {
     try {
       /** Exit the position */
       let base_amount = await this.exisiting_position_size({ base_asset, edge })
-      let order_context: OrderContext = { edge }
+      let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
       await this.ee.market_sell({ order_context, market_identifier, base_amount }) // throws if it fails
       // let executed_amount = // .. actually we might not have this info immediately
       return true // success, really we just have this here to verify that every other code path throws

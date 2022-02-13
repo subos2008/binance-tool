@@ -13,9 +13,11 @@ import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/order_call
 import * as Sentry from "@sentry/node"
 import { Binance, EventType, ExecutionReport, UserDataStreamEvent } from "binance-api-node"
 import { RedisClient } from "redis"
-import { OrderToEdgeMapper } from "../../persistent_state/order-to-edge-mapper"
+import { RedisOrderContextPersistance } from "../../spot/persistence/redis-implementation/redis-order-context-persistence"
 import { AuthorisedEdgeType, check_edge } from "../../spot/abstractions/position-identifier"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
+import { OrderContextPersistence } from "../../spot/persistence/interface/order-context-persistence"
+import { OrderContext_V1 } from "../../spot/exchanges/interfaces/spot-execution-engine"
 
 export class OrderExecutionTracker {
   send_message: Function
@@ -24,7 +26,7 @@ export class OrderExecutionTracker {
   closeUserWebsocket: Function | undefined
   order_callbacks: OrderCallbacks | undefined
   print_all_trades: boolean = false
-  order_to_edge_mapper: OrderToEdgeMapper | undefined
+  order_context_persistence: OrderContextPersistence
   exchange_identifier: ExchangeIdentifier_V3 = {
     type: "spot",
     exchange: "binance",
@@ -39,14 +41,14 @@ export class OrderExecutionTracker {
     logger,
     order_callbacks,
     print_all_trades,
-    redis,
+    order_context_persistence,
   }: {
     ee: Binance
     send_message: (msg: string) => void
     logger: Logger
     order_callbacks?: OrderCallbacks
     print_all_trades?: boolean
-    redis?: RedisClient
+    order_context_persistence: OrderContextPersistence
   }) {
     assert(logger)
     this.logger = logger
@@ -56,19 +58,13 @@ export class OrderExecutionTracker {
     assert(ee)
     this.ee = ee
     if (print_all_trades) this.print_all_trades = true
+    this.order_context_persistence = order_context_persistence
 
     this.logger.warn(`Not type checking BinanceOrderData when casting`)
 
     process.on("exit", () => {
       this.shutdown_streams()
     })
-
-    if (redis) {
-      this.order_to_edge_mapper = new OrderToEdgeMapper({ logger, redis })
-      this.logger.info(`Initialised OrderToEdgeMapper`)
-    } else {
-      this.logger.warn(`No OrderToEdgeMapper available`)
-    }
   }
 
   async main() {
@@ -116,21 +112,23 @@ export class OrderExecutionTracker {
   }
 
   async get_edge_for_order(data: BinanceOrderData): Promise<AuthorisedEdgeType> {
-    let edge = undefined
+    let order_context: OrderContext_V1 | undefined = undefined
     try {
-      if (!this.order_to_edge_mapper)
-        throw new Error(`OrderToEdgeMapper not initialised, maybe redis was down at startup`)
-      edge = await this.order_to_edge_mapper.get_edge_for_order(this.exchange_identifier, data.order_id)
+      order_context = await this.order_context_persistence.get_order_context_for_order({
+        exchange_identifier: this.exchange_identifier,
+        order_id: data.order_id,
+      })
+      let { edge } = order_context
+      this.logger.info(
+        `Loaded edge for order ${data.order_id}: ${edge} (undefined can be valid here for manually created orders)`
+      )
+      return edge
     } catch (error) {
+      // Non fatal there are valid times for this like manually created orders
       this.logger.warn(error)
-      // Non fatal there are valid times for this
       Sentry.captureException(error)
+      return check_edge(undefined)
     }
-    edge = check_edge(edge)
-    this.logger.info(
-      `Loaded edge for order ${data.order_id}: ${edge} (undefined can be valid here for manually created orders)`
-    )
-    return edge
   }
 
   async processExecutionReport(_data: ExecutionReport) {

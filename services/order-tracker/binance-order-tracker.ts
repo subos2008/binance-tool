@@ -49,24 +49,15 @@ import { Binance } from "binance-api-node"
 import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData } from "../../interfaces/order_callbacks"
 import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
-import { OrderToEdgeMapper } from "../../classes/persistent_state/order-to-edge-mapper"
+import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 let order_execution_tracker: OrderExecutionTracker | null = null
 
 class MyOrderCallbacks {
   send_message: Function
   logger: Logger
-  order_to_edge_mapper: OrderToEdgeMapper | undefined
 
-  constructor({
-    send_message,
-    logger,
-    redis,
-  }: {
-    send_message: (msg: string) => void
-    logger: Logger
-    redis: RedisClient | undefined
-  }) {
+  constructor({ send_message, logger }: { send_message: (msg: string) => void; logger: Logger }) {
     assert(logger)
     this.logger = logger
     assert(send_message)
@@ -127,23 +118,18 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  let redis: RedisClient | undefined
-  try {
-    set_redis_logger(logger)
-    redis = get_redis_client()
-  } catch (error) {
-    // We don't want redis failures to take down this logger service
-    // redis is just used to print the edge for information
-  }
+  set_redis_logger(logger)
+  let redis = get_redis_client()
 
-  let order_callbacks = new MyOrderCallbacks({ logger, send_message, redis })
+  let order_callbacks = new MyOrderCallbacks({ logger, send_message })
+  let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
 
   order_execution_tracker = new OrderExecutionTracker({
     ee,
     send_message,
     logger,
     order_callbacks,
-    redis,
+    order_context_persistence,
   })
 
   order_execution_tracker

@@ -21,9 +21,9 @@ import {
   SpotStopMarketSellCommand,
   SpotMarketBuyByQuoteQuantityCommand,
   SpotMarketSellCommand,
-  OrderContext,
+  OrderContext_V1,
 } from "../interfaces/spot-execution-engine"
-import { OrderToEdgeMapper } from "../../../persistent_state/order-to-edge-mapper"
+import { OrderContextPersistence } from "../../persistence/interface/order-context-persistence"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)
@@ -38,14 +38,20 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
   utils: AlgoUtils
   logger: Logger
   ei_getter: BinanceExchangeInfoGetter
-  order_to_edge_mapper: OrderToEdgeMapper
+  order_context_persistence: OrderContextPersistence
 
-  constructor({ logger, order_to_edge_mapper }: { logger: Logger; order_to_edge_mapper: OrderToEdgeMapper }) {
+  constructor({
+    logger,
+    order_context_persistence,
+  }: {
+    logger: Logger
+    order_context_persistence: OrderContextPersistence
+  }) {
     assert(logger)
     this.logger = logger
     this.utils = new AlgoUtils({ logger, ee /* note global variable */ })
     this.ei_getter = new BinanceExchangeInfoGetter({ ee })
-    this.order_to_edge_mapper = order_to_edge_mapper
+    this.order_context_persistence = order_context_persistence
   }
 
   get_exchange_identifier(): ExchangeIdentifier_V3 {
@@ -83,14 +89,14 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
   }
 
   async store_order_context_and_generate_clientOrderId(
-    order_context: OrderContext
+    order_context: OrderContext_V1
   ): Promise<{ clientOrderId: string }> {
     let clientOrderId = randomUUID()
-    await this.order_to_edge_mapper.set_edge_for_order(
-      this.get_exchange_identifier(),
-      clientOrderId,
-      order_context.edge
-    )
+    await this.order_context_persistence.set_order_context_for_order({
+      exchange_identifier: this.get_exchange_identifier(),
+      order_id: clientOrderId,
+      order_context,
+    })
     return { clientOrderId }
   }
 

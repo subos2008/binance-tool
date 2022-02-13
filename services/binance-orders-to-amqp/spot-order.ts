@@ -31,6 +31,7 @@ import { HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { Connection } from "amqplib"
 import { RedisClient } from "redis"
+import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 const exchange_identifier = { exchange: "binance", account: "default" }
 
@@ -98,7 +99,7 @@ export class BinanceSpotOrdersToAMQP {
     send_message: (msg: string) => void
     logger: Logger
     health_and_readiness: HealthAndReadinessSubsystem
-    redis?: RedisClient
+    redis: RedisClient
   }) {
     assert(logger)
     this.logger = logger
@@ -111,12 +112,14 @@ export class BinanceSpotOrdersToAMQP {
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
+  let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+
     this.order_execution_tracker = new OrderExecutionTracker({
       ee: this.ee,
       send_message,
       logger,
       order_callbacks: this,
-      redis
+      order_context_persistence,
     })
 
     this.publisher = new BinanceOrderPublisher({

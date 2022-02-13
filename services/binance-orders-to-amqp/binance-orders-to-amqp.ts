@@ -59,14 +59,8 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  let redis: RedisClient | undefined
-  try {
-    set_redis_logger(logger)
-    redis = get_redis_client()
-  } catch (error) {
-    // We don't want redis failures to take down this service
-    // redis is only used for edge information
-  }
+  set_redis_logger(logger)
+  let redis = get_redis_client()
 
   try {
     let health_and_readiness = health.addSubsystem({

@@ -52,16 +52,8 @@ import { BinancePortfolioToAMQP } from "./portfolio"
 let logger: Logger = _logger
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
-let redis: RedisClient | undefined
-try {
-  set_redis_logger(logger)
-  redis = get_redis_client()
-} catch (error) {
-  // We don't want redis failures to take down this logger service
-  // redis is just used to print the edge for information
-  logger.error(error)
-  Sentry.captureException(error)
-}
+set_redis_logger(logger)
+let redis = get_redis_client()
 
 const health = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health.addSubsystem({ name: "global", ready: true, healthy: true })

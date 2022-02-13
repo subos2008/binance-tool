@@ -63,20 +63,15 @@ process.on("unhandledRejection", (error) => {
 })
 
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
-let redis: RedisClient | undefined
-try {
-  set_redis_logger(logger)
-  redis = get_redis_client()
-} catch (error) {
-  // We don't want redis failures to take down this service
-  // redis is only used for edge information
-}
+set_redis_logger(logger)
+let redis = get_redis_client()
 
 import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData } from "../../interfaces/order_callbacks"
 import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 import { Balance, Portfolio } from "../../interfaces/portfolio"
 import { RedisClient } from "redis"
+import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 export class BinancePortfolioTracker implements PortfolioBitchClass {
   send_message: Function
@@ -109,12 +104,13 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
+    let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
     this.order_execution_tracker = new OrderExecutionTracker({
       ee: this.ee,
       send_message,
       logger,
       order_callbacks: this,
-      redis,
+      order_context_persistence,
     })
   }
 

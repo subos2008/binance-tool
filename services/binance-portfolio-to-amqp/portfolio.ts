@@ -46,7 +46,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { connect, Connection } from "amqplib"
+import { Connection } from "amqplib"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 
@@ -58,6 +58,7 @@ import { Balance, Portfolio } from "../../interfaces/portfolio"
 import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
 import { HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { RedisClient } from "redis"
+import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 // Let's keep this code, could become part of ensuring same format events accross exchanges
 export class PortfolioPublisher {
@@ -263,7 +264,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
     send_message: (msg: string) => void
     logger: Logger
     health_and_readiness: HealthAndReadinessSubsystem
-    redis?: RedisClient
+    redis: RedisClient
   }) {
     assert(logger)
     this.logger = logger
@@ -294,12 +295,14 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
+
+    let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
     this.order_execution_tracker = new OrderExecutionTracker({
       ee: this.ee,
       send_message,
       logger,
       order_callbacks: this,
-      redis,
+      order_context_persistence,
     })
   }
 

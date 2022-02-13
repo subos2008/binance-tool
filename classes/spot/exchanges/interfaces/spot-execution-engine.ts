@@ -9,26 +9,30 @@ import { MarketIdentifier_V3 } from "../../../../events/shared/market-identifier
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { AuthorisedEdgeType } from "../../abstractions/position-identifier"
 
-export interface OrderContext {
-  // Warning: ONLY EDGE IS STORED AT THE MOMENT
-  // If this class is ever extended we need to move to storing objects and not just edge
-  // c.f. OrderToEdgeMapper
+/**
+ * We need to know some info about orders when (read: before) they are executed
+ * i.e. when a position is first entered we want to know which edge it should be stored as
+ */
+export interface OrderContext_V1 {
+  object_type: 'OrderContext'
+  version: 1
   edge: AuthorisedEdgeType
 }
+
 export interface SpotMarketBuyByQuoteQuantityCommand {
-  order_context: OrderContext
+  order_context: OrderContext_V1
   market_identifier: MarketIdentifier_V3
   quote_amount: BigNumber
 }
 
 export interface SpotMarketSellCommand {
-  order_context: OrderContext
+  order_context: OrderContext_V1
   market_identifier: MarketIdentifier_V3
   base_amount: BigNumber
 }
 
 export interface SpotStopMarketSellCommand {
-  order_context: OrderContext
+  order_context: OrderContext_V1
   market_identifier: MarketIdentifier_V3
   base_amount: BigNumber
   trigger_price: BigNumber

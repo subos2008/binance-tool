@@ -89,13 +89,13 @@ app.get("/health", function (req: Request, res: Response) {
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
 import { RedisClient } from "redis"
 import { SpotPositionsExecution } from "../../classes/spot/execution/spot-positions-execution"
-import { OrderToEdgeMapper } from "../../classes/persistent_state/order-to-edge-mapper"
+import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
 
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-const order_to_edge_mapper = new OrderToEdgeMapper({ logger, redis })
-const binance_spot_ee = new BinanceSpotExecutionEngine({ logger, order_to_edge_mapper })
+const order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+const binance_spot_ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
 const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsState({ logger, redis })
 const position_sizer = new FixedPositionSizer({ logger })
 const interim_spot_positions_metadata_persistant_storage = new RedisInterimSpotPositionsMetaDataPersistantStorage({

@@ -39,19 +39,16 @@ import { get_redis_client, set_redis_logger } from "../../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()
 
+import { ExchangeInfo } from "binance-api-node"
 import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData, OrderCallbacks } from "../../interfaces/order_callbacks"
 import { SpotPositionTracker } from "./position-tracker"
-
-import BinanceFoo from "binance-api-node"
-import { Binance } from "binance-api-node"
-import { ExchangeInfo } from "binance-api-node"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "../spot-trade-abstraction/interim-meta-data-storage"
-import { OrderToEdgeMapper } from "../../classes/persistent_state/order-to-edge-mapper"
+import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 let order_execution_tracker: OrderExecutionTracker | null = null
 
@@ -101,8 +98,9 @@ class MyOrderCallbacks implements OrderCallbacks {
 let position_tracker: SpotPositionTracker
 
 async function main() {
-  const order_to_edge_mapper = new OrderToEdgeMapper({ logger, redis })
-  const ee = new BinanceSpotExecutionEngine({ logger, order_to_edge_mapper })
+  let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+
+  const ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
   let exchange_info = await ee.get_exchange_info() // TODO: should update this every now and then
 
   // return true if the position size passed it would be considered an untradeably small balance on the exchange
@@ -155,7 +153,7 @@ async function main() {
     send_message,
     logger,
     order_callbacks,
-    redis,
+    order_context_persistence,
   })
   order_execution_tracker
     .main()

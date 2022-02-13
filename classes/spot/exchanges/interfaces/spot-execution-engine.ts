@@ -7,13 +7,25 @@ BigNumber.prototype.valueOf = function () {
 
 import { MarketIdentifier_V3 } from "../../../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { AuthorisedEdgeType } from "../../abstractions/position-identifier"
 
+export interface OrderContext {
+  edge: AuthorisedEdgeType
+}
 export interface SpotMarketBuyByQuoteQuantityCommand {
+  order_context: OrderContext
   market_identifier: MarketIdentifier_V3
   quote_amount: BigNumber
 }
 
+export interface SpotMarketSellCommand {
+  order_context: OrderContext
+  market_identifier: MarketIdentifier_V3
+  base_amount: BigNumber
+}
+
 export interface SpotStopMarketSellCommand {
+  order_context: OrderContext
   market_identifier: MarketIdentifier_V3
   base_amount: BigNumber
   trigger_price: BigNumber
@@ -38,5 +50,5 @@ export interface SpotExecutionEngine {
 
   cancel_order(args: { order_id: string; symbol: string }): Promise<void>
 
-  market_sell(args: { symbol: string; base_amount: BigNumber }): Promise<void>
+  market_sell(cmd: SpotMarketSellCommand): Promise<void>
 }

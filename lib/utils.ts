@@ -2,6 +2,7 @@ import { strict as assert } from "assert"
 import { BigNumber } from "bignumber.js"
 
 // TODO: binance_regex only supports BTC and returns undef otherwise
+console.warn(`split_pair for binance is hardcoded: should be changed to use exchangeInfo`)
 const binance_regex = /^([A-Z]+)(BTC|USDT|BNB|TUSD)$/
 
 import * as Sentry from "@sentry/node"

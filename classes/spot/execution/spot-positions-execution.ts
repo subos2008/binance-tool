@@ -5,6 +5,7 @@ import Sentry from "../../../lib/sentry"
 import { Logger } from "../../../interfaces/logger"
 import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
 import {
+  OrderContext,
   SpotExecutionEngine,
   SpotMarketBuyByQuoteQuantityCommand,
   SpotStopMarketSellCommand,
@@ -137,7 +138,9 @@ export class SpotPositionsExecution {
     this.send_message(`Opening Spot position in ${args.base_asset} using ${args.quote_asset}, edge ${args.edge}`)
 
     let quote_amount = await this.position_sizer.position_size_in_quote_asset(args)
+    let order_context: OrderContext = { edge: args.edge }
     let cmd: SpotMarketBuyByQuoteQuantityCommand = {
+      order_context,
       market_identifier: this.get_market_identifier_for(args),
       quote_amount,
     }
@@ -152,6 +155,7 @@ export class SpotPositionsExecution {
 
     let stop_order_id: string | number | undefined
     let stop_cmd: SpotStopMarketSellCommand = {
+      order_context,
       market_identifier: cmd.market_identifier,
       base_amount: executed_base_quantity,
       trigger_price: stop_price,
@@ -213,7 +217,8 @@ export class SpotPositionsExecution {
       edge,
     }
 
-    let symbol = this.ee.get_market_identifier_for({ quote_asset, base_asset }).symbol
+    let market_identifier = this.ee.get_market_identifier_for({ quote_asset, base_asset })
+    let symbol = market_identifier.symbol
 
     try {
       /** Cancel stop order if there is one */
@@ -244,7 +249,8 @@ export class SpotPositionsExecution {
     try {
       /** Exit the position */
       let base_amount = await this.exisiting_position_size({ base_asset, edge })
-      await this.ee.market_sell({ symbol, base_amount }) // throws if it fails
+      let order_context: OrderContext = { edge }
+      await this.ee.market_sell({ order_context, market_identifier, base_amount }) // throws if it fails
       // let executed_amount = // .. actually we might not have this info immediately
       return true // success, really we just have this here to verify that every other code path throws
     } catch (error) {

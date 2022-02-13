@@ -20,6 +20,8 @@ import {
   SpotExecutionEngine,
   SpotStopMarketSellCommand,
   SpotMarketBuyByQuoteQuantityCommand,
+  SpotMarketSellCommand,
+  OrderContext,
 } from "../interfaces/spot-execution-engine"
 
 // Binance Keys
@@ -77,14 +79,20 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     }
   }
 
+  async store_order_context_and_generate_clientOrderId(
+    order_context: OrderContext
+  ): Promise<{ clientOrderId: string }> {}
+
   async market_buy_by_quote_quantity(cmd: SpotMarketBuyByQuoteQuantityCommand): Promise<{
     executed_quote_quantity: BigNumber
     executed_base_quantity: BigNumber
     executed_price: BigNumber
   }> {
+    let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let result = await this.utils.create_market_buy_order_by_quote_amount({
       pair: cmd.market_identifier.symbol,
       quote_amount: cmd.quote_amount,
+      clientOrderId,
     })
     if (result) {
       return {
@@ -98,12 +106,14 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
 
   /** implemented as a stop_limit */
   async stop_market_sell(cmd: SpotStopMarketSellCommand) {
+    let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let result = await this.utils.munge_and_create_stop_loss_limit_sell_order({
       exchange_info: await this.get_exchange_info(),
       pair: cmd.market_identifier.symbol,
       base_amount: cmd.base_amount,
       stop_price: cmd.trigger_price,
       limit_price: cmd.trigger_price.times(0.8),
+      clientOrderId,
     })
     if (!result?.orderId) {
       throw new Error(`Failed to create stop order`)
@@ -113,7 +123,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
   }
 
   async cancel_order({ order_id, symbol }: { symbol: string; order_id: string }): Promise<void> {
-    let result = await this.utils.cancelOrder({ symbol, orderId: Number(order_id) })
+    let result = await this.utils.cancelOrder({ symbol, clientOrderId: order_id })
     if (result.status === "CANCELED") {
       this.logger.info(`Sucesfully cancelled order ${order_id}`)
       return
@@ -123,16 +133,18 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     throw new Error(msg)
   }
 
-  async market_sell(args: { symbol: string; base_amount: BigNumber }): Promise<void> {
+  async market_sell(cmd: SpotMarketSellCommand): Promise<void> {
+    let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let order: Order | undefined = await this.utils.create_market_sell_order({
-      base_amount: args.base_amount,
-      pair: args.symbol,
+      base_amount: cmd.base_amount,
+      pair: cmd.market_identifier.symbol,
+      clientOrderId,
     })
     if (order && order.orderId) {
       // looks like success
       return
     }
-    let msg = `Failed to create market sell order for ${args.symbol}`
+    let msg = `Failed to create market sell order for ${cmd.market_identifier.symbol}`
     this.logger.warn(msg)
     this.logger.info(order)
     throw new Error(msg)

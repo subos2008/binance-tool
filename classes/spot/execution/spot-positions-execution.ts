@@ -184,7 +184,6 @@ export class SpotPositionsExecution {
     }
   }
 
-  /* Close both does [eventually] the order execution/tracking, and maintains redis */
   async close_position({
     quote_asset,
     base_asset,

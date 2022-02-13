@@ -141,12 +141,14 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
 
   // throws on failure
   async cancel_order({ order_id, symbol }: { symbol: string; order_id: string }): Promise<void> {
-    let result = await this.utils.cancelOrder({ symbol, clientOrderId: order_id })
+    this.logger.info(`Cancelling clientOrderId ${order_id} on symbol ${symbol}`)
+    let result = await ee.cancelOrder({ symbol, origClientOrderId: order_id })
     if (result.status === "CANCELED") {
       this.logger.info(`Sucesfully cancelled order ${order_id}`)
       return
     }
     let msg = `Failed to cancel order ${order_id} on ${symbol}, status ${result.status}`
+    this.logger.warn(msg)
     this.logger.warn(result)
     throw new Error(msg)
   }

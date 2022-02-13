@@ -165,7 +165,8 @@ app.get("/spot/close", async function (req: Request, res: Response, next: NextFu
       action: "close",
       base_asset,
     }
-    res.status(200).json(await tas.close_spot_long(cmd, send_message))
+    let json = await tas.close_spot_long(cmd, send_message)
+    res.status(200).json(json)
   } catch (error) {
     res.status(500)
     next(error)

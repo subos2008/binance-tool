@@ -16,6 +16,7 @@ import {
 } from "../../classes/spot/abstractions/position-identifier"
 import { SpotExecutionEngine } from "../../classes/spot/exchanges/interfaces/spot-execution-engine"
 import { SpotPositionsExecution } from "../../classes/spot/execution/spot-positions-execution"
+import Sentry from "../../lib/sentry"
 
 export interface TradeAbstractionOpenLongCommand {
   base_asset: string
@@ -51,7 +52,7 @@ export class TradeAbstractionService {
     send_message,
     quote_asset,
     positions,
-    spot_ee
+    spot_ee,
   }: {
     logger: Logger
     send_message: SendMessageFunc
@@ -108,9 +109,17 @@ export class TradeAbstractionService {
     let edge = check_edge(cmd.edge)
 
     this.logger.warn(`Position exit is not atomic with check for existing position`)
-    if (await this.positions.in_position({ base_asset: cmd.base_asset, edge })) {
-      this.spot_ee.close_position({ quote_asset: this.quote_asset, ...cmd, edge })
-      return
+    try {
+      if (await this.positions.in_position({ base_asset: cmd.base_asset, edge })) {
+        this.spot_ee.close_position({ quote_asset: this.quote_asset, ...cmd, edge })
+        return // success
+      }
+    } catch (error) {
+      // lower classes do send_message already
+      // throw so we
+      Sentry.captureException(error)
+      console.error(error)
+      throw error
     }
 
     let msg = `There is no known long spot position on ${cmd.base_asset}, skipping close request`

@@ -10,6 +10,9 @@ import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identi
 import { AuthorisedEdgeType } from "../../abstractions/position-identifier"
 
 export interface OrderContext {
+  // Warning: ONLY EDGE IS STORED AT THE MOMENT
+  // If this class is ever extended we need to move to storing objects and not just edge
+  // c.f. OrderToEdgeMapper
   edge: AuthorisedEdgeType
 }
 export interface SpotMarketBuyByQuoteQuantityCommand {

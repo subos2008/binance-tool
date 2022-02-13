@@ -6,7 +6,7 @@ import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identi
 import binance, { CancelOrderResult, Order } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
 import { BinanceExchangeInfoGetter } from "../../../exchanges/binance/exchange-info-getter"
-
+import { randomUUID } from "crypto"
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -23,6 +23,7 @@ import {
   SpotMarketSellCommand,
   OrderContext,
 } from "../interfaces/spot-execution-engine"
+import { OrderToEdgeMapper } from "../../../persistent_state/order-to-edge-mapper"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)
@@ -37,12 +38,14 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
   utils: AlgoUtils
   logger: Logger
   ei_getter: BinanceExchangeInfoGetter
+  order_to_edge_mapper: OrderToEdgeMapper
 
-  constructor({ logger }: { logger: Logger }) {
+  constructor({ logger, order_to_edge_mapper }: { logger: Logger; order_to_edge_mapper: OrderToEdgeMapper }) {
     assert(logger)
     this.logger = logger
     this.utils = new AlgoUtils({ logger, ee /* note global variable */ })
     this.ei_getter = new BinanceExchangeInfoGetter({ ee })
+    this.order_to_edge_mapper = order_to_edge_mapper
   }
 
   get_exchange_identifier(): ExchangeIdentifier_V3 {
@@ -81,7 +84,15 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
 
   async store_order_context_and_generate_clientOrderId(
     order_context: OrderContext
-  ): Promise<{ clientOrderId: string }> {}
+  ): Promise<{ clientOrderId: string }> {
+    let clientOrderId = randomUUID()
+    await this.order_to_edge_mapper.set_edge_for_order(
+      this.get_exchange_identifier(),
+      clientOrderId,
+      order_context.edge
+    )
+    return { clientOrderId }
+  }
 
   async market_buy_by_quote_quantity(cmd: SpotMarketBuyByQuoteQuantityCommand): Promise<{
     executed_quote_quantity: BigNumber

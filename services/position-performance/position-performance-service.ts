@@ -36,6 +36,7 @@ import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-im
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "../spot-trade-abstraction/interim-meta-data-storage"
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
+import { OrderToEdgeMapper } from "../../classes/persistent_state/order-to-edge-mapper"
 
 export class PositionPerformance {
   send_message: (msg: string) => void
@@ -115,7 +116,8 @@ async function main() {
       logger,
       redis,
     })
-  const binance = new BinanceSpotExecutionEngine({ logger })
+  const order_to_edge_mapper = new OrderToEdgeMapper({ logger, redis })
+  const binance = new BinanceSpotExecutionEngine({ logger, order_to_edge_mapper })
 
   const spot_positions_query = new SpotPositionsQuery({
     logger,

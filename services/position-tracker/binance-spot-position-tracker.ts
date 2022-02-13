@@ -51,6 +51,7 @@ import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-im
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "../spot-trade-abstraction/interim-meta-data-storage"
+import { OrderToEdgeMapper } from "../../classes/persistent_state/order-to-edge-mapper"
 
 let order_execution_tracker: OrderExecutionTracker | null = null
 
@@ -100,7 +101,8 @@ class MyOrderCallbacks implements OrderCallbacks {
 let position_tracker: SpotPositionTracker
 
 async function main() {
-  const ee = new BinanceSpotExecutionEngine({ logger })
+  const order_to_edge_mapper = new OrderToEdgeMapper({ logger, redis })
+  const ee = new BinanceSpotExecutionEngine({ logger, order_to_edge_mapper })
   let exchange_info = await ee.get_exchange_info() // TODO: should update this every now and then
 
   // return true if the position size passed it would be considered an untradeably small balance on the exchange

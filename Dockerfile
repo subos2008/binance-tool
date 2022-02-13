@@ -1,4 +1,5 @@
-FROM node
+# crypto.randomUUID needs 15+, even numbers are LTS
+FROM node:16
 
 RUN mkdir -p /app
 WORKDIR /app

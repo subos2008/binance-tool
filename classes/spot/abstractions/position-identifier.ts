@@ -28,12 +28,16 @@ export function create_position_identifier_from_tuple({
 export type AuthorisedEdgeType = "edge60" | "undefined"
 const authorised_edges: AuthorisedEdgeType[] = ["edge60"]
 
+export function is_authorised_edge(edge: string): boolean {
+  return authorised_edges.includes(edge as AuthorisedEdgeType)
+}
+
 export function check_edge(edge: string | undefined): AuthorisedEdgeType {
   if (!edge) {
     Sentry.captureException(new Error(`check_edge: undefined value passed in`))
     return "undefined"
   }
-  if (authorised_edges.includes(edge as AuthorisedEdgeType)) {
+  if (is_authorised_edge(edge)) {
     return edge as AuthorisedEdgeType
   }
   let msg = `Unauthorised edge: ${edge}`

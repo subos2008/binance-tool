@@ -142,8 +142,13 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       base_asset,
     }
     res.status(200).json(await tas.open_spot_long(cmd, send_message))
-  } catch (error) {
-    res.status(500)
+  } catch (error: any) {
+    if ((error.message = ~/UnauthorisedEdge/)) {
+      res.status(403)
+      logger.warn(`403 due to unauthorised edge '${req.query.edge}' attempting to open ${req.query.base_asset}`)
+    } else {
+      res.status(500)
+    }
     next(error)
   }
 })

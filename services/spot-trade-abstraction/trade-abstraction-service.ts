@@ -12,6 +12,7 @@ import { SendMessageFunc } from "../../lib/telegram-v2"
 import {
   AuthorisedEdgeType,
   check_edge,
+  is_authorised_edge,
   SpotPositionIdentifier_V3,
 } from "../../classes/spot/abstractions/position-identifier"
 import { SpotExecutionEngine } from "../../classes/spot/exchanges/interfaces/spot-execution-engine"
@@ -77,6 +78,11 @@ export class TradeAbstractionService {
   ): Promise<object> {
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
+
+    if (!is_authorised_edge(cmd.edge)) {
+      throw new Error(`UnauthorisedEdge ${cmd.edge}`)
+    }
+
     let edge: AuthorisedEdgeType = check_edge(cmd.edge)
     /** TODO: We want this check and entry to be atomic, while we only trade one edge it's less important */
     this.logger.warn(`Position entry is not atomic with check for existing position`)

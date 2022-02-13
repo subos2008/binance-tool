@@ -106,6 +106,7 @@ export class Commands {
         ctx.reply(`Looks like it succeeded?`)
       }
     } catch (error) {
+      this.logger.error(`Looks like command failed:`)
       this.logger.error(error)
       Sentry.captureException(error)
       ctx.reply(`Looks like it failed, see log for error`)

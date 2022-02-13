@@ -141,7 +141,8 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       action: "open",
       base_asset,
     }
-    res.status(200).json(await tas.open_spot_long(cmd, send_message))
+    let json = await tas.open_spot_long(cmd, send_message)
+    res.status(200).json(json)
   } catch (error: any) {
     if ((error.message = ~/UnauthorisedEdge/)) {
       res.status(403)
@@ -172,9 +173,11 @@ app.get("/spot/close", async function (req: Request, res: Response, next: NextFu
       base_asset,
     }
     let json = await tas.close_spot_long(cmd, send_message)
-    res.status(200).json(json)
+    logger.info(`Success`)
+    logger.info(json)
+    res.status(200).json({msg: 'success'})
   } catch (error) {
-    res.status(500)
+    res.status(500).json({ msg: "failed" })
     next(error)
   }
 })

@@ -22,7 +22,7 @@ export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info
 
   let generic: GenericOrderData = {
     exchange_identifier: { version: "v3", exchange: "binance", type: "spot", account: "default" },
-    orderId: i.orderId,
+    order_id: i.order_id,
     market_symbol: i.symbol,
     baseAsset: symbol_info.baseAsset,
     quoteAsset: symbol_info.quoteAsset,
@@ -89,6 +89,8 @@ export function fromBinanceQueryOrderResult({
     exchange_identifier: { type: "spot", exchange: "binance", version: "v3", account: "default" },
     exchangeOrderId: i.orderId.toString(),
     clientOrderId: i.clientOrderId,
+    order_id: i.clientOrderId,
+    order_id_is_client_order_id: true,
     market_symbol: i.symbol,
     baseAsset: symbol_info.baseAsset,
     quoteAsset: symbol_info.quoteAsset,

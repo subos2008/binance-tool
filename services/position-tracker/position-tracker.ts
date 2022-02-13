@@ -114,15 +114,15 @@ export class SpotPositionTracker {
   }
 
   private async load_position_for_order(generic_order_data: GenericOrderData): Promise<SpotPosition> {
-    let { baseAsset, orderId } = generic_order_data
+    let { baseAsset, order_id } = generic_order_data
 
     let edge: AuthorisedEdgeType | undefined
     try {
       /* We can expect this to error, certainly initally as we have stops already open,
       Any manually created orders will also throw here */
-      edge = await this.order_to_edge_mapper.get_edge_for_order(generic_order_data.exchange_identifier, orderId)
+      edge = await this.order_to_edge_mapper.get_edge_for_order(generic_order_data.exchange_identifier, order_id)
     } catch (error: any) {
-      this.logger.warn(`Exception determining edge for orderId ${orderId}: ${error.toString()}`)
+      this.logger.warn(`Exception determining edge for order_id ${order_id}: ${error.toString()}`)
     }
 
     let position_identifier: SpotPositionIdentifier_V3 = {

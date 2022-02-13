@@ -19,6 +19,7 @@ import {
   NewOrderSL,
   NewOrderSpot,
   OcoOrder,
+  Order,
   OrderSide,
   OrderType,
 } from "binance-api-node"
@@ -197,7 +198,7 @@ export class AlgoUtils {
       }
       this.logger.info(`${pair} Creating LIMIT BUY ORDER for ${quantity} at ${price_string}`)
       let response = await this.ee.order(args)
-      this.logger.info(`order id: ${response.orderId}`)
+      this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (error) {
@@ -266,7 +267,7 @@ export class AlgoUtils {
       }
       this.logger.info(`${pair} Creating LIMIT SELL ORDER for ${quantity} at ${price.toFixed()}`)
       let response = await this.ee.order(args)
-      this.logger.info(`order id: ${response.orderId}`)
+      this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (error: any) {
@@ -371,7 +372,7 @@ export class AlgoUtils {
     stop_price: BigNumber
     limit_price: BigNumber
     clientOrderId: string
-  }) {
+  }): Promise<Order> {
     assert(pair && stop_price && base_amount && stop_price && limit_price)
     assert(BigNumber.isBigNumber(base_amount))
     assert(BigNumber.isBigNumber(stop_price))
@@ -406,24 +407,23 @@ export class AlgoUtils {
         `${pair} Creating STOP_LOSS_LIMIT SELL ORDER for ${quantity} at ${limit_price.toFixed()} triggered at ${stop_price.toFixed()}`
       )
       let response = await this.ee.order(args)
-      this.logger.info(`order id: ${response.orderId}`)
+      this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (error: any) {
       Sentry.captureException(error)
-      async_error_handler(console, `Buy error: ${error.body}`, error)
+      this.logger.error(error)
+      throw error
     }
   }
 
   async create_market_buy_order({
     base_amount,
     pair,
-    // orderId,
     clientOrderId,
   }: {
     base_amount: BigNumber
     pair: string
-    // orderId?: string | undefined
     clientOrderId: string
   }) {
     assert(pair)
@@ -439,10 +439,9 @@ export class AlgoUtils {
         quantity,
         newClientOrderId: clientOrderId,
       }
-      // if (orderId) args.newClientOrderId = orderId
       this.logger.info(`Creating MARKET BUY ORDER for ${quantity} ${pair}`)
       let response = await this.ee.order(args)
-      this.logger.info(`Exchange order id: ${response.orderId}, requested ${clientOrderId}`)
+      this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (error: any) {
@@ -454,12 +453,10 @@ export class AlgoUtils {
   async create_market_buy_order_by_quote_amount({
     quote_amount,
     pair,
-    // orderId,
     clientOrderId,
   }: {
     quote_amount: BigNumber
     pair: string
-    // orderId?: string | undefined
     clientOrderId: string
   }) {
     assert(pair)
@@ -475,10 +472,9 @@ export class AlgoUtils {
         quoteOrderQty,
         newClientOrderId: clientOrderId,
       }
-      // if (orderId) args.newClientOrderId = orderId
       this.logger.info(`Creating MARKET BUY ORDER for quoteOrderQty ${quoteOrderQty} ${pair}`)
       let response = await this.ee.order(args)
-      this.logger.info(`Exchange order id: ${response.orderId}, requested ${clientOrderId}`)
+      this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (error: any) {
@@ -490,12 +486,10 @@ export class AlgoUtils {
   async create_market_sell_order({
     base_amount,
     pair,
-    // orderId,
     clientOrderId,
   }: {
     base_amount: BigNumber
     pair: string
-    // orderId?: string
     clientOrderId: string
   }) {
     assert(pair)
@@ -511,10 +505,9 @@ export class AlgoUtils {
         quantity,
         newClientOrderId: clientOrderId,
       }
-      // if (orderId) args.newClientOrderId = orderId
       this.logger.info(`Creating MARKET SELL ORDER for ${quantity} ${pair}`)
       let response = await this.ee.order(args)
-      this.logger.info(`Exchange order id: ${response.orderId}, requested ${clientOrderId}`)
+      this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (error: any) {

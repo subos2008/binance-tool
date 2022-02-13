@@ -104,7 +104,7 @@ export class OrderExecutionTracker {
           scope.setTag("orderType", data.orderType)
           scope.setTag("orderStatus", data.orderStatus)
           scope.setTag("executionType", data.executionType)
-          scope.setTag("orderId", data.orderId.toString())
+          scope.setTag("order_id", data.newClientOrderId)
           Sentry.captureException(error)
         })
         let msg = `SHIT: error calling processExecutionReport for pair ${data.symbol}`
@@ -120,7 +120,7 @@ export class OrderExecutionTracker {
     try {
       if (!this.order_to_edge_mapper)
         throw new Error(`OrderToEdgeMapper not initialised, maybe redis was down at startup`)
-      edge = await this.order_to_edge_mapper.get_edge_for_order(this.exchange_identifier, data.orderId)
+      edge = await this.order_to_edge_mapper.get_edge_for_order(this.exchange_identifier, data.order_id)
     } catch (error) {
       this.logger.warn(error)
       // Non fatal there are valid times for this
@@ -128,24 +128,27 @@ export class OrderExecutionTracker {
     }
     edge = check_edge(edge)
     this.logger.info(
-      `Loaded edge for order ${data.orderId}: ${edge} (undefined can be valid here for manually created orders)`
+      `Loaded edge for order ${data.order_id}: ${edge} (undefined can be valid here for manually created orders)`
     )
     return edge
   }
 
-  async processExecutionReport(data: any) {
+  async processExecutionReport(_data: ExecutionReport) {
     const {
       symbol,
       price,
       quantity,
       side,
       orderType,
-      orderId,
       orderStatus,
       orderRejectReason,
       totalTradeQuantity,
       totalQuoteTradeQuantity,
-    } = data as BinanceOrderData
+    } = _data
+
+    let order_id = _data.newClientOrderId
+    delete (_data as any).orderId // make sure we aren't using this anywhere, it is depricated
+    let data: BinanceOrderData = { ..._data, order_id } as BinanceOrderData
     // How can I automagically check an input matches the expected type?
 
     try {
@@ -158,7 +161,7 @@ export class OrderExecutionTracker {
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
-        if (orderId) scope.setTag("orderId", orderId.toString())
+        if (order_id) scope.setTag("order_id", order_id)
         Sentry.captureException(error)
       })
     }
@@ -173,14 +176,14 @@ export class OrderExecutionTracker {
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
-        if (orderId) scope.setTag("orderId", orderId.toString())
+        if (order_id) scope.setTag("order_id", order_id)
         Sentry.captureException(error)
       })
     }
 
     try {
       if (this.print_all_trades) {
-        this.logger.info(`${symbol} ${side} ${orderType} ORDER #${orderId} (${orderStatus})`)
+        this.logger.info(`${symbol} ${side} ${orderType} ORDER #${order_id} (${orderStatus})`)
         this.logger.info(
           `..price: ${price}, quantity: ${quantity}, averageExecutionPrice: ${data.averageExecutionPrice}`
         )
@@ -215,7 +218,7 @@ export class OrderExecutionTracker {
       }
 
       if (orderStatus !== "FILLED") {
-        throw new Error(`Unexpected orderStatus: ${orderStatus}. Reason: ${data.r}`)
+        throw new Error(`Unexpected orderStatus: ${orderStatus}. Reason: ${data.orderRejectReason}`)
       }
 
       if (this.order_callbacks && this.order_callbacks.order_filled_or_partially_filled)
@@ -227,20 +230,11 @@ export class OrderExecutionTracker {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
         if (edge) scope.setTag("edge", edge)
-        if (orderId) scope.setTag("orderId", orderId.toString())
+        if (order_id) scope.setTag("order_id", order_id)
         Sentry.captureException(error)
       })
       throw error
     }
-  }
-
-  // Event Listeners
-  async newOrderId() {
-    // we might have orphaned data matching an order, when we get this event
-    // we check to see if that has happened and copy the data accross. This mitigates
-    // the case where the binance stream sends out a completed order before the orderId
-    // is associated with the trade
-    // ED: using custom orderIds is a better solution to this
   }
 
   // Event publishers

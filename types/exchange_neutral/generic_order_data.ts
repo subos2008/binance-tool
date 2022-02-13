@@ -21,7 +21,7 @@ export type GenericOrderType =
 export type GenericOrderData = {
   // OG, created to map completed / filled orders to
   exchange_identifier: ExchangeIdentifier_V3
-  orderId: string // as provided by the exchange
+  order_id: string // as provided by the exchange - would always be clientOrderId for Binance
   market_symbol: string // pair etc - included but only use it to pass back to the exchange/ExchangeUtils as an opaque slug
   baseAsset: string
   quoteAsset: string
@@ -50,6 +50,8 @@ export type GenericOrder = {
   exchangeOrderId: string // as provided by the exchange
   exchangeOrderListId?: string // as provided by the exchange (for OCO orders)
   clientOrderId: string // the one we provided to the exchange if we can set/choose it
+  order_id_is_client_order_id: boolean
+  order_id: string // this will be the one to use - consider the others (*OrderId) kind of internal
   market_symbol: string // pair etc - included but only use it to pass back to the exchange/ExchangeUtils as an opaque slug
   baseAsset: string
   quoteAsset: string

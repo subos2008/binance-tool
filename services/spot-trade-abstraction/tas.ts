@@ -48,7 +48,6 @@ import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-im
 
 import express, { NextFunction, Request, Response } from "express"
 import { FixedPositionSizer } from "./fixed-position-sizer"
-import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "./interim-meta-data-storage"
 const winston = require("winston")
 const expressWinston = require("express-winston")
 
@@ -98,22 +97,16 @@ const order_context_persistence = new RedisOrderContextPersistance({ logger, red
 const binance_spot_ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
 const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsState({ logger, redis })
 const position_sizer = new FixedPositionSizer({ logger })
-const interim_spot_positions_metadata_persistant_storage = new RedisInterimSpotPositionsMetaDataPersistantStorage({
-  logger,
-  redis,
-})
 const positions = new SpotPositionsQuery({
   logger,
   positions_persistance,
   send_message,
-  interim_spot_positions_metadata_persistant_storage,
   exchange_identifier: binance_spot_ee.get_exchange_identifier(),
 })
 const spot_ee: SpotPositionsExecution = new SpotPositionsExecution({
   logger,
   position_sizer,
   positions_persistance,
-  interim_spot_positions_metadata_persistant_storage,
   ee: binance_spot_ee,
   send_message,
 })

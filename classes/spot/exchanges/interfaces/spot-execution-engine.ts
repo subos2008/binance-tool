@@ -8,6 +8,7 @@ BigNumber.prototype.valueOf = function () {
 import { MarketIdentifier_V3 } from "../../../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { AuthorisedEdgeType } from "../../abstractions/position-identifier"
+import { OrderId } from "../../persistence/interface/order-context-persistence"
 
 /**
  * We need to know some info about orders when (read: before) they are executed
@@ -53,7 +54,7 @@ export interface SpotExecutionEngine {
 
   get_exchange_identifier(): ExchangeIdentifier_V3
 
-  stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<{ order_id: string | number; stop_price: BigNumber }>
+  stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<{ order_id: OrderId; stop_price: BigNumber }>
 
   cancel_order(args: { order_id: string; symbol: string }): Promise<void>
 

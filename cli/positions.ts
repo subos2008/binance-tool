@@ -18,6 +18,7 @@ const logger: Logger = new LoggerClass({ silent: false })
 let service_name = "cli"
 const send_message = require("../lib/telegram.js")(`${service_name}: `)
 
+import { RedisClient } from "redis"
 import { get_redis_client, set_redis_logger } from "../lib/redis"
 set_redis_logger(logger)
 const redis: RedisClient = get_redis_client()
@@ -43,17 +44,10 @@ import { BinancePriceGetter } from "../interfaces/exchange/binance/binance-price
 import { CurrentPriceGetter } from "../interfaces/exchange/generic/price-getter"
 import { SpotRedisPositionsState } from "../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
 
-/** Naughty */
-import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "../services/spot-trade-abstraction/interim-meta-data-storage"
-import { RedisClient } from "redis"
 
 require("dotenv").config()
 
 const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsState({ logger, redis })
-const interim_spot_positions_metadata_persistant_storage = new RedisInterimSpotPositionsMetaDataPersistantStorage({
-  logger,
-  redis,
-})
 
 async function main() {
   yargs
@@ -189,7 +183,6 @@ async function list_positions({
     logger,
     positions_persistance,
     send_message,
-    interim_spot_positions_metadata_persistant_storage,
     exchange_identifier: { exchange, type: exchange_type, account, version: "v3" },
   })
   console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
@@ -287,7 +280,6 @@ async function describe_position({
     logger,
     positions_persistance,
     send_message,
-    interim_spot_positions_metadata_persistant_storage,
     exchange_identifier: { exchange, type: exchange_type, account, version: "v3" },
   })
   let position_identifiers: SpotPositionIdentifier_V3[] = await spot_positions_query.query_open_positions(query)

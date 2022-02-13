@@ -47,7 +47,6 @@ import { SpotPositionsPersistance } from "../../classes/spot/persistence/interfa
 import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
-import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "../spot-trade-abstraction/interim-meta-data-storage"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 let order_execution_tracker: OrderExecutionTracker | null = null
@@ -121,18 +120,12 @@ async function main() {
     )
     return result
   }
-  const interim_spot_positions_metadata_persistant_storage =
-    new RedisInterimSpotPositionsMetaDataPersistantStorage({
-      logger,
-      redis,
-    })
   const spot_positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsState({ logger, redis })
   const spot_positions_query = new SpotPositionsQuery({
     logger,
     positions_persistance: spot_positions_persistance,
     send_message,
     exchange_identifier: ee.get_exchange_identifier(),
-    interim_spot_positions_metadata_persistant_storage,
   })
 
   position_tracker = new SpotPositionTracker({

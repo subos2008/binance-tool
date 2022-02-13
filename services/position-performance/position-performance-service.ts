@@ -34,7 +34,6 @@ import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
-import { RedisInterimSpotPositionsMetaDataPersistantStorage } from "../spot-trade-abstraction/interim-meta-data-storage"
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
@@ -111,11 +110,6 @@ export class PositionPerformance {
 async function main() {
   const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   const spot_positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsState({ logger, redis })
-  const interim_spot_positions_metadata_persistant_storage =
-    new RedisInterimSpotPositionsMetaDataPersistantStorage({
-      logger,
-      redis,
-    })
   const order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
   const binance = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
 
@@ -124,7 +118,6 @@ async function main() {
     exchange_identifier: binance.get_exchange_identifier(),
     positions_persistance: spot_positions_persistance,
     send_message,
-    interim_spot_positions_metadata_persistant_storage,
   })
 
   let position_performance = new PositionPerformance({

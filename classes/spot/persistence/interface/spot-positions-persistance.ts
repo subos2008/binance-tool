@@ -8,6 +8,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
+import { OrderId } from "./order-context-persistence"
 
 // export interface PositionReservationCommand {
 //   trade_id: string
@@ -87,4 +88,12 @@ export interface SpotPositionsPersistance {
     { base_change }: { base_change: BigNumber }
   ): Promise<void>
   add_orders(pi: SpotPositionIdentifier_V3, orders: GenericOrderData[]): Promise<void>
+
+  /**
+   * this is a bit hacky because we assume there is only one stop order,
+   * edge60 wants to know what its stop order is when cancelling the order
+   * so this is our not-over-architected way of storing an order_id that needs to be cancelled
+   */
+  set_stop_order(pi: SpotPositionIdentifier_V3, order_id: OrderId): Promise<void>
+  get_stop_order(pi: SpotPositionIdentifier_V3): Promise<OrderId>
 }

@@ -17,6 +17,7 @@ import BigNumber from "bignumber.js"
 import { InterimSpotPositionsMetaDataPersistantStorage } from "../../../services/spot-trade-abstraction/trade-abstraction-service"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../abstractions/position-identifier"
+import { OrderId } from "../persistence/interface/order-context-persistence"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -33,8 +34,6 @@ export class SpotPositionsExecution {
   ee: SpotExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
-  interim_spot_positions_metadata_persistant_storage: InterimSpotPositionsMetaDataPersistantStorage
-
   positions_persistance: SpotPositionsPersistance
 
   constructor({
@@ -43,14 +42,12 @@ export class SpotPositionsExecution {
     positions_persistance,
     send_message,
     position_sizer,
-    interim_spot_positions_metadata_persistant_storage,
   }: {
     logger: Logger
     ee: SpotExecutionEngine
     positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
     position_sizer: PositionSizer
-    interim_spot_positions_metadata_persistant_storage: InterimSpotPositionsMetaDataPersistantStorage
   }) {
     assert(logger)
     this.logger = logger
@@ -59,7 +56,6 @@ export class SpotPositionsExecution {
     this.positions_persistance = positions_persistance
     this.send_message = send_message
     this.position_sizer = position_sizer
-    this.interim_spot_positions_metadata_persistant_storage = interim_spot_positions_metadata_persistant_storage
   }
 
   in_position({ base_asset, edge }: { base_asset: string; edge: AuthorisedEdgeType }) {
@@ -153,7 +149,7 @@ export class SpotPositionsExecution {
       `Calculated stop price of ${stop_price.toFixed()} given buy executed price of ${executed_price.toFixed()}`
     )
 
-    let stop_order_id: string | number | undefined
+    let stop_order_id: OrderId | undefined
     let stop_cmd: SpotStopMarketSellCommand = {
       order_context,
       market_identifier: cmd.market_identifier,
@@ -169,10 +165,7 @@ export class SpotPositionsExecution {
         base_asset: args.base_asset,
         edge: args.edge,
       }
-      await this.interim_spot_positions_metadata_persistant_storage.set_stop_order_id(
-        spot_position_identifier,
-        stop_order_id.toString()
-      )
+      await this.positions_persistance.set_stop_order(spot_position_identifier, stop_order_id.toString())
     } catch (error) {
       Sentry.captureException(error)
       this.send_message(
@@ -222,8 +215,7 @@ export class SpotPositionsExecution {
 
     try {
       /** Cancel stop order if there is one */
-      let stop_order_id: string | null =
-        await this.interim_spot_positions_metadata_persistant_storage.get_stop_order_id(spot_position_identifier)
+      let stop_order_id: OrderId | null = await this.positions_persistance.get_stop_order(spot_position_identifier)
 
       if (stop_order_id) {
         this.send_message(`${prefix} cancelling stop order ${stop_order_id} on ${symbol}`)

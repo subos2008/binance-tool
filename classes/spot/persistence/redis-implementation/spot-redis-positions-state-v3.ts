@@ -86,11 +86,15 @@ export class SpotRedisPositionsState implements SpotPositionsPersistance {
     return this.state.add_orders(pi, orders)
   }
 
-  /** 
-   * this is a bit hacky, edge60 wants to know what its stop order is when cancelling the order
+  /**
+   * this is a bit hacky because we assume there is only one stop order,
+   * edge60 wants to know what its stop order is when cancelling the order
    * so this is our not-over-architected way of storing an order_id that needs to be cancelled
    */
   async set_stop_order(pi: SpotPositionIdentifier_V3, order_id: OrderId): Promise<void> {
     return this.state.set_stop_order(pi, order_id)
+  }
+  async get_stop_order(pi: SpotPositionIdentifier_V3): Promise<OrderId> {
+    return this.state.get_stop_order(pi)
   }
 }

@@ -21,7 +21,6 @@ import { SpotPosition } from "./spot-position"
 export class SpotPositionsQuery {
   logger: Logger
   send_message: SendMessageFunc
-  interim_spot_positions_metadata_persistant_storage: InterimSpotPositionsMetaDataPersistantStorage
   exchange_identifier: ExchangeIdentifier_V3
   positions_persistance: SpotPositionsPersistance
 
@@ -29,20 +28,17 @@ export class SpotPositionsQuery {
     logger,
     positions_persistance,
     send_message,
-    interim_spot_positions_metadata_persistant_storage,
     exchange_identifier,
   }: {
     logger: Logger
     positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
-    interim_spot_positions_metadata_persistant_storage: InterimSpotPositionsMetaDataPersistantStorage
     exchange_identifier: ExchangeIdentifier_V3
   }) {
     assert(logger)
     this.logger = logger
     this.positions_persistance = positions_persistance
     this.send_message = send_message
-    this.interim_spot_positions_metadata_persistant_storage = interim_spot_positions_metadata_persistant_storage
     this.exchange_identifier = exchange_identifier
   }
 

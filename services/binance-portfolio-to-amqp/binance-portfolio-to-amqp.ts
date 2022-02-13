@@ -51,9 +51,12 @@ import { BinancePortfolioToAMQP } from "./portfolio"
 
 let logger: Logger = _logger
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+import express, { Request, Response } from "express"
 
+import { RedisClient } from "redis"
+import { get_redis_client, set_redis_logger } from "../../lib/redis"
 set_redis_logger(logger)
-let redis = get_redis_client()
+let redis: RedisClient = get_redis_client()
 
 const health = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health.addSubsystem({ name: "global", ready: true, healthy: true })
@@ -87,9 +90,6 @@ main().catch((error) => {
   logger.error(`Error in main loop: ${error.stack}`)
 })
 
-import express, { Request, Response } from "express"
-import { RedisClient } from "redis"
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
 var app = express()
 app.get("/health", function (req: Request, res: Response) {
   if (health.healthy()) res.send({ status: "OK" })

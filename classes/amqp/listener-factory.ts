@@ -58,15 +58,15 @@ class MessageProcessorIsolator implements MessageProcessor {
   async process_message(event: any, channel: Channel): Promise<void> {
     // TODO: sentry scope
     try {
-      if (event.object_type === this.event_name) {
+      let Body = JSON.parse(event.content.toString())
+      if (Body.object_type === this.event_name) {
         return this.message_processor.process_message(event, channel)
       } else {
-        if(event.object_type) {
-
-          this.logger.info(`Skipping ${event.object_type}, filtering for ${this.event_name}`)
+        if(Body.object_type) {
+          this.logger.info(`Skipping ${Body.object_type}, filtering for ${this.event_name}`)
         }else {
-          let msg = `Event does not specify and object_type, it will never be logger`
-          this.logger.error()
+          let msg = `Event does not specify an object_type, it will never be processed`
+          this.logger.error(msg)
           this.logger.error(event)
           throw new Error(msg)
         }

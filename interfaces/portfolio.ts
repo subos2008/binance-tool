@@ -14,6 +14,7 @@ export interface Prices {
 }
 
 export interface Portfolio {
+  object_type: "Portfolio"
   usd_value?: string
   btc_value?: string
   balances: Balance[]

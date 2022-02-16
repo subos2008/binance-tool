@@ -32,6 +32,7 @@ main().then(() => {})
 
 async function send_test_event() {
   let pub = new GenericTopicPublisher({ logger, event_name: "InternalConnectivityTestEvent" })
-  await pub.publish(JSON.stringify({ hello: "world" }))
+  let object = { hello: "world", object_type: "InternalConnectivityTestEvent" }
+  await pub.publish(object)
   await pub.shutdown_streams()
 }

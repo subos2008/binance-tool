@@ -93,6 +93,7 @@ export class PortfolioPublisher {
   async publish(event: Portfolio): Promise<void> {
     // Extract only those fields we want to publish
     let trimmed_event: Portfolio = {
+      object_type: "Portfolio",
       usd_value: event.usd_value,
       btc_value: event.btc_value,
       balances: event.balances,
@@ -104,7 +105,7 @@ export class PortfolioPublisher {
       timestamp: Date.now(),
     }
     try {
-      await this.pub.publish(JSON.stringify(trimmed_event), options)
+      await this.pub.publish(trimmed_event, options)
     } catch (e) {
       this.health_and_readiness.healthy(false)
     }
@@ -251,7 +252,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
   portfolio_tracker: PortfolioTracker // duplicated
   order_execution_tracker: OrderExecutionTracker
   exchange_identifier: ExchangeIdentifier
-  portfolio: Portfolio = { balances: [] }
+  portfolio: Portfolio = { balances: [], object_type: "Portfolio" }
   publisher: PortfolioPublisher
   health_and_readiness: HealthAndReadinessSubsystem
 

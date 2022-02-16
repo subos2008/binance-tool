@@ -147,7 +147,7 @@ class Edge58Service implements Edge58EntrySignalsCallbacks {
       persistent: true,
       timestamp: Date.now(), // TODO: maybe this should be set to the candle close timestamp
     }
-    publisher.publish(JSON.stringify(event), options)
+    publisher.publish(event, options)
   }
 
   market_data_for_symbol(symbol: string): CoinGeckoMarketData {

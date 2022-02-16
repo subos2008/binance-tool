@@ -13,6 +13,10 @@ import * as Sentry from "@sentry/node"
 import { Channel, connect, Connection, Options } from "amqplib"
 import { MyEventNameType, MessageRouting } from "./message-routing"
 
+export interface PublishableObject {
+  object_type: string // rounting will fail if this is not provided - used to be called event_name
+}
+
 export class GenericTopicPublisher {
   logger: Logger
   connection: Connection | undefined
@@ -55,10 +59,11 @@ export class GenericTopicPublisher {
     }
   }
 
-  async publish(event: string, options?: Options.Publish): Promise<boolean> {
+  async publish(event: PublishableObject, options?: Options.Publish): Promise<boolean> {
     await this.connect()
-    let msg = event
-    if(!this.channel) throw new Error("not connected to channel when publish() called")
+    let msg = JSON.stringify(event)
+    if (!this.channel) throw new Error("not connected to channel when publish() called")
+
     const server_full = !this.channel.publish(this.exchange_name, this.routing_key, Buffer.from(msg), options)
     if (server_full) {
       let msg = "AMQP reports server full when trying to publish"

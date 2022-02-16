@@ -116,7 +116,7 @@ export class SpotPositionPublisher {
       timestamp: Date.now(),
     }
     try {
-      await this.publisher_opened.publish(JSON.stringify(event), options)
+      await this.publisher_opened.publish(event, options)
     } catch (e) {
       this.health_and_readiness.healthy(false)
     }
@@ -129,7 +129,7 @@ export class SpotPositionPublisher {
       timestamp: Date.now(),
     }
     try {
-      await this.publisher_closed.publish(JSON.stringify(event), options)
+      await this.publisher_closed.publish(event, options)
     } catch (e) {
       this.health_and_readiness.healthy(false)
     }

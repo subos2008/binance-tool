@@ -27,9 +27,10 @@
 // }
 
 import { AuthorisedEdgeType } from "../classes/spot/abstractions/position-identifier"
-import { OrderContext_V1 } from "../classes/spot/exchanges/interfaces/spot-execution-engine";
+import { OrderContext_V1 } from "../classes/spot/exchanges/interfaces/spot-execution-engine"
 
 export interface BinanceOrderData {
+  object_type: "BinanceOrderData"
   order_id: string
   orderTime: number
   totalTradeQuantity: string // NB: we might rename this to totalBaseTradeQuantity in exchange_neutral

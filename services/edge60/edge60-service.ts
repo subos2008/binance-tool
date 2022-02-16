@@ -192,7 +192,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       persistent: true,
       timestamp: Date.now(),
     }
-    publisher.publish(JSON.stringify(event), options)
+    publisher.publish(event, options)
   }
 
   base_asset_for_symbol(symbol: string): string {

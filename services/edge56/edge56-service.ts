@@ -172,7 +172,7 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
       persistent: true,
       timestamp: Date.now(),
     }
-    publisher.publish(JSON.stringify(event), options)
+    publisher.publish(event, options)
   }
 
   market_data_for_symbol(symbol: string): CoinGeckoMarketData {

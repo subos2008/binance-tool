@@ -31,6 +31,7 @@ export type SpotPositionObject = {
   initial_quote_invested: BigNumber
   initial_entry_quote_asset: string
   initial_entry_price: BigNumber
+  initial_entry_position_size: BigNumber
   orders: GenericOrderData[]
   edge: AuthorisedEdgeType
   stop_order_id?: string
@@ -166,7 +167,7 @@ export class SpotPosition {
 
       /** Position size */
       initial_entry_quote_invested: o.initial_quote_invested.toFixed(),
-      initial_entry_position_size: o.position_size.toFixed(), // base asset
+      initial_entry_position_size: o.initial_entry_position_size.toFixed(), // base asset
 
       /** Presumably just the entry order */
       orders: o.orders,

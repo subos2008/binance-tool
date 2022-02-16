@@ -74,6 +74,7 @@ export class RedisSpotPositionsState {
     switch (name) {
       case "position_size":
       case "initial_entry_price":
+      case "initial_entry_position_size":
       case "initial_quote_invested":
       case "total_quote_invested":
       case "total_quote_withdrawn":
@@ -146,6 +147,10 @@ export class RedisSpotPositionsState {
     return this.get_sats_key(pi, { key_name: "initial_entry_price" })
   }
 
+  async get_initial_entry_position_size(pi: SpotPositionIdentifier_V3): Promise<BigNumber> {
+    return this.get_sats_key(pi, { key_name: "initial_entry_position_size" })
+  }
+
   async get_initial_entry_quote_asset(pi: SpotPositionIdentifier_V3): Promise<string> {
     return this.get_string_key(pi, { key_name: "initial_entry_quote_asset" })
   }
@@ -189,6 +194,7 @@ export class RedisSpotPositionsState {
     return {
       position_size: await this.get_position_size(pi),
       initial_entry_price: await this.get_initial_entry_price(pi),
+      initial_entry_position_size: await this.get_initial_entry_position_size(pi),
       initial_entry_quote_asset: await this.get_initial_entry_quote_asset(pi),
       initial_quote_invested: await this.get_initial_quote_invested(pi),
       initial_entry_timestamp: await this.get_initial_entry_timestamp(pi),
@@ -216,6 +222,8 @@ export class RedisSpotPositionsState {
       await this.msetAsync(
         this.name_to_key(pi, { name: "initial_entry_timestamp" }),
         initial_entry_timestamp,
+        this.name_to_key(pi, { name: "initial_entry_position_size" }),
+        to_sats(position_size.toFixed()),
         this.name_to_key(pi, { name: "position_size" }),
         to_sats(position_size.toFixed()),
         this.name_to_key(pi, { name: "initial_quote_invested" }),

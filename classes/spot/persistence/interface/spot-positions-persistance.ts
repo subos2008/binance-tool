@@ -9,6 +9,7 @@ BigNumber.prototype.valueOf = function () {
 import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
 import { OrderId } from "./order-context-persistence"
+import { SpotPositionObject } from "../../abstractions/spot-position"
 
 // export interface PositionReservationCommand {
 //   trade_id: string
@@ -37,7 +38,18 @@ import { OrderId } from "./order-context-persistence"
  */
 // }
 
-export type SpotPositionInitialisationData = SpotPositionObject
+
+// An old type, used when we want to do something like console.log a position
+// Probably should be depricated
+export type SpotPositionInitialisationData = {
+  initial_entry_timestamp: number // yes
+  position_size: BigNumber // yes
+  initial_quote_invested: BigNumber
+  initial_entry_quote_asset: string
+  initial_entry_price: BigNumber
+  orders: GenericOrderData[]
+  edge: AuthorisedEdgeType // added this
+}
 
 export function genericOrderDataToSpotPositionInitialisationData(
   o: GenericOrderData
@@ -51,17 +63,6 @@ export function genericOrderDataToSpotPositionInitialisationData(
     orders: [o],
     edge: check_edge(o.edge),
   }
-}
-// An old type, used when we want to do something like console.log a position
-// Probably should be depricated
-type SpotPositionObject = {
-  initial_entry_timestamp: number // yes
-  position_size: BigNumber // yes
-  initial_quote_invested: BigNumber
-  initial_entry_quote_asset: string
-  initial_entry_price: BigNumber
-  orders: GenericOrderData[]
-  edge: AuthorisedEdgeType // added this
 }
 
 export interface SpotPositionsPersistance {

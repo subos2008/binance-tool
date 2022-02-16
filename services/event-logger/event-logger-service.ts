@@ -42,6 +42,7 @@ assert(process.env.AWS_ACCESS_KEY_ID)
 assert(process.env.AWS_SECRET_ACCESS_KEY)
 const s3Client = new S3Client({ region })
 let Bucket = "binance-tool-event-storage"
+import { randomUUID } from "crypto"
 
 let listener_factory = new ListenerFactory({ logger })
 class EventLogger implements MessageProcessor {
@@ -70,7 +71,7 @@ class EventLogger implements MessageProcessor {
     try {
       this.logger.info(event)
       let Body = event.content.toString()
-      let Key = `${this.event_name}/${+new Date()}` // ms timestamp
+      let Key = `${this.event_name}/${+new Date()}-${randomUUID()}` // ms timestamp
       let params: PutObjectRequest = { Bucket, Key, Body }
       const results = await s3Client.send(new PutObjectCommand(params))
       console.log("Successfully created " + params.Key + " and uploaded it to " + params.Bucket + "/" + params.Key)

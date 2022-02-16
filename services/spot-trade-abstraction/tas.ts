@@ -44,7 +44,7 @@ import {
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
-import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
+import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 
 import express, { NextFunction, Request, Response } from "express"
 import { FixedPositionSizer } from "./fixed-position-sizer"
@@ -95,7 +95,7 @@ let redis: RedisClient = get_redis_client()
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 const order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
 const binance_spot_ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
-const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsState({ logger, redis })
+const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
 const position_sizer = new FixedPositionSizer({ logger })
 const positions = new SpotPositionsQuery({
   logger,

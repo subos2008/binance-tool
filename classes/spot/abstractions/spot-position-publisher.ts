@@ -22,60 +22,66 @@ BigNumber.prototype.valueOf = function () {
 
 import { GenericTopicPublisher } from "../../amqp/generic-publishers"
 import { HealthAndReadinessSubsystem } from "../../health_and_readiness"
-import { SpotPositionInitialisationData } from "../persistence/interface/spot-positions-persistance"
 import { AuthorisedEdgeType } from "./position-identifier"
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
+import _ from "lodash"
 
-need to add event_type and version here
-export type SpotPositionOpenedEvent_V1 = {
-  event_type: "SpotPositionClosedEvent"
+type _shared_v1 = {
+  /**
+   * object_subtype: SingleEntryExit:
+   * We assume that the entry and exit quote asset are the same,
+   * because it gets a little complicated otherwise
+   */
+  object_subtype: "SingleEntryExit" // simple trades with one entry order and one exit order
   version: 1
-  initial_entry_timestamp: number
-  position_size: string
-  initial_quote_invested: string
-  initial_entry_quote_asset: string
-  initial_entry_price: string
-  orders: GenericOrderData[]
+
   edge: AuthorisedEdgeType
+
+  /** When the entry signal fired */
+  entry_signal_source?: string // bert, service name etc
+  entry_signal_timestamp_ms?: number
+  entry_signal_price_at_signal?: string
+
+  /** Executed entry */
+  initial_entry_timestamp_ms: number
+  initial_entry_executed_price: string // average entry price (actual)
+  initial_entry_quote_asset: string
+
+  /** Position size */
+  initial_entry_quote_invested: string
+  initial_entry_position_size: string // base asset
+
+  /** Presumably just the entry order */
+  /** A lot of the above can be derived from the orders list */
+  orders: GenericOrderData[]
 }
 
-export interface SpotPositionClosedEvent_V1 {
-  /**
-   * We assume here that the entry and exit quote asset are the same,
-   * because it gets a little complicated otherwise
-   * 
-   * To add:
-   *  - reason the position closed? Stopped out? Exit Signal? But we might
-   *    want to keep it simple because edges can be wildly different. i.e
-   *    the concept of did a position close sucessfully - at the end of the
-   *    day means did it close with a positive net quote value - it still
-   *    might close in profit and have hit a (trailing) stop
-   *  - usd equivalent? GenericOrderData can also include this
-   *  - entry/exit slippage (triggered exit price vs averageExecuted price)
-   * Derived:
-   *  - net quote change?
-   *  - percentage quote change?
-   * */
-  event_type: "SpotPositionClosedEvent"
+export interface SpotPositionOpenedEvent_V1 extends _shared_v1 {
+  object_type: "SpotPositionOpenedEvent"
+}
+
+export interface SpotPositionClosedEvent_V1 extends _shared_v1 {
+  object_type: "SpotPositionClosedEvent"
   version: 1
-  /** everything else can be derived from edge and an orders list */
-  edge: AuthorisedEdgeType
-  orders: GenericOrderData[] 
 
-  /** derivable values to make things easier
-   * .. although actually entry timestamp could be trigger (signal) vs execution timestamp too
-   * if an edge entered with limit buy orders
-   */
+  /** When the exit signal fired */
+  exit_signal_source?: string // bert, service name etc
+  exit_signal_timestamp_ms?: number
+  exit_signal_price_at_signal?: string
 
-  initial_entry_timestamp_ms: number
-  position_closed_timestamp_ms: number
+  /** Executed exit */
+  exit_timestamp_ms: number
+  exit_executed_price: string // average exit price (actual)
+  exit_quote_asset: string // should match initial_entry_quote_asset
 
   /** can be added if quote value was calculated or the same for all orders  */
-  quote_asset?: string
-  total_quote_invested?: string
-  total_quote_returned?: string
-  net_quote?: string
-  percentage_quote_change?: number // use a float for this, it's not for real accounting
+  exit_quote_returned: string // how much quote did we get when liquidating the position
+  exit_position_size: string // base asset
+
+  total_quote_invested: string // same as initial_entry_quote_invested
+  total_quote_returned: string // same as exit_quote_returned
+
+  percentage_quote_change: number // use a float for this, it's not for real accounting
 }
 
 export class SpotPositionPublisher {
@@ -115,7 +121,7 @@ export class SpotPositionPublisher {
       this.health_and_readiness.healthy(false)
     }
   }
-  
+
   async publish_closed(event: SpotPositionClosedEvent_V1): Promise<void> {
     const options = {
       // expiration: event_expiration_seconds,

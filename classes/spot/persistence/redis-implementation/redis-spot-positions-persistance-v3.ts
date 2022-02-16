@@ -25,7 +25,7 @@ import { SpotPositionObject } from "../../abstractions/spot-position"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
 import { OrderId } from "../interface/order-context-persistence"
 
-export class SpotRedisPositionsState implements SpotPositionsPersistance {
+export class RedisSpotPositionsPersistance implements SpotPositionsPersistance {
   logger: Logger
   state: RedisSpotPositionsState
 

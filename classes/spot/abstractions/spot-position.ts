@@ -23,6 +23,7 @@ import {
   genericOrderDataToSpotPositionInitialisationData,
   SpotPositionsPersistance,
 } from "../persistence/interface/spot-positions-persistance"
+import { SpotPositionClosedEvent_V1, SpotPositionOpenedEvent_V1 } from "./spot-position-publisher"
 
 export type SpotPositionObject = {
   initial_entry_timestamp: number
@@ -143,4 +144,100 @@ export class SpotPosition {
   // async close() {
   //   this.spot_positions_persistance.close_position(this.position_identifier)
   // }
+
+  async get_SpotPositionOpenedEvent(): Promise<SpotPositionOpenedEvent_V1> {
+    let o: SpotPositionObject = await this.describe_position()
+    return {
+      object_type: "SpotPositionOpenedEvent",
+      object_subtype: "SingleEntryExit", // simple trades with one entry order and one exit order
+      version: 1,
+
+      edge: o.edge,
+
+      /** When the entry signal fired */
+      // entry_signal_source: string, // bert, service name etc
+      // entry_signal_timestamp_ms: number,
+      // entry_signal_price_at_signal: string,
+
+      /** Executed entry */
+      initial_entry_timestamp_ms: o.initial_entry_timestamp,
+      initial_entry_executed_price: o.initial_entry_price.toFixed(), // average entry price (actual)
+      initial_entry_quote_asset: o.initial_entry_quote_asset,
+
+      /** Position size */
+      initial_entry_quote_invested: o.initial_quote_invested.toFixed(),
+      initial_entry_position_size: o.position_size.toFixed(), // base asset
+
+      /** Presumably just the entry order */
+      orders: o.orders,
+    }
+  }
+
+  /** currently a bit edge60 specific, designed for single order entry and exit trades */
+  async get_SpotPositionClosedEvent({
+    object_subtype,
+    exit_timestamp_ms,
+    exit_executed_price, // average exit price (actual)
+    exit_quote_asset, // should match initial_entry_quote_asset
+    exit_quote_returned, // how much quote did we get when liquidating the position
+    exit_position_size, // base asset
+  }: {
+    object_subtype: "SingleEntryExit"
+    exit_timestamp_ms: number
+    exit_executed_price: string
+    exit_quote_asset: string
+    exit_quote_returned: string
+    exit_position_size: string
+  }): Promise<SpotPositionClosedEvent_V1> {
+    let o: SpotPositionObject = await this.describe_position()
+    let r: SpotPositionClosedEvent_V1 = {
+      object_type: "SpotPositionClosedEvent",
+      object_subtype, //: "SingleEntryExit", // simple trades with one entry order and one exit order
+      version: 1,
+
+      edge: o.edge,
+
+      /** When the entry signal fired */
+      // entry_signal_source: string, // bert, service name etc
+      // entry_signal_timestamp_ms: number,
+      // entry_signal_price_at_signal: string,
+
+      /** Executed entry */
+      initial_entry_timestamp_ms: o.initial_entry_timestamp,
+      initial_entry_executed_price: o.initial_entry_price.toFixed(), // average entry price (actual)
+      initial_entry_quote_asset: o.initial_entry_quote_asset,
+
+      /** Position size */
+      initial_entry_quote_invested: o.initial_quote_invested.toFixed(),
+      initial_entry_position_size: o.position_size.toFixed(), // base asset
+
+      /** Presumably just the entry order */
+      orders: o.orders,
+
+      /** When the exit signal fired */
+      // exit_signal_source?: string // bert, service name etc
+      // exit_signal_timestamp_ms?: number
+      // exit_signal_price_at_signal?: string
+
+      /** Executed exit */
+      exit_timestamp_ms,
+      exit_executed_price, // average exit price (actual)
+      exit_quote_asset, // should match initial_entry_quote_asset
+
+      /** can be added if quote value was calculated or the same for all orders  */
+      exit_quote_returned, // how much quote did we get when liquidating the position
+      exit_position_size, // base asset
+
+      total_quote_invested: o.initial_quote_invested.toFixed(), // same as initial_entry_quote_invested
+      total_quote_returned: exit_quote_returned, // same as exit_quote_returned
+
+      percentage_quote_change: new BigNumber(exit_quote_returned)
+        .minus(o.initial_quote_invested)
+        .dividedBy(o.initial_quote_invested)
+        .times(100)
+        .toNumber(), // use a float for this, it's not for real accounting
+    }
+
+    return r
+  }
 }

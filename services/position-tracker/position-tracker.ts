@@ -25,6 +25,7 @@ import { OrderContextPersistence } from "../../classes/spot/persistence/interfac
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 import {
   SpotPositionClosedEvent_V1,
+  SpotPositionOpenedEvent_V1,
   SpotPositionPublisher,
 } from "../../classes/spot/abstractions/spot-position-publisher"
 
@@ -130,6 +131,19 @@ export class SpotPositionTracker {
         Sentry.captureException(error)
       })
     }
+    // Publish a new style event declaring the opened position
+    try {
+      let event = await position.get_SpotPositionOpenedEvent()
+      this.spot_position_publisher.publish_open(event)
+    } catch (error) {
+      console.error(error)
+      Sentry.withScope(function (scope) {
+        scope.setTag("baseAsset", baseAsset)
+        scope.setTag("exchange", exchange_identifier.exchange)
+        scope.setTag("account", exchange_identifier.account)
+        Sentry.captureException(error)
+      })
+    }
   }
 
   private async load_position_for_order(generic_order_data: GenericOrderData): Promise<SpotPosition> {
@@ -195,22 +209,22 @@ export class SpotPositionTracker {
         price: new BigNumber(averageExecutionPrice),
       })
     ) {
-      await this.spot_positions_persistance.delete_position(position.position_identifier)
-      this.send_message(`closed position: ${position.baseAsset} to ${quoteAsset}`)
       try {
-        let event: SpotPositionClosedEvent_V1 = {
-          event_type: "SpotPositionClosedEvent",
-          version: 1,
-          edge,
-          orders: await position.orders(),
-          initial_entry_timestamp_ms: await position.initial_entry_timestamp_ms(),
-          position_closed_timestamp_ms: generic_order_data.orderTime,
-        }
+        let event: SpotPositionClosedEvent_V1 = await position.get_SpotPositionClosedEvent({
+          object_subtype: "SingleEntryExit",
+          exit_timestamp_ms: generic_order_data.orderTime,
+          exit_executed_price: averageExecutionPrice, // average exit price (actual)
+          exit_quote_asset: quoteAsset, // should match initial_entry_quote_asset
+          exit_quote_returned: generic_order_data.totalQuoteTradeQuantity, // how much quote did we get when liquidating the position
+          exit_position_size: generic_order_data.totalBaseTradeQuantity, // base asset
+        })
         await this.spot_position_publisher.publish_closed(event)
       } catch (error) {
         this.logger.error(error)
         Sentry.captureException(error)
       }
+      await this.spot_positions_persistance.delete_position(position.position_identifier)
+      this.send_message(`closed position: ${position.baseAsset} to ${quoteAsset}`)
     }
   }
 }

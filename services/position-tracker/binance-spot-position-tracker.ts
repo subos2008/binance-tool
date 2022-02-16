@@ -44,7 +44,7 @@ import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_exe
 import { BinanceOrderData, OrderCallbacks } from "../../interfaces/order_callbacks"
 import { SpotPositionTracker } from "./position-tracker"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
-import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
+import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
@@ -102,8 +102,8 @@ async function main() {
 
   const ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
   let exchange_info = await ee.get_exchange_info() // TODO: should update this every now and then
-  const health = new HealthAndReadiness({ logger, send_message })
-  const service_is_healthy = health.addSubsystem({ name: "global", ready: true, healthy: true })
+  const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+  const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 
   // return true if the position size passed it would be considered an untradeably small balance on the exchange
@@ -124,7 +124,7 @@ async function main() {
     )
     return result
   }
-  const spot_positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsState({ logger, redis })
+  const spot_positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
   const spot_positions_query = new SpotPositionsQuery({
     logger,
     positions_persistance: spot_positions_persistance,
@@ -139,6 +139,7 @@ async function main() {
     close_position_check_func,
     spot_positions_query,
     spot_positions_persistance,
+    health_and_readiness
   })
 
   // await publisher.connect()

@@ -32,7 +32,7 @@ import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
 import { Prices } from "../../interfaces/portfolio"
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
-import { SpotRedisPositionsState } from "../../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
+import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
@@ -109,7 +109,7 @@ export class PositionPerformance {
 
 async function main() {
   const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-  const spot_positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsState({ logger, redis })
+  const spot_positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
   const order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
   const binance = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
 

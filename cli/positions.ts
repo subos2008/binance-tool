@@ -42,12 +42,12 @@ import { SpotPositionIdentifier_V3, SpotPositionsQuery_V3 } from "../classes/spo
 import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
 import { BinancePriceGetter } from "../interfaces/exchange/binance/binance-price-getter"
 import { CurrentPriceGetter } from "../interfaces/exchange/generic/price-getter"
-import { SpotRedisPositionsState } from "../classes/spot/persistence/redis-implementation/spot-redis-positions-state-v3"
+import { RedisSpotPositionsPersistance } from "../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 
 
 require("dotenv").config()
 
-const positions_persistance: SpotPositionsPersistance = new SpotRedisPositionsState({ logger, redis })
+const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
 
 async function main() {
   yargs

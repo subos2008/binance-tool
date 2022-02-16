@@ -57,7 +57,7 @@ export class MessageRouting {
         }
       case "SpotPositionOpened":
         return {
-          routing_key: "spot-binance-orders",
+          routing_key: "spot-positions",
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,

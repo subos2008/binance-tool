@@ -12,7 +12,7 @@
     "@aws-sdk/client-s3": "^3.42.0",
     "@aws-sdk/signature-v4-crt": "^3.49.0",
     "@influxdata/influxdb-client": "^1.20.0",
-    "@sentry/node": "5.15.2",
+    "@sentry/node": "~6.17.9",
     "@tsconfig/node14": "^1.0.1",
     "@types/amqplib": "^0.5.13",
     "@types/bignumber.js": "^5.0.0",

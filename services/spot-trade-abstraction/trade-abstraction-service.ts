@@ -117,7 +117,7 @@ export class TradeAbstractionService {
     this.logger.warn(`Position exit is not atomic with check for existing position`)
     try {
       if (await this.positions.in_position({ base_asset: cmd.base_asset, edge })) {
-        this.spot_ee.close_position({ quote_asset: this.quote_asset, ...cmd, edge })
+        await this.spot_ee.close_position({ quote_asset: this.quote_asset, ...cmd, edge })
         return // success
       }
     } catch (error) {

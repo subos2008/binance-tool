@@ -61,7 +61,15 @@ class MessageProcessorIsolator implements MessageProcessor {
       if (event.object_type === this.event_name) {
         return this.message_processor.process_message(event, channel)
       } else {
-        console.info(`Skipping ${event.object_type}, filtering for ${this.event_name}`)
+        if(event.object_type) {
+
+          this.logger.info(`Skipping ${event.object_type}, filtering for ${this.event_name}`)
+        }else {
+          let msg = `Event does not specify and object_type, it will never be logger`
+          this.logger.error()
+          this.logger.error(event)
+          throw new Error(msg)
+        }
       }
     } catch (error) {
       // Eat any exceptions to prevent this handler from affecting the process

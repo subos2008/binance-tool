@@ -8,7 +8,7 @@ export type PositionChangeEvents =
 
 export interface PositionEntryExecutionLog {
   version: "v1"
-  event_type: "PositionEntryExecutionLog"
+  object_type: "PositionEntryExecutionLog"
   market_identifier: MarketIdentifier_V2
   direction: "long" | "short"
   entry_price: string
@@ -18,7 +18,7 @@ export interface PositionEntryExecutionLog {
 }
 export interface PositionIncreaseExecutionLog {
   version: "v1"
-  event_type: "PositionIncreaseExecutionLog"
+  object_type: "PositionIncreaseExecutionLog"
   market_identifier: MarketIdentifier_V2
   direction: "long" | "short"
   entry_price: string
@@ -29,7 +29,7 @@ export interface PositionIncreaseExecutionLog {
 
 export interface PositionExitExecutionLog {
   version: "v1"
-  event_type: "PositionExitExecutionLog"
+  object_type: "PositionExitExecutionLog"
   market_identifier: MarketIdentifier_V2
   signal: "stopped_out"
   direction: "long" | "short"

@@ -165,7 +165,7 @@ export class Edge58EntrySignals {
         let event: Edge58EntrySignal = {
           version: "v1",
           market_identifier: this.market_identifier,
-          event_type: "Edge58EntrySignal",
+          object_type: "Edge58EntrySignal",
           edge58_parameters: this.edge58_parameters,
           edge58_entry_signal: {
             direction,

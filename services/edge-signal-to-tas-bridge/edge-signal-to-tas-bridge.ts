@@ -79,7 +79,7 @@ class Edge60EntrySignalToSpotTasBridge implements MessageProcessor {
        * export interface Edge60PositionEntrySignal {
             version: "v1"
             edge: "edge60"
-            event_type: "Edge60EntrySignal"
+            object_type: "Edge60EntrySignal"
             market_identifier: MarketIdentifier_V3
             edge60_parameters: Edge60Parameters
             edge60_entry_signal: {
@@ -93,7 +93,7 @@ class Edge60EntrySignalToSpotTasBridge implements MessageProcessor {
           }
        */
       assert.equal(signal.version, "v1")
-      assert.equal(signal.event_type, "Edge60EntrySignal")
+      assert.equal(signal.object_type, "Edge60EntrySignal")
       let { base_asset } = signal.market_identifier
       let { edge } = signal
       assert.equal(edge, "edge60")

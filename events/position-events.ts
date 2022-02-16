@@ -1,7 +1,7 @@
 import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "./shared/exchange-identifier"
 
 export interface NewPositionEvent {
-  event_type: string
+  object_type: string
   exchange_identifier: ExchangeIdentifier_V3
   baseAsset: string
   position_entry_timestamp_ms?: number

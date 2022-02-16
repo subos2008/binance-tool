@@ -33,7 +33,7 @@ export class PositionsListener {
 
   private async message_processor(msg: any) {
     const event = JSON.parse(msg.content.toString());
-    if (event.event_type === 'NewPositionEvent') {
+    if (event.object_type === 'NewPositionEvent') {
       if (this.callbacks?.new_position_event_callback) await this.callbacks.new_position_event_callback(event as NewPositionEvent)
       await this.channel.ack(msg);
     }

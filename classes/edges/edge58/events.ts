@@ -27,7 +27,7 @@ export type Edge58Parameters_V1 = {
 export type Edge58Events = Edge58EntrySignal | Edge58ExitSignal
 export interface Edge58EntrySignal {
   version: "v1"
-  event_type: "Edge58EntrySignal"
+  object_type: "Edge58EntrySignal"
   market_identifier: MarketIdentifier_V2
   edge58_parameters: Edge58Parameters_V1
   edge58_entry_signal: {
@@ -45,7 +45,7 @@ export interface Edge58EntrySignal {
 
 export interface Edge58ExitSignal {
   version: "v1"
-  event_type: "Edge58ExitSignal"
+  object_type: "Edge58ExitSignal"
   market_identifier: MarketIdentifier_V2
   edge58_parameters: Edge58Parameters_V1
   edge58_exit_signal: {

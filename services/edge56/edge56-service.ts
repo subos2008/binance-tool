@@ -157,7 +157,7 @@ class Edge56Service implements Edge56EntrySignalsCallbacks {
         exchange_identifier: { version: "v2", exchange },
         symbol,
       },
-      event_type: "Edge56EntrySignal",
+      object_type: "Edge56EntrySignal",
       edge56_parameters,
       edge56_entry_signal: {
         direction,

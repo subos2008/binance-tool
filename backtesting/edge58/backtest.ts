@@ -139,7 +139,7 @@ class PositionEventLogAnalyser {
   run() {
     for (const event of this.events) {
       let direction = event.direction === "long" ? "LONG " : "SHORT"
-      switch (event.event_type) {
+      switch (event.object_type) {
         case "PositionEntryExecutionLog":
           this.current_trade = new Trade({
             amount_invested: this.fixed_position_size,
@@ -175,7 +175,7 @@ class PositionEventLogAnalyser {
           )
           break
         default:
-          throw new Error(`Unknown event_type`)
+          throw new Error(`Unknown object_type`)
       }
       if (this.current_trade)
         this.capital_required_to_execute_all_trades = BigNumber.max(
@@ -232,7 +232,7 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
     }
 
     let event: Edge58ExitSignal = {
-      event_type: "Edge58ExitSignal",
+      object_type: "Edge58ExitSignal",
       version: "v1",
       market_identifier,
       edge58_parameters,
@@ -323,7 +323,7 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
      */
     this.events.push({
       version: "v1",
-      event_type: "PositionEntryExecutionLog",
+      object_type: "PositionEntryExecutionLog",
       market_identifier: event.market_identifier,
       direction: event.edge58_entry_signal.direction,
       entry_price: event.edge58_entry_signal.entry_price,
@@ -342,7 +342,7 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
      */
     this.events.push({
       version: "v1",
-      event_type: "PositionIncreaseExecutionLog",
+      object_type: "PositionIncreaseExecutionLog",
       market_identifier: event.market_identifier,
       direction: event.edge58_entry_signal.direction,
       entry_price: event.edge58_entry_signal.entry_price,
@@ -358,7 +358,7 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
      */
     this.events.push({
       version: "v1",
-      event_type: "PositionExitExecutionLog",
+      object_type: "PositionExitExecutionLog",
       market_identifier: event.market_identifier,
       direction: event.edge58_exit_signal.direction,
       signal: "stopped_out",

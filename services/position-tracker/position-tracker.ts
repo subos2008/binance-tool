@@ -113,7 +113,7 @@ export class SpotPositionTracker {
     // Publish an event declaring the new position
     try {
       this.position_publisher.publish_new_position_event({
-        event_type: "NewPositionEvent",
+        object_type: "NewPositionEvent",
         exchange_identifier: position.position_identifier.exchange_identifier,
         baseAsset,
         position_base_size: totalBaseTradeQuantity,

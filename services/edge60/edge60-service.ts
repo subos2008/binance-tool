@@ -176,7 +176,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         symbol,
         base_asset: this.base_asset_for_symbol(symbol),
       },
-      event_type: "Edge60EntrySignal",
+      object_type: "Edge60EntrySignal",
       edge60_parameters,
       edge60_entry_signal: {
         direction,

@@ -67,7 +67,7 @@ class MessageProcessorIsolator implements MessageProcessor {
         }else {
           let msg = `Event does not specify an object_type, it will never be processed`
           this.logger.error(msg)
-          this.logger.error(event)
+          this.logger.error(Body)
           throw new Error(msg)
         }
       }

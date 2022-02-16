@@ -58,7 +58,11 @@ class MessageProcessorIsolator implements MessageProcessor {
   async process_message(event: any, channel: Channel): Promise<void> {
     // TODO: sentry scope
     try {
-      return this.message_processor.process_message(event, channel)
+      if (event.object_type === this.event_name) {
+        return this.message_processor.process_message(event, channel)
+      } else {
+        console.info(`Skipping ${event.object_type}, filtering for ${this.event_name}`)
+      }
     } catch (error) {
       // Eat any exceptions to prevent this handler from affecting the process
       // Designed for having multiple independent listeners in one process

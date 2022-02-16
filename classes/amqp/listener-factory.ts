@@ -75,7 +75,8 @@ class MessageProcessorIsolator implements MessageProcessor {
     } catch (error) {
       // Eat any exceptions to prevent this handler from affecting the process
       // Designed for having multiple independent listeners in one process
-      Sentry.captureException(error, { extra: Body })
+      let event_name = this.event_name
+      Sentry.captureException(error, { extra: Body, tags: { event_name } })
       this.logger.warn(error)
     }
   }

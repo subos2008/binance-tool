@@ -149,7 +149,7 @@ export class SpotPosition {
   async get_SpotPositionOpenedEvent(): Promise<SpotPositionOpenedEvent_V1> {
     let o: SpotPositionObject = await this.describe_position()
     return {
-      object_type: "SpotPositionOpenedEvent",
+      object_type: "SpotPositionOpened",
       object_subtype: "SingleEntryExit", // simple trades with one entry order and one exit order
       version: 1,
 
@@ -192,7 +192,7 @@ export class SpotPosition {
   }): Promise<SpotPositionClosedEvent_V1> {
     let o: SpotPositionObject = await this.describe_position()
     let r: SpotPositionClosedEvent_V1 = {
-      object_type: "SpotPositionClosedEvent",
+      object_type: "SpotPositionClosed",
       object_subtype, //: "SingleEntryExit", // simple trades with one entry order and one exit order
       version: 1,
 

@@ -57,11 +57,11 @@ type _shared_v1 = {
 }
 
 export interface SpotPositionOpenedEvent_V1 extends _shared_v1 {
-  object_type: "SpotPositionOpenedEvent"
+  object_type: "SpotPositionOpened"
 }
 
 export interface SpotPositionClosedEvent_V1 extends _shared_v1 {
-  object_type: "SpotPositionClosedEvent"
+  object_type: "SpotPositionClosed"
   version: 1
 
   /** When the exit signal fired */

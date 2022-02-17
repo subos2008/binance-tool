@@ -19,6 +19,7 @@ COPY events /app/events
 # COPY services-test-rig /app/services-test-rig
 COPY chai-bignumber.d.ts /app/chai-bignumber.d.ts
 COPY tsconfig.json /app/tsconfig.json
+COPY config.ts /app/config.ts
 
 RUN ./node_modules/.bin/tsc
 

@@ -10,7 +10,7 @@ import { strict as assert } from "assert"
 require("dotenv").config()
 const service_name = "edge60"
 
-import binance from "binance-api-node"
+import binance, { ExchangeInfo } from "binance-api-node"
 import { Binance } from "binance-api-node"
 const exchange = "binance"
 
@@ -40,6 +40,8 @@ import { Edge60EntrySignals, Edge60EntrySignalsCallbacks } from "../../classes/e
 import { Edge60Parameters, Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { DirectionPersistance } from "./direction-persistance"
+import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
+import { config } from "../../config"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -68,6 +70,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
   send_message: SendMessageFunc
   market_data: CoinGeckoMarketData[] | undefined
   direction_persistance: DirectionPersistance
+  exchange_info_getter: BinanceExchangeInfoGetter
 
   constructor({
     ee,
@@ -86,6 +89,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     this.send_message = send_message
     this.send_message("service re-starting")
     this.direction_persistance = direction_persistance
+    this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
   }
 
   async enter_position({
@@ -196,6 +200,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
   }
 
   base_asset_for_symbol(symbol: string): string {
+    this.logger.warn(`base_asset_for_symbol not using exchangeInfo`)
     let copy = symbol.repeat(1)
     let base_asset = copy.toUpperCase().replace(new RegExp(`(USDT|${quote_symbol})$`), "")
     return base_asset
@@ -209,7 +214,36 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     return data
   }
 
+  /**
+   * Returns base_assets that are available on both the quote the TAS is using (not USDT because it's a scam)
+   * and the quote the Algo uses (USDT because it's mot liquid) */
+  async get_base_assets_list(signals_quote_asset: string): Promise<string[]> {
+    let tas_quote_asset = config.tas_quote_asset.toUpperCase()
+    let exchange_info: ExchangeInfo = await this.exchange_info_getter.get_exchange_info()
+    let symbols = exchange_info.symbols
+    let base_assets = new Set(symbols.map((s) => s.baseAsset))
+    this.logger.info(`${base_assets.size} base_assets on Binance`)
+
+    function filter_available_on_quote_assets(base_asset: string) {
+      let available_on_signal = symbols.find(
+        (s) => s.baseAsset === base_asset && s.quoteAsset === signals_quote_asset
+      )
+      let available_on_tas = symbols.find((s) => s.baseAsset === base_asset && s.quoteAsset === tas_quote_asset)
+      return available_on_signal && available_on_tas
+    }
+
+    let targets: string[] = Array.from(base_assets).filter(filter_available_on_quote_assets)
+    this.logger.info(
+      `${base_assets.size} base_assets on Binance available on both ${signals_quote_asset} and ${tas_quote_asset}`
+    )
+    return targets
+  }
+
   async run() {
+    /** New world demo */
+    let targets: string[] = await this.get_base_assets_list(quote_symbol)
+    this.logger.info(`V2 target markets: ${targets.join(", ")}`)
+
     let limit = num_coins_to_monitor
     let cg = new CoinGeckoAPI()
     // not all of these will be on Binance

@@ -228,7 +228,9 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       let available_on_signal = symbols.find(
         (s) => s.baseAsset === base_asset && s.quoteAsset === signals_quote_asset
       )
-      let available_on_tas = symbols.find((s) => s.baseAsset === base_asset && s.quoteAsset === tas_quote_asset)
+      let available_on_tas = symbols.find((s) => {
+        return s.baseAsset === base_asset && s.quoteAsset === tas_quote_asset
+      })
       return available_on_signal && available_on_tas
     }
 
@@ -241,21 +243,17 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
 
   async run() {
     /** New world demo */
-    let targets: string[] = await this.get_base_assets_list(quote_symbol)
-    this.logger.info(`V2 target markets: ${targets.join(", ")}`)
+    let base_assets: string[] = await this.get_base_assets_list(quote_symbol)
+    this.logger.info(`V2 target markets: ${base_assets.join(", ")}`)
 
     let limit = num_coins_to_monitor
     let cg = new CoinGeckoAPI()
     // not all of these will be on Binance
     this.market_data = await cg.get_top_market_data({ limit })
-    // market_data = market_data.filter((x) => x.id !== "bitcoin")
-    let coin_names = this.market_data.map((x) => x.symbol.toUpperCase())
-    console.log(`Top ${limit} coins by market cap: ${coin_names.join(", ")}`)
-    let to_symbol = (md: CoinGeckoMarketData) => md.symbol.toUpperCase() + quote_symbol
-
+    let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
     let required_initial_candles = Edge60EntrySignals.required_initial_candles(edge60_parameters)
-    for (let i = 0; i < this.market_data.length; i++) {
-      let symbol = to_symbol(this.market_data[i])
+    for (let i = 0; i < base_assets.length; i++) {
+      let symbol = to_symbol(base_assets[i])
       // not all of these will be on Binance, they just throw if missing
       try {
         // Last N closed weekly candles exist between N+1 weeks ago and now

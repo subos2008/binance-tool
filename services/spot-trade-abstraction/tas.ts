@@ -3,7 +3,8 @@
 /* eslint func-names: ["warn", "as-needed"] */
 
 /** Config: */
-const quote_asset = "BUSD".toUpperCase()
+import { config } from "../../config"
+const quote_asset = config.tas_quote_asset.toUpperCase()
 
 import { strict as assert } from "assert"
 require("dotenv").config()
@@ -175,7 +176,7 @@ app.get("/spot/close", async function (req: Request, res: Response, next: NextFu
     let json = await tas.close_spot_long(cmd, send_message)
     logger.info(`Success`)
     logger.info(json)
-    res.status(200).json({msg: 'success'})
+    res.status(200).json({ msg: "success" })
   } catch (error) {
     res.status(500).json({ msg: "failed" })
     next(error)

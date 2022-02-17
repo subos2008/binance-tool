@@ -146,7 +146,12 @@ export class OrderExecutionTracker {
 
     let order_id = _data.newClientOrderId
     delete (_data as any).orderId // make sure we aren't using this anywhere, it is depricated
-    let data: BinanceOrderData = { ..._data, order_id } as BinanceOrderData
+    let data: BinanceOrderData = {
+      ..._data,
+      order_id,
+      version: 1,
+      object_type: "BinanceOrderData",
+    } as BinanceOrderData
     // How can I automagically check an input matches the expected type?
 
     try {

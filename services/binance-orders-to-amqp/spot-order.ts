@@ -71,7 +71,7 @@ export class BinanceOrderPublisher {
       timestamp: Date.now(),
     }
     try {
-      await this.pub.publish(JSON.stringify(event), options)
+      await this.pub.publish(event, options)
     } catch (e) {
       this.health_and_readiness.healthy(false)
     }
@@ -112,7 +112,7 @@ export class BinanceSpotOrdersToAMQP {
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
-  let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+    let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
 
     this.order_execution_tracker = new OrderExecutionTracker({
       ee: this.ee,

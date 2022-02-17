@@ -80,7 +80,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
   master: MasterPortfolioClass
   order_execution_tracker: OrderExecutionTracker
   exchange_identifier: ExchangeIdentifier
-  portfolio: Portfolio = { balances: [] }
+  portfolio: Portfolio = { balances: [], object_type: "Portfolio" }
 
   constructor({
     send_message,

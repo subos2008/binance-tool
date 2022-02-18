@@ -256,7 +256,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       let symbol = to_symbol(base_assets[i])
       // not all of these will be on Binance, they just throw if missing
       try {
-        // Last N closed weekly candles exist between N+1 weeks ago and now
+        // Last N closed candles exist between N+1 ago and now
         let start_date = new Date()
         let end_date = new Date(start_date)
         let candles_preload_start_date = new Date(start_date)
@@ -267,6 +267,9 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
           start_date: candles_preload_start_date,
           end_date,
         })
+        // chop off the most recent candle as the code above gives us a partial candle at the end
+        let partial_candle = initial_candles.pop()
+        if (partial_candle) assert(partial_candle.closeTime > Date.now()) // double check that was actually a partial candle
 
         if (initial_candles.length == 0) {
           console.warn(`No candles loaded for ${symbol}`)

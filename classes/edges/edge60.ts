@@ -150,6 +150,7 @@ export class Edge60EntrySignals {
 
     let last_candle = initial_candles[initial_candles.length - 1]
     this.logger.info(`${symbol} last candle: ${JSON.stringify(last_candle)}`)
+    if (last_candle.closeTime > Date.now()) throw new Error(`${symbol} partial final candle in initial_candles`)
   }
 
   static required_initial_candles(edge60_parameters: Edge60Parameters) {

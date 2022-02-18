@@ -272,7 +272,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         if (partial_candle) assert(partial_candle.closeTime > Date.now()) // double check that was actually a partial candle
 
         if (initial_candles.length == 0) {
-          console.warn(`No candles loaded for ${symbol}`)
+          this.logger.warn(`No candles loaded for ${symbol}`)
           throw new Error(`No candles loaded for ${symbol}`)
         }
         this.edges[symbol] = new Edge60EntrySignals({
@@ -283,16 +283,16 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
           callbacks: this,
           edge60_parameters,
         })
-        console.log(`Setup edge for ${symbol} with ${initial_candles.length} initial candles`)
+        this.logger.info(`Setup edge for ${symbol} with ${initial_candles.length} initial candles`)
         await sleep(2000) // 1200 calls allowed per minute
       } catch (err: any) {
         if (err.toString().includes("Invalid symbol")) {
-          console.info(`Unable to load candles for ${symbol} not listed on binance`)
+          this.logger.info(`Unable to load candles for ${symbol} not listed on binance`)
         } else if (err.toString().includes("No candles loaded for")) {
-          console.warn(`Unable to load candles for ${symbol}.`)
+          this.logger.warn(`Unable to load candles for ${symbol}.`)
         } else {
           Sentry.captureException(err)
-          console.error(err)
+          this.logger.error(err)
         }
       }
     }
@@ -342,14 +342,14 @@ async function main() {
     await publisher.connect()
     await edge60.run()
   } catch (error) {
-    console.error(error)
+    logger.error(error)
     Sentry.captureException(error)
   }
 }
 
 main().catch((error) => {
   Sentry.captureException(error)
-  console.error(`Error in main loop: ${error}`)
-  console.error(error)
-  console.error(`Error in main loop: ${error.stack}`)
+  logger.error(`Error in main loop: ${error}`)
+  logger.error(error)
+  logger.error(`Error in main loop: ${error.stack}`)
 })

@@ -149,7 +149,6 @@ export class Edge60EntrySignals {
     })
 
     let last_candle = initial_candles[initial_candles.length - 1]
-    this.logger.info(`${symbol} last candle: ${JSON.stringify(last_candle)}`)
     if (last_candle.closeTime > Date.now()) throw new Error(`${symbol} partial final candle in initial_candles`)
   }
 
@@ -167,8 +166,9 @@ export class Edge60EntrySignals {
     candle: EdgeCandle
   }) {
     if (timeframe !== "1d") {
-      console.log(`Short timeframe candle on ${this.symbol} closed at ${candle.close}`)
-      throw `Got a short timeframe candle`
+      let msg = `Short timeframe candle on ${this.symbol} closed at ${candle.close}`
+      this.logger.info(msg)
+      throw new Error (msg)
     }
 
     this.logger.debug({ signal: "new_candle", symbol }, `${symbol} ingesting new candle`)
@@ -229,7 +229,7 @@ export class Edge60EntrySignals {
       }
     } catch (e) {
       this.logger.error(`Exception checking or entering position: ${e}`)
-      console.error(e)
+      this.logger.error(e)
       Sentry.captureException(e)
     } finally {
       // important not to miss this - lest we corrupt the history

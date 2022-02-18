@@ -187,7 +187,7 @@ export class Edge60EntrySignals {
 
       // Check for entry signal in both directions and ignore
       if (high.isGreaterThan(highest_price) && low.isLessThan(lowest_price)) {
-        let msg = `Price entry signal both long and short, skipping: ${symbol}`
+        let msg = `${symbol} Price entry signal both long and short, skipping...`
         this.logger.warn(msg)
         throw new Error(msg)
       }

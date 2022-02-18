@@ -213,7 +213,7 @@ export class Edge56EntrySignals {
       if (potential_entry_price.isLessThan(this.price_history_candles.get_lowest_body_value().low)) {
         let direction: "short" = "short"
         console.log(
-          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}`
+          `${symbol} Price entry signal ${direction} at ${potential_entry_price.toFixed()}`
         )
         this.callbacks.enter_position({
           symbol: this.symbol,

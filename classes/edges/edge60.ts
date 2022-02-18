@@ -147,6 +147,9 @@ export class Edge60EntrySignals {
       length: edge60_parameters.days_of_price_history,
       initial_candles,
     })
+
+    let last_candle = initial_candles[initial_candles.length - 1]
+    this.logger.info(`${symbol} last candle: ${JSON.stringify(last_candle)}`)
   }
 
   static required_initial_candles(edge60_parameters: Edge60Parameters) {

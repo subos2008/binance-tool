@@ -136,6 +136,12 @@ export class ListenerFactory {
     let connection: Connection = await connect(connect_options)
     this.logger.info(`PositionsListener: Connection with AMQP server established.`)
     let channel: Channel = await connection.createChannel() // hangs
+    let health_and_readiness = this.health_and_readiness
+    let logger = this.logger
+    channel.on("close", function () {
+      logger.error(`AMQP Channel closed!`)
+      if (health_and_readiness) health_and_readiness.healthy(false)
+    })
     // TODO: do we not look at the return code here?
     await channel.assertExchange(exchange_name, exchange_type, { durable })
     const q = await channel.assertQueue("", { exclusive: true })

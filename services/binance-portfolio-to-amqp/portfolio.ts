@@ -252,7 +252,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
   portfolio_tracker: PortfolioTracker // duplicated
   order_execution_tracker: OrderExecutionTracker
   exchange_identifier: ExchangeIdentifier
-  portfolio: Portfolio = { balances: [], object_type: "Portfolio" }
+  portfolio: Portfolio = { balances: [], object_type: "SpotBinancePortfolio" }
   publisher: PortfolioPublisher
   health_and_readiness: HealthAndReadinessSubsystem
 

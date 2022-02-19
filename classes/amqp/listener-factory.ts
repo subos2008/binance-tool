@@ -65,7 +65,9 @@ class MessageProcessorIsolator implements MessageProcessor {
       } else {
         if (Body.object_type) {
           this.logger.info(`Skipping ${Body.object_type}, filtering for ${this.event_name}`)
+          channel.ack(event) // If we don't ack here the channel will be closed by the server
         } else {
+          channel.ack(event) // If we don't ack here the channel will be closed by the server
           let msg = `Event does not specify an object_type, it will never be processed`
           this.logger.error(msg)
           this.logger.error(Body)

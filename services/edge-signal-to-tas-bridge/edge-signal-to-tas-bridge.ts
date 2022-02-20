@@ -8,11 +8,11 @@
 
 import { strict as assert } from "assert"
 const service_name = "edge-signal-to-tas-bridge"
+require("dotenv").config()
 
 import { ListenerFactory } from "../../classes/amqp/listener-factory"
 import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/client/tas-client"
-
-require("dotenv").config()
+import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 
 import * as Sentry from "@sentry/node"
 Sentry.init({})
@@ -33,30 +33,36 @@ process.on("unhandledRejection", (error) => {
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
-var service_is_healthy: boolean = true
-
 const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
 if (TAS_URL === undefined) {
   throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
 }
 
 import { MessageProcessor } from "../../classes/amqp/interfaces"
-
+import { MyEventNameType } from "../../classes/amqp/message-routing"
+import { Channel } from "amqplib"
+import express, { Request, Response } from "express"
+import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
+import { Edge60EntrySignalFanout, Edge60EntrySignalProcessor } from "./on-edge60-signal"
 let listener_factory = new ListenerFactory({ logger })
-class Edge60EntrySignalToSpotTasBridge implements MessageProcessor {
+
+class Edge60MessageProcessor implements MessageProcessor {
   send_message: Function
   logger: Logger
   event_name: MyEventNameType
   tas_client: SpotTradeAbstractionServiceClient
+  processor: Edge60EntrySignalProcessor
 
   constructor({
     send_message,
     logger,
     event_name,
+    health_and_readiness,
   }: {
     send_message: (msg: string) => void
     logger: Logger
     event_name: MyEventNameType
+    health_and_readiness: HealthAndReadiness
   }) {
     assert(logger)
     this.logger = logger
@@ -64,34 +70,27 @@ class Edge60EntrySignalToSpotTasBridge implements MessageProcessor {
     this.send_message = send_message
     this.tas_client = new SpotTradeAbstractionServiceClient({ logger })
     this.event_name = event_name
-    listener_factory.build_isolated_listener({ event_name, message_processor: this }) // Add arbitrary data argument
+    this.processor = new Edge60EntrySignalFanout({ logger, event_name, send_message })
+    const amqp_health: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
+      name: `amqp-listener-${event_name}`,
+      ready: true,
+      healthy: true,
+    })
+    listener_factory.build_isolated_listener({
+      event_name,
+      message_processor: this,
+      health_and_readiness: amqp_health,
+    }) // Add arbitrary data argument
   }
 
   async process_message(event: any, channel: Channel) {
     try {
       this.logger.info(event)
+      channel.ack(event)
+
       let Body = event.content.toString()
-      let Key = `${this.event_name}/${+new Date()}` // ms timestamp
       this.logger.info(`Message Received: ${Body}`)
       let signal: Edge60PositionEntrySignal = JSON.parse(Body)
-
-      /**
-       * export interface Edge60PositionEntrySignal {
-            version: "v1"
-            edge: "edge60"
-            object_type: "Edge60EntrySignal"
-            market_identifier: MarketIdentifier_V3
-            edge60_parameters: Edge60Parameters
-            edge60_entry_signal: {
-              direction: "long" | "short"
-              entry_price: string
-            }
-            extra?: {
-              previous_direction?: "long" | "short"
-              CoinGeckoMarketData?: CoinGeckoMarketData
-            }
-          }
-       */
       assert.equal(signal.version, "v1")
       assert.equal(signal.object_type, "Edge60EntrySignal")
       let { base_asset } = signal.market_identifier
@@ -103,40 +102,6 @@ class Edge60EntrySignalToSpotTasBridge implements MessageProcessor {
           `base_asset not specified in market_identifier: ${JSON.stringify(signal.market_identifier)}`
         )
       }
-
-      let result: string | undefined
-      switch (signal.edge60_entry_signal.direction) {
-        case "long":
-          this.logger.info(`long signal, attempting to open ${edge} spot long position on ${base_asset}`)
-          result = await this.tas_client.open_spot_long({
-            base_asset,
-            edge,
-            direction: "long",
-            action: "open",
-          })
-          channel.ack(event)
-          break
-        case "short":
-          try {
-            this.logger.info(`short signal, attempting to close any ${edge} spot long position on ${base_asset}`)
-            result = await this.tas_client.close_spot_long({
-              base_asset,
-              edge,
-              direction: "long", // this direction is confising, it's the direction of the position to close, i.e. short = long
-              action: "close",
-            })
-            channel.ack(event)
-          } catch (error) {
-            /**
-             * There are probably valid cases for this - like these was no long position open
-             */
-            this.logger.warn(error)
-            Sentry.captureException(error)
-          }
-          break
-        default:
-          throw new Error(`Unknown direction: ${signal.edge60_entry_signal.direction}`)
-      }
     } catch (err) {
       Sentry.captureException(err)
       this.logger.error(err)
@@ -144,11 +109,18 @@ class Edge60EntrySignalToSpotTasBridge implements MessageProcessor {
   }
 }
 
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+const service_is_healthy: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
+  name: "global",
+  ready: true,
+  healthy: true,
+})
+
 async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  new Edge60EntrySignalToSpotTasBridge({ logger, send_message, event_name: "Edge60EntrySignal" })
+  new Edge60MessageProcessor({ health_and_readiness, logger, send_message, event_name: "Edge60EntrySignal" })
 }
 
 main().catch((error) => {
@@ -162,7 +134,7 @@ main().catch((error) => {
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code: number | null = null, reason: string) {
-  service_is_healthy = false // it seems service isn't exiting on soft exit, but add this to make sure
+  service_is_healthy.healthy(false) // it seems service isn't exiting on soft exit, but add this to make sure
   logger.warn(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}, reason: ${reason}`)
   if (exit_code) process.exitCode = exit_code
@@ -170,15 +142,9 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-import { MyEventNameType } from "../../classes/amqp/message-routing"
-import { Channel } from "amqplib"
-import express, { Request, Response } from "express"
-import { Edge60EntrySignals } from "../../classes/edges/edge60"
-import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
-import { sign } from "crypto"
 var app = express()
 app.get("/health", function (req: Request, res: Response) {
-  if (service_is_healthy) {
+  if (service_is_healthy.healthy()) {
     res.send({ status: "OK" })
   } else {
     logger.error(`Service unhealthy`)

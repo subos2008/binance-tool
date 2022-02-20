@@ -221,7 +221,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
   async get_base_assets_list(signals_quote_asset: string): Promise<string[]> {
     let tas_quote_asset = config.tas_quote_asset.toUpperCase()
     let exchange_info: ExchangeInfo = await this.exchange_info_getter.get_exchange_info()
-    let symbols = exchange_info.symbols
+    let symbols = exchange_info.symbols.filter((s) => s.isSpotTradingAllowed)
     let base_assets = new Set(symbols.map((s) => s.baseAsset))
     this.logger.info(`${base_assets.size} base_assets on Binance`)
 
@@ -257,7 +257,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       let symbol = to_symbol(base_assets[i])
       // not all of these will be on Binance, they just throw if missing
       try {
-        // Last N closed candles exist between N+1 ago and now
+        // Last N closed candles exist between N+1 ago and now (actually and midnight last night)
         let start_date = new Date()
         let end_date = new Date(start_date)
         let candles_preload_start_date = new Date(start_date)
@@ -268,16 +268,18 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
           start_date: candles_preload_start_date,
           end_date,
         })
+
+        if (initial_candles.length == 0) {
+          this.logger.warn(`No candles loaded for ${symbol}`)
+          throw new Error(`No candles loaded for ${symbol}`)
+        }
+
         // chop off the most recent candle as the code above gives us a partial candle at the end
         if (initial_candles[initial_candles.length - 1].closeTime > Date.now()) {
           let partial_candle = initial_candles.pop()
           if (partial_candle) assert(partial_candle.closeTime > Date.now()) // double check that was actually a partial candle
         }
 
-        if (initial_candles.length == 0) {
-          this.logger.warn(`No candles loaded for ${symbol}`)
-          throw new Error(`No candles loaded for ${symbol}`)
-        }
         this.edges[symbol] = new Edge60EntrySignals({
           logger: this.logger,
           initial_candles,

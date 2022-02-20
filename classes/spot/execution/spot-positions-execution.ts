@@ -97,12 +97,17 @@ export class SpotPositionsExecution {
     stop_price: BigNumber
   }> {
     var edge_percentage_stop
+    var edge_percentage_take_profit
 
     args.edge = check_edge(args.edge)
     switch (args.edge) {
       case "edge60":
       case "undefined":
-        edge_percentage_stop = new BigNumber(7)
+        edge_percentage_stop = new BigNumber(8)
+        break
+      case "edge61":
+        edge_percentage_stop = new BigNumber(8)
+        edge_percentage_take_profit = new BigNumber(5)
         break
 
       default:

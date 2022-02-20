@@ -40,20 +40,24 @@ class MessageProcessorIsolator implements MessageProcessor {
   event_name: string
   message_processor: MessageProcessor
   logger: Logger
+  health_and_readiness: HealthAndReadinessSubsystem
 
   constructor({
     event_name,
     message_processor,
     logger,
+    health_and_readiness,
   }: {
     message_processor: MessageProcessor
     event_name: string
     logger: Logger
+    health_and_readiness: HealthAndReadinessSubsystem
   }) {
     assert(event_name && message_processor && logger)
     this.event_name = event_name
     this.message_processor = message_processor
     this.logger = logger
+    this.health_and_readiness = health_and_readiness
   }
   async process_message(event: any, channel: Channel): Promise<void> {
     // TODO: sentry scope
@@ -86,7 +90,6 @@ class MessageProcessorIsolator implements MessageProcessor {
 
 export class ListenerFactory {
   logger: Logger
-  health_and_readiness: HealthAndReadinessSubsystem | undefined
 
   constructor({ logger }: { logger: Logger }) {
     this.logger = logger
@@ -101,23 +104,24 @@ export class ListenerFactory {
   }: {
     message_processor: MessageProcessor
     event_name: MyEventNameType
-    health_and_readiness?: HealthAndReadinessSubsystem
+    health_and_readiness: HealthAndReadinessSubsystem
   }) {
     Sentry.withScope(async (scope) => {
       scope.setTag("event_name", event_name)
-      // TODO: err these health_and_readiness should be internal to the listeners I think
-      this.logger.warn(`health_and_readiness logic perhaps incorrect`)
-      this.health_and_readiness = health_and_readiness
       try {
         assert(message_processor && event_name)
         await this.connect({
           event_name,
-          message_processor: new MessageProcessorIsolator({ event_name, message_processor, logger: this.logger }),
+          health_and_readiness,
+          message_processor: new MessageProcessorIsolator({
+            event_name,
+            message_processor,
+            logger: this.logger,
+            health_and_readiness,
+          }),
         })
-        this.health_and_readiness?.healthy(true)
-        this.health_and_readiness?.ready(true)
       } catch (err) {
-        this.health_and_readiness?.healthy(false)
+        health_and_readiness.healthy(false)
         this.logger.error(`Error connecting MessageProcessor for event_name '${event_name}' to amqp server`)
         this.logger.error(err)
         Sentry.captureException(err)
@@ -129,25 +133,29 @@ export class ListenerFactory {
   private async connect({
     event_name,
     message_processor,
+    health_and_readiness,
   }: {
     message_processor: MessageProcessor
     event_name: MyEventNameType
+    health_and_readiness: HealthAndReadinessSubsystem
   }) {
     // TODO: durable, exclusive, noAck, ... lots of configurable shit here...
     let { routing_key, exchange_name, exchange_type, durable } = MessageRouting.amqp_routing({ event_name })
     let connection: Connection = await connect(connect_options)
+    process.once("SIGINT", connection.close.bind(connection))
     this.logger.info(`PositionsListener: Connection with AMQP server established.`)
     let channel: Channel = await connection.createChannel() // hangs
-    let health_and_readiness = this.health_and_readiness
     let logger = this.logger
     channel.on("close", function () {
       logger.error(`AMQP Channel closed!`)
-      if (health_and_readiness) health_and_readiness.healthy(false)
+      health_and_readiness.healthy(false)
     })
+    health_and_readiness.healthy(true)
+    health_and_readiness.ready(true)
     // TODO: do we not look at the return code here?
     await channel.assertExchange(exchange_name, exchange_type, { durable })
     const q = await channel.assertQueue("", { exclusive: true })
-    channel.bindQueue(q.queue, exchange_name, routing_key)
+    await channel.bindQueue(q.queue, exchange_name, routing_key)
     let wrapper_func = function (event: any) {
       message_processor.process_message(event, channel)
     }

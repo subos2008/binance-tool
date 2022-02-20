@@ -10,6 +10,7 @@ import { strict as assert } from "assert"
 const service_name = "event-persistance"
 
 import { ListenerFactory } from "../../classes/amqp/listener-factory"
+import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 
 require("dotenv").config()
 
@@ -18,8 +19,6 @@ Sentry.init({})
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
-
-var service_is_healthy: boolean = true
 
 import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
@@ -54,17 +53,28 @@ class EventLogger implements MessageProcessor {
     send_message,
     logger,
     event_name,
+    health_and_readiness,
   }: {
     send_message: (msg: string) => void
     logger: Logger
     event_name: MyEventNameType
+    health_and_readiness: HealthAndReadiness
   }) {
     assert(logger)
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
     this.event_name = event_name
-    listener_factory.build_isolated_listener({ event_name, message_processor: this }) // Add arbitrary data argument
+    const amqp_health: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
+      name: `amqp-listener-${event_name}`,
+      ready: false,
+      healthy: false,
+    })
+    listener_factory.build_isolated_listener({
+      event_name,
+      message_processor: this,
+      health_and_readiness: amqp_health,
+    }) // Add arbitrary data argument
   }
 
   async process_message(event: any, channel: Channel) {
@@ -83,16 +93,23 @@ class EventLogger implements MessageProcessor {
   }
 }
 
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+const service_is_healthy: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
+  name: "global",
+  ready: true,
+  healthy: true,
+})
+
 async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  new EventLogger({ logger, send_message, event_name: "SpotBinancePortfolio" })
-  new EventLogger({ logger, send_message, event_name: "Edge56EntrySignal" })
-  new EventLogger({ logger, send_message, event_name: "Edge60EntrySignal" })
-  new EventLogger({ logger, send_message, event_name: "SpotBinanceOrder" })
-  new EventLogger({ logger, send_message, event_name: "SpotPositionOpened" })
-  new EventLogger({ logger, send_message, event_name: "SpotPositionClosed" })
+  new EventLogger({ health_and_readiness, logger, send_message, event_name: "SpotBinancePortfolio" })
+  new EventLogger({ health_and_readiness, logger, send_message, event_name: "Edge56EntrySignal" })
+  new EventLogger({ health_and_readiness, logger, send_message, event_name: "Edge60EntrySignal" })
+  new EventLogger({ health_and_readiness, logger, send_message, event_name: "SpotBinanceOrder" })
+  new EventLogger({ health_and_readiness, logger, send_message, event_name: "SpotPositionOpened" })
+  new EventLogger({ health_and_readiness, logger, send_message, event_name: "SpotPositionClosed" })
 }
 
 main().catch((error) => {
@@ -106,7 +123,7 @@ main().catch((error) => {
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code: number | null = null, reason: string) {
-  service_is_healthy = false // it seems service isn't exiting on soft exit, but add this to make sure
+  service_is_healthy.healthy(false) // it seems service isn't exiting on soft exit, but add this to make sure
   logger.warn(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}, reason: ${reason}`)
   if (exit_code) process.exitCode = exit_code
@@ -119,7 +136,7 @@ import { Channel } from "amqplib"
 import express, { Request, Response } from "express"
 var app = express()
 app.get("/health", function (req: Request, res: Response) {
-  if (service_is_healthy) {
+  if (service_is_healthy.healthy()) {
     res.send({ status: "OK" })
   } else {
     logger.error(`Service unhealthy`)

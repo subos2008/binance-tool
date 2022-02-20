@@ -269,8 +269,10 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
           end_date,
         })
         // chop off the most recent candle as the code above gives us a partial candle at the end
-        let partial_candle = initial_candles.pop()
-        if (partial_candle) assert(partial_candle.closeTime > Date.now()) // double check that was actually a partial candle
+        if (initial_candles[initial_candles.length - 1].closeTime > Date.now()) {
+          let partial_candle = initial_candles.pop()
+          if (partial_candle) assert(partial_candle.closeTime > Date.now()) // double check that was actually a partial candle
+        }
 
         if (initial_candles.length == 0) {
           this.logger.warn(`No candles loaded for ${symbol}`)

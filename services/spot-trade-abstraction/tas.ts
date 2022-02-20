@@ -185,7 +185,7 @@ app.get("/spot/close", async function (req: Request, res: Response, next: NextFu
 
 // Finally, start our server
 // $  npm install -g localtunnel && lt --port 3000
-app.listen(3000, function () {
-  console.log("Telegram app listening on port 3000!")
+let PORT = 3000
+app.listen(PORT, function () {
+  logger.debug(`listening on port ${PORT}!`)
 })
-// await publisher.connect()

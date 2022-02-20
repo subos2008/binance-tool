@@ -84,7 +84,7 @@ export class TradeAbstractionService {
     }
 
     let edge: AuthorisedEdgeType = check_edge(cmd.edge)
-    /** TODO: We want this check and entry to be atomic, while we only trade one edge it's less important */
+
     this.logger.warn(`Position entry is not atomic with check for existing position`)
     let existing_spot_position_size: BigNumber = await this.positions.exisiting_position_size({
       base_asset: cmd.base_asset,
@@ -92,7 +92,7 @@ export class TradeAbstractionService {
     })
 
     if (existing_spot_position_size.isGreaterThan(0)) {
-      let msg = `Already in long spot position on ${cmd.base_asset}, skipping`
+      let msg = `Already in long spot position on ${cmd.base_asset}:${edge}, skipping`
       this.logger.warn(msg)
       send_message(msg)
       throw new Error(msg) // turn this into a 3xx or 4xx

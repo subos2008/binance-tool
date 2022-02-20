@@ -107,12 +107,14 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
 
     try {
       market_data_for_symbol = await this.market_data_for_symbol(symbol)
-      market_data_string = `RANK: ${market_data_for_symbol.market_cap_rank}, MCAP: ${humanNumber(
-        market_data_for_symbol.market_cap
-      )}`
+      if (market_data_for_symbol) {
+        market_data_string = `RANK: ${market_data_for_symbol.market_cap_rank}, MCAP: ${humanNumber(
+          market_data_for_symbol.market_cap
+        )}`
+      }
     } catch (e) {
+      // This can happen
       this.logger.warn(`Failed to generate market_data string for ${symbol}`)
-      // This can happen if top 100 changes since boot and we refresh the cap list
       Sentry.captureException(e)
     }
     let previous_direction = await this.direction_persistance.get_direction(base_asset)
@@ -207,11 +209,11 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     return match.baseAsset
   }
 
-  async market_data_for_symbol(symbol: string): Promise<CoinGeckoMarketData> {
+  async market_data_for_symbol(symbol: string): Promise<CoinGeckoMarketData | undefined> {
     let usym = await this.base_asset_for_symbol(symbol)
     if (!this.market_data) throw new Error(`Market data not initialised.`) // can happen if data updates and
     let data = this.market_data.find((x) => x.symbol.toUpperCase() === usym)
-    if (!data) throw new Error(`Market data for symbol ${usym} not found.`) // can happen if data updates and
+    // if (!data) throw new Error(`Market data for symbol ${usym} not found.`) // can happen if data updates and
     return data
   }
 

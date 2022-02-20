@@ -101,12 +101,12 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     entry_price: BigNumber
     direction: "long" | "short"
   }): Promise<void> {
-    let base_asset = this.base_asset_for_symbol(symbol)
+    let base_asset: string = await this.base_asset_for_symbol(symbol)
     let market_data_for_symbol: CoinGeckoMarketData | undefined
     let market_data_string = ""
 
     try {
-      market_data_for_symbol = this.market_data_for_symbol(symbol)
+      market_data_for_symbol = await this.market_data_for_symbol(symbol)
       market_data_string = `RANK: ${market_data_for_symbol.market_cap_rank}, MCAP: ${humanNumber(
         market_data_for_symbol.market_cap
       )}`
@@ -157,7 +157,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     }
   }
 
-  publish_entry_to_amqp({
+  async publish_entry_to_amqp({
     symbol,
     entry_price,
     direction,
@@ -178,7 +178,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         // TODO: pull exchange_identifier from ee
         exchange_identifier: { version: "v3", exchange, type: "spot", account: "default" },
         symbol,
-        base_asset: this.base_asset_for_symbol(symbol),
+        base_asset: await this.base_asset_for_symbol(symbol),
       },
       object_type: "Edge60EntrySignal",
       edge60_parameters,
@@ -199,15 +199,16 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     publisher.publish(event, options)
   }
 
-  base_asset_for_symbol(symbol: string): string {
-    this.logger.warn(`base_asset_for_symbol not using exchangeInfo`)
-    let copy = symbol.repeat(1)
-    let base_asset = copy.toUpperCase().replace(new RegExp(`(USDT|${quote_symbol})$`), "")
-    return base_asset
+  async base_asset_for_symbol(symbol: string): Promise<string> {
+    let exchange_info = await this.exchange_info_getter.get_exchange_info()
+    let symbols = exchange_info.symbols
+    let match = symbols.find((s) => s.symbol === symbol)
+    if (!match) throw new Error(`No match for symbol ${symbol} in exchange_info symbols`)
+    return match.baseAsset
   }
 
-  market_data_for_symbol(symbol: string): CoinGeckoMarketData {
-    let usym = this.base_asset_for_symbol(symbol)
+  async market_data_for_symbol(symbol: string): Promise<CoinGeckoMarketData> {
+    let usym = await this.base_asset_for_symbol(symbol)
     if (!this.market_data) throw new Error(`Market data not initialised.`) // can happen if data updates and
     let data = this.market_data.find((x) => x.symbol.toUpperCase() === usym)
     if (!data) throw new Error(`Market data for symbol ${usym} not found.`) // can happen if data updates and

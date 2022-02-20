@@ -131,7 +131,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     if (entry_filter) {
       try {
         let days = edge60_parameters.days_of_price_history
-        let msg = `trend reverasl ${direction_string} entry signal on ${symbol} at ${days}d price ${entry_price.toFixed()}. ${market_data_string}`
+        let msg = `trend reversal ${direction_string} entry signal on ${symbol} at ${days}d price ${entry_price.toFixed()}. ${market_data_string}`
         this.logger.info({ signal: "entry", direction, symbol }, msg)
         this.send_message(msg)
       } catch (e) {

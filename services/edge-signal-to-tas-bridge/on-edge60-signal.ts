@@ -7,7 +7,6 @@ import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/client/tas-client"
 import { Logger } from "../../interfaces/logger"
 import * as Sentry from "@sentry/node"
-import { Edge60EntrySignals } from "../../classes/edges/edge60"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 
 /**
@@ -16,23 +15,23 @@ import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-e
  * and edge61 // breakout scalp
  */
 
-    /**
-        * export interface Edge60PositionEntrySignal {
-             version: "v1"
-             edge: "edge60"
-             object_type: "Edge60EntrySignal"
-             market_identifier: MarketIdentifier_V3
-             edge60_parameters: Edge60Parameters
-             edge60_entry_signal: {
-               direction: "long" | "short"
-               entry_price: string
-             }
-             extra?: {
-               previous_direction?: "long" | "short"
-               CoinGeckoMarketData?: CoinGeckoMarketData
-             }
-           }
-        */
+/**
+ * interface Edge60PositionEntrySignal {
+ *   object_type: "Edge60EntrySignal"
+ *   version: "v1"
+ *   edge: "edge60"
+ *   market_identifier: MarketIdentifier_V3
+ *   edge60_parameters: Edge60Parameters
+ *   edge60_entry_signal: {
+ *     direction: "long" | "short"
+ *     entry_price: string
+ *   }
+ *   extra?: {
+ *     previous_direction?: "long" | "short"
+ *     CoinGeckoMarketData?: CoinGeckoMarketData
+ *   }
+ * }
+ */
 
 export interface Edge60EntrySignalProcessor {
   process_edge60_entry_signal: (signal: Edge60PositionEntrySignal) => Promise<void>
@@ -62,23 +61,6 @@ class Edge60 implements Edge60EntrySignalProcessor {
   }
 
   async process_edge60_entry_signal(signal: Edge60PositionEntrySignal) {
-    /**
-        * export interface Edge60PositionEntrySignal {
-             version: "v1"
-             edge: "edge60"
-             object_type: "Edge60EntrySignal"
-             market_identifier: MarketIdentifier_V3
-             edge60_parameters: Edge60Parameters
-             edge60_entry_signal: {
-               direction: "long" | "short"
-               entry_price: string
-             }
-             extra?: {
-               previous_direction?: "long" | "short"
-               CoinGeckoMarketData?: CoinGeckoMarketData
-             }
-           }
-        */
     assert.equal(signal.version, "v1")
     assert.equal(signal.object_type, "Edge60EntrySignal")
     assert.equal(signal.edge, "edge60")
@@ -149,11 +131,6 @@ export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
   }
 
   async process_edge60_entry_signal(signal: Edge60PositionEntrySignal) {
-
-    assert.equal(signal.version, "v1")
-    assert.equal(signal.object_type, "Edge60EntrySignal")
-    assert.equal(signal.edge, "edge60")
-
     let { base_asset } = signal.market_identifier
     if (!base_asset) {
       throw new Error(`base_asset not specified in market_identifier: ${JSON.stringify(signal.market_identifier)}`)
@@ -172,5 +149,4 @@ export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
     //   Sentry.captureException(error)
     // }
   }
-
 }

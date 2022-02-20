@@ -13,18 +13,24 @@ require("dotenv").config()
 import { ListenerFactory } from "../../classes/amqp/listener-factory"
 import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/client/tas-client"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
-
+import { MessageProcessor } from "../../classes/amqp/interfaces"
+import { MyEventNameType } from "../../classes/amqp/message-routing"
+import { Channel } from "amqplib"
+import express, { Request, Response } from "express"
+import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
+import { Edge60EntrySignalFanout, Edge60EntrySignalProcessor } from "./on-edge60-signal"
 import * as Sentry from "@sentry/node"
+import { Logger } from "../../interfaces/logger"
+import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
+
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
-import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 process.on("unhandledRejection", (error) => {
@@ -38,12 +44,6 @@ if (TAS_URL === undefined) {
   throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
 }
 
-import { MessageProcessor } from "../../classes/amqp/interfaces"
-import { MyEventNameType } from "../../classes/amqp/message-routing"
-import { Channel } from "amqplib"
-import express, { Request, Response } from "express"
-import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
-import { Edge60EntrySignalFanout, Edge60EntrySignalProcessor } from "./on-edge60-signal"
 let listener_factory = new ListenerFactory({ logger })
 
 class Edge60MessageProcessor implements MessageProcessor {
@@ -102,6 +102,7 @@ class Edge60MessageProcessor implements MessageProcessor {
           `base_asset not specified in market_identifier: ${JSON.stringify(signal.market_identifier)}`
         )
       }
+      this.processor.process_edge60_entry_signal(signal)
     } catch (err) {
       Sentry.captureException(err)
       this.logger.error(err)

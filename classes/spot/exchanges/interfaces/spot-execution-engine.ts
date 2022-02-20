@@ -48,6 +48,8 @@ export interface SpotExecutionEngine {
     base_asset: string
   }): MarketIdentifier_V3
 
+  base_asset_for_symbol(symbol:string) :Promise<string>
+
   market_buy_by_quote_quantity(
     args: SpotMarketBuyByQuoteQuantityCommand
   ): Promise<{ executed_quote_quantity: BigNumber; executed_price: BigNumber; executed_base_quantity: BigNumber }>

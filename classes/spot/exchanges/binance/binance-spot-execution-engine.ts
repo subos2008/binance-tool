@@ -88,6 +88,14 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     }
   }
 
+  async base_asset_for_symbol(symbol: string): Promise<string> {
+    let exchange_info = await this.get_exchange_info()
+    let symbols = exchange_info.symbols
+    let match = symbols.find((s) => s.symbol === symbol)
+    if (!match) throw new Error(`No match for symbol ${symbol} in exchange_info symbols`)
+    return match.baseAsset
+  }
+
   async store_order_context_and_generate_clientOrderId(
     order_context: OrderContext_V1
   ): Promise<{ clientOrderId: string }> {

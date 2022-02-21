@@ -60,8 +60,6 @@ export class OrderExecutionTracker {
     if (print_all_trades) this.print_all_trades = true
     this.order_context_persistence = order_context_persistence
 
-    this.logger.warn(`Not type checking BinanceOrderData when casting`)
-
     process.on("exit", () => {
       this.shutdown_streams()
     })
@@ -151,7 +149,7 @@ export class OrderExecutionTracker {
       order_id,
       version: 1,
       object_type: "BinanceOrderData",
-    } as BinanceOrderData
+    } 
     // How can I automagically check an input matches the expected type?
 
     try {

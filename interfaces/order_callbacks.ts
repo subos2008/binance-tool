@@ -31,12 +31,22 @@ import { OrderContext_V1 } from "../classes/spot/exchanges/interfaces/spot-execu
 
 export interface BinanceOrderData {
   object_type: "BinanceOrderData"
+  version: 1
   order_id: string
   orderTime: number
   totalTradeQuantity: string // NB: we might rename this to totalBaseTradeQuantity in exchange_neutral
   symbol: string
   side: "BUY" | "SELL"
-  orderType: "LIMIT" | "MARKET" | "STOP_LOSS_LIMIT"
+  orderType:
+    | "LIMIT"
+    | "MARKET"
+    | "STOP_LOSS_LIMIT"
+    | "LIMIT_MAKER"
+    | "STOP"
+    | "STOP_MARKET"
+    | "TAKE_PROFIT_LIMIT"
+    | "TAKE_PROFIT_MARKET"
+    | "TRAILING_STOP_MARKET"
   isOrderWorking: boolean // for stop loss limits this is false on creation and true once triggered
   orderRejectReason?: string
   price?: string

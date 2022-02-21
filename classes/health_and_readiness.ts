@@ -34,7 +34,13 @@ export class HealthAndReadinessSubsystem {
   // if argument is undefined this is a read, if non-null sets and returns
   ready(value?: boolean | undefined): boolean {
     if (typeof value === "undefined") return this._ready
-    if (value != this._ready) this.logger.warn(`Subsystem ${this.name} became ${value ? `ready` : `not ready`}`)
+    if (value != this._ready) {
+      if (value) {
+        this.logger.info(`Subsystem ${this.name} became ready`)
+      } else {
+        this.logger.warn(`Subsystem ${this.name} became ${value ? `ready` : `not ready`}`)
+      }
+    }
     return this._ready
   }
 

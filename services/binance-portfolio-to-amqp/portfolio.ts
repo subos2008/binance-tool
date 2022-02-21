@@ -218,11 +218,6 @@ class PortfolioTracker implements MasterPortfolioClass {
 
   async decorate_portfolio(portfolio: Portfolio): Promise<Portfolio> {
     portfolio = this.portfolio_utils.add_quote_value_to_portfolio_balances({
-      // TODO: convert to list
-      portfolio,
-      quote_currency: "BTC",
-    }).portfolio
-    portfolio = this.portfolio_utils.add_quote_value_to_portfolio_balances({
       portfolio,
       quote_currency: "USDT",
     }).portfolio

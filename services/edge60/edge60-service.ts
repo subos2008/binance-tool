@@ -227,17 +227,16 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     let base_assets = new Set(symbols.map((s) => s.baseAsset))
     this.logger.info(`${base_assets.size} base_assets on Binance`)
 
-    function filter_available_on_quote_assets(base_asset: string) {
-      let available_on_signal = symbols.find(
-        (s) => s.baseAsset === base_asset && s.quoteAsset === signals_quote_asset
-      )
-      let available_on_tas = symbols.find((s) => {
-        return s.baseAsset === base_asset && s.quoteAsset === tas_quote_asset
-      })
-      return available_on_signal && available_on_tas
-    }
+    let signal_assets = new Set(symbols.filter((s) => s.baseAsset === signals_quote_asset).map((s) => s.baseAsset))
+    this.logger.info(`${signal_assets.size} base_assets on Binance available on signals ${signals_quote_asset}`)
+    let tas_assets = new Set(symbols.filter((s) => s.baseAsset === tas_quote_asset).map((s) => s.baseAsset))
+    this.logger.info(`${tas_assets.size} base_assets on Binance available on signals ${tas_quote_asset}`)
 
-    let targets: string[] = Array.from(base_assets).filter(filter_available_on_quote_assets)
+    /** compute intersection */
+    let target_assets = new Set<string>()
+    for (var x of signal_assets) if (tas_assets.has(x)) target_assets.add(x)
+
+    let targets: string[] = Array.from(target_assets)
     this.logger.info(
       `${base_assets.size} base_assets on Binance available on both ${signals_quote_asset} and ${tas_quote_asset}`
     )

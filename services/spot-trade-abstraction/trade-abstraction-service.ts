@@ -5,6 +5,8 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+let disallowed_coins_for_entry = ["UST"]
+
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
@@ -81,6 +83,10 @@ export class TradeAbstractionService {
 
     if (!is_authorised_edge(cmd.edge)) {
       throw new Error(`UnauthorisedEdge ${cmd.edge}`)
+    }
+
+    if (disallowed_coins_for_entry.includes(cmd.base_asset)) {
+      throw new Error(`Opening spot long positions in ${cmd.base_asset} is explicity disallowed`)
     }
 
     let edge: AuthorisedEdgeType = check_edge(cmd.edge)

@@ -33,7 +33,7 @@ function generate_client(logger: Logger): RedisClient {
       return new Error("Retry time exhausted");
     }
     if (options.attempt > 10) {
-      Sentry.captureMessage("In redis_retry_strategy: End reconnecting with built in error");
+      Sentry.captureMessage("In redis_retry_strategy: End reconnecting with built in error (too many attempts)");
       // End reconnecting with built in error
       return undefined;
     }

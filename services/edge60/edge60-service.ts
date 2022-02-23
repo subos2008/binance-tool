@@ -237,7 +237,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
 
     let targets: string[] = Array.from(target_assets)
     this.logger.info(
-      `${targets.size} base_assets on Binance available on both ${signals_quote_asset} and ${tas_quote_asset}`
+      `${targets.length} base_assets on Binance available on both ${signals_quote_asset} and ${tas_quote_asset}`
     )
     return targets
   }

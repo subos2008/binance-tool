@@ -274,8 +274,10 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         })
 
         if (initial_candles.length == 0) {
-          this.logger.warn(`No candles loaded for ${symbol}`)
-          throw new Error(`No candles loaded for ${symbol}`)
+          this.logger.error(`No candles loaded for ${symbol}`)
+          let error = new Error(`No candles loaded for ${symbol}`)
+          Sentry.captureException(error) // this is unexpected now, 429?
+          throw error
         }
 
         // chop off the most recent candle as the code above gives us a partial candle at the end
@@ -295,14 +297,8 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         this.logger.info(`Setup edge for ${symbol} with ${initial_candles.length} initial candles`)
         await sleep(200) // 1200 calls allowed per minute per IP address
       } catch (err: any) {
-        if (err.toString().includes("Invalid symbol")) {
-          this.logger.info(`Unable to load candles for ${symbol} not listed on binance`)
-        } else if (err.toString().includes("No candles loaded for")) {
-          this.logger.warn(`Unable to load candles for ${symbol}.`)
-        } else {
-          Sentry.captureException(err)
-          this.logger.error(err)
-        }
+        Sentry.captureException(err)
+        this.logger.error(err)
       }
     }
     let valid_symbols = Object.keys(this.edges)

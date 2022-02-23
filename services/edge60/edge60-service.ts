@@ -224,12 +224,11 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     let tas_quote_asset = config.tas_quote_asset.toUpperCase()
     let exchange_info: ExchangeInfo = await this.exchange_info_getter.get_exchange_info()
     let symbols = exchange_info.symbols.filter((s) => s.isSpotTradingAllowed)
-    let base_assets = new Set(symbols.map((s) => s.baseAsset))
-    this.logger.info(`${base_assets.size} base_assets on Binance`)
+    this.logger.info(`${symbols.length} spot tradeable base_assets on Binance`)
 
-    let signal_assets = new Set(symbols.filter((s) => s.baseAsset === signals_quote_asset).map((s) => s.baseAsset))
+    let signal_assets = new Set(symbols.filter((s) => s.quoteAsset === signals_quote_asset).map((s) => s.baseAsset))
     this.logger.info(`${signal_assets.size} base_assets on Binance available on signals ${signals_quote_asset}`)
-    let tas_assets = new Set(symbols.filter((s) => s.baseAsset === tas_quote_asset).map((s) => s.baseAsset))
+    let tas_assets = new Set(symbols.filter((s) => s.quoteAsset === tas_quote_asset).map((s) => s.baseAsset))
     this.logger.info(`${tas_assets.size} base_assets on Binance available on signals ${tas_quote_asset}`)
 
     /** compute intersection */
@@ -238,7 +237,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
 
     let targets: string[] = Array.from(target_assets)
     this.logger.info(
-      `${base_assets.size} base_assets on Binance available on both ${signals_quote_asset} and ${tas_quote_asset}`
+      `${targets.size} base_assets on Binance available on both ${signals_quote_asset} and ${tas_quote_asset}`
     )
     return targets
   }

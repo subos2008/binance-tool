@@ -289,7 +289,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
           edge60_parameters,
         })
         this.logger.info(`Setup edge for ${symbol} with ${initial_candles.length} initial candles`)
-        await sleep(2000) // 1200 calls allowed per minute
+        await sleep(200) // 1200 calls allowed per minute per IP address
       } catch (err: any) {
         if (err.toString().includes("Invalid symbol")) {
           this.logger.info(`Unable to load candles for ${symbol} not listed on binance`)

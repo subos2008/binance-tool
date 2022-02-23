@@ -28,6 +28,7 @@
 
 import { AuthorisedEdgeType } from "../classes/spot/abstractions/position-identifier"
 import { OrderContext_V1 } from "../classes/spot/exchanges/interfaces/spot-execution-engine"
+import { BinanceOrderType } from "./exchange/binance/spot-orders"
 
 export interface BinanceOrderData {
   object_type: "BinanceOrderData"
@@ -37,16 +38,7 @@ export interface BinanceOrderData {
   totalTradeQuantity: string // NB: we might rename this to totalBaseTradeQuantity in exchange_neutral
   symbol: string
   side: "BUY" | "SELL"
-  orderType:
-    | "LIMIT"
-    | "MARKET"
-    | "STOP_LOSS_LIMIT"
-    | "LIMIT_MAKER"
-    | "STOP"
-    | "STOP_MARKET"
-    | "TAKE_PROFIT_LIMIT"
-    | "TAKE_PROFIT_MARKET"
-    | "TRAILING_STOP_MARKET"
+  orderType: BinanceOrderType
   isOrderWorking: boolean // for stop loss limits this is false on creation and true once triggered
   orderRejectReason?: string
   price?: string

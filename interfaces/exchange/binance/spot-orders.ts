@@ -27,7 +27,7 @@ export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info
     baseAsset: symbol_info.baseAsset,
     quoteAsset: symbol_info.quoteAsset,
     side: i.side,
-    orderType: i.orderType,
+    orderType: map_binance_order_type_to_generic_order_type(i.orderType),
     totalBaseTradeQuantity: i.totalTradeQuantity,
     totalQuoteTradeQuantity: i.totalQuoteTradeQuantity,
     averageExecutionPrice: i.averageExecutionPrice,
@@ -42,6 +42,8 @@ export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info
 function map_binance_order_type_to_generic_order_type(i: BinanceOrderType): GenericOrderType {
   if (i === "LIMIT") return "LIMIT"
   if (i === "MARKET") return "MARKET"
+  if (i === "STOP") return "STOP_LOSS"
+  if (i === "STOP_MARKET") return "STOP_LOSS"
   if (i === "STOP_LOSS") return "STOP_LOSS"
   if (i === "STOP_LOSS_LIMIT") return "STOP_LOSS_LIMIT"
   if (i === "TAKE_PROFIT") return "TAKE_PROFIT"
@@ -65,11 +67,15 @@ function map_binance_order_status_to_generic_order_status(i: OrderStatus | Order
 export type BinanceOrderType =
   | "LIMIT"
   | "MARKET"
+  | "STOP"
+  | "STOP_MARKET"
   | "STOP_LOSS"
   | "STOP_LOSS_LIMIT"
   | "TAKE_PROFIT"
   | "TAKE_PROFIT_LIMIT"
   | "LIMIT_MAKER"
+  | "TAKE_PROFIT_MARKET"
+  | "TRAILING_STOP_MARKET"
 
 export function fromBinanceQueryOrderResult({
   query_order_result,

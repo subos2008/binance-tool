@@ -225,6 +225,8 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     let exchange_info: ExchangeInfo = await this.exchange_info_getter.get_exchange_info()
     let symbols = exchange_info.symbols.filter((s) => s.isSpotTradingAllowed && s.status === "TRADING")
     this.logger.info(`${symbols.length} spot tradeable symbols on Binance`)
+    symbols = symbols.filter((s) => s.baseAssetPrecision === 8 && s.quoteAssetPrecision === 8)
+    this.logger.info(`${symbols.length} of those assets have a precision of 8`)
 
     let signal_assets = new Set(
       symbols.filter((s) => s.quoteAsset === signals_quote_asset).map((s) => s.baseAsset)

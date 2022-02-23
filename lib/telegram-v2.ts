@@ -36,7 +36,7 @@ export class SendMessage {
         // https://core.telegram.org/bots/faq#my-bot-is-hitting-limits-how-do-i-avoid-this
         Sentry.captureException(new Error(`Hit rate limit on telegram API (429)`))
         this.logger.warn(`Hit rate limit on telegram API (429)`)
-        setTimeout(bind(this.send_message, this, message), 1000 * 60)
+        setTimeout(this.send_message.bind(this, message), 1000 * 60)
       }
       if (response.status != 200) {
         throw new Error(`Response status code from telegram api: ${response.status} ${response.statusText}`)

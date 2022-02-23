@@ -210,7 +210,7 @@ export class SpotPosition {
 
       /** Position size */
       initial_entry_quote_invested: o.initial_quote_invested.toFixed(),
-      initial_entry_position_size: o.position_size.toFixed(), // base asset
+      initial_entry_position_size: o.initial_entry_position_size.toFixed(), // base asset
 
       /** Presumably just the entry order */
       orders: o.orders,

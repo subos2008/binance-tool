@@ -224,7 +224,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     let tas_quote_asset = config.tas_quote_asset.toUpperCase()
     let exchange_info: ExchangeInfo = await this.exchange_info_getter.get_exchange_info()
     let symbols = exchange_info.symbols.filter((s) => s.isSpotTradingAllowed)
-    this.logger.info(`${symbols.length} spot tradeable base_assets on Binance`)
+    this.logger.info(`${symbols.length} spot tradeable symbols on Binance`)
 
     let signal_assets = new Set(symbols.filter((s) => s.quoteAsset === signals_quote_asset).map((s) => s.baseAsset))
     this.logger.info(`${signal_assets.size} base_assets on Binance available on signals ${signals_quote_asset}`)

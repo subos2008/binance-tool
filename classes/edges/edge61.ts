@@ -39,20 +39,28 @@ export interface LongShortEntrySignalsCallbacks {
   }): void
 }
 
-export interface EdgeCandle {
+export interface StoredCandle {
   // The candle interface required by this edge
   close: string
   low: string
   high: string
 }
 
+export interface IngestionCandle {
+  // The candle interface required by this edge
+  close: string
+  low: string
+  high: string
+  isFinal: boolean
+}
+
 class LimitedLengthCandlesHistory {
-  private candles: EdgeCandle[]
+  private candles: StoredCandle[]
   private length: number
 
   // Patch an array object with overrided push() function
-  private limited_length_candle_array(length: number, initial_candles: EdgeCandle[]): EdgeCandle[] {
-    var array: EdgeCandle[] = initial_candles.slice(-length)
+  private limited_length_candle_array(length: number, initial_candles: StoredCandle[]): StoredCandle[] {
+    var array: StoredCandle[] = initial_candles.slice(-length)
     array.push = function () {
       if (this.length >= length) {
         this.shift()
@@ -62,7 +70,7 @@ class LimitedLengthCandlesHistory {
     return array
   }
 
-  constructor({ length, initial_candles }: { length: number; initial_candles: EdgeCandle[] }) {
+  constructor({ length, initial_candles }: { length: number; initial_candles: StoredCandle[] }) {
     this.candles = this.limited_length_candle_array(length, initial_candles)
     this.length = length
   }
@@ -75,13 +83,13 @@ class LimitedLengthCandlesHistory {
     return this.candles.length
   }
 
-  push(candle: EdgeCandle) {
+  push(candle: StoredCandle) {
     this.candles.push(candle)
     assert(this.candles.length <= this.length)
   }
 
-  get_highest_value(): { high: BigNumber; candle: EdgeCandle } {
-    function candle_high_value(candle: EdgeCandle) {
+  get_highest_value(): { high: BigNumber; candle: StoredCandle } {
+    function candle_high_value(candle: StoredCandle) {
       return new BigNumber(candle["high"])
     }
     let high = candle_high_value(this.candles[0])
@@ -97,8 +105,8 @@ class LimitedLengthCandlesHistory {
     return { high, candle: high_candle }
   }
 
-  get_lowest_value(): { low: BigNumber; candle: EdgeCandle } {
-    function candle_low_value(candle: EdgeCandle) {
+  get_lowest_value(): { low: BigNumber; candle: StoredCandle } {
+    function candle_low_value(candle: StoredCandle) {
       return new BigNumber(candle["low"])
     }
     let low = candle_low_value(this.candles[0])
@@ -163,7 +171,7 @@ export class Edge61EntrySignals {
   }: {
     timeframe: string
     symbol: string
-    candle: EdgeCandle
+    candle: IngestionCandle
   }) {
     if (timeframe !== "1d") {
       let msg = `Short timeframe candle on ${this.symbol} closed at ${candle.close}`
@@ -233,7 +241,9 @@ export class Edge61EntrySignals {
       Sentry.captureException(e)
     } finally {
       // important not to miss this - lest we corrupt the history
-      this.price_history_candles.push(candle)
+      if (candle.isFinal) {
+        this.price_history_candles.push(candle)
+      }
     }
   }
 }

@@ -227,7 +227,6 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     let required_initial_candles = Edge61EntrySignals.required_initial_candles(edge61_parameters)
     for (let i = 0; i < base_assets.length; i++) {
       let symbol = to_symbol(base_assets[i])
-      // not all of these will be on Binance, they just throw if missing
       try {
         // Last N closed candles exist between N+1 ago and now (actually and midnight last night)
         let start_date = new Date()
@@ -277,9 +276,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
       let symbol = candle.symbol
       let timeframe = "1d"
       if (this.edges[symbol]) {
-        if (candle.isFinal) {
-          this.edges[symbol].ingest_new_candle({ symbol, timeframe, candle })
-        }
+        this.edges[symbol].ingest_new_candle({ symbol, timeframe, candle })
       }
     })
   }

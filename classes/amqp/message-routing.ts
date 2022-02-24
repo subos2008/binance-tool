@@ -5,6 +5,7 @@ export type MyEventNameType =
   | "SpotBinanceOrder"
   | "Edge58EntrySignal"
   | "Edge60EntrySignal"
+  | "Edge61EntrySignal"
   | "SpotPositionOpened"
   | "SpotPositionClosed"
 
@@ -43,6 +44,14 @@ export class MessageRouting {
       case "Edge60EntrySignal":
         return {
           routing_key: "edge60",
+          exchange_name: "binance-tool",
+          exchange_type: "topic",
+          durable: false,
+        }
+
+      case "Edge61EntrySignal":
+        return {
+          routing_key: "edge61",
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,

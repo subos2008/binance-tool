@@ -10,7 +10,7 @@ import { strict as assert } from "assert"
 require("dotenv").config()
 const service_name = "edge61"
 
-import binance, { ExchangeInfo } from "binance-api-node"
+import binance, { Candle, ExchangeInfo } from "binance-api-node"
 import { Binance } from "binance-api-node"
 const exchange = "binance"
 
@@ -36,7 +36,8 @@ BigNumber.prototype.valueOf = function () {
 
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
-import { Edge61EntrySignals, LongShortEntrySignalsCallbacks } from "../../classes/edges/edge61"
+import { Edge61EntrySignals } from "./edge61-entry-signals"
+import { LongShortEntrySignalsCallbacks } from "./interfaces"
 import { Edge61Parameters, Edge61PositionEntrySignal } from "../../events/shared/edge61-position-entry"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
@@ -272,7 +273,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     this.logger.info(`Edges initialised for ${valid_symbols.length} symbols.`)
     this.send_message(`initialised for ${valid_symbols.length} symbols.`)
 
-    this.close_1d_candle_ws = this.ee.ws.candles(valid_symbols, "1d", (candle) => {
+    this.close_1d_candle_ws = this.ee.ws.candles(valid_symbols, "1d", (candle: Candle) => {
       let symbol = candle.symbol
       let timeframe = "1d"
       if (this.edges[symbol]) {

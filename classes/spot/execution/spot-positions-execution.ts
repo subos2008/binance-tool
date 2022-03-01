@@ -136,7 +136,7 @@ export class SpotPositionsExecution {
      * Create sell order at the stop price for any amount that was executed for the buy
      */
 
-    this.send_message(`Opening Spot position in ${args.base_asset} using ${args.quote_asset}, edge ${args.edge}`)
+    this.send_message(`Opening Spot position ${args.edge}:${args.base_asset} using ${args.quote_asset}`)
 
     let quote_amount = await this.position_sizer.position_size_in_quote_asset(args)
     let order_context: OrderContext_V1 = { edge: args.edge, object_type: "OrderContext", version: 1 }

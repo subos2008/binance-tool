@@ -81,13 +81,13 @@ class MyOrderCallbacks implements OrderCallbacks {
   async order_filled(data: BinanceOrderData): Promise<void> {
     let exchange_info = this.exchange_info
     if (data.side == "BUY") {
-      this.logger.info(`BUY order on ${data.symbol} filled (edge: ${data.edge}).`)
+      this.logger.info(data, `BUY order on ${data.symbol} filled (edge: ${data.edge}).`)
       this.position_tracker.buy_order_filled({
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
       })
     }
     if (data.side == "SELL") {
-      this.logger.info(`SELL order on ${data.symbol} filled (edge: ${data.edge}).`)
+      this.logger.info(data, `SELL order on ${data.symbol} filled (edge: ${data.edge}).`)
       this.position_tracker.sell_order_filled({
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
       })
@@ -103,8 +103,6 @@ async function main() {
   const ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
   let exchange_info = await ee.get_exchange_info() // TODO: should update this every now and then
   const health_and_readiness = new HealthAndReadiness({ logger, send_message })
-  const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
-
 
   // return true if the position size passed it would be considered an untradeably small balance on the exchange
   let close_position_check_func = function ({

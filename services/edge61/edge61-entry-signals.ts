@@ -20,6 +20,7 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../interfaces/logger"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { Edge61Parameters } from "../../events/shared/edge61-position-entry"
+import { RetriggerPrevention } from "./retrigger-prevention"
 
 import * as Sentry from "@sentry/node"
 Sentry.init({})
@@ -27,8 +28,10 @@ Sentry.init({})
 //   scope.setTag("service", service_name)
 // })
 
-import { LongShortEntrySignalsCallbacks, StoredCandle, IngestionCandle } from "./interfaces"
+import { LongShortEntrySignalsCallbacks, StoredCandle, IngestionCandle, PositionEntryArgs } from "./interfaces"
 import { LimitedLengthCandlesHistory } from "./limited-length-candles-history"
+import { RedisClient } from "redis"
+import { TriggerMidTrendOnRestartPrevention } from "./trigger-mid-trend-on-restart-prevention"
 
 export class Edge61EntrySignals {
   symbol: string
@@ -37,6 +40,8 @@ export class Edge61EntrySignals {
 
   callbacks: LongShortEntrySignalsCallbacks
   price_history_candles: LimitedLengthCandlesHistory
+  retrigger_prevention: RetriggerPrevention
+  trigger_on_restart_prevention: TriggerMidTrendOnRestartPrevention
 
   constructor({
     logger,
@@ -45,6 +50,7 @@ export class Edge61EntrySignals {
     market_data,
     callbacks,
     edge61_parameters,
+    redis,
   }: {
     logger: Logger
     initial_candles: CandleChartResult[]
@@ -52,6 +58,7 @@ export class Edge61EntrySignals {
     market_data: CoinGeckoMarketData
     callbacks: LongShortEntrySignalsCallbacks
     edge61_parameters: Edge61Parameters
+    redis: RedisClient
   }) {
     this.symbol = symbol
     this.logger = logger
@@ -65,6 +72,12 @@ export class Edge61EntrySignals {
 
     let last_candle = initial_candles[initial_candles.length - 1]
     if (last_candle.closeTime > Date.now()) throw new Error(`${symbol} partial final candle in initial_candles`)
+
+    this.trigger_on_restart_prevention = new TriggerMidTrendOnRestartPrevention()
+    this.retrigger_prevention = new RetriggerPrevention({
+      redis,
+      key_prefix: `edge61:retrigger-prevention:binance:spot`,
+    })
   }
 
   static required_initial_candles(edge61_parameters: Edge61Parameters) {
@@ -80,6 +93,10 @@ export class Edge61EntrySignals {
     symbol: string
     candle: IngestionCandle
   }) {
+    if (candle.isFinal) {
+      this.trigger_on_restart_prevention.process_new_daily_close_candle()
+    }
+
     if (timeframe !== "1d") {
       let msg = `Short timeframe candle on ${this.symbol} closed at ${candle.close}`
       this.logger.info(msg)
@@ -104,37 +121,51 @@ export class Edge61EntrySignals {
         return // should execute finally block
       }
 
+      let signal_high = high.isGreaterThan(highest_price)
+      let signal_low = low.isLessThan(lowest_price)
+
+      this.trigger_on_restart_prevention.process_symbol({ symbol, signal_high, signal_low })
+      if (!this.trigger_on_restart_prevention.signal_allowed_on_symbol(symbol)) {
+        return
+      }
+
       // Check for entry signal in both directions and ignore
-      if (high.isGreaterThan(highest_price) && low.isLessThan(lowest_price)) {
+      if (signal_high && signal_low) {
         let msg = `${symbol} Price entry signal both long and short, skipping...`
         this.logger.warn(msg)
         throw new Error(msg)
       }
 
       // check for long entry
-      if (high.isGreaterThan(highest_price)) {
+      if (signal_high) {
         direction = "long"
         this.logger.info(
           `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: ${high.toFixed()} greater than ${highest_price.toFixed()}`
         )
-        this.callbacks.enter_position({
-          symbol: this.symbol,
-          entry_price: potential_entry_price,
-          direction,
-        })
+        this.enter_position(
+          {
+            symbol: this.symbol,
+            entry_price: potential_entry_price,
+            direction,
+          },
+          candle
+        )
       }
 
       // check for short entry
-      if (low.isLessThan(lowest_price)) {
+      if (signal_low) {
         direction = "short"
         this.logger.info(
           `Price entry signal ${direction} at ${potential_entry_price.toFixed()}: ${low.toFixed()} less than ${lowest_price.toFixed()}`
         )
-        this.callbacks.enter_position({
-          symbol: this.symbol,
-          entry_price: potential_entry_price,
-          direction,
-        })
+        this.enter_position(
+          {
+            symbol: this.symbol,
+            entry_price: potential_entry_price,
+            direction,
+          },
+          candle
+        )
       }
 
       if (direction === undefined) {
@@ -152,5 +183,33 @@ export class Edge61EntrySignals {
         this.price_history_candles.push(candle)
       }
     }
+  }
+
+  async enter_position(args: PositionEntryArgs, entry_candle: IngestionCandle): Promise<void> {
+    /**
+     * if we trigger then we prevent triggering again until the next close candle
+     */
+
+    // closeTime of the passed in entry_candle is the current time - for partial candles in ms
+    // so first let's get the start time in seconds of the current daily candle
+
+    // So closeTime is any given millisecond mid-day, or porentially an end of day close candle
+    let candle_close_time_seconds_in_ms_remainder = entry_candle.closeTime % 1000
+    let candle_close_time_in_seconds = entry_candle.closeTime - candle_close_time_seconds_in_ms_remainder
+    let candle_close_time_seconds = candle_close_time_in_seconds / 1000
+    let candle_close_time_seconds_modulo_remainder_24h = candle_close_time_seconds % 86400
+    let candle_open_time = candle_close_time_seconds - candle_close_time_seconds_modulo_remainder_24h
+    let one_day_in_seconds = 60 * 60 * 24
+    let expiry_timestamp_seconds = candle_open_time + one_day_in_seconds
+    let signal_allowed = await this.retrigger_prevention.atomic_trigger_check_and_prevent(
+      args,
+      expiry_timestamp_seconds
+    )
+    this.logger.info(
+      args,
+      `Setting expiry for additional entries into ${args.symbol} to ${expiry_timestamp_seconds}, IngestionCandle closeTime ${entry_candle.closeTime}`
+    )
+
+    if (signal_allowed) this.callbacks.enter_position(args)
   }
 }

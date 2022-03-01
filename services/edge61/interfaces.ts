@@ -22,7 +22,7 @@ export interface StoredCandle {
   close: string
   low: string
   high: string
-  closeTime: number
+  closeTime: number // milliseconds
 }
 
 export interface IngestionCandle {
@@ -31,5 +31,11 @@ export interface IngestionCandle {
   low: string
   high: string
   isFinal: boolean
-  closeTime: number
+  closeTime: number // milliseconds
+}
+
+export interface PositionEntryArgs {
+  symbol: string
+  entry_price: BigNumber
+  direction: "long" | "short"
 }

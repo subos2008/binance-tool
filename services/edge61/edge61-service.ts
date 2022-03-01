@@ -42,6 +42,7 @@ import { Edge61Parameters, Edge61PositionEntrySignal } from "../../events/shared
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { config } from "../../config"
+import { get_redis_client, set_redis_logger } from "../../lib/redis"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -254,6 +255,9 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
           if (partial_candle) assert(partial_candle.closeTime > Date.now()) // double check that was actually a partial candle
         }
 
+        set_redis_logger(logger)
+        let redis = get_redis_client()
+
         this.edges[symbol] = new Edge61EntrySignals({
           logger: this.logger,
           initial_candles,
@@ -261,6 +265,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
           market_data: this.market_data[i],
           callbacks: this,
           edge61_parameters,
+          redis,
         })
         this.logger.info(`Setup edge for ${symbol} with ${initial_candles.length} initial candles`)
         await sleep(400) // 1200 calls allowed per minute per IP address

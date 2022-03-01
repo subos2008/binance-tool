@@ -118,7 +118,7 @@ export class OrderExecutionTracker {
       })
       let { edge } = order_context
       this.logger.info(
-        `Loaded edge for order ${data.order_id}: ${edge} (undefined can be valid here for manually created orders)`
+        `Loaded edge for order ${data.order_id}: ${edge}:${data.symbol} (undefined can be valid here for manually created orders)`
       )
       return order_context
     } catch (error) {

@@ -118,6 +118,7 @@ export class OrderExecutionTracker {
       })
       let { edge } = order_context
       this.logger.info(
+        data,
         `Loaded edge for order ${data.order_id}: ${edge}:${data.symbol} (undefined can be valid here for manually created orders)`
       )
       return order_context
@@ -149,7 +150,7 @@ export class OrderExecutionTracker {
       order_id,
       version: 1,
       object_type: "BinanceOrderData",
-    } 
+    }
     // How can I automagically check an input matches the expected type?
 
     try {

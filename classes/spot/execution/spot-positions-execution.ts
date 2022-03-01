@@ -125,7 +125,7 @@ export class SpotPositionsExecution {
      * Check if already in a position
      */
     if (await this.in_position(args)) {
-      let msg = `Already in position on ${args.base_asset}`
+      let msg = `Already in position on ${args.edge}:${args.base_asset}`
       this.send_message(msg)
       throw new Error(msg)
     }

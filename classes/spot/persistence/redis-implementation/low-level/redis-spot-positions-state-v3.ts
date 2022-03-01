@@ -191,6 +191,7 @@ export class RedisSpotPositionsState {
   }
 
   async describe_position(pi: SpotPositionIdentifier_V3): Promise<SpotPositionObject> {
+    console.warn(`describe_position implementation is shit`)
     return {
       position_size: await this.get_position_size(pi),
       initial_entry_price: await this.get_initial_entry_price(pi),

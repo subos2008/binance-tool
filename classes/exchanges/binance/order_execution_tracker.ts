@@ -102,7 +102,7 @@ export class OrderExecutionTracker {
           Sentry.captureException(error)
         })
         let msg = `SHIT: error calling processExecutionReport for pair ${data.symbol}`
-        this.logger.error(msg)
+        this.logger.error(_data, msg)
         this.logger.error(error)
         this.send_message(msg)
       }
@@ -124,7 +124,7 @@ export class OrderExecutionTracker {
       return order_context
     } catch (error) {
       // Non fatal there are valid times for this like manually created orders
-      this.logger.warn(error)
+      this.logger.warn(data, error)
       // Sentry.captureException(error)
       throw error
     }
@@ -159,7 +159,7 @@ export class OrderExecutionTracker {
       if (totalQuoteTradeQuantity && totalTradeQuantity)
         data.averageExecutionPrice = new BigNumber(totalQuoteTradeQuantity).div(totalTradeQuantity).toFixed(8)
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(_data, error)
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
@@ -176,7 +176,7 @@ export class OrderExecutionTracker {
       data.order_context = order_context
       data.edge = order_context.edge
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(_data, error)
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
@@ -189,8 +189,9 @@ export class OrderExecutionTracker {
 
     try {
       if (this.print_all_trades) {
-        this.logger.info(`${symbol} ${side} ${orderType} ORDER #${order_id} (${orderStatus})`)
+        this.logger.info(_data, `${symbol} ${side} ${orderType} ORDER #${order_id} (${orderStatus})`)
         this.logger.info(
+          _data,
           `..price: ${price}, quantity: ${quantity}, averageExecutionPrice: ${data.averageExecutionPrice}`
         )
       }
@@ -231,7 +232,7 @@ export class OrderExecutionTracker {
         await this.order_callbacks.order_filled_or_partially_filled(data)
       if (this.order_callbacks) await this.order_callbacks.order_filled(data)
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(_data, error)
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)

@@ -48,7 +48,11 @@ export class HealthAndReadinessSubsystem {
   healthy(value?: boolean | undefined): boolean {
     if (typeof value === "undefined") return this._healthy
     if (value != this._healthy) {
-      this.logger.warn(`Subsystem ${this.name} became ${value ? `healthy` : `not healthy`}`)
+      if (value) {
+        this.logger.info(`Subsystem ${this.name} became ${value ? `healthy` : `not healthy`}`)
+      } else {
+        this.logger.warn(`Subsystem ${this.name} became ${value ? `healthy` : `not healthy`}`)
+      }
       try {
         if (!value) this.send_message(`subsystem ${this.name} became unhealthy`)
       } catch (e) {

@@ -139,9 +139,6 @@ export class Edge61EntrySignals {
       // check for long entry
       if (signal_high) {
         direction = "long"
-        this.logger.info(
-          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: ${high.toFixed()} greater than ${highest_price.toFixed()}`
-        )
         this.enter_position(
           {
             symbol: this.symbol,
@@ -155,9 +152,6 @@ export class Edge61EntrySignals {
       // check for short entry
       if (signal_low) {
         direction = "short"
-        this.logger.info(
-          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}: ${low.toFixed()} less than ${lowest_price.toFixed()}`
-        )
         this.enter_position(
           {
             symbol: this.symbol,
@@ -207,6 +201,7 @@ export class Edge61EntrySignals {
     )
 
     if (signal_allowed) {
+      this.logger.info(`Price entry signal on ${args.symbol} ${args.direction} at ${args.entry_price.toFixed()}`)
       this.logger.info(
         args,
         `Set expiry for additional entries into ${args.symbol} to ${expiry_timestamp_seconds}, IngestionCandle closeTime ${entry_candle.closeTime}`

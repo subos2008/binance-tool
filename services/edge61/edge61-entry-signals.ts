@@ -205,11 +205,13 @@ export class Edge61EntrySignals {
       args,
       expiry_timestamp_seconds
     )
-    this.logger.info(
-      args,
-      `Setting expiry for additional entries into ${args.symbol} to ${expiry_timestamp_seconds}, IngestionCandle closeTime ${entry_candle.closeTime}`
-    )
 
-    if (signal_allowed) this.callbacks.enter_position(args)
+    if (signal_allowed) {
+      this.logger.info(
+        args,
+        `Set expiry for additional entries into ${args.symbol} to ${expiry_timestamp_seconds}, IngestionCandle closeTime ${entry_candle.closeTime}`
+      )
+      this.callbacks.enter_position(args)
+    }
   }
 }

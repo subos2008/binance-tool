@@ -110,7 +110,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
 
     try {
       let days = edge61_parameters.days_of_price_history
-      let msg = `trend reversal ${direction_string} entry signal on ${symbol} at ${days}d price ${entry_price.toFixed()}. ${market_data_string}`
+      let msg = `${direction_string} entry signal on ${symbol} at ${days}d price ${entry_price.toFixed()}. ${market_data_string}`
       this.logger.info({ signal: "entry", direction, symbol }, msg)
       this.send_message(msg)
     } catch (e) {

@@ -115,7 +115,7 @@ export class Edge61EntrySignals {
       let direction: "long" | "short" | undefined = undefined
 
       if (!this.price_history_candles.full()) {
-        this.logger.info(
+        this.logger.debug(
           `${symbol}: insufficient candles of history, currently ${this.price_history_candles.current_number_of_stored_candles()}`
         )
         return // should execute finally block
@@ -169,7 +169,7 @@ export class Edge61EntrySignals {
       }
 
       if (direction === undefined) {
-        this.logger.info(
+        this.logger.debug(
           `${symbol}: No signal H: ${high.toFixed()} vs ${highest_price.toFixed()} L: ${low.toFixed()} vs ${lowest_price.toFixed()}`
         )
       }

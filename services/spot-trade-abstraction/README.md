@@ -7,6 +7,8 @@ Allowing us to keep the following code from being repeated in edge signals bots:
 1. Persistant Positions Tracking
 1. Execution of Orders on the Market
 
+However, currently the entry/exit for each edge is hardcoded in the execution logic.
+
 
 ## Ideas
 

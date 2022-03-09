@@ -117,9 +117,10 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       this.logger.warn(`Failed to generate market_data string for ${symbol}`)
       Sentry.captureException(e)
     }
+    let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
+    
     let previous_direction = await this.direction_persistance.get_direction(base_asset)
     this.direction_persistance.set_direction(base_asset, direction)
-    let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
 
     if (previous_direction === null) {
       this.send_message(

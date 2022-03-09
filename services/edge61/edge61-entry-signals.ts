@@ -17,21 +17,21 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../interfaces/logger"
-import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
-import { Edge61Parameters } from "../../events/shared/edge61-position-entry"
-import { RetriggerPrevention } from "./retrigger-prevention"
-
 import * as Sentry from "@sentry/node"
 Sentry.init({})
 // Sentry.configureScope(function (scope: any) {
 //   scope.setTag("service", service_name)
 // })
 
+import { Logger } from "../../interfaces/logger"
+import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
+import { Edge61Parameters } from "../../events/shared/edge61-position-entry"
+import { RetriggerPrevention } from "./retrigger-prevention"
 import { LongShortEntrySignalsCallbacks, StoredCandle, IngestionCandle, PositionEntryArgs } from "./interfaces"
 import { LimitedLengthCandlesHistory } from "./limited-length-candles-history"
 import { RedisClient } from "redis"
 import { TriggerMidTrendOnRestartPrevention } from "./trigger-mid-trend-on-restart-prevention"
+import { DirectionPersistance } from "./direction-persistance"
 
 export class Edge61EntrySignals {
   symbol: string
@@ -42,6 +42,7 @@ export class Edge61EntrySignals {
   price_history_candles: LimitedLengthCandlesHistory
   retrigger_prevention: RetriggerPrevention
   trigger_on_restart_prevention: TriggerMidTrendOnRestartPrevention
+  direction_persistance: DirectionPersistance
 
   constructor({
     logger,
@@ -51,6 +52,7 @@ export class Edge61EntrySignals {
     callbacks,
     edge61_parameters,
     redis,
+    direction_persistance,
   }: {
     logger: Logger
     initial_candles: CandleChartResult[]
@@ -59,6 +61,7 @@ export class Edge61EntrySignals {
     callbacks: LongShortEntrySignalsCallbacks
     edge61_parameters: Edge61Parameters
     redis: RedisClient
+    direction_persistance: DirectionPersistance
   }) {
     this.symbol = symbol
     this.logger = logger
@@ -78,6 +81,7 @@ export class Edge61EntrySignals {
       redis,
       key_prefix: `edge61:retrigger-prevention:binance:spot`,
     })
+    this.direction_persistance = direction_persistance
   }
 
   static required_initial_candles(edge61_parameters: Edge61Parameters) {
@@ -200,7 +204,18 @@ export class Edge61EntrySignals {
       expiry_timestamp_seconds
     )
 
-    if (signal_allowed) {
+    /** Guard on trend reversal */
+    let previous_direction = await this.direction_persistance.get_direction(args.symbol)
+    this.direction_persistance.set_direction(args.symbol, args.direction)
+    if (previous_direction === null) {
+      this.logger.info(
+        `possible ${args.direction} entry signal on ${args.symbol} - check manually if this is a trend reversal.`
+      )
+      return
+    }
+    let direction_change = previous_direction && previous_direction != args.direction
+
+    if (signal_allowed && direction_change) {
       this.logger.info(`Price entry signal on ${args.symbol} ${args.direction} at ${args.entry_price.toFixed()}`)
       this.logger.info(
         args,

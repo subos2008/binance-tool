@@ -43,6 +43,7 @@ import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { config } from "../../config"
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
+import { DirectionPersistance } from "./direction-persistance"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -258,6 +259,12 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
         set_redis_logger(logger)
         let redis = get_redis_client()
 
+        let direction_persistance = new DirectionPersistance({
+          logger,
+          prefix: `${service_name}:spot:binance:usd_quote`,
+          send_message: this.send_message,
+        })
+
         this.edges[symbol] = new Edge61EntrySignals({
           logger: this.logger,
           initial_candles,
@@ -266,6 +273,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
           callbacks: this,
           edge61_parameters,
           redis,
+          direction_persistance,
         })
         this.logger.info(`Setup edge for ${symbol} with ${initial_candles.length} initial candles`)
         await sleep(400) // 1200 calls allowed per minute per IP address

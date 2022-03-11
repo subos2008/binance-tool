@@ -17,7 +17,8 @@ import BigNumber from "bignumber.js"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../abstractions/position-identifier"
 import { OrderId } from "../persistence/interface/order-context-persistence"
-import { Edge60SpotPositionsExecution } from "./executors/edge60-executor"
+import { Edge60SpotPositionsExecution } from "./entry-executors/edge60-executor"
+import { PositionEntryExecutor } from "./interfaces"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -37,7 +38,7 @@ export class SpotPositionsExecution {
   positions_persistance: SpotPositionsPersistance
 
   /* executors - really need to refactor this */
-  edge60_executor: Edge60SpotPositionsExecution
+  edge60_executor: PositionEntryExecutor
 
   constructor({
     logger,

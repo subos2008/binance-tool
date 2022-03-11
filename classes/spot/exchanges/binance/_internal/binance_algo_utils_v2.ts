@@ -236,7 +236,7 @@ export class AlgoUtils {
     })
   }
 
-  async create_limit_sell_order({
+  private async create_limit_sell_order({
     exchange_info,
     pair,
     base_amount,
@@ -277,88 +277,96 @@ export class AlgoUtils {
     }
   }
 
-  // async munge_and_create_oco_order({
-  //   exchange_info,
-  //   pair,
-  //   base_amount,
-  //   target_price,
-  //   stop_price,
-  //   limit_price,
-  //   clientOrderId,
-  // }: {
-  //   exchange_info: ExchangeInfo
-  //   pair: string
-  //   base_amount: BigNumber
-  //   target_price: BigNumber
-  //   stop_price: BigNumber
-  //   limit_price: BigNumber
-  //   clientOrderId: string
-  // }) {
-  //   assert(pair && target_price && base_amount && stop_price && limit_price)
-  //   assert(BigNumber.isBigNumber(base_amount))
-  //   assert(BigNumber.isBigNumber(target_price))
-  //   assert(BigNumber.isBigNumber(limit_price))
-  //   try {
-  //     base_amount = this.munge_amount_and_check_notionals({
-  //       exchange_info,
-  //       pair,
-  //       base_amount,
-  //       stop_price,
-  //       limit_price,
-  //       target_price,
-  //     })
-  //     stop_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: stop_price })
-  //     limit_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: limit_price })
-  //     target_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: target_price })
-  //     let quantity = base_amount.toFixed()
-  //     //   export interface NewOcoOrder {
-  //     //     symbol: string;
-  //     //     listClientOrderId?: string;
-  //     //     side: OrderSide;
-  //     //     quantity: string;
-  //     //     limitClientOrderId?: string;
-  //     //     price: string;
-  //     //     limitIcebergQty?: string;
-  //     //     stopClientOrderId?: string;
-  //     //     stopPrice: string;
-  //     //     stopLimitPrice?: string;
-  //     //     stopIcebergQty?: string;
-  //     //     stopLimitTimeInForce?: TimeInForce;
-  //     //     newOrderRespType?: NewOrderRespType;
-  //     //     recvWindow?: number;
-  //     //     useServerTime?: boolean;
-  //     // }
-  //     let args: NewOcoOrder = {
-  //       useServerTime: true,
-  //       symbol: pair,
-  //       side: "SELL" as OrderSide,
-  //       quantity,
-  //       price: target_price.toFixed(),
-  //       stopPrice: stop_price.toFixed(),
-  //       stopLimitPrice: limit_price.toFixed(),
-  //       newClientOrderId: clientOrderId,
-  //     }
-  //     this.logger.info(
-  //       `${pair} Creating OCO ORDER for ${quantity} at target ${target_price.toFixed()} stop triggered at ${stop_price.toFixed()}`
-  //     )
-  //     //   export interface OcoOrder {
-  //     //     orderListId: number;
-  //     //     contingencyType: ContingencyType;
-  //     //     listStatusType: ListStatusType;
-  //     //     listOrderStatus: ListOrderStatus;
-  //     //     listClientOrderId: string;
-  //     //     transactionTime: number;
-  //     //     symbol: string;
-  //     //     orders: Order[];
-  //     //     orderReports: Order[];
-  //     // }
-  //     let response: OcoOrder = await this.ee.orderOco(args)
-  //     return response
-  //   } catch (error: any) {
-  //     Sentry.captureException(error)
-  //     async_error_handler(console, `Buy error: ${error.body}`, error)
-  //   }
-  // }
+  async munge_and_create_oco_order({
+    exchange_info,
+    pair,
+    base_amount,
+    target_price,
+    stop_price,
+    limit_price,
+    stop_ClientOrderId,
+    take_profit_ClientOrderId,
+    oco_list_ClientOrderId,
+  }: {
+    exchange_info: ExchangeInfo
+    pair: string
+    base_amount: BigNumber
+    target_price: BigNumber
+    stop_price: BigNumber
+    limit_price: BigNumber
+    stop_ClientOrderId: string
+    take_profit_ClientOrderId: string
+    oco_list_ClientOrderId?: string
+  }) {
+    assert(pair && target_price && base_amount && stop_price && limit_price)
+    assert(BigNumber.isBigNumber(base_amount))
+    assert(BigNumber.isBigNumber(target_price))
+    assert(BigNumber.isBigNumber(limit_price))
+    try {
+      base_amount = this.munge_amount_and_check_notionals({
+        exchange_info,
+        pair,
+        base_amount,
+        stop_price,
+        limit_price,
+        target_price,
+      })
+      stop_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: stop_price })
+      limit_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: limit_price })
+      target_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: target_price })
+      let quantity = base_amount.toFixed()
+      //   export interface NewOcoOrder {
+      //     symbol: string;
+      //     listClientOrderId?: string;
+      //     side: OrderSide;
+      //     quantity: string;
+      //     limitClientOrderId?: string;
+      //     price: string;
+      //     limitIcebergQty?: string;
+      //     stopClientOrderId?: string;
+      //     stopPrice: string;
+      //     stopLimitPrice?: string;
+      //     stopIcebergQty?: string;
+      //     stopLimitTimeInForce?: TimeInForce;
+      //     newOrderRespType?: NewOrderRespType;
+      //     recvWindow?: number;
+      //     useServerTime?: boolean;
+      // }
+      let args: NewOcoOrder = {
+        useServerTime: true,
+        symbol: pair,
+        side: "SELL" as OrderSide,
+        quantity,
+        price: target_price.toFixed(),
+        stopPrice: stop_price.toFixed(),
+        stopLimitPrice: limit_price.toFixed(),
+        listClientOrderId: oco_list_ClientOrderId,
+        limitClientOrderId: take_profit_ClientOrderId,
+        stopClientOrderId: stop_ClientOrderId,
+      }
+      this.logger.info(
+        `${pair} Creating OCO ORDER for ${quantity} at target ${target_price.toFixed()} stop triggered at ${stop_price.toFixed()}`
+      )
+      //   export interface OcoOrder {
+      //     orderListId: number;
+      //     contingencyType: ContingencyType;
+      //     listStatusType: ListStatusType;
+      //     listOrderStatus: ListOrderStatus;
+      //     listClientOrderId: string;
+      //     transactionTime: number;
+      //     symbol: string;
+      //     orders: Order[];
+      //     orderReports: Order[];
+      // }
+      let response: OcoOrder = await this.ee.orderOco(args)
+      return response
+    } catch (error: any) {
+      Sentry.captureException(error)
+      this.logger.error(`Buy error: ${error.body}`)
+      console.error(error)
+      throw error
+    }
+  }
 
   async munge_and_create_stop_loss_limit_sell_order({
     exchange_info,

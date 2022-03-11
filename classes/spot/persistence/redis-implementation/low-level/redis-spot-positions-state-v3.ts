@@ -308,6 +308,14 @@ export class RedisSpotPositionsState {
     return this.get_string_key(pi, { key_name: "stop_order_id" })
   }
 
+  async set_oco_order(pi: SpotPositionIdentifier_V3, order_id: OrderId) {
+    return this.set_string_key(pi, { key_name: "oco_order_id" }, order_id.toString())
+  }
+
+  async get_oco_order(pi: SpotPositionIdentifier_V3): Promise<OrderId> {
+    return this.get_string_key(pi, { key_name: "oco_order_id" })
+  }
+
   async delete_position(pi: SpotPositionIdentifier_V3) {
     try {
       let keys = await this.keysAsync(`${this.prefix(pi)}:*`)

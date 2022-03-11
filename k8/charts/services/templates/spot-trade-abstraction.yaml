@@ -47,7 +47,7 @@ spec:
         - name: spot-trade-abstraction
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["node", "./out/./services/spot-trade-abstraction/tas"]
+          command: ["./services/spot-trade-abstraction/tas.ts"]
           ports:
           - name: http
             containerPort: 3000

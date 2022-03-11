@@ -37,17 +37,18 @@ export class DirectionPersistance {
   }
 
   async set_direction(symbol: string, direction: Direction) {
-    this.logger.info(`Setting direction ${direction} for ${symbol}`)
     let previous_direction = await this.get_direction(symbol)
     if (previous_direction === null) {
-      this.send_message(`Initialising ${this.prefix} direction for ${symbol} to ${direction}`)
+      this.send_message(`Initialising direction for ${symbol} to ${direction}`)
+    } else if (previous_direction !== direction) {
+      this.logger.info(`Direction change to ${direction} for ${symbol}`)
     }
     await this.setAsync(this._market_to_key(symbol), direction)
+    return previous_direction
   }
 
   async get_direction(symbol: string): Promise<Direction | null> {
     let direction = await this.getAsync(this._market_to_key(symbol))
-    this.logger.info(`Loaded direction ${direction} for ${symbol}`)
     return direction
   }
 }

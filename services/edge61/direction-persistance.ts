@@ -39,7 +39,7 @@ export class DirectionPersistance {
   async set_direction(symbol: string, direction: Direction) {
     let previous_direction = await this.get_direction(symbol)
     if (previous_direction === null) {
-      this.send_message(`Initialising direction for ${symbol} to ${direction}`)
+      this.logger.info(`Initialising direction for ${symbol} to ${direction}`)
     } else if (previous_direction !== direction) {
       this.logger.info(`Direction change to ${direction} for ${symbol}`)
     }

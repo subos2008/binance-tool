@@ -29,21 +29,23 @@ export type AuthorisedEdgeType = "edge60" | "undefined" | "edge61"
 const authorised_edges: AuthorisedEdgeType[] = ["edge60", "edge61"]
 
 export function is_authorised_edge(edge: string): boolean {
-  return authorised_edges.includes(edge as AuthorisedEdgeType)
+  let authorised = authorised_edges.includes(edge as AuthorisedEdgeType)
+  if (!authorised) console.log(`Edge '${edge} unauthorised, allowed edges are: ${authorised_edges.join(", ")}`)
+  return authorised
 }
 
 export function check_edge(edge: string | undefined): AuthorisedEdgeType {
-  if (!edge) {
-    Sentry.captureException(new Error(`check_edge: undefined value passed in`))
-    return "undefined"
-  }
-  if (is_authorised_edge(edge)) {
+  if (edge && is_authorised_edge(edge)) {
     return edge as AuthorisedEdgeType
   }
-  let msg = `Unauthorised edge: ${edge}`
+  if (!edge) {
+    Sentry.captureException(new Error(`check_edge: undefined value passed in`))
+  }
+  let msg = `check_edge: Unauthorised edge: '${edge}', allowed edges: ${authorised_edges.join(", ")}`
   console.error(msg)
-  Sentry.captureException(new Error(msg))
-  return edge as AuthorisedEdgeType
+  let error = new Error(msg)
+  Sentry.captureException(error)
+  throw error
 }
 export interface SpotPositionIdentifier_V3 {
   exchange_identifier: ExchangeIdentifier_V3 // yeah exchange, not market, for spot - but market for futures

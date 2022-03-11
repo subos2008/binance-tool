@@ -197,6 +197,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     let symbols = exchange_info.symbols.filter((s) => s.isSpotTradingAllowed && s.status === "TRADING")
     this.logger.info(`${symbols.length} spot tradeable symbols on Binance`)
     symbols = symbols.filter((s) => s.baseAssetPrecision === 8 && s.quoteAssetPrecision === 8)
+    symbols = symbols.filter((s) => s.ocoAllowed)
     this.logger.info(`${symbols.length} of those assets have a precision of 8`)
 
     let signal_assets = new Set(

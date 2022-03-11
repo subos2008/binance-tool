@@ -80,6 +80,7 @@ class Edge60 implements Edge60EntrySignalProcessor {
           edge,
           direction: "long",
           action: "open",
+          trigger_price: signal.edge60_entry_signal.entry_price
         })
         break
       case "short":

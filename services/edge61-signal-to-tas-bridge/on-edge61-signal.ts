@@ -79,6 +79,7 @@ class Edge61 implements Edge61EntrySignalProcessor {
           edge,
           direction: "long",
           action: "open",
+          trigger_price: signal.edge61_entry_signal.entry_price,
         })
         break
       case "short":

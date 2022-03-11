@@ -3,7 +3,7 @@ import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { MarketIdentifier_V3 } from "../../../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import binance, { CancelOrderResult, Order } from "binance-api-node"
+import binance, { CancelOrderResult, OcoOrder, Order } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
 import { BinanceExchangeInfoGetter } from "../../../exchanges/binance/exchange-info-getter"
 import { randomUUID } from "crypto"
@@ -22,6 +22,8 @@ import {
   SpotMarketBuyByQuoteQuantityCommand,
   SpotMarketSellCommand,
   OrderContext_V1,
+  SpotOCOSellCommand,
+  SpotLimitBuyCommand,
 } from "../interfaces/spot-execution-engine"
 import { OrderContextPersistence } from "../../persistence/interface/order-context-persistence"
 
@@ -129,6 +131,29 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)
   }
 
+  async limit_buy(cmd: SpotLimitBuyCommand): Promise<{
+    executed_quote_quantity: BigNumber
+    executed_price: BigNumber
+    executed_base_quantity: BigNumber
+  }> {
+    let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
+    let result = await this.utils.create_limit_buy_order({
+      exchange_info: await this.get_exchange_info(),
+      price: cmd.limit_price,
+      pair: cmd.market_identifier.symbol,
+      base_amount: cmd.base_amount,
+      clientOrderId,
+    })
+    if (result) {
+      return {
+        executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
+        executed_base_quantity: new BigNumber(result.executedQty),
+        executed_price: new BigNumber(result.cummulativeQuoteQty).dividedBy(result.executedQty),
+      }
+    }
+    throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)
+  }
+
   /** implemented as a stop_limit */
   async stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<{ order_id: string; stop_price: BigNumber }> {
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
@@ -161,6 +186,20 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     throw new Error(msg)
   }
 
+  // throws on failure
+  async cancel_oco_order({ order_id, symbol }: { symbol: string; order_id: string }): Promise<void> {
+    this.logger.info(`Cancelling clientOrderId ${order_id} oco order on symbol ${symbol}`)
+    let result = await ee.cancelOrderOco({ symbol, listClientOrderId: order_id })
+    if (result.listOrderStatus === "ALL_DONE") {
+      this.logger.info(`Sucesfully cancelled order ${order_id}`)
+      return
+    }
+    let msg = `Failed to cancel oco order ${order_id} on ${symbol}, status ${result.listOrderStatus}`
+    this.logger.warn(msg)
+    this.logger.warn(result)
+    throw new Error(msg)
+  }
+
   async market_sell(cmd: SpotMarketSellCommand): Promise<void> {
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let order: Order | undefined = await this.utils.create_market_sell_order({
@@ -173,6 +212,43 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       return
     }
     let msg = `Failed to create market sell order for ${cmd.market_identifier.symbol}`
+    this.logger.warn(msg)
+    this.logger.info(order)
+    throw new Error(msg)
+  }
+
+  async oco_sell_order(cmd: SpotOCOSellCommand): Promise<void> {
+    let { stop_ClientOrderId, take_profit_ClientOrderId, oco_list_ClientOrderId } = cmd
+
+    let order: OcoOrder | undefined = await this.utils.munge_and_create_oco_order({
+      exchange_info: await this.get_exchange_info(),
+      base_amount: cmd.base_amount,
+      pair: cmd.market_identifier.symbol,
+      stop_ClientOrderId,
+      take_profit_ClientOrderId,
+      oco_list_ClientOrderId,
+      target_price: cmd.take_profit_price,
+      stop_price: cmd.stop_price,
+      limit_price: cmd.stop_limit_price,
+    })
+    /**
+     *   export interface OcoOrder {
+     *     orderListId: number
+     *     contingencyType: OcoOrderType.CONTINGENCY_TYPE
+     *     listStatusType: ListStatusType_LT
+     *     listOrderStatus: ListOrderStatus_LT
+     *     listClientOrderId: string
+     *     transactionTime: number
+     *     symbol: string
+     *     orders: Order[]
+     *     orderReports: Order[]
+     * }
+     */
+    if (order && order.listClientOrderId) {
+      // looks like success
+      return
+    }
+    let msg = `Failed to create oco sell order for ${cmd.market_identifier.symbol}`
     this.logger.warn(msg)
     this.logger.info(order)
     throw new Error(msg)

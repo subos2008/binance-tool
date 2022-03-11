@@ -105,4 +105,10 @@ export class RedisSpotPositionsPersistance implements SpotPositionsPersistance {
   async get_stop_order(pi: SpotPositionIdentifier_V3): Promise<OrderId> {
     return this.state.get_stop_order(pi)
   }
+  async set_oco_order(pi: SpotPositionIdentifier_V3, order_id: OrderId): Promise<void> {
+    return this.state.set_oco_order(pi, order_id)
+  }
+  async get_oco_order(pi: SpotPositionIdentifier_V3): Promise<OrderId> {
+    return this.state.get_oco_order(pi)
+  }
 }

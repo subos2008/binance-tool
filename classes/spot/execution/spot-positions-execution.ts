@@ -19,6 +19,7 @@ import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../ab
 import { OrderId } from "../persistence/interface/order-context-persistence"
 import { Edge60SpotPositionsExecution } from "./entry-executors/edge60-executor"
 import { PositionEntryExecutor } from "./interfaces"
+import { Edge61SpotPositionsExecution } from "./entry-executors/edge61-executor"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -39,6 +40,7 @@ export class SpotPositionsExecution {
 
   /* executors - really need to refactor this */
   edge60_executor: PositionEntryExecutor
+  edge61_executor: PositionEntryExecutor
 
   constructor({
     logger,
@@ -61,6 +63,13 @@ export class SpotPositionsExecution {
     this.send_message = send_message
     this.position_sizer = position_sizer
     this.edge60_executor = new Edge60SpotPositionsExecution({
+      logger,
+      ee,
+      positions_persistance,
+      send_message,
+      position_sizer,
+    })
+    this.edge61_executor = new Edge61SpotPositionsExecution({
       logger,
       ee,
       positions_persistance,
@@ -118,13 +127,16 @@ export class SpotPositionsExecution {
       throw new Error(msg)
     }
 
-    if (args.edge === "edge60") {
+    switch (args.edge) {
+      case 'edge60':
       return this.edge60_executor.open_position(args)
+      case 'edge61':
+      return this.edge61_executor.open_position(args)
+      default:
+        let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
+        this.send_message(msg)
+        throw new Error(msg)
     }
-
-    let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
-    this.send_message(msg)
-    throw new Error(msg)
   }
 
   async close_position({
@@ -178,7 +190,30 @@ export class SpotPositionsExecution {
       this.send_message(msg)
     }
 
-    // Continue even if the attempt to cancel the stop order fails
+    try {
+      /** Cancel oco order if there is one */
+      let oco_order_id: OrderId | null = await this.positions_persistance.get_oco_order(spot_position_identifier)
+
+      if (oco_order_id) {
+        this.send_message(`${prefix} cancelling oco order ${oco_order_id} on ${symbol}`)
+        await this.ee.cancel_oco_order({
+          order_id: oco_order_id,
+          symbol,
+        })
+      } else {
+        let msg = `${prefix} No oco order found`
+        this.logger.info(msg)
+        this.send_message(msg)
+      }
+    } catch (error) {
+      let msg = `Failed to cancel oco order on ${symbol} - was it cancelled manually?`
+      this.logger.warn(msg)
+      this.logger.warn(error)
+      Sentry.captureException(error)
+      this.send_message(msg)
+    }
+
+    // Continue even if the attempt to cancel the stop/oco orders fails
 
     try {
       /** Exit the position */

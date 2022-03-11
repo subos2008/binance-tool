@@ -296,7 +296,7 @@ export class AlgoUtils {
     limit_price: BigNumber
     stop_ClientOrderId: string
     take_profit_ClientOrderId: string
-    oco_list_ClientOrderId?: string
+    oco_list_ClientOrderId: string
   }) {
     assert(pair && target_price && base_amount && stop_price && limit_price)
     assert(BigNumber.isBigNumber(base_amount))

@@ -15,7 +15,7 @@ import { OrderId } from "../../persistence/interface/order-context-persistence"
  * i.e. when a position is first entered we want to know which edge it should be stored as
  */
 export interface OrderContext_V1 {
-  object_type: 'OrderContext'
+  object_type: "OrderContext"
   version: 1
   edge: AuthorisedEdgeType
 }
@@ -48,7 +48,7 @@ export interface SpotExecutionEngine {
     base_asset: string
   }): MarketIdentifier_V3
 
-  base_asset_for_symbol(symbol:string) :Promise<string>
+  base_asset_for_symbol(symbol: string): Promise<string>
 
   market_buy_by_quote_quantity(
     args: SpotMarketBuyByQuoteQuantityCommand

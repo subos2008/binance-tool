@@ -206,15 +206,16 @@ export class Edge61EntrySignals {
 
     /** Guard on trend reversal */
     let previous_direction = await this.direction_persistance.set_direction(args.symbol, args.direction)
-    if (previous_direction === null) {
-      this.logger.info(
-        `possible ${args.direction} entry signal on ${args.symbol} - check manually if this is a trend reversal.`
-      )
-      return
-    }
-    let direction_change = previous_direction && previous_direction != args.direction
+    // if (previous_direction === null) {
+    //   this.logger.info(
+    //     `possible ${args.direction} entry signal on ${args.symbol} - check manually if this is a trend reversal.`
+    //   )
+    //   return
+    // }
+    // let direction_change = previous_direction && previous_direction != args.direction
+    // signal_allowed = signal_allowed && direction_change
 
-    if (signal_allowed && direction_change) {
+    if (signal_allowed) {
       this.logger.info(`Price entry signal on ${args.symbol} ${args.direction} at ${args.entry_price.toFixed()}`)
       this.logger.info(
         args,

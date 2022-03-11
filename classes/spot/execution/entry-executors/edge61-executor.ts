@@ -90,7 +90,7 @@ export class Edge61SpotPositionsExecution {
     take_profit_price: BigNumber
   }> {
     args.edge = check_edge(args.edge)
-    assert.equal(args.edge, "edge60")
+    assert.equal(args.edge, "edge61")
     let { trigger_price, edge } = args
 
     let edge_percentage_stop = new BigNumber(5)

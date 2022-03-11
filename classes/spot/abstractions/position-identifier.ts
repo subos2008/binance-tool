@@ -29,8 +29,8 @@ export type AuthorisedEdgeType = "edge60" | "undefined" | "edge61"
 const authorised_edges: AuthorisedEdgeType[] = ["edge60", "edge61"]
 
 export function is_authorised_edge(edge: string): boolean {
-  console.log(`is_authorised_edge: checking if edge '${edge}' is authorised`)
   let authorised = authorised_edges.includes(edge as AuthorisedEdgeType)
+  console.log(`is_authorised_edge: checking if edge '${edge}' is authorised: ${authorised}`)
   if (!authorised) console.log(`Edge '${edge} unauthorised, allowed edges are: ${authorised_edges.join(", ")}`)
   return authorised
 }

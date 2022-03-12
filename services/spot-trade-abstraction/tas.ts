@@ -129,13 +129,18 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
 
 app.get("/spot/long", async function (req: Request, res: Response, next: NextFunction) {
   try {
-    let { edge, base_asset, action, direction } = req.query
-    assert(edge)
-    assert(typeof edge == "string")
-    assert(base_asset)
-    assert(typeof base_asset == "string")
-    assert(direction === "long")
-    assert(action === "open")
+    let { edge, base_asset, action, direction, trigger_price } = req.query
+
+    /* input checking */
+    assert(typeof edge == "string", new Error(`InputChecking: typeof edge unexpected`))
+    assert(
+      typeof trigger_price == "string" || typeof trigger_price == "undefined",
+      new Error(`InputChecking: typeof trigger_price unexpected`)
+    )
+    assert(typeof base_asset == "string", new Error(`InputChecking: typeof base_asset unexpected`))
+    assert(direction === "long", new Error(`InputChecking: expected long direction`))
+    assert(action === "open", new Error(`InputChecking: expected action to be open`))
+
     let cmd: TradeAbstractionOpenLongCommand = {
       edge,
       direction: "long",
@@ -148,6 +153,11 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
     if ((error.message = ~/UnauthorisedEdge/)) {
       res.status(403)
       logger.warn(`403 due to unauthorised edge '${req.query.edge}' attempting to open ${req.query.base_asset}`)
+    } else if ((error.message = ~/InputChecking/)) {
+      res.status(400)
+      logger.warn(
+        `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${error.message}`
+      )
     } else {
       res.status(500)
     }

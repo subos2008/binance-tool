@@ -78,7 +78,7 @@ export class Edge61SpotPositionsExecution {
     base_asset: string
     direction: string
     edge: AuthorisedEdgeType
-    trigger_price: BigNumber
+    trigger_price: BigNumber | undefined
   }): Promise<{
     executed_quote_quantity: string
     executed_base_quantity: string
@@ -92,6 +92,7 @@ export class Edge61SpotPositionsExecution {
     try {
       args.edge = check_edge(args.edge)
       assert.equal(args.edge, "edge61")
+
       let { trigger_price, edge } = args
 
       let edge_percentage_stop = new BigNumber(5)
@@ -101,6 +102,11 @@ export class Edge61SpotPositionsExecution {
 
       this.send_message(`Opening Spot position ${edge}:${args.base_asset} using ${args.quote_asset}`)
 
+      let market_identifier: MarketIdentifier_V3 = this.get_market_identifier_for(args)
+      if (!trigger_price) {
+        this.logger.warn(`Using current price as trigger_price for ${args.edge}:${args.base_asset} entry`)
+        trigger_price = await this.ee.current_price(market_identifier.symbol)
+      }
       /**
        * TODO: Make this trading rules instead
        */

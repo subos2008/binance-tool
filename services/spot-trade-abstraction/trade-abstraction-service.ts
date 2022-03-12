@@ -26,6 +26,7 @@ export interface TradeAbstractionOpenLongCommand {
   edge: string
   direction: "long"
   action: "open"
+  trigger_price?: string
 }
 
 export interface TradeAbstractionCloseLongCommand {
@@ -104,7 +105,8 @@ export class TradeAbstractionService {
       throw new Error(msg) // turn this into a 3xx or 4xx
     }
 
-    let result = await this.spot_ee.open_position({ quote_asset: this.quote_asset, ...cmd, edge })
+    let trigger_price = cmd.trigger_price ? new BigNumber(cmd.trigger_price) : undefined
+    let result = await this.spot_ee.open_position({ quote_asset: this.quote_asset, ...cmd, edge, trigger_price })
     this.send_message(
       `Entered ${cmd.direction} position on ${cmd.edge}:${
         cmd.base_asset

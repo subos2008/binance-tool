@@ -110,6 +110,7 @@ export class SpotPositionsExecution {
     base_asset: string
     direction: string
     edge: AuthorisedEdgeType
+    trigger_price?: BigNumber
   }): Promise<{
     executed_quote_quantity: string
     stop_order_id: string | number | undefined

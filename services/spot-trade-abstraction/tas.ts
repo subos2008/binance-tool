@@ -146,6 +146,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       direction: "long",
       action: "open",
       base_asset,
+      trigger_price,
     }
     let json = await tas.open_spot_long(cmd, send_message)
     res.status(200).json(json)

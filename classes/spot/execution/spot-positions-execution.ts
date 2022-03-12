@@ -20,6 +20,7 @@ import { OrderId } from "../persistence/interface/order-context-persistence"
 import { Edge60SpotPositionsExecution } from "./entry-executors/edge60-executor"
 import { PositionEntryExecutor } from "./interfaces"
 import { Edge61SpotPositionsExecution } from "./entry-executors/edge61-executor"
+import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -37,10 +38,11 @@ export class SpotPositionsExecution {
   send_message: SendMessageFunc
   position_sizer: PositionSizer
   positions_persistance: SpotPositionsPersistance
+  price_getter: CurrentPriceGetter
 
   /* executors - really need to refactor this */
-  edge60_executor: PositionEntryExecutor
-  edge61_executor: PositionEntryExecutor
+  edge60_executor: Edge60SpotPositionsExecution
+  edge61_executor: Edge61SpotPositionsExecution
 
   constructor({
     logger,
@@ -48,12 +50,14 @@ export class SpotPositionsExecution {
     positions_persistance,
     send_message,
     position_sizer,
+    price_getter,
   }: {
     logger: Logger
     ee: SpotExecutionEngine
     positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
     position_sizer: PositionSizer
+    price_getter: CurrentPriceGetter
   }) {
     assert(logger)
     this.logger = logger
@@ -62,6 +66,7 @@ export class SpotPositionsExecution {
     this.positions_persistance = positions_persistance
     this.send_message = send_message
     this.position_sizer = position_sizer
+    this.price_getter = price_getter
     this.edge60_executor = new Edge60SpotPositionsExecution({
       logger,
       ee,
@@ -75,6 +80,7 @@ export class SpotPositionsExecution {
       positions_persistance,
       send_message,
       position_sizer,
+      price_getter,
     })
   }
 

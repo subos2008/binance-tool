@@ -83,7 +83,7 @@ export class Edge61SpotPositionsExecution {
     base_asset: string
     direction: string
     edge: AuthorisedEdgeType
-    trigger_price: BigNumber | undefined
+    trigger_price?: BigNumber
   }): Promise<{
     executed_quote_quantity: string
     executed_base_quantity: string
@@ -110,7 +110,7 @@ export class Edge61SpotPositionsExecution {
       let market_identifier: MarketIdentifier_V3 = this.get_market_identifier_for(args)
       if (!trigger_price) {
         this.logger.warn(`Using current price as trigger_price for ${args.edge}:${args.base_asset} entry`)
-        trigger_price = await this.ee.current_price(market_identifier.symbol)
+        trigger_price = await this.price_getter.get_current_price({ market_symbol: market_identifier.symbol })
       }
       /**
        * TODO: Make this trading rules instead
@@ -132,7 +132,7 @@ export class Edge61SpotPositionsExecution {
       let base_amount = quote_amount.dividedBy(limit_price)
       let cmd: SpotLimitBuyCommand = {
         order_context,
-        market_identifier: this.get_market_identifier_for(args),
+        market_identifier,
         base_amount,
         limit_price,
         order_type: "ioc",

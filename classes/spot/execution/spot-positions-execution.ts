@@ -4,12 +4,7 @@ import Sentry from "../../../lib/sentry"
 
 import { Logger } from "../../../interfaces/logger"
 import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
-import {
-  OrderContext_V1,
-  SpotExecutionEngine,
-  SpotMarketBuyByQuoteQuantityCommand,
-  SpotStopMarketSellCommand,
-} from "../exchanges/interfaces/spot-execution-engine"
+import { OrderContext_V1, SpotExecutionEngine } from "../exchanges/interfaces/spot-execution-engine"
 import { SpotPositionsPersistance } from "../persistence/interface/spot-positions-persistance"
 import { SendMessageFunc } from "../../../lib/telegram-v2"
 import { PositionSizer } from "../../../services/spot-trade-abstraction/fixed-position-sizer"
@@ -18,7 +13,6 @@ import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifie
 import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../abstractions/position-identifier"
 import { OrderId } from "../persistence/interface/order-context-persistence"
 import { Edge60SpotPositionsExecution } from "./entry-executors/edge60-executor"
-import { PositionEntryExecutor } from "./interfaces"
 import { Edge61SpotPositionsExecution } from "./entry-executors/edge61-executor"
 import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
 
@@ -135,10 +129,10 @@ export class SpotPositionsExecution {
     }
 
     switch (args.edge) {
-      case 'edge60':
-      return this.edge60_executor.open_position(args)
-      case 'edge61':
-      return this.edge61_executor.open_position(args)
+      case "edge60":
+        return this.edge60_executor.open_position(args)
+      case "edge61":
+        return this.edge61_executor.open_position(args)
       default:
         let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
         this.send_message(msg)

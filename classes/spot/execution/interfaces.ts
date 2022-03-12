@@ -20,7 +20,3 @@ export interface PositionEntryReturn {
   executed_price: BigNumber
   stop_price: BigNumber
 }
-
-export interface PositionEntryExecutor {
- open_position(args: PositionEntryArgs): Promise<PositionEntryReturn>
-}

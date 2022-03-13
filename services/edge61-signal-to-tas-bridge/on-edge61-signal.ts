@@ -84,13 +84,7 @@ class Edge61 implements Edge61EntrySignalProcessor {
         break
       case "short":
         try {
-          this.logger.info(`short signal, attempting to close any ${edge} spot long position on ${base_asset}`)
-          result = await this.tas_client.close_spot_long({
-            base_asset,
-            edge,
-            direction: "long", // this direction is confising, it's the direction of the position to close, i.e. short = long
-            action: "close",
-          })
+          this.logger.info(`short signal, NOP on ${edge}`)
         } catch (error) {
           /**
            * There are probably valid cases for this - like these was no long position open
@@ -142,11 +136,5 @@ export class Edge61EntrySignalFanout implements Edge61EntrySignalProcessor {
       this.logger.error(error)
       Sentry.captureException(error)
     }
-    // try {
-    //   await this.enter_edge61(signal)
-    // } catch (error) {
-    //   this.logger.error(error)
-    //   Sentry.captureException(error)
-    // }
   }
 }

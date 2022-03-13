@@ -113,13 +113,7 @@ export class Edge61SpotPositionsExecution {
         trigger_price = await this.price_getter.get_current_price({ market_symbol: market_identifier.symbol })
       }
       /**
-       * TODO: Make this trading rules instead
-       */
-
-      /**
-       * Get the position size, -- this can be hardcoded, just needs price or to specify quote amount to spend
-       * Try and execute a buy on that position size
-       * Create sell order at the stop price for any amount that was executed for the buy
+       * TODO: trading rules 
        */
 
       let quote_amount = await this.position_sizer.position_size_in_quote_asset(args)

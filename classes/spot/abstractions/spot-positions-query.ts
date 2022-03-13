@@ -84,9 +84,11 @@ export class SpotPositionsQuery {
   }
 
   async position(position_identifier: SpotPositionIdentifier_V3): Promise<SpotPosition> {
-    this.logger.warn(
-      `SpotPositionsQuery.position() doesn't ensure the positions exists before returning a SpotPosition object`
-    )
+    // I think we can add orders to positions before they exist so this is kinda valid...
+    // We might want some flag or call to check a position exists
+    // this.logger.warn(
+    //   `SpotPositionsQuery.position() doesn't ensure the positions exists before returning a SpotPosition object`
+    // )
     return new SpotPosition({
       logger: this.logger,
       send_message: this.send_message,

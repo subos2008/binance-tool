@@ -34,6 +34,7 @@ export interface BinanceOrderData {
   object_type: "BinanceOrderData"
   version: 1
   order_id: string
+  order_is_is_client_order_id: boolean // did we use newClientOrderId to set orderId
   orderTime: number
   totalTradeQuantity: string // NB: we might rename this to totalBaseTradeQuantity in exchange_neutral
   symbol: string

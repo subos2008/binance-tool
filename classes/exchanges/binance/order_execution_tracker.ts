@@ -141,13 +141,29 @@ export class OrderExecutionTracker {
       orderRejectReason,
       totalTradeQuantity,
       totalQuoteTradeQuantity,
+      newClientOrderId,
+      orderId,
+      orderListId,
     } = _data
 
-    let order_id = _data.newClientOrderId
-    delete (_data as any).orderId // make sure we aren't using this anywhere, it is depricated
+    let order_id: string, order_is_is_client_order_id: boolean
+    if (!newClientOrderId) {
+      order_is_is_client_order_id = true
+      order_id = _data.newClientOrderId
+      this.logger.warn(
+        `No newClientOrderId in ExecutionReport, oderId: ${orderId}, orderListId: ${orderListId}`,
+        _data
+      )
+      console.warn(JSON.stringify(_data))
+    } else {
+      order_is_is_client_order_id = false
+      order_id = _data.orderId.toString()
+    }
+
     let data: BinanceOrderData = {
       ..._data,
       order_id,
+      order_is_is_client_order_id,
       version: 1,
       object_type: "BinanceOrderData",
     }
@@ -163,7 +179,7 @@ export class OrderExecutionTracker {
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
-        if (order_id) scope.setTag("order_id", order_id)
+        scope.setTag("order_id", order_id || "undefined")
         Sentry.captureException(error)
       })
     }
@@ -180,7 +196,7 @@ export class OrderExecutionTracker {
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
-        if (order_id) scope.setTag("order_id", order_id)
+        scope.setTag("order_id", order_id || "undefined")
         Sentry.captureException(error)
       })
       edge = check_edge(undefined)

@@ -1,30 +1,30 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: edge-signal-to-tas-bridge
+  name: edge60-signal-to-tas-bridge
   labels:
 {{ include "mychart.labels" . | indent 4 }}
-    binance-tool/service: "edge-signal-to-tas-bridge"
+    binance-tool/service: "edge60-signal-to-tas-bridge"
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "mychart.name" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
-      app: edge-signal-to-tas-bridge
+      app: edge60-signal-to-tas-bridge
   template:
     metadata:
       labels:
         app.kubernetes.io/name: {{ include "mychart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-        binance-tool/service: "edge-signal-to-tas-bridge"
-        app: edge-signal-to-tas-bridge
+        binance-tool/service: "edge60-signal-to-tas-bridge"
+        app: edge60-signal-to-tas-bridge
       annotations:
-        ad.datadoghq.com/tags: '{"service": "edge-signal-to-tas-bridge"}'
-        ad.datadoghq.com/edge-signal-to-tas-bridge.logs: >-
+        ad.datadoghq.com/tags: '{"service": "edge60-signal-to-tas-bridge"}'
+        ad.datadoghq.com/edge60-signal-to-tas-bridge.logs: >-
           [{
             "source": "nodejs",
-            "service": "edge-signal-to-tas-bridge"
+            "service": "edge60-signal-to-tas-bridge"
           }]   
     spec:
     {{- with .Values.imagePullSecrets }}
@@ -32,10 +32,10 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       containers:
-        - name: edge-signal-to-tas-bridge
+        - name: main
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["node", "./out/./services/edge-signal-to-tas-bridge/edge-signal-to-tas-bridge"]
+          command: ["node", "./out/./services/edge60-signal-to-tas-bridge/edge-signal-to-tas-bridge"]
           ports:
           - name: http
             containerPort: 80

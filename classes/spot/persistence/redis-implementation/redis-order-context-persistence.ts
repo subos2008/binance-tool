@@ -37,8 +37,12 @@ export class RedisOrderContextPersistance implements OrderContextPersistence {
     order_id: OrderId
     order_context: OrderContext_V1
   }): Promise<void> {
+    let { order_id, exchange_identifier } = args
     let json = JSON.stringify(args.order_context)
-    await this.setAsync(this._key(args.exchange_identifier, args.order_id), json)
+    if (!order_id) {
+      throw new Error(`null order_id in set_order_context_for_order: order_id: '${order_id}', context: ${json}`)
+    }
+    await this.setAsync(this._key(exchange_identifier, order_id), json)
   }
 
   async get_order_context_for_order(args: {
@@ -46,13 +50,14 @@ export class RedisOrderContextPersistance implements OrderContextPersistence {
     order_id: OrderId
   }): Promise<OrderContext_V1> {
     let { order_id, exchange_identifier } = args
+    if (!order_id) throw new Error(`null order_id in get_order_context_for_order: ${order_id}`)
 
     let json = await this.getAsync(this._key(exchange_identifier, order_id))
     if (!json) throw new Error(`No OrderContext found for order ${order_id}`)
 
     let order_context: OrderContext_V1 = JSON.parse(json)
     order_context.edge = check_edge(order_context.edge)
-    
+
     return order_context
   }
 }

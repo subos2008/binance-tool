@@ -183,6 +183,7 @@ export class AlgoUtils {
     assert(BigNumber.isBigNumber(base_amount))
     assert(BigNumber.isBigNumber(price))
     try {
+      price = this.munge_and_check_price({ exchange_info, symbol: pair, price })
       base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, price })
       let price_string = price.toFixed()
       let quantity = base_amount.toFixed()

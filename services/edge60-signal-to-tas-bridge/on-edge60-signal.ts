@@ -143,11 +143,5 @@ export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
       this.logger.error(error)
       Sentry.captureException(error)
     }
-    // try {
-    //   await this.enter_edge61(signal)
-    // } catch (error) {
-    //   this.logger.error(error)
-    //   Sentry.captureException(error)
-    // }
   }
 }

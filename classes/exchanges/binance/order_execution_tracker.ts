@@ -144,18 +144,25 @@ export class OrderExecutionTracker {
       newClientOrderId,
       orderId,
       orderListId,
+      originalClientOrderId,
     } = _data
 
     let order_id: string, order_is_is_client_order_id: boolean
-    if (!newClientOrderId) {
+    if (newClientOrderId) {
       order_is_is_client_order_id = true
-      order_id = _data.newClientOrderId
+      order_id = newClientOrderId
+      console.info(JSON.stringify(_data))
+    } else if (originalClientOrderId) {
+      order_is_is_client_order_id = true
+      order_id = originalClientOrderId
+      console.info(JSON.stringify(_data))
+    } else {
       this.logger.warn(
         `No newClientOrderId in ExecutionReport, oderId: ${orderId}, orderListId: ${orderListId}`,
         _data
       )
-      console.warn(JSON.stringify(_data))
-    } else {
+      console.info(JSON.stringify(_data))
+
       order_is_is_client_order_id = false
       order_id = _data.orderId.toString()
     }

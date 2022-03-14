@@ -115,8 +115,11 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     try {
       this.logger.warn(`What do we do about typing amqp publishes safely?`)
       this.publish_entry_to_amqp({
+        // todo: versioning
         symbol,
-        entry_price: trigger_price,
+        trigger_price,
+        signal_price,
+        entry_price: trigger_price, // this should be depricated if the typing worked
         direction,
         market_data_for_symbol,
       })
@@ -129,11 +132,15 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
 
   async publish_entry_to_amqp({
     symbol,
+    trigger_price,
+    signal_price,
     entry_price,
     direction,
     market_data_for_symbol,
   }: {
     symbol: string
+    trigger_price: BigNumber
+    signal_price: BigNumber
     entry_price: BigNumber
     direction: "long" | "short"
     market_data_for_symbol: CoinGeckoMarketData | undefined
@@ -153,6 +160,8 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
       edge61_entry_signal: {
         direction,
         entry_price: entry_price.toFixed(),
+        trigger_price: trigger_price.toFixed(),
+        signal_price: signal_price.toFixed(),
       },
       extra: {
         CoinGeckoMarketData: market_data_for_symbol,

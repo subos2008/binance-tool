@@ -13,7 +13,9 @@ export interface Edge61PositionEntrySignal {
   edge61_parameters: Edge61Parameters
   edge61_entry_signal: {
     direction: "long" | "short"
-    entry_price: string
+    entry_price: string // depricated, is trigger_price
+    trigger_price: string // price at which the signla should have triggered
+    signal_price: string // price at which the signal triggered (slippage vs trigger price)
   }
   extra?: {
     CoinGeckoMarketData?: CoinGeckoMarketData

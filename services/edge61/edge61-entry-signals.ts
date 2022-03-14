@@ -146,7 +146,7 @@ export class Edge61EntrySignals {
         this.enter_position(
           {
             symbol: this.symbol,
-            entry_price: potential_entry_price,
+            entry_price: highest_price, // use the donchen band price instead of the price we noticed the cross at
             direction,
           },
           candle
@@ -159,7 +159,7 @@ export class Edge61EntrySignals {
         this.enter_position(
           {
             symbol: this.symbol,
-            entry_price: potential_entry_price,
+            entry_price: lowest_price, // use the donchen band price instead of the price we noticed the cross at
             direction,
           },
           candle

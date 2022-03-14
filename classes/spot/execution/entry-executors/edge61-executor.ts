@@ -136,8 +136,9 @@ export class Edge61SpotPositionsExecution {
       let { executed_quote_quantity, executed_price, executed_base_quantity } = buy_result
 
       if (executed_base_quantity.isZero()) {
-        let msg = `${edge}:${args.base_asset} IOC limit buy executed zero`
+        let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one`
         this.logger.info(msg)
+        this.send_message(msg)
         throw new Error(msg)
       }
 

@@ -140,6 +140,10 @@ export class Edge61SpotPositionsExecution {
         this.logger.info(msg)
         this.send_message(msg)
         throw new Error(msg)
+      } else {
+        let msg = `${edge}:${args.base_asset} bought ${executed_quote_quantity.toFixed()} ${quote_asset}`
+        this.logger.info(msg)
+        this.send_message(msg)
       }
 
       let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)

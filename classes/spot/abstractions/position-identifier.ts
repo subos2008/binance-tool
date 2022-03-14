@@ -40,11 +40,15 @@ export function check_edge(edge: string | undefined): AuthorisedEdgeType {
     return edge as AuthorisedEdgeType
   }
   if (!edge) {
-    Sentry.captureException(new Error(`check_edge: undefined value passed in`))
+    let error = new Error(`check_edge: undefined passed in`)
+    Sentry.captureException(error)
+    console.error(error)
+    // return "undefined"
+    throw error
   }
   let msg = `check_edge: Unauthorised edge: '${edge}', allowed edges: ${authorised_edges.join(", ")}`
-  console.error(msg)
   let error = new Error(msg)
+  console.error(error)
   Sentry.captureException(error)
   throw error
 }

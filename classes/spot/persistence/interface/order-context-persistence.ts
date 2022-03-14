@@ -19,7 +19,6 @@ export interface OrderContextPersistence {
 
   // throws if not found, there are valid situations for this like manually created orders
   // so ALWAYS wrap this in a try ... catch block
-  // check_edge() called internally
   get_order_context_for_order(args: {
     exchange_identifier: ExchangeIdentifier_V3
     order_id: OrderId

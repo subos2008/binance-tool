@@ -12,7 +12,7 @@ BigNumber.prototype.valueOf = function () {
 import * as Sentry from "@sentry/node"
 
 import { RedisClient } from "redis"
-import { SpotPositionIdentifier_V3, check_edge } from "../../../abstractions/position-identifier"
+import { SpotPositionIdentifier_V3, AuthorisedEdgeType } from "../../../abstractions/position-identifier"
 import { SpotPositionObject } from "../../../abstractions/spot-position"
 import { GenericOrderData } from "../../../../../types/exchange_neutral/generic_order_data"
 import { SpotPositionInitialisationData } from "../../interface/spot-positions-persistance"
@@ -200,7 +200,7 @@ export class RedisSpotPositionsState {
       initial_quote_invested: await this.get_initial_quote_invested(pi),
       initial_entry_timestamp: await this.get_initial_entry_timestamp(pi),
       orders: await this.get_orders(pi),
-      edge: check_edge(await this.get_edge(pi)),
+      edge: (await this.get_edge(pi)) as AuthorisedEdgeType,
       stop_order_id: await this.get_stop_order(pi),
     }
   }
@@ -345,7 +345,7 @@ export class RedisSpotPositionsState {
       let pi: SpotPositionIdentifier_V3 = {
         exchange_identifier: { exchange: tuple[1], account: tuple[2], version: "v3", type: "spot" },
         base_asset: tuple[3],
-        edge: check_edge(tuple[4]),
+        edge: tuple[4] as AuthorisedEdgeType,
       }
       return pi
     })

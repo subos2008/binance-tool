@@ -1,5 +1,4 @@
 import { RedisClient } from "redis"
-import { AuthorisedEdgeType, check_edge } from "../../abstractions/position-identifier"
 import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { promisify } from "util"
@@ -56,7 +55,6 @@ export class RedisOrderContextPersistance implements OrderContextPersistence {
     if (!json) throw new Error(`No OrderContext found for order ${order_id}`)
 
     let order_context: OrderContext_V1 = JSON.parse(json)
-    order_context.edge = check_edge(order_context.edge)
 
     return order_context
   }

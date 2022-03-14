@@ -13,11 +13,7 @@ import { Logger } from "../../interfaces/logger"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { GenericOrderData } from "../../types/exchange_neutral/generic_order_data"
 import { PositionPublisher } from "../../classes/amqp/positions-publisher"
-import {
-  AuthorisedEdgeType,
-  check_edge,
-  SpotPositionIdentifier_V3,
-} from "../../classes/spot/abstractions/position-identifier"
+import { AuthorisedEdgeType, SpotPositionIdentifier_V3 } from "../../classes/spot/abstractions/position-identifier"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
@@ -165,7 +161,7 @@ export class SpotPositionTracker {
     let position_identifier: SpotPositionIdentifier_V3 = {
       exchange_identifier: generic_order_data.exchange_identifier,
       base_asset: baseAsset,
-      edge: check_edge(edge),
+      edge: edge as AuthorisedEdgeType,
     }
     return this.spot_positions_query.position(position_identifier)
   }

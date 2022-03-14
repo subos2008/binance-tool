@@ -12,9 +12,7 @@ import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/order_call
 
 import * as Sentry from "@sentry/node"
 import { Binance, EventType, ExecutionReport, UserDataStreamEvent } from "binance-api-node"
-import { RedisClient } from "redis"
-import { RedisOrderContextPersistance } from "../../spot/persistence/redis-implementation/redis-order-context-persistence"
-import { AuthorisedEdgeType, check_edge } from "../../spot/abstractions/position-identifier"
+import { AuthorisedEdgeType } from "../../spot/abstractions/position-identifier"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { OrderContextPersistence } from "../../spot/persistence/interface/order-context-persistence"
 import { OrderContext_V1 } from "../../spot/exchanges/interfaces/spot-execution-engine"
@@ -206,8 +204,7 @@ export class OrderExecutionTracker {
         scope.setTag("order_id", order_id || "undefined")
         Sentry.captureException(error)
       })
-      edge = check_edge(undefined)
-      data.edge = edge
+      edge = "undefined"
     }
 
     try {

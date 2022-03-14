@@ -6,7 +6,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
+import { AuthorisedEdgeType, SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
 import { OrderId } from "./order-context-persistence"
 import { SpotPositionObject } from "../../abstractions/spot-position"
@@ -38,7 +38,6 @@ import { SpotPositionObject } from "../../abstractions/spot-position"
  */
 // }
 
-
 // An old type, used when we want to do something like console.log a position
 // Probably should be depricated
 export type SpotPositionInitialisationData = {
@@ -61,7 +60,7 @@ export function genericOrderDataToSpotPositionInitialisationData(
     initial_entry_quote_asset: o.quoteAsset,
     initial_entry_price: new BigNumber(o.averageExecutionPrice),
     orders: [o],
-    edge: check_edge(o.edge),
+    edge: o.edge as AuthorisedEdgeType,
   }
 }
 

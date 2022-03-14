@@ -17,7 +17,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../../interfaces/logger"
-import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "./position-identifier"
+import { AuthorisedEdgeType, SpotPositionIdentifier_V3 } from "./position-identifier"
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
 import {
   genericOrderDataToSpotPositionInitialisationData,
@@ -89,29 +89,12 @@ export class SpotPosition {
   }
 
   async edge(): Promise<AuthorisedEdgeType> {
-    return check_edge(await this.spot_positions_persistance.edge(this.position_identifier))
+    return (await this.spot_positions_persistance.edge(this.position_identifier)) as AuthorisedEdgeType
   }
 
   async orders(): Promise<GenericOrderData[]> {
     return await this.spot_positions_persistance.orders(this.position_identifier)
   }
-
-  // // Create a new position in the state
-  // // NB: does not send a NewPosition event as that would require AQMP access,
-  // // We could take that as an argument. Or there are RO vs RW versions of this class
-  // async create({ generic_order_data }: { generic_order_data: GenericOrderData }) {
-  //   if (this.send_message) this.send_message(`New position for ${generic_order_data.baseAsset}`)
-  //   if (!generic_order_data.edge) throw new Error(`Refusing to create position for unknown edge`)
-  //   this.spot_positions_persistance.create_new_position(this.position_identifier, {
-  //     position_size: new BigNumber(generic_order_data.totalBaseTradeQuantity),
-  //     initial_entry_price: new BigNumber(generic_order_data.averageExecutionPrice),
-  //     initial_quote_invested: new BigNumber(generic_order_data.totalQuoteTradeQuantity),
-  //     initial_entry_quote_asset: generic_order_data.quoteAsset,
-  //     initial_entry_timestamp: generic_order_data.orderTime,
-  //     orders: [generic_order_data],
-  //     edge: check_edge(generic_order_data.edge),
-  //   })
-  // }
 
   // adjust the position according to the order, create a new position if current size is zero
   async add_order_to_position({ generic_order_data }: { generic_order_data: GenericOrderData }) {

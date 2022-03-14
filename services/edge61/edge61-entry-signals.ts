@@ -207,6 +207,7 @@ export class Edge61EntrySignals {
     )
 
     /** Guard on trend reversal - actually no we took this out as a guard */
+    // we just maintain this in case we decide to use it later
     let previous_direction = await this.direction_persistance.set_direction(args.symbol, args.direction)
     // if (previous_direction === null) {
     //   this.logger.info(

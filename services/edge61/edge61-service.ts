@@ -37,7 +37,7 @@ BigNumber.prototype.valueOf = function () {
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { Edge61EntrySignals } from "./edge61-entry-signals"
-import { LongShortEntrySignalsCallbacks } from "./interfaces"
+import { LongShortEntrySignalsCallbacks, PositionEntryArgs } from "./interfaces"
 import { Edge61Parameters, Edge61PositionEntrySignal } from "../../events/shared/edge61-position-entry"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
@@ -82,15 +82,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
   }
 
-  async enter_position({
-    symbol,
-    entry_price,
-    direction,
-  }: {
-    symbol: string
-    entry_price: BigNumber
-    direction: "long" | "short"
-  }): Promise<void> {
+  async enter_position({ symbol, trigger_price, signal_price, direction }: PositionEntryArgs): Promise<void> {
     let base_asset: string = await this.base_asset_for_symbol(symbol)
     let market_data_for_symbol: CoinGeckoMarketData | undefined
     let market_data_string = ""
@@ -111,7 +103,8 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
 
     try {
       let days = edge61_parameters.days_of_price_history
-      let msg = `${direction_string} entry signal on ${symbol} at ${days}d price ${entry_price.toFixed()}. ${market_data_string}`
+      let trigger_to_signal_slippage = signal_price.minus(trigger_price).dividedBy(trigger_price).times(100).dp(1)
+      let msg = `${direction_string} entry signal on ${symbol} at ${days}d price. trigger: ${trigger_price.toFixed()}, signal: ${signal_price.toFixed()} trigger to signal slippage ${trigger_to_signal_slippage}%. ${market_data_string}`
       this.logger.info({ signal: "entry", direction, symbol }, msg)
       this.send_message(msg)
     } catch (e) {
@@ -120,9 +113,10 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
       Sentry.captureException(e)
     }
     try {
+      this.logger.warn(`What do we do about typing amqp publishes safely?`)
       this.publish_entry_to_amqp({
         symbol,
-        entry_price,
+        entry_price: trigger_price,
         direction,
         market_data_for_symbol,
       })

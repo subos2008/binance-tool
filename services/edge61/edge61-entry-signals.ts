@@ -146,7 +146,8 @@ export class Edge61EntrySignals {
         this.enter_position(
           {
             symbol: this.symbol,
-            entry_price: highest_price, // use the donchen band price instead of the price we noticed the cross at
+            trigger_price: highest_price, // use the donchen band price instead of the price we noticed the cross at
+            signal_price: potential_entry_price, // the price we noticed the cross at (i.e. trigger_price + realisation slippage)
             direction,
           },
           candle
@@ -159,7 +160,8 @@ export class Edge61EntrySignals {
         this.enter_position(
           {
             symbol: this.symbol,
-            entry_price: lowest_price, // use the donchen band price instead of the price we noticed the cross at
+            trigger_price: lowest_price, // the donchen band price
+            signal_price: potential_entry_price, // the price we noticed the cross at (i.e. trigger_price + realisation slippage)
             direction,
           },
           candle
@@ -216,7 +218,11 @@ export class Edge61EntrySignals {
     // signal_allowed = signal_allowed && direction_change
 
     if (signal_allowed) {
-      this.logger.info(`Price entry signal on ${args.symbol} ${args.direction} at ${args.entry_price.toFixed()}`)
+      this.logger.info(
+        `Price entry signal on ${args.symbol} ${
+          args.direction
+        } at trigger: ${args.trigger_price.toFixed()}, signal: ${args.signal_price.toFixed()}`
+      )
       this.logger.info(
         args,
         `Set expiry for additional entries into ${args.symbol} to ${expiry_timestamp_seconds}, IngestionCandle closeTime ${entry_candle.closeTime}`

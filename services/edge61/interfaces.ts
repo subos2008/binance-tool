@@ -6,15 +6,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 export interface LongShortEntrySignalsCallbacks {
-  enter_position({
-    symbol,
-    entry_price,
-    direction,
-  }: {
-    symbol: string
-    entry_price: BigNumber
-    direction: "long" | "short"
-  }): void
+  enter_position(args: PositionEntryArgs): void
 }
 
 export interface StoredCandle {
@@ -36,6 +28,7 @@ export interface IngestionCandle {
 
 export interface PositionEntryArgs {
   symbol: string
-  entry_price: BigNumber
+  trigger_price: BigNumber
+  signal_price: BigNumber
   direction: "long" | "short"
 }

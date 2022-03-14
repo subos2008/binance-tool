@@ -22,8 +22,11 @@ export class RetriggerPrevention {
    * Returns true if we are allowed to trigger at the same time setting Redis state
    * to prevent future triggering until the provided time
    */
-  async atomic_trigger_check_and_prevent(args: PositionEntryArgs, expiry_timestamp_seconds: number): Promise<boolean> {
-    let { symbol, entry_price, direction } = args
+  async atomic_trigger_check_and_prevent(
+    args: PositionEntryArgs,
+    expiry_timestamp_seconds: number
+  ): Promise<boolean> {
+    let { symbol } = args
     let key = `${this.key_prefix}:${symbol}`
     let got_lock = await this.asyncSetNx(key, Date.now().toString())
     // expiry_timestamp is a unix timestamp in seconds

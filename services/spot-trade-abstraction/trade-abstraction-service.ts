@@ -120,7 +120,7 @@ export class TradeAbstractionService {
   async close_spot_long(cmd: TradeAbstractionCloseLongCommand, send_message: (msg: string) => void) {
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "close")
-    let { edge } = cmd
+    let edge: AuthorisedEdgeType = cmd.edge as AuthorisedEdgeType
 
     this.logger.warn(`Position exit is not atomic with check for existing position`)
     try {

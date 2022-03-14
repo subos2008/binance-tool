@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge-performance-tracker
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "edge-performance-tracker"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "edge-performance-tracker"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "edge-performance-tracker"}'
+        ad.datadoghq.com/edge-performance-tracker.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "edge-performance-tracker"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: edge-performance-tracker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "./out/services/edge-performance-tracker/edge-performance-tracker"]
+          ports:
+          - name: http
+            containerPort: 80
+            protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          env:
+            - name: SENTRY_DSN
+              value: "https://f5a83f085f234e58941be48cd31789a8@o369902.ingest.sentry.io/6257524"
+{{- include "telegram.vars" . | nindent 12 }}
+{{- include "amqp.vars" . | nindent 12 }}

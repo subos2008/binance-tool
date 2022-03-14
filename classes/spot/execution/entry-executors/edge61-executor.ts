@@ -141,7 +141,7 @@ export class Edge61SpotPositionsExecution {
         this.send_message(msg)
         throw new Error(msg)
       } else {
-        let msg = `${edge}:${args.base_asset} bought ${executed_quote_quantity.toFixed()} ${quote_asset}`
+        let msg = `${edge}:${args.base_asset} bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth`
         this.logger.info(msg)
         this.send_message(msg)
       }

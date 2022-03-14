@@ -34,7 +34,7 @@ spec:
         - name: binance-position-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["node", "./out/./services/position-tracker/binance-spot-position-tracker", "--live"]
+          command: ["./services/position-tracker/binance-spot-position-tracker.ts", "--live"]
           # ports:
           # - name: http
           #   containerPort: 8081

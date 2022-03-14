@@ -23,6 +23,7 @@ import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identi
 import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
 import { OrderId } from "../../persistence/interface/order-context-persistence"
 import { CurrentPriceGetter } from "../../../../interfaces/exchange/generic/price-getter"
+import { SpotPositionExecutionOpenResult } from "../spot-positions-execution"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -77,28 +78,28 @@ export class Edge61SpotPositionsExecution {
   }
 
   /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
-
+  // {
+  //     executed_quote_quantity: string
+  //     executed_base_quantity: string
+  //     stop_order_id: string | number | undefined
+  //     take_profit_order_id: string | number | undefined
+  //     oco_order_id: string | number | undefined
+  //     executed_price: BigNumber
+  //     stop_price: BigNumber
+  //     take_profit_price: BigNumber
+  //   }
   async open_position(args: {
     quote_asset: string
     base_asset: string
     direction: string
     edge: AuthorisedEdgeType
     trigger_price?: BigNumber
-  }): Promise<{
-    executed_quote_quantity: string
-    executed_base_quantity: string
-    stop_order_id: string | number | undefined
-    take_profit_order_id: string | number | undefined
-    oco_order_id: string | number | undefined
-    executed_price: BigNumber
-    stop_price: BigNumber
-    take_profit_price: BigNumber
-  }> {
+  }): Promise<SpotPositionExecutionOpenResult> {
     try {
       args.edge = check_edge(args.edge)
       assert.equal(args.edge, "edge61")
 
-      let { trigger_price, edge } = args
+      let { trigger_price, edge, base_asset, quote_asset } = args
 
       let edge_percentage_stop = new BigNumber(5)
       let edge_percentage_stop_limit = new BigNumber(15)
@@ -113,7 +114,7 @@ export class Edge61SpotPositionsExecution {
         trigger_price = await this.price_getter.get_current_price({ market_symbol: market_identifier.symbol })
       }
       /**
-       * TODO: trading rules 
+       * TODO: trading rules
        */
 
       let quote_amount = await this.position_sizer.position_size_in_quote_asset(args)
@@ -194,14 +195,17 @@ export class Edge61SpotPositionsExecution {
       }
 
       return {
+        base_asset,
+        quote_asset,
+        edge,
         executed_quote_quantity: executed_quote_quantity.toFixed(),
         executed_base_quantity: executed_base_quantity.toFixed(),
         oco_order_id: oco_list_ClientOrderId,
         stop_order_id: stop_ClientOrderId,
         take_profit_order_id: take_profit_ClientOrderId,
-        executed_price,
-        stop_price,
-        take_profit_price,
+        executed_price: executed_price.toFixed(),
+        stop_price: stop_price.toFixed(),
+        take_profit_price: take_profit_price.toFixed(),
       }
     } catch (error) {
       Sentry.captureException(error)

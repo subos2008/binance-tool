@@ -26,6 +26,31 @@ import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-g
  * Note this is instantiated with a particular exchange, the exchange identifier is
  * fixed at instantiation
  */
+
+export interface SpotPositionExecutionOpenResult {
+  base_asset: string
+  quote_asset: string
+  edge: string
+  trigger_price?: string
+
+  executed_quote_quantity: string
+  executed_base_quantity: string
+  executed_price: string
+
+  stop_order_id?: string | number | undefined
+  stop_price?: string
+
+  take_profit_order_id?: string | number | undefined
+  take_profit_price?: string
+  oco_order_id?: string | number | undefined
+}
+
+export interface SpotPositionExecutionCloseResult {
+  base_asset: string
+  quote_asset: string
+  edge: string
+}
+
 export class SpotPositionsExecution {
   logger: Logger
   ee: SpotExecutionEngine
@@ -104,19 +129,19 @@ export class SpotPositionsExecution {
   }
 
   /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
-
+  // {
+  //     executed_quote_quantity: string
+  //     stop_order_id: string | number | undefined
+  //     executed_price: BigNumber
+  //     stop_price: BigNumber
+  //   }
   async open_position(args: {
     quote_asset: string
     base_asset: string
     direction: string
     edge: AuthorisedEdgeType
     trigger_price?: BigNumber
-  }): Promise<{
-    executed_quote_quantity: string
-    stop_order_id: string | number | undefined
-    executed_price: BigNumber
-    stop_price: BigNumber
-  }> {
+  }): Promise<SpotPositionExecutionOpenResult> {
     args.edge = check_edge(args.edge)
 
     /**
@@ -150,7 +175,7 @@ export class SpotPositionsExecution {
     base_asset: string
     direction: string
     edge: AuthorisedEdgeType
-  }): Promise<boolean> {
+  }): Promise<SpotPositionExecutionCloseResult> {
     assert.equal(direction, "long") // spot positions are always long
     let prefix: string = `Closing ${edge}:${base_asset} spot position:`
 
@@ -222,7 +247,12 @@ export class SpotPositionsExecution {
       let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
       await this.ee.market_sell({ order_context, market_identifier, base_amount }) // throws if it fails
       // let executed_amount = // .. actually we might not have this info immediately
-      return true // success, really we just have this here to verify that every other code path throws
+
+      return {
+        base_asset,
+        quote_asset,
+        edge,
+      } // success, really we just have this here to verify that every other code path throws
     } catch (error) {
       let msg = `Failed to exit position on ${symbol}`
       this.logger.warn(msg)

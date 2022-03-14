@@ -8,7 +8,12 @@ if (!TAS_URL.startsWith("http")) {
 
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"
 import { Logger } from "../../../interfaces/logger"
-import { TradeAbstractionCloseLongCommand, TradeAbstractionOpenLongCommand } from "../trade-abstraction-service"
+import {
+  TradeAbstractionCloseLongCommand,
+  TradeAbstractionCloseSpotLongResult,
+  TradeAbstractionOpenSpotLongCommand,
+  TradeAbstractionOpenSpotLongResult,
+} from "../trade-abstraction-service"
 const JSONBigNumber = require("./JSONBigNumber")
 import { URL } from "url"
 
@@ -33,14 +38,14 @@ export class SpotTradeAbstractionServiceClient {
     return response
   }
 
-  async open_spot_long(cmd: TradeAbstractionOpenLongCommand): Promise<string> {
+  async open_spot_long(cmd: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
     let response = await this._call("GET", new URL("/spot/long", TAS_URL).toString(), cmd)
     console.log(`Returned open_spot_long:`)
     console.log(response)
-    return response
+    return JSON.parse(response)
   }
 
-  async close_spot_long(cmd: TradeAbstractionCloseLongCommand): Promise<string> {
+  async close_spot_long(cmd: TradeAbstractionCloseLongCommand): Promise<TradeAbstractionCloseSpotLongResult> {
     let response = await this._call("GET", new URL("/spot/close", TAS_URL).toString(), cmd)
     console.log(`Returned close_spot_long:`)
     console.log(response)

@@ -3,6 +3,10 @@ import { Logger } from "../../interfaces/logger"
 import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/client/tas-client"
 
 import * as Sentry from "@sentry/node"
+import {
+  TradeAbstractionCloseSpotLongResult,
+  TradeAbstractionOpenSpotLongResult,
+} from "../spot-trade-abstraction/trade-abstraction-service"
 Sentry.init({})
 // Sentry.configureScope(function (scope: any) {
 //   scope.setTag("service", service_name)
@@ -120,7 +124,7 @@ export class Commands {
   ) {
     let msg = `${edge.toUpperCase()}: opening spot long on ${asset}`
     ctx.reply(msg)
-    let result: string = await this.tas_client.open_spot_long({
+    let result: TradeAbstractionOpenSpotLongResult = await this.tas_client.open_spot_long({
       base_asset: asset,
       edge,
       direction: "long",
@@ -135,7 +139,7 @@ export class Commands {
   ) {
     let msg = `${edge.toUpperCase()}: closing spot long on ${asset}`
     ctx.reply(msg)
-    let result: string = await this.tas_client.close_spot_long({
+    let result: TradeAbstractionCloseSpotLongResult = await this.tas_client.close_spot_long({
       base_asset: asset,
       edge,
       direction: "long",

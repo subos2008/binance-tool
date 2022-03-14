@@ -8,6 +8,7 @@ import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/cli
 import { Logger } from "../../interfaces/logger"
 import * as Sentry from "@sentry/node"
 import { Edge61PositionEntrySignal } from "../../events/shared/edge61-position-entry"
+import { TradeAbstractionOpenSpotLongResult } from "../spot-trade-abstraction/trade-abstraction-service"
 
 /**
  * We enter multiple trade types on this signal:
@@ -70,7 +71,7 @@ class Edge61 implements Edge61EntrySignalProcessor {
       throw new Error(`base_asset not specified in market_identifier: ${JSON.stringify(signal.market_identifier)}`)
     }
 
-    let result: string | undefined
+    let result: TradeAbstractionOpenSpotLongResult
     switch (signal.edge61_entry_signal.direction) {
       case "long":
         this.logger.info(`long signal, attempting to open ${edge} spot long position on ${base_asset}`)

@@ -39,7 +39,7 @@ process.on("unhandledRejection", (error) => {
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 import {
   TradeAbstractionCloseLongCommand,
-  TradeAbstractionOpenLongCommand,
+  TradeAbstractionOpenSpotLongCommand,
   TradeAbstractionService,
 } from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
@@ -145,7 +145,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
     assert(direction === "long", new Error(`InputChecking: expected long direction`))
     assert(action === "open", new Error(`InputChecking: expected action to be open`))
 
-    let cmd: TradeAbstractionOpenLongCommand = {
+    let cmd: TradeAbstractionOpenSpotLongCommand = {
       edge,
       direction: "long",
       action: "open",

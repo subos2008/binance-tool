@@ -17,6 +17,7 @@ import BigNumber from "bignumber.js"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
 import { OrderId } from "../../persistence/interface/order-context-persistence"
+import { SpotPositionExecutionOpenResult } from "../spot-positions-execution"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -89,16 +90,13 @@ export class Edge60SpotPositionsExecution {
     base_asset: string
     direction: string
     edge: AuthorisedEdgeType
-  }): Promise<{
-    executed_quote_quantity: string
-    stop_order_id: string | number | undefined
-    executed_price: BigNumber
-    stop_price: BigNumber
-  }> {
+  }): Promise<SpotPositionExecutionOpenResult> {
     var edge_percentage_stop
 
     args.edge = check_edge(args.edge)
     assert.equal(args.edge, "edge60")
+
+    let { base_asset, quote_asset, edge } = args
 
     edge_percentage_stop = new BigNumber(8)
 
@@ -167,10 +165,14 @@ export class Edge60SpotPositionsExecution {
     }
 
     return {
+      base_asset,
+      quote_asset,
+      edge,
       executed_quote_quantity: executed_quote_quantity.toFixed(),
+      executed_base_quantity: executed_base_quantity.toFixed(),
       stop_order_id,
-      executed_price,
-      stop_price,
+      executed_price: executed_price.toFixed(),
+      stop_price: stop_price.toFixed(),
     }
   }
 }

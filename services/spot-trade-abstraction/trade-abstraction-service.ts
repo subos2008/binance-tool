@@ -20,13 +20,39 @@ import {
 import { SpotExecutionEngine } from "../../classes/spot/exchanges/interfaces/spot-execution-engine"
 import { SpotPositionsExecution } from "../../classes/spot/execution/spot-positions-execution"
 import Sentry from "../../lib/sentry"
+import { result } from "lodash"
 
-export interface TradeAbstractionOpenLongCommand {
+export interface TradeAbstractionOpenSpotLongCommand {
   base_asset: string
   edge: string
   direction: "long"
   action: "open"
   trigger_price?: string
+}
+
+export interface TradeAbstractionOpenSpotLongResult {
+  object_type: "TradeAbstractionOpenSpotLongResult"
+  version: 1
+  base_asset: string
+  quote_asset: string
+  edge: string
+
+  trigger_price?: string
+  executed_price: string
+
+  created_stop_order: boolean
+  stop_price?: string
+
+  created_take_profit_order: boolean
+  take_profit_price?: string
+}
+
+export interface TradeAbstractionCloseSpotLongResult {
+  object_type: "TradeAbstractionCloseSpotLongResult"
+  version: 1
+  base_asset: string
+  quote_asset: string
+  edge: string
 }
 
 export interface TradeAbstractionCloseLongCommand {
@@ -76,9 +102,9 @@ export class TradeAbstractionService {
   // or signal_long
   // Spot so we can only be long or no-position
   async open_spot_long(
-    cmd: TradeAbstractionOpenLongCommand,
+    cmd: TradeAbstractionOpenSpotLongCommand,
     send_message: (msg: string) => void
-  ): Promise<object> {
+  ): Promise<TradeAbstractionOpenSpotLongResult> {
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
 
@@ -108,16 +134,32 @@ export class TradeAbstractionService {
     let trigger_price = cmd.trigger_price ? new BigNumber(cmd.trigger_price) : undefined
     let result = await this.spot_ee.open_position({ quote_asset: this.quote_asset, ...cmd, edge, trigger_price })
     this.send_message(
-      `Entered ${cmd.direction} position on ${cmd.edge}:${
-        cmd.base_asset
-      } at price ${result.executed_price.toFixed()}, created stop at ${result.stop_price.toFixed()}`
+      `Entered ${cmd.direction} position on ${cmd.edge}:${cmd.base_asset} at price ${result.executed_price}, created stop at ${result.stop_price}`
     )
-    return result
+
+    let created_stop_order: boolean = result.stop_order_id ? true : false
+    let created_take_profit_order: boolean = result.take_profit_order_id ? true : false
+
+    return {
+      object_type: "TradeAbstractionOpenSpotLongResult",
+      version: 1,
+      base_asset: result.base_asset,
+      quote_asset: result.quote_asset,
+      edge: result.edge,
+      created_stop_order,
+      created_take_profit_order,
+      stop_price: result.stop_price,
+      take_profit_price: result.take_profit_price,
+      executed_price: result.executed_price,
+    }
   }
 
   // or signal_short or signal_exit/close
   // Spot so we can only be long or no-position
-  async close_spot_long(cmd: TradeAbstractionCloseLongCommand, send_message: (msg: string) => void) {
+  async close_spot_long(
+    cmd: TradeAbstractionCloseLongCommand,
+    send_message: (msg: string) => void
+  ): Promise<TradeAbstractionCloseSpotLongResult> {
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "close")
     let edge: AuthorisedEdgeType = cmd.edge as AuthorisedEdgeType
@@ -125,8 +167,15 @@ export class TradeAbstractionService {
     this.logger.warn(`Position exit is not atomic with check for existing position`)
     try {
       if (await this.positions.in_position({ base_asset: cmd.base_asset, edge })) {
-        await this.spot_ee.close_position({ quote_asset: this.quote_asset, ...cmd, edge })
-        return // success
+        let result = await this.spot_ee.close_position({ quote_asset: this.quote_asset, ...cmd, edge })
+        // success
+        return {
+          object_type: "TradeAbstractionCloseSpotLongResult",
+          version: 1,
+          base_asset: result.base_asset,
+          quote_asset: result.quote_asset,
+          edge,
+        }
       }
     } catch (error) {
       // lower classes do send_message already

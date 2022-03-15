@@ -9,16 +9,18 @@ export class Logger {
     let args = {
       name: "bunyan_stream_name", // Required
       // level: <level name or number>,      // Optional, see "Levels" section
-      streams: [
-        {
-          stream: process.stderr,
-          level: "warn",
-        },
-        {
-          stream: process.stdout,
-          level: "info",
-        },
-      ],
+      // streams: [
+      //   {
+      //     stream: process.stderr,
+      //     level: "warn",
+      //   },
+      //   {
+      //     stream: process.stdout,
+      //     level: "info",
+      //   },
+      // ],
+      // src: true, // slow, not for production
+      // serializers: bunyan.stdSerializers,
       // serializers: <serializers mapping>, // Optional, see "Serializers" section
       // src: <boolean>,                     // Optional, see "src" section
 
@@ -41,6 +43,11 @@ export class Logger {
   error(...args: any[]) {
     if (!this.silent) {
       this.bunyan.error(...args)
+    }
+  }
+  fatal(...args: any[]) {
+    if (!this.silent) {
+      this.bunyan.fatal(...args)
     }
   }
   warn(...args: any[]) {

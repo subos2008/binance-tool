@@ -194,6 +194,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         CoinGeckoMarketData: market_data_for_symbol,
       },
     }
+    this.logger.info(JSON.stringify(event))
     const options = {
       // expiration: event_expiration_seconds,
       persistent: true,

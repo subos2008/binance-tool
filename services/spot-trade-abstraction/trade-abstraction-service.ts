@@ -5,7 +5,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-let disallowed_coins_for_entry = ["UST"]
+let disallowed_coins_for_entry = ["UST", "GBP", "USDT"]
 
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"

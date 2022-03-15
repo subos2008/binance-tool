@@ -164,7 +164,8 @@ export class Edge60SpotPositionsExecution {
       throw error
     }
 
-    return {
+    let res: SpotPositionExecutionOpenResult = {
+      object_type: "SpotPositionExecutionOpenResult",
       base_asset,
       quote_asset,
       edge,
@@ -174,5 +175,7 @@ export class Edge60SpotPositionsExecution {
       executed_price: executed_price.toFixed(),
       stop_price: stop_price.toFixed(),
     }
+    this.logger.info(res)
+    return res
   }
 }

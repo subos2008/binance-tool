@@ -153,7 +153,7 @@ export class TradeAbstractionService {
       take_profit_price: result.take_profit_price,
       executed_price: result.executed_price,
     }
-    this.logger.info(obj)
+    this.logger.info(JSON.stringify(obj))
     return obj
   }
 

@@ -28,6 +28,7 @@ import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-g
  */
 
 export interface SpotPositionExecutionOpenResult {
+  object_type: "SpotPositionExecutionOpenResult"
   base_asset: string
   quote_asset: string
   edge: string

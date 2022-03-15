@@ -105,6 +105,7 @@ export class TradeAbstractionService {
     cmd: TradeAbstractionOpenSpotLongCommand,
     send_message: (msg: string) => void
   ): Promise<TradeAbstractionOpenSpotLongResult> {
+    this.logger.info(cmd)
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
 
@@ -140,7 +141,7 @@ export class TradeAbstractionService {
     let created_stop_order: boolean = result.stop_order_id ? true : false
     let created_take_profit_order: boolean = result.take_profit_order_id ? true : false
 
-    return {
+    let obj: TradeAbstractionOpenSpotLongResult = {
       object_type: "TradeAbstractionOpenSpotLongResult",
       version: 1,
       base_asset: result.base_asset,
@@ -152,6 +153,8 @@ export class TradeAbstractionService {
       take_profit_price: result.take_profit_price,
       executed_price: result.executed_price,
     }
+    this.logger.info(obj)
+    return obj
   }
 
   // or signal_short or signal_exit/close

@@ -14,6 +14,7 @@ import {
   OrderContext_V1,
   SpotExecutionEngine,
   SpotLimitBuyCommand,
+  SpotMarketSellCommand,
   SpotOCOSellCommand,
 } from "../../exchanges/interfaces/spot-execution-engine"
 import { SpotPositionsPersistance } from "../../persistence/interface/spot-positions-persistance"
@@ -198,10 +199,21 @@ export class Edge61SpotPositionsExecution {
             oco_cmd.market_identifier.symbol
           } at ${stop_price.toFixed()}`
         )
+
+        /** If we failed to create the OCO order then dump the position */
+        this.logger.warn({ edge, base_asset }, `Failed to create OCO order, dumping position`)
+        let market_sell_cmd: SpotMarketSellCommand = {
+          order_context,
+          market_identifier,
+          base_amount: executed_base_quantity,
+        }
+        await this.ee.market_sell(market_sell_cmd)
+
         throw error
       }
 
-      return {
+      let res: SpotPositionExecutionOpenResult = {
+        object_type: "SpotPositionExecutionOpenResult",
         base_asset,
         quote_asset,
         edge,
@@ -214,6 +226,8 @@ export class Edge61SpotPositionsExecution {
         stop_price: stop_price.toFixed(),
         take_profit_price: take_profit_price.toFixed(),
       }
+      this.logger.info(JSON.stringify(res))
+      return res
     } catch (error) {
       Sentry.captureException(error)
       throw error

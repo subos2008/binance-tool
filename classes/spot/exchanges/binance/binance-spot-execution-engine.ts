@@ -137,14 +137,15 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     executed_base_quantity: BigNumber
   }> {
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
-    let result = await this.utils.create_limit_buy_order({
+    let result: Order = await this.utils.create_limit_buy_order({
       exchange_info: await this.get_exchange_info(),
       price: cmd.limit_price,
       pair: cmd.market_identifier.symbol,
       base_amount: cmd.base_amount,
       clientOrderId,
-      timeInForce: "IOC"
+      timeInForce: "IOC",
     })
+    this.logger.info(JSON.stringify({ object_type: "BinanceOrder", ...result }))
     if (result) {
       return {
         executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),

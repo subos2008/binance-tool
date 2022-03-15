@@ -31,6 +31,14 @@ export class RetriggerPrevention {
     let got_lock = await this.asyncSetNx(key, Date.now().toString())
     // expiry_timestamp is a unix timestamp in seconds
     this.redis.expireat(key, expiry_timestamp_seconds)
+    console.info(
+      JSON.stringify({
+        symbol,
+        edge: "edge61",
+        object_type: "GotRetriggerPreventionLock",
+        msg: `atomic_trigger_check_and_prevent got lock, expires at ${expiry_timestamp_seconds} seconds timestamp`,
+      })
+    )
     return got_lock ? true : false
   }
 }

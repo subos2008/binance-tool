@@ -89,7 +89,7 @@ class Edge60MessageProcessor implements MessageProcessor {
       channel.ack(event)
 
       let Body = event.content.toString()
-      this.logger.info(`Message Received: ${Body}`)
+      this.logger.info(Body)
       let signal: Edge60PositionEntrySignal = JSON.parse(Body)
       assert.equal(signal.version, "v1")
       assert.equal(signal.object_type, "Edge60EntrySignal")

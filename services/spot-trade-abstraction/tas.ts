@@ -19,7 +19,7 @@ Sentry.configureScope(function (scope: any) {
 var service_is_healthy: boolean = true
 
 import { Logger } from "../../interfaces/logger"
-const LoggerClass = require("../../lib/faux_logger")
+import { Logger as LoggerClass } from "../../lib/faux_logger"
 const logger: Logger = new LoggerClass({ silent: false })
 
 import { BigNumber } from "bignumber.js"
@@ -100,7 +100,7 @@ const order_context_persistence = new RedisOrderContextPersistance({ logger, red
 const binance_spot_ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
 const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
 const position_sizer = new FixedPositionSizer({ logger })
-const price_getter = new BinancePriceGetter({ee:binance_spot_ee.get_raw_binance_ee(), cache_timeout_ms: 400})
+const price_getter = new BinancePriceGetter({ ee: binance_spot_ee.get_raw_binance_ee(), cache_timeout_ms: 400 })
 const positions = new SpotPositionsQuery({
   logger,
   positions_persistance,
@@ -113,7 +113,7 @@ const spot_ee: SpotPositionsExecution = new SpotPositionsExecution({
   positions_persistance,
   ee: binance_spot_ee,
   send_message,
-  price_getter
+  price_getter,
 })
 let tas: TradeAbstractionService = new TradeAbstractionService({
   positions,

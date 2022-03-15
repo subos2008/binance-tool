@@ -143,6 +143,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       pair: cmd.market_identifier.symbol,
       base_amount: cmd.base_amount,
       clientOrderId,
+      timeInForce: "IOC"
     })
     if (result) {
       return {

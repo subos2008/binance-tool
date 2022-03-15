@@ -21,6 +21,7 @@ import {
   Order,
   OrderSide,
   OrderType,
+  TimeInForce_LT,
 } from "binance-api-node"
 import { Binance as BinanceType } from "binance-api-node"
 
@@ -172,12 +173,14 @@ export class AlgoUtils {
     base_amount,
     price,
     clientOrderId,
+    timeInForce,
   }: {
     exchange_info: ExchangeInfo
     pair: string
     base_amount: BigNumber
     price: BigNumber
     clientOrderId: string
+    timeInForce?: TimeInForce_LT
   }) {
     assert(pair && price && base_amount)
     assert(BigNumber.isBigNumber(base_amount))
@@ -195,6 +198,7 @@ export class AlgoUtils {
         quantity,
         price: price_string,
         newClientOrderId: clientOrderId,
+        timeInForce,
       }
       this.logger.info(`${pair} Creating LIMIT BUY ORDER for ${quantity} at ${price_string}`)
       let response = await this.ee.order(args)

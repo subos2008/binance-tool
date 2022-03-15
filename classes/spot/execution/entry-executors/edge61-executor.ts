@@ -131,7 +131,7 @@ export class Edge61SpotPositionsExecution {
         market_identifier,
         base_amount,
         limit_price,
-        order_type: "ioc",
+        timeInForce: "IOC",
       }
       let buy_result = await this.ee.limit_buy(cmd)
       let { executed_quote_quantity, executed_price, executed_base_quantity } = buy_result

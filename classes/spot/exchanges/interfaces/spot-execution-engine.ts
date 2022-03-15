@@ -31,7 +31,7 @@ export interface SpotLimitBuyCommand {
   market_identifier: MarketIdentifier_V3
   base_amount: BigNumber
   limit_price: BigNumber
-  order_type: "ioc"
+  timeInForce: "IOC"
 }
 
 export interface SpotMarketSellCommand {

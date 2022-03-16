@@ -130,7 +130,9 @@ class EventLogger implements MessageProcessor {
   orders: GenericOrderData[]
   */
       let { edge, percentage_quote_change, base_asset } = event
-      let msg: string = `Closed position on ${edge}:${base_asset} with percentage_quote_change of ${percentage_quote_change}%`
+      let msg: string = `Closed position on ${edge}:${base_asset} with percentage_quote_change of ${
+        percentage_quote_change ? new BigNumber(percentage_quote_change).dp(2).toFixed() : "unknown"
+      }%`
       this.send_message(msg)
     } catch (e) {
       console.log(e)
@@ -168,6 +170,7 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 
 import express, { Request, Response } from "express"
 import { SpotPositionClosedEvent_V1 } from "../../classes/spot/abstractions/spot-position-publisher"
+import { BigNumber } from "bignumber.js"
 var app = express()
 app.get("/health", function (req: Request, res: Response) {
   if (health_and_readiness.healthy()) res.send({ status: "OK" })

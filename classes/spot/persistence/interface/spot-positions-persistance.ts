@@ -97,7 +97,7 @@ export interface SpotPositionsPersistance {
    * so this is our not-over-architected way of storing an order_id that needs to be cancelled
    */
   set_stop_order(pi: SpotPositionIdentifier_V3, order_id: OrderId): Promise<void>
-  get_stop_order(pi: SpotPositionIdentifier_V3): Promise<OrderId>
+  get_stop_order(pi: SpotPositionIdentifier_V3): Promise<OrderId | undefined>
   /** end the edge61 variant */
   set_oco_order(pi: SpotPositionIdentifier_V3, order_id: OrderId): Promise<void>
   get_oco_order(pi: SpotPositionIdentifier_V3): Promise<OrderId>

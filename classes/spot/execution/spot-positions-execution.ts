@@ -196,7 +196,9 @@ export class SpotPositionsExecution {
 
     try {
       /** Cancel stop order if there is one */
-      let stop_order_id: OrderId | null = await this.positions_persistance.get_stop_order(spot_position_identifier)
+      let stop_order_id: OrderId | undefined = await this.positions_persistance.get_stop_order(
+        spot_position_identifier
+      )
 
       if (stop_order_id) {
         this.send_message(`${prefix} cancelling stop order ${stop_order_id} on ${symbol}`)

@@ -35,6 +35,7 @@ type _shared_v1 = {
   object_subtype: "SingleEntryExit" // simple trades with one entry order and one exit order
   version: 1
 
+  base_asset: string
   edge: AuthorisedEdgeType
 
   /** When the entry signal fired */

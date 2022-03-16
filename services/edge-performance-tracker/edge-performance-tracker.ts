@@ -129,8 +129,8 @@ class EventLogger implements MessageProcessor {
 
   orders: GenericOrderData[]
   */
-      let { edge, percentage_quote_change } = event
-      let msg: string = `Closed position on ${edge} with percentage_quote_change of ${percentage_quote_change}%`
+      let { edge, percentage_quote_change, base_asset } = event
+      let msg: string = `Closed position on ${edge}:${base_asset} with percentage_quote_change of ${percentage_quote_change}%`
       this.send_message(msg)
     } catch (e) {
       console.log(e)

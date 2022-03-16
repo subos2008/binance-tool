@@ -136,6 +136,7 @@ export class SpotPosition {
       object_subtype: "SingleEntryExit", // simple trades with one entry order and one exit order
       version: 1,
 
+      base_asset: this.base_asset,
       edge: o.edge,
 
       /** When the entry signal fired */
@@ -189,6 +190,7 @@ export class SpotPosition {
       object_subtype, //: "SingleEntryExit", // simple trades with one entry order and one exit order
       version: 1,
 
+      base_asset: this.base_asset,
       edge: o.edge,
 
       /** When the entry signal fired */

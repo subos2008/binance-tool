@@ -70,7 +70,6 @@ import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_exe
 import { BinanceOrderData } from "../../interfaces/order_callbacks"
 import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 import { Balance, Portfolio } from "../../interfaces/portfolio"
-import { RedisClient } from "redis"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 export class BinancePortfolioTracker implements PortfolioBitchClass {

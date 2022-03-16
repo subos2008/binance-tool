@@ -184,14 +184,9 @@ class PortfolioTracker implements MasterPortfolioClass {
       .toFixed()
     if (!portfolio.prices) throw new Error(`No prices`)
     portfolio.usd_value = portfolio_utils
-      .convert_base_to_quote_currency({
-        base_quantity: new BigNumber(portfolio.btc_value),
-        base_currency: "BTC",
-        quote_currency: "USDT",
-        prices: portfolio.prices,
-      })
-      .dp(0)
-      .toFixed()
+    .calculate_portfolio_value_in_quote_currency({ quote_currency: "BUSD", portfolio })
+    .total.dp(0)
+    .toFixed()
     return portfolio
   }
 }

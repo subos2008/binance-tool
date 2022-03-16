@@ -7,7 +7,7 @@
  */
 
 import { strict as assert } from "assert"
-const service_name = "edge61-performance-tracker"
+const service_name = "edge-performance-tracker"
 
 import { ListenerFactory } from "../../classes/amqp/listener-factory"
 

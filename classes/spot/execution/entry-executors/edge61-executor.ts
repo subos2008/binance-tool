@@ -136,18 +136,18 @@ export class Edge61SpotPositionsExecution {
       let buy_result = await this.ee.limit_buy(cmd)
       let { executed_quote_quantity, executed_price, executed_base_quantity } = buy_result
 
-      if (executed_base_quantity.isZero()) {
-        let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one. Entry slippage allowed ${edge_percentage_buy_limit}%`
-        this.logger.info(msg)
-        this.send_message(msg)
-        throw new Error(msg)
-      } else {
-        let msg = `${edge}:${
-          args.base_asset
-        } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
-        this.logger.info(msg)
-        this.send_message(msg)
-      }
+      // if (executed_base_quantity.isZero()) {
+      //   let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one. Entry slippage allowed ${edge_percentage_buy_limit}%`
+      //   this.logger.info(msg)
+      //   this.send_message(msg)
+      //   throw new Error(msg)
+      // } else {
+      let msg = `${edge}:${
+        args.base_asset
+      } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
+      this.logger.info(msg)
+      this.send_message(msg)
+      // }
 
       let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
       let stop_price = trigger_price.times(stop_price_factor)

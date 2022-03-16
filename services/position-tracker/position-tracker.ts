@@ -223,7 +223,7 @@ export class SpotPositionTracker {
         Sentry.captureException(error)
       }
       await this.spot_positions_persistance.delete_position(position.position_identifier)
-      this.send_message(`closed position: ${position.baseAsset} to ${quoteAsset}`)
+      this.send_message(`closed position: ${position.baseAsset} to ${quoteAsset} (${position.edge})`)
     }
   }
 }

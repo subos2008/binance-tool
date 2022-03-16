@@ -214,8 +214,11 @@ export class SpotPositionTracker {
           exit_quote_returned: generic_order_data.totalQuoteTradeQuantity, // how much quote did we get when liquidating the position
           exit_position_size: generic_order_data.totalBaseTradeQuantity, // base asset
         })
+        this.logger.info(JSON.stringify(event))
         await this.spot_position_publisher.publish_closed(event)
       } catch (error) {
+        this.send_message(`Failed to create/send SpotPositionClosed for: ${position.baseAsset} to ${quoteAsset}`)
+
         this.logger.error(error)
         Sentry.captureException(error)
       }

@@ -44,11 +44,11 @@ type _shared_v1 = {
 
   /** Executed entry */
   initial_entry_timestamp_ms: number
-  initial_entry_executed_price: string // average entry price (actual)
+  initial_entry_executed_price?: string // average entry price (actual)
   initial_entry_quote_asset: string
 
   /** Position size */
-  initial_entry_quote_invested: string
+  initial_entry_quote_invested?: string
   initial_entry_position_size: string // base asset
 
   /** Presumably just the entry order */
@@ -78,10 +78,10 @@ export interface SpotPositionClosedEvent_V1 extends _shared_v1 {
   exit_quote_returned: string // how much quote did we get when liquidating the position
   exit_position_size: string // base asset
 
-  total_quote_invested: string // same as initial_entry_quote_invested
+  total_quote_invested?: string // same as initial_entry_quote_invested
   total_quote_returned: string // same as exit_quote_returned
 
-  percentage_quote_change: number // use a float for this, it's not for real accounting
+  percentage_quote_change?: number // use a float for this, it's not for real accounting
 }
 
 export class SpotPositionPublisher {

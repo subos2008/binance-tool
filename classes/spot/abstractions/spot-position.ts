@@ -28,9 +28,9 @@ import { SpotPositionClosedEvent_V1, SpotPositionOpenedEvent_V1 } from "./spot-p
 export type SpotPositionObject = {
   initial_entry_timestamp: number
   position_size: BigNumber
-  initial_quote_invested: BigNumber
+  initial_quote_invested?: BigNumber
   initial_entry_quote_asset: string
-  initial_entry_price: BigNumber
+  initial_entry_price?: BigNumber
   initial_entry_position_size: BigNumber
   orders: GenericOrderData[]
   edge: AuthorisedEdgeType
@@ -145,11 +145,11 @@ export class SpotPosition {
 
       /** Executed entry */
       initial_entry_timestamp_ms: o.initial_entry_timestamp,
-      initial_entry_executed_price: o.initial_entry_price.toFixed(), // average entry price (actual)
+      initial_entry_executed_price: o.initial_entry_price?.toFixed(), // average entry price (actual)
       initial_entry_quote_asset: o.initial_entry_quote_asset,
 
       /** Position size */
-      initial_entry_quote_invested: o.initial_quote_invested.toFixed(),
+      initial_entry_quote_invested: o.initial_quote_invested?.toFixed(),
       initial_entry_position_size: o.initial_entry_position_size.toFixed(), // base asset
 
       /** Presumably just the entry order */
@@ -174,6 +174,16 @@ export class SpotPosition {
     exit_position_size: string
   }): Promise<SpotPositionClosedEvent_V1> {
     let o: SpotPositionObject = await this.describe_position()
+
+    let percentage_quote_change
+    if (o.initial_quote_invested) {
+      percentage_quote_change = new BigNumber(exit_quote_returned)
+        .minus(o.initial_quote_invested)
+        .dividedBy(o.initial_quote_invested)
+        .times(100)
+        .toNumber()
+    }
+
     let r: SpotPositionClosedEvent_V1 = {
       object_type: "SpotPositionClosed",
       object_subtype, //: "SingleEntryExit", // simple trades with one entry order and one exit order
@@ -188,11 +198,11 @@ export class SpotPosition {
 
       /** Executed entry */
       initial_entry_timestamp_ms: o.initial_entry_timestamp,
-      initial_entry_executed_price: o.initial_entry_price.toFixed(), // average entry price (actual)
+      initial_entry_executed_price: o.initial_entry_price?.toFixed(), // average entry price (actual)
       initial_entry_quote_asset: o.initial_entry_quote_asset,
 
       /** Position size */
-      initial_entry_quote_invested: o.initial_quote_invested.toFixed(),
+      initial_entry_quote_invested: o.initial_quote_invested?.toFixed(),
       initial_entry_position_size: o.initial_entry_position_size.toFixed(), // base asset
 
       /** Presumably just the entry order */
@@ -212,14 +222,10 @@ export class SpotPosition {
       exit_quote_returned, // how much quote did we get when liquidating the position
       exit_position_size, // base asset
 
-      total_quote_invested: o.initial_quote_invested.toFixed(), // same as initial_entry_quote_invested
+      total_quote_invested: o.initial_quote_invested?.toFixed(), // same as initial_entry_quote_invested
       total_quote_returned: exit_quote_returned, // same as exit_quote_returned
 
-      percentage_quote_change: new BigNumber(exit_quote_returned)
-        .minus(o.initial_quote_invested)
-        .dividedBy(o.initial_quote_invested)
-        .times(100)
-        .toNumber(), // use a float for this, it's not for real accounting
+      percentage_quote_change, // use a float for this, it's not for real accounting
     }
 
     return r

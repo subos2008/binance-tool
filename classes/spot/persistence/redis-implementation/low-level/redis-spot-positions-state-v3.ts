@@ -191,23 +191,61 @@ export class RedisSpotPositionsState {
   }
 
   async describe_position(pi: SpotPositionIdentifier_V3): Promise<SpotPositionObject> {
-    console.warn(`describe_position implementation is shit`)
-    return {
-      position_size: await this.get_position_size(pi),
-      initial_entry_price: await this.get_initial_entry_price(pi),
-      initial_entry_position_size: await this.get_initial_entry_position_size(pi),
-      initial_entry_quote_asset: await this.get_initial_entry_quote_asset(pi),
-      initial_quote_invested: await this.get_initial_quote_invested(pi),
-      initial_entry_timestamp: await this.get_initial_entry_timestamp(pi),
-      orders: await this.get_orders(pi),
-      edge: (await this.get_edge(pi)) as AuthorisedEdgeType,
-      stop_order_id: await this.get_stop_order(pi),
+    let position_size,
+      initial_entry_price,
+      initial_entry_position_size,
+      initial_entry_quote_asset,
+      initial_quote_invested,
+      initial_entry_timestamp,
+      orders,
+      edge,
+      stop_order_id
+
+    position_size = await this.get_position_size(pi)
+    initial_entry_position_size = await this.get_initial_entry_position_size(pi)
+    initial_entry_quote_asset = await this.get_initial_entry_quote_asset(pi)
+    initial_entry_timestamp = await this.get_initial_entry_timestamp(pi)
+    orders = await this.get_orders(pi)
+    edge = (await this.get_edge(pi)) as AuthorisedEdgeType
+
+    try {
+      initial_entry_price = await this.get_initial_entry_price(pi)
+    } catch (e) {
+      /* nop */
     }
+
+    try {
+      initial_quote_invested = await this.get_initial_quote_invested(pi)
+    } catch (e) {
+      /* nop */
+    }
+
+    try {
+      stop_order_id = await this.get_stop_order(pi)
+    } catch (e) {
+      /* nop */
+    }
+
+    let res = {
+      object_type: "SpotPositionObject",
+      position_size,
+      initial_entry_price,
+      initial_entry_position_size,
+      initial_entry_quote_asset,
+      initial_quote_invested,
+      initial_entry_timestamp,
+      orders,
+      edge,
+      stop_order_id,
+    }
+
+    this.logger.info(JSON.stringify(res))
+
+    return res
   }
 
-  async create_new_position(
-    pi: SpotPositionIdentifier_V3,
-    {
+  async create_new_position(pi: SpotPositionIdentifier_V3, spid: SpotPositionInitialisationData) {
+    let {
       position_size,
       initial_entry_price,
       initial_quote_invested,
@@ -215,8 +253,8 @@ export class RedisSpotPositionsState {
       initial_entry_timestamp,
       orders,
       edge,
-    }: SpotPositionInitialisationData
-  ) {
+    } = spid
+
     try {
       assert(initial_quote_invested.isPositive())
       await this.add_orders(pi, orders)

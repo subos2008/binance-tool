@@ -93,7 +93,7 @@ export class PortfolioPublisher {
   async publish(event: Portfolio): Promise<void> {
     // Extract only those fields we want to publish
     let trimmed_event: Portfolio = {
-      object_type: "Portfolio",
+      object_type: "SpotBinancePortfolio",
       usd_value: event.usd_value,
       btc_value: event.btc_value,
       balances: event.balances,

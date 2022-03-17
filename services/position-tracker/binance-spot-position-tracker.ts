@@ -53,7 +53,7 @@ import { HealthAndReadiness } from "../../classes/health_and_readiness"
 let order_execution_tracker: OrderExecutionTracker | null = null
 
 class MyOrderCallbacks implements OrderCallbacks {
-  send_message: Function
+  send_message: SendMessageFunc
   logger: Logger
   position_tracker: SpotPositionTracker
   exchange_info: ExchangeInfo
@@ -64,7 +64,7 @@ class MyOrderCallbacks implements OrderCallbacks {
     position_tracker,
     exchange_info,
   }: {
-    send_message: (msg: string) => void
+    send_message: SendMessageFunc
     logger: Logger
     position_tracker: SpotPositionTracker
     exchange_info: ExchangeInfo

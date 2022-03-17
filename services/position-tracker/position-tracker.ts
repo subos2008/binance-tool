@@ -24,6 +24,7 @@ import {
   SpotPositionOpenedEvent_V1,
   SpotPositionPublisher,
 } from "../../classes/spot/abstractions/spot-position-publisher"
+import { SendMessageFunc } from "../../lib/telegram-v2"
 
 type check_func = ({
   volume,
@@ -36,7 +37,7 @@ type check_func = ({
 }) => boolean
 
 export class SpotPositionTracker {
-  send_message: Function
+  send_message: SendMessageFunc
   logger: Logger
   position_publisher: PositionPublisher
   close_position_check_func: check_func
@@ -55,7 +56,7 @@ export class SpotPositionTracker {
     spot_positions_persistance,
     health_and_readiness,
   }: {
-    send_message: (msg: string) => void
+    send_message: SendMessageFunc
     logger: Logger
     redis: RedisClient
     close_position_check_func: check_func
@@ -65,7 +66,6 @@ export class SpotPositionTracker {
   }) {
     assert(logger, "logger not set")
     this.logger = logger
-    assert(send_message, "send_message not set")
     this.send_message = send_message
     this.spot_positions_query = spot_positions_query
     this.position_publisher = new PositionPublisher({
@@ -192,7 +192,7 @@ export class SpotPositionTracker {
       // .. really? Can't we use current price as a backup? ..
       let msg = `averageExecutionPrice not supplied, unable to determine if ${baseAsset} position should be closed.`
       Sentry.captureMessage(msg)
-      this.send_message(msg)
+      this.send_message(msg, { edge })
       return
     }
 
@@ -217,14 +217,15 @@ export class SpotPositionTracker {
         this.logger.info(JSON.stringify(event))
         await this.spot_position_publisher.publish_closed(event)
       } catch (error) {
-        this.send_message(`Failed to create/send SpotPositionClosed for: ${position.baseAsset} to ${quoteAsset}`)
+        this.send_message(`Failed to create/send SpotPositionClosed for: ${position.baseAsset} to ${quoteAsset}`, {
+          edge,
+        })
 
         this.logger.error(error)
         Sentry.captureException(error)
       }
       await this.spot_positions_persistance.delete_position(position.position_identifier)
-      let edge : AuthorisedEdgeType = await position.edge()
-      this.send_message(`closed position: ${position.baseAsset} to ${quoteAsset} (${edge})`)
+      this.send_message(`closed position: ${position.baseAsset} to ${quoteAsset} (${edge})`, { edge })
     }
   }
 }

@@ -144,13 +144,14 @@ export class SpotPositionsExecution {
     trigger_price?: BigNumber
   }): Promise<SpotPositionExecutionOpenResult> {
     args.edge = check_edge(args.edge)
+    let { edge } = args
 
     /**
      * Check if already in a position
      */
     if (await this.in_position(args)) {
       let msg = `Already in position on ${args.edge}:${args.base_asset}`
-      this.send_message(msg)
+      this.send_message(msg, { edge })
       throw new Error(msg)
     }
 
@@ -161,7 +162,7 @@ export class SpotPositionsExecution {
         return this.edge61_executor.open_position(args)
       default:
         let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
-        this.send_message(msg)
+        this.send_message(msg, { edge })
         throw new Error(msg)
     }
   }
@@ -201,7 +202,7 @@ export class SpotPositionsExecution {
       )
 
       if (stop_order_id) {
-        this.send_message(`${prefix} cancelling stop order ${stop_order_id} on ${symbol}`)
+        this.send_message(`${prefix} cancelling stop order ${stop_order_id} on ${symbol}`, { edge })
         await this.ee.cancel_order({
           order_id: stop_order_id,
           symbol,
@@ -209,14 +210,14 @@ export class SpotPositionsExecution {
       } else {
         let msg = `${prefix} No stop order found`
         this.logger.info(msg)
-        this.send_message(msg)
+        this.send_message(msg, { edge })
       }
     } catch (error) {
       let msg = `Failed to cancel stop order on ${symbol} - was it cancelled manually?`
       this.logger.warn(msg)
       this.logger.warn(error)
       Sentry.captureException(error)
-      this.send_message(msg)
+      this.send_message(msg, { edge })
     }
 
     try {
@@ -224,7 +225,7 @@ export class SpotPositionsExecution {
       let oco_order_id: OrderId | null = await this.positions_persistance.get_oco_order(spot_position_identifier)
 
       if (oco_order_id) {
-        this.send_message(`${prefix} cancelling oco order ${oco_order_id} on ${symbol}`)
+        this.send_message(`${prefix} cancelling oco order ${oco_order_id} on ${symbol}`, { edge })
         await this.ee.cancel_oco_order({
           order_id: oco_order_id,
           symbol,
@@ -232,14 +233,14 @@ export class SpotPositionsExecution {
       } else {
         let msg = `${prefix} No oco order found`
         this.logger.info(msg)
-        this.send_message(msg)
+        this.send_message(msg, { edge })
       }
     } catch (error) {
       let msg = `Failed to cancel oco order on ${symbol} - was it cancelled manually?`
       this.logger.warn(msg)
       this.logger.warn(error)
       Sentry.captureException(error)
-      this.send_message(msg)
+      this.send_message(msg, { edge })
     }
 
     // Continue even if the attempt to cancel the stop/oco orders fails
@@ -261,7 +262,7 @@ export class SpotPositionsExecution {
       this.logger.warn(msg)
       this.logger.warn(error)
       Sentry.captureException(error)
-      this.send_message(msg)
+      this.send_message(msg, { edge })
       throw error
     }
   }

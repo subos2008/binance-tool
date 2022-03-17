@@ -103,7 +103,7 @@ export class TradeAbstractionService {
   // Spot so we can only be long or no-position
   async open_spot_long(
     cmd: TradeAbstractionOpenSpotLongCommand,
-    send_message: (msg: string) => void
+    send_message: SendMessageFunc
   ): Promise<TradeAbstractionOpenSpotLongResult> {
     this.logger.info(cmd)
     assert.equal(cmd.direction, "long")
@@ -128,14 +128,15 @@ export class TradeAbstractionService {
     if (existing_spot_position_size.isGreaterThan(0)) {
       let msg = `Already in long spot position on ${cmd.base_asset}:${edge}, skipping`
       this.logger.warn(msg)
-      send_message(msg)
+      send_message(msg, { edge })
       throw new Error(msg) // turn this into a 3xx or 4xx
     }
 
     let trigger_price = cmd.trigger_price ? new BigNumber(cmd.trigger_price) : undefined
     let result = await this.spot_ee.open_position({ quote_asset: this.quote_asset, ...cmd, edge, trigger_price })
     this.send_message(
-      `Entered ${cmd.direction} position on ${cmd.edge}:${cmd.base_asset} at price ${result.executed_price}, created stop at ${result.stop_price}`
+      `Entered ${cmd.direction} position on ${cmd.edge}:${cmd.base_asset} at price ${result.executed_price}, created stop at ${result.stop_price}`,
+      { edge }
     )
 
     let created_stop_order: boolean = result.stop_order_id ? true : false
@@ -161,7 +162,7 @@ export class TradeAbstractionService {
   // Spot so we can only be long or no-position
   async close_spot_long(
     cmd: TradeAbstractionCloseLongCommand,
-    send_message: (msg: string) => void
+    send_message: SendMessageFunc
   ): Promise<TradeAbstractionCloseSpotLongResult> {
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "close")

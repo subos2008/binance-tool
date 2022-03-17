@@ -12,6 +12,7 @@ export type SendMessageFunc = (msg: string, tags?: ContextTags) => Promise<void>
 
 export interface ContextTags {
   edge?: string | AuthorisedEdgeType
+  base_asset?: string
 }
 export class SendMessage {
   service_name: string

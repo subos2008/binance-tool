@@ -108,8 +108,8 @@ export class Edge60SpotPositionsExecution {
      * Check if already in a position
      */
     if (await this.in_position(args)) {
-      let msg = `Already in position on ${args.edge}:${args.base_asset}`
-      this.send_message(msg)
+      let msg = `Already in position on ${edge}:${base_asset}`
+      this.send_message(msg, { edge, base_asset })
       throw new Error(msg)
     }
 
@@ -119,7 +119,10 @@ export class Edge60SpotPositionsExecution {
      * Create sell order at the stop price for any amount that was executed for the buy
      */
 
-    this.send_message(`Opening Spot position ${args.edge}:${args.base_asset} using ${args.quote_asset}`)
+    this.send_message(`Opening Spot position ${args.edge}:${args.base_asset} using ${args.quote_asset}`, {
+      edge,
+      base_asset,
+    })
 
     let quote_amount = await this.position_sizer.position_size_in_quote_asset(args)
     let order_context: OrderContext_V1 = { edge: args.edge, object_type: "OrderContext", version: 1 }
@@ -159,7 +162,8 @@ export class Edge60SpotPositionsExecution {
       this.send_message(
         `Failed to create stop limit order for ${args.edge}:${args.base_asset} on ${
           stop_cmd.market_identifier.symbol
-        } at ${stop_price.toFixed()}`
+        } at ${stop_price.toFixed()}`,
+        { edge, base_asset }
       )
       throw error
     }

@@ -199,9 +199,11 @@ export class AlgoUtils {
         price: price_string,
         newClientOrderId: clientOrderId,
         timeInForce,
+        newOrderRespType: "RESULT",
       }
       this.logger.info(`${pair} Creating LIMIT BUY ORDER for ${quantity} at ${price_string}`)
       let response = await this.ee.order(args)
+      this.logger.info(JSON.stringify({ ...response, object_type: "BinanceOrder" }))
       this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response

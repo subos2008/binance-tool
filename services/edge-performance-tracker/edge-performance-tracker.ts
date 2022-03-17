@@ -51,7 +51,7 @@ class EventLogger implements MessageProcessor {
     logger,
     health_and_readiness,
   }: {
-    send_message: (msg: string) => void
+    send_message: SendMessageFunc
     logger: Logger
     health_and_readiness: HealthAndReadiness
   }) {
@@ -133,7 +133,7 @@ class EventLogger implements MessageProcessor {
       let msg: string = `Closed position on ${edge}:${base_asset} with percentage_quote_change of ${
         percentage_quote_change ? new BigNumber(percentage_quote_change).dp(2).toFixed() : "unknown"
       }%`
-      this.send_message(msg)
+      this.send_message(msg, { edge })
     } catch (e) {
       console.log(e)
       Sentry.captureException(e)

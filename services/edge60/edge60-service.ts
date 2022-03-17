@@ -60,6 +60,8 @@ const edge60_parameters: Edge60Parameters = {
   days_of_price_history: 22,
 }
 
+let edge = "edge60"
+
 class Edge60Service implements Edge60EntrySignalsCallbacks {
   edges: { [Key: string]: Edge60EntrySignals } = {}
   candles_collector: CandlesCollector
@@ -87,7 +89,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     this.ee = ee
     this.logger = logger
     this.send_message = send_message
-    this.send_message("service re-starting")
+    this.send_message("service re-starting", { edge })
     this.direction_persistance = direction_persistance
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
   }
@@ -118,13 +120,14 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       Sentry.captureException(e)
     }
     let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
-    
+
     let previous_direction = await this.direction_persistance.get_direction(base_asset)
     this.direction_persistance.set_direction(base_asset, direction)
 
     if (previous_direction === null) {
       this.send_message(
-        `possible ${direction_string} entry signal on ${symbol} - check manually if this is a trend reversal.`
+        `possible ${direction_string} entry signal on ${symbol} - check manually if this is a trend reversal.`,
+        { edge }
       )
       return
     }
@@ -136,7 +139,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         let days = edge60_parameters.days_of_price_history
         let msg = `trend reversal ${direction_string} entry signal on ${symbol} at ${days}d price ${entry_price.toFixed()}. ${market_data_string}`
         this.logger.info({ signal: "entry", direction, symbol }, msg)
-        this.send_message(msg)
+        this.send_message(msg, { edge })
       } catch (e) {
         this.logger.warn(`Failed to publish to telegram for ${symbol}`)
         // This can happen if top 100 changes since boot and we refresh the cap list
@@ -305,7 +308,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     }
     let valid_symbols = Object.keys(this.edges)
     this.logger.info(`Edges initialised for ${valid_symbols.length} symbols.`)
-    this.send_message(`initialised for ${valid_symbols.length} symbols.`)
+    this.send_message(`initialised for ${valid_symbols.length} symbols.`, { edge })
 
     this.close_1d_candle_ws = this.ee.ws.candles(valid_symbols, "1d", (candle) => {
       let symbol = candle.symbol

@@ -50,11 +50,9 @@ spec:
           env:
             - name: SENTRY_DSN
               value: "https://45e180eb17ab46aeb9a9bc5b20c9759f@o369902.ingest.sentry.io/6229578"
-{{- include "telegram.vars" . | nindent 12 }}
-            - name: TELEGRAM_CHAT_ID
-              value: 682031175
 {{- include "binance.vars" . | nindent 12 }}
 {{- include "datadog.vars" . | nindent 12 }}
+{{- include "telegram.vars" . | nindent 12 }}
 {{- include "amqp.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}
 ---

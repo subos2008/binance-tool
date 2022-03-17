@@ -109,7 +109,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       market_data_for_symbol = await this.market_data_for_symbol(symbol)
       if (market_data_for_symbol) {
         market_data_string = `RANK: ${market_data_for_symbol.market_cap_rank}, MCAP: ${humanNumber(
-          market_data_for_symbol.market_cap
+          new BigNumber(market_data_for_symbol.market_cap).sd(2).toFixed()
         )}`
       }
     } catch (e) {

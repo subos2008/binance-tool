@@ -62,6 +62,8 @@ const edge61_parameters: Edge61Parameters = {
   days_of_price_history: 22,
 }
 
+let edge = "edge61"
+
 class Edge61Service implements LongShortEntrySignalsCallbacks {
   edges: { [Key: string]: Edge61EntrySignals } = {}
   candles_collector: CandlesCollector
@@ -78,7 +80,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     this.ee = ee
     this.logger = logger
     this.send_message = send_message
-    this.send_message("service re-starting")
+    this.send_message("service re-starting", { edge })
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
   }
 
@@ -106,7 +108,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
       let trigger_to_signal_slippage = signal_price.minus(trigger_price).dividedBy(trigger_price).times(100).dp(1)
       let msg = `${direction_string} entry signal on ${symbol} at ${days}d price. trigger: ${trigger_price.toFixed()}, signal: ${signal_price.toFixed()} trigger to signal slippage ${trigger_to_signal_slippage}%. ${market_data_string}`
       this.logger.info({ signal: "entry", direction, symbol }, msg)
-      this.send_message(msg)
+      this.send_message(msg, { edge })
     } catch (e) {
       this.logger.warn(`Failed to publish to telegram for ${symbol}`)
       // This can happen if top 100 changes since boot and we refresh the cap list
@@ -289,7 +291,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     }
     let valid_symbols = Object.keys(this.edges)
     this.logger.info(`Edges initialised for ${valid_symbols.length} symbols.`)
-    this.send_message(`initialised for ${valid_symbols.length} symbols.`)
+    this.send_message(`initialised for ${valid_symbols.length} symbols.`, { edge })
 
     this.close_1d_candle_ws = this.ee.ws.candles(valid_symbols, "1d", (candle: Candle) => {
       let symbol = candle.symbol

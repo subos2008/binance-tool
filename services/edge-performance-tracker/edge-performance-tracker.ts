@@ -124,7 +124,7 @@ async function main() {
   execSync("date -u")
 
   const redis_health_and_readiness = health_and_readiness.addSubsystem({
-    name: "global",
+    name: "redis",
     ready: true,
     healthy: true,
   })

@@ -12,7 +12,6 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../../../../interfaces/logger"
 import { TradingRules } from "../../../../../lib/trading_rules"
 import Sentry from "../../../../../lib/sentry"
-import { CaptureContext } from "@sentry/node"
 import {
   ExchangeInfo,
   NewOcoOrder,

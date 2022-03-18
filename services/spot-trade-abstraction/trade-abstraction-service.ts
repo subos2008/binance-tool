@@ -154,7 +154,7 @@ export class TradeAbstractionService {
     let trigger_price = cmd.trigger_price ? new BigNumber(cmd.trigger_price) : undefined
     let result = await this.spot_ee.open_position({ quote_asset: this.quote_asset, ...cmd, edge, trigger_price })
     this.send_message(
-      `${cmd.edge}:${cmd.base_asset} ${cmd.direction} ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}`,
+      `${cmd.edge}:${cmd.base_asset} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}`,
       { edge }
     )
 

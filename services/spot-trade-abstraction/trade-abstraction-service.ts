@@ -41,6 +41,7 @@ export interface TradeAbstractionOpenSpotLongResult {
     | "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill
     | "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
     | "SUCCESS" // full or partial entry, all good
+    | "ALREADY_IN_POSITION" // Didn't enter because already in this position
 
   trigger_price?: string
   executed_price?: string // null if nothing bought
@@ -131,16 +132,29 @@ export class TradeAbstractionService {
     })
 
     if (existing_spot_position_size.isGreaterThan(0)) {
-      let msg = `Already in long spot position on ${cmd.base_asset}:${edge}, skipping`
+      let msg = `${cmd.base_asset}:${edge} already in long spot position, skipping.`
       this.logger.warn(msg)
       send_message(msg, { edge })
-      throw new Error(msg) // turn this into a 3xx or 4xx
+
+      // turn this into a 3xx or 4xx
+      let obj: TradeAbstractionOpenSpotLongResult = {
+        object_type: "TradeAbstractionOpenSpotLongResult",
+        version: 1,
+        base_asset: cmd.base_asset,
+        quote_asset: this.quote_asset,
+        edge,
+        created_stop_order: false,
+        created_take_profit_order: false,
+        status: "ALREADY_IN_POSITION",
+      }
+      this.logger.info(JSON.stringify(obj))
+      return obj
     }
 
     let trigger_price = cmd.trigger_price ? new BigNumber(cmd.trigger_price) : undefined
     let result = await this.spot_ee.open_position({ quote_asset: this.quote_asset, ...cmd, edge, trigger_price })
     this.send_message(
-      `Entered ${cmd.direction} position on ${cmd.edge}:${cmd.base_asset} at price ${result.executed_price}, created stop at ${result.stop_price}`,
+      `${cmd.edge}:${cmd.base_asset} ${cmd.direction} ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}`,
       { edge }
     )
 

@@ -40,6 +40,7 @@ import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 import {
   TradeAbstractionCloseLongCommand,
   TradeAbstractionOpenSpotLongCommand,
+  TradeAbstractionOpenSpotLongResult,
   TradeAbstractionService,
 } from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
@@ -152,8 +153,21 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       base_asset,
       trigger_price,
     }
-    let json = await tas.open_spot_long(cmd, send_message)
-    res.status(200).json(json)
+    let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd, send_message)
+    switch (result.status) {
+      case "SUCCESS":
+        res.status(201).json(result) // 201: Created
+        break
+      case "ALREADY_IN_POSITION":
+        res.status(409).json(result) // 409: Conflict
+        break
+      default:
+        Sentry.captureException(new Error(`Oops, don't know how to map ${result.status} to an http return code!`))
+      case "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS":
+      case "ENTRY_FAILED_TO_FILL":
+        res.status(200).json(result) // 200: Success... but not 201, so not actually created
+        break
+    }
   } catch (error: any) {
     if ((error.message = ~/UnauthorisedEdge/)) {
       res.status(403)

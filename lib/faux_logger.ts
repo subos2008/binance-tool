@@ -1,6 +1,7 @@
 var bunyan = require("bunyan")
 
-export class Logger {
+import { Logger as LoggerInterface } from "../interfaces/logger"
+export class Logger implements LoggerInterface {
   silent: boolean
   bunyan: any
   constructor({ silent, template }: { silent: boolean; template?: object } = { silent: false, template: {} }) {
@@ -30,6 +31,11 @@ export class Logger {
     this.bunyan = bunyan.createLogger({ ...args, ...template })
   }
 
+  object(obj: any) {
+    if (!this.silent) {
+      this.bunyan.info(JSON.stringify(obj))
+    }
+  }
   info(...args: any[]) {
     if (!this.silent) {
       this.bunyan.info(...args)

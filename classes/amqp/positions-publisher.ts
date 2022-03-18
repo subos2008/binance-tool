@@ -54,6 +54,7 @@ export class PositionPublisher {
     if (!this.connection) await this.connect()
     event.object_type = "NewPositionEvent"
     let msg = JSON.stringify(event)
+    this.logger.object(event)
     const options = {
       expiration: event_expiration_seconds,
       persistent: false,

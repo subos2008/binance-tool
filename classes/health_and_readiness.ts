@@ -1,8 +1,9 @@
 import { Logger } from "../interfaces/logger"
+import { SendMessageFunc } from "../lib/telegram-v2"
 
 export class HealthAndReadinessSubsystem {
   logger: Logger
-  send_message: (msg: string) => void
+  send_message: SendMessageFunc
   private _ready: boolean
   private _healthy: boolean
   parent: HealthAndReadiness
@@ -18,7 +19,7 @@ export class HealthAndReadinessSubsystem {
   }: {
     parent: HealthAndReadiness
     logger: Logger
-    send_message: (msg: string) => void
+    send_message: SendMessageFunc
     name: string
     healthy: boolean
     ready: boolean
@@ -36,9 +37,17 @@ export class HealthAndReadinessSubsystem {
     if (typeof value === "undefined") return this._ready
     if (value != this._ready) {
       if (value) {
-        this.logger.info(`Subsystem ${this.name} became ready`)
+        this.logger.info(
+          { class: "HealthAndReadiness", subsystem: this.name, transition: "ready" },
+          `Subsystem ${this.name} became ready`
+        )
+        this._ready = value
       } else {
-        this.logger.warn(`Subsystem ${this.name} became ${value ? `ready` : `not ready`}`)
+        let transition = value ? `ready` : `not ready`
+        this.logger.warn(
+          { class: "HealthAndReadiness", subsystem: this.name, transition },
+          `Subsystem ${this.name} became ${transition}`
+        )
       }
     }
     return this._ready
@@ -54,7 +63,7 @@ export class HealthAndReadinessSubsystem {
         this.logger.warn(`Subsystem ${this.name} became ${value ? `healthy` : `not healthy`}`)
       }
       try {
-        if (!value) this.send_message(`subsystem ${this.name} became unhealthy`)
+        if (!value) this.send_message(`subsystem ${this.name} became unhealthy`, { class: "HealthAndReadiness" })
       } catch (e) {
         this.logger.error(`unable to send_message to report service as going unhealthy`)
       }
@@ -65,10 +74,10 @@ export class HealthAndReadinessSubsystem {
 
 export class HealthAndReadiness {
   logger: Logger
-  send_message: (msg: string) => void
+  send_message: SendMessageFunc
   subsystems: { [id: string]: HealthAndReadinessSubsystem } = {}
 
-  constructor({ logger, send_message }: { logger: Logger; send_message: (msg: string) => void }) {
+  constructor({ logger, send_message }: { logger: Logger; send_message: SendMessageFunc }) {
     this.logger = logger
     this.send_message = send_message || logger.info.bind(logger)
   }

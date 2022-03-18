@@ -196,11 +196,10 @@ export class Edge61SpotPositionsExecution {
       try {
         let oco_result = await this.ee.oco_sell_order(oco_cmd)
       } catch (error) {
+        this.logger.warn(error)
         Sentry.captureException(error)
         this.send_message(
-          `Failed to create oco order for ${edge}:${args.base_asset} on ${
-            oco_cmd.market_identifier.symbol
-          } at ${stop_price.toFixed()}`,
+          `Failed to create oco order for ${edge}:${args.base_asset} on ${oco_cmd.market_identifier.symbol}: ${error}`,
           { edge, base_asset }
         )
 

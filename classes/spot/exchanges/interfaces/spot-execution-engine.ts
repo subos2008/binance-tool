@@ -27,6 +27,7 @@ export interface SpotMarketBuyByQuoteQuantityCommand {
 }
 
 export interface SpotLimitBuyCommand {
+  object_type: "SpotLimitBuyCommand"
   order_context: OrderContext_V1
   market_identifier: MarketIdentifier_V3
   base_amount: BigNumber
@@ -48,6 +49,7 @@ export interface SpotStopMarketSellCommand {
 }
 
 export interface SpotOCOSellCommand {
+  object_type: "SpotOCOSellCommand"
   order_context: OrderContext_V1
   market_identifier: MarketIdentifier_V3
   base_amount: BigNumber
@@ -73,7 +75,7 @@ export interface SpotExecutionEngine {
   // Generate a suitable clientOrderId for the exchange
   store_order_context_and_generate_clientOrderId(
     order_context: OrderContext_V1
-  ): Promise<{ clientOrderId: string }> 
+  ): Promise<{ clientOrderId: string }>
 
   market_buy_by_quote_quantity(
     args: SpotMarketBuyByQuoteQuantityCommand

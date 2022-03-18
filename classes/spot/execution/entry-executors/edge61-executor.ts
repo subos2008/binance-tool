@@ -130,6 +130,7 @@ export class Edge61SpotPositionsExecution {
       )
       let base_amount = quote_amount.dividedBy(limit_price)
       let cmd: SpotLimitBuyCommand = {
+        object_type: "SpotLimitBuyCommand",
         order_context,
         market_identifier,
         base_amount,
@@ -182,6 +183,7 @@ export class Edge61SpotPositionsExecution {
       await this.positions_persistance.set_oco_order(spot_position_identifier, oco_list_ClientOrderId)
 
       let oco_cmd: SpotOCOSellCommand = {
+        object_type: "SpotOCOSellCommand",
         order_context,
         market_identifier: cmd.market_identifier,
         base_amount: executed_base_quantity,

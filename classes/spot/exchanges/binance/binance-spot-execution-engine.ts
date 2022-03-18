@@ -136,6 +136,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     executed_price: BigNumber
     executed_base_quantity: BigNumber
   }> {
+    this.logger.object(cmd)
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let result: Order = await this.utils.create_limit_buy_order({
       exchange_info: await this.get_exchange_info(),
@@ -145,7 +146,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       clientOrderId,
       timeInForce: "IOC",
     })
-    this.logger.info(JSON.stringify({ object_type: "BinanceOrder", ...result }))
+    this.logger.object({ object_type: "BinanceOrder", ...result })
     if (result) {
       return {
         executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
@@ -220,6 +221,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
   }
 
   async oco_sell_order(cmd: SpotOCOSellCommand): Promise<void> {
+    this.logger.object(cmd)
     let { stop_ClientOrderId, take_profit_ClientOrderId, oco_list_ClientOrderId } = cmd
 
     let order: OcoOrder | undefined = await this.utils.munge_and_create_oco_order({
@@ -246,6 +248,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
      *     orderReports: Order[]
      * }
      */
+    this.logger.object({ object_type: "BinanceOrder", ...order })
     if (order && order.listClientOrderId) {
       // looks like success
       return

@@ -48,7 +48,6 @@ const BinanceFoo = require("binance-api-node").default
 import { Binance } from "binance-api-node"
 import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData } from "../../interfaces/order_callbacks"
-import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 let order_execution_tracker: OrderExecutionTracker | null = null
@@ -100,6 +99,17 @@ class MyOrderCallbacks {
       : "(null)"
     this.send_message(
       `${data.symbol} ${data.orderType} ${data.side} filled at ${price}/${averageExecutionPrice}  (edge: ${data.edge})`
+    )
+  }
+
+  async order_expired(data: BinanceOrderData): Promise<void> {
+    let price: string = data.price ? new BigNumber(data.price).toFixed() : "(null)"
+    let averageExecutionPrice: string = data.averageExecutionPrice
+      ? new BigNumber(data.averageExecutionPrice).toFixed()
+      : "(null)"
+      let executedAmount = new BigNumber(data.totalTradeQuantity).isZero() ? 0 : data.totalTradeQuantity
+    this.send_message(
+      `${data.symbol} ${data.orderType} ${data.side} EXPIRED at ${price}/${averageExecutionPrice}, executed amount ${executedAmount} (edge: ${data.edge})`
     )
   }
 }

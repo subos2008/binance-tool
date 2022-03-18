@@ -30,6 +30,7 @@ import { AuthorisedEdgeType } from "../classes/spot/abstractions/position-identi
 import { OrderContext_V1 } from "../classes/spot/exchanges/interfaces/spot-execution-engine"
 import { BinanceOrderType } from "./exchange/binance/spot-orders"
 
+// Where the fuck is executedQuoteQuant?
 export interface BinanceOrderData {
   object_type: "BinanceOrderData"
   version: 1

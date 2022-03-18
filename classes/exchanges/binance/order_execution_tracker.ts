@@ -238,6 +238,7 @@ export class OrderExecutionTracker {
       }
 
       // EXPIRED can happen on OCO orders when the other side hits or if a token is de-listed
+      // Can also happen on IOC limit buys, used to prevent slippage on entry
       if (orderStatus === "EXPIRED") {
         if (this.order_callbacks && this.order_callbacks.order_expired)
           await this.order_callbacks.order_expired(data)

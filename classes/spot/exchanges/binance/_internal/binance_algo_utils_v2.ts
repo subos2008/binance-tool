@@ -12,6 +12,7 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../../../../interfaces/logger"
 import { TradingRules } from "../../../../../lib/trading_rules"
 import Sentry from "../../../../../lib/sentry"
+import { CaptureContext } from "@sentry/node"
 import {
   ExchangeInfo,
   NewOcoOrder,
@@ -277,7 +278,7 @@ export class AlgoUtils {
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (error: any) {
-      console.error(`Buy error: ${error.body}`)
+      console.error(`Sell error: ${error.body}`)
       console.error(error)
       Sentry.captureException(error)
       throw error
@@ -368,9 +369,12 @@ export class AlgoUtils {
       let response: OcoOrder = await this.ee.orderOco(args)
       return response
     } catch (error: any) {
-      Sentry.captureException(error)
-      this.logger.error(`Buy error: ${error.body}`)
-      console.error(error)
+      let context = { symbol: pair, class: "AlgoUtils", method: "munge_and_create_oco_order" }
+      Sentry.captureException(error, {
+        tags: context,
+      })
+      this.logger.error(context, `OCO error: ${error.body}`)
+      this.logger.error(error)
       throw error
     }
   }

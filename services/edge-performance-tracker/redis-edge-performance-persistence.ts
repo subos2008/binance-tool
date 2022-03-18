@@ -28,7 +28,7 @@ export class RedisEdgePerformancePersistence {
   }
 
   private results_counts_hash_key(edge: string) {
-    return `edge-performance:v1:${edge}:results_counts_hash`
+    return `edge-performance:v1:${edge}:all-time:results-counts-hash`
   }
 
   async ingest_event(event: SpotPositionClosedEvent_V1) {

@@ -134,6 +134,9 @@ export class BinanceSpotOrdersToAMQP {
     this.order_execution_tracker.main()
   }
 
+  // What about partial fills?
+  // I think should should be a more raw interface - not using the callbacks interface but instead 
+  // mapping and sending all messages, with an alert in the mapper when it sees anything it doesn't recognise
   async order_filled(data: BinanceOrderData): Promise<void> {
     this.logger.info(`Binance: ${data.side} order on ${data.symbol} filled.`)
     await this.publisher.publish(data)

@@ -13,7 +13,7 @@ export type SendMessageFunc = (msg: string, tags?: ContextTags) => Promise<void>
 export interface ContextTags {
   edge?: string | AuthorisedEdgeType
   base_asset?: string
-  class?: string // name of the class calling send_message 
+  class?: string // name of the class calling send_message
 }
 
 export class SendMessage {
@@ -39,7 +39,7 @@ export class SendMessage {
   }
 
   async send_message(message: string, tags?: ContextTags) {
-    this.logger.info(message)
+    this.logger.info(tags, message)
     try {
       const url = new URL(`https://api.telegram.org/bot${process.env.TELEGRAM_KEY}/sendMessage`)
       url.searchParams.append("chat_id", this.get_chat_id(tags))

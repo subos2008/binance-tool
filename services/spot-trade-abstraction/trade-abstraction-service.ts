@@ -37,8 +37,13 @@ export interface TradeAbstractionOpenSpotLongResult {
   quote_asset: string
   edge: string
 
+  status:
+    | "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill
+    | "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
+    | "SUCCESS" // full or partial entry, all good
+
   trigger_price?: string
-  executed_price: string
+  executed_price?: string // null if nothing bought
 
   created_stop_order: boolean
   stop_price?: string
@@ -153,6 +158,7 @@ export class TradeAbstractionService {
       stop_price: result.stop_price,
       take_profit_price: result.take_profit_price,
       executed_price: result.executed_price,
+      status: result.status,
     }
     this.logger.info(JSON.stringify(obj))
     return obj

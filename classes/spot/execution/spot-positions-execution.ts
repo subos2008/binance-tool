@@ -32,11 +32,16 @@ export interface SpotPositionExecutionOpenResult {
   base_asset: string
   quote_asset: string
   edge: string
+
+  status:
+    | "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill
+    | "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
+    | "SUCCESS" // full or partial entry, all good
   trigger_price?: string
 
   executed_quote_quantity: string
   executed_base_quantity: string
-  executed_price: string
+  executed_price?: string // null if quantity is zero
 
   stop_order_id?: string | number | undefined
   stop_price?: string

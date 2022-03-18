@@ -140,18 +140,28 @@ export class Edge61SpotPositionsExecution {
       let buy_result = await this.ee.limit_buy(cmd)
       let { executed_quote_quantity, executed_price, executed_base_quantity } = buy_result
 
-      // if (executed_base_quantity.isZero()) {
-      //   let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one. Entry slippage allowed ${edge_percentage_buy_limit}%`
-      //   this.logger.info(msg)
-      //   this.send_message(msg, { edge, base_asset })
-      //   throw new Error(msg)
-      // } else {
-      let msg = `${edge}:${
-        args.base_asset
-      } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
-      this.logger.info(msg)
-      this.send_message(msg, { edge, base_asset })
-      // }
+      if (executed_base_quantity.isZero()) {
+        let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
+        this.logger.info(msg)
+        this.send_message(msg, { edge, base_asset })
+        let ret: SpotPositionExecutionOpenResult = {
+          object_type: "SpotPositionExecutionOpenResult",
+          edge,
+          base_asset,
+          quote_asset,
+          executed_base_quantity: "0",
+          executed_quote_quantity: "0",
+          status: "ENTRY_FAILED_TO_FILL",
+        }
+        this.logger.object(ret)
+        return ret
+      } else {
+        let msg = `${edge}:${
+          args.base_asset
+        } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
+        this.logger.info(msg)
+        this.send_message(msg, { edge, base_asset })
+      }
 
       let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
       let stop_price = trigger_price.times(stop_price_factor)
@@ -214,7 +224,17 @@ export class Edge61SpotPositionsExecution {
         }
         await this.ee.market_sell(market_sell_cmd)
 
-        throw error
+        let ret: SpotPositionExecutionOpenResult = {
+          object_type: "SpotPositionExecutionOpenResult",
+          edge,
+          base_asset,
+          quote_asset,
+          executed_base_quantity: "0",
+          executed_quote_quantity: "0",
+          status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS",
+        }
+        this.logger.object(ret)
+        return ret
       }
 
       let res: SpotPositionExecutionOpenResult = {
@@ -230,6 +250,7 @@ export class Edge61SpotPositionsExecution {
         executed_price: executed_price.toFixed(),
         stop_price: stop_price.toFixed(),
         take_profit_price: take_profit_price.toFixed(),
+        status: "SUCCESS",
       }
       this.logger.info(JSON.stringify(res))
       return res

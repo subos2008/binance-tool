@@ -178,6 +178,7 @@ export class Edge60SpotPositionsExecution {
       stop_order_id,
       executed_price: executed_price.toFixed(),
       stop_price: stop_price.toFixed(),
+      status: "SUCCESS",
     }
     this.logger.info(res)
     return res

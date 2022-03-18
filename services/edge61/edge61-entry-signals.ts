@@ -194,17 +194,19 @@ export class Edge61EntrySignals {
     // so first let's get the start time in seconds of the current daily candle
 
     // So closeTime is any given millisecond mid-day, or porentially an end of day close candle
-    let candle_close_time_seconds_in_ms_remainder = entry_candle.closeTime % 1000
-    let candle_close_time_in_seconds = entry_candle.closeTime - candle_close_time_seconds_in_ms_remainder
-    let candle_close_time_seconds = candle_close_time_in_seconds / 1000
-    let candle_close_time_seconds_modulo_remainder_24h = candle_close_time_seconds % 86400
-    let candle_open_time = candle_close_time_seconds - candle_close_time_seconds_modulo_remainder_24h
-    let one_day_in_seconds = 60 * 60 * 24
-    let expiry_timestamp_seconds = candle_open_time + one_day_in_seconds
-    let signal_allowed = await this.retrigger_prevention.atomic_trigger_check_and_prevent(
-      args,
-      expiry_timestamp_seconds
-    )
+    // let candle_close_time_seconds_in_ms_remainder = entry_candle.closeTime % 1000
+    // let candle_close_time_in_seconds = entry_candle.closeTime - candle_close_time_seconds_in_ms_remainder
+    // let candle_close_time_seconds = candle_close_time_in_seconds / 1000
+    // let candle_close_time_seconds_modulo_remainder_24h = candle_close_time_seconds % 86400
+    // let candle_open_time = candle_close_time_seconds - candle_close_time_seconds_modulo_remainder_24h
+    // let one_day_in_seconds = 60 * 60 * 24
+    // let expiry_timestamp_seconds = candle_open_time + one_day_in_seconds
+
+    var end = new Date(entry_candle.closeTime)
+    end.setUTCHours(23, 59, 59, 999)
+    let expiry_timestamp = end.getTime()
+
+    let signal_allowed = await this.retrigger_prevention.atomic_trigger_check_and_prevent(args, expiry_timestamp)
 
     /** Guard on trend reversal - actually no we took this out as a guard */
     // we just maintain this in case we decide to use it later
@@ -226,7 +228,7 @@ export class Edge61EntrySignals {
       )
       this.logger.info(
         args,
-        `Set expiry for additional entries into ${args.symbol} to ${expiry_timestamp_seconds}, IngestionCandle closeTime ${entry_candle.closeTime}`
+        `Set expiry for additional entries into ${args.symbol} to ${expiry_timestamp}, IngestionCandle closeTime ${entry_candle.closeTime}`
       )
       this.callbacks.enter_position(args)
     }

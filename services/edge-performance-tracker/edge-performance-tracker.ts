@@ -45,21 +45,25 @@ class EventLogger implements MessageProcessor {
   send_message: Function
   logger: Logger
   health_and_readiness: HealthAndReadiness
+  persistence: RedisEdgePerformancePersistence
 
   constructor({
     send_message,
     logger,
     health_and_readiness,
+    persistence,
   }: {
     send_message: SendMessageFunc
     logger: Logger
     health_and_readiness: HealthAndReadiness
+    persistence: RedisEdgePerformancePersistence
   }) {
     assert(logger)
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
     this.health_and_readiness = health_and_readiness
+    this.persistence = persistence
   }
 
   async start() {
@@ -82,60 +86,34 @@ class EventLogger implements MessageProcessor {
   }
 
   async process_message(amqp_event: any, channel: Channel): Promise<void> {
-    this.logger.info(amqp_event.content.toString())
-
     try {
-      let event: SpotPositionClosedEvent_V1 = JSON.parse(amqp_event.content.toString())
-      this.logger.info(JSON.stringify(event))
+      this.logger.info(amqp_event.content.toString())
+
       channel.ack(amqp_event)
 
-      /**
-       * export interface SpotPositionClosedEvent_V1 extends _shared_v1 {
-          object_type: "SpotPositionClosed"
-          object_subtype: "SingleEntryExit" // simple trades with one entry order and one exit order
-          version: 1
+      let event: SpotPositionClosedEvent_V1 = JSON.parse(amqp_event.content.toString())
+      this.logger.info(JSON.stringify(event))
 
-          When the exit signal fired 
-          exit_signal_source?: string // bert, service name etc
-          exit_signal_timestamp_ms?: number
-          exit_signal_price_at_signal?: string
-
-        Executed exit 
-          exit_timestamp_ms: number
-          exit_executed_price: string // average exit price (actual)
-          exit_quote_asset: string // should match initial_entry_quote_asset
-
-          can be added if quote value was calculated or the same for all orders  
-          exit_quote_returned: string // how much quote did we get when liquidating the position
-          exit_position_size: string // base asset
-
-          total_quote_invested: string // same as initial_entry_quote_invested
-          total_quote_returned: string // same as exit_quote_returned
-
-          percentage_quote_change: number // use a float for this, it's not for real accounting
-
-  edge: AuthorisedEdgeType
-
-  entry_signal_source?: string // bert, service name etc
-  entry_signal_timestamp_ms?: number
-  entry_signal_price_at_signal?: string
-
-  initial_entry_timestamp_ms: number
-  initial_entry_executed_price: string // average entry price (actual)
-  initial_entry_quote_asset: string
-
-  initial_entry_quote_invested: string
-  initial_entry_position_size: string // base asset
-
-  orders: GenericOrderData[]
-  */
       let { edge, percentage_quote_change, base_asset } = event
-      let msg: string = `Closed position on ${edge}:${base_asset} with percentage_quote_change of ${
-        percentage_quote_change ? new BigNumber(percentage_quote_change).dp(2).toFixed() : "unknown"
-      }%`
-      this.send_message(msg, { edge })
+
+      try {
+        let msg: string = `Closed position on ${edge}:${base_asset} with percentage_quote_change of ${
+          percentage_quote_change ? new BigNumber(percentage_quote_change).dp(2).toFixed() : "unknown"
+        }%`
+        this.send_message(msg, { edge })
+      } catch (e) {
+        this.logger.error(e)
+        Sentry.captureException(e)
+      }
+
+      try {
+        this.persistence.ingest_event(event)
+      } catch (e) {
+        this.logger.error(e)
+        Sentry.captureException(e)
+      }
     } catch (e) {
-      console.log(e)
+      this.logger.error(e)
       Sentry.captureException(e)
     }
   }
@@ -145,7 +123,19 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  let foo = new EventLogger({ logger, send_message, health_and_readiness })
+  const redis_health_and_readiness = health_and_readiness.addSubsystem({
+    name: "global",
+    ready: true,
+    healthy: true,
+  })
+
+  let persistence = new RedisEdgePerformancePersistence({
+    logger,
+    health_and_readiness: redis_health_and_readiness,
+  })
+  await persistence.connect()
+
+  let foo = new EventLogger({ logger, send_message, health_and_readiness, persistence })
   foo.start()
 }
 
@@ -171,6 +161,7 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 import express, { Request, Response } from "express"
 import { SpotPositionClosedEvent_V1 } from "../../classes/spot/abstractions/spot-position-publisher"
 import { BigNumber } from "bignumber.js"
+import { RedisEdgePerformancePersistence } from "./redis-edge-performance-persistence"
 var app = express()
 app.get("/health", function (req: Request, res: Response) {
   if (health_and_readiness.healthy()) res.send({ status: "OK" })

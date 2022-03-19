@@ -22,21 +22,21 @@ export class RetriggerPrevention {
    * Returns true if we are allowed to trigger at the same time setting Redis state
    * to prevent future triggering until the provided time
    */
-  async atomic_trigger_check_and_prevent(
-    args: PositionEntryArgs,
-    expiry_timestamp_unix: number
-  ): Promise<boolean> {
+  async atomic_trigger_check_and_prevent(args: PositionEntryArgs, expiry_timestamp: number): Promise<boolean> {
     let { symbol } = args
     let key = `${this.key_prefix}:${symbol}`
     let got_lock = await this.asyncSetNx(key, Date.now().toString())
+    let got_lock2 = await this.asyncSetNx(key, Date.now().toString())
     // expiry_timestamp is a unix timestamp in seconds
-    this.redis.expireat(key, expiry_timestamp_unix)
+    this.redis.expireat(key, expiry_timestamp)
     console.info(
       JSON.stringify({
         symbol,
         edge: "edge61",
-        object_type: "GotRetriggerPreventionLock",
-        msg: `atomic_trigger_check_and_prevent got lock, expires at ${expiry_timestamp_unix} seconds timestamp`,
+        object_type: "RetriggerPreventionLockResult",
+        expiry_timestamp,
+        got_lock,
+        got_lock2,
       })
     )
     return got_lock ? true : false

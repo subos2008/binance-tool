@@ -29,7 +29,7 @@ import { Edge61Parameters } from "../../events/shared/edge61-position-entry"
 import { RetriggerPrevention } from "./retrigger-prevention"
 import { LongShortEntrySignalsCallbacks, StoredCandle, IngestionCandle, PositionEntryArgs } from "./interfaces"
 import { LimitedLengthCandlesHistory } from "./limited-length-candles-history"
-import { RedisClient } from "redis"
+import { RedisClientType } from "redis-v4"
 import { TriggerMidTrendOnRestartPrevention } from "./trigger-mid-trend-on-restart-prevention"
 import { DirectionPersistance } from "./direction-persistance"
 
@@ -60,7 +60,7 @@ export class Edge61EntrySignals {
     market_data: CoinGeckoMarketData
     callbacks: LongShortEntrySignalsCallbacks
     edge61_parameters: Edge61Parameters
-    redis: RedisClient
+    redis: RedisClientType
     direction_persistance: DirectionPersistance
   }) {
     this.symbol = symbol

@@ -1,5 +1,4 @@
-import { promisify } from "node:util"
-import { RedisClient } from "redis"
+import { RedisClientType } from "redis-v4"
 import { PositionEntryArgs } from "./interfaces"
 
 /**
@@ -9,13 +8,11 @@ import { PositionEntryArgs } from "./interfaces"
 
 export class RetriggerPrevention {
   private key_prefix: string
-  private redis: RedisClient
-  private asyncSetNx: any
+  private redis: RedisClientType
 
-  constructor({ key_prefix, redis }: { key_prefix: string; redis: RedisClient }) {
+  constructor({ key_prefix, redis }: { key_prefix: string; redis: RedisClientType }) {
     this.key_prefix = key_prefix
     this.redis = redis
-    this.asyncSetNx = promisify(this.redis.setnx).bind(this.redis)
   }
 
   /**
@@ -25,11 +22,9 @@ export class RetriggerPrevention {
   async atomic_trigger_check_and_prevent(args: PositionEntryArgs, expiry_timestamp: number): Promise<boolean> {
     let { symbol } = args
     let key = `${this.key_prefix}:${symbol}`
-    let got_lock_raw = await this.asyncSetNx(key, Date.now())
-    let got_lock2_raw = await this.asyncSetNx(key, Date.now())
-    let got_lock: boolean = got_lock_raw === "1"
+    let got_lock: boolean = await this.redis.SETNX(key, Date.now().toString())
     // expiry_timestamp is a unix timestamp in seconds
-    this.redis.expireat(key, expiry_timestamp)
+    this.redis.expireAt(key, expiry_timestamp)
 
     if (got_lock) {
       console.info(
@@ -38,8 +33,6 @@ export class RetriggerPrevention {
           edge: "edge61",
           object_type: "RetriggerPreventionLockResult",
           expiry_timestamp,
-          got_lock_raw,
-          got_lock2_raw,
           got_lock,
         })
       )

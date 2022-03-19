@@ -42,8 +42,14 @@ import { Edge61Parameters, Edge61PositionEntrySignal } from "../../events/shared
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { config } from "../../config"
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
+import { get_redis_client } from "../../lib/redis-v4"
 import { DirectionPersistance } from "./direction-persistance"
+import { HealthAndReadiness } from "../../classes/health_and_readiness"
+
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+
+const health = new HealthAndReadiness({ logger, send_message })
+const global_health = health.addSubsystem({ name: "global", ready: true, healthy: true })
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -263,13 +269,13 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
           if (partial_candle) assert(partial_candle.closeTime > Date.now()) // double check that was actually a partial candle
         }
 
-        set_redis_logger(logger)
-        let redis = get_redis_client()
-
+        const redis_health = health.addSubsystem({ name: "redis", ready: false, healthy: false })
+        let redis: RedisClientType = get_redis_client(logger, redis_health)
         let direction_persistance = new DirectionPersistance({
           logger,
           prefix: `${service_name}:spot:binance:usd_quote`,
           send_message: this.send_message,
+          redis,
         })
 
         this.edges[symbol] = new Edge61EntrySignals({
@@ -318,8 +324,6 @@ async function main() {
   })
 
   try {
-    const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-
     edge61 = new Edge61Service({
       ee,
       logger,
@@ -339,3 +343,15 @@ main().catch((error) => {
   logger.error(error)
   logger.error(`Error in main loop: ${error.stack}`)
 })
+
+import express, { Request, Response } from "express"
+import { RedisClient } from "redis"
+import { RedisClientType } from "redis-v4"
+var app = express()
+app.get("/health", function (req: Request, res: Response) {
+  if (health.healthy()) res.send({ status: "OK" })
+  else res.status(500).json({ status: "UNHEALTHY" })
+})
+const port = "80"
+app.listen(port)
+logger.info(`Server on port ${port}`)

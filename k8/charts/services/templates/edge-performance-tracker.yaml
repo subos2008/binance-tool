@@ -33,7 +33,7 @@ spec:
         - name: edge-performance-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["node", "./out/services/edge-performance-tracker/edge-performance-tracker"]
+          command: ["./services/edge-performance-tracker/edge-performance-tracker.ts"]
           ports:
           - name: http
             containerPort: 80

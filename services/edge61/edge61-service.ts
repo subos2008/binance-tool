@@ -320,8 +320,8 @@ async function main() {
   assert(process.env.BINANCE_API_KEY)
   assert(process.env.BINANCE_API_SECRET)
   var ee: Binance = binance({
-    apiKey: process.env.BINANCE_API_KEY || "foo",
-    apiSecret: process.env.BINANCE_API_SECRET || "foo",
+    apiKey: process.env.BINANCE_API_KEY,
+    apiSecret: process.env.BINANCE_API_SECRET,
   })
 
   try {

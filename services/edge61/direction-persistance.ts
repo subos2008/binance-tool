@@ -1,5 +1,4 @@
 import { RedisClientType } from "redis-v4"
-import { promisify } from "util"
 import { Logger } from "../../interfaces/logger"
 import { SendMessageFunc } from "../../lib/telegram-v2"
 

@@ -11,8 +11,10 @@ export async function get_redis_client(
   logger: Logger,
   health_and_readiness: HealthAndReadinessSubsystem
 ): Promise<RedisClientType> {
+  let url = `redis://:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}`
+  console.error(url)
   const redis: RedisClientType = createClient({
-    url: `redis://:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}`,
+    url,
     // retry_strategy: redis_retry_strategy,
   })
 

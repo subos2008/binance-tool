@@ -1,9 +1,7 @@
 import BigNumber from "bignumber.js"
 import { RedisClientType } from "redis-v4"
-import { HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { SpotPositionClosedEvent_V1 } from "../../classes/spot/abstractions/spot-position-publisher"
 import { Logger } from "../../interfaces/logger"
-import { get_redis_client } from "../../lib/redis-v4"
 import { DateTime } from "luxon"
 
 type TradeResult = "win" | "loss" | "unknown"
@@ -11,16 +9,10 @@ type TradeResult = "win" | "loss" | "unknown"
 export class RedisEdgePerformancePersistence {
   redis: RedisClientType
   logger: Logger
-  health_and_readiness: HealthAndReadinessSubsystem
 
-  constructor(args: { logger: Logger; health_and_readiness: HealthAndReadinessSubsystem }) {
+  constructor(args: { logger: Logger; redis: RedisClientType }) {
     this.logger = args.logger
-    this.health_and_readiness = args.health_and_readiness
-    this.redis = get_redis_client(this.logger, this.health_and_readiness)
-  }
-
-  async connect() {
-    await this.redis.connect()
+    this.redis = args.redis
   }
 
   private async results(key: string) {

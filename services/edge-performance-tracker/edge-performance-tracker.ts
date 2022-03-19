@@ -41,6 +41,8 @@ import express from "express"
 import { SpotPositionClosedEvent_V1 } from "../../classes/spot/abstractions/spot-position-publisher"
 import { BigNumber } from "bignumber.js"
 import { RedisEdgePerformancePersistence } from "./redis-edge-performance-persistence"
+import { get_redis_client } from "../../lib/redis-v4"
+import { RedisClientType } from "redis-v4"
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
@@ -132,11 +134,13 @@ async function main() {
     healthy: false,
   })
 
+  let redis: RedisClientType = await get_redis_client(logger, redis_health_and_readiness)
+  await redis.connect()
+
   let persistence = new RedisEdgePerformancePersistence({
     logger,
-    health_and_readiness: redis_health_and_readiness,
+    redis,
   })
-  await persistence.connect()
 
   let foo = new EventLogger({ logger, send_message, health_and_readiness, persistence })
   foo.start()
@@ -167,4 +171,3 @@ app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readine
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)
-

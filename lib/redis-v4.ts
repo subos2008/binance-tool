@@ -7,10 +7,10 @@ import { HealthAndReadinessSubsystem } from "../classes/health_and_readiness"
  * You need to await connect on the client returned here
  */
 
-export function get_redis_client(
+export async function get_redis_client(
   logger: Logger,
   health_and_readiness: HealthAndReadinessSubsystem
-): RedisClientType {
+): Promise<RedisClientType> {
   const redis: RedisClientType = createClient({
     url: `redis://:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}`,
     // retry_strategy: redis_retry_strategy,
@@ -46,6 +46,8 @@ export function get_redis_client(
     logger.object(obj)
     health_and_readiness.healthy(false)
   })
+
+  await redis.connect()
 
   return redis
 }

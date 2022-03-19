@@ -270,7 +270,8 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
         }
 
         const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
-        let redis: RedisClientType = get_redis_client(logger, redis_health)
+        let redis: RedisClientType = await get_redis_client(logger, redis_health)
+        await redis.connect()
         let direction_persistance = new DirectionPersistance({
           logger,
           prefix: `${service_name}:spot:binance:usd_quote`,

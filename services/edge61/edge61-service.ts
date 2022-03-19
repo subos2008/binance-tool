@@ -231,6 +231,10 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
   }
 
   async run() {
+    const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
+    let redis: RedisClientType = await get_redis_client(logger, redis_health)
+    await redis.connect()
+
     /** New world demo */
     let base_assets: string[] = await this.get_base_assets_list(quote_symbol)
     this.logger.info(`V2 target markets: ${base_assets.join(", ")}`)
@@ -269,9 +273,6 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
           if (partial_candle) assert(partial_candle.closeTime > Date.now()) // double check that was actually a partial candle
         }
 
-        const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
-        let redis: RedisClientType = await get_redis_client(logger, redis_health)
-        await redis.connect()
         let direction_persistance = new DirectionPersistance({
           logger,
           prefix: `${service_name}:spot:binance:usd_quote`,

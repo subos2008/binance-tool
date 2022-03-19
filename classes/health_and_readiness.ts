@@ -1,6 +1,8 @@
 import { Logger } from "../interfaces/logger"
 import { SendMessageFunc } from "../lib/telegram-v2"
+import express, { Request, Response } from "express"
 
+type Summary = { [subsystem: string]: boolean }
 export class HealthAndReadinessSubsystem {
   logger: Logger
   send_message: SendMessageFunc
@@ -107,6 +109,22 @@ export class HealthAndReadiness {
     })
   }
 
+  surmise_health_state(): Summary {
+    let result: { [subsystem: string]: boolean } = {}
+    for (const subsystem in this.subsystems) {
+      result[subsystem] = this.subsystems[subsystem].healthy()
+    }
+    return result
+  }
+
+  surmise_readiness_state(): Summary {
+    let result: { [subsystem: string]: boolean } = {}
+    for (const subsystem in this.subsystems) {
+      result[subsystem] = this.subsystems[subsystem].ready()
+    }
+    return result
+  }
+
   surmise_state_to_logger() {
     this.logger.warn(`HealthAndReadiness status:`)
     for (const key in this.subsystems) {
@@ -114,6 +132,18 @@ export class HealthAndReadiness {
         `${key}: healthy: ${this.subsystems[key].healthy()}, ready: ${this.subsystems[key].ready()}`
       )
     }
+  }
+
+  health_handler(req: Request, res: Response) {
+    let summary: Summary = this.surmise_health_state()
+    if (this.healthy()) res.send({ status: "OK", summary })
+    else res.status(500).json({ status: "UNHEALTHY", summary })
+  }
+
+  readiness_handler(req: Request, res: Response) {
+    let summary: Summary = this.surmise_readiness_state()
+    if (this.ready()) res.send({ status: "OK", summary })
+    else res.status(500).json({ status: "UNHEALTHY", summary })
   }
 
   healthy(): boolean {

@@ -37,7 +37,10 @@ import { MessageProcessor } from "../../classes/amqp/interfaces"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { Channel } from "amqplib"
-
+import express from "express"
+import { SpotPositionClosedEvent_V1 } from "../../classes/spot/abstractions/spot-position-publisher"
+import { BigNumber } from "bignumber.js"
+import { RedisEdgePerformancePersistence } from "./redis-edge-performance-persistence"
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
@@ -154,23 +157,15 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   logger.error(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}, reason: ${reason}`)
   if (exit_code) process.exitCode = exit_code
-  Sentry.close(500)
+  // Sentry.close(500)
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-import express, { Request, Response } from "express"
-import { SpotPositionClosedEvent_V1 } from "../../classes/spot/abstractions/spot-position-publisher"
-import { BigNumber } from "bignumber.js"
-import { RedisEdgePerformancePersistence } from "./redis-edge-performance-persistence"
 var app = express()
-app.get("/health", function (req: Request, res: Response) {
-  if (health_and_readiness.healthy()) res.send({ status: "OK" })
-  else res.status(500).json({ status: "UNHEALTHY" })
-})
-app.get("/ready", function (req, res) {
-  if (health_and_readiness.ready()) res.send({ status: "OK" })
-  else res.status(500).json({ status: "NOT READY" })
-})
+
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
+app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
+
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

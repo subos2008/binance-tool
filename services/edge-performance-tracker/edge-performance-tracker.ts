@@ -128,8 +128,8 @@ async function main() {
 
   const redis_health_and_readiness = health_and_readiness.addSubsystem({
     name: "redis",
-    ready: true,
-    healthy: true,
+    ready: false,
+    healthy: false,
   })
 
   let persistence = new RedisEdgePerformancePersistence({

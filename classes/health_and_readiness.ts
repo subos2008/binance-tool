@@ -1,6 +1,8 @@
 import { Logger } from "../interfaces/logger"
 import { SendMessageFunc } from "../lib/telegram-v2"
-import express, { Request, Response } from "express"
+import { Request, Response } from "express"
+import Sentry from "../lib/sentry"
+import { randomUUID } from "crypto"
 
 type Summary = { [subsystem: string]: boolean }
 type HealthAndReadinessChange = {
@@ -98,7 +100,10 @@ export class HealthAndReadiness {
     this.logger.info(`Registering new subsystem: ${name}, starting defaults: ready: ${ready}, healthy:${healthy}`)
     if (name in this.subsystems) {
       // check for subsystem already exists)
-      throw new Error(`Attempting to add already existing subsystem '${name}' to HealthAndReadiness'`)
+      Sentry.captureException(
+        new Error(`Attempting to add already existing subsystem '${name}' to HealthAndReadiness'`)
+      )
+      name = `${name}-${randomUUID()}`
     }
 
     this.subsystems[name] = new HealthAndReadinessSubsystem({

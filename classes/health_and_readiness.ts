@@ -52,6 +52,7 @@ export class HealthAndReadinessSubsystem {
         )
       }
     }
+    this._ready = value
     return this._ready
   }
 
@@ -70,6 +71,7 @@ export class HealthAndReadinessSubsystem {
         this.logger.error(`unable to send_message to report service as going unhealthy`)
       }
     }
+    this._healthy = value
     return this._healthy
   }
 }

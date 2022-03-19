@@ -48,8 +48,8 @@ import { HealthAndReadiness } from "../../classes/health_and_readiness"
 
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
-const health = new HealthAndReadiness({ logger, send_message })
-const global_health = health.addSubsystem({ name: "global", ready: true, healthy: true })
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+const global_health = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -269,7 +269,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
           if (partial_candle) assert(partial_candle.closeTime > Date.now()) // double check that was actually a partial candle
         }
 
-        const redis_health = health.addSubsystem({ name: "redis", ready: false, healthy: false })
+        const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
         let redis: RedisClientType = get_redis_client(logger, redis_health)
         let direction_persistance = new DirectionPersistance({
           logger,
@@ -347,8 +347,8 @@ main().catch((error) => {
 import express from "express"
 import { RedisClientType } from "redis-v4"
 var app = express()
-app.get("/health", health.health_handler.bind(health))
-app.get("/ready", health.readiness_handler.bind(health))
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
+app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

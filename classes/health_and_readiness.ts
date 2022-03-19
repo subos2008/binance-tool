@@ -3,6 +3,12 @@ import { SendMessageFunc } from "../lib/telegram-v2"
 import express, { Request, Response } from "express"
 
 type Summary = { [subsystem: string]: boolean }
+type HealthAndReadinessChange = {
+  object_type: "HealthAndReadinessChange"
+  subsystem: string
+  value: boolean
+}
+
 export class HealthAndReadinessSubsystem {
   logger: Logger
   send_message: SendMessageFunc
@@ -60,11 +66,12 @@ export class HealthAndReadinessSubsystem {
   healthy(value?: boolean | undefined): boolean {
     if (typeof value === "undefined") return this._healthy
     if (value != this._healthy) {
-      if (value) {
-        this.logger.info(`Subsystem ${this.name} became ${value ? `healthy` : `not healthy`}`)
-      } else {
-        this.logger.warn(`Subsystem ${this.name} became ${value ? `healthy` : `not healthy`}`)
+      let event: HealthAndReadinessChange = {
+        object_type: "HealthAndReadinessChange",
+        subsystem: this.name,
+        value,
       }
+      this.logger.object(event)
       try {
         if (!value) this.send_message(`subsystem ${this.name} became unhealthy`, { class: "HealthAndReadiness" })
       } catch (e) {

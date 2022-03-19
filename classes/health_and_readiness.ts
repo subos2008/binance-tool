@@ -137,7 +137,12 @@ export class HealthAndReadiness {
   }
 
   surmise_state_to_logger() {
-    this.logger.warn(`HealthAndReadiness status:`)
+    let event = {
+      object_type: "HealthAndReadinessFailed",
+      health_summary: this.surmise_health_state(),
+      readiness_summary: this.surmise_readiness_state(),
+    }
+    this.logger.warn(JSON.stringify(event))
     for (const key in this.subsystems) {
       this.logger.warn(
         `${key}: healthy: ${this.subsystems[key].healthy()}, ready: ${this.subsystems[key].ready()}`

@@ -26,7 +26,7 @@ export class RetriggerPrevention {
 
     if (got_lock) {
       // expiry_timestamp is a unix timestamp in seconds
-      let expiry_timestamp_seconds = expiry_timestamp / 1000
+      let expiry_timestamp_seconds = Number((expiry_timestamp / 1000).toFixed(0))
       console.log(`expireAt: ${expiry_timestamp_seconds}`)
       this.redis.expireAt(key, expiry_timestamp_seconds)
       console.info(

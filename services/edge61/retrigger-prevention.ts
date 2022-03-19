@@ -25,8 +25,9 @@ export class RetriggerPrevention {
   async atomic_trigger_check_and_prevent(args: PositionEntryArgs, expiry_timestamp: number): Promise<boolean> {
     let { symbol } = args
     let key = `${this.key_prefix}:${symbol}`
-    let got_lock = await this.asyncSetNx(key, Date.now().toString())
-    let got_lock2 = await this.asyncSetNx(key, Date.now().toString())
+    let got_lock_raw = await this.asyncSetNx(key, Date.now())
+    let got_lock2_raw = await this.asyncSetNx(key, Date.now())
+    let got_lock: boolean = got_lock_raw === "1"
     // expiry_timestamp is a unix timestamp in seconds
     this.redis.expireat(key, expiry_timestamp)
     console.info(
@@ -35,10 +36,11 @@ export class RetriggerPrevention {
         edge: "edge61",
         object_type: "RetriggerPreventionLockResult",
         expiry_timestamp,
+        got_lock_raw,
+        got_lock2_raw,
         got_lock,
-        got_lock2,
       })
     )
-    return got_lock ? true : false
+    return got_lock
   }
 }

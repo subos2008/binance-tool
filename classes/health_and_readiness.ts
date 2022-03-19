@@ -99,7 +99,7 @@ export class HealthAndReadiness {
       throw new Error(`Attempting to add already existing subsystem '${name}' to HealthAndReadiness'`)
     }
 
-    return new HealthAndReadinessSubsystem({
+    this.subsystems[name] = new HealthAndReadinessSubsystem({
       parent: this,
       logger: this.logger,
       send_message: this.send_message,
@@ -107,6 +107,8 @@ export class HealthAndReadiness {
       healthy,
       ready,
     })
+
+    return this.subsystems[name]
   }
 
   surmise_health_state(): Summary {

@@ -34,7 +34,7 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-var service_is_healthy: boolean = true
+import { HealthAndReadiness } from "../../classes/health_and_readiness"
 
 // redis + events publishing + binance
 
@@ -58,7 +58,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { SendMessage } from "../../lib/telegram-v2"
+import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -73,13 +73,13 @@ import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
 import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 
 class PortfolioTracker implements MasterPortfolioClass {
-  send_message: (msg: string) => void
+  send_message: SendMessageFunc
   logger: Logger
   ee: any
   portfolios: { [exchange: string]: Portfolio } = {}
   exchanges: { [exchange: string]: PortfolioBitchClass } = {}
 
-  constructor({ send_message, logger }: { send_message: (msg: string) => void; logger: Logger }) {
+  constructor({ send_message, logger }: { send_message: SendMessageFunc; logger: Logger }) {
     assert(logger)
     this.logger = logger
     assert(send_message)
@@ -184,20 +184,20 @@ class PortfolioTracker implements MasterPortfolioClass {
       .toFixed()
     if (!portfolio.prices) throw new Error(`No prices`)
     portfolio.usd_value = portfolio_utils
-    .calculate_portfolio_value_in_quote_currency({ quote_currency: "BUSD", portfolio })
-    .total.dp(0)
-    .toFixed()
+      .calculate_portfolio_value_in_quote_currency({ quote_currency: "BUSD", portfolio })
+      .total.dp(0)
+      .toFixed()
     return portfolio
   }
 }
 
 const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger, sentry: Sentry })
+const send_message = new SendMessage({ service_name, logger }).build()
 
 async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  const send_message = new SendMessage({ service_name, logger }).build()
   let portfolio_tracker = new PortfolioTracker({ logger, send_message })
   let binance = new BinancePortfolioTracker({ send_message, logger, master: portfolio_tracker })
   binance.start()
@@ -214,10 +214,13 @@ main().catch((error) => {
   soft_exit(1, `Error in main loop: ${error}`)
 })
 
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code: number | null = null, reason: string) {
-  service_is_healthy = false // it seems service isn't exiting on soft exit, but add this to make sure
+  service_is_healthy.healthy(false) // it seems service isn't exiting on soft exit, but add this to make sure
   logger.warn(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}, reason: ${reason}`)
   if (exit_code) process.exitCode = exit_code
@@ -225,12 +228,9 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-import express, { Request, Response } from "express"
+import express from "express"
 var app = express()
-app.get("/health", function (req: Request, res: Response) {
-  if (service_is_healthy) res.send({ status: "OK" })
-  else res.status(500).json({ status: "UNHEALTHY" })
-})
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

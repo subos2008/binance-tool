@@ -51,7 +51,7 @@ import { BinancePortfolioToAMQP } from "./portfolio"
 
 let logger: Logger = _logger
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-import express, { Request, Response } from "express"
+import express from "express"
 
 import { RedisClient } from "redis"
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
@@ -91,10 +91,7 @@ main().catch((error) => {
 })
 
 var app = express()
-app.get("/health", function (req: Request, res: Response) {
-  if (health.healthy()) res.send({ status: "OK" })
-  else res.status(500).json({ status: "UNHEALTHY" })
-})
+app.get("/health", health.health_handler.bind(health))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

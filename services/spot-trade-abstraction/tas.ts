@@ -16,8 +16,6 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-var service_is_healthy: boolean = true
-
 import { Logger } from "../../interfaces/logger"
 import { Logger as LoggerClass } from "../../lib/faux_logger"
 const logger: Logger = new LoggerClass({ silent: false })
@@ -78,25 +76,22 @@ app.use(
   })
 ) // for parsing application/x-www-form-urlencoded
 
-app.get("/health", function (req: Request, res: Response) {
-  if (service_is_healthy) {
-    res.send({ status: "OK" })
-  } else {
-    logger.error(`Service unhealthy`)
-    res.status(500).json({ status: "UNHEALTHY" })
-  }
-})
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+
+import { HealthAndReadiness } from "../../classes/health_and_readiness"
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
-import { RedisClient } from "redis"
 import { SpotPositionsExecution } from "../../classes/spot/execution/spot-positions-execution"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
-import { CurrentPriceGetter } from "../../interfaces/exchange/generic/price-getter"
 import { BinancePriceGetter } from "../../interfaces/exchange/binance/binance-price-getter"
+
+
+import { RedisClient } from "redis"
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
 
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 const order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
 const binance_spot_ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
 const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })

@@ -87,13 +87,9 @@ main().catch((error) => {
   logger.error(`Error in main loop: ${error.stack}`)
 })
 
-import express, { Request, Response } from "express"
-import { RedisClient } from "redis"
+import express from "express"
 var app = express()
-app.get("/health", function (req: Request, res: Response) {
-  if (health.healthy()) res.send({ status: "OK" })
-  else res.status(500).json({ status: "UNHEALTHY" })
-})
+app.get("/health", health.health_handler.bind(health))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

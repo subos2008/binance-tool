@@ -62,6 +62,7 @@ export class BinanceOrderPublisher {
   async connect(): Promise<void> {
     await this.pub.connect()
     this.health_and_readiness.ready(true)
+    this.health_and_readiness.healthy(true)
   }
 
   async publish(event: BinanceOrderData): Promise<void> {
@@ -135,7 +136,7 @@ export class BinanceSpotOrdersToAMQP {
   }
 
   // What about partial fills?
-  // I think should should be a more raw interface - not using the callbacks interface but instead 
+  // I think should should be a more raw interface - not using the callbacks interface but instead
   // mapping and sending all messages, with an alert in the mapper when it sees anything it doesn't recognise
   async order_filled(data: BinanceOrderData): Promise<void> {
     this.logger.info(`Binance: ${data.side} order on ${data.symbol} filled.`)

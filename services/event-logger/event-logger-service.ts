@@ -133,16 +133,10 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { Channel } from "amqplib"
-import express, { Request, Response } from "express"
+import express from "express"
 var app = express()
-app.get("/health", function (req: Request, res: Response) {
-  if (service_is_healthy.healthy()) {
-    res.send({ status: "OK" })
-  } else {
-    logger.error(`Service unhealthy`)
-    res.status(500).json({ status: "UNHEALTHY" })
-  }
-})
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)
+

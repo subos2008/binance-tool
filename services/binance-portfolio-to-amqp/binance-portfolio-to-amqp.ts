@@ -58,19 +58,14 @@ import { get_redis_client, set_redis_logger } from "../../lib/redis"
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
 
-const health = new HealthAndReadiness({ logger, send_message })
-const service_is_healthy = health.addSubsystem({ name: "global", ready: true, healthy: true })
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
   try {
-    let health_and_readiness = health.addSubsystem({
-      name: "binance-portfolio-to-amqp",
-      ready: false,
-      healthy: false,
-    })
     let portfolio_to_amqp = new BinancePortfolioToAMQP({ send_message, logger, health_and_readiness, redis })
     await portfolio_to_amqp.start()
   } catch (error: any) {
@@ -91,7 +86,7 @@ main().catch((error) => {
 })
 
 var app = express()
-app.get("/health", health.health_handler.bind(health))
+app.get("/health_and_readiness", health_and_readiness.health_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

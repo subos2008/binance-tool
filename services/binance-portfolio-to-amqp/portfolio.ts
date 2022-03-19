@@ -56,7 +56,7 @@ import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
 import { Balance, Portfolio } from "../../interfaces/portfolio"
 
 import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
-import { HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
+import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { RedisClient } from "redis"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
@@ -86,8 +86,16 @@ export class PortfolioPublisher {
   }
 
   async connect(): Promise<void> {
-    await this.pub.connect()
+    try {
+      await this.pub.connect()
+    } catch (err) {
+      this.logger.error({ err, msg: `Failed to connect to AMQP in PortfolioPublisher` })
+      Sentry.captureException(err)
+      this.health_and_readiness.ready(false)
+      throw err
+    }
     this.health_and_readiness.ready(true)
+    this.health_and_readiness.healthy(true)
   }
 
   async publish(event: Portfolio): Promise<void> {
@@ -113,6 +121,7 @@ export class PortfolioPublisher {
 
   async shutdown_streams() {
     if (this.pub) this.pub.shutdown_streams()
+    this.health_and_readiness.healthy(false)
   }
 }
 
@@ -146,6 +155,8 @@ class PortfolioTracker implements MasterPortfolioClass {
     this.publisher = publisher
     this.portfolio_utils = new PortfolioUtils({ logger, sentry: Sentry })
     this.health_and_readiness = health_and_readiness
+    health_and_readiness.healthy(true)
+    health_and_readiness.ready(true)
   }
 
   async set_portfolio_for_exchange({
@@ -249,7 +260,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
   exchange_identifier: ExchangeIdentifier
   portfolio: Portfolio = { balances: [], object_type: "SpotBinancePortfolio" }
   publisher: PortfolioPublisher
-  health_and_readiness: HealthAndReadinessSubsystem
+  health_and_readiness: HealthAndReadiness
 
   constructor({
     send_message,
@@ -259,7 +270,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
   }: {
     send_message: (msg: string) => void
     logger: Logger
-    health_and_readiness: HealthAndReadinessSubsystem
+    health_and_readiness: HealthAndReadiness
     redis: RedisClient
   }) {
     assert(logger)
@@ -271,14 +282,22 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
     this.publisher = new PortfolioPublisher({
       logger,
       event_name: "SpotBinancePortfolio",
-      health_and_readiness,
+      health_and_readiness: health_and_readiness.addSubsystem({
+        name: "PortfolioPublisher",
+        ready: false,
+        healthy: false,
+      }),
     })
 
     this.portfolio_tracker = new PortfolioTracker({
       logger,
       send_message,
       publisher: this.publisher,
-      health_and_readiness,
+      health_and_readiness: health_and_readiness.addSubsystem({
+        name: "PortfolioTracker",
+        ready: false,
+        healthy: false,
+      }),
     })
 
     this.master = this.portfolio_tracker
@@ -306,12 +325,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
     try {
       await this.publisher.connect()
     } catch (error: any) {
-      Sentry.captureException(error)
       this.logger.error(`Error connecting to AMQP: ${error}`)
-      this.logger.error(error)
-      this.logger.error(`Error connecting to AMQP: ${error.stack}`)
-      // TODO: this should be more like a HealthCheck class
-      this.health_and_readiness.healthy(false)
       return
     }
 

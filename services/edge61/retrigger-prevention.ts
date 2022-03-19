@@ -30,17 +30,20 @@ export class RetriggerPrevention {
     let got_lock: boolean = got_lock_raw === "1"
     // expiry_timestamp is a unix timestamp in seconds
     this.redis.expireat(key, expiry_timestamp)
-    console.info(
-      JSON.stringify({
-        symbol,
-        edge: "edge61",
-        object_type: "RetriggerPreventionLockResult",
-        expiry_timestamp,
-        got_lock_raw,
-        got_lock2_raw,
-        got_lock,
-      })
-    )
+
+    if (got_lock) {
+      console.info(
+        JSON.stringify({
+          symbol,
+          edge: "edge61",
+          object_type: "RetriggerPreventionLockResult",
+          expiry_timestamp,
+          got_lock_raw,
+          got_lock2_raw,
+          got_lock,
+        })
+      )
+    }
     return got_lock
   }
 }

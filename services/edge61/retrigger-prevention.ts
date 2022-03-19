@@ -24,7 +24,7 @@ export class RetriggerPrevention {
     let key = `${this.key_prefix}:${symbol}`
     let got_lock: boolean = await this.redis.SETNX(key, Date.now().toString())
     // expiry_timestamp is a unix timestamp in seconds
-    this.redis.expireAt(key, expiry_timestamp)
+    this.redis.expireAt(key, expiry_timestamp / 1000)
 
     if (got_lock) {
       console.info(

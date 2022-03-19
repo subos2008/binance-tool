@@ -12,7 +12,7 @@ export function get_redis_client(
   health_and_readiness: HealthAndReadinessSubsystem
 ): RedisClientType {
   const redis: RedisClientType = createClient({
-    url: `redis://:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}:6380`,
+    url: `redis://:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}`,
     // retry_strategy: redis_retry_strategy,
   })
 

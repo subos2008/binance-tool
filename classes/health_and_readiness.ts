@@ -7,6 +7,7 @@ type HealthAndReadinessChange = {
   object_type: "HealthAndReadinessChange"
   subsystem: string
   value: boolean
+  transition: "healthy" | "ready"
 }
 
 export class HealthAndReadinessSubsystem {
@@ -44,19 +45,14 @@ export class HealthAndReadinessSubsystem {
   ready(value?: boolean | undefined): boolean {
     if (typeof value === "undefined") return this._ready
     if (value != this._ready) {
-      if (value) {
-        this.logger.info(
-          { class: "HealthAndReadiness", subsystem: this.name, transition: "ready" },
-          `Subsystem ${this.name} became ready`
-        )
-        this._ready = value
-      } else {
-        let transition = value ? `ready` : `not ready`
-        this.logger.warn(
-          { class: "HealthAndReadiness", subsystem: this.name, transition },
-          `Subsystem ${this.name} became ${transition}`
-        )
+      let event: HealthAndReadinessChange = {
+        object_type: "HealthAndReadinessChange",
+        subsystem: this.name,
+        transition: "ready",
+        value,
       }
+      this.logger.object(event)
+      if (!value) this.send_message(`subsystem ${this.name} became not ready`, { class: "HealthAndReadiness" })
     }
     this._ready = value
     return this._ready
@@ -69,14 +65,11 @@ export class HealthAndReadinessSubsystem {
       let event: HealthAndReadinessChange = {
         object_type: "HealthAndReadinessChange",
         subsystem: this.name,
+        transition: "healthy",
         value,
       }
       this.logger.object(event)
-      try {
-        if (!value) this.send_message(`subsystem ${this.name} became unhealthy`, { class: "HealthAndReadiness" })
-      } catch (e) {
-        this.logger.error(`unable to send_message to report service as going unhealthy`)
-      }
+      if (!value) this.send_message(`subsystem ${this.name} became unhealthy`, { class: "HealthAndReadiness" })
     }
     this._healthy = value
     return this._healthy

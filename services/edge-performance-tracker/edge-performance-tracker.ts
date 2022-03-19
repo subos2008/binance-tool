@@ -135,7 +135,6 @@ async function main() {
   })
 
   let redis: RedisClientType = await get_redis_client(logger, redis_health_and_readiness)
-  await redis.connect()
 
   let persistence = new RedisEdgePerformancePersistence({
     logger,

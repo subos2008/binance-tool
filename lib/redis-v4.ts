@@ -7,7 +7,6 @@ import { HealthAndReadinessSubsystem } from "../classes/health_and_readiness"
  * You need to await connect on the client returned here
  */
 
-
 export function get_redis_client(
   logger: Logger,
   health_and_readiness: HealthAndReadinessSubsystem
@@ -28,21 +27,21 @@ export function get_redis_client(
   })
 
   redis.on("ready", function () {
-    let obj = { object_type: "RedisConnectionStatus", ready: true }
+    let obj = { object_type: "RedisConnectionStatus", ready: true, REDIS_HOST: process.env.REDIS_HOST }
     logger.object(obj)
     health_and_readiness.ready(true)
     health_and_readiness.healthy(true)
   })
 
   redis.on("error", function (err: any) {
-    let obj = { object_type: "RedisConnectionStatus", ready: false }
+    let obj = { object_type: "RedisConnectionStatus", ready: false, REDIS_HOST: process.env.REDIS_HOST }
     logger.error(`Redis disconnected: ${err.toString()}`)
     logger.object(obj)
     health_and_readiness.healthy(false)
   })
 
   redis.on("end", function () {
-    let obj = { object_type: "RedisConnectionStatus", ready: false }
+    let obj = { object_type: "RedisConnectionStatus", ready: false, REDIS_HOST: process.env.REDIS_HOST }
     logger.error(`Redis disconnected co-operatively`)
     logger.object(obj)
     health_and_readiness.healthy(false)

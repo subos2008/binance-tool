@@ -152,6 +152,28 @@ class PortfolioTracker implements MasterPortfolioClass {
         Sentry.captureException(err)
         logger.error(err)
       }
+
+      try {
+        if (portfolio.prices) {
+          let quote_amount = new BigNumber(10)
+          let quote_currency = "BUSD"
+          let free_balances = portfolio_utils.get_balances_with_free_greater_than({
+            portfolio,
+            quote_currency,
+            quote_amount,
+            prices: portfolio.prices,
+          })
+          if (free_balances.length > 0) {
+            let string =
+              `Assets with free balances gt ${quote_amount.toFixed()}${quote_currency}: ` +
+              free_balances.map((b) => `${b.asset}: ${b.quote_amount.dp(0).toFixed()}`).join(", ")
+            this.send_message(string)
+          }
+        }
+      } catch (err) {
+        Sentry.captureException(err)
+        logger.error(err)
+      }
     } catch (err) {
       Sentry.captureException(err)
       logger.error(err)

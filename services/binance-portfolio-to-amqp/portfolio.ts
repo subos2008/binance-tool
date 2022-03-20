@@ -59,6 +59,7 @@ import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { RedisClient } from "redis"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { SendMessageFunc } from "../../lib/telegram-v2"
 
 // Let's keep this code, could become part of ensuring same format events accross exchanges
 export class PortfolioPublisher {
@@ -128,7 +129,7 @@ export class PortfolioPublisher {
 // This class is a bit strange because it was originally intended to conglomerate multiple
 // portfolio accounts into one view for publishing.
 class PortfolioTracker implements MasterPortfolioClass {
-  send_message: Function
+  send_message: SendMessageFunc
   logger: Logger
   ee: any
   portfolios: { [exchange: string]: Portfolio } = {}
@@ -143,7 +144,7 @@ class PortfolioTracker implements MasterPortfolioClass {
     publisher,
     health_and_readiness,
   }: {
-    send_message: (msg: string) => void
+    send_message: SendMessageFunc
     logger: Logger
     publisher: PortfolioPublisher
     health_and_readiness: HealthAndReadinessSubsystem
@@ -229,6 +230,11 @@ class PortfolioTracker implements MasterPortfolioClass {
 
   async decorate_portfolio(portfolio: Portfolio): Promise<Portfolio> {
     portfolio = this.portfolio_utils.add_quote_value_to_portfolio_balances({
+      // TODO: convert to list
+      portfolio,
+      quote_currency: "BTC",
+    }).portfolio
+    portfolio = this.portfolio_utils.add_quote_value_to_portfolio_balances({
       portfolio,
       quote_currency: "USDT",
     }).portfolio
@@ -238,20 +244,15 @@ class PortfolioTracker implements MasterPortfolioClass {
       .toFixed()
     if (!portfolio.prices) throw new Error(`No prices`)
     portfolio.usd_value = this.portfolio_utils
-      .convert_base_to_quote_currency({
-        base_quantity: new BigNumber(portfolio.btc_value),
-        base_currency: "BTC",
-        quote_currency: "USDT",
-        prices: portfolio.prices,
-      })
-      // .dp(0)
+      .calculate_portfolio_value_in_quote_currency({ quote_currency: "BUSD", portfolio })
+      .total.dp(0)
       .toFixed()
     return portfolio
   }
 }
 
 export class BinancePortfolioToAMQP implements PortfolioBitchClass {
-  send_message: Function
+  send_message: SendMessageFunc
   logger: Logger
   ee: BinanceType
   master: MasterPortfolioClass // duplicated
@@ -268,7 +269,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
     health_and_readiness,
     redis,
   }: {
-    send_message: (msg: string) => void
+    send_message: SendMessageFunc
     logger: Logger
     health_and_readiness: HealthAndReadiness
     redis: RedisClient

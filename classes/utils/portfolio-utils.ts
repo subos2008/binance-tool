@@ -118,12 +118,19 @@ export class PortfolioUtils {
     quote_amount: BigNumber
     prices: Prices
   }) {
-    return portfolio.balances
-      .map((p) => ({
-        asset: p.asset,
-        quote_amount: this.get_free_balance_in_quote_currency({ balance: p, quote_currency, prices }),
-      }))
-      .filter((p) => p.quote_amount.isGreaterThanOrEqualTo(quote_amount))
+    let all = portfolio.balances.map((p) => ({
+      asset: p.asset,
+      quote_amount: this.get_free_balance_in_quote_currency({ balance: p, quote_currency, prices }),
+    }))
+    let filtered = all.filter((p) => p.quote_amount.isGreaterThanOrEqualTo(quote_amount))
+
+    this.logger.object({
+      object_type: "FreeBalancesReport",
+      all: all.map((p) => `${p.asset}: ${p.quote_amount}`).join(", "),
+      filtered: filtered.map((p) => `${p.asset}: ${p.quote_amount}`).join(", "),
+    })
+
+    return filtered
   }
 
   add_quote_value_to_portfolio_balances({

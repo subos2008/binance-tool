@@ -86,7 +86,7 @@ main().catch((error) => {
 })
 
 var app = express()
-app.get("/health_and_readiness", health_and_readiness.health_handler.bind(health_and_readiness))
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

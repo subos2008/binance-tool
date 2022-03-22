@@ -4,7 +4,7 @@ import { Request, Response } from "express"
 import Sentry from "../lib/sentry"
 import { randomUUID } from "crypto"
 
-type Summary = { [subsystem: string]: boolean }
+type Summary = { [subsystem: string]: boolean | string }
 type HealthAndReadinessChange = {
   object_type: "HealthAndReadinessChange"
   subsystem: string
@@ -123,7 +123,7 @@ export class HealthAndReadiness {
     for (const subsystem in this.subsystems) {
       result[subsystem] = this.subsystems[subsystem].healthy()
     }
-    return result
+    return { object_type: "ReadinessSummary", ...result }
   }
 
   surmise_readiness_state(): Summary {
@@ -131,7 +131,7 @@ export class HealthAndReadiness {
     for (const subsystem in this.subsystems) {
       result[subsystem] = this.subsystems[subsystem].ready()
     }
-    return result
+    return { object_type: "HealthSummary", ...result }
   }
 
   surmise_state_to_logger() {
@@ -150,14 +150,22 @@ export class HealthAndReadiness {
 
   health_handler(req: Request, res: Response) {
     let summary: Summary = this.surmise_health_state()
-    if (this.healthy()) res.send({ status: "OK", summary })
-    else res.status(500).json({ status: "UNHEALTHY", summary })
+    if (this.healthy()) {
+      res.send({ status: "OK", summary })
+    } else {
+      this.logger.warn(summary)
+      res.status(500).json({ status: "UNHEALTHY", summary })
+    }
   }
 
   readiness_handler(req: Request, res: Response) {
     let summary: Summary = this.surmise_readiness_state()
-    if (this.ready()) res.send({ status: "OK", summary })
-    else res.status(500).json({ status: "UNHEALTHY", summary })
+    if (this.ready()) {
+      res.send({ status: "OK", summary })
+    } else {
+      this.logger.warn(summary)
+      res.status(500).json({ status: "UNHEALTHY", summary })
+    }
   }
 
   healthy(): boolean {

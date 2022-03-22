@@ -9,6 +9,7 @@ import { Logger } from "../../interfaces/logger"
 import * as Sentry from "@sentry/node"
 import { Edge61PositionEntrySignal } from "../../events/shared/edge61-position-entry"
 import { TradeAbstractionOpenSpotLongResult } from "../spot-trade-abstraction/trade-abstraction-service"
+import { SignalSupression } from "./signal-supression"
 
 /**
  * We enter multiple trade types on this signal:
@@ -42,6 +43,7 @@ class Edge61 implements Edge61EntrySignalProcessor {
   logger: Logger
   event_name: MyEventNameType
   tas_client: SpotTradeAbstractionServiceClient
+  signal_supression: SignalSupression
 
   constructor({
     send_message,
@@ -58,6 +60,7 @@ class Edge61 implements Edge61EntrySignalProcessor {
     this.send_message = send_message
     this.tas_client = new SpotTradeAbstractionServiceClient({ logger })
     this.event_name = event_name
+    this.signal_supression = new SignalSupression({ logger })
   }
 
   async process_edge61_entry_signal(signal: Edge61PositionEntrySignal) {
@@ -69,6 +72,15 @@ class Edge61 implements Edge61EntrySignalProcessor {
     let { base_asset } = signal.market_identifier
     if (!base_asset) {
       throw new Error(`base_asset not specified in market_identifier: ${JSON.stringify(signal.market_identifier)}`)
+    }
+
+    let signal_allowed = this.signal_supression.signal_allowed(signal)
+    if (!signal_allowed) {
+      this.send_message(`Supressed: ${signal.edge}:${signal.market_identifier.base_asset} signal in TAS bridge`, {
+        edge,
+        base_asset,
+      })
+      return
     }
 
     let result: TradeAbstractionOpenSpotLongResult

@@ -167,8 +167,9 @@ class PortfolioTracker implements MasterPortfolioClass {
           })
           if (free_balances.length > 0) {
             let string =
-              `Assets with free balances gt ${quote_amount.toFixed()}${quote_currency}: ` +
-              free_balances.map((b) => `${b.asset}: ${b.quote_amount?.dp(0).toFixed()}`).join(", ")
+              `Assets with free balances gt ${quote_amount.toFixed()} ${quote_currency}: [` +
+              free_balances.map((b) => `${b.asset}: ${b.quote_amount?.dp(0).toFixed()}`).join(", ") +
+              "]"
             this.send_message(string)
           }
         }

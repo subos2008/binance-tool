@@ -149,6 +149,7 @@ export class Edge61EntrySignals {
             trigger_price: highest_price, // use the donchen band price instead of the price we noticed the cross at
             signal_price: potential_entry_price, // the price we noticed the cross at (i.e. trigger_price + realisation slippage)
             direction,
+            signal_timestamp_ms: candle.closeTime,
           },
           candle
         )
@@ -163,6 +164,7 @@ export class Edge61EntrySignals {
             trigger_price: lowest_price, // the donchen band price
             signal_price: potential_entry_price, // the price we noticed the cross at (i.e. trigger_price + realisation slippage)
             direction,
+            signal_timestamp_ms: candle.closeTime,
           },
           candle
         )

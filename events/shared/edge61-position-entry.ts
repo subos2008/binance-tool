@@ -6,7 +6,7 @@ export type Edge61Parameters = {
 }
 
 export interface Edge61PositionEntrySignal {
-  version: "v1"
+  version: "v2"
   edge: "edge61"
   object_type: "Edge61EntrySignal"
   market_identifier: MarketIdentifier_V3
@@ -14,8 +14,9 @@ export interface Edge61PositionEntrySignal {
   edge61_entry_signal: {
     direction: "long" | "short"
     entry_price: string // depricated, is trigger_price
-    trigger_price: string // price at which the signla should have triggered
+    trigger_price: string // price at which the signal should have triggered
     signal_price: string // price at which the signal triggered (slippage vs trigger price)
+    signal_timestamp_ms: number
   }
   extra?: {
     CoinGeckoMarketData?: CoinGeckoMarketData

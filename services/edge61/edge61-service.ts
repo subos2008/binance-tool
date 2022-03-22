@@ -90,7 +90,13 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
   }
 
-  async enter_position({ symbol, trigger_price, signal_price, direction }: PositionEntryArgs): Promise<void> {
+  async enter_position({
+    symbol,
+    trigger_price,
+    signal_price,
+    direction,
+    signal_timestamp_ms,
+  }: PositionEntryArgs): Promise<void> {
     let base_asset: string = await this.base_asset_for_symbol(symbol)
     let market_data_for_symbol: CoinGeckoMarketData | undefined
     let market_data_string = ""
@@ -130,6 +136,8 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
         entry_price: trigger_price, // this should be depricated if the typing worked
         direction,
         market_data_for_symbol,
+        base_asset,
+        signal_timestamp_ms,
       })
     } catch (e) {
       this.logger.warn(`Failed to publish to AMQP for ${symbol}`)
@@ -145,6 +153,8 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     entry_price,
     direction,
     market_data_for_symbol,
+    signal_timestamp_ms,
+    base_asset,
   }: {
     symbol: string
     trigger_price: BigNumber
@@ -152,16 +162,18 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     entry_price: BigNumber
     direction: "long" | "short"
     market_data_for_symbol: CoinGeckoMarketData | undefined
+    signal_timestamp_ms: number
+    base_asset: string
   }) {
     let event: Edge61PositionEntrySignal = {
-      version: "v1",
+      version: "v2",
       edge: "edge61",
       market_identifier: {
         version: "v3",
         // TODO: pull exchange_identifier from ee
         exchange_identifier: { version: "v3", exchange, type: "spot", account: "default" },
         symbol,
-        base_asset: await this.base_asset_for_symbol(symbol),
+        base_asset,
       },
       object_type: "Edge61EntrySignal",
       edge61_parameters,
@@ -170,6 +182,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
         entry_price: entry_price.toFixed(),
         trigger_price: trigger_price.toFixed(),
         signal_price: signal_price.toFixed(),
+        signal_timestamp_ms,
       },
       extra: {
         CoinGeckoMarketData: market_data_for_symbol,

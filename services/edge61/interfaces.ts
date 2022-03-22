@@ -31,4 +31,5 @@ export interface PositionEntryArgs {
   trigger_price: BigNumber
   signal_price: BigNumber
   direction: "long" | "short"
+  signal_timestamp_ms: number
 }

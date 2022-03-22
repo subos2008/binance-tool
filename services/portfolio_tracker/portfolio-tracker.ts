@@ -154,7 +154,9 @@ class PortfolioTracker implements MasterPortfolioClass {
       }
 
       try {
+        this.logger.warn(`delme1`)
         if (portfolio.prices) {
+          this.logger.warn(`delme2`)
           let quote_amount = new BigNumber(10)
           let quote_currency = "BUSD"
           let free_balances = portfolio_utils.get_balances_with_free_greater_than({
@@ -166,7 +168,7 @@ class PortfolioTracker implements MasterPortfolioClass {
           if (free_balances.length > 0) {
             let string =
               `Assets with free balances gt ${quote_amount.toFixed()}${quote_currency}: ` +
-              free_balances.map((b) => `${b.asset}: ${b.quote_amount.dp(0).toFixed()}`).join(", ")
+              free_balances.map((b) => `${b.asset}: ${b.quote_amount?.dp(0).toFixed()}`).join(", ")
             this.send_message(string)
           }
         }

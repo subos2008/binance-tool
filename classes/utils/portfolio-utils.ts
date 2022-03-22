@@ -118,17 +118,35 @@ export class PortfolioUtils {
     quote_amount: BigNumber
     prices: Prices
   }) {
-    let all = portfolio.balances.map((p) => ({
-      asset: p.asset,
-      quote_amount: this.get_free_balance_in_quote_currency({ balance: p, quote_currency, prices }),
-    }))
-    let filtered = all.filter((p) => p.quote_amount.isGreaterThanOrEqualTo(quote_amount))
+    type Mapped = { asset: string; quote_amount: BigNumber | undefined }
+    let mapper = (b: Balance): Mapped => {
+      let quote_amount
+      try {
+        quote_amount = this.get_free_balance_in_quote_currency({ balance: b, quote_currency, prices })
+        return {
+          asset: b.asset,
+          quote_amount,
+        }
+      } catch (error) {
+        this.logger.warn(`Failed to convert free balance of ${b.asset} to ${quote_currency}`)
+        return { asset: b.asset, quote_amount: undefined }
+      }
+    }
+    let all = portfolio.balances.map(mapper)
 
-    this.logger.object({
-      object_type: "FreeBalancesReport",
-      all: all.map((p) => `${p.asset}: ${p.quote_amount}`).join(", "),
-      filtered: filtered.map((p) => `${p.asset}: ${p.quote_amount}`).join(", "),
-    })
+    let filtered = all.filter((p) => p.quote_amount && p.quote_amount.isGreaterThanOrEqualTo(quote_amount))
+
+    try {
+      this.logger.object({
+        object_type: "FreeBalancesReport",
+        all: all.map((p) => `${p.asset}: ${p.quote_amount?.toFixed()}`).join(", "),
+        filtered: filtered.map((p) => `${p.asset}: ${p.quote_amount?.toFixed()}`).join(", "),
+      })
+    } catch (error) {
+      this.logger.error(`Failed to log FreeBalancesReport`)
+      this.logger.error(error)
+      Sentry.captureException(error)
+    }
 
     return filtered
   }

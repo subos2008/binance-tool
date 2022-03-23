@@ -41,12 +41,19 @@ class Edge61 implements Edge61EntrySignalProcessor {
   }
 
   async process_edge61_entry_signal(signal: Edge61PositionEntrySignal) {
-    assert.equal(signal.version, "v1")
     assert.equal(signal.object_type, "Edge61EntrySignal")
+    let { edge } = signal
+    let { base_asset } = signal?.market_identifier
+
+    if (signal.version !== "v2") {
+      let msg = `Old object_type version: ${signal.version}`
+      this.logger.error(msg)
+      this.logger.object(signal, { edge, base_asset })
+      throw new Error(msg)
+    }
+    
     assert.equal(signal.edge, "edge61")
 
-    let { edge } = signal
-    let { base_asset } = signal.market_identifier
     if (!base_asset) {
       throw new Error(`base_asset not specified in market_identifier: ${JSON.stringify(signal.market_identifier)}`)
     }

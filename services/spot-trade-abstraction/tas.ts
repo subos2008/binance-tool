@@ -87,7 +87,6 @@ import { SpotPositionsExecution } from "../../classes/spot/execution/spot-positi
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 import { BinancePriceGetter } from "../../interfaces/exchange/binance/binance-price-getter"
 
-
 import { RedisClient } from "redis"
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
@@ -96,7 +95,11 @@ const order_context_persistence = new RedisOrderContextPersistance({ logger, red
 const binance_spot_ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
 const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
 const position_sizer = new FixedPositionSizer({ logger })
-const price_getter = new BinancePriceGetter({ ee: binance_spot_ee.get_raw_binance_ee(), cache_timeout_ms: 400 })
+const price_getter = new BinancePriceGetter({
+  logger,
+  ee: binance_spot_ee.get_raw_binance_ee(),
+  cache_timeout_ms: 400,
+})
 const positions = new SpotPositionsQuery({
   logger,
   positions_persistance,

@@ -11,29 +11,6 @@ import { Edge61PositionEntrySignal } from "../../events/shared/edge61-position-e
 import { TradeAbstractionOpenSpotLongResult } from "../spot-trade-abstraction/trade-abstraction-service"
 import { SignalSupression } from "./signal-supression"
 
-/**
- * We enter multiple trade types on this signal:
- * edge61     // trend following
- * and edge61 // breakout scalp
- */
-
-/**
- * interface Edge61PositionEntrySignal {
- *   object_type: "Edge61EntrySignal"
- *   version: "v1"
- *   edge: "edge61"
- *   market_identifier: MarketIdentifier_V3
- *   edge61_parameters: Edge61Parameters
- *   edge61_entry_signal: {
- *     direction: "long" | "short"
- *     entry_price: string
- *   }
- *   extra?: {
- *     CoinGeckoMarketData?: CoinGeckoMarketData
- *   }
- * }
- */
-
 export interface Edge61EntrySignalProcessor {
   process_edge61_entry_signal: (signal: Edge61PositionEntrySignal) => Promise<void>
 }

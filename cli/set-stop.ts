@@ -126,7 +126,7 @@ function mint_price_getter({
   exchange_identifier: ExchangeIdentifier
 }): CurrentPriceGetter {
   if (exchange_identifier.exchange === "binance") {
-    return new BinancePriceGetter({ ee: get_ee() })
+    return new BinancePriceGetter({ logger, ee: get_ee() })
   } else {
     throw new Error(`Exchange ${exchange_identifier.exchange} not implemented`)
   }
@@ -284,7 +284,7 @@ function chew(orders: GenericOrder[]): any {
   return { non_zero_stops }
 }
 
-function recreate_stop_order_with_different_stop_price(order:GenericOrder) {
+function recreate_stop_order_with_different_stop_price(order: GenericOrder) {
   // TODO: check order type
   // TODO: cancel order
   // TODO: convert and create order with new stop price

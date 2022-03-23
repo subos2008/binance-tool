@@ -44,7 +44,6 @@ import { BinancePriceGetter } from "../interfaces/exchange/binance/binance-price
 import { CurrentPriceGetter } from "../interfaces/exchange/generic/price-getter"
 import { RedisSpotPositionsPersistance } from "../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 
-
 require("dotenv").config()
 
 const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
@@ -151,7 +150,7 @@ function mint_price_getter({
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
-    return new BinancePriceGetter({ ee })
+    return new BinancePriceGetter({ logger, ee })
   } else {
     throw new Error(`Exchange ${exchange_identifier.exchange} not implemented`)
   }

@@ -12,7 +12,6 @@ export async function get_redis_client(
   health_and_readiness: HealthAndReadinessSubsystem
 ): Promise<RedisClientType> {
   let url = `redis://:${process.env.REDIS_PASSWORD}@${process.env.REDIS_HOST}`
-  console.error(url)
 
   let reconnectInvocationCounter = 0;
 

@@ -5,7 +5,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { DateTime } from "luxon"
+import { DateTime, Duration } from "luxon"
 import { Edge61PositionEntrySignal } from "../../events/shared/edge61-position-entry"
 import { Logger } from "../../interfaces/logger"
 
@@ -56,12 +56,12 @@ export class SignalSupression {
 
   private old_messages_supression(signal: Edge61PositionEntrySignal): boolean {
     /* We suppress entries on this signal when the singal is older than a few seconds */
-    let signal_time = DateTime.fromMillis(signal.edge61_entry_signal.signal_timestamp_ms).toUTC()
-    let now = DateTime.now()
-    let message_age = now.minus(signal_time)
+    let { signal_timestamp_ms } = signal.edge61_entry_signal
+    let now_timestamp_ms = DateTime.now().toMillis()
+    let message_age_ms = now_timestamp_ms - signal_timestamp_ms
 
     let suppressed = false
-    if (message_age.toMillis() > this.max_allowed_message_age_ms) {
+    if (message_age_ms > this.max_allowed_message_age_ms) {
       suppressed = true
     }
 
@@ -70,12 +70,12 @@ export class SignalSupression {
       let { base_asset } = signal.market_identifier
       this.logger.object({
         object_type: "SignalSupression",
-        signal_time,
+        signal_timestamp_ms,
         edge,
         base_asset,
         reason: "old_message",
         max_allowed_message_age_ms: this.max_allowed_message_age_ms,
-        message_age,
+        message_age_ms,
       })
     }
     return suppressed

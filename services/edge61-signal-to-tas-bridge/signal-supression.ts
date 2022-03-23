@@ -44,6 +44,8 @@ export class SignalSupression {
       this.logger.object({
         object_type: "SignalSupression",
         signal_time,
+        start_of_supressed_period,
+        end_of_supressed_period,
         edge,
         base_asset,
         reason: "time_of_day_supression",

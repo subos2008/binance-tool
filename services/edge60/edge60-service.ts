@@ -126,7 +126,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
 
     if (previous_direction === null) {
       this.send_message(
-        `possible ${direction_string} entry signal on ${symbol} - check manually if this is a trend reversal.`,
+        `possible ${direction_string} entry signal on ${base_asset} - check manually if this is a trend reversal.`,
         { edge }
       )
       return
@@ -137,7 +137,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     if (entry_filter) {
       try {
         let days = edge60_parameters.days_of_price_history
-        let msg = `trend reversal ${direction_string} entry signal on ${symbol} at ${days}d price ${entry_price.toFixed()}. ${market_data_string}`
+        let msg = `trend reversal ${direction_string} entry signal on ${base_asset} at ${days}d price ${entry_price.toFixed()}. ${market_data_string}`
         this.logger.info({ signal: "entry", direction, symbol }, msg)
         this.send_message(msg, { edge })
       } catch (e) {

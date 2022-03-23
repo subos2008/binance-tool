@@ -118,7 +118,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     try {
       let days = edge61_parameters.days_of_price_history
       let trigger_to_signal_slippage = signal_price.minus(trigger_price).dividedBy(trigger_price).times(100).dp(1)
-      let msg = `${direction_string} entry signal on ${symbol} at ${days}d price. trigger: ${trigger_price.toFixed()}, signal: ${signal_price.toFixed()} trigger to signal slippage ${trigger_to_signal_slippage}%. ${market_data_string}`
+      let msg = `${direction_string} entry signal on ${base_asset} at ${days}d price. trigger: ${trigger_price.toFixed()}, signal: ${signal_price.toFixed()} trigger to signal slippage ${trigger_to_signal_slippage}%. ${market_data_string}`
       this.logger.info({ signal: "entry", direction, symbol }, msg)
       this.send_message(msg, { edge })
     } catch (e) {

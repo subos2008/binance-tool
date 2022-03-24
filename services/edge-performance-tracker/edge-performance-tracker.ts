@@ -43,6 +43,8 @@ import { BigNumber } from "bignumber.js"
 import { RedisEdgePerformancePersistence } from "./redis-edge-performance-persistence"
 import { get_redis_client } from "../../lib/redis-v4"
 import { RedisClientType } from "redis-v4"
+import { UploadToMongoDB } from "./upload-for-tableau-via-mongodb"
+import { SpotEdgePerformanceEvent } from "./interfaces"
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
@@ -51,6 +53,7 @@ class EventLogger implements MessageProcessor {
   logger: Logger
   health_and_readiness: HealthAndReadiness
   persistence: RedisEdgePerformancePersistence
+  mongodb_uploader: UploadToMongoDB
 
   constructor({
     send_message,
@@ -69,6 +72,7 @@ class EventLogger implements MessageProcessor {
     this.send_message = send_message
     this.health_and_readiness = health_and_readiness
     this.persistence = persistence
+    this.mongodb_uploader = new UploadToMongoDB()
   }
 
   async start() {
@@ -96,10 +100,22 @@ class EventLogger implements MessageProcessor {
 
       channel.ack(amqp_event)
 
-      let event: SpotPositionClosedEvent_V1 = JSON.parse(amqp_event.content.toString())
-      this.logger.info(JSON.stringify(event))
+      let i: SpotPositionClosedEvent_V1 = JSON.parse(amqp_event.content.toString())
+      this.logger.info(JSON.stringify(i))
 
-      let { edge, percentage_quote_change, base_asset } = event
+      let { edge, percentage_quote_change, base_asset, abs_quote_change } = i
+      let loss = percentage_quote_change ? percentage_quote_change < 0 : undefined
+      let o: SpotEdgePerformanceEvent = {
+        edge,
+        percentage_quote_change,
+        abs_quote_change,
+        loss,
+        base_asset,
+        exchange: i.exchange_identifier.exchange,
+        exchange_type: i.exchange_identifier.type,
+        entry_timestamp_ms: i.entry_signal_timestamp_ms,
+        exit_timestamp_ms: i.exit_signal_timestamp_ms,
+      }
 
       try {
         let msg: string = `Closed position on ${edge}:${base_asset} with percentage_quote_change of ${
@@ -112,7 +128,14 @@ class EventLogger implements MessageProcessor {
       }
 
       try {
-        this.persistence.ingest_event(event)
+        this.mongodb_uploader.ingest_event(o)
+      } catch (e) {
+        this.logger.error(e)
+        Sentry.captureException(e)
+      }
+
+      try {
+        this.persistence.ingest_event(i)
       } catch (e) {
         this.logger.error(e)
         Sentry.captureException(e)

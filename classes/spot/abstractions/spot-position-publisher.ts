@@ -25,6 +25,8 @@ import { HealthAndReadinessSubsystem } from "../../health_and_readiness"
 import { AuthorisedEdgeType } from "./position-identifier"
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
 import _ from "lodash"
+import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
+import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 
 type _shared_v1 = {
   /**
@@ -35,8 +37,10 @@ type _shared_v1 = {
   object_subtype: "SingleEntryExit" // simple trades with one entry order and one exit order
   version: 1
 
-  base_asset: string
   edge: AuthorisedEdgeType
+
+  exchange_identifier: ExchangeIdentifier_V3
+  base_asset: string
 
   /** When the entry signal fired */
   entry_signal_source?: string // bert, service name etc
@@ -83,6 +87,7 @@ export interface SpotPositionClosedEvent_V1 extends _shared_v1 {
   total_quote_returned: string // same as exit_quote_returned
 
   percentage_quote_change?: number // use a float for this, it's not for real accounting
+  abs_quote_change?: string
 }
 
 export class SpotPositionPublisher {

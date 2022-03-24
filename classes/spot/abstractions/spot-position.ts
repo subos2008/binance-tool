@@ -131,13 +131,14 @@ export class SpotPosition {
 
   async get_SpotPositionOpenedEvent(): Promise<SpotPositionOpenedEvent_V1> {
     let o: SpotPositionObject = await this.describe_position()
-    return {
+    let obj: SpotPositionOpenedEvent_V1 = {
       object_type: "SpotPositionOpened",
       object_subtype: "SingleEntryExit", // simple trades with one entry order and one exit order
       version: 1,
 
-      base_asset: this.base_asset,
       edge: o.edge,
+      exchange_identifier: this.position_identifier.exchange_identifier,
+      base_asset: this.base_asset,
 
       /** When the entry signal fired */
       // entry_signal_source: string, // bert, service name etc
@@ -156,6 +157,8 @@ export class SpotPosition {
       /** Presumably just the entry order */
       orders: o.orders,
     }
+
+    return obj
   }
 
   /** currently a bit edge60 specific, designed for single order entry and exit trades */
@@ -190,8 +193,9 @@ export class SpotPosition {
       object_subtype, //: "SingleEntryExit", // simple trades with one entry order and one exit order
       version: 1,
 
-      base_asset: this.base_asset,
       edge: o.edge,
+      exchange_identifier: this.position_identifier.exchange_identifier,
+      base_asset: this.base_asset,
 
       /** When the entry signal fired */
       // entry_signal_source: string, // bert, service name etc

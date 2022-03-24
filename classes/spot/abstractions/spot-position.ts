@@ -179,13 +179,10 @@ export class SpotPosition {
   }): Promise<SpotPositionClosedEvent_V1> {
     let o: SpotPositionObject = await this.describe_position()
 
-    let percentage_quote_change
+    let percentage_quote_change, abs_quote_change
     if (o.initial_quote_invested) {
-      percentage_quote_change = new BigNumber(exit_quote_returned)
-        .minus(o.initial_quote_invested)
-        .dividedBy(o.initial_quote_invested)
-        .times(100)
-        .toNumber()
+      abs_quote_change = new BigNumber(exit_quote_returned).minus(o.initial_quote_invested)
+      percentage_quote_change = abs_quote_change.dividedBy(o.initial_quote_invested).times(100).toNumber()
     }
 
     let r: SpotPositionClosedEvent_V1 = {
@@ -231,6 +228,7 @@ export class SpotPosition {
       total_quote_invested: o.initial_quote_invested?.toFixed(), // same as initial_entry_quote_invested
       total_quote_returned: exit_quote_returned, // same as exit_quote_returned
 
+      abs_quote_change: abs_quote_change?.toFixed(),
       percentage_quote_change, // use a float for this, it's not for real accounting
     }
 

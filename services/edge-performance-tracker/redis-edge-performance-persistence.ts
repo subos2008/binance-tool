@@ -80,13 +80,14 @@ export class RedisEdgePerformancePersistence {
   async ingest_event(event: SpotPositionClosedEvent_V1) {
     let {
       edge,
-      percentage_quote_change: percentage_quote_change_string,
+      percentage_quote_change: percentage_quote_change_string, // actually bro this is a number...
       exit_signal_timestamp_ms,
       abs_quote_change,
     } = event
 
+
     let percentage_quote_change: BigNumber | undefined = percentage_quote_change_string
-      ? new BigNumber(percentage_quote_change_string)
+      ? new BigNumber(percentage_quote_change_string.toString())
       : undefined
 
     let dt = exit_signal_timestamp_ms ? DateTime.fromMillis(exit_signal_timestamp_ms).toUTC() : DateTime.utc()

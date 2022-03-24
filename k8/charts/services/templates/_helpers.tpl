@@ -168,3 +168,11 @@ Environment variables
       key: INFLUXDB_ORG_ID
       name: influxdb
 {{- end -}}
+
+{{- define "mongodb-wo.vars" -}}
+- name: MONGODB_URL
+  valueFrom:
+    secretKeyRef:
+      key: MONGODB_URL
+      name: mongodb-wo
+{{- end -}}

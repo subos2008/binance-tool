@@ -11,7 +11,7 @@ import { Logger } from "../../interfaces/logger"
 
 export class SignalSupression {
   logger: Logger
-  max_allowed_message_age_ms: number = 1000
+  max_allowed_message_age_ms: number = 5000
   max_trigger_to_signal_price_slippage_percentage: BigNumber = new BigNumber("0.3")
 
   constructor(args: { logger: Logger }) {

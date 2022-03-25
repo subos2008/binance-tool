@@ -18,7 +18,7 @@ Sentry.init({})
 
 import { SpotEdgePerformanceEvent } from "./interfaces"
 
-import { MongoClient, Decimal128 } from "mongodb"
+import { MongoClient, Decimal128, Timestamp } from "mongodb"
 
 export class UploadToMongoDB {
   private client: MongoClient | null = null
@@ -55,6 +55,8 @@ export class UploadToMongoDB {
 
       let obj: any = JSON.parse(JSON.stringify(event)) //clone
       if (event.abs_quote_change) obj.abs_quote_change = new Decimal128(event.abs_quote_change)
+      if (event.entry_timestamp_ms) obj.entry_timestamp_ms = new Date(event.entry_timestamp_ms)
+      if (event.exit_timestamp_ms) obj.exit_timestamp_ms = new Date(event.exit_timestamp_ms)
 
       await db.collection(this.mongodb_collection).insertOne(event)
     } catch (error) {

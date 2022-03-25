@@ -182,7 +182,7 @@ export class SpotPosition {
     let percentage_quote_change, abs_quote_change
     if (o.initial_quote_invested) {
       abs_quote_change = new BigNumber(exit_quote_returned).minus(o.initial_quote_invested)
-      percentage_quote_change = abs_quote_change.dividedBy(o.initial_quote_invested).times(100).toNumber()
+      percentage_quote_change = abs_quote_change.dividedBy(o.initial_quote_invested).times(100).dp(3).toNumber()
     }
 
     let r: SpotPositionClosedEvent_V1 = {

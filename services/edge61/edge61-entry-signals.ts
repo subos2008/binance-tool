@@ -141,7 +141,7 @@ export class Edge61EntrySignals {
         throw new Error(msg)
       }
 
-      let signal_timestamp_ms = DateTime.now().toMillis()
+      let signal_timestamp_ms = DateTime.now().toMillis() + 1 // avoid the last millisecond of the day
 
       // check for long entry
       if (signal_high) {
@@ -207,7 +207,7 @@ export class Edge61EntrySignals {
     // let one_day_in_seconds = 60 * 60 * 24
     // let expiry_timestamp_seconds = candle_open_time + one_day_in_seconds
 
-    var end = new Date(entry_candle.closeTime)
+    var end = new Date(args.signal_timestamp_ms)
     end.setUTCHours(23, 59, 59, 999)
     let expiry_timestamp = end.getTime()
 

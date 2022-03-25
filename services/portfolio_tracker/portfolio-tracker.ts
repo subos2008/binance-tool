@@ -114,7 +114,8 @@ class PortfolioTracker implements MasterPortfolioClass {
         return
       }
       try {
-        let msg = `B: ${portfolio.btc_value}, U: ${portfolio.usd_value}`
+        let length = portfolio.balances.length
+        let msg = `B: ${portfolio.btc_value}, U: ${portfolio.usd_value}, #${length}`
         try {
           msg += " as " + portfolio_utils.balances_to_string(portfolio, "BTC")
         } catch (err) {

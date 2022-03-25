@@ -97,7 +97,7 @@ export class PositionPerformance {
 
     if (position_strings.length > 0) {
       let msg: string = position_strings.join("\n")
-      this.send_message(`\n${msg}`)
+      this.send_message(`\n${position_strings.length} positions:\n${msg}`)
     }
   }
 

@@ -142,8 +142,8 @@ export class SpotPosition {
 
       /** When the entry signal fired */
       // entry_signal_source: string, // bert, service name etc
-      // entry_signal_timestamp_ms: number,
-      // entry_signal_price_at_signal: string,
+      entry_signal_timestamp_ms: o.initial_entry_timestamp,
+      // entry_signal_price_at_signal: o.,
 
       /** Executed entry */
       initial_entry_timestamp_ms: o.initial_entry_timestamp,
@@ -196,7 +196,7 @@ export class SpotPosition {
 
       /** When the entry signal fired */
       // entry_signal_source: string, // bert, service name etc
-      // entry_signal_timestamp_ms: number,
+      entry_signal_timestamp_ms: o.initial_entry_timestamp,
       // entry_signal_price_at_signal: string,
 
       /** Executed entry */
@@ -213,7 +213,7 @@ export class SpotPosition {
 
       /** When the exit signal fired */
       // exit_signal_source?: string // bert, service name etc
-      // exit_signal_timestamp_ms?: number
+      // exit_signal_timestamp_ms?: o.
       // exit_signal_price_at_signal?: string
 
       /** Executed exit */

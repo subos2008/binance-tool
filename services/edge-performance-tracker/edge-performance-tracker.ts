@@ -115,8 +115,8 @@ class EventLogger implements MessageProcessor {
         base_asset,
         exchange: i.exchange_identifier.exchange,
         exchange_type: i.exchange_identifier.type,
-        entry_timestamp_ms: i.entry_signal_timestamp_ms,
-        exit_timestamp_ms: i.exit_signal_timestamp_ms,
+        entry_timestamp_ms: i.initial_entry_timestamp_ms,
+        exit_timestamp_ms: i.exit_timestamp_ms,
       }
 
       try {

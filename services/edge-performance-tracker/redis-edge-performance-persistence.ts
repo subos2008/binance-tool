@@ -126,7 +126,7 @@ export class RedisEdgePerformancePersistence {
 
     try {
       if (abs_quote_change) {
-        let delta: number = Number(percentage_quote_change_string)
+        let delta: number = Number(abs_quote_change)
         await Promise.all([
           this.update_abs_quote_change_for_key(this.all_time_results_counts_hash_key(edge), delta),
           this.update_abs_quote_change_for_key(this.daily_results_counts_hash_key(edge, dt), delta),

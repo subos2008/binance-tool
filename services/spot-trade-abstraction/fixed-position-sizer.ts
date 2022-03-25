@@ -36,7 +36,7 @@ export class FixedPositionSizer implements PositionSizer {
     switch (edge) {
       case "edge60":
         assert("BUSD" === quote_asset)
-        return new BigNumber(150)
+        return new BigNumber(100)
 
       case "edge61":
         assert("BUSD" === quote_asset)

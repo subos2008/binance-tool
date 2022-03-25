@@ -81,18 +81,49 @@ export class PositionPerformance {
     let position_strings: string[] = []
     let open_positions = await this.spot_positions_persistance.list_open_positions()
 
-    async function position_to_string(current_price: BigNumber, p: SpotPosition) {
-      let initial_entry_price = await p.initial_entry_price()
-      let percentage = (await p.percentage_price_change_since_initial_entry(current_price)).dp(1)
-      let percentage_string: string = percentage?.toFixed() || "?"
-      let edge = await p.edge()
-      return `${p.baseAsset}: ${percentage_string}% (entry: ${initial_entry_price.toFixed()}, ${edge})`
+    type InterimData = {
+      edge: string
+      base_asset: string
+      initial_entry_price: BigNumber
+      percentage_price_change_since_initial_entry: BigNumber
     }
 
+    async function data_to_string(p: InterimData) {
+      let percentage_string: string = p.percentage_price_change_since_initial_entry?.toFixed() || "?"
+      return `${p.base_asset}: ${percentage_string}% (entry: ${p.initial_entry_price.toFixed()}, ${p.edge})`
+    }
+
+    /** convert pi's to positions */
     for (const position_identifier of open_positions) {
-      let p = await this.spot_positions_query.position(position_identifier)
+      let p: SpotPosition = await this.spot_positions_query.position(position_identifier)
       positions.push(p)
-      position_strings.push(await position_to_string(await this.current_price(p), p))
+    }
+
+    let data: InterimData[] = []
+    for (const p of positions) {
+      let current_price = await this.current_price(p)
+      let initial_entry_price = await p.initial_entry_price()
+      let percentage_price_change_since_initial_entry = await p.percentage_price_change_since_initial_entry(
+        current_price
+      )
+      let edge = await p.edge()
+      data.push({
+        edge,
+        base_asset: p.base_asset,
+        initial_entry_price,
+        percentage_price_change_since_initial_entry,
+      })
+    }
+
+    /* sort, if begger return 1, smaller -1 */
+    data = data.sort((a, b) =>
+      a.percentage_price_change_since_initial_entry.isGreaterThan(b.percentage_price_change_since_initial_entry)
+        ? 1
+        : -1
+    )
+
+    for (const p of data) {
+      position_strings.push(await data_to_string(p))
     }
 
     if (position_strings.length > 0) {

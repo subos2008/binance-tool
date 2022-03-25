@@ -1,6 +1,7 @@
-
 // NB: Add new fields to the mongoDB upload also if they need mappying - like string decimals
 export interface SpotEdgePerformanceEvent {
+  object_type: "SpotEdgePerformanceEvent"
+  version: 1
   edge: string
   base_asset: string
   exchange: string

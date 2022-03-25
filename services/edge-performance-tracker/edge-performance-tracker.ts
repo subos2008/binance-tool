@@ -106,6 +106,8 @@ class EventLogger implements MessageProcessor {
       let { edge, percentage_quote_change, base_asset, abs_quote_change } = i
       let loss = percentage_quote_change ? percentage_quote_change < 0 : undefined
       let o: SpotEdgePerformanceEvent = {
+        object_type: "SpotEdgePerformanceEvent",
+        version: 1,
         edge,
         percentage_quote_change,
         abs_quote_change,

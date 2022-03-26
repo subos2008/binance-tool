@@ -15,6 +15,7 @@ import { OrderId } from "../persistence/interface/order-context-persistence"
 import { Edge60SpotPositionsExecution } from "./entry-executors/edge60-executor"
 import { Edge61SpotPositionsExecution } from "./entry-executors/edge61-executor"
 import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
+import { TradeAbstractionOpenSpotLongCommand } from "../../../services/spot-trade-abstraction/trade-abstraction-service"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -141,15 +142,10 @@ export class SpotPositionsExecution {
   //     executed_price: BigNumber
   //     stop_price: BigNumber
   //   }
-  async open_position(args: {
-    quote_asset: string
-    base_asset: string
-    direction: string
-    edge: AuthorisedEdgeType
-    trigger_price?: BigNumber
-  }): Promise<SpotPositionExecutionOpenResult> {
+  async open_position(args: TradeAbstractionOpenSpotLongCommand): Promise<SpotPositionExecutionOpenResult> {
     args.edge = check_edge(args.edge)
-    let { edge } = args
+    let { edge, quote_asset } = args
+    if (!quote_asset) throw new Error(`quote_asset not defined`)
 
     /**
      * Check if already in a position
@@ -162,9 +158,9 @@ export class SpotPositionsExecution {
 
     switch (args.edge) {
       case "edge60":
-        return this.edge60_executor.open_position(args)
+        return this.edge60_executor.open_position({ ...args, quote_asset })
       case "edge61":
-        return this.edge61_executor.open_position(args)
+        return this.edge61_executor.open_position({ ...args, quote_asset })
       default:
         let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
         this.send_message(msg, { edge })

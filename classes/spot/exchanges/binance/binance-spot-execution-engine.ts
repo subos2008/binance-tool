@@ -135,6 +135,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     executed_quote_quantity: BigNumber
     executed_price: BigNumber
     executed_base_quantity: BigNumber
+    transaction_timestamp_ms: number | undefined
   }> {
     this.logger.object(cmd)
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
@@ -152,6 +153,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
         executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
         executed_base_quantity: new BigNumber(result.executedQty),
         executed_price: new BigNumber(result.cummulativeQuoteQty).dividedBy(result.executedQty),
+        transaction_timestamp_ms: result.transactTime,
       }
     }
     throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)

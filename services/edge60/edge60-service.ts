@@ -152,6 +152,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
           direction,
           previous_direction,
           market_data_for_symbol,
+          signal_timestamp_ms: +Date.now(),
         })
       } catch (e) {
         this.logger.warn(`Failed to publish to AMQP for ${symbol}`)
@@ -169,12 +170,14 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     direction,
     previous_direction,
     market_data_for_symbol,
+    signal_timestamp_ms,
   }: {
     symbol: string
     entry_price: BigNumber
     direction: "long" | "short"
     previous_direction: "long" | "short"
     market_data_for_symbol: CoinGeckoMarketData | undefined
+    signal_timestamp_ms: number
   }) {
     let event: Edge60PositionEntrySignal = {
       version: "v1",
@@ -191,6 +194,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       edge60_entry_signal: {
         direction,
         entry_price: entry_price.toFixed(),
+        signal_timestamp_ms,
       },
       extra: {
         previous_direction,

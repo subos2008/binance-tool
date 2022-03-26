@@ -88,6 +88,7 @@ import { RedisOrderContextPersistance } from "../../classes/spot/persistence/red
 import { BinancePriceGetter } from "../../interfaces/exchange/binance/binance-price-getter"
 
 import { RedisClient } from "redis"
+import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
 
@@ -132,24 +133,35 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
 
 app.get("/spot/long", async function (req: Request, res: Response, next: NextFunction) {
   try {
-    let { edge, base_asset, action, direction, trigger_price } = req.query
+    let { edge: edge_unchecked, base_asset, action, direction, trigger_price, signal_timestamp_ms } = req.query
 
     /* input checking */
-    assert(typeof edge == "string", new Error(`InputChecking: typeof edge unexpected`))
+    assert(typeof edge_unchecked == "string", new Error(`InputChecking: typeof edge unexpected`))
     assert(
       typeof trigger_price == "string" || typeof trigger_price == "undefined",
-      new Error(`InputChecking: typeof trigger_price unexpected`)
+      new Error(`InputChecking: typeof trigger_price unexpected: ${typeof trigger_price}`)
     )
     assert(typeof base_asset == "string", new Error(`InputChecking: typeof base_asset unexpected`))
+    assert(
+      typeof signal_timestamp_ms == "string",
+      new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms}`)
+    )
     assert(direction === "long", new Error(`InputChecking: expected long direction`))
     assert(action === "open", new Error(`InputChecking: expected action to be open`))
 
+    let edge: AuthorisedEdgeType
+    try {
+      edge = check_edge(edge_unchecked)
+    } catch (err) {
+      throw new Error(`UnauthorisedEdge: ${edge_unchecked}`)
+    }
     let cmd: TradeAbstractionOpenSpotLongCommand = {
       edge,
       direction: "long",
       action: "open",
       base_asset,
       trigger_price,
+      signal_timestamp_ms,
     }
     let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd, send_message)
     switch (result.status) {

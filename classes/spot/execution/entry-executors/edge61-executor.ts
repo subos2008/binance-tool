@@ -25,6 +25,7 @@ import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../..
 import { OrderId } from "../../persistence/interface/order-context-persistence"
 import { CurrentPriceGetter } from "../../../../interfaces/exchange/generic/price-getter"
 import { SpotPositionExecutionOpenResult } from "../spot-positions-execution"
+import { TradeAbstractionOpenSpotLongCommand } from "../../../../services/spot-trade-abstraction/trade-abstraction-service"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -89,18 +90,13 @@ export class Edge61SpotPositionsExecution {
   //     stop_price: BigNumber
   //     take_profit_price: BigNumber
   //   }
-  async open_position(args: {
-    quote_asset: string
-    base_asset: string
-    direction: string
-    edge: AuthorisedEdgeType
-    trigger_price?: BigNumber
-  }): Promise<SpotPositionExecutionOpenResult> {
+  async open_position(args: TradeAbstractionOpenSpotLongCommand): Promise<SpotPositionExecutionOpenResult> {
     try {
       args.edge = check_edge(args.edge)
       assert.equal(args.edge, "edge61")
+      let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
 
-      let { trigger_price, edge, base_asset, quote_asset } = args
+      if (!quote_asset) throw new Error(`quote_asset not defined`)
 
       let edge_percentage_stop = new BigNumber(5)
       let edge_percentage_stop_limit = new BigNumber(15)
@@ -109,8 +105,11 @@ export class Edge61SpotPositionsExecution {
 
       this.logger.object({ object_type: "SpotPositionExecutionOpenRequest", ...args })
 
-      let market_identifier: MarketIdentifier_V3 = this.get_market_identifier_for(args)
-      if (!trigger_price) {
+      let market_identifier: MarketIdentifier_V3 = this.get_market_identifier_for({ ...args, quote_asset })
+      let trigger_price: BigNumber | undefined
+      if (trigger_price_string) {
+        trigger_price = new BigNumber(trigger_price_string)
+      } else {
         this.logger.warn(`Using current price as trigger_price for ${args.edge}:${args.base_asset} entry`)
         trigger_price = await this.price_getter.get_current_price({ market_symbol: market_identifier.symbol })
       }
@@ -118,12 +117,12 @@ export class Edge61SpotPositionsExecution {
        * TODO: trading rules
        */
 
-      let quote_amount = await this.position_sizer.position_size_in_quote_asset(args)
+      let quote_amount = await this.position_sizer.position_size_in_quote_asset({ ...args, quote_asset })
       let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
       let limit_price_factor = new BigNumber(100).plus(edge_percentage_buy_limit).div(100)
       let limit_price = trigger_price.times(limit_price_factor)
       this.logger.info(
-        `Calculated buy_limit price of ${limit_price.toFixed()} given trigger_price of ${trigger_price.toFixed()} (${edge_percentage_buy_limit.toFixed()}%)`
+        `Calculated buy_limit price of ${limit_price.toFixed()} given trigger_price of ${trigger_price} (${edge_percentage_buy_limit.toFixed()}%)`
       )
       let base_amount = quote_amount.dividedBy(limit_price)
       let cmd: SpotLimitBuyCommand = {
@@ -135,7 +134,8 @@ export class Edge61SpotPositionsExecution {
         timeInForce: "IOC",
       }
       let buy_result = await this.ee.limit_buy(cmd)
-      let { executed_quote_quantity, executed_price, executed_base_quantity } = buy_result
+      let { executed_quote_quantity, executed_price, executed_base_quantity, transaction_timestamp_ms } =
+        buy_result
 
       if (executed_base_quantity.isZero()) {
         let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`

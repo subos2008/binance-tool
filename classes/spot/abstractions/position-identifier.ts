@@ -35,6 +35,7 @@ export function is_authorised_edge(edge: string): boolean {
   return authorised
 }
 
+/** if it doesn't throw then whatever it returns is the valid edge string we are using */
 export function check_edge(edge: string | undefined): AuthorisedEdgeType {
   if (edge && is_authorised_edge(edge)) {
     return edge as AuthorisedEdgeType

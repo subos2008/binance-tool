@@ -83,7 +83,12 @@ export interface SpotExecutionEngine {
 
   limit_buy(
     args: SpotLimitBuyCommand
-  ): Promise<{ executed_quote_quantity: BigNumber; executed_price: BigNumber; executed_base_quantity: BigNumber }>
+  ): Promise<{
+    executed_quote_quantity: BigNumber
+    executed_price: BigNumber
+    executed_base_quantity: BigNumber
+    transaction_timestamp_ms: number | undefined
+  }>
 
   get_exchange_identifier(): ExchangeIdentifier_V3
 

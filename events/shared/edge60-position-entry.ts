@@ -14,6 +14,7 @@ export interface Edge60PositionEntrySignal {
   edge60_entry_signal: {
     direction: "long" | "short"
     entry_price: string
+    signal_timestamp_ms: number
   }
   extra?: {
     previous_direction?: "long" | "short"

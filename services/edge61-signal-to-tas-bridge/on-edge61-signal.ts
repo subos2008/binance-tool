@@ -8,7 +8,10 @@ import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/cli
 import { Logger } from "../../interfaces/logger"
 import * as Sentry from "@sentry/node"
 import { Edge61PositionEntrySignal } from "../../events/shared/edge61-position-entry"
-import { TradeAbstractionOpenSpotLongResult } from "../spot-trade-abstraction/trade-abstraction-service"
+import {
+  TradeAbstractionOpenSpotLongCommand,
+  TradeAbstractionOpenSpotLongResult,
+} from "../spot-trade-abstraction/trade-abstraction-service"
 import { SignalSupression } from "./signal-supression"
 
 export interface Edge61EntrySignalProcessor {
@@ -51,7 +54,7 @@ class Edge61 implements Edge61EntrySignalProcessor {
       this.logger.object(signal, { edge, base_asset })
       throw new Error(msg)
     }
-    
+
     assert.equal(signal.edge, "edge61")
 
     if (!base_asset) {
@@ -71,13 +74,15 @@ class Edge61 implements Edge61EntrySignalProcessor {
     switch (signal.edge61_entry_signal.direction) {
       case "long":
         this.logger.info(`long signal, attempting to open ${edge} spot long position on ${base_asset}`)
-        result = await this.tas_client.open_spot_long({
+        let cmd: TradeAbstractionOpenSpotLongCommand = {
           base_asset,
           edge,
           direction: "long",
           action: "open",
           trigger_price: signal.edge61_entry_signal.entry_price,
-        })
+          signal_timestamp_ms: signal.edge61_entry_signal.signal_timestamp_ms.toString(),
+        }
+        result = await this.tas_client.open_spot_long(cmd)
         break
       case "short":
         try {

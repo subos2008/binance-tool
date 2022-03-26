@@ -5,8 +5,10 @@ import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/cli
 import * as Sentry from "@sentry/node"
 import {
   TradeAbstractionCloseSpotLongResult,
+  TradeAbstractionOpenSpotLongCommand,
   TradeAbstractionOpenSpotLongResult,
 } from "../spot-trade-abstraction/trade-abstraction-service"
+import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
 Sentry.init({})
 // Sentry.configureScope(function (scope: any) {
 //   scope.setTag("service", service_name)
@@ -88,25 +90,38 @@ export class Commands {
 
   async spot(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
     try {
-      let [command, asset, edge] = args
-      asset = asset.toUpperCase()
+      let [command, base_asset, edge_unchecked] = args
+      base_asset = base_asset.toUpperCase()
       let valid_commands = ["long", "close"]
       if (!valid_commands.includes(command)) {
         ctx.replyWithHTML(`Invalid command for /spot '${command}, valid commands are ${valid_commands.join(", ")}`)
         return
       }
-      if (!edge || !edge.match(/edge\d+|undefined/)) {
-        ctx.replyWithHTML(`Invalid format for edge '${edge}', expected something like edgeNN`)
+
+      let edge: AuthorisedEdgeType
+      try {
+        edge = check_edge(edge_unchecked)
+      } catch (err) {
+        this.logger.error({ err })
+        Sentry.captureException(err)
+        ctx.replyWithHTML(`Invalid format for edge '${edge_unchecked}', expected something like edgeNN`)
         return
       }
 
       if (command == "long") {
-        let result = await this.open_spot_long(ctx, { asset, edge })
-        ctx.reply(`Looks like it succeeded?`)
+        let signal_timestamp_ms = (+Date.now()).toString()
+        let result: TradeAbstractionOpenSpotLongResult = await this.open_spot_long(ctx, {
+          base_asset,
+          edge,
+          direction: "long",
+          signal_timestamp_ms,
+          action: "open",
+        })
+        ctx.reply(`Spot long entry on ${edge}:${base_asset}: ${result.status}`)
       }
 
       if (command == "close") {
-        let result = await this.close_spot_long(ctx, { asset, edge })
+        let result = await this.close_spot_long(ctx, { asset: base_asset, edge })
         ctx.reply(`Looks like it succeeded?`)
       }
     } catch (error) {
@@ -120,17 +135,18 @@ export class Commands {
 
   async open_spot_long(
     ctx: NarrowedContext<Context, Types.MountMap["text"]>,
-    { asset, edge }: { asset: string; edge: string }
-  ) {
-    let msg = `${edge.toUpperCase()}: opening spot long on ${asset}`
-    ctx.reply(msg)
-    let result: TradeAbstractionOpenSpotLongResult = await this.tas_client.open_spot_long({
-      base_asset: asset,
-      edge,
-      direction: "long",
-      action: "open",
-    })
-    return result
+    cmd: TradeAbstractionOpenSpotLongCommand
+  ): Promise<TradeAbstractionOpenSpotLongResult> {
+    // let msg = `${cmd.edge.toUpperCase()}: opening spot long on ${cmd.base_asset} (unchecked)`
+    // ctx.reply(msg)
+    try {
+      let result: TradeAbstractionOpenSpotLongResult = await this.tas_client.open_spot_long(cmd)
+      return result
+    } catch (err) {
+      this.logger.error({ err })
+      Sentry.captureException(err)
+      throw err
+    }
   }
 
   async close_spot_long(

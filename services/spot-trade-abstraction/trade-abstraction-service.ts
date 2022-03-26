@@ -41,6 +41,7 @@ export interface TradeAbstractionOpenSpotLongResult {
     | "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
     | "SUCCESS" // full or partial entry, all good
     | "ALREADY_IN_POSITION" // Didn't enter because already in this position
+    | "UNAUTHORISED" // atm means edge not recognised
 
   trigger_price?: string
   executed_price?: string // null if nothing bought
@@ -110,7 +111,19 @@ export class TradeAbstractionService {
     assert.equal(cmd.action, "open")
 
     if (!is_authorised_edge(cmd.edge)) {
-      throw new Error(`UnauthorisedEdge ${cmd.edge}`)
+      this.logger.warn(`UnauthorisedEdge ${cmd.edge}`)
+      let obj: TradeAbstractionOpenSpotLongResult = {
+        object_type: "TradeAbstractionOpenSpotLongResult",
+        version: 1,
+        base_asset: cmd.base_asset,
+        quote_asset: this.quote_asset,
+        edge:cmd.edge,
+        created_stop_order: false,
+        created_take_profit_order: false,
+        status: "UNAUTHORISED",
+      }
+      this.logger.object(obj)
+      return obj
     }
 
     if (disallowed_coins_for_entry.includes(cmd.base_asset)) {
@@ -164,7 +177,7 @@ export class TradeAbstractionService {
       execution_timestamp_ms,
       execution_time_slippage_ms,
     }
-    this.logger.info(JSON.stringify(obj))
+    this.logger.object(obj)
     return obj
   }
 

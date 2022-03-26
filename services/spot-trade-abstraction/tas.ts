@@ -164,31 +164,38 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
     }
     let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd)
 
-    send_message(
-      `${cmd.edge}:${cmd.base_asset} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.execution_time_slippage_ms}ms`,
-      { edge, base_asset }
-    )
-
     switch (result.status) {
       case "SUCCESS":
+        send_message(
+          `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.execution_time_slippage_ms}ms`,
+          { edge, base_asset }
+        )
         res.status(201).json(result) // 201: Created
         break
       case "ALREADY_IN_POSITION":
+        send_message(`${edge}:${base_asset} ${result.status}`, { edge, base_asset })
         res.status(409).json(result) // 409: Conflict
         break
-      default:
-        Sentry.captureException(new Error(`Oops, don't know how to map ${result.status} to an http return code!`))
       case "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS":
-        send_message(`Failed to create oco order for ${edge}:${base_asset}`, { edge, base_asset })
-      case "ENTRY_FAILED_TO_FILL":
+        send_message(`${edge}:${base_asset} ${result.status}`, { edge, base_asset })
         res.status(200).json(result) // 200: Success... but not 201, so not actually created
         break
+      case "ENTRY_FAILED_TO_FILL":
+        send_message(`${edge}:${base_asset}: ${result.status}`, { edge, base_asset })
+        res.status(200).json(result) // 200: Success... but not 201, so not actually created
+        break
+      case "UNAUTHORISED":
+        send_message(`${edge}:${base_asset}: ${result.status}`, { edge, base_asset })
+        res.status(403).json(result)
+        break
+      default:
+        let msg = `Unrecognised result.status for TradeAbstractionOpenSpotLongResult in TAS: ${result.status}`
+        logger.error(msg)
+        Sentry.captureException(new Error(msg))
+        send_message(msg)
     }
   } catch (error: any) {
-    if ((error.message = ~/UnauthorisedEdge/)) {
-      res.status(403)
-      logger.warn(`403 due to unauthorised edge '${req.query.edge}' attempting to open ${req.query.base_asset}`)
-    } else if ((error.message = ~/InputChecking/)) {
+    if ((error.message = ~/InputChecking/)) {
       res.status(400)
       logger.warn(
         `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${error.message}`

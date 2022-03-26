@@ -10,17 +10,14 @@ let disallowed_coins_for_entry = ["UST", "GBP", "USDT", "EGLD"]
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
-import { SendMessageFunc } from "../../lib/telegram-v2"
 import {
   AuthorisedEdgeType,
   check_edge,
   is_authorised_edge,
   SpotPositionIdentifier_V3,
 } from "../../classes/spot/abstractions/position-identifier"
-import { SpotExecutionEngine } from "../../classes/spot/exchanges/interfaces/spot-execution-engine"
 import { SpotPositionsExecution } from "../../classes/spot/execution/spot-positions-execution"
 import Sentry from "../../lib/sentry"
-import { result } from "lodash"
 
 export interface TradeAbstractionOpenSpotLongCommand {
   base_asset: string

@@ -149,7 +149,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     }
 
     try {
-      dogstatsd.increment(`edge-signal-long-short`, 1, 1, { edge, direction, base_asset })
+      dogstatsd.increment(`trading-engine.edge-signal-long-short`, 1, 1, { edge, direction, base_asset })
     } catch (e) {
       this.logger.warn(`Failed to submit metrics to DogStatsD`)
       Sentry.captureException(e)

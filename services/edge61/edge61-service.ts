@@ -58,6 +58,9 @@ process.on("unhandledRejection", (error) => {
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
+var StatsD = require("hot-shots")
+var dogstatsd = new StatsD()
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -142,6 +145,13 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     } catch (e) {
       this.logger.warn(`Failed to publish to AMQP for ${symbol}`)
       // This can happen if top 100 changes since boot and we refresh the cap list
+      Sentry.captureException(e)
+    }
+
+    try {
+      dogstatsd.increment(`edge-signal-long-short`, 1, 1, { edge, direction, base_asset })
+    } catch (e) {
+      this.logger.warn(`Failed to submit metrics to DogStatsD`)
       Sentry.captureException(e)
     }
   }

@@ -47,6 +47,8 @@ export interface TradeAbstractionOpenSpotLongResult {
 
   trigger_price?: string
   executed_price?: string // null if nothing bought
+  execution_timestamp_ms?: string
+  execution_time_slippage_ms?: string
 
   created_stop_order: boolean
   stop_price?: string
@@ -80,20 +82,17 @@ export interface InterimSpotPositionsMetaDataPersistantStorage {
  */
 export class TradeAbstractionService {
   logger: Logger
-  send_message: SendMessageFunc
   quote_asset: string
   private positions: SpotPositionsQuery // query state of existing open positions
   private spot_ee: SpotPositionsExecution
 
   constructor({
     logger,
-    send_message,
     quote_asset,
     positions,
     spot_ee,
   }: {
     logger: Logger
-    send_message: SendMessageFunc
     quote_asset: string
     positions: SpotPositionsQuery
     spot_ee: SpotPositionsExecution
@@ -103,16 +102,12 @@ export class TradeAbstractionService {
     assert(quote_asset)
     this.quote_asset = quote_asset
     this.positions = positions
-    this.send_message = send_message
     this.spot_ee = spot_ee
   }
 
   // or signal_long
   // Spot so we can only be long or no-position
-  async open_spot_long(
-    cmd: TradeAbstractionOpenSpotLongCommand,
-    send_message: SendMessageFunc
-  ): Promise<TradeAbstractionOpenSpotLongResult> {
+  async open_spot_long(cmd: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
     this.logger.info(cmd)
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
@@ -149,14 +144,13 @@ export class TradeAbstractionService {
     }
 
     let result = await this.spot_ee.open_position(cmd)
-    let trigger_price = cmd.trigger_price ? new BigNumber(cmd.trigger_price) : undefined
-    this.send_message(
-      `${cmd.edge}:${cmd.base_asset} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}`,
-      { edge }
-    )
-
+    let { execution_timestamp_ms } = result
     let created_stop_order: boolean = result.stop_order_id ? true : false
     let created_take_profit_order: boolean = result.take_profit_order_id ? true : false
+
+    let execution_time_slippage_ms = execution_timestamp_ms
+      ? new BigNumber(execution_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
+      : undefined
 
     let obj: TradeAbstractionOpenSpotLongResult = {
       object_type: "TradeAbstractionOpenSpotLongResult",
@@ -170,6 +164,8 @@ export class TradeAbstractionService {
       take_profit_price: result.take_profit_price,
       executed_price: result.executed_price,
       status: result.status,
+      execution_timestamp_ms,
+      execution_time_slippage_ms,
     }
     this.logger.info(JSON.stringify(obj))
     return obj
@@ -177,10 +173,7 @@ export class TradeAbstractionService {
 
   // or signal_short or signal_exit/close
   // Spot so we can only be long or no-position
-  async close_spot_long(
-    cmd: TradeAbstractionCloseLongCommand,
-    send_message: SendMessageFunc
-  ): Promise<TradeAbstractionCloseSpotLongResult> {
+  async close_spot_long(cmd: TradeAbstractionCloseLongCommand): Promise<TradeAbstractionCloseSpotLongResult> {
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "close")
     let edge: AuthorisedEdgeType = cmd.edge as AuthorisedEdgeType
@@ -199,8 +192,6 @@ export class TradeAbstractionService {
         }
       }
     } catch (error) {
-      // lower classes do send_message already
-      // throw so we
       Sentry.captureException(error)
       console.error(error)
       throw error
@@ -208,7 +199,6 @@ export class TradeAbstractionService {
 
     let msg = `There is no known long spot position on ${cmd.base_asset}, skipping close request`
     this.logger.warn(msg)
-    // send_message(msg)
     throw new Error(msg) // turn this into a 3xx or 4xx - 404?
   }
 

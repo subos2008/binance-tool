@@ -24,6 +24,7 @@ import {
   OrderContext_V1,
   SpotOCOSellCommand,
   SpotLimitBuyCommand,
+  SpotExecutionEngineBuyResult,
 } from "../interfaces/spot-execution-engine"
 import { OrderContextPersistence } from "../../persistence/interface/order-context-persistence"
 
@@ -110,11 +111,9 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     return { clientOrderId }
   }
 
-  async market_buy_by_quote_quantity(cmd: SpotMarketBuyByQuoteQuantityCommand): Promise<{
-    executed_quote_quantity: BigNumber
-    executed_base_quantity: BigNumber
-    executed_price: BigNumber
-  }> {
+  async market_buy_by_quote_quantity(
+    cmd: SpotMarketBuyByQuoteQuantityCommand
+  ): Promise<SpotExecutionEngineBuyResult> {
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let result = await this.utils.create_market_buy_order_by_quote_amount({
       pair: cmd.market_identifier.symbol,
@@ -126,17 +125,13 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
         executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
         executed_base_quantity: new BigNumber(result.executedQty),
         executed_price: new BigNumber(result.cummulativeQuoteQty).dividedBy(result.executedQty),
+        execution_timestamp_ms: result.transactTime?.toString(),
       }
     }
     throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)
   }
 
-  async limit_buy(cmd: SpotLimitBuyCommand): Promise<{
-    executed_quote_quantity: BigNumber
-    executed_price: BigNumber
-    executed_base_quantity: BigNumber
-    transaction_timestamp_ms: number | undefined
-  }> {
+  async limit_buy(cmd: SpotLimitBuyCommand): Promise<SpotExecutionEngineBuyResult> {
     this.logger.object(cmd)
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let result: Order = await this.utils.create_limit_buy_order({
@@ -153,7 +148,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
         executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
         executed_base_quantity: new BigNumber(result.executedQty),
         executed_price: new BigNumber(result.cummulativeQuoteQty).dividedBy(result.executedQty),
-        transaction_timestamp_ms: result.transactTime,
+        execution_timestamp_ms: result.transactTime?.toString(),
       }
     }
     throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)

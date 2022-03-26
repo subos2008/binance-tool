@@ -132,7 +132,7 @@ export class Edge60SpotPositionsExecution {
       quote_amount,
     }
     let buy_result = await this.ee.market_buy_by_quote_quantity(cmd)
-    let { executed_quote_quantity, executed_price, executed_base_quantity } = buy_result
+    let { executed_quote_quantity, executed_price, executed_base_quantity, execution_timestamp_ms } = buy_result
 
     let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
     let stop_price = executed_price.times(stop_price_factor)
@@ -157,6 +157,7 @@ export class Edge60SpotPositionsExecution {
         edge: args.edge,
       }
       await this.positions_persistance.set_stop_order(spot_position_identifier, stop_order_id.toString())
+      this.logger.warn(`e60: can throw instead of returning enum status result`)
     } catch (error) {
       Sentry.captureException(error)
       this.send_message(
@@ -179,6 +180,7 @@ export class Edge60SpotPositionsExecution {
       executed_price: executed_price.toFixed(),
       stop_price: stop_price.toFixed(),
       status: "SUCCESS",
+      execution_timestamp_ms,
     }
     this.logger.info(res)
     return res

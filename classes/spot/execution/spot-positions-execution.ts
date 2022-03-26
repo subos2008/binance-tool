@@ -43,6 +43,7 @@ export interface SpotPositionExecutionOpenResult {
   executed_quote_quantity: string
   executed_base_quantity: string
   executed_price?: string // null if quantity is zero
+  execution_timestamp_ms?: string
 
   stop_order_id?: string | number | undefined
   stop_price?: string

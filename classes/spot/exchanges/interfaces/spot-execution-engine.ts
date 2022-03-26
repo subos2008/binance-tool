@@ -61,6 +61,12 @@ export interface SpotOCOSellCommand {
   oco_list_ClientOrderId: string
 }
 
+export interface SpotExecutionEngineBuyResult {
+  executed_quote_quantity: BigNumber
+  executed_price: BigNumber
+  executed_base_quantity: BigNumber
+  execution_timestamp_ms: string | undefined
+}
 export interface SpotExecutionEngine {
   get_market_identifier_for({
     quote_asset,
@@ -77,18 +83,9 @@ export interface SpotExecutionEngine {
     order_context: OrderContext_V1
   ): Promise<{ clientOrderId: string }>
 
-  market_buy_by_quote_quantity(
-    args: SpotMarketBuyByQuoteQuantityCommand
-  ): Promise<{ executed_quote_quantity: BigNumber; executed_price: BigNumber; executed_base_quantity: BigNumber }>
+  market_buy_by_quote_quantity(args: SpotMarketBuyByQuoteQuantityCommand): Promise<SpotExecutionEngineBuyResult>
 
-  limit_buy(
-    args: SpotLimitBuyCommand
-  ): Promise<{
-    executed_quote_quantity: BigNumber
-    executed_price: BigNumber
-    executed_base_quantity: BigNumber
-    transaction_timestamp_ms: number | undefined
-  }>
+  limit_buy(args: SpotLimitBuyCommand): Promise<SpotExecutionEngineBuyResult>
 
   get_exchange_identifier(): ExchangeIdentifier_V3
 

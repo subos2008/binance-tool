@@ -134,13 +134,12 @@ export class Edge61SpotPositionsExecution {
         timeInForce: "IOC",
       }
       let buy_result = await this.ee.limit_buy(cmd)
-      let { executed_quote_quantity, executed_price, executed_base_quantity, transaction_timestamp_ms } =
-        buy_result
+      let { executed_quote_quantity, executed_price, executed_base_quantity, execution_timestamp_ms } = buy_result
 
       if (executed_base_quantity.isZero()) {
         let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
         this.logger.info(msg)
-        this.send_message(msg, { edge, base_asset })
+        // this.send_message(msg, { edge, base_asset })
         let ret: SpotPositionExecutionOpenResult = {
           object_type: "SpotPositionExecutionOpenResult",
           edge,
@@ -149,6 +148,7 @@ export class Edge61SpotPositionsExecution {
           executed_base_quantity: "0",
           executed_quote_quantity: "0",
           status: "ENTRY_FAILED_TO_FILL",
+          execution_timestamp_ms,
         }
         this.logger.object(ret)
         return ret
@@ -157,7 +157,7 @@ export class Edge61SpotPositionsExecution {
           args.base_asset
         } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
         this.logger.info(msg)
-        this.send_message(msg, { edge, base_asset })
+        // this.send_message(msg, { edge, base_asset })
       }
 
       let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
@@ -207,10 +207,6 @@ export class Edge61SpotPositionsExecution {
       } catch (error) {
         this.logger.warn(error)
         Sentry.captureException(error)
-        this.send_message(
-          `Failed to create oco order for ${edge}:${args.base_asset} on ${oco_cmd.market_identifier.symbol}: ${error}`,
-          { edge, base_asset }
-        )
 
         /** If we failed to create the OCO order then dump the position */
         this.logger.warn({ edge, base_asset }, `Failed to create OCO order, dumping position`)
@@ -248,6 +244,7 @@ export class Edge61SpotPositionsExecution {
         stop_price: stop_price.toFixed(),
         take_profit_price: take_profit_price.toFixed(),
         status: "SUCCESS",
+        execution_timestamp_ms,
       }
       this.logger.object(res)
       return res

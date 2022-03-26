@@ -118,7 +118,6 @@ const spot_ee: SpotPositionsExecution = new SpotPositionsExecution({
 let tas: TradeAbstractionService = new TradeAbstractionService({
   positions,
   logger,
-  send_message,
   quote_asset /* global */,
   spot_ee,
 })
@@ -163,7 +162,13 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       trigger_price,
       signal_timestamp_ms,
     }
-    let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd, send_message)
+    let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd)
+
+    send_message(
+      `${cmd.edge}:${cmd.base_asset} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.execution_time_slippage_ms}ms`,
+      { edge, base_asset }
+    )
+
     switch (result.status) {
       case "SUCCESS":
         res.status(201).json(result) // 201: Created
@@ -174,6 +179,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       default:
         Sentry.captureException(new Error(`Oops, don't know how to map ${result.status} to an http return code!`))
       case "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS":
+        send_message(`Failed to create oco order for ${edge}:${base_asset}`, { edge, base_asset })
       case "ENTRY_FAILED_TO_FILL":
         res.status(200).json(result) // 200: Success... but not 201, so not actually created
         break
@@ -212,7 +218,7 @@ app.get("/spot/close", async function (req: Request, res: Response, next: NextFu
       action: "close",
       base_asset,
     }
-    let json = await tas.close_spot_long(cmd, send_message)
+    let json = await tas.close_spot_long(cmd)
     logger.info(`Success`)
     logger.info(json)
     res.status(200).json({ msg: "success" })

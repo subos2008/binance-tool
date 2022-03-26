@@ -34,6 +34,8 @@ import { TriggerMidTrendOnRestartPrevention } from "./trigger-mid-trend-on-resta
 import { DirectionPersistance } from "./direction-persistance"
 import { DateTime } from "luxon"
 
+var StatsD = require("hot-shots")
+var dogstatsd = new StatsD()
 export class Edge61EntrySignals {
   symbol: string
   logger: Logger
@@ -98,6 +100,13 @@ export class Edge61EntrySignals {
     symbol: string
     candle: IngestionCandle
   }) {
+    try {
+      dogstatsd.increment(`trading-engine.edge-signals.candle-ingested`, 1, 1, { edge: "edge61", symbol })
+    } catch (e) {
+      this.logger.warn(`Failed to submit metrics to DogStatsD`)
+      Sentry.captureException(e)
+    }
+
     if (candle.isFinal) {
       this.trigger_on_restart_prevention.process_new_daily_close_candle()
     }

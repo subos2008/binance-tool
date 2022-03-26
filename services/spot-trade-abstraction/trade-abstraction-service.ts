@@ -134,11 +134,6 @@ export class TradeAbstractionService {
     })
 
     if (existing_spot_position_size.isGreaterThan(0)) {
-      let msg = `${cmd.base_asset}:${edge} already in long spot position, skipping.`
-      this.logger.warn(msg)
-      send_message(msg, { edge })
-
-      // turn this into a 3xx or 4xx
       let obj: TradeAbstractionOpenSpotLongResult = {
         object_type: "TradeAbstractionOpenSpotLongResult",
         version: 1,
@@ -149,7 +144,7 @@ export class TradeAbstractionService {
         created_take_profit_order: false,
         status: "ALREADY_IN_POSITION",
       }
-      this.logger.info(JSON.stringify(obj))
+      this.logger.object(obj)
       return obj
     }
 

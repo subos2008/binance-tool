@@ -107,10 +107,7 @@ export class Edge61SpotPositionsExecution {
       let edge_percentage_take_profit = new BigNumber(5)
       let edge_percentage_buy_limit = new BigNumber(0.5)
 
-      this.send_message(`Opening Spot position ${edge}:${args.base_asset} using ${args.quote_asset}`, {
-        edge,
-        base_asset,
-      })
+      this.logger.object({ object_type: "SpotPositionExecutionOpenRequest", ...args })
 
       let market_identifier: MarketIdentifier_V3 = this.get_market_identifier_for(args)
       if (!trigger_price) {
@@ -252,10 +249,16 @@ export class Edge61SpotPositionsExecution {
         take_profit_price: take_profit_price.toFixed(),
         status: "SUCCESS",
       }
-      this.logger.info(JSON.stringify(res))
+      this.logger.object(res)
       return res
     } catch (error) {
       Sentry.captureException(error)
+      this.logger.error({ err: error })
+      this.send_message(`FAILED opening spot position ${args.edge}:${args.base_asset} using ${args.quote_asset}`, {
+        edge: args.edge,
+        base_asset: args.base_asset,
+      })
+
       throw error
     }
   }

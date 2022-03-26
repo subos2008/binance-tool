@@ -89,7 +89,7 @@ export class PositionPerformance {
     }
 
     async function data_to_string(p: InterimData) {
-      let percentage_string: string = p.percentage_price_change_since_initial_entry?.toFixed() || "?"
+      let percentage_string: string = p.percentage_price_change_since_initial_entry?.dp(1).toFixed() || "?"
       return `${p.base_asset}: ${percentage_string}% (entry: ${p.initial_entry_price.toFixed()}, ${p.edge})`
     }
 

@@ -109,6 +109,7 @@ export class TradeAbstractionService {
     this.logger.info(cmd)
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
+    cmd.quote_asset = this.quote_asset
 
     if (!is_authorised_edge(cmd.edge)) {
       this.logger.warn(`UnauthorisedEdge ${cmd.edge}`)
@@ -117,7 +118,7 @@ export class TradeAbstractionService {
         version: 1,
         base_asset: cmd.base_asset,
         quote_asset: this.quote_asset,
-        edge:cmd.edge,
+        edge: cmd.edge,
         created_stop_order: false,
         created_take_profit_order: false,
         status: "UNAUTHORISED",

@@ -17,7 +17,7 @@ import BigNumber from "bignumber.js"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
 import { OrderId } from "../../persistence/interface/order-context-persistence"
-import { SpotPositionExecutionOpenResult } from "../spot-positions-execution"
+import { TradeAbstractionOpenSpotLongResult } from "../../../../services/spot-trade-abstraction/trade-abstraction-service"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -90,7 +90,7 @@ export class Edge60SpotPositionsExecution {
     base_asset: string
     direction: string
     edge: AuthorisedEdgeType
-  }): Promise<SpotPositionExecutionOpenResult> {
+  }): Promise<TradeAbstractionOpenSpotLongResult> {
     var edge_percentage_stop
 
     args.edge = check_edge(args.edge)
@@ -169,8 +169,9 @@ export class Edge60SpotPositionsExecution {
       throw error
     }
 
-    let res: SpotPositionExecutionOpenResult = {
-      object_type: "SpotPositionExecutionOpenResult",
+    let res: TradeAbstractionOpenSpotLongResult = {
+      object_type: "TradeAbstractionOpenSpotLongResult",
+      version: 1,
       base_asset,
       quote_asset,
       edge,
@@ -181,6 +182,8 @@ export class Edge60SpotPositionsExecution {
       stop_price: stop_price.toFixed(),
       status: "SUCCESS",
       execution_timestamp_ms,
+      created_take_profit_order: false,
+      created_stop_order: true,
     }
     this.logger.info(res)
     return res

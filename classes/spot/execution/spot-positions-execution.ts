@@ -15,7 +15,10 @@ import { OrderId } from "../persistence/interface/order-context-persistence"
 import { Edge60SpotPositionsExecution } from "./entry-executors/edge60-executor"
 import { Edge61SpotPositionsExecution } from "./entry-executors/edge61-executor"
 import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
-import { TradeAbstractionOpenSpotLongCommand } from "../../../services/spot-trade-abstraction/trade-abstraction-service"
+import {
+  TradeAbstractionOpenSpotLongCommand,
+  TradeAbstractionOpenSpotLongResult,
+} from "../../../services/spot-trade-abstraction/trade-abstraction-service"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -28,30 +31,61 @@ import { TradeAbstractionOpenSpotLongCommand } from "../../../services/spot-trad
  * fixed at instantiation
  */
 
-export interface SpotPositionExecutionOpenResult {
-  object_type: "SpotPositionExecutionOpenResult"
-  base_asset: string
-  quote_asset: string
-  edge: string
+// type SpotPositionExecutionOpenResult_SUCCESS = {
+//   object_type: "SpotPositionExecutionOpenResult"
+//   base_asset: string
+//   quote_asset?: string
+//   edge: string
 
-  status:
-    | "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill
-    | "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
-    | "SUCCESS" // full or partial entry, all good
-  trigger_price?: string
+//   status: "SUCCESS" // full or partial entry, all good
 
-  executed_quote_quantity: string
-  executed_base_quantity: string
-  executed_price?: string // null if quantity is zero
-  execution_timestamp_ms?: string
+//   msg?: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+//   trigger_price?: string
 
-  stop_order_id?: string | number | undefined
-  stop_price?: string
+//   executed_quote_quantity: string
+//   executed_base_quantity: string
+//   executed_price?: string // null if quantity is zero
+//   execution_timestamp_ms?: string
 
-  take_profit_order_id?: string | number | undefined
-  take_profit_price?: string
-  oco_order_id?: string | number | undefined
-}
+//   stop_order_id?: string | number | undefined
+//   stop_price?: string
+
+//   take_profit_order_id?: string | number | undefined
+//   take_profit_price?: string
+//   oco_order_id?: string | number | undefined
+// }
+
+// type SpotPositionExecutionOpenResult_NOT_SUCCESS = {
+//   object_type: "SpotPositionExecutionOpenResult"
+//   base_asset: string
+//   quote_asset?: string
+//   edge: string
+
+//   status:
+//     | "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill (i.e. zero, we consider a partial fill as a fill)
+//     | "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
+//     | "INTERNAL_SERVER_ERROR" // exception caught
+
+//   msg?: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+//   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
+//   trigger_price?: string
+
+//   executed_quote_quantity?: string
+//   executed_base_quantity?: string
+//   executed_price?: string // null if quantity is zero
+//   execution_timestamp_ms?: string
+
+//   stop_order_id?: string | number | undefined
+//   stop_price?: string
+
+//   take_profit_order_id?: string | number | undefined
+//   take_profit_price?: string
+//   oco_order_id?: string | number | undefined
+// }
+
+// export type SpotPositionExecutionOpenResult =
+//   | SpotPositionExecutionOpenResult_SUCCESS
+//   | SpotPositionExecutionOpenResult_NOT_SUCCESS
 
 export interface SpotPositionExecutionCloseResult {
   base_asset: string
@@ -143,29 +177,46 @@ export class SpotPositionsExecution {
   //     executed_price: BigNumber
   //     stop_price: BigNumber
   //   }
-  async open_position(args: TradeAbstractionOpenSpotLongCommand): Promise<SpotPositionExecutionOpenResult> {
-    args.edge = check_edge(args.edge)
-    let { edge, quote_asset } = args
-    if (!quote_asset) throw new Error(`quote_asset not defined`)
+  async open_position(args: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
+    try {
+      args.edge = check_edge(args.edge)
+      let { edge, quote_asset } = args
+      if (!quote_asset) throw new Error(`quote_asset not defined`)
 
-    /**
-     * Check if already in a position
-     */
-    if (await this.in_position(args)) {
-      let msg = `Already in position on ${args.edge}:${args.base_asset}`
-      this.send_message(msg, { edge })
-      throw new Error(msg)
-    }
-
-    switch (args.edge) {
-      case "edge60":
-        return this.edge60_executor.open_position({ ...args, quote_asset })
-      case "edge61":
-        return this.edge61_executor.open_position({ ...args, quote_asset })
-      default:
-        let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
+      /**
+       * Check if already in a position
+       */
+      if (await this.in_position(args)) {
+        let msg = `Already in position on ${args.edge}:${args.base_asset}`
         this.send_message(msg, { edge })
         throw new Error(msg)
+      }
+
+      switch (args.edge) {
+        case "edge60":
+          return this.edge60_executor.open_position({ ...args, quote_asset })
+        case "edge61":
+          return this.edge61_executor.open_position({ ...args, quote_asset })
+        default:
+          let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
+          this.send_message(msg, { edge })
+          throw new Error(msg)
+      }
+    } catch (err: any) {
+      this.logger.error({ err })
+      Sentry.captureException(err)
+      let result: TradeAbstractionOpenSpotLongResult = {
+        object_type: "TradeAbstractionOpenSpotLongResult",
+        version: 1,
+        base_asset: args.base_asset,
+        quote_asset: args.quote_asset,
+        edge: args.edge,
+        status: "INTERNAL_SERVER_ERROR",
+        msg: err.message,
+        err,
+        execution_timestamp_ms: Date.now().toString(),
+      }
+      return result
     }
   }
 

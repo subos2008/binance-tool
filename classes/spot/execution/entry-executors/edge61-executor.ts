@@ -24,8 +24,10 @@ import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identi
 import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
 import { OrderId } from "../../persistence/interface/order-context-persistence"
 import { CurrentPriceGetter } from "../../../../interfaces/exchange/generic/price-getter"
-import { SpotPositionExecutionOpenResult } from "../spot-positions-execution"
-import { TradeAbstractionOpenSpotLongCommand } from "../../../../services/spot-trade-abstraction/trade-abstraction-service"
+import {
+  TradeAbstractionOpenSpotLongCommand,
+  TradeAbstractionOpenSpotLongResult,
+} from "../../../../services/spot-trade-abstraction/trade-abstraction-service"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -90,7 +92,7 @@ export class Edge61SpotPositionsExecution {
   //     stop_price: BigNumber
   //     take_profit_price: BigNumber
   //   }
-  async open_position(args: TradeAbstractionOpenSpotLongCommand): Promise<SpotPositionExecutionOpenResult> {
+  async open_position(args: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
     try {
       args.edge = check_edge(args.edge)
       assert.equal(args.edge, "edge61")
@@ -140,13 +142,12 @@ export class Edge61SpotPositionsExecution {
         let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
         this.logger.info(msg)
         // this.send_message(msg, { edge, base_asset })
-        let ret: SpotPositionExecutionOpenResult = {
-          object_type: "SpotPositionExecutionOpenResult",
+        let ret: TradeAbstractionOpenSpotLongResult = {
+          object_type: "TradeAbstractionOpenSpotLongResult",
+          version: 1,
           edge,
           base_asset,
           quote_asset,
-          executed_base_quantity: "0",
-          executed_quote_quantity: "0",
           status: "ENTRY_FAILED_TO_FILL",
           execution_timestamp_ms,
         }
@@ -217,28 +218,34 @@ export class Edge61SpotPositionsExecution {
         }
         await this.ee.market_sell(market_sell_cmd)
 
-        let ret: SpotPositionExecutionOpenResult = {
-          object_type: "SpotPositionExecutionOpenResult",
+        let ret: TradeAbstractionOpenSpotLongResult = {
+          object_type: "TradeAbstractionOpenSpotLongResult",
+          version: 1,
+          status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS",
           edge,
           base_asset,
           quote_asset,
           executed_base_quantity: "0",
           executed_quote_quantity: "0",
-          status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS",
+          created_stop_order: false,
+          created_take_profit_order: false,
         }
         this.logger.object(ret)
         return ret
       }
 
-      let res: SpotPositionExecutionOpenResult = {
-        object_type: "SpotPositionExecutionOpenResult",
+      let res: TradeAbstractionOpenSpotLongResult = {
+        object_type: "TradeAbstractionOpenSpotLongResult",
+        version: 1,
         base_asset,
         quote_asset,
         edge,
         executed_quote_quantity: executed_quote_quantity.toFixed(),
         executed_base_quantity: executed_base_quantity.toFixed(),
         oco_order_id: oco_list_ClientOrderId,
+        created_stop_order: true,
         stop_order_id: stop_ClientOrderId,
+        created_take_profit_order: true,
         take_profit_order_id: take_profit_ClientOrderId,
         executed_price: executed_price.toFixed(),
         stop_price: stop_price.toFixed(),

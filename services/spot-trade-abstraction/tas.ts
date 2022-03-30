@@ -188,11 +188,18 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
         send_message(`${edge}:${base_asset}: ${result.status}`, { edge, base_asset })
         res.status(403).json(result)
         break
+      case "INTERNAL_SERVER_ERROR":
+        send_message(`${edge}:${base_asset}: ${result.status}: ${result.msg}`, { edge, base_asset })
+        res.status(500).json(result)
+        break
       default:
-        let msg = `Unrecognised result.status for TradeAbstractionOpenSpotLongResult in TAS: ${result.status}`
+        let msg = `Unrecognised result.status for TradeAbstractionOpenSpotLongResult in TAS: ${
+          (result as any).status
+        }`
         logger.error(msg)
         Sentry.captureException(new Error(msg))
         send_message(msg)
+        res.status(500).json(result)
     }
   } catch (error: any) {
     if ((error.message = ~/InputChecking/)) {

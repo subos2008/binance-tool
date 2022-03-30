@@ -29,31 +29,141 @@ export interface TradeAbstractionOpenSpotLongCommand {
   signal_timestamp_ms: string
 }
 
-export interface TradeAbstractionOpenSpotLongResult {
+interface TradeAbstractionOpenSpotLongResult_SUCCESS {
   object_type: "TradeAbstractionOpenSpotLongResult"
   version: 1
   base_asset: string
   quote_asset: string
   edge: string
 
-  status:
-    | "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill
-    | "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
-    | "SUCCESS" // full or partial entry, all good
-    | "ALREADY_IN_POSITION" // Didn't enter because already in this position
-    | "UNAUTHORISED" // atm means edge not recognised
+  status: "SUCCESS" // full or partial entry, all good
+
+  // signal
+  trigger_price?: string
+
+  // Buy execution
+  executed_quote_quantity: string
+  executed_base_quantity: string
+  executed_price?: string // can be null if nothing bought
+  execution_timestamp_ms?: string
+  execution_time_slippage_ms?: string
+
+  created_stop_order: boolean
+  stop_order_id?: string | number | undefined
+  stop_price?: string
+
+  created_take_profit_order: boolean
+  take_profit_order_id?: string | number | undefined
+  take_profit_price?: string
+  oco_order_id?: string | number | undefined
+}
+interface TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR {
+  object_type: "TradeAbstractionOpenSpotLongResult"
+  version: 1
+  base_asset: string
+  quote_asset?: string
+  edge: string
+
+  status: "INTERNAL_SERVER_ERROR" // exception caught
+
+  msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+  err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
+
+  trigger_price?: string
+  execution_timestamp_ms: string
+  execution_time_slippage_ms?: string
+}
+interface TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL {
+  object_type: "TradeAbstractionOpenSpotLongResult"
+  version: 1
+  base_asset: string
+  quote_asset?: string
+  edge: string
+
+  status: "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill
+
+  msg?: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+  err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
+
+  // signal
+  trigger_price?: string
+
+  // Buy execution
+  execution_timestamp_ms?: string
+  execution_time_slippage_ms?: string
+}
+interface TradeAbstractionOpenSpotLongResult_UNAUTHORISED {
+  object_type: "TradeAbstractionOpenSpotLongResult"
+  version: 1
+  base_asset: string
+  quote_asset?: string
+  edge: string
+
+  status: "UNAUTHORISED" // atm means edge not recognised
+
+  msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+  err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
+
+  trigger_price?: string
+  execution_timestamp_ms?: string
+  execution_time_slippage_ms?: string
+}
+
+interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION {
+  object_type: "TradeAbstractionOpenSpotLongResult"
+  version: 1
+  base_asset: string
+  quote_asset?: string
+  edge: string
+
+  status: "ALREADY_IN_POSITION" // Didn't enter because already in this position
+
+  msg?: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+  err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
 
   trigger_price?: string
   executed_price?: string // null if nothing bought
   execution_timestamp_ms?: string
   execution_time_slippage_ms?: string
+}
+interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
+  object_type: "TradeAbstractionOpenSpotLongResult"
+  version: 1
+  base_asset: string
+  quote_asset?: string
+  edge: string
+
+  status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
+
+  msg?: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+  err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
+
+  trigger_price?: string
+  
+  // Buy execution
+  executed_quote_quantity: string
+  executed_base_quantity: string
+  executed_price?: string // can be null if nothing bought
+  execution_timestamp_ms?: string
+  execution_time_slippage_ms?: string
 
   created_stop_order: boolean
+  stop_order_id?: string | number | undefined
   stop_price?: string
 
   created_take_profit_order: boolean
+  take_profit_order_id?: string | number | undefined
   take_profit_price?: string
+  oco_order_id?: string | number | undefined
 }
+
+export type TradeAbstractionOpenSpotLongResult =
+  | TradeAbstractionOpenSpotLongResult_SUCCESS
+  | TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR
+  | TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL
+  | TradeAbstractionOpenSpotLongResult_UNAUTHORISED
+  | TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION
+  | TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
 
 export interface TradeAbstractionCloseSpotLongResult {
   object_type: "TradeAbstractionCloseSpotLongResult"
@@ -112,16 +222,17 @@ export class TradeAbstractionService {
     cmd.quote_asset = this.quote_asset
 
     if (!is_authorised_edge(cmd.edge)) {
-      this.logger.warn(`UnauthorisedEdge ${cmd.edge}`)
+      let err = new Error(`UnauthorisedEdge ${cmd.edge}`)
+      this.logger.warn({ err })
       let obj: TradeAbstractionOpenSpotLongResult = {
         object_type: "TradeAbstractionOpenSpotLongResult",
         version: 1,
         base_asset: cmd.base_asset,
         quote_asset: this.quote_asset,
         edge: cmd.edge,
-        created_stop_order: false,
-        created_take_profit_order: false,
         status: "UNAUTHORISED",
+        msg: err.message,
+        err,
       }
       this.logger.object(obj)
       return obj
@@ -146,40 +257,30 @@ export class TradeAbstractionService {
         base_asset: cmd.base_asset,
         quote_asset: this.quote_asset,
         edge,
-        created_stop_order: false,
-        created_take_profit_order: false,
         status: "ALREADY_IN_POSITION",
       }
       this.logger.object(obj)
       return obj
     }
 
-    let result = await this.spot_ee.open_position(cmd)
-    let { execution_timestamp_ms } = result
-    let created_stop_order: boolean = result.stop_order_id ? true : false
-    let created_take_profit_order: boolean = result.take_profit_order_id ? true : false
+    let result: TradeAbstractionOpenSpotLongResult = await this.spot_ee.open_position(cmd)
+    if (
+      result.status != "INTERNAL_SERVER_ERROR" &&
+      result.status != "ENTRY_FAILED_TO_FILL" &&
+      result.status != "UNAUTHORISED" &&
+      result.status != "ALREADY_IN_POSITION"
+    ) {
+      result.created_stop_order = result.stop_order_id ? true : false
+      result.created_take_profit_order = result.take_profit_order_id ? true : false
+    }
 
-    let execution_time_slippage_ms = execution_timestamp_ms
+    let { execution_timestamp_ms } = result
+    result.execution_time_slippage_ms = execution_timestamp_ms
       ? new BigNumber(execution_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
       : undefined
 
-    let obj: TradeAbstractionOpenSpotLongResult = {
-      object_type: "TradeAbstractionOpenSpotLongResult",
-      version: 1,
-      base_asset: result.base_asset,
-      quote_asset: result.quote_asset,
-      edge: result.edge,
-      created_stop_order,
-      created_take_profit_order,
-      stop_price: result.stop_price,
-      take_profit_price: result.take_profit_price,
-      executed_price: result.executed_price,
-      status: result.status,
-      execution_timestamp_ms,
-      execution_time_slippage_ms,
-    }
-    this.logger.object(obj)
-    return obj
+    this.logger.object(result)
+    return result
   }
 
   // or signal_short or signal_exit/close

@@ -163,6 +163,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       signal_timestamp_ms,
     }
     let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd)
+    logger.object(result)
 
     switch (result.status) {
       case "SUCCESS":

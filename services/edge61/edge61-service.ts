@@ -65,7 +65,14 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-let publisher: GenericTopicPublisher = new GenericTopicPublisher({ logger, event_name: "Edge61EntrySignal" })
+let publisher_for_Edge61EntrySignal: GenericTopicPublisher = new GenericTopicPublisher({
+  logger,
+  event_name: "Edge61EntrySignal",
+})
+let publisher_for_EdgeDirectionSignal: GenericTopicPublisher = new GenericTopicPublisher({
+  logger,
+  event_name: "EdgeDirectionSignal",
+})
 
 const edge61_parameters: Edge61Parameters = {
   days_of_price_history: 22,
@@ -143,7 +150,26 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
         signal_timestamp_ms,
       })
     } catch (e) {
-      this.logger.warn(`Failed to publish to AMQP for ${symbol}`)
+      this.logger.warn(`Failed to publish entry signal to AMQP for ${symbol}`)
+      // This can happen if top 100 changes since boot and we refresh the cap list
+      Sentry.captureException(e)
+    }
+    try {
+      let market_identifier: MarketIdentifier_V3 = {
+        version: "v3",
+        // TODO: pull exchange_identifier from ee
+        exchange_identifier: { version: "v3", exchange, type: "spot", account: "default" },
+        symbol,
+        base_asset,
+      }
+      this.publish_direction_to_amqp({
+        signal_timestamp_ms,
+        market_identifier,
+        direction,
+        base_asset,
+      })
+    } catch (e) {
+      this.logger.warn(`Failed to publish direction to AMQP for ${symbol}`)
       // This can happen if top 100 changes since boot and we refresh the cap list
       Sentry.captureException(e)
     }
@@ -204,7 +230,38 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
       persistent: true,
       timestamp: Date.now(),
     }
-    publisher.publish(event, options)
+    publisher_for_Edge61EntrySignal.publish(event, options)
+  }
+
+  async publish_direction_to_amqp({
+    direction,
+    market_identifier,
+    signal_timestamp_ms,
+  }: {
+    direction: "long" | "short"
+    signal_timestamp_ms: number
+    base_asset: string
+    market_identifier: MarketIdentifier_V3
+  }) {
+    let event: EdgeDirectionSignal = {
+      object_type: "EdgeDirectionSignal",
+      version: "v1",
+      edge: "edge61",
+      market_identifier,
+      direction,
+      exchange_type: market_identifier.exchange_identifier.type,
+      base_asset: market_identifier.base_asset,
+      quote_asset: market_identifier.quote_asset,
+      symbol: market_identifier.symbol,
+      signal_timestamp_ms: signal_timestamp_ms.toString(),
+    }
+    this.logger.info(JSON.stringify(event))
+    const options = {
+      // expiration: event_expiration_seconds,
+      persistent: true,
+      timestamp: Date.now(),
+    }
+    publisher_for_EdgeDirectionSignal.publish(event, options)
   }
 
   async base_asset_for_symbol(symbol: string): Promise<string> {
@@ -353,7 +410,8 @@ async function main() {
       logger,
       send_message,
     })
-    await publisher.connect()
+    await publisher_for_Edge61EntrySignal.connect()
+    await publisher_for_EdgeDirectionSignal.connect()
     await edge61.run()
   } catch (error) {
     logger.error(error)
@@ -370,6 +428,8 @@ main().catch((error) => {
 
 import express from "express"
 import { RedisClientType } from "redis-v4"
+import { EdgeDirectionSignal } from "../../events/shared/edge-direction-signal"
+import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))

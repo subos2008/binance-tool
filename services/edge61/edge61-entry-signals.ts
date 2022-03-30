@@ -49,6 +49,7 @@ export class Edge61EntrySignals {
   retrigger_prevention: RetriggerPrevention
   trigger_on_restart_prevention: TriggerMidTrendOnRestartPrevention
   direction_persistance: DirectionPersistance
+  just_processed_close_candle: boolean = false // refuse to publish a signal on the first ingestion after the close candle
 
   constructor({
     logger,
@@ -110,14 +111,17 @@ export class Edge61EntrySignals {
       Sentry.captureException(e)
     }
 
-    if (candle.isFinal) {
-      this.trigger_on_restart_prevention.process_new_daily_close_candle()
+    if (timeframe !== "1d") {
+      let msg = `Short timeframe (${timeframe}) candle on ${this.symbol} closed at ${candle.close}`
+      this.logger.error(msg)
+      throw new Error(msg)
     }
 
-    if (timeframe !== "1d") {
-      let msg = `Short timeframe candle on ${this.symbol} closed at ${candle.close}`
-      this.logger.info(msg)
-      throw new Error(msg)
+    if (candle.isFinal) {
+      this.trigger_on_restart_prevention.process_new_daily_close_candle()
+      this.price_history_candles.push(candle)
+      this.just_processed_close_candle = true
+      return
     }
 
     this.logger.debug({ signal: "new_candle", symbol }, `${symbol} ingesting new candle`)
@@ -190,15 +194,12 @@ export class Edge61EntrySignals {
           `${symbol}: No signal H: ${high.toFixed()} vs ${highest_price.toFixed()} L: ${low.toFixed()} vs ${lowest_price.toFixed()}`
         )
       }
+
+      this.just_processed_close_candle = false
     } catch (e) {
       this.logger.error(`Exception checking or entering position: ${e}`)
       this.logger.error(e)
       Sentry.captureException(e)
-    } finally {
-      // important not to miss this - lest we corrupt the history
-      if (candle.isFinal) {
-        this.price_history_candles.push(candle)
-      }
     }
   }
 
@@ -236,6 +237,12 @@ export class Edge61EntrySignals {
     // }
     // let direction_change = previous_direction && previous_direction != args.direction
     // signal_allowed = signal_allowed && direction_change
+
+    /**
+     * We supress signals immediately following the daily close. Because the signals come from the donchen channel
+     * moving instead of the price crossing the channel
+     */
+    signal_allowed = signal_allowed && !this.just_processed_close_candle
 
     if (signal_allowed) {
       this.logger.info(

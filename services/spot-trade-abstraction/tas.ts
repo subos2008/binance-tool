@@ -34,6 +34,11 @@ process.on("unhandledRejection", (error) => {
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
+import { StatsD } from "hot-shots"
+function dogstatsderrorhandler(error: any) {
+  logger.error({ err: error }, `DogStatsD: Socket errors caught here: ${error}`)
+}
+
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 import {
   TradeAbstractionCloseLongCommand,
@@ -96,6 +101,7 @@ const order_context_persistence = new RedisOrderContextPersistance({ logger, red
 const binance_spot_ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
 const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
 const position_sizer = new FixedPositionSizer({ logger })
+const exchange_identifier = binance_spot_ee.get_exchange_identifier()
 const price_getter = new BinancePriceGetter({
   logger,
   ee: binance_spot_ee.get_raw_binance_ee(),
@@ -121,6 +127,12 @@ let tas: TradeAbstractionService = new TradeAbstractionService({
   quote_asset /* global */,
   spot_ee,
 })
+var dogstatsd = new StatsD({
+  errorHandler: dogstatsderrorhandler,
+  globalTags: { service_name, exchange_type: exchange_identifier.type, exchange: exchange_identifier.exchange },
+  prefix: "trading_engine.tas.",
+})
+
 app.get("/positions", async function (req: Request, res: Response, next: NextFunction) {
   try {
     res.status(200).json(await tas.open_positions())
@@ -165,10 +177,18 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
     let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd)
     logger.object(result)
 
+    try {
+      if (result.signal_to_execution_slippage_ms)
+        dogstatsd.gauge("signal_to_execution_slippage_ms", Number(result.signal_to_execution_slippage_ms))
+    } catch (err) {
+      logger.warn({ err }, `Failed to submit metrics to DogStatsD`)
+      Sentry.captureException(err)
+    }
+
     switch (result.status) {
       case "SUCCESS":
         send_message(
-          `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.execution_time_slippage_ms}ms`,
+          `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.signal_to_execution_slippage_ms}ms`,
           { edge, base_asset }
         )
         res.status(201).json(result) // 201: Created

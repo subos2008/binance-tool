@@ -46,7 +46,7 @@ interface TradeAbstractionOpenSpotLongResult_SUCCESS {
   executed_base_quantity: string
   executed_price?: string // can be null if nothing bought
   execution_timestamp_ms?: string
-  execution_time_slippage_ms?: string
+  signal_to_execution_slippage_ms?: string
 
   created_stop_order: boolean
   stop_order_id?: string | number | undefined
@@ -71,7 +71,7 @@ interface TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR {
 
   trigger_price?: string
   execution_timestamp_ms: string
-  execution_time_slippage_ms?: string
+  signal_to_execution_slippage_ms?: string
 }
 interface TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL {
   object_type: "TradeAbstractionOpenSpotLongResult"
@@ -90,7 +90,7 @@ interface TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL {
 
   // Buy execution
   execution_timestamp_ms?: string
-  execution_time_slippage_ms?: string
+  signal_to_execution_slippage_ms?: string
 }
 interface TradeAbstractionOpenSpotLongResult_UNAUTHORISED {
   object_type: "TradeAbstractionOpenSpotLongResult"
@@ -106,7 +106,7 @@ interface TradeAbstractionOpenSpotLongResult_UNAUTHORISED {
 
   trigger_price?: string
   execution_timestamp_ms?: string
-  execution_time_slippage_ms?: string
+  signal_to_execution_slippage_ms?: string
 }
 
 interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION {
@@ -124,7 +124,7 @@ interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION {
   trigger_price?: string
   executed_price?: string // null if nothing bought
   execution_timestamp_ms?: string
-  execution_time_slippage_ms?: string
+  signal_to_execution_slippage_ms?: string
 }
 interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
   object_type: "TradeAbstractionOpenSpotLongResult"
@@ -145,7 +145,7 @@ interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDER
   executed_base_quantity: string
   executed_price?: string // can be null if nothing bought
   execution_timestamp_ms?: string
-  execution_time_slippage_ms?: string
+  signal_to_execution_slippage_ms?: string
 
   created_stop_order: boolean
   stop_order_id?: string | number | undefined
@@ -273,7 +273,7 @@ export class TradeAbstractionService {
     }
 
     let { execution_timestamp_ms } = result
-    result.execution_time_slippage_ms = execution_timestamp_ms
+    result.signal_to_execution_slippage_ms = execution_timestamp_ms
       ? new BigNumber(execution_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
       : undefined
 

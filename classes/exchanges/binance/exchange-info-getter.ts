@@ -1,8 +1,8 @@
 import { Binance, ExchangeInfo } from "binance-api-node"
 
-import { Logger } from "../../../interfaces/logger"
-const LoggerClass = require("../../lib/faux_logger")
-const logger: Logger = new LoggerClass({ silent: false })
+import { Logger } from "../../../lib/faux_logger"
+const logger = new Logger({ silent: false })
+
 export class BinanceExchangeInfoGetter {
   private ee: Binance
   private exchange_info_promise: Promise<ExchangeInfo> | null | undefined

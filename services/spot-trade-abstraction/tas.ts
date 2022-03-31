@@ -174,6 +174,17 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       trigger_price,
       signal_timestamp_ms,
     }
+
+    try {
+      let signal_to_cmd_received_slippage_ms = Number(
+        new BigNumber(+Date.now()).minus(cmd.signal_timestamp_ms).toFixed()
+      )
+      dogstatsd.gauge("signal_to_cmd_received_slippage_ms", signal_to_cmd_received_slippage_ms)
+    } catch (err) {
+      logger.warn({ err }, `Failed to submit metric to DogStatsD`)
+      Sentry.captureException(err)
+    }
+
     let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd)
     logger.object(result)
 
@@ -181,7 +192,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       if (result.signal_to_execution_slippage_ms)
         dogstatsd.gauge("signal_to_execution_slippage_ms", Number(result.signal_to_execution_slippage_ms))
     } catch (err) {
-      logger.warn({ err }, `Failed to submit metrics to DogStatsD`)
+      logger.warn({ err }, `Failed to submit metric to DogStatsD`)
       Sentry.captureException(err)
     }
 

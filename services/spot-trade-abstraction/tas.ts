@@ -166,6 +166,8 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
     } catch (err) {
       throw new Error(`UnauthorisedEdge: ${edge_unchecked}`)
     }
+    let tags: { [name: string]: string } = { edge, base_asset, direction, quote_asset, action }
+
     let cmd: TradeAbstractionOpenSpotLongCommand = {
       edge,
       direction: "long",
@@ -181,7 +183,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       let signal_to_cmd_received_slippage_ms = Number(
         new BigNumber(cmd_received_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
       )
-      dogstatsd.gauge("signal_to_cmd_received_slippage_ms", signal_to_cmd_received_slippage_ms)
+      dogstatsd.gauge("signal_to_cmd_received_slippage_ms", signal_to_cmd_received_slippage_ms, undefined, tags)
     } catch (err) {
       logger.warn({ err }, `Failed to submit metric to DogStatsD`)
       Sentry.captureException(err)
@@ -189,15 +191,21 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
 
     let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd)
     logger.object(result)
+    tags.status = result.status
 
     try {
       if (result.signal_to_execution_slippage_ms)
-        dogstatsd.gauge("signal_to_execution_slippage_ms", Number(result.signal_to_execution_slippage_ms))
+        dogstatsd.gauge(
+          "signal_to_execution_slippage_ms",
+          Number(result.signal_to_execution_slippage_ms),
+          undefined,
+          tags
+        )
       // Probably being a bit anal with my avoidance of floating point here...
       let execution_time_ms = new BigNumber(result.execution_timestamp_ms || +Date.now())
         .minus(cmd_received_timestamp_ms)
         .toFixed()
-      dogstatsd.gauge("execution_time_ms", Number(execution_time_ms))
+      dogstatsd.gauge("execution_time_ms", Number(execution_time_ms), undefined, tags)
     } catch (err) {
       logger.warn({ err }, `Failed to submit metrics to DogStatsD`)
       Sentry.captureException(err)

@@ -175,9 +175,11 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       signal_timestamp_ms,
     }
 
+    let cmd_received_timestamp_ms = +Date.now()
+
     try {
       let signal_to_cmd_received_slippage_ms = Number(
-        new BigNumber(+Date.now()).minus(cmd.signal_timestamp_ms).toFixed()
+        new BigNumber(cmd_received_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
       )
       dogstatsd.gauge("signal_to_cmd_received_slippage_ms", signal_to_cmd_received_slippage_ms)
     } catch (err) {
@@ -191,8 +193,13 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
     try {
       if (result.signal_to_execution_slippage_ms)
         dogstatsd.gauge("signal_to_execution_slippage_ms", Number(result.signal_to_execution_slippage_ms))
+      // Probably being a bit anal with my avoidance of floating point here...
+      let execution_time_ms = new BigNumber(result.execution_timestamp_ms || +Date.now())
+        .minus(cmd_received_timestamp_ms)
+        .toFixed()
+      dogstatsd.gauge("execution_time_ms", Number(execution_time_ms))
     } catch (err) {
-      logger.warn({ err }, `Failed to submit metric to DogStatsD`)
+      logger.warn({ err }, `Failed to submit metrics to DogStatsD`)
       Sentry.captureException(err)
     }
 

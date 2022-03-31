@@ -1,5 +1,8 @@
 import { Binance, ExchangeInfo } from "binance-api-node"
 
+import { Logger } from "../../../interfaces/logger"
+const LoggerClass = require("../../lib/faux_logger")
+const logger: Logger = new LoggerClass({ silent: false })
 export class BinanceExchangeInfoGetter {
   private ee: Binance
   private exchange_info_promise: Promise<ExchangeInfo> | null | undefined
@@ -13,7 +16,7 @@ export class BinanceExchangeInfoGetter {
       return this.exchange_info_promise
     }
 
-    console.warn(`exchange_info not cached, reloading`)
+    logger.warn(`exchange_info not cached, reloading`)
 
     if (!this.exchange_info_promise) {
       setTimeout(() => {

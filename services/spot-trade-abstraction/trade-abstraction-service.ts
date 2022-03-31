@@ -234,7 +234,6 @@ export class TradeAbstractionService {
         msg: err.message,
         err,
       }
-      this.logger.object(obj)
       return obj
     }
 
@@ -259,7 +258,6 @@ export class TradeAbstractionService {
         edge,
         status: "ALREADY_IN_POSITION",
       }
-      this.logger.object(obj)
       return obj
     }
 
@@ -279,7 +277,6 @@ export class TradeAbstractionService {
       ? new BigNumber(execution_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
       : undefined
 
-    this.logger.object(result)
     return result
   }
 

@@ -69,10 +69,7 @@ let publisher_for_Edge61EntrySignal: GenericTopicPublisher = new GenericTopicPub
   logger,
   event_name: "Edge61EntrySignal",
 })
-let publisher_for_EdgeDirectionSignal: GenericTopicPublisher = new GenericTopicPublisher({
-  logger,
-  event_name: "EdgeDirectionSignal",
-})
+let publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({ logger })
 
 const edge61_parameters: Edge61Parameters = {
   days_of_price_history: 22,
@@ -428,7 +425,7 @@ main().catch((error) => {
 
 import express from "express"
 import { RedisClientType } from "redis-v4"
-import { EdgeDirectionSignal } from "../../events/shared/edge-direction-signal"
+import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))

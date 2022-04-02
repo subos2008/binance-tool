@@ -42,6 +42,8 @@ import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { DirectionPersistance } from "./direction-persistance"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { config } from "../../config"
+import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
+import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
 
 process.on("unhandledRejection", (error) => {
   logger.error(error)
@@ -55,6 +57,7 @@ function sleep(ms: number) {
 }
 
 let publisher: GenericTopicPublisher = new GenericTopicPublisher({ logger, event_name: "Edge60EntrySignal" })
+let publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({ logger })
 
 const edge60_parameters: Edge60Parameters = {
   days_of_price_history: 22,
@@ -145,6 +148,16 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         // This can happen if top 100 changes since boot and we refresh the cap list
         Sentry.captureException(e)
       }
+
+      let market_identifier: MarketIdentifier_V3 = {
+        version: "v3",
+        // TODO: pull exchange_identifier from ee
+        exchange_identifier: { version: "v3", exchange, type: "spot", account: "default" },
+        symbol,
+        base_asset,
+      }
+      let signal_timestamp_ms = +Date.now()
+
       try {
         this.publish_entry_to_amqp({
           symbol,
@@ -152,10 +165,24 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
           direction,
           previous_direction,
           market_data_for_symbol,
-          signal_timestamp_ms: +Date.now(),
+          signal_timestamp_ms,
+          market_identifier,
         })
       } catch (e) {
         this.logger.warn(`Failed to publish to AMQP for ${symbol}`)
+        // This can happen if top 100 changes since boot and we refresh the cap list
+        Sentry.captureException(e)
+      }
+
+      try {
+        this.publish_direction_to_amqp({
+          signal_timestamp_ms,
+          market_identifier,
+          direction,
+          base_asset,
+        })
+      } catch (e) {
+        this.logger.warn(`Failed to publish direction to AMQP for ${symbol}`)
         // This can happen if top 100 changes since boot and we refresh the cap list
         Sentry.captureException(e)
       }
@@ -171,6 +198,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     previous_direction,
     market_data_for_symbol,
     signal_timestamp_ms,
+    market_identifier,
   }: {
     symbol: string
     entry_price: BigNumber
@@ -178,17 +206,12 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     previous_direction: "long" | "short"
     market_data_for_symbol: CoinGeckoMarketData | undefined
     signal_timestamp_ms: number
+    market_identifier: MarketIdentifier_V3
   }) {
     let event: Edge60PositionEntrySignal = {
       version: "v1",
       edge: "edge60",
-      market_identifier: {
-        version: "v3",
-        // TODO: pull exchange_identifier from ee
-        exchange_identifier: { version: "v3", exchange, type: "spot", account: "default" },
-        symbol,
-        base_asset: await this.base_asset_for_symbol(symbol),
-      },
+      market_identifier,
       object_type: "Edge60EntrySignal",
       edge60_parameters,
       edge60_entry_signal: {
@@ -208,6 +231,37 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       timestamp: Date.now(),
     }
     publisher.publish(event, options)
+  }
+
+  async publish_direction_to_amqp({
+    direction,
+    market_identifier,
+    signal_timestamp_ms,
+  }: {
+    direction: "long" | "short"
+    signal_timestamp_ms: number
+    base_asset: string
+    market_identifier: MarketIdentifier_V3
+  }) {
+    let event: EdgeDirectionSignal = {
+      object_type: "EdgeDirectionSignal",
+      version: "v1",
+      edge: "edge61",
+      market_identifier,
+      direction,
+      exchange_type: market_identifier.exchange_identifier.type,
+      base_asset: market_identifier.base_asset,
+      quote_asset: market_identifier.quote_asset,
+      symbol: market_identifier.symbol,
+      signal_timestamp_ms: signal_timestamp_ms.toString(),
+    }
+    this.logger.info(JSON.stringify(event))
+    const options = {
+      // expiration: event_expiration_seconds,
+      persistent: true,
+      timestamp: Date.now(),
+    }
+    publisher_for_EdgeDirectionSignal.publish(event, options)
   }
 
   async base_asset_for_symbol(symbol: string): Promise<string> {

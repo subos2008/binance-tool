@@ -58,8 +58,8 @@ process.on("unhandledRejection", (error) => {
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
-var StatsD = require("hot-shots")
-var dogstatsd = new StatsD()
+import { StatsD } from "hot-shots"
+var statsd = new StatsD()
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -69,7 +69,7 @@ let publisher_for_Edge61EntrySignal: GenericTopicPublisher = new GenericTopicPub
   logger,
   event_name: "Edge61EntrySignal",
 })
-let publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({ logger })
+let publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({ logger, statsd })
 
 const edge61_parameters: Edge61Parameters = {
   days_of_price_history: 22,
@@ -168,13 +168,6 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     } catch (e) {
       this.logger.warn(`Failed to publish direction to AMQP for ${symbol}`)
       // This can happen if top 100 changes since boot and we refresh the cap list
-      Sentry.captureException(e)
-    }
-
-    try {
-      dogstatsd.increment(`trading-engine.edge-signal-long-short`, 1, 1, { edge, direction, base_asset })
-    } catch (e) {
-      this.logger.warn(`Failed to submit metrics to DogStatsD`)
       Sentry.captureException(e)
     }
   }

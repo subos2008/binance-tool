@@ -45,6 +45,9 @@ import { config } from "../../config"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
 
+import { StatsD } from "hot-shots"
+var statsd = new StatsD()
+
 process.on("unhandledRejection", (error) => {
   logger.error(error)
   Sentry.captureException(error)
@@ -57,7 +60,7 @@ function sleep(ms: number) {
 }
 
 let publisher: GenericTopicPublisher = new GenericTopicPublisher({ logger, event_name: "Edge60EntrySignal" })
-let publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({ logger })
+let publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({ logger, statsd })
 
 const edge60_parameters: Edge60Parameters = {
   days_of_price_history: 22,

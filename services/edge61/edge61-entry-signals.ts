@@ -37,7 +37,7 @@ import { DateTime } from "luxon"
 function dogstatsderrorhandler(error: any) {
   console.log("DogStatsD: Socket errors caught here: ", error)
 }
-var StatsD = require("hot-shots")
+import { StatsD } from "hot-shots"
 var dogstatsd = new StatsD({ errorHandler: dogstatsderrorhandler })
 export class Edge61EntrySignals {
   symbol: string

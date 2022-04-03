@@ -62,6 +62,6 @@ export class EdgeDirectionSignalPublisher {
       this.logger.warn(`Failed to submit metrics to DogStatsD`)
       Sentry.captureException(e)
     }
-    return this.publish(event, options)
+    return this.publisher.publish(event, options)
   }
 }

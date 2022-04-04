@@ -21,7 +21,7 @@ export class Logger implements LoggerInterface {
       //   },
       // ],
       // src: true, // slow, not for production
-      serializers: bunyan.stdSerializers,
+      // serializers: bunyan.stdSerializers,
       // serializers: <serializers mapping>, // Optional, see "Serializers" section
       // src: <boolean>,                     // Optional, see "src" section
 
@@ -33,6 +33,7 @@ export class Logger implements LoggerInterface {
 
   object(obj: any) {
     if (!this.silent) {
+      // wouldn't this just have a string msg? Yes... it does seem to work in DataDog though
       this.bunyan.info(JSON.stringify(obj))
     }
   }

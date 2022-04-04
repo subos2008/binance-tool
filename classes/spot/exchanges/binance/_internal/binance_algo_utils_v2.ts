@@ -120,14 +120,6 @@ export class AlgoUtils {
     return base_amount
   }
 
-  split_pair(pair: string): { quote_currency: string; base_currency: string } {
-    const { base_coin: base_currency, quote_coin: quote_currency } = utils.break_up_binance_pair(pair)
-    return {
-      quote_currency,
-      base_currency,
-    }
-  }
-
   calculate_percentages({
     buy_price,
     stop_price,

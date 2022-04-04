@@ -20,6 +20,8 @@ import { Logger } from "../../interfaces/logger"
 import { Logger as LoggerClass } from "../../lib/faux_logger"
 const logger: Logger = new LoggerClass({ silent: false })
 
+logger.info({ hello: "world" }, "Service starting")
+
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -185,7 +187,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       )
       dogstatsd.gauge("signal_to_cmd_received_slippage_ms", signal_to_cmd_received_slippage_ms, undefined, tags)
     } catch (err) {
-      logger.warn({ err }, `Failed to submit metric to DogStatsD`)
+      logger.warn({ ...tags, err }, `Failed to submit metric to DogStatsD`)
       Sentry.captureException(err)
     }
 
@@ -207,7 +209,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
         .toFixed()
       dogstatsd.gauge("execution_time_ms", Number(execution_time_ms), undefined, tags)
     } catch (err) {
-      logger.warn({ err }, `Failed to submit metrics to DogStatsD`)
+      logger.warn({ ...tags, err }, `Failed to submit metrics to DogStatsD`)
       Sentry.captureException(err)
     }
 
@@ -215,28 +217,28 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       case "SUCCESS":
         send_message(
           `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.signal_to_execution_slippage_ms}ms`,
-          { edge, base_asset }
+          tags
         )
         res.status(201).json(result) // 201: Created
         break
       case "ALREADY_IN_POSITION":
-        send_message(`${edge}:${base_asset} ${result.status}`, { edge, base_asset })
+        send_message(`${edge}:${base_asset} ${result.status}`, tags)
         res.status(409).json(result) // 409: Conflict
         break
       case "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS":
-        send_message(`${edge}:${base_asset} ${result.status}`, { edge, base_asset })
+        send_message(`${edge}:${base_asset} ${result.status}`, tags)
         res.status(200).json(result) // 200: Success... but not 201, so not actually created
         break
       case "ENTRY_FAILED_TO_FILL":
-        send_message(`${edge}:${base_asset}: ${result.status}`, { edge, base_asset })
+        send_message(`${edge}:${base_asset}: ${result.status}`, tags)
         res.status(200).json(result) // 200: Success... but not 201, so not actually created
         break
       case "UNAUTHORISED":
-        send_message(`${edge}:${base_asset}: ${result.status}`, { edge, base_asset })
+        send_message(`${edge}:${base_asset}: ${result.status}`, tags)
         res.status(403).json(result)
         break
       case "INTERNAL_SERVER_ERROR":
-        send_message(`${edge}:${base_asset}: ${result.status}: ${result.msg}`, { edge, base_asset })
+        send_message(`${edge}:${base_asset}: ${result.status}: ${result.msg}`, tags)
         res.status(500).json(result)
         break
       default:
@@ -245,7 +247,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
         }`
         logger.error(msg)
         Sentry.captureException(new Error(msg))
-        send_message(msg)
+        send_message(msg, tags)
         res.status(500).json(result)
     }
   } catch (error: any) {
@@ -265,6 +267,14 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
 app.get("/spot/close", async function (req: Request, res: Response, next: NextFunction) {
   try {
     let { edge, base_asset, action, direction } = req.query
+    let tags: { [name: string]: string } = { edge, base_asset, direction, quote_asset, action } as {
+      edge: string
+      base_asset: string
+      direction: string
+      quote_asset: string
+      action: string
+    }
+
     assert(edge)
     assert(base_asset)
     assert(edge)
@@ -280,7 +290,7 @@ app.get("/spot/close", async function (req: Request, res: Response, next: NextFu
       base_asset,
     }
     let json = await tas.close_spot_long(cmd)
-    logger.info(`Success`)
+    logger.info(tags, `Success`)
     logger.info(json)
     res.status(200).json({ msg: "success" })
   } catch (error) {

@@ -94,7 +94,7 @@ spec:
           command: ["node", "./out/./services/position-performance/position-performance-service", "--live"]
           # ports:
           # - name: http
-          #   containerPort: 8081
+          #   containerPort: 80
           #   protocol: TCP
           # livenessProbe:
           #   httpGet:

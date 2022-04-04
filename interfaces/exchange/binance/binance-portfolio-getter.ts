@@ -20,7 +20,7 @@ export class BinancePortfolioGetter implements CurrentPortfolioGetter {
       return balances
     } catch (err) {
       Sentry.captureException(err)
-      throw error
+      throw err
     }
   }
 }

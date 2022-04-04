@@ -106,7 +106,7 @@ export class RedisEdgePerformancePersistence {
         this.update_counts_for_key(this.monthly_results_counts_hash_key(edge, dt), result),
       ])
     } catch (err) {
-      this.logger.error({ err: error })
+      this.logger.error({ err })
       Sentry.captureException(err)
     }
 
@@ -120,7 +120,7 @@ export class RedisEdgePerformancePersistence {
         ])
       }
     } catch (err) {
-      this.logger.error({ err: error })
+      this.logger.error({ err })
       Sentry.captureException(err)
     }
 
@@ -134,7 +134,7 @@ export class RedisEdgePerformancePersistence {
         ])
       }
     } catch (err) {
-      this.logger.error({ err: error })
+      this.logger.error({ err })
       Sentry.captureException(err)
     }
   }

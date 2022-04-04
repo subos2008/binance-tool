@@ -37,8 +37,8 @@ process.on("unhandledRejection", (err) => {
 })
 
 import { StatsD } from "hot-shots"
-function dogstatsderrorhandler(error: any) {
-  logger.error({ err: error }, `DogStatsD: Socket errors caught here: ${error}`)
+function dogstatsderrorhandler(err: Error) {
+  logger.error({ err }, `DogStatsD: Socket errors caught here: ${err}`)
 }
 
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
@@ -250,11 +250,11 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
         send_message(msg, tags)
         res.status(500).json(result)
     }
-  } catch (error: any) {
-    if ((error.message = ~/InputChecking/)) {
+  } catch (err: any) {
+    if ((err.message = ~/InputChecking/)) {
       res.status(400)
       logger.warn(
-        `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${error.message}`
+        `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
       )
     } else {
       res.status(500)

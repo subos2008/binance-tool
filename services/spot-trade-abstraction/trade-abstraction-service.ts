@@ -303,7 +303,7 @@ export class TradeAbstractionService {
     } catch (err) {
       Sentry.captureException(err)
       console.error(err)
-      throw error
+      throw err
     }
 
     let msg = `There is no known long spot position on ${cmd.base_asset}, skipping close request`

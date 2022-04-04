@@ -47,7 +47,7 @@ function ping() {
     })
     .catch((err: any) => {
       logger.error(`Exception when checking redis connection with incr`)
-      logger.error(err)
+      logger.error({ err })
       Sentry.captureException(err)
     })
 }
@@ -64,7 +64,7 @@ async function main() {
 // TODO: exceptions / sentry
 main().catch((err) => {
   Sentry.captureException(err)
-  logger.error(`Error in main loop: ${error}`)
-  logger.error(err)
-  logger.error(`Error in main loop: ${error.stack}`)
+  logger.error(`Error in main loop: ${err}`)
+  logger.error({ err })
+  logger.error(`Error in main loop: ${err.stack}`)
 })

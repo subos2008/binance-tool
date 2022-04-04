@@ -168,7 +168,7 @@ export class Edge60EntrySignals {
     if (timeframe !== "1d") {
       let msg = `Short timeframe candle on ${this.symbol} closed at ${candle.close}`
       this.logger.info(msg)
-      throw new Error (msg)
+      throw new Error(msg)
     }
 
     this.logger.debug({ signal: "new_candle", symbol }, `${symbol} ingesting new candle`)
@@ -227,10 +227,10 @@ export class Edge60EntrySignals {
           `${symbol}: No signal H: ${high.toFixed()} vs ${highest_price.toFixed()} L: ${low.toFixed()} vs ${lowest_price.toFixed()}`
         )
       }
-    } catch (e) {
-      this.logger.error(`Exception checking or entering position: ${e}`)
-      this.logger.error(e)
-      Sentry.captureException(e)
+    } catch (err) {
+      this.logger.error(`Exception checking or entering position: ${err}`)
+      this.logger.error({ err })
+      Sentry.captureException(err)
     } finally {
       // important not to miss this - lest we corrupt the history
       this.price_history_candles.push(candle)

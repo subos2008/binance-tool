@@ -683,7 +683,7 @@ export class ExchangeEmulator {
         await obj.user_cb(mapper(order))
       } catch (err) {
         obj.logger.error(`Error: exception in client callback for user events!`)
-        obj.logger.error(err)
+        obj.logger.error({ err })
       }
     }
     for (const order of completed_orders) {

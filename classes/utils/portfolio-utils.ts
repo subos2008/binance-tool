@@ -210,7 +210,7 @@ export class PortfolioUtils {
       return { total, unprocessed_balances }
     } catch (err) {
       Sentry.captureException(err)
-      throw error
+      throw err
     }
   }
 

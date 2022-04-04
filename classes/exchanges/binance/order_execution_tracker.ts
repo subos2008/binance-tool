@@ -69,7 +69,7 @@ export class OrderExecutionTracker {
     } catch (err) {
       Sentry.captureException(err)
       this.logger.error({ err })
-      throw error
+      throw err
     }
   }
 
@@ -122,9 +122,9 @@ export class OrderExecutionTracker {
       return order_context
     } catch (err) {
       // Non fatal there are valid times for this like manually created orders
-      this.logger.warn(data, error)
+      this.logger.warn(data, err)
       // Sentry.captureException(err)
-      throw error
+      throw err
     }
   }
 
@@ -180,7 +180,7 @@ export class OrderExecutionTracker {
       if (totalQuoteTradeQuantity && totalTradeQuantity)
         data.averageExecutionPrice = new BigNumber(totalQuoteTradeQuantity).div(totalTradeQuantity).toFixed(8)
     } catch (err) {
-      this.logger.error(_data, error)
+      this.logger.error(_data, err)
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
@@ -197,7 +197,7 @@ export class OrderExecutionTracker {
       data.order_context = order_context
       data.edge = order_context.edge
     } catch (err) {
-      this.logger.error(_data, error)
+      this.logger.error(_data, err)
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
@@ -253,7 +253,7 @@ export class OrderExecutionTracker {
         await this.order_callbacks.order_filled_or_partially_filled(data)
       if (this.order_callbacks) await this.order_callbacks.order_filled(data)
     } catch (err) {
-      this.logger.error(_data, error)
+      this.logger.error(_data, err)
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
@@ -261,7 +261,7 @@ export class OrderExecutionTracker {
         if (order_id) scope.setTag("order_id", order_id)
         Sentry.captureException(err)
       })
-      throw error
+      throw err
     }
   }
 

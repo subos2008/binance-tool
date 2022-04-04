@@ -100,7 +100,7 @@ export class RedisSpotPositionsState {
         // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(err)
       })
-      throw error
+      throw err
     }
   }
 
@@ -283,7 +283,7 @@ export class RedisSpotPositionsState {
         // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(err)
       })
-      throw error
+      throw err
     }
   }
 
@@ -298,7 +298,7 @@ export class RedisSpotPositionsState {
         if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
         Sentry.captureException(err)
       })
-      throw error
+      throw err
     }
   }
 
@@ -313,7 +313,7 @@ export class RedisSpotPositionsState {
         if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
         Sentry.captureException(err)
       })
-      throw error
+      throw err
     }
   }
 
@@ -334,7 +334,7 @@ export class RedisSpotPositionsState {
         // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(err)
       })
-      throw error
+      throw err
     }
   }
 
@@ -373,7 +373,7 @@ export class RedisSpotPositionsState {
         // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(err)
       })
-      throw error
+      throw err
     }
   }
 

@@ -166,7 +166,7 @@ export class Edge60SpotPositionsExecution {
         } at ${stop_price.toFixed()}`,
         { edge, base_asset }
       )
-      throw error
+      throw err
     }
 
     let res: TradeAbstractionOpenSpotLongResult = {

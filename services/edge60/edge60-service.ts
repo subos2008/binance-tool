@@ -49,10 +49,10 @@ import { StatsD } from "hot-shots"
 var statsd = new StatsD()
 
 process.on("unhandledRejection", (err) => {
-  logger.error(err)
+  logger.error({ err })
   Sentry.captureException(err)
   const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-  send_message(`UnhandledPromiseRejection: ${error}`)
+  send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
 function sleep(ms: number) {
@@ -341,9 +341,9 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
 
         if (initial_candles.length == 0) {
           this.logger.error(`No candles loaded for ${symbol}`)
-          let error = new Error(`No candles loaded for ${symbol}`)
+          let err = new Error(`No candles loaded for ${symbol}`)
           Sentry.captureException(err) // this is unexpected now, 429?
-          throw error
+          throw err
         }
 
         // chop off the most recent candle as the code above gives us a partial candle at the end
@@ -413,14 +413,14 @@ async function main() {
     await publisher.connect()
     await edge60.run()
   } catch (err) {
-    logger.error(err)
+    logger.error({ err })
     Sentry.captureException(err)
   }
 }
 
 main().catch((err) => {
   Sentry.captureException(err)
-  logger.error(`Error in main loop: ${error}`)
-  logger.error(err)
-  logger.error(`Error in main loop: ${error.stack}`)
+  logger.error(`Error in main loop: ${err}`)
+  logger.error({ err })
+  logger.error(`Error in main loop: ${err.stack}`)
 })

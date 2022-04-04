@@ -29,8 +29,8 @@
 // };
 
 // process.on("unhandledRejection", error => {
-//   logger.error(err)
-//   // send_message(`UnhandledPromiseRejection: ${error}`);
+//   logger.error({ err })
+//   // send_message(`UnhandledPromiseRejection: ${err}`);
 //   Sentry.captureException(err)
 // });
 
@@ -100,15 +100,15 @@
 
 //   order_execution_tracker.main().catch(error => {
 //     Sentry.captureException(err)
-//     if (error.name && error.name === "FetchError") {
+//     if (err.name && err.name === "FetchError") {
 //       logger.error(
-//         `${error.name}: Likely unable to connect to FTX and/or Telegram: ${error}`
+//         `${err.name}: Likely unable to connect to FTX and/or Telegram: ${err}`
 //       );
 //     } else {
-//       logger.error(`Error in main loop: ${error}`);
-//       logger.error(err);
-//       logger.error(`Error in main loop: ${error.stack}`);
-//       send_message(`Error in main loop: ${error}`);
+//       logger.error(`Error in main loop: ${err}`);
+//       logger.error({ err });
+//       logger.error(`Error in main loop: ${err.stack}`);
+//       send_message(`Error in main loop: ${err}`);
 //     }
 //     soft_exit(1);
 //   }).then(() => { logger.info('order_execution_tracker.main() returned.') });
@@ -117,9 +117,9 @@
 // // TODO: exceptions / sentry
 // main().catch(error => {
 //   Sentry.captureException(err)
-//   logger.error(`Error in main loop: ${error}`);
-//   logger.error(err);
-//   logger.error(`Error in main loop: ${error.stack}`);
+//   logger.error(`Error in main loop: ${err}`);
+//   logger.error({ err });
+//   logger.error(`Error in main loop: ${err.stack}`);
 //   soft_exit(1);
 // });
 

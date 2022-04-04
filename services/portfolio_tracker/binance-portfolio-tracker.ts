@@ -137,7 +137,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
       return await this.ee.prices()
     } catch (err) {
       Sentry.captureException(err)
-      throw error
+      throw err
     }
   }
 
@@ -149,7 +149,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
       return balances
     } catch (err) {
       Sentry.captureException(err)
-      throw error
+      throw err
     }
   }
 }

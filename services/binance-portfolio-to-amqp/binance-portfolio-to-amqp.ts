@@ -42,9 +42,9 @@ BigNumber.prototype.valueOf = function () {
 }
 
 process.on("unhandledRejection", (err) => {
-  _logger.error(err)
+  _logger.error({ err })
   Sentry.captureException(err)
-  send_message(`UnhandledPromiseRejection: ${error}`)
+  send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
 import { BinancePortfolioToAMQP } from "./portfolio"
@@ -68,11 +68,11 @@ async function main() {
   try {
     let portfolio_to_amqp = new BinancePortfolioToAMQP({ send_message, logger, health_and_readiness, redis })
     await portfolio_to_amqp.start()
-  } catch (error: any) {
+  } catch (err: any) {
     Sentry.captureException(err)
-    logger.error(`Error connecting to exchange: ${error}`)
-    logger.error(err)
-    logger.error(`Error connecting to exchange: ${error.stack}`)
+    logger.error(`Error connecting to exchange: ${err}`)
+    logger.error({ err })
+    logger.error(`Error connecting to exchange: ${err.stack}`)
     service_is_healthy.healthy(false) // it seems service isn't exiting on soft exit, but add this to make sure
     return
   }
@@ -80,9 +80,9 @@ async function main() {
 
 main().catch((err) => {
   Sentry.captureException(err)
-  logger.error(`Error in main loop: ${error}`)
-  logger.error(err)
-  logger.error(`Error in main loop: ${error.stack}`)
+  logger.error(`Error in main loop: ${err}`)
+  logger.error({ err })
+  logger.error(`Error in main loop: ${err.stack}`)
 })
 
 var app = express()

@@ -316,7 +316,7 @@ export class SpotPositionsExecution {
       this.logger.warn({ err })
       Sentry.captureException(err)
       this.send_message(msg, { edge })
-      throw error
+      throw err
     }
   }
 }

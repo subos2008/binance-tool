@@ -155,13 +155,13 @@ async function main() {
     .main()
     .catch((err) => {
       Sentry.captureException(err)
-      if (error.name && error.name === "FetchError") {
-        logger.error(`${error.name}: Likely unable to connect to Binance and/or Telegram: ${error}`)
+      if (err.name && err.name === "FetchError") {
+        logger.error(`${err.name}: Likely unable to connect to Binance and/or Telegram: ${err}`)
       } else {
-        logger.error(`Error in main loop: ${error}`)
-        logger.error(err)
-        logger.error(`Error in main loop: ${error.stack}`)
-        send_message(`Error in main loop: ${error}`)
+        logger.error(`Error in main loop: ${err}`)
+        logger.error({ err })
+        logger.error(`Error in main loop: ${err.stack}`)
+        send_message(`Error in main loop: ${err}`)
       }
       soft_exit(1)
     })
@@ -172,9 +172,9 @@ async function main() {
 
 main().catch((err) => {
   Sentry.captureException(err)
-  logger.error(`Error in main loop: ${error}`)
-  logger.error(err)
-  logger.error(`Error in main loop: ${error.stack}`)
+  logger.error(`Error in main loop: ${err}`)
+  logger.error({ err })
+  logger.error(`Error in main loop: ${err.stack}`)
   soft_exit(1)
 })
 

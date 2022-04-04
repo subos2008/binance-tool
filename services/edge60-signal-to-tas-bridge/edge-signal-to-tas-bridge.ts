@@ -34,9 +34,9 @@ const logger: Logger = new LoggerClass({ silent: false })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 process.on("unhandledRejection", (err) => {
-  logger.error(err)
+  logger.error({ err })
   Sentry.captureException(err)
-  send_message(`UnhandledPromiseRejection: ${error}`)
+  send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
 const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
@@ -126,10 +126,10 @@ async function main() {
 
 main().catch((err) => {
   Sentry.captureException(err)
-  logger.error(`Error in main loop: ${error}`)
-  logger.error(err)
-  logger.error(`Error in main loop: ${error.stack}`)
-  soft_exit(1, `Error in main loop: ${error}`)
+  logger.error(`Error in main loop: ${err}`)
+  logger.error({ err })
+  logger.error(`Error in main loop: ${err.stack}`)
+  soft_exit(1, `Error in main loop: ${err}`)
 })
 
 // Note this method returns!

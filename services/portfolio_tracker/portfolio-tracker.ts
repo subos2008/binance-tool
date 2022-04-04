@@ -234,10 +234,10 @@ async function main() {
 
 main().catch((err) => {
   Sentry.captureException(err)
-  logger.error(`Error in main loop: ${error}`)
-  logger.error(err)
-  logger.error(`Error in main loop: ${error.stack}`)
-  soft_exit(1, `Error in main loop: ${error}`)
+  logger.error(`Error in main loop: ${err}`)
+  logger.error({ err })
+  logger.error(`Error in main loop: ${err.stack}`)
+  soft_exit(1, `Error in main loop: ${err}`)
 })
 
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })

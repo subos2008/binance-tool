@@ -49,7 +49,7 @@
 // logger = new Logger({ silent: false, template: { symbol } })
 
 // process.on("unhandledRejection", (err) => {
-//   logger.error(err)
+//   logger.error({ err })
 // })
 
 // class Backtester implements EntrySignalsCallbacks {
@@ -159,9 +159,9 @@
 
 // // TODO: exceptions
 // main(symbol).catch((err) => {
-//   console.error(`Error in main loop: ${error}`)
+//   console.error(`Error in main loop: ${err}`)
 //   console.error(err)
-//   console.error(`Error in main loop: ${error.stack}`)
+//   console.error(`Error in main loop: ${err.stack}`)
 // })
 
 // function soft_exit(exit_code?: number | undefined) {

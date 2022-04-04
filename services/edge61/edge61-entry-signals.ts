@@ -34,11 +34,12 @@ import { TriggerMidTrendOnRestartPrevention } from "./trigger-mid-trend-on-resta
 import { DirectionPersistance } from "./direction-persistance"
 import { DateTime } from "luxon"
 
-function dogstatsderrorhandler(error: any) {
-  console.log("DogStatsD: Socket errors caught here: ", error)
+function dogstatsderrorhandler(err: any) {
+  console.log("DogStatsD: Socket errors caught here: ", err)
 }
-import { StatsD } from "hot-shots"
+var StatsD = require("hot-shots")
 var dogstatsd = new StatsD({ errorHandler: dogstatsderrorhandler })
+
 export class Edge61EntrySignals {
   symbol: string
   logger: Logger
@@ -196,10 +197,9 @@ export class Edge61EntrySignals {
       }
 
       this.just_processed_close_candle = false
-    } catch (e) {
-      this.logger.error(`Exception checking or entering position: ${e}`)
-      this.logger.error(e)
-      Sentry.captureException(e)
+    } catch (err: any) {
+      this.logger.error({ err }, `Exception checking or entering position: ${err.message}`)
+      Sentry.captureException(err)
     }
   }
 

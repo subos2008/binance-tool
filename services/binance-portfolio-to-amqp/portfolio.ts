@@ -325,8 +325,8 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
   async start() {
     try {
       await this.publisher.connect()
-    } catch (error: any) {
-      this.logger.error(`Error connecting to AMQP: ${error}`)
+    } catch (err: any) {
+      this.logger.error(`Error connecting to AMQP: ${err}`)
       return
     }
 
@@ -362,7 +362,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
       return await this.ee.prices()
     } catch (err) {
       Sentry.captureException(err)
-      throw error
+      throw err
     }
   }
 
@@ -374,7 +374,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
       return balances
     } catch (err) {
       Sentry.captureException(err)
-      throw error
+      throw err
     }
   }
 }

@@ -209,7 +209,7 @@ export class AlgoUtils {
       return response
     } catch (err) {
       Sentry.captureException(err)
-      throw error
+      throw err
     }
   }
 
@@ -276,11 +276,11 @@ export class AlgoUtils {
       this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
-    } catch (error: any) {
-      console.error(`Sell error: ${error.body}`)
+    } catch (err: any) {
+      console.error(`Sell error: ${err.body}`)
       console.error(err)
       Sentry.captureException(err)
-      throw error
+      throw err
     }
   }
 
@@ -367,14 +367,14 @@ export class AlgoUtils {
       // }
       let response: OcoOrder = await this.ee.orderOco(args)
       return response
-    } catch (error: any) {
+    } catch (err: any) {
       let context = { symbol: pair, class: "AlgoUtils", method: "munge_and_create_oco_order" }
-      Sentry.captureException(error, {
+      Sentry.captureException(err, {
         tags: context,
       })
-      this.logger.error(context, `OCO error: ${error.body}`)
+      this.logger.error(context, `OCO error: ${err.body}`)
       this.logger.error({ err })
-      throw error
+      throw err
     }
   }
 
@@ -430,10 +430,10 @@ export class AlgoUtils {
       this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
-    } catch (error: any) {
+    } catch (err: any) {
       Sentry.captureException(err)
       this.logger.error({ err })
-      throw error
+      throw err
     }
   }
 
@@ -464,11 +464,12 @@ export class AlgoUtils {
       this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
-    } catch (error: any) {
+    } catch (err: any) {
       Sentry.captureException(err)
-      console.error(`Market Buy error: ${error.body}`)
+      // .body? Really?
+      console.error(`Market Buy error: ${err.body}`)
       console.error(err)
-      throw error
+      throw err
     }
   }
 
@@ -499,11 +500,12 @@ export class AlgoUtils {
       this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
-    } catch (error: any) {
+    } catch (err: any) {
       Sentry.captureException(err)
-      console.error(`Market buy error: ${error.body}`)
+      // .body? Really?
+      console.error(`Market buy error: ${err.body}`)
       console.error(err)
-      throw error
+      throw err
     }
   }
 
@@ -534,11 +536,12 @@ export class AlgoUtils {
       this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
-    } catch (error: any) {
+    } catch (err: any) {
       Sentry.captureException(err)
-      console.error(`Market sell error: ${error.body}`)
+      // .body? Really?
+      console.error(`Market sell error: ${err.body}`)
       console.error(err)
-      throw error
+      throw err
     }
   }
 

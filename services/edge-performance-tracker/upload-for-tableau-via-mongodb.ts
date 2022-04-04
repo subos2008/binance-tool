@@ -61,7 +61,7 @@ export class UploadToMongoDB {
       await db.collection(this.mongodb_collection).insertOne(event)
     } catch (err) {
       console.error(err)
-      throw error
+      throw err
     }
   }
 }

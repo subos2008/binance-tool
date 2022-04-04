@@ -39,7 +39,7 @@ export class SendMessage {
   }
 
   async send_message(message: string, tags?: ContextTags) {
-    this.logger.info(tags, message)
+    this.logger.info(tags || {}, message)
     try {
       const url = new URL(`https://api.telegram.org/bot${process.env.TELEGRAM_KEY}/sendMessage`)
       url.searchParams.append("chat_id", this.get_chat_id(tags))

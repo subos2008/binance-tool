@@ -154,8 +154,8 @@ export class SpotPositionTracker {
         order_id,
       })
       edge = order_context.edge
-    } catch (error: any) {
-      this.logger.warn(`Exception determining edge for order_id ${order_id}: ${error.toString()}`)
+    } catch (err: any) {
+      this.logger.warn({ err }, `Exception determining edge for order_id ${order_id}: ${err.message}`)
     }
 
     let position_identifier: SpotPositionIdentifier_V3 = {
@@ -168,16 +168,16 @@ export class SpotPositionTracker {
 
   async sell_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
     let { baseAsset, quoteAsset, market_symbol, averageExecutionPrice } = generic_order_data
-    
+
     let position: SpotPosition = await this.load_position_for_order(generic_order_data)
     this.logger.info(position)
     let edge = await position.edge()
 
-    let tags = {edge, base_asset: baseAsset, quote_asset:quoteAsset}
+    let tags = { edge, base_asset: baseAsset, quote_asset: quoteAsset }
 
     // 1. Is this an existing position?
     if ((await position.position_size()).isZero()) {
-      this.send_message(`Sell executed on unknown position for ${baseAsset}`,tags)
+      this.send_message(`Sell executed on unknown position for ${baseAsset}`, tags)
       return // this is our NOP
     }
 

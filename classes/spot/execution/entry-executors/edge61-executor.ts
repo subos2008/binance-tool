@@ -257,13 +257,13 @@ export class Edge61SpotPositionsExecution {
       return res
     } catch (err) {
       Sentry.captureException(err)
-      this.logger.error({ err: error })
+      this.logger.error({ err })
       this.send_message(`FAILED opening spot position ${args.edge}:${args.base_asset} using ${args.quote_asset}`, {
         edge: args.edge,
         base_asset: args.base_asset,
       })
 
-      throw error
+      throw err
     }
   }
 }

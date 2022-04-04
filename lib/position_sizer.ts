@@ -41,7 +41,7 @@ export class PositionSizer {
       Sentry.captureException(err);
       this.logger.error(`Getting account info from exchange:`)
       this.logger.error({ err })
-      throw error
+      throw err
     }
     try {
       prices = await this.ee.prices();
@@ -49,7 +49,7 @@ export class PositionSizer {
       Sentry.captureException(err);
       this.logger.error(`Getting account info from exchange:`)
       this.logger.error({ err })
-      throw error
+      throw err
     }
 
     // try {

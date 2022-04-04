@@ -168,14 +168,16 @@ export class SpotPositionTracker {
 
   async sell_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
     let { baseAsset, quoteAsset, market_symbol, averageExecutionPrice } = generic_order_data
-
+    
     let position: SpotPosition = await this.load_position_for_order(generic_order_data)
     this.logger.info(position)
     let edge = await position.edge()
 
+    let tags = {edge, base_asset: baseAsset, quote_asset:quoteAsset}
+
     // 1. Is this an existing position?
     if ((await position.position_size()).isZero()) {
-      this.send_message(`Sell executed on unknown position for ${baseAsset}`)
+      this.send_message(`Sell executed on unknown position for ${baseAsset}`,tags)
       return // this is our NOP
     }
 
@@ -192,7 +194,7 @@ export class SpotPositionTracker {
       // .. really? Can't we use current price as a backup? ..
       let msg = `averageExecutionPrice not supplied, unable to determine if ${baseAsset} position should be closed.`
       Sentry.captureMessage(msg)
-      this.send_message(msg, { edge })
+      this.send_message(msg, tags)
       return
     }
 
@@ -214,18 +216,17 @@ export class SpotPositionTracker {
           exit_quote_returned: generic_order_data.totalQuoteTradeQuantity, // how much quote did we get when liquidating the position
           exit_position_size: generic_order_data.totalBaseTradeQuantity, // base asset
         })
-        this.logger.info(JSON.stringify(event))
+        this.logger.object(event)
         await this.spot_position_publisher.publish_closed(event)
       } catch (error) {
-        this.send_message(`Failed to create/send SpotPositionClosed for: ${position.baseAsset} to ${quoteAsset}`, {
-          edge,
-        })
+        this.send_message(`Failed to create/send SpotPositionClosed for: ${position.baseAsset} to ${quoteAsset}`, tags)
 
         this.logger.error(error)
         Sentry.captureException(error)
       }
       await this.spot_positions_persistance.delete_position(position.position_identifier)
-      this.send_message(`closed position: ${position.baseAsset} to ${quoteAsset} (${edge})`, { edge })
+      // removed as it was becomming a duplicate; edge performance messages are more useful
+      // this.send_message(`closed position: ${position.baseAsset} to ${quoteAsset} (${edge})`, tags)
     }
   }
 }

@@ -34,6 +34,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+import express from "express"
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { Edge61EntrySignals } from "./edge61-entry-signals"
@@ -45,6 +46,9 @@ import { config } from "../../config"
 import { get_redis_client } from "../../lib/redis-v4"
 import { DirectionPersistance } from "./direction-persistance"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
+import { RedisClientType } from "redis-v4"
+import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
+import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
@@ -415,10 +419,6 @@ main().catch((err) => {
   logger.error(`Error in main loop: ${err.stack}`)
 })
 
-import express from "express"
-import { RedisClientType } from "redis-v4"
-import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
-import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))

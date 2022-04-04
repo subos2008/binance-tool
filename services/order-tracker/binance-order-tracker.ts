@@ -27,8 +27,6 @@ const logger: Logger = new LoggerClass({ silent: false })
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
-import { RedisClient } from "redis"
-
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -53,10 +51,10 @@ import { RedisOrderContextPersistance } from "../../classes/spot/persistence/red
 let order_execution_tracker: OrderExecutionTracker | null = null
 
 class MyOrderCallbacks {
-  send_message: Function
+  send_message: SendMessageFunc
   logger: Logger
 
-  constructor({ send_message, logger }: { send_message: (msg: string) => void; logger: Logger }) {
+  constructor({ send_message, logger }: { send_message: SendMessageFunc; logger: Logger }) {
     assert(logger)
     this.logger = logger
     assert(send_message)

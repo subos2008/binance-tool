@@ -28,6 +28,14 @@ Deployment and config is done via a helm chart you can find in `./k8/charts/serv
 
 At the time of writing many services connect directly to binnace to pull in ws streams. Some of the more generic services listen to AMQP but it's a work in progress. Services are being renamed as 'spot` version in preparation for second versions that can trade long/shot on futures exchanges. All the current code makes spot specific assumptions.
 
+There is no UI apart from telegram.
+
+# Connecting
+
+In general there is no ingress. There is one for the telegram bot webhooks.
+
+  kubectl port-forward --namespace persistent-state svc/bitnami-redis-master 6379:6379
+
 ![](https://github.com/subos2008/binance-tool/workflows/DockerPublish/badge.svg)
 
 

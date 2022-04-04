@@ -27,7 +27,7 @@ logger.info(`Service starting.`)
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
-process.on("unhandledRejection", (error) => {
+process.on("unhandledRejection", (error: Error) => {
   logger.error(error)
   Sentry.captureException(error)
   send_message(`UnhandledPromiseRejection: ${error}`)
@@ -152,4 +152,3 @@ app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readine
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)
-

@@ -29,10 +29,10 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-process.on("unhandledRejection", (error) => {
-  logger.error(error)
-  Sentry.captureException(error)
-  send_message(`UnhandledPromiseRejection: ${error}`)
+process.on("unhandledRejection", (err) => {
+  logger.error({ err })
+  Sentry.captureException(err)
+  send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
@@ -137,7 +137,7 @@ async function main() {
     close_position_check_func,
     spot_positions_query,
     spot_positions_persistance,
-    health_and_readiness
+    health_and_readiness,
   })
 
   // await publisher.connect()

@@ -218,11 +218,11 @@ export class SpotPositionTracker {
         })
         this.logger.object(event)
         await this.spot_position_publisher.publish_closed(event)
-      } catch (error) {
-        this.send_message(`Failed to create/send SpotPositionClosed for: ${position.baseAsset} to ${quoteAsset}`, tags)
-
-        this.logger.error(error)
-        Sentry.captureException(error)
+      } catch (err) {
+        let msg = `Failed to create/send SpotPositionClosed for: ${position.baseAsset} to ${quoteAsset}`
+        this.send_message(msg, tags)
+        this.logger.error(tags, err, msg)
+        Sentry.captureException(err)
       }
       await this.spot_positions_persistance.delete_position(position.position_identifier)
       // removed as it was becomming a duplicate; edge performance messages are more useful

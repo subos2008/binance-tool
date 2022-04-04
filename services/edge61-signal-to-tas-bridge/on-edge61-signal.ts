@@ -87,12 +87,12 @@ class Edge61 implements Edge61EntrySignalProcessor {
       case "short":
         try {
           this.logger.info(`short signal, NOP on ${edge}`)
-        } catch (error) {
+        } catch (err) {
           /**
            * There are probably valid cases for this - like these was no long position open
            */
-          this.logger.warn(error)
-          Sentry.captureException(error)
+          this.logger.warn({ err })
+          Sentry.captureException(err)
         }
         break
       default:
@@ -134,9 +134,9 @@ export class Edge61EntrySignalFanout implements Edge61EntrySignalProcessor {
 
     try {
       await this.edge61.process_edge61_entry_signal(signal)
-    } catch (error) {
-      this.logger.error(error)
-      Sentry.captureException(error)
+    } catch (err) {
+      this.logger.error({ err })
+      Sentry.captureException(err)
     }
   }
 }

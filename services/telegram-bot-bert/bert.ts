@@ -48,18 +48,18 @@ app.use(
 /**
  * Docs: https://telegraf.js.org/
  */
- const bot = new Telegraf(token)
- const commands = new Commands({ bot, logger })
+const bot = new Telegraf(token)
+const commands = new Commands({ bot, logger })
 
 /**
  * Error handler: not we are told not to just eat all the exceptions in the README.
  * Especially we shouldn't eat TimeoutError - but that's exactly the one I want to eat,
  * Because it causes infinite retries of messages
  */
- bot.catch((error) => {
-  Sentry.captureException(error)
-  logger.error(error)
-  throw error // docs suggest not to eat errors, let's rethrow until we understand why
+bot.catch((err) => {
+  Sentry.captureException(err)
+  logger.error({ err })
+  throw err // docs suggest not to eat errors, let's rethrow until we understand why
 })
 
 // Register logger middleware
@@ -77,8 +77,7 @@ bot.use((ctx, next) => {
   let user = ctx.from
   console.log(`message from ${user}`)
   // if(['slyph'].includes(user as string))
-  return next().then(() => {
-  })
+  return next().then(() => {})
 })
 
 // Need to get this working with bot.launch
@@ -90,10 +89,6 @@ bot.use((ctx, next) => {
 //     res.status(500).json({ status: "UNHEALTHY" })
 //   }
 // })
-
-
-
-
 
 const secretPath = `/telegraf/bert/${bot.secretPathComponent()}`
 

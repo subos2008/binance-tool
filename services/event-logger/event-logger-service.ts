@@ -27,10 +27,10 @@ const logger: Logger = new LoggerClass({ silent: false })
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
-process.on("unhandledRejection", (error) => {
-  logger.error(error)
-  Sentry.captureException(error)
-  send_message(`UnhandledPromiseRejection: ${error}`)
+process.on("unhandledRejection", (err) => {
+  logger.error({ err })
+  Sentry.captureException(err)
+  send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
 import { MessageProcessor } from "../../classes/amqp/interfaces"
@@ -88,7 +88,7 @@ class EventLogger implements MessageProcessor {
       channel.ack(event)
     } catch (err) {
       Sentry.captureException(err)
-      this.logger.error(err)
+      this.logger.error({ err })
     }
   }
 }
@@ -139,4 +139,3 @@ app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)
-

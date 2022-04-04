@@ -53,7 +53,7 @@ export class GenericTopicPublisher {
       }
     } catch (err) {
       this.logger.error(`Error connecting to amqp server`)
-      this.logger.error(err)
+      this.logger.error({ err })
       Sentry.captureException(err)
       throw err
     }

@@ -29,11 +29,11 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-process.on("unhandledRejection", (error) => {
-  logger.error(error)
-  Sentry.captureException(error)
+process.on("unhandledRejection", (err) => {
+  logger.error({ err })
+  Sentry.captureException(err)
   const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-  send_message(`UnhandledPromiseRejection: ${error}`)
+  send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
 import { StatsD } from "hot-shots"

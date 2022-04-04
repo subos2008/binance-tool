@@ -60,11 +60,11 @@ BigNumber.prototype.valueOf = function () {
 
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 
-process.on("unhandledRejection", (error) => {
-  logger.error(error)
-  Sentry.captureException(error)
+process.on("unhandledRejection", (err) => {
+  logger.error({ err })
+  Sentry.captureException(err)
   const send_message = new SendMessage({ service_name, logger }).build()
-  send_message(`UnhandledPromiseRejection: ${error}`)
+  send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
 import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
@@ -120,7 +120,7 @@ class PortfolioTracker implements MasterPortfolioClass {
           msg += " as " + portfolio_utils.balances_to_string(portfolio, "BTC")
         } catch (err) {
           Sentry.captureException(err)
-          logger.error(err)
+          logger.error({ err })
         }
         if (portfolio.prices) {
           try {
@@ -132,7 +132,7 @@ class PortfolioTracker implements MasterPortfolioClass {
         this.send_message(msg)
       } catch (err) {
         Sentry.captureException(err)
-        logger.error(err)
+        logger.error({ err })
       }
 
       try {
@@ -151,7 +151,7 @@ class PortfolioTracker implements MasterPortfolioClass {
         }
       } catch (err) {
         Sentry.captureException(err)
-        logger.error(err)
+        logger.error({ err })
       }
 
       try {
@@ -176,11 +176,11 @@ class PortfolioTracker implements MasterPortfolioClass {
         }
       } catch (err) {
         Sentry.captureException(err)
-        logger.error(err)
+        logger.error({ err })
       }
     } catch (err) {
       Sentry.captureException(err)
-      logger.error(err)
+      logger.error({ err })
     }
   }
 

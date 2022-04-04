@@ -124,10 +124,9 @@ export class Commands {
         let result = await this.close_spot_long(ctx, { asset: base_asset, edge })
         ctx.reply(`Looks like it succeeded?`)
       }
-    } catch (error) {
-      this.logger.error(`Looks like command failed:`)
-      this.logger.error(error)
-      Sentry.captureException(error)
+    } catch (err) {
+      this.logger.error({ err }, `Looks like command failed:`)
+      Sentry.captureException(err)
       ctx.reply(`Looks like it failed, see log for error`)
     }
     // ctx.replyWithHTML("<i>Are you sure?</i>")

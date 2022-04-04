@@ -51,11 +51,10 @@ const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const global_health = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
-process.on("unhandledRejection", (error) => {
-  logger.error(error)
-  Sentry.captureException(error)
-  const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-  send_message(`UnhandledPromiseRejection: ${error}`)
+process.on("unhandledRejection", (err) => {
+  logger.error({ err })
+  Sentry.captureException(err)
+  send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
 import { StatsD } from "hot-shots"
@@ -403,9 +402,9 @@ async function main() {
     await publisher_for_Edge61EntrySignal.connect()
     await publisher_for_EdgeDirectionSignal.connect()
     await edge61.run()
-  } catch (error) {
-    logger.error(error)
-    Sentry.captureException(error)
+  } catch (err) {
+    logger.error({ err })
+    Sentry.captureException(err)
   }
 }
 

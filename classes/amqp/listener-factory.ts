@@ -78,12 +78,12 @@ class MessageProcessorIsolator implements MessageProcessor {
           throw new Error(msg)
         }
       }
-    } catch (error) {
+    } catch (err) {
       // Eat any exceptions to prevent this handler from affecting the process
       // Designed for having multiple independent listeners in one process
       let event_name = this.event_name
-      Sentry.captureException(error, { extra: Body, tags: { event_name } })
-      this.logger.warn(error)
+      Sentry.captureException(err, { extra: Body, tags: { event_name } })
+      this.logger.warn({ err })
     }
   }
 }
@@ -122,8 +122,7 @@ export class ListenerFactory {
         })
       } catch (err) {
         health_and_readiness.healthy(false)
-        this.logger.error(`Error connecting MessageProcessor for event_name '${event_name}' to amqp server`)
-        this.logger.error(err)
+        this.logger.error({ err },`Error connecting MessageProcessor for event_name '${event_name}' to amqp server`)
         Sentry.captureException(err)
         // throw err // don't throw when setting up isolated infrastructure
       }

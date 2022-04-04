@@ -27,7 +27,7 @@ logger.info(`Service starting.`)
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
-process.on("unhandledRejection", (error) => {
+process.on("unhandledRejection", (error: Error) => {
   logger.error(error)
   Sentry.captureException(error)
   send_message(`UnhandledPromiseRejection: ${error}`)
@@ -124,25 +124,25 @@ class EventLogger implements MessageProcessor {
           percentage_quote_change ? new BigNumber(percentage_quote_change.toString()).dp(2).toFixed() : "unknown"
         }%`
         this.send_message(msg, { edge })
-      } catch (e) {
+      } catch (e: any) {
         this.logger.error(e)
         Sentry.captureException(e)
       }
 
       try {
         this.mongodb_uploader.ingest_event(o)
-      } catch (e) {
+      } catch (e: any) {
         this.logger.error(e)
         Sentry.captureException(e)
       }
 
       try {
         this.persistence.ingest_event(i)
-      } catch (e) {
+      } catch (e: any) {
         this.logger.error(e)
         Sentry.captureException(e)
       }
-    } catch (e) {
+    } catch (e: any) {
       this.logger.error(e)
       Sentry.captureException(e)
     }

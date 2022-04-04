@@ -66,9 +66,9 @@ export class OrderExecutionTracker {
   async main() {
     try {
       await this.monitor_user_stream()
-    } catch (error) {
-      Sentry.captureException(error)
-      this.logger.error(error)
+    } catch (err) {
+      Sentry.captureException(err)
+      this.logger.error(err)
       throw error
     }
   }
@@ -88,7 +88,7 @@ export class OrderExecutionTracker {
           return
         }
         this.processExecutionReport(data)
-      } catch (error) {
+      } catch (err) {
         Sentry.withScope(function (scope) {
           scope.setTag("operation", "processExecutionReport")
           scope.setTag("market_symbol", data.symbol)
@@ -97,11 +97,11 @@ export class OrderExecutionTracker {
           scope.setTag("orderStatus", data.orderStatus)
           scope.setTag("executionType", data.executionType)
           scope.setTag("order_id", data.newClientOrderId)
-          Sentry.captureException(error)
+          Sentry.captureException(err)
         })
         let msg = `SHIT: error calling processExecutionReport for pair ${data.symbol}`
         this.logger.error(_data, msg)
-        this.logger.error(error)
+        this.logger.error(err)
         this.send_message(msg)
       }
     })
@@ -120,10 +120,10 @@ export class OrderExecutionTracker {
         `Loaded edge for order ${data.order_id}: ${edge}:${data.symbol} (undefined can be valid here for manually created orders)`
       )
       return order_context
-    } catch (error) {
+    } catch (err) {
       // Non fatal there are valid times for this like manually created orders
       this.logger.warn(data, error)
-      // Sentry.captureException(error)
+      // Sentry.captureException(err)
       throw error
     }
   }
@@ -179,13 +179,13 @@ export class OrderExecutionTracker {
       // https://binance-docs.github.io/apidocs/spot/en/#payload-balance-update
       if (totalQuoteTradeQuantity && totalTradeQuantity)
         data.averageExecutionPrice = new BigNumber(totalQuoteTradeQuantity).div(totalTradeQuantity).toFixed(8)
-    } catch (error) {
+    } catch (err) {
       this.logger.error(_data, error)
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
         scope.setTag("order_id", order_id || "undefined")
-        Sentry.captureException(error)
+        Sentry.captureException(err)
       })
     }
 
@@ -196,13 +196,13 @@ export class OrderExecutionTracker {
       let order_context: OrderContext_V1 = await this.get_order_context_for_order(data)
       data.order_context = order_context
       data.edge = order_context.edge
-    } catch (error) {
+    } catch (err) {
       this.logger.error(_data, error)
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
         scope.setTag("order_id", order_id || "undefined")
-        Sentry.captureException(error)
+        Sentry.captureException(err)
       })
       edge = "undefined"
     }
@@ -252,14 +252,14 @@ export class OrderExecutionTracker {
       if (this.order_callbacks && this.order_callbacks.order_filled_or_partially_filled)
         await this.order_callbacks.order_filled_or_partially_filled(data)
       if (this.order_callbacks) await this.order_callbacks.order_filled(data)
-    } catch (error) {
+    } catch (err) {
       this.logger.error(_data, error)
       Sentry.withScope(function (scope) {
         scope.setTag("operation", "processExecutionReport")
         scope.setTag("pair", symbol)
         if (edge) scope.setTag("edge", edge)
         if (order_id) scope.setTag("order_id", order_id)
-        Sentry.captureException(error)
+        Sentry.captureException(err)
       })
       throw error
     }

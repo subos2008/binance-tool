@@ -232,10 +232,10 @@ async function main() {
   setInterval(portfolio_tracker.update_and_report_portfolio.bind(portfolio_tracker), 1000 * 60 * 60 * 6)
 }
 
-main().catch((error) => {
-  Sentry.captureException(error)
+main().catch((err) => {
+  Sentry.captureException(err)
   logger.error(`Error in main loop: ${error}`)
-  logger.error(error)
+  logger.error(err)
   logger.error(`Error in main loop: ${error.stack}`)
   soft_exit(1, `Error in main loop: ${error}`)
 })

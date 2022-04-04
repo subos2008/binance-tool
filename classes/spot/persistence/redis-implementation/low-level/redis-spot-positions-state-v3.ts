@@ -91,14 +91,14 @@ export class RedisSpotPositionsState {
   ): Promise<void> {
     try {
       await this.msetAsync(this.name_to_key(pi, { name: "position_size" }), to_sats(position_size.toFixed()))
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      console.error(err)
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.base_asset)
         scope.setTag("exchange", pi.exchange_identifier.exchange)
         if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
         // scope.setTag("redis.connected", this.redis.connected.toString());
-        Sentry.captureException(error)
+        Sentry.captureException(err)
       })
       throw error
     }
@@ -274,14 +274,14 @@ export class RedisSpotPositionsState {
         this.name_to_key(pi, { name: "edge" }),
         edge
       )
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      console.error(err)
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.base_asset)
         scope.setTag("exchange", pi.exchange_identifier.exchange)
         if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
         // scope.setTag("redis.connected", this.redis.connected.toString());
-        Sentry.captureException(error)
+        Sentry.captureException(err)
       })
       throw error
     }
@@ -290,13 +290,13 @@ export class RedisSpotPositionsState {
   async _patch_initial_entry_quote_asset(pi: SpotPositionIdentifier_V3, { initial_entry_quote_asset }: any) {
     try {
       await this.msetAsync(this.name_to_key(pi, { name: "initial_entry_quote_asset" }), initial_entry_quote_asset)
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      console.error(err)
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.base_asset)
         scope.setTag("exchange", pi.exchange_identifier.exchange)
         if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
-        Sentry.captureException(error)
+        Sentry.captureException(err)
       })
       throw error
     }
@@ -305,13 +305,13 @@ export class RedisSpotPositionsState {
   async _patch_initial_entry_timestamp(pi: SpotPositionIdentifier_V3, { initial_entry_timestamp }: any) {
     try {
       await this.msetAsync(this.name_to_key(pi, { name: "initial_entry_timestamp" }), initial_entry_timestamp)
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      console.error(err)
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.base_asset)
         scope.setTag("exchange", pi.exchange_identifier.exchange)
         if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
-        Sentry.captureException(error)
+        Sentry.captureException(err)
       })
       throw error
     }
@@ -325,14 +325,14 @@ export class RedisSpotPositionsState {
       console.log(`adjust_position_size_by start: ${await this.get_position_size(pi)}`)
       await this.incrbyAsync(this.name_to_key(pi, { name: "position_size" }), to_sats(base_change.toFixed()))
       console.log(`adjust_position_size_by after: ${await this.get_position_size(pi)}`)
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      console.error(err)
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.base_asset)
         scope.setTag("exchange", pi.exchange_identifier.exchange)
         if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
         // scope.setTag("redis.connected", this.redis.connected.toString());
-        Sentry.captureException(error)
+        Sentry.captureException(err)
       })
       throw error
     }
@@ -345,7 +345,7 @@ export class RedisSpotPositionsState {
   async get_stop_order(pi: SpotPositionIdentifier_V3): Promise<OrderId | undefined> {
     try {
       return this.get_string_key(pi, { key_name: "stop_order_id" })
-    } catch (error) {
+    } catch (err) {
       return
     }
   }
@@ -364,14 +364,14 @@ export class RedisSpotPositionsState {
       for (let key of keys) {
         await this.delAsync(key)
       }
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      console.error(err)
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.base_asset)
         scope.setTag("exchange", pi.exchange_identifier?.exchange)
         if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
         // scope.setTag("redis.connected", this.redis.connected.toString());
-        Sentry.captureException(error)
+        Sentry.captureException(err)
       })
       throw error
     }

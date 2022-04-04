@@ -68,7 +68,7 @@ export class Commands {
         // Not a command - just people speaking in a channel
         // ctx.reply(ctx.message.text)
       }
-    } catch (error) {
+    } catch (err) {
       ctx.reply(`Internal error 🤪`)
     }
   }

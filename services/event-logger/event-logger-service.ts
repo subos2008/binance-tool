@@ -112,10 +112,10 @@ async function main() {
   new EventLogger({ health_and_readiness, logger, send_message, event_name: "SpotPositionClosed" })
 }
 
-main().catch((error) => {
-  Sentry.captureException(error)
+main().catch((err) => {
+  Sentry.captureException(err)
   logger.error(`Error in main loop: ${error}`)
-  logger.error(error)
+  logger.error(err)
   logger.error(`Error in main loop: ${error.stack}`)
   soft_exit(1, `Error in main loop: ${error}`)
 })

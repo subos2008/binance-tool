@@ -29,9 +29,9 @@
 // };
 
 // process.on("unhandledRejection", error => {
-//   logger.error(error)
+//   logger.error(err)
 //   // send_message(`UnhandledPromiseRejection: ${error}`);
-//   Sentry.captureException(error)
+//   Sentry.captureException(err)
 // });
 
 // import { FtxWebsocketClient } from "../../../../classes/exchanges/ftx/websocket-client";
@@ -99,14 +99,14 @@
 //   })
 
 //   order_execution_tracker.main().catch(error => {
-//     Sentry.captureException(error)
+//     Sentry.captureException(err)
 //     if (error.name && error.name === "FetchError") {
 //       logger.error(
 //         `${error.name}: Likely unable to connect to FTX and/or Telegram: ${error}`
 //       );
 //     } else {
 //       logger.error(`Error in main loop: ${error}`);
-//       logger.error(error);
+//       logger.error(err);
 //       logger.error(`Error in main loop: ${error.stack}`);
 //       send_message(`Error in main loop: ${error}`);
 //     }
@@ -116,9 +116,9 @@
 
 // // TODO: exceptions / sentry
 // main().catch(error => {
-//   Sentry.captureException(error)
+//   Sentry.captureException(err)
 //   logger.error(`Error in main loop: ${error}`);
-//   logger.error(error);
+//   logger.error(err);
 //   logger.error(`Error in main loop: ${error.stack}`);
 //   soft_exit(1);
 // });

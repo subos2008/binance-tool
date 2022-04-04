@@ -48,8 +48,8 @@
 
 // logger = new Logger({ silent: false, template: { symbol } })
 
-// process.on("unhandledRejection", (error) => {
-//   logger.error(error)
+// process.on("unhandledRejection", (err) => {
+//   logger.error(err)
 // })
 
 // class Backtester implements EntrySignalsCallbacks {
@@ -152,15 +152,15 @@
 
 //     await edge.run()
 //     soft_exit(0)
-//   } catch (error) {
-//     console.error(error)
+//   } catch (err) {
+//     console.error(err)
 //   }
 // }
 
 // // TODO: exceptions
-// main(symbol).catch((error) => {
+// main(symbol).catch((err) => {
 //   console.error(`Error in main loop: ${error}`)
-//   console.error(error)
+//   console.error(err)
 //   console.error(`Error in main loop: ${error.stack}`)
 // })
 

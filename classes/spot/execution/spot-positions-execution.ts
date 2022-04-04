@@ -265,11 +265,11 @@ export class SpotPositionsExecution {
         this.logger.info(msg)
         this.send_message(msg, { edge })
       }
-    } catch (error) {
+    } catch (err) {
       let msg = `Failed to cancel stop order on ${symbol} - was it cancelled manually?`
       this.logger.warn(msg)
-      this.logger.warn(error)
-      Sentry.captureException(error)
+      this.logger.warn(err)
+      Sentry.captureException(err)
       this.send_message(msg, { edge })
     }
 
@@ -288,11 +288,11 @@ export class SpotPositionsExecution {
         this.logger.info(msg)
         this.send_message(msg, { edge })
       }
-    } catch (error) {
+    } catch (err) {
       let msg = `Failed to cancel oco order on ${symbol} - was it cancelled manually?`
       this.logger.warn(msg)
-      this.logger.warn(error)
-      Sentry.captureException(error)
+      this.logger.warn(err)
+      Sentry.captureException(err)
       this.send_message(msg, { edge })
     }
 
@@ -310,11 +310,11 @@ export class SpotPositionsExecution {
         quote_asset,
         edge,
       } // success, really we just have this here to verify that every other code path throws
-    } catch (error) {
+    } catch (err) {
       let msg = `Failed to exit position on ${symbol}`
       this.logger.warn(msg)
-      this.logger.warn(error)
-      Sentry.captureException(error)
+      this.logger.warn(err)
+      Sentry.captureException(err)
       this.send_message(msg, { edge })
       throw error
     }

@@ -158,8 +158,8 @@ export class Edge60SpotPositionsExecution {
       }
       await this.positions_persistance.set_stop_order(spot_position_identifier, stop_order_id.toString())
       this.logger.warn(`e60: can throw instead of returning enum status result`)
-    } catch (error) {
-      Sentry.captureException(error)
+    } catch (err) {
+      Sentry.captureException(err)
       this.send_message(
         `Failed to create stop limit order for ${args.edge}:${args.base_asset} on ${
           stop_cmd.market_identifier.symbol

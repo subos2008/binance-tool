@@ -42,9 +42,9 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-process.on("unhandledRejection", (error) => {
-  logger.error(error)
-  Sentry.captureException(error)
+process.on("unhandledRejection", (err) => {
+  logger.error(err)
+  Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
@@ -71,19 +71,19 @@ async function main() {
     let portfolio_to_amqp = new BinanceSpotOrdersToAMQP({ send_message, logger, health_and_readiness, redis })
     await portfolio_to_amqp.start()
   } catch (error: any) {
-    Sentry.captureException(error)
+    Sentry.captureException(err)
     logger.error(`Error connecting to exchange: ${error}`)
-    logger.error(error)
+    logger.error(err)
     logger.error(`Error connecting to exchange: ${error.stack}`)
     service_is_healthy.healthy(false) // it seems service isn't exiting on soft exit, but add this to make sure
     return
   }
 }
 
-main().catch((error) => {
-  Sentry.captureException(error)
+main().catch((err) => {
+  Sentry.captureException(err)
   logger.error(`Error in main loop: ${error}`)
-  logger.error(error)
+  logger.error(err)
   logger.error(`Error in main loop: ${error.stack}`)
 })
 

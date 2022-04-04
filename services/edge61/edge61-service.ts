@@ -331,7 +331,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
         if (initial_candles.length == 0) {
           this.logger.error(`No candles loaded for ${symbol}`)
           let error = new Error(`No candles loaded for ${symbol}`)
-          Sentry.captureException(error) // this is unexpected now, 429?
+          Sentry.captureException(err) // this is unexpected now, 429?
           throw error
         }
 
@@ -408,10 +408,10 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  Sentry.captureException(error)
+main().catch((err) => {
+  Sentry.captureException(err)
   logger.error(`Error in main loop: ${error}`)
-  logger.error(error)
+  logger.error(err)
   logger.error(`Error in main loop: ${error.stack}`)
 })
 

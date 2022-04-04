@@ -153,13 +153,13 @@ async function main() {
   })
   order_execution_tracker
     .main()
-    .catch((error) => {
-      Sentry.captureException(error)
+    .catch((err) => {
+      Sentry.captureException(err)
       if (error.name && error.name === "FetchError") {
         logger.error(`${error.name}: Likely unable to connect to Binance and/or Telegram: ${error}`)
       } else {
         logger.error(`Error in main loop: ${error}`)
-        logger.error(error)
+        logger.error(err)
         logger.error(`Error in main loop: ${error.stack}`)
         send_message(`Error in main loop: ${error}`)
       }
@@ -170,10 +170,10 @@ async function main() {
     })
 }
 
-main().catch((error) => {
-  Sentry.captureException(error)
+main().catch((err) => {
+  Sentry.captureException(err)
   logger.error(`Error in main loop: ${error}`)
-  logger.error(error)
+  logger.error(err)
   logger.error(`Error in main loop: ${error.stack}`)
   soft_exit(1)
 })

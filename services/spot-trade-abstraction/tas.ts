@@ -138,9 +138,9 @@ var dogstatsd = new StatsD({
 app.get("/positions", async function (req: Request, res: Response, next: NextFunction) {
   try {
     res.status(200).json(await tas.open_positions())
-  } catch (error) {
+  } catch (err) {
     res.status(500)
-    next(error)
+    next(err)
   }
 })
 
@@ -260,7 +260,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       res.status(500)
     }
     res.json({ msg: "failed" })
-    next(error)
+    next(err)
   }
 })
 
@@ -293,9 +293,9 @@ app.get("/spot/close", async function (req: Request, res: Response, next: NextFu
     logger.info(tags, `Success`)
     logger.info(json)
     res.status(200).json({ msg: "success" })
-  } catch (error) {
+  } catch (err) {
     res.status(500).json({ msg: "failed" })
-    next(error)
+    next(err)
   }
 })
 

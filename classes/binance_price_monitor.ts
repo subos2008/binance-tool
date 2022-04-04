@@ -38,8 +38,8 @@ export class BinancePriceMonitor {
           assert(string_price);
           // this.logger.info(`${symbol}: ${string_price}`) # spams logging ingestion
           await this.price_event_callback(symbol, string_price, trade)
-        } catch (error) {
-          Sentry.captureException(error);
+        } catch (err) {
+          Sentry.captureException(err);
         }
       }
     );

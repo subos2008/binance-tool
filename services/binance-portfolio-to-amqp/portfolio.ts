@@ -360,8 +360,8 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
     )
     try {
       return await this.ee.prices()
-    } catch (error) {
-      Sentry.captureException(error)
+    } catch (err) {
+      Sentry.captureException(err)
       throw error
     }
   }
@@ -372,8 +372,8 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
       /* Hardcode remove AGI from balances as it's dud */
       let balances = response.balances.filter((bal) => bal.asset !== "AGI")
       return balances
-    } catch (error) {
-      Sentry.captureException(error)
+    } catch (err) {
+      Sentry.captureException(err)
       throw error
     }
   }

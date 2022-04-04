@@ -54,10 +54,10 @@ export class SendMessage {
       if (response.status != 200) {
         throw new Error(`Response status code from telegram api: ${response.status} ${response.statusText}`)
       }
-    } catch (error) {
+    } catch (err) {
       // few things throw
-      Sentry.captureException(error)
-      this.logger.error(error)
+      Sentry.captureException(err)
+      this.logger.error(err)
     }
   }
 }

@@ -466,9 +466,9 @@ export class ExchangeEmulator {
     this.open_orders = remaining_orders
     try {
       await this.send_ws_events(completed_orders)
-    } catch (error) {
+    } catch (err) {
       this.logger.error("Urgh: exception thrown by send_ws_events! That shouldn't happen!")
-      this.logger.error(error)
+      this.logger.error(err)
     }
     return completed_orders
   }
@@ -681,9 +681,9 @@ export class ExchangeEmulator {
       assert(order)
       try {
         await obj.user_cb(mapper(order))
-      } catch (error) {
+      } catch (err) {
         obj.logger.error(`Error: exception in client callback for user events!`)
-        obj.logger.error(error)
+        obj.logger.error(err)
       }
     }
     for (const order of completed_orders) {

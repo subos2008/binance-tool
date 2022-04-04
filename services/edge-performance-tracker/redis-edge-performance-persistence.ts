@@ -105,9 +105,9 @@ export class RedisEdgePerformancePersistence {
         this.update_counts_for_key(this.daily_results_counts_hash_key(edge, dt), result),
         this.update_counts_for_key(this.monthly_results_counts_hash_key(edge, dt), result),
       ])
-    } catch (error) {
+    } catch (err) {
       this.logger.error({ err: error })
-      Sentry.captureException(error)
+      Sentry.captureException(err)
     }
 
     try {
@@ -119,9 +119,9 @@ export class RedisEdgePerformancePersistence {
           this.update_percentages_for_key(this.monthly_results_counts_hash_key(edge, dt), delta),
         ])
       }
-    } catch (error) {
+    } catch (err) {
       this.logger.error({ err: error })
-      Sentry.captureException(error)
+      Sentry.captureException(err)
     }
 
     try {
@@ -133,9 +133,9 @@ export class RedisEdgePerformancePersistence {
           this.update_abs_quote_change_for_key(this.monthly_results_counts_hash_key(edge, dt), delta),
         ])
       }
-    } catch (error) {
+    } catch (err) {
       this.logger.error({ err: error })
-      Sentry.captureException(error)
+      Sentry.captureException(err)
     }
   }
 }

@@ -97,12 +97,12 @@ class Edge60 implements Edge60EntrySignalProcessor {
             direction: "long", // this direction is confising, it's the direction of the position to close, i.e. short = long
             action: "close",
           })
-        } catch (error) {
+        } catch (err) {
           /**
            * There are probably valid cases for this - like these was no long position open
            */
-          this.logger.warn(error)
-          Sentry.captureException(error)
+          this.logger.warn(err)
+          Sentry.captureException(err)
         }
         break
       default:
@@ -144,9 +144,9 @@ export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
 
     try {
       await this.edge60.process_edge60_entry_signal(signal)
-    } catch (error) {
-      this.logger.error(error)
-      Sentry.captureException(error)
+    } catch (err) {
+      this.logger.error(err)
+      Sentry.captureException(err)
     }
   }
 }

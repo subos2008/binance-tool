@@ -491,8 +491,8 @@ async function main() {
   await edge58.run_dates({ start_date: _start_date, end_date: _end_date, symbol: _symbol })
 }
 
-main().catch((error) => {
+main().catch((err) => {
   console.error(`Error in main loop: ${error}`)
-  console.error(error)
+  console.error(err)
   console.error(`Error in main loop: ${error.stack}`)
 })

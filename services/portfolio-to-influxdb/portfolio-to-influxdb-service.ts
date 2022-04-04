@@ -28,8 +28,8 @@ import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 process.on("unhandledRejection", (error: Error) => {
-  logger.error(error)
-  Sentry.captureException(error)
+  logger.error(err)
+  Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
@@ -126,10 +126,10 @@ async function main() {
   foo.start()
 }
 
-main().catch((error) => {
-  Sentry.captureException(error)
+main().catch((err) => {
+  Sentry.captureException(err)
   logger.error(`Error in main loop: ${error}`)
-  logger.error(error)
+  logger.error(err)
   logger.error(`Error in main loop: ${error.stack}`)
   soft_exit(1, `Error in main loop: ${error}`)
 })

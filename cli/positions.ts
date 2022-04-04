@@ -209,8 +209,8 @@ async function list_positions({
           price_change_string = `${percentage_change.isGreaterThan(0) ? "+" : ""}${percentage_change}%`
           if (percentage_change.isLessThan(0)) price_change_string = c.red(price_change_string)
         }
-      } catch (error) {
-        console.error(error)
+      } catch (err) {
+        console.error(err)
       }
       price_change_string = `${price_change_string} vs ${quote_asset}`
       let pi = position_identifier

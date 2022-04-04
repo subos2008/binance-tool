@@ -487,8 +487,8 @@
 //             if(!base_balance) throw '';
 // 						expect(base_balance.locked).to.bignumber.equal(0);
 // 						expect(base_balance.free).to.bignumber.equal(base_volume);
-// 					} catch (error) {
-// 						console.log(error);
+// 					} catch (err) {
+// 						console.log(err);
 // 						expect.fail('expected not to throw');
 // 					}
 // 				});

@@ -207,8 +207,8 @@ export class AlgoUtils {
       this.logger.info(`order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
-    } catch (error) {
-      Sentry.captureException(error)
+    } catch (err) {
+      Sentry.captureException(err)
       throw error
     }
   }
@@ -278,8 +278,8 @@ export class AlgoUtils {
       return response
     } catch (error: any) {
       console.error(`Sell error: ${error.body}`)
-      console.error(error)
-      Sentry.captureException(error)
+      console.error(err)
+      Sentry.captureException(err)
       throw error
     }
   }
@@ -373,7 +373,7 @@ export class AlgoUtils {
         tags: context,
       })
       this.logger.error(context, `OCO error: ${error.body}`)
-      this.logger.error(error)
+      this.logger.error(err)
       throw error
     }
   }
@@ -431,8 +431,8 @@ export class AlgoUtils {
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (error: any) {
-      Sentry.captureException(error)
-      this.logger.error(error)
+      Sentry.captureException(err)
+      this.logger.error(err)
       throw error
     }
   }
@@ -465,9 +465,9 @@ export class AlgoUtils {
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (error: any) {
-      Sentry.captureException(error)
+      Sentry.captureException(err)
       console.error(`Market Buy error: ${error.body}`)
-      console.error(error)
+      console.error(err)
       throw error
     }
   }
@@ -500,9 +500,9 @@ export class AlgoUtils {
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (error: any) {
-      Sentry.captureException(error)
+      Sentry.captureException(err)
       console.error(`Market buy error: ${error.body}`)
-      console.error(error)
+      console.error(err)
       throw error
     }
   }
@@ -535,9 +535,9 @@ export class AlgoUtils {
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (error: any) {
-      Sentry.captureException(error)
+      Sentry.captureException(err)
       console.error(`Market sell error: ${error.body}`)
-      console.error(error)
+      console.error(err)
       throw error
     }
   }

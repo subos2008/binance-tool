@@ -33,9 +33,9 @@ const logger: Logger = new LoggerClass({ silent: false })
 
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
-process.on("unhandledRejection", (error) => {
-  logger.error(error)
-  Sentry.captureException(error)
+process.on("unhandledRejection", (err) => {
+  logger.error(err)
+  Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
@@ -124,10 +124,10 @@ async function main() {
   new Edge60MessageProcessor({ health_and_readiness, logger, send_message, event_name: "Edge60EntrySignal" })
 }
 
-main().catch((error) => {
-  Sentry.captureException(error)
+main().catch((err) => {
+  Sentry.captureException(err)
   logger.error(`Error in main loop: ${error}`)
-  logger.error(error)
+  logger.error(err)
   logger.error(`Error in main loop: ${error.stack}`)
   soft_exit(1, `Error in main loop: ${error}`)
 })

@@ -17,4 +17,4 @@ export default Sentry
 
 // import * as Sentry from '@sentry/node';
 // ...
-//       }).catch((error) => Sentry.captureMessage(error));
+//       }).catch((err) => Sentry.captureMessage(err));

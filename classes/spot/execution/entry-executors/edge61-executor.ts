@@ -205,9 +205,9 @@ export class Edge61SpotPositionsExecution {
 
       try {
         let oco_result = await this.ee.oco_sell_order(oco_cmd)
-      } catch (error) {
-        this.logger.warn(error)
-        Sentry.captureException(error)
+      } catch (err) {
+        this.logger.warn(err)
+        Sentry.captureException(err)
 
         /** If we failed to create the OCO order then dump the position */
         this.logger.warn({ edge, base_asset }, `Failed to create OCO order, dumping position`)
@@ -255,8 +255,8 @@ export class Edge61SpotPositionsExecution {
       }
       this.logger.object(res)
       return res
-    } catch (error) {
-      Sentry.captureException(error)
+    } catch (err) {
+      Sentry.captureException(err)
       this.logger.error({ err: error })
       this.send_message(`FAILED opening spot position ${args.edge}:${args.base_asset} using ${args.quote_asset}`, {
         edge: args.edge,

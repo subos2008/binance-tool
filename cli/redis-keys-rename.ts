@@ -78,9 +78,9 @@ export class Foo {
         await this.setAsync(new_key, direction)
         console.info(`Set ${new_key} to ${direction}`)
         // this.delAsync(key)
-      } catch (error) {
+      } catch (err) {
         console.error(`Error processing key ${key}`)
-        console.error(error)
+        console.error(err)
       }
     }
   }

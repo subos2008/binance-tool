@@ -37,18 +37,18 @@ export class PositionSizer {
     try {
       let response = await this.ee.accountInfo();
       balances = response.balances;
-    } catch (error) {
-      Sentry.captureException(error);
+    } catch (err) {
+      Sentry.captureException(err);
       this.logger.error(`Getting account info from exchange:`)
-      this.logger.error(error)
+      this.logger.error(err)
       throw error
     }
     try {
       prices = await this.ee.prices();
-    } catch (error) {
-      Sentry.captureException(error);
+    } catch (err) {
+      Sentry.captureException(err);
       this.logger.error(`Getting account info from exchange:`)
-      this.logger.error(error)
+      this.logger.error(err)
       throw error
     }
 
@@ -83,7 +83,7 @@ export class PositionSizer {
     });
     this.logger.warn(`Non fatal error: unable to convert ${count} assets to ${quote_currency}, skipping`);
     return { available, total };
-    // } catch (error) {
+    // } catch (err) {
     //   async_error_handler(console, `calculating portfolio value`, error);
     // }
   }
@@ -100,7 +100,7 @@ export class PositionSizer {
     quote_portfolio = await this._get_portfolio_value_from_exchange({
       quote_currency: quote_currency
     });
-    // } catch (error) {
+    // } catch (err) {
     //   async_error_handler(console, `Autosizing error during portfolio sizing: ${error.body}`, error);
     // }
     assert(BigNumber.isBigNumber(quote_portfolio.total));

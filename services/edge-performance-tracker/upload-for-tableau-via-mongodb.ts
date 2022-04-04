@@ -59,8 +59,8 @@ export class UploadToMongoDB {
       if (event.exit_timestamp_ms) obj.exit_timestamp_ms = new Date(event.exit_timestamp_ms)
 
       await db.collection(this.mongodb_collection).insertOne(event)
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      console.error(err)
       throw error
     }
   }

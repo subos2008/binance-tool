@@ -118,26 +118,26 @@ export class SpotPositionTracker {
         position_initial_entry_price: averageExecutionPrice,
         position_entry_timestamp_ms: orderTime,
       })
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      console.error(err)
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", baseAsset)
         scope.setTag("exchange", exchange_identifier.exchange)
         scope.setTag("account", exchange_identifier.account)
-        Sentry.captureException(error)
+        Sentry.captureException(err)
       })
     }
     // Publish a new style event declaring the opened position
     try {
       let event = await position.get_SpotPositionOpenedEvent()
       this.spot_position_publisher.publish_open(event)
-    } catch (error) {
-      console.error(error)
+    } catch (err) {
+      console.error(err)
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", baseAsset)
         scope.setTag("exchange", exchange_identifier.exchange)
         scope.setTag("account", exchange_identifier.account)
-        Sentry.captureException(error)
+        Sentry.captureException(err)
       })
     }
   }

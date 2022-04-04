@@ -34,9 +34,9 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-process.on("unhandledRejection", (error) => {
-  logger.error(error)
-  Sentry.captureException(error)
+process.on("unhandledRejection", (err) => {
+  logger.error(err)
+  Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
 
@@ -142,13 +142,13 @@ async function main() {
 
   order_execution_tracker
     .main()
-    .catch((error) => {
-      Sentry.captureException(error)
+    .catch((err) => {
+      Sentry.captureException(err)
       if (error.name && error.name === "FetchError") {
         logger.error(`${error.name}: Likely unable to connect to Binance and/or Telegram: ${error}`)
       } else {
         logger.error(`Error in main loop: ${error}`)
-        logger.error(error)
+        logger.error(err)
         logger.error(`Error in main loop: ${error.stack}`)
         send_message(`Error in main loop: ${error}`)
       }
@@ -160,10 +160,10 @@ async function main() {
 }
 
 // TODO: exceptions / sentry
-main().catch((error) => {
-  Sentry.captureException(error)
+main().catch((err) => {
+  Sentry.captureException(err)
   logger.error(`Error in main loop: ${error}`)
-  logger.error(error)
+  logger.error(err)
   logger.error(`Error in main loop: ${error.stack}`)
   soft_exit(1)
 })

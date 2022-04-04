@@ -149,8 +149,8 @@ export class TradeDefinition {
         target_price,
         trading_rules,
       })
-    } catch (error) {
-      this.logger.warn(error) // eat the error, this is non-essential
+    } catch (err) {
+      this.logger.warn(err) // eat the error, this is non-essential
     }
   }
 

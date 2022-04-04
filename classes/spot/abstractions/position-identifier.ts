@@ -42,15 +42,15 @@ export function check_edge(edge: string | undefined): AuthorisedEdgeType {
   }
   if (!edge) {
     let error = new Error(`check_edge: undefined passed in`)
-    Sentry.captureException(error)
-    console.error(error)
+    Sentry.captureException(err)
+    console.error(err)
     // return "undefined"
     throw error
   }
   let msg = `check_edge: Unauthorised edge: '${edge}', allowed edges: ${authorised_edges.join(", ")}`
   let error = new Error(msg)
-  console.error(error)
-  Sentry.captureException(error)
+  console.error(err)
+  Sentry.captureException(err)
   throw error
 }
 export interface SpotPositionIdentifier_V3 {

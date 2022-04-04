@@ -48,9 +48,9 @@ import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/
 import { StatsD } from "hot-shots"
 var statsd = new StatsD()
 
-process.on("unhandledRejection", (error) => {
-  logger.error(error)
-  Sentry.captureException(error)
+process.on("unhandledRejection", (err) => {
+  logger.error(err)
+  Sentry.captureException(err)
   const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   send_message(`UnhandledPromiseRejection: ${error}`)
 })
@@ -342,7 +342,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
         if (initial_candles.length == 0) {
           this.logger.error(`No candles loaded for ${symbol}`)
           let error = new Error(`No candles loaded for ${symbol}`)
-          Sentry.captureException(error) // this is unexpected now, 429?
+          Sentry.captureException(err) // this is unexpected now, 429?
           throw error
         }
 
@@ -412,15 +412,15 @@ async function main() {
     })
     await publisher.connect()
     await edge60.run()
-  } catch (error) {
-    logger.error(error)
-    Sentry.captureException(error)
+  } catch (err) {
+    logger.error(err)
+    Sentry.captureException(err)
   }
 }
 
-main().catch((error) => {
-  Sentry.captureException(error)
+main().catch((err) => {
+  Sentry.captureException(err)
   logger.error(`Error in main loop: ${error}`)
-  logger.error(error)
+  logger.error(err)
   logger.error(`Error in main loop: ${error.stack}`)
 })

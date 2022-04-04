@@ -18,8 +18,8 @@ export class BinancePortfolioGetter implements CurrentPortfolioGetter {
       /* Hardcode remove AGI from balances as it's dud */
       let balances = response.balances.filter((bal) => bal.asset !== "AGI")
       return balances
-    } catch (error) {
-      Sentry.captureException(error)
+    } catch (err) {
+      Sentry.captureException(err)
       throw error
     }
   }

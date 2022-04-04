@@ -300,9 +300,9 @@ export class TradeAbstractionService {
           edge,
         }
       }
-    } catch (error) {
-      Sentry.captureException(error)
-      console.error(error)
+    } catch (err) {
+      Sentry.captureException(err)
+      console.error(err)
       throw error
     }
 

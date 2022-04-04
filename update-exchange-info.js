@@ -18,7 +18,7 @@ async function main() {
 		exchange_info = await binance_client.exchangeInfo();
 		var json = JSON.stringify(exchange_info);
 		fs.writeFileSync('./test/exchange_info.json', json);
-	} catch (error) {
+	} catch (err) {
 		console.error('Error could not pull exchange info', error);
 	}
 }

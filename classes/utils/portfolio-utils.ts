@@ -127,7 +127,7 @@ export class PortfolioUtils {
           asset: b.asset,
           quote_amount,
         }
-      } catch (error) {
+      } catch (err) {
         this.logger.warn(`Failed to convert free balance of ${b.asset} to ${quote_currency}`)
         return { asset: b.asset, quote_amount: undefined }
       }
@@ -142,10 +142,10 @@ export class PortfolioUtils {
         all: all.map((p) => `${p.asset}: ${p.quote_amount?.toFixed()}`).join(", "),
         filtered: filtered.map((p) => `${p.asset}: ${p.quote_amount?.toFixed()}`).join(", "),
       })
-    } catch (error) {
+    } catch (err) {
       this.logger.error(`Failed to log FreeBalancesReport`)
-      this.logger.error(error)
-      Sentry.captureException(error)
+      this.logger.error(err)
+      Sentry.captureException(err)
     }
 
     return filtered
@@ -208,8 +208,8 @@ export class PortfolioUtils {
         total = total.plus(balance.quote_equivalents?.[quote_currency] || 0)
       }
       return { total, unprocessed_balances }
-    } catch (error) {
-      Sentry.captureException(error)
+    } catch (err) {
+      Sentry.captureException(err)
       throw error
     }
   }

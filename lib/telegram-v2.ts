@@ -11,6 +11,7 @@ const Sentry = require("@sentry/node")
 export type SendMessageFunc = (msg: string, tags?: ContextTags) => Promise<void>
 
 export interface ContextTags {
+  // object_type: "SendMessage"
   edge?: string | AuthorisedEdgeType
   base_asset?: string
   class?: string // name of the class calling send_message
@@ -38,8 +39,10 @@ export class SendMessage {
     return process.env.TELEGRAM_CHAT_ID as string
   }
 
-  async send_message(message: string, tags?: ContextTags) {
-    this.logger.info(tags || {}, message)
+  async send_message(message: string, _tags?: ContextTags) {
+    let tags: any = _tags || {}
+    tags.object_type = "SendMessage"
+    this.logger.info(tags, message)
     try {
       const url = new URL(`https://api.telegram.org/bot${process.env.TELEGRAM_KEY}/sendMessage`)
       url.searchParams.append("chat_id", this.get_chat_id(tags))

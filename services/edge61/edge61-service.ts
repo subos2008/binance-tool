@@ -97,7 +97,8 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     this.logger = logger
     this.send_message = send_message
     this.send_message("service re-starting", { edge })
-    this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
+    let hours_to_cache_expiry = 3
+    this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee, minutes_to_cache_expiry: 60 * hours_to_cache_expiry })
   }
 
   async enter_position({

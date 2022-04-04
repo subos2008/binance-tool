@@ -101,7 +101,7 @@ class Edge60 implements Edge60EntrySignalProcessor {
           /**
            * There are probably valid cases for this - like these was no long position open
            */
-          this.logger.warn(err)
+          this.logger.warn({ err })
           Sentry.captureException(err)
         }
         break
@@ -145,7 +145,7 @@ export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
     try {
       await this.edge60.process_edge60_entry_signal(signal)
     } catch (err) {
-      this.logger.error(err)
+      this.logger.error({ err })
       Sentry.captureException(err)
     }
   }

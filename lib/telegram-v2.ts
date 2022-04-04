@@ -57,7 +57,7 @@ export class SendMessage {
     } catch (err) {
       // few things throw
       Sentry.captureException(err)
-      this.logger.error(err)
+      this.logger.error({ err })
     }
   }
 }

@@ -68,7 +68,7 @@ export class OrderExecutionTracker {
       await this.monitor_user_stream()
     } catch (err) {
       Sentry.captureException(err)
-      this.logger.error(err)
+      this.logger.error({ err })
       throw error
     }
   }
@@ -101,7 +101,7 @@ export class OrderExecutionTracker {
         })
         let msg = `SHIT: error calling processExecutionReport for pair ${data.symbol}`
         this.logger.error(_data, msg)
-        this.logger.error(err)
+        this.logger.error({ err })
         this.send_message(msg)
       }
     })

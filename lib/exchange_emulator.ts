@@ -468,7 +468,7 @@ export class ExchangeEmulator {
       await this.send_ws_events(completed_orders)
     } catch (err) {
       this.logger.error("Urgh: exception thrown by send_ws_events! That shouldn't happen!")
-      this.logger.error(err)
+      this.logger.error({ err })
     }
     return completed_orders
   }

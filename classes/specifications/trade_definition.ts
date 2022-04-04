@@ -150,7 +150,7 @@ export class TradeDefinition {
         trading_rules,
       })
     } catch (err) {
-      this.logger.warn(err) // eat the error, this is non-essential
+      this.logger.warn({ err }) // eat the error, this is non-essential
     }
   }
 

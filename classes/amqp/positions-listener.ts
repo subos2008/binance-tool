@@ -51,7 +51,7 @@ export class PositionsListener {
       this.logger.info(`PositionsListener: Waiting for new events on AMQP: exchange: ${amqp_exchange_name}, route: ${this.amqp_routing_key}.`);
     } catch (err) {
       this.logger.error(`PositionsListener:Error connecting to amqp server`);
-      this.logger.error(err);
+      this.logger.error({ err });
       Sentry.captureException(err);
       throw err;
     }

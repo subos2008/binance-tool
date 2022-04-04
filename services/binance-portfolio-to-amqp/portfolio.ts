@@ -195,7 +195,7 @@ class PortfolioTracker implements MasterPortfolioClass {
           msg += " as " + this.portfolio_utils.balances_to_string(portfolio, "BTC")
         } catch (err) {
           Sentry.captureException(err)
-          this.logger.error(err)
+          this.logger.error({ err })
         }
         if (portfolio.prices) {
           try {
@@ -208,13 +208,13 @@ class PortfolioTracker implements MasterPortfolioClass {
       } catch (err) {
         // Not fatal, we just used it for logging anyway
         Sentry.captureException(err)
-        this.logger.error(err)
+        this.logger.error({ err })
       }
 
       await this.publisher.publish(portfolio)
     } catch (err) {
       Sentry.captureException(err)
-      this.logger.error(err)
+      this.logger.error({ err })
     }
   }
 

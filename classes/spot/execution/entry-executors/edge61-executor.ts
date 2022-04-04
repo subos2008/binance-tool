@@ -206,7 +206,7 @@ export class Edge61SpotPositionsExecution {
       try {
         let oco_result = await this.ee.oco_sell_order(oco_cmd)
       } catch (err) {
-        this.logger.warn(err)
+        this.logger.warn({ err })
         Sentry.captureException(err)
 
         /** If we failed to create the OCO order then dump the position */

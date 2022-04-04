@@ -37,7 +37,7 @@ export class PricePublisher {
       this.logger.info(`Connection with AMQP server established.`)
     } catch (err) {
       this.logger.error(`Error connecting to amqp server`)
-      this.logger.error(err)
+      this.logger.error({ err })
       Sentry.captureException(err)
       throw err
     }

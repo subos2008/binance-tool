@@ -362,7 +362,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
         await sleep(400) // 1200 calls allowed per minute per IP address
       } catch (err: any) {
         Sentry.captureException(err)
-        this.logger.error(err)
+        this.logger.error({ err })
       }
     }
     let valid_symbols = Object.keys(this.edges)

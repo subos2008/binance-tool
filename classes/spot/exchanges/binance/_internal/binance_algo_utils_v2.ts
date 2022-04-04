@@ -373,7 +373,7 @@ export class AlgoUtils {
         tags: context,
       })
       this.logger.error(context, `OCO error: ${error.body}`)
-      this.logger.error(err)
+      this.logger.error({ err })
       throw error
     }
   }
@@ -432,7 +432,7 @@ export class AlgoUtils {
       return response
     } catch (error: any) {
       Sentry.captureException(err)
-      this.logger.error(err)
+      this.logger.error({ err })
       throw error
     }
   }

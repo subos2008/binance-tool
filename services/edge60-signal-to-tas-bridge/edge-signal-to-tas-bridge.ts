@@ -105,7 +105,7 @@ class Edge60MessageProcessor implements MessageProcessor {
       this.processor.process_edge60_entry_signal(signal)
     } catch (err) {
       Sentry.captureException(err)
-      this.logger.error(err)
+      this.logger.error({ err })
     }
   }
 }

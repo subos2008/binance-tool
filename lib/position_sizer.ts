@@ -40,7 +40,7 @@ export class PositionSizer {
     } catch (err) {
       Sentry.captureException(err);
       this.logger.error(`Getting account info from exchange:`)
-      this.logger.error(err)
+      this.logger.error({ err })
       throw error
     }
     try {
@@ -48,7 +48,7 @@ export class PositionSizer {
     } catch (err) {
       Sentry.captureException(err);
       this.logger.error(`Getting account info from exchange:`)
-      this.logger.error(err)
+      this.logger.error({ err })
       throw error
     }
 

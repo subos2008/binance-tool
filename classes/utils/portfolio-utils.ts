@@ -144,7 +144,7 @@ export class PortfolioUtils {
       })
     } catch (err) {
       this.logger.error(`Failed to log FreeBalancesReport`)
-      this.logger.error(err)
+      this.logger.error({ err })
       Sentry.captureException(err)
     }
 

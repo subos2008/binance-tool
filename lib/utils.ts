@@ -1,47 +1,6 @@
 import { strict as assert } from "assert"
 import { BigNumber } from "bignumber.js"
 
-// TODO: binance_regex only supports BTC and returns undef otherwise
-console.warn(`split_pair for binance is hardcoded: should be changed to use exchangeInfo`)
-const binance_regex = /^([A-Z]+)(BTC|USDT|BNB|TUSD)$/
-
-import * as Sentry from "@sentry/node"
-
-export function break_up_binance_pair(pair: string): { total: string; base_coin: string; quote_coin: string } {
-  try {
-    assert(typeof pair === "string")
-    const [total, base_coin, quote_coin] = pair.match(binance_regex) || []
-    if (!quote_coin) throw new Error(`binance_regex didn't split properly`)
-    return { total, base_coin, quote_coin }
-  } catch (e) {
-    Sentry.captureException(e)
-    let msg = `Cannot split up binance pair: ${pair}, check utils knows this quote currency`
-    console.error(msg)
-    throw new Error(msg)
-  }
-}
-
-export function base_currency_for_binance_pair(pair: string) {
-  const { base_coin } = break_up_binance_pair(pair)
-  assert(base_coin)
-  return base_coin
-}
-
-export function quote_currency_for_binance_pair(pair: string) {
-  const { quote_coin } = break_up_binance_pair(pair)
-  assert(quote_coin)
-  return quote_coin
-}
-
-// function base_currency_for_ccxt_pair(pair: string) {
-//   assert(base_coin);
-//   return base_coin;
-// }
-
-export function convert_binance_pair_to_ccxt_pair(binance_pair: string) {
-  return `${base_currency_for_binance_pair(binance_pair)}/${quote_currency_for_binance_pair(binance_pair)}`
-}
-
 // The amount of quote coin that can be bought, so rounds down
 // TODO: decimal places is a hardcoded constant
 export function quote_volume_at_price_to_base_volume({

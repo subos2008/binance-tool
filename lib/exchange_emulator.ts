@@ -23,14 +23,45 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+/** ----------- hacky old code */
+// TODO: binance_regex only supports BTC and returns undef otherwise
+console.warn(`split_pair for binance is hardcoded: should be changed to use exchangeInfo`)
+const binance_regex = /^([A-Z]+)(BTC|USDT|BNB|TUSD|BUSD)$/
+export function break_up_binance_pair(pair: string): { total: string; base_coin: string; quote_coin: string } {
+  try {
+    assert(typeof pair === "string")
+    const [total, base_coin, quote_coin] = pair.match(binance_regex) || []
+    if (!quote_coin) throw new Error(`binance_regex didn't split properly`)
+    return { total, base_coin, quote_coin }
+  } catch (e) {
+    // Sentry.captureException(e)
+    let msg = `Cannot split up binance pair: ${pair}, check utils knows this quote currency`
+    console.error(msg)
+    throw new Error(msg)
+  }
+}
+
+export function base_currency_for_binance_pair(pair: string) {
+  const { base_coin } = break_up_binance_pair(pair)
+  assert(base_coin)
+  return base_coin
+}
+
+export function quote_currency_for_binance_pair(pair: string) {
+  const { quote_coin } = break_up_binance_pair(pair)
+  assert(quote_coin)
+  return quote_coin
+}
+/** ----------- end*/
+
 import { strict as assert } from "assert"
-const utils = require("../lib/utils")
+import * as utils from "../lib/utils"
 const async_error_handler = require("../lib/async_error_handler")
 
 const { InsufficientBalanceError } = require("../lib/errors")
 
 function split_pair(pair: string) {
-  const { base_currency, quote_currency } = utils.break_up_binance_pair(pair)
+  const { base_coin: base_currency, quote_coin: quote_currency } = break_up_binance_pair(pair)
   return {
     quote_currency,
     base_currency,
@@ -245,7 +276,7 @@ export class ExchangeEmulator {
       assert(base_volume.isGreaterThan(0))
       assert(limit_price.isGreaterThan(0))
       assert(pair)
-      let quote_currency = utils.quote_currency_for_binance_pair(pair)
+      let quote_currency = quote_currency_for_binance_pair(pair)
       const quote_volume = utils.base_volume_at_price_to_quote_volume({ base_volume, price: limit_price })
       if (this.balance_not_in_orders(quote_currency).isLessThan(quote_volume)) {
         throw new InsufficientBalanceError(
@@ -277,7 +308,7 @@ export class ExchangeEmulator {
       assert(BigNumber.isBigNumber(base_volume))
       assert(base_volume.isGreaterThan(0))
       assert(pair)
-      let quote_currency = utils.quote_currency_for_binance_pair(pair)
+      let quote_currency = quote_currency_for_binance_pair(pair)
       let price = this.known_prices[pair]
       const quote_volume = utils.base_volume_at_price_to_quote_volume({
         base_volume,
@@ -522,7 +553,11 @@ export class ExchangeEmulator {
       throw new Error(`symbol not known in EE.order: ${symbol}`)
     }
     if (typeof price !== "undefined") {
-      let munged_price = utils.munge_and_check_price({ price, exchange_info: this.exchange_info, symbol })
+      let munged_price = utils.munge_and_check_price({
+        price: new BigNumber(price),
+        exchange_info: this.exchange_info,
+        symbol,
+      })
       if (!new BigNumber(price).isEqualTo(munged_price)) {
         throw new Error(
           `.order passed unmunged price: PRICE_FILTER: Precision is over the maximum defined for this asset`
@@ -531,7 +566,7 @@ export class ExchangeEmulator {
     }
     if (typeof stopPrice !== "undefined") {
       let munged_price = utils.munge_and_check_price({
-        price: stopPrice,
+        price: new BigNumber(stopPrice),
         exchange_info: this.exchange_info,
         symbol,
       })
@@ -543,7 +578,7 @@ export class ExchangeEmulator {
     }
     if (typeof quantity !== "undefined") {
       let munged_volume = utils.munge_and_check_quantity({
-        volume: quantity,
+        volume: new BigNumber(quantity),
         exchange_info: this.exchange_info,
         symbol,
       })
@@ -554,8 +589,8 @@ export class ExchangeEmulator {
     if (typeof quantity !== "undefined" && typeof price !== "undefined") {
       // TODO: should check value at stopPrice too?
       utils.check_notional({
-        volume: quantity,
-        price,
+        volume: new BigNumber(quantity),
+        price: new BigNumber(price),
         exchange_info: this.exchange_info,
         symbol,
       })

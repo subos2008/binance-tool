@@ -16,6 +16,7 @@
     "@tsconfig/node14": "^1.0.1",
     "@types/amqplib": "^0.5.13",
     "@types/bignumber.js": "^5.0.0",
+    "@types/bunyan": "^1.8.8",
     "@types/express": "^4.17.13",
     "@types/lodash": "^4.14.150",
     "@types/luxon": "^2.3.0",

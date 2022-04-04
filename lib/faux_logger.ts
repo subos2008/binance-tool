@@ -1,13 +1,13 @@
-var bunyan = require("bunyan")
+import * as bunyan from "bunyan"
 
 import { Logger as LoggerInterface } from "../interfaces/logger"
 export class Logger implements LoggerInterface {
   silent: boolean
-  bunyan: any
+  bunyan: bunyan
   constructor({ silent, template }: { silent: boolean; template?: object } = { silent: false, template: {} }) {
     if (!template) template = {}
     this.silent = silent
-    let args = {
+    let params = {
       name: "bunyan_stream_name", // Required
       // level: <level name or number>,      // Optional, see "Levels" section
       // streams: [
@@ -21,14 +21,14 @@ export class Logger implements LoggerInterface {
       //   },
       // ],
       // src: true, // slow, not for production
-      // serializers: bunyan.stdSerializers,
+      serializers: bunyan.stdSerializers,
       // serializers: <serializers mapping>, // Optional, see "Serializers" section
       // src: <boolean>,                     // Optional, see "src" section
 
       // Any other fields are added to all log records as is.
       // foo: 'bar',
     }
-    this.bunyan = bunyan.createLogger({ ...args, ...template })
+    this.bunyan = bunyan.createLogger({ ...params, ...template })
   }
 
   object(obj: any) {
@@ -36,39 +36,40 @@ export class Logger implements LoggerInterface {
       this.bunyan.info(JSON.stringify(obj))
     }
   }
-  info(...args: any[]) {
+  info(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.info(...args)
+      this.bunyan.info(obj, ...params)
     }
   }
-  notice(...args: any[]) {
+  notice(obj: Object,...params: any[]) {
     if (!this.silent) {
-      this.bunyan.info(...args)
+      this.bunyan.info(obj,...params)
     }
   }
-  error(...args: any[]) {
+  error(obj: Object,...params: any[]) {
     if (!this.silent) {
-      this.bunyan.error(...args)
+      this.bunyan.error(obj,...params)
     }
   }
-  fatal(...args: any[]) {
+
+  fatal(obj: Object,...params: any[]) {
     if (!this.silent) {
-      this.bunyan.fatal(...args)
+      this.bunyan.fatal(obj,...params)
     }
   }
-  warn(...args: any[]) {
+  warn(obj: Object,...params: any[]) {
     if (!this.silent) {
-      this.bunyan.warn(...args)
+      this.bunyan.warn(obj,...params)
     }
   }
-  debug(...args: any[]) {
+  debug(obj: Object,...params: any[]) {
     if (!this.silent) {
-      this.bunyan.debug(...args)
+      this.bunyan.debug(obj,...params)
     }
   }
-  silly(...args: any[]) {
+  silly(obj: Object,...params: any[]) {
     if (!this.silent) {
-      this.bunyan.debug(...args)
+      this.bunyan.debug(obj,...params)
     }
   }
 }

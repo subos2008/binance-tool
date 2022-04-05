@@ -33,20 +33,19 @@ export class SpotTradeAbstractionServiceClient {
 
   async positions(): Promise<SpotPositionIdentifier_V3[]> {
     let response = await this._call("GET", new URL("/positions", TAS_URL).toString())
-    console.log(`Returned positions:`)
+    this.logger.info(`Returned positions:`)
     this.logger.object(response)
     return response
   }
 
   async open_spot_long(cmd: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
     let response = await this._call("GET", new URL("/spot/long", TAS_URL).toString(), cmd)
-    this.logger.object(response)
     return response
   }
 
   async close_spot_long(cmd: TradeAbstractionCloseLongCommand): Promise<TradeAbstractionCloseSpotLongResult> {
     let response = await this._call("GET", new URL("/spot/close", TAS_URL).toString(), cmd)
-    this.logger.info(JSON.stringify(response))
+    this.logger.object(response)
     return response
   }
 
@@ -69,7 +68,6 @@ export class SpotTradeAbstractionServiceClient {
       }
 
       let response = await axios(options)
-      // console.log(response)
       if (response.status == 200) {
         return response.data
       }

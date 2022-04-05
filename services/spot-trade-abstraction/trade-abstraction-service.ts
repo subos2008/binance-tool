@@ -139,7 +139,7 @@ interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDER
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
 
   trigger_price?: string
-  
+
   // Buy execution
   executed_quote_quantity: string
   executed_base_quantity: string
@@ -302,7 +302,7 @@ export class TradeAbstractionService {
       }
     } catch (err) {
       Sentry.captureException(err)
-      console.error(err)
+      this.logger.error({ err })
       throw err
     }
 

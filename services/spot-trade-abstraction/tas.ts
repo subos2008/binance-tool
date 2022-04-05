@@ -212,9 +212,11 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       Sentry.captureException(err)
     }
 
+    let msg:string = `TradeAbstractionOpenSpotLongResult: ${result.edge}:${result.base_asset}: ${result.status}`
+
     switch (result.status) {
       case "SUCCESS":
-        logger.info(result, "TradeAbstractionOpenSpotLongResult Event")
+        logger.info(result, msg)
         send_message(
           `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.signal_to_execution_slippage_ms}ms`,
           tags
@@ -222,36 +224,35 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
         res.status(201).json(result) // 201: Created
         break
       case "ALREADY_IN_POSITION":
-        logger.info(result, "TradeAbstractionOpenSpotLongResult Event")
+        logger.info(result, msg)
         send_message(`${edge}:${base_asset} ${result.status}`, tags)
         res.status(409).json(result) // 409: Conflict
         break
       case "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS":
-        logger.error(result, "TradeAbstractionOpenSpotLongResult Event")
+        logger.error(result, msg)
         send_message(`${edge}:${base_asset} ${result.status}`, tags)
         res.status(200).json(result) // 200: Success... but not 201, so not actually created
         break
       case "ENTRY_FAILED_TO_FILL":
-        logger.info(result, "TradeAbstractionOpenSpotLongResult Event")
+        logger.info(result, msg)
         send_message(`${edge}:${base_asset}: ${result.status}`, tags)
         res.status(200).json(result) // 200: Success... but not 201, so not actually created
         break
       case "UNAUTHORISED":
-        logger.warn(result, "TradeAbstractionOpenSpotLongResult Event")
+        logger.warn(result, msg)
         send_message(`${edge}:${base_asset}: ${result.status}`, tags)
         res.status(403).json(result)
         break
       case "INTERNAL_SERVER_ERROR":
-        logger.error(result, "TradeAbstractionOpenSpotLongResult Event")
+        logger.error(result, msg)
         send_message(`${edge}:${base_asset}: ${result.status}: ${result.msg}`, tags)
         res.status(500).json(result)
         break
       default:
-        logger.error(result, "TradeAbstractionOpenSpotLongResult Event")
-        let msg = `Unrecognised result.status for TradeAbstractionOpenSpotLongResult in TAS: ${
+        msg = `Unrecognised result.status for TradeAbstractionOpenSpotLongResult in TAS: ${
           (result as any).status
         }`
-        logger.error(msg)
+        logger.error(result, msg)
         Sentry.captureException(new Error(msg))
         send_message(msg, tags)
         res.status(500).json(result)

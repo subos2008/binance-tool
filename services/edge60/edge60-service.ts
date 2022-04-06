@@ -44,8 +44,11 @@ import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/excha
 import { config } from "../../config"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
+import { get_redis_client } from "../../lib/redis-v4"
+import { RedisClientType } from "redis-v4"
 
 import { StatsD } from "hot-shots"
+import { HealthAndReadiness } from "../../classes/health_and_readiness"
 var statsd = new StatsD()
 
 process.on("unhandledRejection", (err) => {
@@ -399,6 +402,9 @@ async function main() {
 
   try {
     const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+    const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+    const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
+    let redis: RedisClientType = await get_redis_client(logger, redis_health)
 
     edge60 = new Edge60Service({
       ee,
@@ -408,6 +414,7 @@ async function main() {
         logger,
         prefix: `${service_name}:spot:binance:usd_quote`,
         send_message,
+        redis,
       }),
     })
     await publisher.connect()

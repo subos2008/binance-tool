@@ -1,35 +1,28 @@
-import { RedisClient } from "redis"
-import { promisify } from "util"
+import { RedisClientType } from "redis-v4"
 import { Logger } from "../../interfaces/logger"
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
 import { SendMessageFunc } from "../../lib/telegram-v2"
 
 export type Direction = "short" | "long" // Redis returns null for unset
 
 export class DirectionPersistance {
   private logger: Logger
-  private redis: RedisClient
+  private redis: RedisClientType
   private prefix: string
-  private setAsync: any
-  private getAsync: any
-  private send_message: SendMessageFunc
 
   constructor({
     logger,
     prefix,
     send_message,
+    redis,
   }: {
     logger: Logger
     prefix: string
     send_message: SendMessageFunc
+    redis: RedisClientType
   }) {
     this.logger = logger
-    set_redis_logger(logger)
-    this.redis = get_redis_client()
     this.prefix = prefix
-    this.setAsync = promisify(this.redis.set).bind(this.redis)
-    this.getAsync = promisify(this.redis.get).bind(this.redis)
-    this.send_message = send_message
+    this.redis = redis
   }
 
   private _market_to_key(symbol: string): string {
@@ -37,17 +30,18 @@ export class DirectionPersistance {
   }
 
   async set_direction(symbol: string, direction: Direction) {
-    this.logger.info(`Setting direction ${direction} for ${symbol}`)
     let previous_direction = await this.get_direction(symbol)
     if (previous_direction === null) {
-      this.send_message(`Initialising edge60 direction for ${symbol} to ${direction}`)
+      this.logger.info(`Initialising direction for ${symbol} to ${direction}`)
+    } else if (previous_direction !== direction) {
+      this.logger.info(`Direction change to ${direction} for ${symbol}`)
     }
-    await this.setAsync(this._market_to_key(symbol), direction)
+    await this.redis.set(this._market_to_key(symbol), direction)
+    return previous_direction
   }
 
   async get_direction(symbol: string): Promise<Direction | null> {
-    let direction = await this.getAsync(this._market_to_key(symbol))
-    this.logger.info(`Loaded direction ${direction} for ${symbol}`)
-    return direction
+    let direction = await this.redis.get(this._market_to_key(symbol))
+    return direction as Direction
   }
 }

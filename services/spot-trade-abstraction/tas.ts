@@ -42,12 +42,8 @@ function dogstatsderrorhandler(err: Error) {
 }
 
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
-import {
-  TradeAbstractionCloseLongCommand,
-  TradeAbstractionOpenSpotLongCommand,
-  TradeAbstractionOpenSpotLongResult,
-  TradeAbstractionService,
-} from "./trade-abstraction-service"
+import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
+import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close_spot"
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
@@ -90,12 +86,14 @@ const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
-import { SpotPositionsExecution } from "../../classes/spot/execution/spot-positions-execution"
+import { SpotPositionsExecution } from "./spot-positions-execution"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 import { BinancePriceGetter } from "../../interfaces/exchange/binance/binance-price-getter"
 
 import { RedisClient } from "redis"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
+import { TradeAbstractionService } from "./trade-abstraction-service"
+
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
 
@@ -212,7 +210,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       Sentry.captureException(err)
     }
 
-    let msg:string = `TradeAbstractionOpenSpotLongResult: ${result.edge}:${result.base_asset}: ${result.status}`
+    let msg: string = `TradeAbstractionOpenSpotLongResult: ${result.edge}:${result.base_asset}: ${result.status}`
 
     switch (result.status) {
       case "SUCCESS":
@@ -249,9 +247,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
         res.status(500).json(result)
         break
       default:
-        msg = `Unrecognised result.status for TradeAbstractionOpenSpotLongResult in TAS: ${
-          (result as any).status
-        }`
+        msg = `Unrecognised result.status for TradeAbstractionOpenSpotLongResult in TAS: ${(result as any).status}`
         logger.error(result, msg)
         Sentry.captureException(new Error(msg))
         send_message(msg, tags)
@@ -296,12 +292,13 @@ app.get("/spot/close", async function (req: Request, res: Response, next: NextFu
       action: "close",
       base_asset,
     }
-    let json = await tas.close_spot_long(cmd)
+    let result: TradeAbstractionCloseSpotLongResult = await tas.close_spot_long(cmd)
     logger.info(tags, `Success`)
-    logger.info(json)
-    res.status(200).json({ msg: "success" })
+    logger.info(result)
+    res.status(result.http_status).json(result)
   } catch (err) {
-    res.status(500).json({ msg: "failed" })
+    Sentry.captureException(err)
+    res.status(500).json({ msg: "internal server error" })
     next(err)
   }
 })

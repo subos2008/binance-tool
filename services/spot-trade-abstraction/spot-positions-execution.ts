@@ -1,24 +1,32 @@
 import { strict as assert } from "assert"
 
-import Sentry from "../../../lib/sentry"
+import Sentry from "../../lib/sentry"
 
-import { Logger } from "../../../interfaces/logger"
-import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
-import { OrderContext_V1, SpotExecutionEngine } from "../exchanges/interfaces/spot-execution-engine"
-import { SpotPositionsPersistance } from "../persistence/interface/spot-positions-persistance"
-import { SendMessageFunc } from "../../../lib/telegram-v2"
-import { PositionSizer } from "../../../services/spot-trade-abstraction/fixed-position-sizer"
-import BigNumber from "bignumber.js"
-import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
-import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../abstractions/position-identifier"
-import { OrderId } from "../persistence/interface/order-context-persistence"
-import { Edge60SpotPositionsExecution } from "./entry-executors/edge60-executor"
-import { Edge61SpotPositionsExecution } from "./entry-executors/edge61-executor"
-import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
+import { Logger } from "../../interfaces/logger"
+import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import {
-  TradeAbstractionOpenSpotLongCommand,
-  TradeAbstractionOpenSpotLongResult,
-} from "../../../services/spot-trade-abstraction/trade-abstraction-service"
+  OrderContext_V1,
+  SpotExecutionEngine,
+} from "../../classes/spot/exchanges/interfaces/spot-execution-engine"
+import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SendMessageFunc } from "../../lib/telegram-v2"
+import { PositionSizer } from "./fixed-position-sizer"
+import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
+import {
+  AuthorisedEdgeType,
+  check_edge,
+  SpotPositionIdentifier_V3,
+} from "../../classes/spot/abstractions/position-identifier"
+import { OrderId } from "../../classes/spot/persistence/interface/order-context-persistence"
+import { Edge60SpotPositionsExecution } from "../../classes/spot/execution/entry-executors/edge60-executor"
+import { Edge61SpotPositionsExecution } from "../../classes/spot/execution/entry-executors/edge61-executor"
+import { CurrentPriceGetter } from "../../interfaces/exchange/generic/price-getter"
+import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
+import {
+  TradeAbstractionCloseSpotLongResult,
+  TradeAbstractionCloseSpotLongResult_NOT_FOUND,
+  TradeAbstractionCloseSpotLongResult_SUCCESS,
+} from "./interfaces/close_spot"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -230,9 +238,23 @@ export class SpotPositionsExecution {
     base_asset: string
     direction: string
     edge: AuthorisedEdgeType
-  }): Promise<SpotPositionExecutionCloseResult> {
+  }): Promise<TradeAbstractionCloseSpotLongResult> {
     assert.equal(direction, "long") // spot positions are always long
     let prefix: string = `Closing ${edge}:${base_asset} spot position:`
+
+    if (!(await this.in_position({ base_asset, edge }))) {
+      let obj: TradeAbstractionCloseSpotLongResult_NOT_FOUND = {
+        object_type: "TradeAbstractionCloseSpotLongResult",
+        version: 1,
+        status: "NOT_FOUND",
+        http_status: 404,
+        msg: `Spot Close: there is no known long spot position on ${base_asset}, skipping close request`,
+        base_asset,
+        edge,
+      }
+      this.logger.warn({ edge, base_asset }, obj)
+      return obj
+    }
 
     /**
      * 1. Get stop order id and cancel it
@@ -305,11 +327,17 @@ export class SpotPositionsExecution {
       await this.ee.market_sell({ order_context, market_identifier, base_amount }) // throws if it fails
       // let executed_amount = // .. actually we might not have this info immediately
 
-      return {
+      let obj: TradeAbstractionCloseSpotLongResult_SUCCESS = {
+        object_type: "TradeAbstractionCloseSpotLongResult",
+        version: 1,
+        status: "SUCCESS",
+        http_status: 200,
+        msg: `Spot Close ${edge}:${base_asset}: SUCCESS`,
         base_asset,
         quote_asset,
         edge,
-      } // success, really we just have this here to verify that every other code path throws
+      }
+      return obj
     } catch (err) {
       let msg = `Failed to exit position on ${symbol}`
       this.logger.warn(msg)

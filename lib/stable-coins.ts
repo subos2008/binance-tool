@@ -1,5 +1,5 @@
 export let stable_coins: string[] = ["UST", "TUSD", "USDP", "USDC", "BUSD", "USDT"]
-export let fiat: string[] = ["EUR", "USD", "GBP"]
+export let fiat: string[] = ["EUR", "USD", "GBP", "JPY", "CHF", "CAD", "AUD", "NZD", "ZAR"]
 
 export let non_volatile_coins: string[] = ["EGLD"]
 

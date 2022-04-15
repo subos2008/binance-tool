@@ -6,14 +6,14 @@ export type Edge60Parameters = {
 }
 
 export interface Edge60PositionEntrySignal {
-  version: "v1"
+  version: "v1" | 2
   edge: "edge60"
   object_type: "Edge60EntrySignal"
   market_identifier: MarketIdentifier_V3
   edge60_parameters: Edge60Parameters
   edge60_entry_signal: {
     direction: "long" | "short"
-    entry_price: string
+    signal_price: string
     signal_timestamp_ms: number
   }
   extra?: {

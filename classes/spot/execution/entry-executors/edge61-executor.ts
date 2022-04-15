@@ -27,7 +27,11 @@ import { CurrentPriceGetter } from "../../../../interfaces/exchange/generic/pric
 import {
   TradeAbstractionOpenSpotLongCommand,
   TradeAbstractionOpenSpotLongResult,
-} from "../../../../services/spot-trade-abstraction/trade-abstraction-service"
+} from "../../../../services/spot-trade-abstraction/interfaces/open_spot"
+import {
+  TradeAbstractionCloseLongCommand,
+  TradeAbstractionCloseSpotLongResult,
+} from "../../../../services/spot-trade-abstraction/interfaces/close_spot"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -100,6 +104,7 @@ export class Edge61SpotPositionsExecution {
 
       if (!quote_asset) throw new Error(`quote_asset not defined`)
 
+      let prefix = `${edge}:${base_asset} open spot long: `
       let edge_percentage_stop = new BigNumber(5)
       let edge_percentage_stop_limit = new BigNumber(15)
       let edge_percentage_take_profit = new BigNumber(5)
@@ -149,6 +154,7 @@ export class Edge61SpotPositionsExecution {
           base_asset,
           quote_asset,
           status: "ENTRY_FAILED_TO_FILL",
+          msg: `${prefix}: ENTRY_FAILED_TO_FILL`,
           execution_timestamp_ms,
         }
         this.logger.object(ret)
@@ -222,6 +228,7 @@ export class Edge61SpotPositionsExecution {
           object_type: "TradeAbstractionOpenSpotLongResult",
           version: 1,
           status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS",
+          msg: `${prefix}: ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`,
           edge,
           base_asset,
           quote_asset,
@@ -251,6 +258,7 @@ export class Edge61SpotPositionsExecution {
         stop_price: stop_price.toFixed(),
         take_profit_price: take_profit_price.toFixed(),
         status: "SUCCESS",
+        msg: `${prefix}: SUCCESS`,
         execution_timestamp_ms,
       }
       this.logger.object(res)

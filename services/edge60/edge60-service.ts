@@ -34,9 +34,11 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+import express from "express"
+
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
-import { Edge60EntrySignals, Edge60EntrySignalsCallbacks } from "../../classes/edges/edge60"
+import { LongShortEntrySignalsCallbacks } from "./interfaces"
 import { Edge60Parameters, Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { DirectionPersistance } from "./direction-persistance"
@@ -50,6 +52,7 @@ import { StatsD } from "hot-shots"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { disallowed_base_assets_for_entry } from "../../lib/stable-coins"
 import { BaseAssetsList } from "./base-assets-list"
+import { Edge60EntrySignals } from "./edge60-entry-signals"
 
 var statsd = new StatsD()
 
@@ -73,7 +76,7 @@ const edge60_parameters: Edge60Parameters = {
 
 let edge = "edge60"
 
-class Edge60Service implements Edge60EntrySignalsCallbacks {
+class Edge60Service implements LongShortEntrySignalsCallbacks {
   edges: { [Key: string]: Edge60EntrySignals } = {}
   candles_collector: CandlesCollector
   ee: Binance
@@ -84,6 +87,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
   market_data: CoinGeckoMarketData[] | undefined
   direction_persistance: DirectionPersistance
   exchange_info_getter: BinanceExchangeInfoGetter
+  health_and_readiness: HealthAndReadiness
 
   constructor({
     ee,
@@ -95,6 +99,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     logger: Logger
     send_message: SendMessageFunc
     direction_persistance: DirectionPersistance
+    health_and_readiness: HealthAndReadiness
   }) {
     this.candles_collector = new CandlesCollector({ ee })
     this.ee = ee
@@ -103,15 +108,16 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     this.send_message("service re-starting", { edge })
     this.direction_persistance = direction_persistance
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
+    this.health_and_readiness = health_and_readiness
   }
 
   async enter_position({
     symbol,
-    entry_price,
+    signal_price,
     direction,
   }: {
     symbol: string
-    entry_price: BigNumber
+    signal_price: BigNumber
     direction: "long" | "short"
   }): Promise<void> {
     let base_asset: string = await this.base_asset_for_symbol(symbol)
@@ -148,7 +154,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     if (entry_filter) {
       try {
         let days = edge60_parameters.days_of_price_history
-        let msg = `trend reversal ${direction_string} entry signal on ${base_asset} at ${days}d price ${entry_price.toFixed()}. ${market_data_string}`
+        let msg = `trend reversal ${direction_string} entry signal on ${base_asset} at ${days}d price ${signal_price.toFixed()}. ${market_data_string}`
         this.logger.info({ signal: "entry", direction, symbol }, msg)
         this.send_message(msg, { edge })
       } catch (e) {
@@ -169,7 +175,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
       try {
         this.publish_entry_to_amqp({
           symbol,
-          entry_price,
+          signal_price,
           direction,
           previous_direction,
           market_data_for_symbol,
@@ -201,7 +207,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
 
   async publish_entry_to_amqp({
     symbol,
-    entry_price,
+    signal_price,
     direction,
     previous_direction,
     market_data_for_symbol,
@@ -209,7 +215,7 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     market_identifier,
   }: {
     symbol: string
-    entry_price: BigNumber
+    signal_price: BigNumber
     direction: "long" | "short"
     previous_direction: "long" | "short"
     market_data_for_symbol: CoinGeckoMarketData | undefined
@@ -217,14 +223,14 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     market_identifier: MarketIdentifier_V3
   }) {
     let event: Edge60PositionEntrySignal = {
-      version: "v1",
+      version: 2,
       edge: "edge60",
       market_identifier,
       object_type: "Edge60EntrySignal",
       edge60_parameters,
       edge60_entry_signal: {
         direction,
-        entry_price: entry_price.toFixed(),
+        signal_price: signal_price.toFixed(),
         signal_timestamp_ms,
       },
       extra: {
@@ -289,7 +295,9 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
   }
 
   async run() {
-    /** New world demo */
+    const redis_health = this.health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
+    let redis: RedisClientType = await get_redis_client(logger, redis_health)
+
     let base_assets_generator = new BaseAssetsList({
       logger: this.logger,
       exchange_info_getter: this.exchange_info_getter,
@@ -372,6 +380,11 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
 }
 
 let edge60: Edge60Service | null
+
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+const global_health = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+
 async function main() {
   assert(process.env.BINANCE_API_KEY)
   assert(process.env.BINANCE_API_SECRET)
@@ -381,8 +394,6 @@ async function main() {
   })
 
   try {
-    const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-    const health_and_readiness = new HealthAndReadiness({ logger, send_message })
     const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
     let redis: RedisClientType = await get_redis_client(logger, redis_health)
 
@@ -390,6 +401,7 @@ async function main() {
       ee,
       logger,
       send_message,
+      health_and_readiness,
       direction_persistance: new DirectionPersistance({
         logger,
         prefix: `${service_name}:spot:binance:usd_quote`,
@@ -411,3 +423,10 @@ main().catch((err) => {
   logger.error({ err })
   logger.error(`Error in main loop: ${err.stack}`)
 })
+
+var app = express()
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
+app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
+const port = "80"
+app.listen(port)
+logger.info(`Server on port ${port}`)

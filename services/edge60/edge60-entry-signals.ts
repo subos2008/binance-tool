@@ -7,9 +7,12 @@
  *
  * */
 
-import { strict as assert } from "assert"
+import * as Sentry from "@sentry/node"
+Sentry.init({})
+// Sentry.configureScope(function (scope: any) {
+//   scope.setTag("service", service_name)
+// })
 
-import { CandleChartResult } from "binance-api-node"
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -20,107 +23,17 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../interfaces/logger"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { Edge60Parameters } from "../../events/shared/edge60-position-entry"
-
-import * as Sentry from "@sentry/node"
-Sentry.init({})
-// Sentry.configureScope(function (scope: any) {
-//   scope.setTag("service", service_name)
-// })
-
-export interface Edge60EntrySignalsCallbacks {
-  enter_position({
-    symbol,
-    entry_price,
-    direction,
-  }: {
-    symbol: string
-    entry_price: BigNumber
-    direction: "long" | "short"
-  }): void
-}
-
-export interface EdgeCandle {
-  // The candle interface required by this edge
-  close: string
-  low: string
-  high: string
-}
-
-class LimitedLengthCandlesHistory {
-  private candles: EdgeCandle[]
-  private length: number
-
-  // Patch an array object with overrided push() function
-  private limited_length_candle_array(length: number, initial_candles: EdgeCandle[]): EdgeCandle[] {
-    var array: EdgeCandle[] = initial_candles.slice(-length)
-    array.push = function () {
-      if (this.length >= length) {
-        this.shift()
-      }
-      return Array.prototype.push.apply(this, arguments as any) // typscript didn't like this
-    }
-    return array
-  }
-
-  constructor({ length, initial_candles }: { length: number; initial_candles: EdgeCandle[] }) {
-    this.candles = this.limited_length_candle_array(length, initial_candles)
-    this.length = length
-  }
-
-  full(): boolean {
-    return this.candles.length >= this.length
-  }
-
-  current_number_of_stored_candles(): number {
-    return this.candles.length
-  }
-
-  push(candle: EdgeCandle) {
-    this.candles.push(candle)
-    assert(this.candles.length <= this.length)
-  }
-
-  get_highest_value(): { high: BigNumber; candle: EdgeCandle } {
-    function candle_high_value(candle: EdgeCandle) {
-      return new BigNumber(candle["high"])
-    }
-    let high = candle_high_value(this.candles[0])
-    let high_candle = this.candles[0]
-    for (let i = 0; i < this.candles.length; i++) {
-      let candle = this.candles[i]
-      let candle_high_price = candle_high_value(candle)
-      if (candle_high_price.isGreaterThan(high)) {
-        high = candle_high_price
-        high_candle = candle
-      }
-    }
-    return { high, candle: high_candle }
-  }
-
-  get_lowest_value(): { low: BigNumber; candle: EdgeCandle } {
-    function candle_low_value(candle: EdgeCandle) {
-      return new BigNumber(candle["low"])
-    }
-    let low = candle_low_value(this.candles[0])
-    let low_candle = this.candles[0]
-    for (let i = 0; i < this.candles.length; i++) {
-      let candle = this.candles[i]
-      let candle_low_price = candle_low_value(candle)
-      if (candle_low_price.isLessThan(low)) {
-        low = candle_low_price
-        low_candle = candle
-      }
-    }
-    return { low, candle: low_candle }
-  }
-}
+import { CandleChartResult } from "binance-api-node"
+import { EdgeCandle, LongShortEntrySignalsCallbacks } from "./interfaces"
+import { LimitedLengthCandlesHistory } from "./limited-length-candles-history"
+import { DateTime } from "luxon"
 
 export class Edge60EntrySignals {
   symbol: string
   logger: Logger
   market_data: CoinGeckoMarketData
 
-  callbacks: Edge60EntrySignalsCallbacks
+  callbacks: LongShortEntrySignalsCallbacks
   price_history_candles: LimitedLengthCandlesHistory
 
   constructor({
@@ -135,7 +48,7 @@ export class Edge60EntrySignals {
     initial_candles: CandleChartResult[]
     symbol: string
     market_data: CoinGeckoMarketData
-    callbacks: Edge60EntrySignalsCallbacks
+    callbacks: LongShortEntrySignalsCallbacks
     edge60_parameters: Edge60Parameters
   }) {
     this.symbol = symbol
@@ -196,6 +109,8 @@ export class Edge60EntrySignals {
         throw new Error(msg)
       }
 
+      let signal_timestamp_ms = DateTime.now().toMillis() + 1 // avoid the last millisecond of the day... why?
+
       // check for long entry
       if (high.isGreaterThan(highest_price)) {
         direction = "long"
@@ -204,8 +119,10 @@ export class Edge60EntrySignals {
         )
         this.callbacks.enter_position({
           symbol: this.symbol,
-          entry_price: potential_entry_price,
+          signal_price: potential_entry_price,
+          trigger_price: potential_entry_price,
           direction,
+          signal_timestamp_ms,
         })
       }
 
@@ -217,8 +134,10 @@ export class Edge60EntrySignals {
         )
         this.callbacks.enter_position({
           symbol: this.symbol,
-          entry_price: potential_entry_price,
+          signal_price: potential_entry_price,
+          trigger_price: potential_entry_price,
           direction,
+          signal_timestamp_ms,
         })
       }
 

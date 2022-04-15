@@ -11,7 +11,7 @@ import { Edge61PositionEntrySignal } from "../../events/shared/edge61-position-e
 import {
   TradeAbstractionOpenSpotLongCommand,
   TradeAbstractionOpenSpotLongResult,
-} from "../spot-trade-abstraction/trade-abstraction-service"
+} from "../spot-trade-abstraction/interfaces/open_spot"
 import { SignalSupression } from "./signal-supression"
 
 export interface Edge61EntrySignalProcessor {

@@ -8,10 +8,9 @@ import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/cli
 import { Logger } from "../../interfaces/logger"
 import * as Sentry from "@sentry/node"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
-import {
-  TradeAbstractionCloseSpotLongResult,
-  TradeAbstractionOpenSpotLongResult,
-} from "../spot-trade-abstraction/trade-abstraction-service"
+import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../spot-trade-abstraction/interfaces/open_spot"
+import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "../spot-trade-abstraction/interfaces/close_spot"
+
 
 /**
  * We enter multiple trade types on this signal:
@@ -84,7 +83,7 @@ class Edge60 implements Edge60EntrySignalProcessor {
           edge,
           direction: "long",
           action: "open",
-          trigger_price: signal.edge60_entry_signal.entry_price,
+          trigger_price: signal.edge60_entry_signal.signal_price,
           signal_timestamp_ms: signal.edge60_entry_signal.signal_timestamp_ms.toString(),
         })
         break

@@ -18,6 +18,7 @@ interface TradeAbstractionOpenSpotLongResult_SUCCESS {
   edge: string
 
   status: "SUCCESS" // full or partial entry, all good
+  msg: string // human readable summary
 
   // signal
   trigger_price?: string
@@ -65,7 +66,7 @@ interface TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL {
 
   status: "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill
 
-  msg?: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+  msg: string // human readable summary
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
 
   // signal
@@ -84,7 +85,7 @@ interface TradeAbstractionOpenSpotLongResult_UNAUTHORISED {
 
   status: "UNAUTHORISED" // atm means edge not recognised
 
-  msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+  msg: string // human readable summary
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
 
   trigger_price?: string

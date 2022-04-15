@@ -1,3 +1,4 @@
+
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -9,14 +10,14 @@ export interface LongShortEntrySignalsCallbacks {
   enter_position(args: PositionEntryArgs): void
 }
 
-export interface IngestionCandle {
+export interface EdgeCandle {
   // The candle interface required by this edge
   close: string
   low: string
   high: string
-  isFinal: boolean
   closeTime: number // milliseconds
 }
+
 export interface StoredCandle {
   // The candle interface required by this edge
   close: string

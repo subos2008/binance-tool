@@ -3,11 +3,8 @@ import { Logger } from "../../interfaces/logger"
 import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/client/tas-client"
 
 import * as Sentry from "@sentry/node"
-import {
-  TradeAbstractionCloseSpotLongResult,
-  TradeAbstractionOpenSpotLongCommand,
-  TradeAbstractionOpenSpotLongResult,
-} from "../spot-trade-abstraction/trade-abstraction-service"
+import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../spot-trade-abstraction/interfaces/open_spot"
+import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "../spot-trade-abstraction/interfaces/close_spot"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
 Sentry.init({})
 // Sentry.configureScope(function (scope: any) {

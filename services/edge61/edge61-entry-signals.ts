@@ -158,7 +158,7 @@ export class Edge61EntrySignals {
         throw new Error(msg)
       }
 
-      let signal_timestamp_ms = DateTime.now().toMillis() + 1 // avoid the last millisecond of the day
+      let signal_timestamp_ms = DateTime.now().toMillis() + 1 // avoid the last millisecond of the day... why?
 
       // check for long entry
       if (signal_high) {

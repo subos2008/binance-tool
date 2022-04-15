@@ -282,7 +282,6 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
     let redis: RedisClientType = await get_redis_client(logger, redis_health)
 
-    /** New world demo */
     let base_assets_generator = new BaseAssetsList({
       logger: this.logger,
       exchange_info_getter: this.exchange_info_getter,

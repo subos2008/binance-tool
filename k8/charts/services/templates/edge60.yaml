@@ -35,18 +35,18 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "./out/./services/edge60/edge60-service", "--live"]
-          # ports:
-          # - name: http
-          #   containerPort: 80
-          #   protocol: TCP
-          # livenessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: http
-          # readinessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: http
+          ports:
+          - name: http
+            containerPort: 80
+            protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
           env:
             - name: SENTRY_DSN
               value: "https://ec7e90a79b4e48ac8727fc5de7bfc454@o369902.ingest.sentry.io/6112658"

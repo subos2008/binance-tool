@@ -8,12 +8,9 @@ if (!TAS_URL.startsWith("http")) {
 
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"
 import { Logger } from "../../../interfaces/logger"
-import {
-  TradeAbstractionCloseLongCommand,
-  TradeAbstractionCloseSpotLongResult,
-  TradeAbstractionOpenSpotLongCommand,
-  TradeAbstractionOpenSpotLongResult,
-} from "../trade-abstraction-service"
+import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/open_spot"
+import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "../interfaces/close_spot"
+
 const JSONBigNumber = require("./JSONBigNumber")
 import { URL } from "url"
 

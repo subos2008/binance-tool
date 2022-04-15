@@ -39,62 +39,6 @@ import {
  * fixed at instantiation
  */
 
-// type SpotPositionExecutionOpenResult_SUCCESS = {
-//   object_type: "SpotPositionExecutionOpenResult"
-//   base_asset: string
-//   quote_asset?: string
-//   edge: string
-
-//   status: "SUCCESS" // full or partial entry, all good
-
-//   msg?: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
-//   trigger_price?: string
-
-//   executed_quote_quantity: string
-//   executed_base_quantity: string
-//   executed_price?: string // null if quantity is zero
-//   execution_timestamp_ms?: string
-
-//   stop_order_id?: string | number | undefined
-//   stop_price?: string
-
-//   take_profit_order_id?: string | number | undefined
-//   take_profit_price?: string
-//   oco_order_id?: string | number | undefined
-// }
-
-// type SpotPositionExecutionOpenResult_NOT_SUCCESS = {
-//   object_type: "SpotPositionExecutionOpenResult"
-//   base_asset: string
-//   quote_asset?: string
-//   edge: string
-
-//   status:
-//     | "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill (i.e. zero, we consider a partial fill as a fill)
-//     | "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
-//     | "INTERNAL_SERVER_ERROR" // exception caught
-
-//   msg?: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
-//   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
-//   trigger_price?: string
-
-//   executed_quote_quantity?: string
-//   executed_base_quantity?: string
-//   executed_price?: string // null if quantity is zero
-//   execution_timestamp_ms?: string
-
-//   stop_order_id?: string | number | undefined
-//   stop_price?: string
-
-//   take_profit_order_id?: string | number | undefined
-//   take_profit_price?: string
-//   oco_order_id?: string | number | undefined
-// }
-
-// export type SpotPositionExecutionOpenResult =
-//   | SpotPositionExecutionOpenResult_SUCCESS
-//   | SpotPositionExecutionOpenResult_NOT_SUCCESS
-
 export interface SpotPositionExecutionCloseResult {
   base_asset: string
   quote_asset: string

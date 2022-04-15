@@ -44,11 +44,12 @@ import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { config } from "../../config"
 import { get_redis_client } from "../../lib/redis-v4"
+import { RedisClientType } from "redis-v4"
 import { DirectionPersistance } from "./direction-persistance"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
-import { RedisClientType } from "redis-v4"
 import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
+import { disallowed_base_assets_for_entry } from "../../lib/stable-coins"
 
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
@@ -98,7 +99,10 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     this.send_message = send_message
     this.send_message("service re-starting", { edge })
     let hours_to_cache_expiry = 3
-    this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee, minutes_to_cache_expiry: 60 * hours_to_cache_expiry })
+    this.exchange_info_getter = new BinanceExchangeInfoGetter({
+      ee,
+      minutes_to_cache_expiry: 60 * hours_to_cache_expiry,
+    })
   }
 
   async enter_position({
@@ -301,6 +305,8 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
     this.logger.info(
       `${targets.length} base_assets on Binance available on both ${signals_quote_asset} and ${tas_quote_asset}`
     )
+
+    targets = targets.filter((x) => !disallowed_base_assets_for_entry.includes(x))
     return targets
   }
 

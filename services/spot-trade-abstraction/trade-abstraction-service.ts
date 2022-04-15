@@ -5,7 +5,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-let disallowed_coins_for_entry = ["UST", "GBP", "USDT", "EGLD"]
+import {disallowed_base_assets_for_entry} from '../../lib/stable-coins'
 
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
@@ -73,7 +73,7 @@ export class TradeAbstractionService {
       return obj
     }
 
-    if (disallowed_coins_for_entry.includes(cmd.base_asset)) {
+    if (disallowed_base_assets_for_entry.includes(cmd.base_asset)) {
       let err = new Error(`Opening spot long positions in ${cmd.base_asset} is explicity disallowed`)
       this.logger.warn({ err })
       let obj: TradeAbstractionOpenSpotLongResult = {

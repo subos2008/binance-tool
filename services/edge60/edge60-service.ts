@@ -46,9 +46,11 @@ import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
 import { get_redis_client } from "../../lib/redis-v4"
 import { RedisClientType } from "redis-v4"
-
 import { StatsD } from "hot-shots"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
+import {disallowed_base_assets_for_entry} from '../../lib/stable-coins'
+
+
 var statsd = new StatsD()
 
 process.on("unhandledRejection", (err) => {
@@ -312,6 +314,9 @@ class Edge60Service implements Edge60EntrySignalsCallbacks {
     this.logger.info(
       `${targets.length} base_assets on Binance available on both ${signals_quote_asset} and ${tas_quote_asset}`
     )
+
+    targets = targets.filter((x) => !disallowed_base_assets_for_entry.includes(x))
+
     return targets
   }
 

@@ -20,7 +20,11 @@ import { SpotPositionsPersistance } from "../../../classes/spot/persistence/inte
 import { SendMessageFunc } from "../../../lib/telegram-v2"
 import { PositionSizer } from "../fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
-import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
+import {
+  AuthorisedEdgeType,
+  check_edge,
+  SpotPositionIdentifier_V3,
+} from "../../../classes/spot/abstractions/position-identifier"
 import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
 import {
   TradeAbstractionOpenSpotLongCommand,
@@ -188,11 +192,13 @@ export class Edge60SpotPositionsExecution {
 
     let stop_order_id: OrderId | undefined
     let stop_cmd: SpotStopMarketSellCommand = {
+      object_type: "SpotStopMarketSellCommand",
       order_context,
       market_identifier: cmd.market_identifier,
       base_amount: executed_base_quantity,
       trigger_price: stop_price,
     }
+    this.logger.info(stop_cmd)
     try {
       let stop_result = await this.ee.stop_market_sell(stop_cmd)
       stop_order_id = stop_result.order_id

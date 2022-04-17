@@ -42,6 +42,7 @@ export interface SpotMarketSellCommand {
 }
 
 export interface SpotStopMarketSellCommand {
+  object_type: "SpotStopMarketSellCommand"
   order_context: OrderContext_V1
   market_identifier: MarketIdentifier_V3
   base_amount: BigNumber

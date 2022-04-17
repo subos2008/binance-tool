@@ -205,6 +205,7 @@ export class Edge61SpotPositionsExecution {
         take_profit_ClientOrderId,
         oco_list_ClientOrderId,
       }
+      this.logger.info(oco_cmd)
 
       try {
         let oco_result = await this.ee.oco_sell_order(oco_cmd)

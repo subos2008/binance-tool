@@ -1,6 +1,7 @@
 import { strict as assert } from "assert"
 
 import Sentry from "../../../../lib/sentry"
+
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -10,28 +11,27 @@ BigNumber.prototype.valueOf = function () {
 
 import { Logger } from "../../../../interfaces/logger"
 import { MarketIdentifier_V3 } from "../../../../events/shared/market-identifier"
-import {
-  OrderContext_V1,
-  SpotExecutionEngine,
-  SpotLimitBuyCommand,
-  SpotMarketSellCommand,
-  SpotOCOSellCommand,
-} from "../../exchanges/interfaces/spot-execution-engine"
+import { OrderContext_V1, SpotExecutionEngine } from "../../exchanges/interfaces/spot-execution-engine"
 import { SpotPositionsPersistance } from "../../persistence/interface/spot-positions-persistance"
 import { SendMessageFunc } from "../../../../lib/telegram-v2"
 import { PositionSizer } from "../../../../services/spot-trade-abstraction/fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
 import { OrderId } from "../../persistence/interface/order-context-persistence"
-import { CurrentPriceGetter } from "../../../../interfaces/exchange/generic/price-getter"
 import {
   TradeAbstractionOpenSpotLongCommand,
+  TradeAbstractionOpenSpotLongCommand_Edge61,
   TradeAbstractionOpenSpotLongResult,
 } from "../../../../services/spot-trade-abstraction/interfaces/open_spot"
+
+/* Edge specific code */
+import { CurrentPriceGetter } from "../../../../interfaces/exchange/generic/price-getter"
 import {
-  TradeAbstractionCloseLongCommand,
-  TradeAbstractionCloseSpotLongResult,
-} from "../../../../services/spot-trade-abstraction/interfaces/close_spot"
+  SpotLimitBuyCommand,
+  SpotMarketSellCommand,
+  SpotOCOSellCommand,
+} from "../../exchanges/interfaces/spot-execution-engine"
+/* END Edge specific code */
 
 /**
  * If this does the execution of spot position entry/exit
@@ -85,32 +85,20 @@ export class Edge61SpotPositionsExecution {
     return this.ee.get_exchange_identifier()
   }
 
-  /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
-  // {
-  //     executed_quote_quantity: string
-  //     executed_base_quantity: string
-  //     stop_order_id: string | number | undefined
-  //     take_profit_order_id: string | number | undefined
-  //     oco_order_id: string | number | undefined
-  //     executed_price: BigNumber
-  //     stop_price: BigNumber
-  //     take_profit_price: BigNumber
-  //   }
-  async open_position(args: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
+  async open_position(
+    args: TradeAbstractionOpenSpotLongCommand_Edge61
+  ): Promise<TradeAbstractionOpenSpotLongResult> {
     try {
-      args.edge = check_edge(args.edge)
-      assert.equal(args.edge, "edge61")
       let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
 
-      if (!quote_asset) throw new Error(`quote_asset not defined`)
+      let {
+        edge_percentage_stop,
+        edge_percentage_stop_limit,
+        edge_percentage_take_profit,
+        edge_percentage_buy_limit,
+      } = args
 
       let prefix = `${edge}:${base_asset} open spot long: `
-      let edge_percentage_stop = new BigNumber(5)
-      let edge_percentage_stop_limit = new BigNumber(15)
-      let edge_percentage_take_profit = new BigNumber(5)
-      let edge_percentage_buy_limit = new BigNumber(0.5)
-
-      this.logger.object({ object_type: "SpotPositionExecutionOpenRequest", ...args })
 
       let market_identifier: MarketIdentifier_V3 = this.get_market_identifier_for({ ...args, quote_asset })
       let trigger_price: BigNumber | undefined
@@ -120,6 +108,7 @@ export class Edge61SpotPositionsExecution {
         this.logger.warn(`Using current price as trigger_price for ${args.edge}:${args.base_asset} entry`)
         trigger_price = await this.price_getter.get_current_price({ market_symbol: market_identifier.symbol })
       }
+
       /**
        * TODO: trading rules
        */
@@ -128,10 +117,16 @@ export class Edge61SpotPositionsExecution {
       let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
       let limit_price_factor = new BigNumber(100).plus(edge_percentage_buy_limit).div(100)
       let limit_price = trigger_price.times(limit_price_factor)
-      this.logger.info(
-        `Calculated buy_limit price of ${limit_price.toFixed()} given trigger_price of ${trigger_price} (${edge_percentage_buy_limit.toFixed()}%)`
-      )
       let base_amount = quote_amount.dividedBy(limit_price)
+
+      this.logger.object({
+        object_type: "SpotPositionExecutionOpenRequest",
+        ...args,
+        buy_limit_price: limit_price,
+        quote_amount,
+        base_amount,
+      })
+
       let cmd: SpotLimitBuyCommand = {
         object_type: "SpotLimitBuyCommand",
         order_context,
@@ -166,6 +161,8 @@ export class Edge61SpotPositionsExecution {
         this.logger.info(msg)
         // this.send_message(msg, { edge, base_asset })
       }
+
+      /** BUY completed  */
 
       let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
       let stop_price = trigger_price.times(stop_price_factor)

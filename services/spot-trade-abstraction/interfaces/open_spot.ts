@@ -1,4 +1,5 @@
-import { AuthorisedEdgeType } from "../../../classes/spot/abstractions/position-identifier";
+import BigNumber from "bignumber.js"
+import { AuthorisedEdgeType } from "../../../classes/spot/abstractions/position-identifier"
 
 export interface TradeAbstractionOpenSpotLongCommand {
   base_asset: string
@@ -8,6 +9,32 @@ export interface TradeAbstractionOpenSpotLongCommand {
   action: "open"
   trigger_price?: string
   signal_timestamp_ms: string
+}
+
+export interface TradeAbstractionOpenSpotLongCommand_Edge60 {
+  base_asset: string
+  quote_asset: string // added by the TAS before it hits the EE
+  edge: AuthorisedEdgeType
+  direction: "long"
+  action: "open"
+  trigger_price?: string
+  signal_timestamp_ms: string
+  edge_percentage_stop: BigNumber
+  edge_percentage_buy_limit: BigNumber
+}
+
+export interface TradeAbstractionOpenSpotLongCommand_Edge61 {
+  base_asset: string
+  quote_asset: string // added by the TAS before it hits the EE
+  edge: AuthorisedEdgeType
+  direction: "long"
+  action: "open"
+  trigger_price?: string
+  signal_timestamp_ms: string
+  edge_percentage_stop: BigNumber
+  edge_percentage_stop_limit: BigNumber
+  edge_percentage_take_profit: BigNumber
+  edge_percentage_buy_limit: BigNumber
 }
 
 interface TradeAbstractionOpenSpotLongResult_SUCCESS {

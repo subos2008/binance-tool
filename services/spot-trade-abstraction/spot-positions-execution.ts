@@ -2,6 +2,13 @@ import { strict as assert } from "assert"
 
 import Sentry from "../../lib/sentry"
 
+import { BigNumber } from "bignumber.js"
+BigNumber.DEBUG = true // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function () {
+  throw Error("BigNumber .valueOf called!")
+}
+
 import { Logger } from "../../interfaces/logger"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import {
@@ -86,6 +93,7 @@ export class SpotPositionsExecution {
       positions_persistance,
       send_message,
       position_sizer,
+      price_getter,
     })
     this.edge61_executor = new Edge61SpotPositionsExecution({
       logger,
@@ -146,9 +154,21 @@ export class SpotPositionsExecution {
 
       switch (args.edge) {
         case "edge60":
-          return this.edge60_executor.open_position({ ...args, quote_asset })
+          return this.edge60_executor.open_position({
+            ...args,
+            quote_asset,
+            edge_percentage_stop: new BigNumber(8),
+            edge_percentage_buy_limit: new BigNumber(5), // arbitrary
+          })
         case "edge61":
-          return this.edge61_executor.open_position({ ...args, quote_asset })
+          return this.edge61_executor.open_position({
+            ...args,
+            quote_asset,
+            edge_percentage_stop: new BigNumber(5),
+            edge_percentage_stop_limit: new BigNumber(15),
+            edge_percentage_take_profit: new BigNumber(5),
+            edge_percentage_buy_limit: new BigNumber(0.5),
+          })
         default:
           let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
           this.send_message(msg, { edge })

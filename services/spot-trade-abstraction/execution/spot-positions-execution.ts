@@ -25,8 +25,8 @@ import {
   SpotPositionIdentifier_V3,
 } from "../../../classes/spot/abstractions/position-identifier"
 import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
-import { Edge60SpotPositionsExecution } from "./stop-limit-exit-executor"
-import { Edge61SpotPositionsExecution } from "./oco-exit-executor"
+import { SpotPositionsExecution_StopLimitExit } from "./stop-limit-exit-executor"
+import { SpotPositionsExecution_OCOExit } from "./oco-exit-executor"
 import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/open_spot"
 import {
@@ -61,8 +61,8 @@ export class SpotPositionsExecution {
   price_getter: CurrentPriceGetter
 
   /* executors - really need to refactor this */
-  edge60_executor: Edge60SpotPositionsExecution
-  edge61_executor: Edge61SpotPositionsExecution
+  edge60_executor: SpotPositionsExecution_StopLimitExit
+  edge61_executor: SpotPositionsExecution_OCOExit
 
   constructor({
     logger,
@@ -87,7 +87,7 @@ export class SpotPositionsExecution {
     this.send_message = send_message
     this.position_sizer = position_sizer
     this.price_getter = price_getter
-    this.edge60_executor = new Edge60SpotPositionsExecution({
+    this.edge60_executor = new SpotPositionsExecution_StopLimitExit({
       logger,
       ee,
       positions_persistance,
@@ -95,7 +95,7 @@ export class SpotPositionsExecution {
       position_sizer,
       price_getter,
     })
-    this.edge61_executor = new Edge61SpotPositionsExecution({
+    this.edge61_executor = new SpotPositionsExecution_OCOExit({
       logger,
       ee,
       positions_persistance,

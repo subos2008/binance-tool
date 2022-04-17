@@ -49,7 +49,7 @@ import {
  * Note this is instantiated with a particular exchange, the exchange identifier is
  * fixed at instantiation
  */
-export class Edge61SpotPositionsExecution {
+export class SpotPositionsExecution_OCOExit {
   logger: Logger
   ee: SpotExecutionEngine
   send_message: SendMessageFunc

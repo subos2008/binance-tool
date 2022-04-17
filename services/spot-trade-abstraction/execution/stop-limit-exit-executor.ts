@@ -49,7 +49,7 @@ import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-g
  * Note this is instantiated with a particular exchange, the exchange identifier is
  * fixed at instantiation
  */
-export class Edge60SpotPositionsExecution {
+export class SpotPositionsExecution_StopLimitExit {
   logger: Logger
   ee: SpotExecutionEngine
   send_message: SendMessageFunc

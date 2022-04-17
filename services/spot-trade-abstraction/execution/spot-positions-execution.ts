@@ -61,8 +61,8 @@ export class SpotPositionsExecution {
   price_getter: CurrentPriceGetter
 
   /* executors - really need to refactor this */
-  edge60_executor: SpotPositionsExecution_StopLimitExit
-  edge61_executor: SpotPositionsExecution_OCOExit
+  stop_limit_executor: SpotPositionsExecution_StopLimitExit
+  oco_executor: SpotPositionsExecution_OCOExit
 
   constructor({
     logger,
@@ -87,7 +87,7 @@ export class SpotPositionsExecution {
     this.send_message = send_message
     this.position_sizer = position_sizer
     this.price_getter = price_getter
-    this.edge60_executor = new SpotPositionsExecution_StopLimitExit({
+    this.stop_limit_executor = new SpotPositionsExecution_StopLimitExit({
       logger,
       ee,
       positions_persistance,
@@ -95,7 +95,7 @@ export class SpotPositionsExecution {
       position_sizer,
       price_getter,
     })
-    this.edge61_executor = new SpotPositionsExecution_OCOExit({
+    this.oco_executor = new SpotPositionsExecution_OCOExit({
       logger,
       ee,
       positions_persistance,
@@ -154,14 +154,14 @@ export class SpotPositionsExecution {
 
       switch (args.edge) {
         case "edge60":
-          return this.edge60_executor.open_position({
+          return this.stop_limit_executor.open_position({
             ...args,
             quote_asset,
-            edge_percentage_stop: new BigNumber(8),
+            edge_percentage_stop: new BigNumber(7),
             edge_percentage_buy_limit: new BigNumber(5), // arbitrary
           })
         case "edge61":
-          return this.edge61_executor.open_position({
+          return this.oco_executor.open_position({
             ...args,
             quote_asset,
             edge_percentage_stop: new BigNumber(5),

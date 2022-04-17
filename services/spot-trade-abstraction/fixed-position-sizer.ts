@@ -33,16 +33,6 @@ export class FixedPositionSizer implements PositionSizer {
     quote_asset: string
     edge: string
   }): Promise<BigNumber> {
-    switch (edge) {
-      case "edge60":
-        assert("BUSD" === quote_asset)
-        return new BigNumber(100)
-
-      case "edge61":
-        assert("BUSD" === quote_asset)
-        return new BigNumber(50)
-      default:
-        throw new Error(`Unknoen edge in positionSizer: ${edge}`)
-    }
+    return new BigNumber(100)
   }
 }

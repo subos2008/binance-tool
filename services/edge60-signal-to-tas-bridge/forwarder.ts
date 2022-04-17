@@ -17,12 +17,7 @@ import {
   TradeAbstractionCloseSpotLongResult,
 } from "../spot-trade-abstraction/interfaces/close_spot"
 import { Edge60EntrySignalProcessor } from "./interfaces"
-
-/**
- * We enter multiple trade types on this signal:
- * edge60     // trend following
- * and edge61 // breakout scalp
- */
+import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
 
 /**
  * interface Edge60PositionEntrySignal {
@@ -42,20 +37,23 @@ import { Edge60EntrySignalProcessor } from "./interfaces"
  * }
  */
 
-export class Edge60 implements Edge60EntrySignalProcessor {
+export class Edge60Forwarder implements Edge60EntrySignalProcessor {
   send_message: Function
   logger: Logger
   event_name: MyEventNameType
   tas_client: SpotTradeAbstractionServiceClient
+  edge: AuthorisedEdgeType
 
   constructor({
     send_message,
     logger,
     event_name,
+    edge,
   }: {
     send_message: (msg: string) => void
     logger: Logger
     event_name: MyEventNameType
+    edge: AuthorisedEdgeType
   }) {
     assert(logger)
     this.logger = logger
@@ -63,6 +61,7 @@ export class Edge60 implements Edge60EntrySignalProcessor {
     this.send_message = send_message
     this.tas_client = new SpotTradeAbstractionServiceClient({ logger })
     this.event_name = event_name
+    this.edge = edge
   }
 
   async process_edge60_entry_signal(signal: Edge60PositionEntrySignal) {
@@ -70,7 +69,7 @@ export class Edge60 implements Edge60EntrySignalProcessor {
     assert.equal(signal.object_type, "Edge60EntrySignal")
     assert.equal(signal.edge, "edge60")
 
-    let { edge } = signal
+    let edge = this.edge
     let { base_asset } = signal.market_identifier
     if (!base_asset) {
       throw new Error(`base_asset not specified in market_identifier: ${JSON.stringify(signal.market_identifier)}`)

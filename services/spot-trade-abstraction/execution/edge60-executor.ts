@@ -1,6 +1,6 @@
 import { strict as assert } from "assert"
 
-import Sentry from "../../../../lib/sentry"
+import Sentry from "../../../lib/sentry"
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -9,31 +9,31 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../../../interfaces/logger"
-import { MarketIdentifier_V3 } from "../../../../events/shared/market-identifier"
+import { Logger } from "../../../interfaces/logger"
+import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
 import {
   OrderContext_V1,
   SpotExecutionEngine,
   SpotLimitBuyCommand,
-} from "../../exchanges/interfaces/spot-execution-engine"
-import { SpotPositionsPersistance } from "../../persistence/interface/spot-positions-persistance"
-import { SendMessageFunc } from "../../../../lib/telegram-v2"
-import { PositionSizer } from "../../../../services/spot-trade-abstraction/fixed-position-sizer"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
-import { OrderId } from "../../persistence/interface/order-context-persistence"
+} from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
+import { SpotPositionsPersistance } from "../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SendMessageFunc } from "../../../lib/telegram-v2"
+import { PositionSizer } from "../fixed-position-sizer"
+import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
+import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
+import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
 import {
   TradeAbstractionOpenSpotLongCommand,
   TradeAbstractionOpenSpotLongCommand_Edge60,
   TradeAbstractionOpenSpotLongResult,
-} from "../../../../services/spot-trade-abstraction/interfaces/open_spot"
+} from "../interfaces/open_spot"
 
 /* Edge specific code */
 import {
   SpotMarketBuyByQuoteQuantityCommand,
   SpotStopMarketSellCommand,
-} from "../../exchanges/interfaces/spot-execution-engine"
-import { CurrentPriceGetter } from "../../../../interfaces/exchange/generic/price-getter"
+} from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
+import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
 /* END Edge specific code */
 
 /**

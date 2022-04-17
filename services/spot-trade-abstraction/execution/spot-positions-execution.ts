@@ -25,8 +25,8 @@ import {
   SpotPositionIdentifier_V3,
 } from "../../../classes/spot/abstractions/position-identifier"
 import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
-import { Edge60SpotPositionsExecution } from "./edge60-executor"
-import { Edge61SpotPositionsExecution } from "./edge61-executor"
+import { Edge60SpotPositionsExecution } from "./stop-limit-exit-executor"
+import { Edge61SpotPositionsExecution } from "./oco-exit-executor"
 import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/open_spot"
 import {

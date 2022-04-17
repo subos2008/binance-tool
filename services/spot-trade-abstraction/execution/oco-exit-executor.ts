@@ -26,8 +26,7 @@ import {
 } from "../../../classes/spot/abstractions/position-identifier"
 import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
 import {
-  TradeAbstractionOpenSpotLongCommand,
-  TradeAbstractionOpenSpotLongCommand_Edge61,
+  TradeAbstractionOpenSpotLongCommand_OCO_Exit,
   TradeAbstractionOpenSpotLongResult,
 } from "../interfaces/open_spot"
 
@@ -93,7 +92,7 @@ export class Edge61SpotPositionsExecution {
   }
 
   async open_position(
-    args: TradeAbstractionOpenSpotLongCommand_Edge61
+    args: TradeAbstractionOpenSpotLongCommand_OCO_Exit
   ): Promise<TradeAbstractionOpenSpotLongResult> {
     try {
       let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args

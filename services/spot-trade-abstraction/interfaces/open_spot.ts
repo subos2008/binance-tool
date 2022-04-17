@@ -11,7 +11,7 @@ export interface TradeAbstractionOpenSpotLongCommand {
   signal_timestamp_ms: string
 }
 
-export interface TradeAbstractionOpenSpotLongCommand_Edge60 {
+export interface TradeAbstractionOpenSpotLongCommand__StopLimitExit {
   base_asset: string
   quote_asset: string // added by the TAS before it hits the EE
   edge: AuthorisedEdgeType
@@ -23,7 +23,7 @@ export interface TradeAbstractionOpenSpotLongCommand_Edge60 {
   edge_percentage_buy_limit: BigNumber
 }
 
-export interface TradeAbstractionOpenSpotLongCommand_Edge61 {
+export interface TradeAbstractionOpenSpotLongCommand_OCO_Exit {
   base_asset: string
   quote_asset: string // added by the TAS before it hits the EE
   edge: AuthorisedEdgeType

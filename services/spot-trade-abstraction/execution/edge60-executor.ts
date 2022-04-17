@@ -115,8 +115,9 @@ export class Edge60SpotPositionsExecution {
   ): Promise<TradeAbstractionOpenSpotLongResult> {
     let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
     let { edge_percentage_stop, edge_percentage_buy_limit } = args
+    let tags = { edge, base_asset, quote_asset }
 
-    this.logger.object({ object_type: "SpotPositionExecutionOpenRequest", ...args })
+    this.logger.info(tags, { object_type: "SpotPositionExecutionOpenRequest", ...args })
 
     let prefix = `${edge}:${base_asset} open spot long: `
 
@@ -125,7 +126,7 @@ export class Edge60SpotPositionsExecution {
     if (trigger_price_string) {
       trigger_price = new BigNumber(trigger_price_string)
     } else {
-      this.logger.warn(`Using current price as trigger_price for ${args.edge}:${args.base_asset} entry`)
+      this.logger.warn(tags, `Using current price as trigger_price for ${args.edge}:${args.base_asset} entry`)
       trigger_price = await this.price_getter.get_current_price({ market_symbol: market_identifier.symbol })
     }
 
@@ -139,7 +140,7 @@ export class Edge60SpotPositionsExecution {
     let limit_price = trigger_price.times(limit_price_factor)
     let base_amount = quote_amount.dividedBy(limit_price)
 
-    this.logger.object({
+    this.logger.info(tags, {
       object_type: "SpotPositionExecutionOpenRequest",
       ...args,
       buy_limit_price: limit_price,
@@ -159,8 +160,8 @@ export class Edge60SpotPositionsExecution {
     let { executed_quote_quantity, executed_price, executed_base_quantity, execution_timestamp_ms } = buy_result
 
     if (executed_base_quantity.isZero()) {
-      let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
-      this.logger.info(msg)
+      // let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
+      // this.logger.info(tags, msg)
       // this.send_message(msg, { edge, base_asset })
       let ret: TradeAbstractionOpenSpotLongResult = {
         object_type: "TradeAbstractionOpenSpotLongResult",
@@ -172,13 +173,13 @@ export class Edge60SpotPositionsExecution {
         msg: `${prefix}: ENTRY_FAILED_TO_FILL`,
         execution_timestamp_ms,
       }
-      this.logger.object(ret)
+      this.logger.object(tags, ret)
       return ret
     } else {
       let msg = `${edge}:${
         args.base_asset
       } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
-      this.logger.info(msg)
+      this.logger.info(tags, msg)
       // this.send_message(msg, { edge, base_asset })
     }
 
@@ -186,9 +187,15 @@ export class Edge60SpotPositionsExecution {
 
     let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
     let stop_price = executed_price.times(stop_price_factor)
-    this.logger.info(
-      `Calculated stop price of ${stop_price.toFixed()} given buy executed price of ${executed_price.toFixed()}`
-    )
+
+    this.logger.object(tags, {
+      object_type: "SpotPositionExecutionCreateStopExitOrderRequest",
+      ...args,
+      buy_limit_price: limit_price,
+      quote_amount,
+      base_amount,
+      stop_price,
+    })
 
     let stop_order_id: OrderId | undefined
     let stop_cmd: SpotStopMarketSellCommand = {
@@ -198,7 +205,8 @@ export class Edge60SpotPositionsExecution {
       base_amount: executed_base_quantity,
       trigger_price: stop_price,
     }
-    this.logger.info(stop_cmd)
+    this.logger.info(tags, stop_cmd)
+
     try {
       let stop_result = await this.ee.stop_market_sell(stop_cmd)
       stop_order_id = stop_result.order_id
@@ -209,15 +217,14 @@ export class Edge60SpotPositionsExecution {
         edge: args.edge,
       }
       await this.positions_persistance.set_stop_order(spot_position_identifier, stop_order_id.toString())
-      this.logger.warn(`e60: can throw instead of returning enum status result`)
+      this.logger.warn(tags, `e60: can throw instead of returning enum status result`)
     } catch (err) {
       Sentry.captureException(err)
-      this.send_message(
-        `Failed to create stop limit order for ${args.edge}:${args.base_asset} on ${
-          stop_cmd.market_identifier.symbol
-        } at ${stop_price.toFixed()}`,
-        { edge, base_asset }
-      )
+      let msg = `Failed to create stop limit order for ${args.edge}:${args.base_asset} on ${
+        stop_cmd.market_identifier.symbol
+      } at ${stop_price.toFixed()}`
+      this.send_message(msg, tags)
+      this.logger.error(tags)
       throw err
     }
 

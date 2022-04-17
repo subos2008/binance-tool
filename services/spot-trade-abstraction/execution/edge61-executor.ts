@@ -11,12 +11,19 @@ BigNumber.prototype.valueOf = function () {
 
 import { Logger } from "../../../interfaces/logger"
 import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
-import { OrderContext_V1, SpotExecutionEngine } from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
+import {
+  OrderContext_V1,
+  SpotExecutionEngine,
+} from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
 import { SpotPositionsPersistance } from "../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SendMessageFunc } from "../../../lib/telegram-v2"
 import { PositionSizer } from "../fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
-import { AuthorisedEdgeType, check_edge, SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
+import {
+  AuthorisedEdgeType,
+  check_edge,
+  SpotPositionIdentifier_V3,
+} from "../../../classes/spot/abstractions/position-identifier"
 import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
 import {
   TradeAbstractionOpenSpotLongCommand,
@@ -99,13 +106,14 @@ export class Edge61SpotPositionsExecution {
       } = args
 
       let prefix = `${edge}:${base_asset} open spot long: `
+      let tags = { edge, base_asset, quote_asset }
 
       let market_identifier: MarketIdentifier_V3 = this.get_market_identifier_for({ ...args, quote_asset })
       let trigger_price: BigNumber | undefined
       if (trigger_price_string) {
         trigger_price = new BigNumber(trigger_price_string)
       } else {
-        this.logger.warn(`Using current price as trigger_price for ${args.edge}:${args.base_asset} entry`)
+        this.logger.warn(tags, `Using current price as trigger_price for ${args.edge}:${args.base_asset} entry`)
         trigger_price = await this.price_getter.get_current_price({ market_symbol: market_identifier.symbol })
       }
 
@@ -119,7 +127,7 @@ export class Edge61SpotPositionsExecution {
       let limit_price = trigger_price.times(limit_price_factor)
       let base_amount = quote_amount.dividedBy(limit_price)
 
-      this.logger.object({
+      this.logger.info(tags, {
         object_type: "SpotPositionExecutionOpenRequest",
         ...args,
         buy_limit_price: limit_price,
@@ -140,7 +148,7 @@ export class Edge61SpotPositionsExecution {
 
       if (executed_base_quantity.isZero()) {
         let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
-        this.logger.info(msg)
+        this.logger.info(tags, msg)
         // this.send_message(msg, { edge, base_asset })
         let ret: TradeAbstractionOpenSpotLongResult = {
           object_type: "TradeAbstractionOpenSpotLongResult",
@@ -152,13 +160,13 @@ export class Edge61SpotPositionsExecution {
           msg: `${prefix}: ENTRY_FAILED_TO_FILL`,
           execution_timestamp_ms,
         }
-        this.logger.object(ret)
+        this.logger.info(tags, ret)
         return ret
       } else {
         let msg = `${edge}:${
           args.base_asset
         } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
-        this.logger.info(msg)
+        this.logger.info(tags, msg)
         // this.send_message(msg, { edge, base_asset })
       }
 
@@ -168,15 +176,20 @@ export class Edge61SpotPositionsExecution {
       let stop_price = trigger_price.times(stop_price_factor)
       let stop_limit_price_factor = new BigNumber(100).minus(edge_percentage_stop_limit).div(100)
       let stop_limit_price = trigger_price.times(stop_limit_price_factor)
-      this.logger.info(
-        `Calculated stop price of ${stop_price.toFixed()} given trigger price of ${trigger_price.toFixed()}`
-      )
 
       let take_profit_price_factor = new BigNumber(100).plus(edge_percentage_take_profit).div(100)
       let take_profit_price = trigger_price.times(take_profit_price_factor)
-      this.logger.info(
-        `Calculated take profit price of ${take_profit_price.toFixed()} given trigger price of ${trigger_price.toFixed()}`
-      )
+
+      this.logger.info(tags, {
+        object_type: "SpotPositionExecutionCreateOCOExitOrderRequest",
+        ...args,
+        buy_limit_price: limit_price,
+        quote_amount,
+        base_amount,
+        stop_price,
+        take_profit_price,
+        stop_limit_price,
+      })
 
       let { clientOrderId: stop_ClientOrderId } = await this.ee.store_order_context_and_generate_clientOrderId(
         cmd.order_context
@@ -205,16 +218,16 @@ export class Edge61SpotPositionsExecution {
         take_profit_ClientOrderId,
         oco_list_ClientOrderId,
       }
-      this.logger.info(oco_cmd)
+      this.logger.info(tags, oco_cmd)
 
       try {
         let oco_result = await this.ee.oco_sell_order(oco_cmd)
       } catch (err) {
-        this.logger.warn({ err })
+        this.logger.warn(tags, { err })
         Sentry.captureException(err)
 
         /** If we failed to create the OCO order then dump the position */
-        this.logger.warn({ edge, base_asset }, `Failed to create OCO order, dumping position`)
+        this.logger.warn(tags, `Failed to create OCO order, dumping position`)
         let market_sell_cmd: SpotMarketSellCommand = {
           order_context,
           market_identifier,
@@ -235,7 +248,7 @@ export class Edge61SpotPositionsExecution {
           created_stop_order: false,
           created_take_profit_order: false,
         }
-        this.logger.object(ret)
+        this.logger.info(tags, ret)
         return ret
       }
 

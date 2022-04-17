@@ -1,6 +1,6 @@
 import { strict as assert } from "assert"
 
-import Sentry from "../../lib/sentry"
+import Sentry from "../../../lib/sentry"
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -9,31 +9,31 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../interfaces/logger"
-import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
+import { Logger } from "../../../interfaces/logger"
+import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
 import {
   OrderContext_V1,
   SpotExecutionEngine,
-} from "../../classes/spot/exchanges/interfaces/spot-execution-engine"
-import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
-import { SendMessageFunc } from "../../lib/telegram-v2"
-import { PositionSizer } from "./fixed-position-sizer"
-import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
+} from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
+import { SpotPositionsPersistance } from "../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SendMessageFunc } from "../../../lib/telegram-v2"
+import { PositionSizer } from "../fixed-position-sizer"
+import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import {
   AuthorisedEdgeType,
   check_edge,
   SpotPositionIdentifier_V3,
-} from "../../classes/spot/abstractions/position-identifier"
-import { OrderId } from "../../classes/spot/persistence/interface/order-context-persistence"
-import { Edge60SpotPositionsExecution } from "../../classes/spot/execution/entry-executors/edge60-executor"
-import { Edge61SpotPositionsExecution } from "../../classes/spot/execution/entry-executors/edge61-executor"
-import { CurrentPriceGetter } from "../../interfaces/exchange/generic/price-getter"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
+} from "../../../classes/spot/abstractions/position-identifier"
+import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
+import { Edge60SpotPositionsExecution } from "../../../classes/spot/execution/entry-executors/edge60-executor"
+import { Edge61SpotPositionsExecution } from "../../../classes/spot/execution/entry-executors/edge61-executor"
+import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
+import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/open_spot"
 import {
   TradeAbstractionCloseSpotLongResult,
   TradeAbstractionCloseSpotLongResult_NOT_FOUND,
   TradeAbstractionCloseSpotLongResult_SUCCESS,
-} from "./interfaces/close_spot"
+} from "../interfaces/close_spot"
 
 /**
  * If this does the execution of spot position entry/exit

@@ -169,6 +169,15 @@ export class SpotPositionsExecution {
             edge_percentage_take_profit: new BigNumber(5),
             edge_percentage_buy_limit: new BigNumber(0.5),
           })
+        case "edge62":
+          return this.oco_executor.open_position({
+            ...args,
+            quote_asset,
+            edge_percentage_stop: new BigNumber(7),
+            edge_percentage_stop_limit: new BigNumber(15),
+            edge_percentage_take_profit: new BigNumber(7),
+            edge_percentage_buy_limit: new BigNumber(0.5),
+          })
         default:
           let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
           this.send_message(msg, { edge })

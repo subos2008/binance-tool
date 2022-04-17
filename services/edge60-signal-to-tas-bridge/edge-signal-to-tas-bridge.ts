@@ -16,12 +16,13 @@ import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/h
 import { MessageProcessor } from "../../classes/amqp/interfaces"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { Channel } from "amqplib"
-import express, { Request, Response } from "express"
+import express from "express"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
-import { Edge60EntrySignalFanout, Edge60EntrySignalProcessor } from "./on-edge60-signal"
 import * as Sentry from "@sentry/node"
 import { Logger } from "../../interfaces/logger"
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
+import { Edge60EntrySignalFanout } from "./fanout"
+import { Edge60EntrySignalProcessor } from "./interfaces"
 
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
@@ -51,7 +52,7 @@ class Edge60MessageProcessor implements MessageProcessor {
   logger: Logger
   event_name: MyEventNameType
   tas_client: SpotTradeAbstractionServiceClient
-  processor: Edge60EntrySignalProcessor
+  fanout: Edge60EntrySignalProcessor
 
   constructor({
     send_message,
@@ -70,7 +71,7 @@ class Edge60MessageProcessor implements MessageProcessor {
     this.send_message = send_message
     this.tas_client = new SpotTradeAbstractionServiceClient({ logger })
     this.event_name = event_name
-    this.processor = new Edge60EntrySignalFanout({ logger, event_name, send_message })
+    this.fanout = new Edge60EntrySignalFanout({ logger, event_name, send_message })
     const amqp_health: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
       name: `amqp-listener-${event_name}`,
       ready: true,
@@ -102,7 +103,7 @@ class Edge60MessageProcessor implements MessageProcessor {
           `base_asset not specified in market_identifier: ${JSON.stringify(signal.market_identifier)}`
         )
       }
-      this.processor.process_edge60_entry_signal(signal)
+      this.fanout.process_edge60_entry_signal(signal)
     } catch (err) {
       Sentry.captureException(err)
       this.logger.error({ err })
@@ -149,4 +150,3 @@ app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readine
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)
-

@@ -75,11 +75,12 @@ export class Edge60 implements Edge60EntrySignalProcessor {
     if (!base_asset) {
       throw new Error(`base_asset not specified in market_identifier: ${JSON.stringify(signal.market_identifier)}`)
     }
+    let tags = { base_asset, edge }
 
     let result: TradeAbstractionOpenSpotLongResult | TradeAbstractionCloseSpotLongResult
     switch (signal.edge60_entry_signal.direction) {
       case "long":
-        this.logger.info(`long signal, attempting to open ${edge} spot long position on ${base_asset}`)
+        this.logger.info(tags, `long signal, attempting to open ${edge} spot long position on ${base_asset}`)
         result = await this.tas_client.open_spot_long({
           base_asset,
           edge,
@@ -91,7 +92,10 @@ export class Edge60 implements Edge60EntrySignalProcessor {
         break
       case "short":
         try {
-          this.logger.info(`short signal, attempting to close any ${edge} spot long position on ${base_asset}`)
+          this.logger.info(
+            tags,
+            `short signal, attempting to close any ${edge} spot long position on ${base_asset}`
+          )
           result = await this.tas_client.close_spot_long({
             base_asset,
             edge,
@@ -102,7 +106,7 @@ export class Edge60 implements Edge60EntrySignalProcessor {
           /**
            * There are probably valid cases for this - like these was no long position open
            */
-          this.logger.warn({ err })
+          this.logger.warn(tags, { err })
           Sentry.captureException(err)
         }
         break

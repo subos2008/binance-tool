@@ -243,7 +243,7 @@ class Edge61Service implements LongShortEntrySignalsCallbacks {
   }) {
     let event: EdgeDirectionSignal = {
       object_type: "EdgeDirectionSignal",
-      version: "v1",
+      version: 1,
       edge: "edge61",
       market_identifier,
       direction,

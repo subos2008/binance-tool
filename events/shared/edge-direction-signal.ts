@@ -6,7 +6,7 @@ import { MarketIdentifier_V3 } from "./market-identifier"
 /** For edges that signal flip-flop long/short */
 export interface EdgeDirectionSignal {
   object_type: "EdgeDirectionSignal"
-  version: "v1"
+  version: 1
   edge: AuthorisedEdgeType
   direction: "long" | "short"
   base_asset?: string

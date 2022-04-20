@@ -9,6 +9,7 @@ export interface Edge60PositionEntrySignal {
   version: "v1" | 2
   edge: "edge60"
   object_type: "Edge60EntrySignal"
+  base_asset?: string
   market_identifier: MarketIdentifier_V3
   edge60_parameters: Edge60Parameters
   edge60_entry_signal: {

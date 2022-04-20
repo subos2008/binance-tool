@@ -65,7 +65,6 @@ export class Edge60Forwarder implements Edge60EntrySignalProcessor {
   }
 
   async process_edge60_entry_signal(signal: Edge60PositionEntrySignal) {
-    assert.equal(signal.version, "v1")
     assert.equal(signal.object_type, "Edge60EntrySignal")
     assert.equal(signal.edge, "edge60")
 

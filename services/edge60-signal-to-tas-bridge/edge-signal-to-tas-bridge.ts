@@ -92,7 +92,6 @@ class Edge60MessageProcessor implements MessageProcessor {
       let Body = event.content.toString()
       this.logger.info(Body)
       let signal: Edge60PositionEntrySignal = JSON.parse(Body)
-      assert.equal(signal.version, "v1")
       assert.equal(signal.object_type, "Edge60EntrySignal")
       let { base_asset } = signal.market_identifier
       let { edge } = signal

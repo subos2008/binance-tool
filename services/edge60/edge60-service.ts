@@ -53,6 +53,7 @@ import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { disallowed_base_assets_for_entry } from "../../lib/stable-coins"
 import { BaseAssetsList } from "./base-assets-list"
 import { Edge60EntrySignals } from "./edge60-entry-signals"
+import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
 
 var statsd = new StatsD()
 
@@ -222,12 +223,15 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     signal_timestamp_ms: number
     market_identifier: MarketIdentifier_V3
   }) {
+    const edge: AuthorisedEdgeType = "edge60"
+    let base_asset = market_identifier.base_asset
     let event: Edge60PositionEntrySignal = {
-      version: 2,
-      base_asset: market_identifier.base_asset,
-      edge: "edge60",
-      market_identifier,
       object_type: "Edge60EntrySignal",
+      version: 2,
+      msg: `${edge} ${direction} signal on ${base_asset} (${symbol})`,
+      base_asset,
+      edge,
+      market_identifier,
       edge60_parameters,
       edge60_entry_signal: {
         direction,

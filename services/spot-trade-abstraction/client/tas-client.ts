@@ -65,10 +65,7 @@ export class SpotTradeAbstractionServiceClient {
       }
 
       let response = await axios(options)
-      if (response.status == 200) {
-        return response.data
-      }
-      throw new Error(`Bad response code calling ${options.url}, response: ${response}`)
+      return response.data
     } catch (err) {
       Sentry.captureException(err)
       this.logger.error({ err })

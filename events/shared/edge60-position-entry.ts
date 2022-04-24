@@ -10,6 +10,7 @@ export interface Edge60PositionEntrySignal {
   edge: "edge60"
   object_type: "Edge60EntrySignal"
   base_asset?: string
+  direction: "long" | "short"
   msg: string
   market_identifier: MarketIdentifier_V3
   edge60_parameters: Edge60Parameters

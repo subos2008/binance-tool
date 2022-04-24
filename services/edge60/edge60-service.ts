@@ -230,6 +230,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
       version: 2,
       msg: `${edge} ${direction} signal on ${base_asset} (${symbol})`,
       base_asset,
+      direction,
       edge,
       market_identifier,
       edge60_parameters,

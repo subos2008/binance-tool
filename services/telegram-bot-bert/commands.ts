@@ -3,8 +3,14 @@ import { Logger } from "../../interfaces/logger"
 import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/client/tas-client"
 
 import * as Sentry from "@sentry/node"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../spot-trade-abstraction/interfaces/open_spot"
-import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "../spot-trade-abstraction/interfaces/close_spot"
+import {
+  TradeAbstractionOpenSpotLongCommand,
+  TradeAbstractionOpenSpotLongResult,
+} from "../spot-trade-abstraction/interfaces/open_spot"
+import {
+  TradeAbstractionCloseLongCommand,
+  TradeAbstractionCloseSpotLongResult,
+} from "../spot-trade-abstraction/interfaces/close_spot"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
 Sentry.init({})
 // Sentry.configureScope(function (scope: any) {
@@ -148,7 +154,7 @@ export class Commands {
   async close_spot_long(
     ctx: NarrowedContext<Context, Types.MountMap["text"]>,
     { asset, edge }: { asset: string; edge: string }
-  ) {
+  ): Promise<TradeAbstractionCloseSpotLongResult> {
     let msg = `${edge.toUpperCase()}: closing spot long on ${asset}`
     ctx.reply(msg)
     let result: TradeAbstractionCloseSpotLongResult = await this.tas_client.close_spot_long({
@@ -157,6 +163,7 @@ export class Commands {
       direction: "long",
       action: "close",
     })
+    ctx.reply(`Spot long close on ${edge}:${asset}: ${result.status}`)
     return result
   }
 }

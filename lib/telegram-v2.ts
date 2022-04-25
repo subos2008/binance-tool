@@ -36,6 +36,8 @@ export class SendMessage {
   get_chat_id(tags?: ContextTags): string {
     if (tags?.edge === "edge61") return "-682031175"
     if (tags?.edge === "edge60") return "-795241615"
+    if (tags?.edge === "edge62") return "-795241615"
+    if (tags?.edge === "edge63") return "-795241615"
     return process.env.TELEGRAM_CHAT_ID as string
   }
 

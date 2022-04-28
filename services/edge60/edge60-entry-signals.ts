@@ -30,6 +30,7 @@ import { DateTime } from "luxon"
 
 export class Edge60EntrySignals {
   symbol: string
+  base_asset: string
   logger: Logger
   market_data: CoinGeckoMarketData
 
@@ -43,6 +44,7 @@ export class Edge60EntrySignals {
     market_data,
     callbacks,
     edge60_parameters,
+    base_asset,
   }: {
     logger: Logger
     initial_candles: CandleChartResult[]
@@ -50,11 +52,13 @@ export class Edge60EntrySignals {
     market_data: CoinGeckoMarketData
     callbacks: LongShortEntrySignalsCallbacks
     edge60_parameters: Edge60Parameters
+    base_asset: string
   }) {
     this.symbol = symbol
     this.logger = logger
     this.market_data = market_data
     this.callbacks = callbacks
+    this.base_asset = base_asset
 
     this.price_history_candles = new LimitedLengthCandlesHistory({
       length: edge60_parameters.days_of_price_history,
@@ -78,13 +82,17 @@ export class Edge60EntrySignals {
     symbol: string
     candle: EdgeCandle
   }) {
+    let base_asset = this.base_asset
+    let tags: Object = { symbol, base_asset, edge: "edge60" }
     if (timeframe !== "1d") {
       let msg = `Short timeframe candle on ${this.symbol} closed at ${candle.close}`
-      this.logger.info(msg)
+      this.logger.info(tags, msg)
       throw new Error(msg)
     }
 
-    this.logger.debug({ signal: "new_candle", symbol }, `${symbol} ingesting new candle`)
+    // assert.equal(symbol, this.symbol)
+
+    this.logger.debug(tags, { signal: "new_candle", symbol }, `${symbol} ingesting new candle`)
 
     try {
       let potential_entry_price = new BigNumber(candle["close"])
@@ -92,11 +100,16 @@ export class Edge60EntrySignals {
       let low = new BigNumber(candle["low"])
       let { high: highest_price } = this.price_history_candles.get_highest_value()
       let { low: lowest_price } = this.price_history_candles.get_lowest_value()
+      
+      // Debug info
+      let debug_string = `${symbol}: H: ${high.toFixed()} vs ${highest_price.toFixed()} L: ${low.toFixed()} vs ${lowest_price.toFixed()}`
+      // let high_candles
 
       let direction: "long" | "short" | undefined = undefined
 
       if (!this.price_history_candles.full()) {
         this.logger.info(
+          tags,
           `${symbol}: insufficient candles of history, currently ${this.price_history_candles.current_number_of_stored_candles()}`
         )
         return // should execute finally block
@@ -105,7 +118,7 @@ export class Edge60EntrySignals {
       // Check for entry signal in both directions and ignore
       if (high.isGreaterThan(highest_price) && low.isLessThan(lowest_price)) {
         let msg = `${symbol} Price entry signal both long and short, skipping...`
-        this.logger.warn(msg)
+        this.logger.warn(tags, msg)
         throw new Error(msg)
       }
 
@@ -114,8 +127,10 @@ export class Edge60EntrySignals {
       // check for long entry
       if (high.isGreaterThan(highest_price)) {
         direction = "long"
+        tags = { ...tags, direction }
         this.logger.info(
-          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: ${high.toFixed()} greater than ${highest_price.toFixed()}`
+          tags,
+          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: ${high.toFixed()} greater than ${highest_price.toFixed()}: ${debug_string}`
         )
         this.callbacks.enter_position({
           symbol: this.symbol,
@@ -129,8 +144,10 @@ export class Edge60EntrySignals {
       // check for short entry
       if (low.isLessThan(lowest_price)) {
         direction = "short"
+        tags = { ...tags, direction }
         this.logger.info(
-          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}: ${low.toFixed()} less than ${lowest_price.toFixed()}`
+          tags,
+          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}: ${low.toFixed()} less than ${lowest_price.toFixed()}: ${debug_string}`
         )
         this.callbacks.enter_position({
           symbol: this.symbol,
@@ -142,9 +159,7 @@ export class Edge60EntrySignals {
       }
 
       if (direction === undefined) {
-        this.logger.info(
-          `${symbol}: No signal H: ${high.toFixed()} vs ${highest_price.toFixed()} L: ${low.toFixed()} vs ${lowest_price.toFixed()}`
-        )
+        this.logger.info(tags, `${symbol}: No signal ${debug_string}`)
       }
     } catch (err) {
       this.logger.error(`Exception checking or entering position: ${err}`)

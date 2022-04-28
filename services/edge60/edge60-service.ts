@@ -321,7 +321,8 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
     let required_initial_candles = Edge60EntrySignals.required_initial_candles(edge60_parameters)
     for (let i = 0; i < base_assets.length; i++) {
-      let symbol = to_symbol(base_assets[i])
+      let base_asset = base_assets[i]
+      let symbol = to_symbol(base_asset)
       // not all of these will be on Binance, they just throw if missing
       try {
         // Last N closed candles exist between N+1 ago and now (actually and midnight last night)
@@ -356,6 +357,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
           market_data: this.market_data[i],
           callbacks: this,
           edge60_parameters,
+          base_asset
         })
         this.logger.info(`Setup edge for ${symbol} with ${initial_candles.length} initial candles`)
         await sleep(200) // 1200 calls allowed per minute per IP address

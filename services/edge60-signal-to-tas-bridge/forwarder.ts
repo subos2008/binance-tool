@@ -43,17 +43,20 @@ export class Edge60Forwarder implements Edge60EntrySignalProcessor {
   event_name: MyEventNameType
   tas_client: SpotTradeAbstractionServiceClient
   edge: AuthorisedEdgeType
+  forward_short_signals_as_close_position: boolean
 
   constructor({
     send_message,
     logger,
     event_name,
     edge,
+    forward_short_signals_as_close_position,
   }: {
     send_message: (msg: string) => void
     logger: Logger
     event_name: MyEventNameType
     edge: AuthorisedEdgeType
+    forward_short_signals_as_close_position: boolean
   }) {
     assert(logger)
     this.logger = logger
@@ -62,6 +65,7 @@ export class Edge60Forwarder implements Edge60EntrySignalProcessor {
     this.tas_client = new SpotTradeAbstractionServiceClient({ logger })
     this.event_name = event_name
     this.edge = edge
+    this.forward_short_signals_as_close_position = forward_short_signals_as_close_position
   }
 
   async process_edge60_entry_signal(signal: Edge60PositionEntrySignal) {
@@ -89,23 +93,29 @@ export class Edge60Forwarder implements Edge60EntrySignalProcessor {
         })
         break
       case "short":
-        try {
-          this.logger.info(
-            tags,
-            `short signal, attempting to close any ${edge} spot long position on ${base_asset}`
-          )
-          result = await this.tas_client.close_spot_long({
-            base_asset,
-            edge,
-            direction: "long", // this direction is confising, it's the direction of the position to close, i.e. short = long
-            action: "close",
-          })
-        } catch (err) {
-          /**
-           * There are probably valid cases for this - like these was no long position open
-           */
-          this.logger.warn(tags, { err })
-          Sentry.captureException(err)
+        if (this.forward_short_signals_as_close_position) {
+          try {
+            this.logger.info(
+              tags,
+              `short signal, attempting to close any ${edge} spot long position on ${base_asset}`
+            )
+            result = await this.tas_client.close_spot_long({
+              base_asset,
+              edge,
+              direction: "long", // this direction is confising, it's the direction of the position to close, i.e. short = long
+              action: "close",
+            })
+          } catch (err: any) {
+            /**
+             * There are probably valid cases for this - like these was no long position open
+             */
+            if (err.status == 404) {
+              this.logger.info(tags, `404 - position not found closing ${base_asset} spot long`)
+              return
+            }
+            this.logger.warn(tags, { err })
+            Sentry.captureException(err)
+          }
         }
         break
       default:

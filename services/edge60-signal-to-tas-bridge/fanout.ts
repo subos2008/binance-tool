@@ -30,8 +30,22 @@ export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
     this.send_message = send_message
     this.tas_client = new SpotTradeAbstractionServiceClient({ logger })
     this.event_name = event_name
-    this.edge60 = new Edge60Forwarder({ send_message, logger, event_name, edge: "edge60" })
-    this.edge62 = new Edge60Forwarder({ send_message, logger, event_name, edge: "edge62" })
+
+    this.edge60 = new Edge60Forwarder({
+      send_message,
+      logger,
+      event_name,
+      edge: "edge60",
+      forward_short_signals_as_close_position: true,
+    })
+
+    this.edge62 = new Edge60Forwarder({
+      send_message,
+      logger,
+      event_name,
+      edge: "edge62",
+      forward_short_signals_as_close_position: false,
+    })
   }
 
   async process_edge60_entry_signal(signal: Edge60PositionEntrySignal) {

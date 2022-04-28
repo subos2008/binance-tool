@@ -11,4 +11,5 @@ export interface SpotEdgePerformanceEvent {
   loss?: boolean
   entry_timestamp_ms?: number
   exit_timestamp_ms?: number
+  days_in_position: number
 }

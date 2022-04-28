@@ -10,6 +10,7 @@ import { strict as assert } from "assert"
 const service_name = "edge-performance-tracker"
 
 import { ListenerFactory } from "../../classes/amqp/listener-factory"
+import { Duration } from "luxon"
 
 require("dotenv").config()
 
@@ -105,6 +106,10 @@ class EventLogger implements MessageProcessor {
 
       let { edge, percentage_quote_change, base_asset, abs_quote_change } = i
       let loss = percentage_quote_change ? percentage_quote_change < 0 : undefined
+
+      let duration = Duration.fromMillis(i.exit_timestamp_ms - i.initial_entry_timestamp_ms)
+      let days_in_position = duration.as("days")
+
       let o: SpotEdgePerformanceEvent = {
         object_type: "SpotEdgePerformanceEvent",
         version: 1,
@@ -117,12 +122,13 @@ class EventLogger implements MessageProcessor {
         exchange_type: i.exchange_identifier.type,
         entry_timestamp_ms: i.initial_entry_timestamp_ms,
         exit_timestamp_ms: i.exit_timestamp_ms,
+        days_in_position,
       }
 
       try {
         let msg: string = `Closed position on ${edge}:${base_asset} with percentage_quote_change of ${
           percentage_quote_change ? new BigNumber(percentage_quote_change.toString()).dp(2).toFixed() : "unknown"
-        }%`
+        }%, in position for ${days_in_position} days`
         this.send_message(msg, { edge })
       } catch (e: any) {
         this.logger.error(e)
@@ -130,14 +136,14 @@ class EventLogger implements MessageProcessor {
       }
 
       try {
-        this.mongodb_uploader.ingest_event(o)
+        await this.mongodb_uploader.ingest_event(o)
       } catch (e: any) {
         this.logger.error(e)
         Sentry.captureException(e)
       }
 
       try {
-        this.persistence.ingest_event(i)
+        await this.persistence.ingest_event(i)
       } catch (e: any) {
         this.logger.error(e)
         Sentry.captureException(e)

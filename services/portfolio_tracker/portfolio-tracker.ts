@@ -110,6 +110,7 @@ class PortfolioTracker implements MasterPortfolioClass {
           let tags: Tags = { base_asset, quote_asset, exchange, account }
           let stat = `trading-engine.portfilio.spot.holdings.${quote_asset}`
           statsd.gauge(stat, Number(quote_amount), undefined, tags)
+          this.logger.info(tags, `Submited metric portfolio in ${quote_asset} for ${base_asset}`)
         }
       }
     } catch (err) {

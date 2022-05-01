@@ -35,6 +35,8 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
+import { StatsD, Tags } from "hot-shots"
+const statsd = new StatsD()
 
 // redis + events publishing + binance
 
@@ -96,6 +98,24 @@ class PortfolioTracker implements MasterPortfolioClass {
     // TODO: account not used in ExchangeIdentifier: default (default added so this appears in greps)
     this.portfolios[exchange_identifier.exchange] = portfolio
     this.report_current_portfolio() // this line is going to be a problem when we have multiple exchanges
+
+    try {
+      // Submit metrics
+      for (const balance of portfolio.balances) {
+        let base_asset = balance.asset
+        for (const quote_asset in balance.quote_equivalents) {
+          let quote_amount = balance.quote_equivalents[quote_asset]
+          let exchange = exchange_identifier.exchange
+          let account = exchange_identifier.account
+          let tags: Tags = { base_asset, quote_asset, exchange, account }
+          let stat = `trading-engine.portfilio.spot.holdings.${quote_asset}`
+          statsd.gauge(stat, Number(quote_amount), undefined, tags)
+        }
+      }
+    } catch (err) {
+      Sentry.captureException(err)
+      console.error(err)
+    }
   }
 
   async update_and_report_portfolio() {

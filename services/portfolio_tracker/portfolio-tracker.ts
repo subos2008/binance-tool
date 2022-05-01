@@ -100,6 +100,7 @@ class PortfolioTracker implements MasterPortfolioClass {
     this.report_current_portfolio() // this line is going to be a problem when we have multiple exchanges
 
     try {
+      this.logger.info(`submitting metrics`)
       // Submit metrics
       for (const balance of portfolio.balances) {
         let base_asset = balance.asset

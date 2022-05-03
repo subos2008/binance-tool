@@ -75,8 +75,9 @@ class EventLogger implements MessageProcessor {
   async process_message(event: any, channel: Channel) {
     try {
       this.logger.info(event)
-      let event_name = event.object_type || "Orphaned"
       let Body = event.content.toString()
+      let event_object = JSON.parse(Body)
+      let event_name = event_object.object_type || "Orphaned"
       let Key = `${event_name}/${+new Date()}-${randomUUID()}.json` // ms timestamp
       let params: PutObjectRequest = { Bucket, Key, Body }
       const results = await s3Client.send(new PutObjectCommand(params))

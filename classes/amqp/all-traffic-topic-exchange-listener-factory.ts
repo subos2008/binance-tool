@@ -2,8 +2,6 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
-// const amqp_exchange_name = "positions"
-
 const connect_options = require("../../lib/amqp/connect_options").default
 
 import * as Sentry from "@sentry/node"
@@ -13,7 +11,6 @@ import { assert } from "console"
 import { Logger } from "../../interfaces/logger"
 import { HealthAndReadinessSubsystem } from "../health_and_readiness"
 import { MessageProcessor } from "./interfaces"
-import { MessageRouting, MyEventNameType } from "./message-routing"
 
 // A Factory / router where you give it an event type and some other shit like an exchange identifier
 // and it gives you the amqp connection / queue binding that calls your callback?
@@ -21,19 +18,6 @@ import { MessageRouting, MyEventNameType } from "./message-routing"
 // This class could also have a buddy class that
 // set up and check for all the expected queues and maybe even have an admin access to RabbitMQ?
 
-/**
- * PublisherFactory
- * ListenerFactory
- */
-
-/**
- * What do we currently have in our routing?
- * - MyEventNameType
- * - ExchangeIdentifier
- * - exchange (AMQP exchange name)
- * - routing_keys
- *
- * */
 
 // Prevents unhandled exceptions from MessageProcessor's
 class MessageProcessorIsolator implements MessageProcessor {
@@ -119,7 +103,7 @@ export class ListenerFactory {
     let { routing_key, durable } = { durable: false, routing_key: "#" } // '#' gets all messages
     let connection: Connection = await connect(connect_options)
     process.once("SIGINT", connection.close.bind(connection))
-    this.logger.info(`PositionsListener: Connection with AMQP server established.`)
+    this.logger.info(`AllTrafficTopicExchangeListener: Connection with AMQP server established.`)
     let channel: Channel = await connection.createChannel() // hangs
     let logger = this.logger
     channel.on("close", function () {
@@ -137,7 +121,7 @@ export class ListenerFactory {
     }
     channel.consume(q.queue, wrapper_func, { noAck: false })
     this.logger.info(
-      `ListenerFactory: waiting for events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}.`
+      `AllTrafficTopicExchangeListener: waiting for events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}.`
     )
   }
 }

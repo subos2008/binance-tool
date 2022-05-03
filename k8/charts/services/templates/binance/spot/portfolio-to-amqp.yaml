@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: binance-portfolio-to-amqp
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "binance-portfolio-to-amqp"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "binance-portfolio-to-amqp"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "binance-portfolio-to-amqp"}'
+        ad.datadoghq.com/binance-portfolio-to-amqp.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "binance-portfolio-to-amqp"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+      containers:
+        - name: binance-portfolio-to-amqp
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "./out/./services/binance/spot/portfolio-to-amqp/binance-portfolio-to-amqp", "--live"]
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /health
+          #     port: http
+          env:
+            - name: SENTRY_DSN
+              value: "https://fd044b9bc259422ea55a1910e3801aa8@o369902.ingest.sentry.io/5618730"
+{{- include "binance.vars" . | nindent 12 }}
+{{- include "datadog.vars" . | nindent 12 }}
+{{- include "telegram.vars" . | nindent 12 }}
+{{- include "amqp.vars" . | nindent 12 }}
+{{- include "redis.vars" . | nindent 12 }}

@@ -1,4 +1,5 @@
 import { SpotPosition } from "../classes/spot/abstractions/spot-position"
+import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
 // import { ExchangeIdentifier } from "../events/shared/exchange-identifier";
 
 export interface Balance {
@@ -20,4 +21,16 @@ export interface Portfolio {
   balances: Balance[]
   prices?: Prices
   positions?: { [name: string]: SpotPosition }
+}
+
+export interface SpotPortfolio {
+  object_type: "SpotPortfolio"
+  version: 1
+  exchange_identifier: ExchangeIdentifier_V3
+  timestamp_ms: number
+
+  usd_value?: string
+  btc_value?: string
+  balances: Balance[]
+  prices?: Prices
 }

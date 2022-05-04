@@ -49,7 +49,7 @@ const statsd = new StatsD()
 // 3. Maintain portfolio state - probably just in-process
 // 4. Publish to telegram when portfolio changes
 
-import { Logger } from "..../../../lib/faux_logger"
+import { Logger } from "../../../../lib/faux_logger"
 const logger = new Logger({ silent: false })
 
 import { BigNumber } from "bignumber.js"

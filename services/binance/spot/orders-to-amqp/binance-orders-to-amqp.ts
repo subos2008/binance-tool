@@ -28,7 +28,7 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "..../../../lib/faux_logger"
+import { Logger } from "../../../../lib/faux_logger"
 const logger = new Logger({ silent: false })
 
 import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"

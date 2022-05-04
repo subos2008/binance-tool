@@ -11,7 +11,18 @@ import { Logger } from "../../../interfaces/logger"
 import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/order_callbacks"
 
 import * as Sentry from "@sentry/node"
-import { Binance, ExecutionReport, UserDataStreamEvent } from "binance-api-node"
+import {
+  AccountConfigUpdate,
+  AccountUpdate,
+  BalanceUpdate,
+  Binance,
+  ExecutionReport,
+  MarginCall,
+  OrderUpdate,
+  OutboundAccountInfo,
+  OutboundAccountPosition,
+  UserDataStreamEvent,
+} from "binance-api-node"
 import { AuthorisedEdgeType } from "../../spot/abstractions/position-identifier"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { OrderContextPersistence } from "../../spot/persistence/interface/order-context-persistence"
@@ -25,12 +36,7 @@ export class OrderExecutionTracker {
   order_callbacks: OrderCallbacks | undefined
   print_all_trades: boolean = false
   order_context_persistence: OrderContextPersistence
-  exchange_identifier: ExchangeIdentifier_V3 = {
-    type: "spot",
-    exchange: "binance",
-    account: "default",
-    version: "v3",
-  }
+  exchange_identifier: ExchangeIdentifier_V3
 
   // All numbers are expected to be passed in as strings
   constructor({
@@ -40,6 +46,7 @@ export class OrderExecutionTracker {
     order_callbacks,
     print_all_trades,
     order_context_persistence,
+    exchange_identifier,
   }: {
     ee: Binance
     send_message: (msg: string) => void
@@ -47,6 +54,7 @@ export class OrderExecutionTracker {
     order_callbacks?: OrderCallbacks
     print_all_trades?: boolean
     order_context_persistence: OrderContextPersistence
+    exchange_identifier: ExchangeIdentifier_V3
   }) {
     assert(logger)
     this.logger = logger
@@ -57,6 +65,7 @@ export class OrderExecutionTracker {
     this.ee = ee
     if (print_all_trades) this.print_all_trades = true
     this.order_context_persistence = order_context_persistence
+    this.exchange_identifier = exchange_identifier
 
     process.on("exit", () => {
       this.shutdown_streams()
@@ -79,9 +88,9 @@ export class OrderExecutionTracker {
   }
 
   async monitor_user_stream() {
-    this.closeUserWebsocket = await this.ee.ws.user(async (_data: UserDataStreamEvent) => {
-      if (!(_data.eventType === "executionReport")) return
-      let data: ExecutionReport = _data as ExecutionReport
+    type processor_func = (data: ExecutionReport) => Promise<void>
+
+    const process_execution_report: processor_func = async (data: ExecutionReport) => {
       try {
         const { eventType } = data
         if (eventType !== "executionReport") {
@@ -100,11 +109,46 @@ export class OrderExecutionTracker {
           Sentry.captureException(err)
         })
         let msg = `SHIT: error calling processExecutionReport for pair ${data.symbol}`
-        this.logger.error(_data, msg)
+        this.logger.error(data, msg)
         this.logger.error({ err })
         this.send_message(msg)
       }
-    })
+    }
+
+    switch (this.exchange_identifier.type) {
+      case "spot":
+        this.closeUserWebsocket = await this.ee.ws.user(
+          async (
+            data: OutboundAccountInfo | ExecutionReport | BalanceUpdate | OutboundAccountPosition | MarginCall
+          ) => {
+            this.logger.info(data)
+            if (data.eventType === "executionReport") {
+              process_execution_report(data as ExecutionReport)
+            }
+          }
+        )
+        break
+      case "futures":
+        this.closeUserWebsocket = await this.ee.ws.futuresUser(
+          async (
+            data:
+              | OutboundAccountInfo
+              | ExecutionReport
+              | AccountUpdate
+              | OrderUpdate
+              | AccountConfigUpdate
+              | MarginCall
+          ) => {
+            this.logger.info(data)
+            if (data.eventType === "executionReport") {
+              process_execution_report(data as ExecutionReport)
+            }
+          }
+        )
+        break
+      default:
+        throw new Error(`Unknown exchange type: ${this.exchange_identifier.type}`)
+    }
   }
 
   async get_order_context_for_order(data: BinanceOrderData): Promise<OrderContext_V1> {
@@ -171,6 +215,7 @@ export class OrderExecutionTracker {
       order_is_is_client_order_id,
       version: 1,
       object_type: "BinanceOrderData",
+      exchange_identifier: this.exchange_identifier,
     }
     // How can I automagically check an input matches the expected type?
 

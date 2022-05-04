@@ -29,6 +29,12 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
+const exchange_identifier: ExchangeIdentifier_V3 = {
+  type: "spot",
+  version: "v3",
+  exchange: "binance",
+  account: "default",
+}
 
 import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 
@@ -125,6 +131,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
       logger,
       order_callbacks: this,
       order_context_persistence,
+      exchange_identifier,
     })
   }
 

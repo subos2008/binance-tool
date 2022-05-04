@@ -25,7 +25,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/order_execution_tracker"
 import { BinanceOrderData } from "../../../../interfaces/order_callbacks"
-import { ExchangeIdentifier } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { GenericTopicPublisher } from "../../../../classes/amqp/generic-publishers"
 import { HealthAndReadinessSubsystem } from "../../../../classes/health_and_readiness"
 import { MyEventNameType } from "../../../../classes/amqp/message-routing"
@@ -33,7 +33,12 @@ import { Connection } from "amqplib"
 import { RedisClient } from "redis"
 import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
-const exchange_identifier = { exchange: "binance", account: "default" }
+const exchange_identifier: ExchangeIdentifier_V3 = {
+  exchange: "binance",
+  account: "default",
+  type: "spot",
+  version: "v3",
+}
 
 export class BinanceOrderPublisher {
   logger: Logger
@@ -87,7 +92,7 @@ export class BinanceSpotOrdersToAMQP {
   logger: Logger
   ee: BinanceType
   order_execution_tracker: OrderExecutionTracker
-  exchange_identifier: ExchangeIdentifier
+  exchange_identifier: ExchangeIdentifier_V3
   health_and_readiness: HealthAndReadinessSubsystem
   publisher: BinanceOrderPublisher
 
@@ -121,6 +126,7 @@ export class BinanceSpotOrdersToAMQP {
       logger,
       order_callbacks: this,
       order_context_persistence,
+      exchange_identifier,
     })
 
     this.publisher = new BinanceOrderPublisher({

@@ -105,7 +105,7 @@ class MyOrderCallbacks {
     let averageExecutionPrice: string = data.averageExecutionPrice
       ? new BigNumber(data.averageExecutionPrice).toFixed()
       : "(null)"
-      let executedAmount = new BigNumber(data.totalTradeQuantity).isZero() ? 0 : data.totalTradeQuantity
+    let executedAmount = new BigNumber(data.totalTradeQuantity).isZero() ? 0 : data.totalTradeQuantity
     this.send_message(
       `${data.symbol} ${data.orderType} ${data.side} EXPIRED at ${price}/${averageExecutionPrice}, executed amount ${executedAmount} (edge: ${data.edge})`
     )
@@ -138,6 +138,7 @@ async function main() {
     logger,
     order_callbacks,
     order_context_persistence,
+    exchange_identifier: { type: "spot", version: "v3", exchange: "binance", account: "default" },
   })
 
   order_execution_tracker

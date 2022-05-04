@@ -123,11 +123,12 @@ async function main() {
     return result
   }
   const spot_positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
+  let exchange_identifier = ee.get_exchange_identifier()
   const spot_positions_query = new SpotPositionsQuery({
     logger,
     positions_persistance: spot_positions_persistance,
     send_message,
-    exchange_identifier: ee.get_exchange_identifier(),
+    exchange_identifier,
   })
 
   position_tracker = new SpotPositionTracker({
@@ -150,6 +151,7 @@ async function main() {
     logger,
     order_callbacks,
     order_context_persistence,
+    exchange_identifier,
   })
   order_execution_tracker
     .main()

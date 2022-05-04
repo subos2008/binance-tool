@@ -26,27 +26,30 @@
 //   totalQuoteTradeQuantity: string;
 // }
 
+import { ExecutionReport, OrderRejectReason, OrderStatus_LT, OrderType_LT } from "binance-api-node"
 import { AuthorisedEdgeType } from "../classes/spot/abstractions/position-identifier"
 import { OrderContext_V1 } from "../classes/spot/exchanges/interfaces/spot-execution-engine"
+import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
 import { BinanceOrderType } from "./exchange/binance/spot-orders"
 
 // Where the fuck is executedQuoteQuant?
-export interface BinanceOrderData {
+export interface BinanceOrderData extends ExecutionReport {
   object_type: "BinanceOrderData"
   version: 1
+  exchange_identifier: ExchangeIdentifier_V3
   order_id: string
-  order_is_is_client_order_id: boolean // did we use newClientOrderId to set orderId
+  order_is_is_client_order_id: boolean // Added by us: did we use newClientOrderId to set orderId
   orderTime: number
   totalTradeQuantity: string // NB: we might rename this to totalBaseTradeQuantity in exchange_neutral
   symbol: string
   side: "BUY" | "SELL"
-  orderType: BinanceOrderType
+  orderType: OrderType_LT
   isOrderWorking: boolean // for stop loss limits this is false on creation and true once triggered
-  orderRejectReason?: string
-  price?: string
-  stopPrice?: string
-  quantity?: string
-  orderStatus?: string
+  orderRejectReason: OrderRejectReason
+  price: string
+  stopPrice: string
+  quantity: string
+  orderStatus: OrderStatus_LT
   totalQuoteTradeQuantity: string
   averageExecutionPrice?: string // Added by us
   edge?: AuthorisedEdgeType // Added by us

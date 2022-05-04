@@ -14,7 +14,7 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "../../interfaces/logger"
+import { Logger } from "../../../../interfaces/logger"
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -23,15 +23,15 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
-import { BinanceOrderData } from "../../interfaces/order_callbacks"
-import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
-import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
-import { HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
-import { MyEventNameType } from "../../classes/amqp/message-routing"
+import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/order_execution_tracker"
+import { BinanceOrderData } from "../../../../interfaces/order_callbacks"
+import { ExchangeIdentifier } from "../../../../events/shared/exchange-identifier"
+import { GenericTopicPublisher } from "../../../../classes/amqp/generic-publishers"
+import { HealthAndReadinessSubsystem } from "../../../../classes/health_and_readiness"
+import { MyEventNameType } from "../../../../classes/amqp/message-routing"
 import { Connection } from "amqplib"
 import { RedisClient } from "redis"
-import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 const exchange_identifier = { exchange: "binance", account: "default" }
 

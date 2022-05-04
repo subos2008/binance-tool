@@ -18,7 +18,7 @@
 // Config
 const service_name = "binance-orders-to-amqp"
 
-import { HealthAndReadiness } from "../../classes/health_and_readiness"
+import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 
 require("dotenv").config()
 
@@ -28,11 +28,11 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "../../interfaces/logger"
+import { Logger } from "../../../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
-import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
+import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 import { BigNumber } from "bignumber.js"
@@ -50,7 +50,7 @@ process.on("unhandledRejection", (err) => {
 
 import { BinanceSpotOrdersToAMQP } from "./spot-order"
 
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
+import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 
 const health = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health.addSubsystem({ name: "global", ready: true, healthy: true })

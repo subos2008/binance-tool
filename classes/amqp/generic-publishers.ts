@@ -27,7 +27,6 @@ export class GenericTopicPublisher {
 
   constructor({ logger, event_name }: { logger: Logger; event_name: MyEventNameType }) {
     this.logger = logger
-    // we needed a routing key and this seems like a good one
     let { routing_key, exchange_name, durable } = MessageRouting.amqp_routing({ event_name })
     this.routing_key = routing_key
     this.exchange_name = exchange_name

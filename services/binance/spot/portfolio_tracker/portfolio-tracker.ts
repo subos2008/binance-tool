@@ -34,7 +34,7 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { HealthAndReadiness } from "../../classes/health_and_readiness"
+import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { StatsD, Tags } from "hot-shots"
 const statsd = new StatsD()
 
@@ -49,7 +49,7 @@ const statsd = new StatsD()
 // 3. Maintain portfolio state - probably just in-process
 // 4. Publish to telegram when portfolio changes
 
-import { Logger } from "../../interfaces/logger"
+import { Logger } from "../../../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
@@ -60,7 +60,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
+import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -69,10 +69,10 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
-import { Portfolio, Balance } from "../../interfaces/portfolio"
+import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
+import { Portfolio, Balance } from "../../../../interfaces/portfolio"
 import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
-import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
+import { ExchangeIdentifier } from "../../../../events/shared/exchange-identifier"
 
 class PortfolioTracker implements MasterPortfolioClass {
   send_message: SendMessageFunc

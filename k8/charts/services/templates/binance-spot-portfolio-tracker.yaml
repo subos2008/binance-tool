@@ -34,7 +34,7 @@ spec:
         - name: portfolio-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["node", "./out/./services/portfolio_tracker/portfolio-tracker", "--live"]
+          command: ["node", "./out/./services/binance/spot/portfolio_tracker/portfolio-tracker", "--live"]
           ports:
             - name: http
               containerPort: 80

@@ -1,5 +1,5 @@
-import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
-import { Balance, Portfolio } from "../../interfaces/portfolio"
+import { ExchangeIdentifier } from "../../../../events/shared/exchange-identifier"
+import { Balance, Portfolio } from "../../../../interfaces/portfolio"
 
 export interface MasterPortfolioClass {
   set_portfolio_for_exchange({

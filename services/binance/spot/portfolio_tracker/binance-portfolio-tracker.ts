@@ -42,11 +42,11 @@ Sentry.configureScope(function (scope: any) {
 // 3. Maintain portfolio state - probably just in-process
 // 4. Publish to telegram when portfolio changes
 
-import { Logger } from "../../interfaces/logger"
+import { Logger } from "../../../../interfaces/logger"
 const LoggerClass = require("../../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
-import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
+import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 import { BigNumber } from "bignumber.js"
@@ -62,15 +62,15 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
+import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 set_redis_logger(logger)
 let redis = get_redis_client()
 
-import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
-import { BinanceOrderData } from "../../interfaces/order_callbacks"
-import { ExchangeIdentifier } from "../../events/shared/exchange-identifier"
-import { Balance, Portfolio } from "../../interfaces/portfolio"
-import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/order_execution_tracker"
+import { BinanceOrderData } from "../../../../interfaces/order_callbacks"
+import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { Balance, Portfolio } from "../../../../interfaces/portfolio"
+import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 export class BinancePortfolioTracker implements PortfolioBitchClass {
   send_message: Function
@@ -78,7 +78,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
   ee: BinanceType
   master: MasterPortfolioClass
   order_execution_tracker: OrderExecutionTracker
-  exchange_identifier: ExchangeIdentifier
+  exchange_identifier: ExchangeIdentifier_V3
   portfolio: Portfolio = { balances: [], object_type: "Portfolio" }
 
   constructor({
@@ -96,7 +96,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
     this.master = master
     this.send_message = send_message
     logger.info("Live monitoring mode")
-    this.exchange_identifier = { exchange: "binance", account: "default" }
+    this.exchange_identifier = { exchange: "binance", account: "default", type: "spot", version: "v3" }
     if (!process.env.BINANCE_API_KEY) throw new Error(`Missing BINANCE_API_KEY in ENV`)
     if (!process.env.BINANCE_API_SECRET) throw new Error(`Missing BINANCE_API_SECRET in ENV`)
     this.ee = Binance({
@@ -110,6 +110,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
       logger,
       order_callbacks: this,
       order_context_persistence,
+      exchange_identifier: this.exchange_identifier,
     })
   }
 

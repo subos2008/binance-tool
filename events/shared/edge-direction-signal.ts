@@ -12,7 +12,7 @@ export interface EdgeDirectionSignal {
   base_asset?: string
   quote_asset?: string
   symbol: string
-  exchange_type: "spot" | "margin"
+  exchange_type: ExchangeType
   signal_timestamp_ms: string
 
   market_identifier: MarketIdentifier_V3
@@ -23,6 +23,7 @@ import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { Logger } from "../../interfaces/logger"
 import { StatsD, Tags } from "hot-shots"
+import { ExchangeType } from "./exchange-identifier"
 
 export class EdgeDirectionSignalPublisher {
   logger: Logger

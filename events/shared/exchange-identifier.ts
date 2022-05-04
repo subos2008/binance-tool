@@ -8,10 +8,12 @@ export type ExchangeIdentifier_V2 = {
   exchange: string
 }
 
+export type ExchangeType = "margin" | "spot" | "futures"
+
 export type ExchangeIdentifier_V3 = {
   version: "v3"
   exchange: string
-  type: "margin" | "spot"
+  type: ExchangeType
   account: string // 'default' // we will want this eventually - PositionPersistance is ready for it
 }
 

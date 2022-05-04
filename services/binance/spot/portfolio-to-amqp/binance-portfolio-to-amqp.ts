@@ -38,9 +38,8 @@ const exchange_identifier: ExchangeIdentifier_V3 = {
 
 import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 
-import { Logger } from "../../../../interfaces/logger"
-const LoggerClass = require("../../lib/faux_logger")
-const _logger: Logger = new LoggerClass({ silent: false })
+import { Logger } from "..../../../lib/faux_logger"
+const _logger = new Logger({ silent: false })
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN

@@ -22,9 +22,9 @@ Sentry.configureScope(function (scope: any) {
 
 const humanNumber = require("human-number")
 
-import { Logger } from "../../interfaces/logger"
-const LoggerClass = require("../../lib/faux_logger")
-const logger: Logger = new LoggerClass({ silent: false })
+import { Logger } from "./../../lib/faux_logger"
+const logger: Logger = new Logger({ silent: false })
+
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 
 import { BigNumber } from "bignumber.js"

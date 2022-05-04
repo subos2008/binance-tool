@@ -17,9 +17,8 @@ Sentry.configureScope(function (scope: any) {
 
 var service_is_healthy: boolean = true
 
-import { Logger } from "../../interfaces/logger"
-const LoggerClass = require("../../lib/faux_logger")
-const logger: Logger = new LoggerClass({ silent: false })
+import { Logger } from "./../../lib/faux_logger"
+const logger: Logger = new Logger({ silent: false })
 
 import express, { Request, Response } from "express"
 import { Telegraf } from "telegraf"

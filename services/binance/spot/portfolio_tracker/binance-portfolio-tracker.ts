@@ -42,9 +42,8 @@ Sentry.configureScope(function (scope: any) {
 // 3. Maintain portfolio state - probably just in-process
 // 4. Publish to telegram when portfolio changes
 
-import { Logger } from "../../../../interfaces/logger"
-const LoggerClass = require("../../lib/faux_logger")
-const logger: Logger = new LoggerClass({ silent: false })
+import { Logger } from "../../../../lib/faux_logger"
+const logger: Logger = new Logger({ silent: false })
 
 import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()

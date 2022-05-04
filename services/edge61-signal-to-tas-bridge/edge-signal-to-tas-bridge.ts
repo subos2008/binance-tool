@@ -20,7 +20,7 @@ import express, { Request, Response } from "express"
 import { Edge61PositionEntrySignal } from "../../events/shared/edge61-position-entry"
 import { Edge61EntrySignalFanout, Edge61EntrySignalProcessor } from "./on-edge61-signal"
 import * as Sentry from "@sentry/node"
-import { Logger } from "../../interfaces/logger"
+// import { Logger } from "../../interfaces/logger"
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 
 Sentry.init({})
@@ -28,8 +28,8 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-const LoggerClass = require("../../lib/faux_logger")
-const logger: Logger = new LoggerClass({ silent: false })
+import { Logger } from "./../../lib/faux_logger"
+const logger: Logger = new Logger({ silent: false })
 
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 

@@ -19,18 +19,18 @@ import { Channel } from "amqplib"
 import express from "express"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 import * as Sentry from "@sentry/node"
-import { Logger } from "../../interfaces/logger"
+// import { Logger } from "../../interfaces/logger"
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
-import { Edge60EntrySignalFanout } from "./fanout"
 import { Edge60EntrySignalProcessor } from "./interfaces"
+import { Edge60EntrySignalFanout } from "./fanout"
 
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-const LoggerClass = require("../../lib/faux_logger")
-const logger: Logger = new LoggerClass({ silent: false })
+import { Logger } from "./../../lib/faux_logger"
+const logger: Logger = new Logger({ silent: false })
 
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 

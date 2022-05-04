@@ -20,9 +20,8 @@ const service_name = "order-tracker"
 // TODO: add watchdog on trades stream - it can stop responding without realising
 // TODO: - in the original implementations (iirc lib around binance has been replaced)
 
-import { Logger } from "../../interfaces/logger"
-const LoggerClass = require("../../lib/faux_logger")
-const logger: Logger = new LoggerClass({ silent: false })
+import { Logger } from "./../../lib/faux_logger"
+const logger: Logger = new Logger({ silent: false })
 
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()

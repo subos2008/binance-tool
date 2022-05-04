@@ -6,9 +6,8 @@ import { strict as assert } from "assert"
 
 require("dotenv").config()
 
-import { Logger } from "../../interfaces/logger"
-const LoggerClass = require("../../lib/faux_logger")
-const logger: Logger = new LoggerClass({ silent: false })
+import { Logger } from "./../../lib/faux_logger"
+const logger: Logger = new Logger({ silent: false })
 
 const service_name = "position-performance"
 

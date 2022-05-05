@@ -32,60 +32,13 @@ import { MyEventNameType } from "../../../../classes/amqp/message-routing"
 import { Connection } from "amqplib"
 import { RedisClient } from "redis"
 import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { BinanceOrderPublisher } from "../../lib/binance-order-publisher"
 
 const exchange_identifier: ExchangeIdentifier_V3 = {
   exchange: "binance",
   account: "default",
   type: "spot",
   version: "v3",
-}
-
-export class BinanceOrderPublisher {
-  logger: Logger
-  closeTradesWebSocket: (() => void) | undefined
-  connection: Connection | undefined
-  channel: any
-  pub: GenericTopicPublisher
-  event_name: MyEventNameType
-  health_and_readiness: HealthAndReadinessSubsystem
-
-  constructor({
-    logger,
-    event_name,
-    health_and_readiness,
-  }: {
-    logger: Logger
-    event_name: MyEventNameType
-    health_and_readiness: HealthAndReadinessSubsystem
-  }) {
-    this.logger = logger
-    this.health_and_readiness = health_and_readiness
-    this.event_name = event_name
-    this.pub = new GenericTopicPublisher({ logger, event_name })
-  }
-
-  async connect(): Promise<void> {
-    await this.pub.connect()
-    this.health_and_readiness.ready(true)
-    this.health_and_readiness.healthy(true)
-  }
-
-  async publish(event: BinanceOrderData): Promise<void> {
-    const options = {
-      // expiration: event_expiration_seconds,
-      persistent: true,
-      timestamp: Date.now(),
-    }
-    try {
-      await this.pub.publish(event, options)
-    } catch (e) {
-      this.health_and_readiness.healthy(false)
-    }
-  }
-
-  async shutdown_streams() {
-    if (this.pub) this.pub.shutdown_streams()
-  }
 }
 
 export class BinanceSpotOrdersToAMQP {
@@ -131,7 +84,6 @@ export class BinanceSpotOrdersToAMQP {
 
     this.publisher = new BinanceOrderPublisher({
       logger,
-      event_name: "SpotBinanceOrder",
       health_and_readiness,
     })
   }

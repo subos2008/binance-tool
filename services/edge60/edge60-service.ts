@@ -122,6 +122,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     direction: "long" | "short"
   }): Promise<void> {
     let base_asset: string = await this.base_asset_for_symbol(symbol)
+    let tags = { edge, base_asset, direction, symbol }
     let market_data_for_symbol: CoinGeckoMarketData | undefined
     let market_data_string = ""
 
@@ -134,7 +135,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
       }
     } catch (e) {
       // This can happen
-      this.logger.warn(`Failed to generate market_data string for ${symbol}`)
+      this.logger.warn(tags, `Failed to generate market_data string for ${symbol}`)
       Sentry.captureException(e)
     }
     let direction_string = direction === "long" ? "⬆ LONG" : "SHORT ⬇"
@@ -156,10 +157,10 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
       try {
         let days = edge60_parameters.days_of_price_history
         let msg = `trend reversal ${direction_string} entry signal on ${base_asset} at ${days}d price ${signal_price.toFixed()}. ${market_data_string}`
-        this.logger.info({ signal: "entry", direction, symbol }, msg)
+        this.logger.info(tags, msg)
         this.send_message(msg, { edge })
       } catch (e) {
-        this.logger.warn(`Failed to publish to telegram for ${symbol}`)
+        this.logger.error(tags, `Failed to publish to telegram for ${symbol}`)
         // This can happen if top 100 changes since boot and we refresh the cap list
         Sentry.captureException(e)
       }
@@ -184,7 +185,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
           market_identifier,
         })
       } catch (e) {
-        this.logger.warn(`Failed to publish to AMQP for ${symbol}`)
+        this.logger.warn(tags, `Failed to publish to AMQP for ${symbol}`)
         // This can happen if top 100 changes since boot and we refresh the cap list
         Sentry.captureException(e)
       }
@@ -197,12 +198,12 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
           base_asset,
         })
       } catch (e) {
-        this.logger.warn(`Failed to publish direction to AMQP for ${symbol}`)
+        this.logger.warn(tags, `Failed to publish direction to AMQP for ${symbol}`)
         // This can happen if top 100 changes since boot and we refresh the cap list
         Sentry.captureException(e)
       }
     } else {
-      this.logger.info(`${symbol} ${direction} price triggered but not trend reversal`)
+      this.logger.info(tags, `${symbol} ${direction} price triggered but not trend reversal`)
     }
   }
 
@@ -357,7 +358,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
           market_data: this.market_data[i],
           callbacks: this,
           edge60_parameters,
-          base_asset
+          base_asset,
         })
         this.logger.info(`Setup edge for ${symbol} with ${initial_candles.length} initial candles`)
         await sleep(200) // 1200 calls allowed per minute per IP address

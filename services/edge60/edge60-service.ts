@@ -2,6 +2,8 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
+console.log(`--- Service starting ---`)
+
 /** Config: */
 const num_coins_to_monitor = 500
 const quote_symbol = "USDT".toUpperCase()

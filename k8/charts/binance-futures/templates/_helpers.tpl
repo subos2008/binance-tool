@@ -120,3 +120,16 @@ Environment variables
       name: redis
       key: REDIS_PASSWORD    
 {{- end -}}
+
+{{- define "telegram.vars" -}}
+- name: TELEGRAM_KEY
+  valueFrom:
+    secretKeyRef:
+      key: TELEGRAM_KEY
+      name: telegram
+- name: TELEGRAM_CHAT_ID
+  valueFrom:
+    secretKeyRef:
+      key: TELEGRAM_CHAT_ID
+      name: telegram
+{{- end -}}

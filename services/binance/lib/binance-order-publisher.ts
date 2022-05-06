@@ -35,7 +35,7 @@ export class BinanceOrderPublisher {
   connection: Connection | undefined
   channel: any
   pub: GenericTopicPublisher
-  event_name: MyEventNameType = "BinanceExecutionReport"
+  event_name: MyEventNameType = "BinanceOrderData"
   health_and_readiness: HealthAndReadinessSubsystem
 
   constructor({

@@ -3,7 +3,7 @@ export type MyEventNameType =
   | "SpotBinancePortfolio"
   | "SpotPortfolio"
   | "Edge56EntrySignal"
-  | "BinanceExecutionReport"
+  | "BinanceOrderData"
   | "Edge58EntrySignal"
   | "Edge60EntrySignal"
   | "Edge61EntrySignal"
@@ -75,7 +75,7 @@ export class MessageRouting {
           durable: false,
         }
 
-      case "BinanceExecutionReport": // BinanceOrderPublisher
+      case "BinanceOrderData": // BinanceOrderPublisher
         return {
           routing_key: "spot-binance-orders",
           exchange_name: "binance-tool",

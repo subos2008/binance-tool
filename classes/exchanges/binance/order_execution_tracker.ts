@@ -75,7 +75,10 @@ export class OrderExecutionTracker {
   async main() {
     try {
       await this.monitor_user_stream()
-    } catch (err) {
+    } catch (err: any) {
+      if (err.name && err.name === "FetchError") {
+        this.logger.error(`${err.name}: Likely unable to connect to Binance and/or Telegram: ${err}`)
+      }
       Sentry.captureException(err)
       this.logger.error({ err })
       throw err

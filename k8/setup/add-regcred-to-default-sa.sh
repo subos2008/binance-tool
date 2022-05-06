@@ -2,4 +2,4 @@
 
 source ../../.env
 
-kubectl patch serviceaccount --namespace ${KUBECTL_NAMESPACE} default -p '{"imagePullSecrets": [{"name": "regcred"}]}'
+kubectl patch serviceaccount --namespace $1 default -p '{"imagePullSecrets": [{"name": "regcred"}]}'

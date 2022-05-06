@@ -54,3 +54,4 @@ spec:
 {{- include "binance.vars" . | nindent 12 }}
 {{- include "datadog.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}
+{{- include "amqp.vars" . | nindent 12 }}

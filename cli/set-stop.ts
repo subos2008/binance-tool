@@ -27,16 +27,16 @@ BigNumber.prototype.valueOf = function () {
 const yargs = require("yargs")
 
 import { ExchangeIdentifier } from "../events/shared/exchange-identifier"
-import { CurrentPortfolioGetter } from "../interfaces/exchange/generic/portfolio-getter"
+import { CurrentPortfolioGetter } from "../interfaces/exchanges/generic/portfolio-getter"
 import { Balance } from "../interfaces/portfolio"
-import { BinancePortfolioGetter } from "../interfaces/exchange/binance/binance-portfolio-getter"
+import { BinancePortfolioGetter } from "../interfaces/exchanges/binance/binance-portfolio-getter"
 import { BinancePriceGetter } from "../interfaces/exchanges/binance/binance-price-getter"
 import { CurrentPriceGetter } from "../interfaces/exchanges/generic/price-getter"
 import { nextTick } from "process"
 import { Binance, QueryOrderResult } from "binance-api-node"
 import { strict as assert } from "assert"
-import { GenericOrder, OrdersGetter } from "../interfaces/exchange/generic/orders-getter"
-import { BinanceOrdersGetter } from "../interfaces/exchange/binance/binance-orders-getter"
+import { GenericOrder, OrdersGetter } from "../interfaces/exchanges/generic/orders-getter"
+import { BinanceOrdersGetter } from "../interfaces/exchanges/binance/binance-orders-getter"
 
 require("dotenv").config()
 

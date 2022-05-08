@@ -1,4 +1,4 @@
-import { BinanceOrderData } from "../../order_callbacks"
+import { BinanceOrderData } from "./order_callbacks"
 import { strict as assert } from "assert"
 import { ExchangeInfo, OrderStatus, OrderStatus_LT, QueryOrderResult } from "binance-api-node"
 import {

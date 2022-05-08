@@ -8,7 +8,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../../interfaces/logger"
-import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/order_callbacks"
+import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/exchanges/binance/order_callbacks"
 
 import * as Sentry from "@sentry/node"
 import {

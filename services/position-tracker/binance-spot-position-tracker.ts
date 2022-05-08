@@ -4,7 +4,7 @@
 
 import { strict as assert } from "assert"
 const service_name = "binance-position-tracker"
-import { fromCompletedBinanceOrderData } from "../../interfaces/exchange/binance/spot-orders"
+import { fromCompletedBinanceOrderData } from "../../interfaces/exchanges/binance/spot-orders"
 import { is_too_small_to_trade } from "../../lib/utils"
 
 require("dotenv").config()

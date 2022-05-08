@@ -15,7 +15,7 @@ import { MessageProcessor } from "../../amqp/interfaces"
 import { HealthAndReadiness } from "../../health_and_readiness"
 import { MyEventNameType } from "../../amqp/message-routing"
 import { Channel } from "amqplib"
-import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/order_callbacks"
+import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/exchanges/binance/order_callbacks"
 import { SendMessageFunc } from "../../../lib/telegram-v2"
 
 export class AMQP_BinanceOrderDataListener implements MessageProcessor {

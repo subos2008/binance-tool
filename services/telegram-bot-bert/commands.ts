@@ -12,6 +12,12 @@ import {
   TradeAbstractionCloseSpotLongResult,
 } from "../spot-trade-abstraction/interfaces/close_spot"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
+import {
+  TradeAbstractionOpenFuturesShortCommand_OCO_Exit,
+  TradeAbstractionOpenFuturesShortResult,
+} from "../binance/futures/trade-abstraction/interfaces/open_futures_short"
+import { FuturesTradeAbstractionServiceClient } from "../binance/futures/trade-abstraction/client/tas-client"
+import { Commands_Futures } from "./commands/futures"
 Sentry.init({})
 // Sentry.configureScope(function (scope: any) {
 //   scope.setTag("service", service_name)
@@ -30,7 +36,13 @@ To close an open long spot position:
 
   /spot close LINK [edge##]
 
-To view open positions:
+Futures positions:
+
+  /futures short LINK <edge##>
+  /futures short LINK <edge##>
+  /futures close LINK [edge##] (Not implemented?)
+
+To view open spot positions:
 
   /positions
 
@@ -43,12 +55,15 @@ To check the bot is listening:
  * Probably add session here later
  */
 export class Commands {
-  tas_client: SpotTradeAbstractionServiceClient
+  spot_tas_client: SpotTradeAbstractionServiceClient
   logger: Logger
+
+  // commands
+  futures: Commands_Futures
 
   constructor({ bot, logger }: { bot: Telegraf; logger: Logger }) {
     this.logger = logger
-    this.tas_client = new SpotTradeAbstractionServiceClient({ logger })
+    this.spot_tas_client = new SpotTradeAbstractionServiceClient({ logger })
     // Set the bot response
     // Order is important
     bot.help((ctx) => ctx.replyWithHTML(help_text))
@@ -58,12 +73,14 @@ export class Commands {
     })
     // bot.command("spot", Commands.spot)
     bot.on("text", this.text_to_command.bind(this))
+    this.futures = new Commands_Futures({ logger, bot })
   }
 
   async text_to_command(ctx: NarrowedContext<Context, Types.MountMap["text"]>) {
     try {
       let args = split_message(ctx.message.text)
-      if (args[0] == "/spot") {
+      if (false) {
+      } else if (args[0] == "/spot") {
         await this.spot(ctx, args.slice(1))
       } else if (args[0] == "/positions") {
         await this.list_positions(ctx, args.slice(1))
@@ -77,7 +94,7 @@ export class Commands {
   }
 
   async list_positions(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
-    let postions = await this.tas_client.positions()
+    let postions = await this.spot_tas_client.positions()
     if (postions.length == 0) {
       ctx.reply(`No open positions.`)
       return
@@ -125,7 +142,7 @@ export class Commands {
 
       if (command == "close") {
         let result = await this.close_spot_long(ctx, { asset: base_asset, edge })
-        ctx.reply(`Looks like it succeeded?`)
+        ctx.reply(`Spot long close on ${edge}:${base_asset}: ${result.status}`)
       }
     } catch (err) {
       this.logger.error({ err }, `Looks like command failed:`)
@@ -142,7 +159,7 @@ export class Commands {
     // let msg = `${cmd.edge.toUpperCase()}: opening spot long on ${cmd.base_asset} (unchecked)`
     // ctx.reply(msg)
     try {
-      let result: TradeAbstractionOpenSpotLongResult = await this.tas_client.open_spot_long(cmd)
+      let result: TradeAbstractionOpenSpotLongResult = await this.spot_tas_client.open_spot_long(cmd)
       return result
     } catch (err) {
       this.logger.error({ err })
@@ -157,7 +174,7 @@ export class Commands {
   ): Promise<TradeAbstractionCloseSpotLongResult> {
     let msg = `${edge.toUpperCase()}: closing spot long on ${asset}`
     ctx.reply(msg)
-    let result: TradeAbstractionCloseSpotLongResult = await this.tas_client.close_spot_long({
+    let result: TradeAbstractionCloseSpotLongResult = await this.spot_tas_client.close_spot_long({
       base_asset: asset,
       edge,
       direction: "long",

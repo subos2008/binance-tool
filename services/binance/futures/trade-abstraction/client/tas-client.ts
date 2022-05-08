@@ -7,44 +7,45 @@ if (!TAS_URL.startsWith("http")) {
 }
 
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"
-import { Logger } from "../../../interfaces/logger"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/open_spot"
-import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "../interfaces/close_spot"
+import { Logger } from "../../../../../interfaces/logger"
 
 const JSONBigNumber = require("./JSONBigNumber")
 import { URL } from "url"
 
 import * as Sentry from "@sentry/node"
-import { SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
+import {
+  TradeAbstractionOpenFuturesShortCommand,
+  TradeAbstractionOpenFuturesShortResult,
+} from "../interfaces/open_futures_short"
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
   scope.setTag("class", "SpotTradeAbstractionServiceClient")
 })
 
-export class SpotTradeAbstractionServiceClient {
+export class FuturesTradeAbstractionServiceClient {
   logger: Logger
 
   constructor({ logger }: { logger: Logger }) {
     this.logger = logger
   }
 
-  async positions(): Promise<SpotPositionIdentifier_V3[]> {
-    let response = await this._call("GET", new URL("/positions", TAS_URL).toString())
-    this.logger.info(`Returned positions:`)
-    this.logger.object(response)
+  // async positions(): Promise<SpotPositionIdentifier_V3[]> {
+  //   let response = await this._call("GET", new URL("/positions", TAS_URL).toString())
+  //   this.logger.info(`Returned positions:`)
+  //   this.logger.object(response)
+  //   return response
+  // }
+
+  async open_short(cmd: TradeAbstractionOpenFuturesShortCommand): Promise<TradeAbstractionOpenFuturesShortResult> {
+    let response = await this._call("GET", new URL("/futures/short", TAS_URL).toString(), cmd)
     return response
   }
 
-  async open_spot_long(cmd: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
-    let response = await this._call("GET", new URL("/spot/long", TAS_URL).toString(), cmd)
-    return response
-  }
-
-  async close_spot_long(cmd: TradeAbstractionCloseLongCommand): Promise<TradeAbstractionCloseSpotLongResult> {
-    let response = await this._call("GET", new URL("/spot/close", TAS_URL).toString(), cmd)
-    this.logger.object(response)
-    return response
-  }
+  // async close_spot_long(cmd: TradeAbstractionCloseLongCommand): Promise<TradeAbstractionCloseSpotLongResult> {
+  //   let response = await this._call("GET", new URL("/spot/close", TAS_URL).toString(), cmd)
+  //   this.logger.object(response)
+  //   return response
+  // }
 
   /**
    * @private Make a HTTP request to a specific endpoint. Private endpoints are automatically signed.

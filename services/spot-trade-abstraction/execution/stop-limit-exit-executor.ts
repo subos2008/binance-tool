@@ -11,18 +11,12 @@ BigNumber.prototype.valueOf = function () {
 
 import { Logger } from "../../../interfaces/logger"
 import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
-import {
-  OrderContext_V1,
-  SpotExecutionEngine,
-  SpotLimitBuyCommand,
-} from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
 import { SpotPositionsPersistance } from "../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SendMessageFunc } from "../../../lib/telegram-v2"
 import { PositionSizer } from "../fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import {
   AuthorisedEdgeType,
-  check_edge,
   SpotPositionIdentifier_V3,
 } from "../../../classes/spot/abstractions/position-identifier"
 import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
@@ -30,13 +24,11 @@ import {
   TradeAbstractionOpenSpotLongCommand__StopLimitExit,
   TradeAbstractionOpenSpotLongResult,
 } from "../interfaces/open_spot"
+import { SpotExecutionEngine, SpotLimitBuyCommand, SpotStopMarketSellCommand } from "../../../interfaces/exchanges/spot-execution-engine"
+import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
+import { CurrentPriceGetter } from "../../../interfaces/exchanges/generic/price-getter"
 
 /* Edge specific code */
-import {
-  SpotMarketBuyByQuoteQuantityCommand,
-  SpotStopMarketSellCommand,
-} from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
-import { CurrentPriceGetter } from "../../../interfaces/exchanges/generic/price-getter"
 /* END Edge specific code */
 
 /**
@@ -121,7 +113,7 @@ export class SpotPositionsExecution_StopLimitExit {
     let prefix = `${edge}:${base_asset} open spot long: `
 
     let market_identifier: MarketIdentifier_V3 = this.get_market_identifier_for({ ...args, quote_asset })
-    let trigger_price: BigNumber | undefined
+    let trigger_price: BigNumber
     if (trigger_price_string) {
       trigger_price = new BigNumber(trigger_price_string)
     } else {

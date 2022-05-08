@@ -66,5 +66,5 @@ export interface FuturesExecutionEngine {
 
   // market_sell(cmd: FuturesMarketSellCommand): Promise<void>
 
-  oco_buy_order(cmd: FuturesOCOBuyCommand): Promise<void>
+  // oco_buy_order(cmd: FuturesOCOBuyCommand): Promise<void> // fitures exchanges don't have oco orders
 }

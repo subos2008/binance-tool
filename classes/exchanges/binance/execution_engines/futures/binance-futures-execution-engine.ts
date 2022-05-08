@@ -22,7 +22,7 @@ import { randomUUID } from "crypto"
 
 import {
   FuturesExecutionEngine,
-  FuturesMarketSellByQuoteQuantityCommand,
+  FuturesLimitSellByQuoteQuantityCommand,
   FuturesOCOBuyCommand,
   FuturesExecutionEngineSellResult,
 } from "../../../../../interfaces/exchanges/futures-execution-engine"

@@ -40,7 +40,7 @@ const redis = get_redis_client()
 
 import { ExchangeInfo } from "binance-api-node"
 import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_execution_tracker"
-import { BinanceOrderData, OrderCallbacks } from "../../interfaces/order_callbacks"
+import { BinanceOrderData, OrderCallbacks } from "../../interfaces/exchanges/binance/order_callbacks"
 import { SpotPositionTracker } from "./position-tracker"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"

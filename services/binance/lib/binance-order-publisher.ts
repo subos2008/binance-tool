@@ -23,7 +23,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { BinanceOrderData } from "../../../interfaces/order_callbacks"
+import { BinanceOrderData } from "../../../interfaces/exchanges/binance/order_callbacks"
 import { GenericTopicPublisher } from "../../../classes/amqp/generic-publishers"
 import { HealthAndReadinessSubsystem } from "../../../classes/health_and_readiness"
 import { MyEventNameType } from "../../../classes/amqp/message-routing"

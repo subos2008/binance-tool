@@ -197,7 +197,7 @@ import express from "express"
 
 import { RedisClient } from "redis"
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
-import { BinanceOrderData } from "../../../../interfaces/order_callbacks"
+import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 import { PortfolioPublisher } from "./portfolio-publisher"
 import { PortfolioTracker } from "./portfolio-tracker"

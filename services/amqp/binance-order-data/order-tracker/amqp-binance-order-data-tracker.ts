@@ -33,7 +33,7 @@ process.on("unhandledRejection", (err) => {
 })
 
 import { AMQP_BinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-order-execution-tracker"
-import { BinanceOrderData } from "../../../../interfaces/order_callbacks"
+import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })

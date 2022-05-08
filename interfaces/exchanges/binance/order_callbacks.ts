@@ -27,9 +27,9 @@
 // }
 
 import { ExecutionReport, OrderRejectReason, OrderStatus_LT, OrderType_LT } from "binance-api-node"
-import { AuthorisedEdgeType } from "../classes/spot/abstractions/position-identifier"
-import { OrderContext_V1 } from "../classes/spot/exchanges/interfaces/spot-execution-engine"
-import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
+import { AuthorisedEdgeType } from "../../../classes/spot/abstractions/position-identifier"
+import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
+import { OrderContext_V1 } from "../../orders/order-context"
 
 // Where the fuck is executedQuoteQuant?
 export interface BinanceOrderData extends ExecutionReport {

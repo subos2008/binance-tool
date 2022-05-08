@@ -66,7 +66,7 @@ set_redis_logger(logger)
 let redis = get_redis_client()
 
 import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/order_execution_tracker"
-import { BinanceOrderData } from "../../../../interfaces/order_callbacks"
+import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { Balance, Portfolio } from "../../../../interfaces/portfolio"
 import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"

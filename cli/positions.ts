@@ -41,8 +41,8 @@ import { SpotPositionsPersistance } from "../classes/spot/persistence/interface/
 // import { Position } from "../classes/position"
 import { SpotPositionIdentifier_V3, SpotPositionsQuery_V3 } from "../classes/spot/abstractions/position-identifier"
 import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
-import { BinancePriceGetter } from "../interfaces/exchange/binance/binance-price-getter"
-import { CurrentPriceGetter } from "../interfaces/exchange/generic/price-getter"
+import { BinancePriceGetter } from "../interfaces/exchanges/binance/binance-price-getter"
+import { CurrentPriceGetter } from "../interfaces/exchanges/generic/price-getter"
 import { RedisSpotPositionsPersistance } from "../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 
 require("dotenv").config()

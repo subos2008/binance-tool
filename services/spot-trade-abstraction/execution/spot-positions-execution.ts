@@ -11,10 +11,6 @@ BigNumber.prototype.valueOf = function () {
 
 import { Logger } from "../../../interfaces/logger"
 import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
-import {
-  OrderContext_V1,
-  SpotExecutionEngine,
-} from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
 import { SpotPositionsPersistance } from "../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SendMessageFunc } from "../../../lib/telegram-v2"
 import { PositionSizer } from "../fixed-position-sizer"
@@ -34,6 +30,8 @@ import {
   TradeAbstractionCloseSpotLongResult_NOT_FOUND,
   TradeAbstractionCloseSpotLongResult_SUCCESS,
 } from "../interfaces/close_spot"
+import { SpotExecutionEngine } from "../../../interfaces/exchanges/spot-execution-engine"
+import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
 
 /**
  * If this does the execution of spot position entry/exit

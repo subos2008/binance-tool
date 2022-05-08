@@ -11,10 +11,6 @@ BigNumber.prototype.valueOf = function () {
 
 import { Logger } from "../../../interfaces/logger"
 import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
-import {
-  OrderContext_V1,
-  SpotExecutionEngine,
-} from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
 import { SpotPositionsPersistance } from "../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SendMessageFunc } from "../../../lib/telegram-v2"
 import { PositionSizer } from "../fixed-position-sizer"
@@ -32,11 +28,9 @@ import {
 
 /* Edge specific code */
 import { CurrentPriceGetter } from "../../../interfaces/exchanges/generic/price-getter"
-import {
-  SpotLimitBuyCommand,
-  SpotMarketSellCommand,
-  SpotOCOSellCommand,
-} from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
+import { SpotExecutionEngine, SpotLimitBuyCommand, SpotMarketSellCommand, SpotOCOSellCommand } from "../../../interfaces/exchanges/spot-execution-engine"
+import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
+
 /* END Edge specific code */
 
 /**

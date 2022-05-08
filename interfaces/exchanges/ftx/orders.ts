@@ -1,7 +1,7 @@
 // from: https://docs.ftx.com/#orders-2
 
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
-import { ExchangeUtils } from "../../../interfaces/exchange/generic/exchange-utils"
+import { ExchangeUtils } from "../generic/exchange-utils"
 import BigNumber from "bignumber.js"
 
 export type FtxWsOrderData = {

@@ -5,20 +5,10 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { MarketIdentifier_V3 } from "../../../../events/shared/market-identifier"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { AuthorisedEdgeType } from "../../abstractions/position-identifier"
-import { OrderId } from "../../persistence/interface/order-context-persistence"
-
-/**
- * We need to know some info about orders when (read: before) they are executed
- * i.e. when a position is first entered we want to know which edge it should be stored as
- */
-export interface OrderContext_V1 {
-  object_type: "OrderContext"
-  version: 1
-  edge: AuthorisedEdgeType
-}
+import { OrderContext_V1 } from "../orders/order-context"
+import { OrderId } from "../../classes/spot/persistence/interface/order-context-persistence"
+import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
+import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
 
 export interface SpotMarketBuyByQuoteQuantityCommand {
   order_context: OrderContext_V1
@@ -68,6 +58,7 @@ export interface SpotExecutionEngineBuyResult {
   executed_base_quantity: BigNumber
   execution_timestamp_ms: string | undefined
 }
+
 export interface SpotExecutionEngine {
   get_market_identifier_for({
     quote_asset,

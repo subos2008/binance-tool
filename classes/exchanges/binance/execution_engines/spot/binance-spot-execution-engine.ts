@@ -1,11 +1,11 @@
 import { AlgoUtils } from "./_internal/binance_algo_utils_v2"
-import { Logger } from "../../../../interfaces/logger"
+import { Logger } from "../../../../../interfaces/logger"
 import { strict as assert } from "assert"
-import { MarketIdentifier_V3 } from "../../../../events/shared/market-identifier"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
+import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import binance, { CancelOrderResult, OcoOrder, Order } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
-import { BinanceExchangeInfoGetter } from "../../../exchanges/binance/exchange-info-getter"
+import { BinanceExchangeInfoGetter } from "../../exchange-info-getter"
 import { randomUUID } from "crypto"
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -14,19 +14,17 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-interface BinanceSpotStopLimitOrderCommand {}
-
 import {
   SpotExecutionEngine,
   SpotStopMarketSellCommand,
   SpotMarketBuyByQuoteQuantityCommand,
   SpotMarketSellCommand,
-  OrderContext_V1,
   SpotOCOSellCommand,
   SpotLimitBuyCommand,
   SpotExecutionEngineBuyResult,
-} from "../interfaces/spot-execution-engine"
-import { OrderContextPersistence } from "../../persistence/interface/order-context-persistence"
+} from "../../../../../interfaces/exchanges/spot-execution-engine"
+import { OrderContextPersistence } from "../../../../spot/persistence/interface/order-context-persistence"
+import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)
@@ -123,6 +121,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     if (result) {
       return {
         executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
+        // Note we use cumBase instead of executedQty for futures version..?
         executed_base_quantity: new BigNumber(result.executedQty),
         executed_price: new BigNumber(result.cummulativeQuoteQty).dividedBy(result.executedQty),
         execution_timestamp_ms: result.transactTime?.toString(),

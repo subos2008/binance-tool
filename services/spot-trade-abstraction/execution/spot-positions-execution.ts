@@ -27,7 +27,7 @@ import {
 import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
 import { SpotPositionsExecution_StopLimitExit } from "./stop-limit-exit-executor"
 import { SpotPositionsExecution_OCOExit } from "./oco-exit-executor"
-import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
+import { CurrentPriceGetter } from "../../../interfaces/exchanges/generic/price-getter"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/open_spot"
 import {
   TradeAbstractionCloseSpotLongResult,

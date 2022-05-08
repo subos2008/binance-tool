@@ -31,7 +31,7 @@ import {
 } from "../interfaces/open_spot"
 
 /* Edge specific code */
-import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
+import { CurrentPriceGetter } from "../../../interfaces/exchanges/generic/price-getter"
 import {
   SpotLimitBuyCommand,
   SpotMarketSellCommand,

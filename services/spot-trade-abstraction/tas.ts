@@ -88,7 +88,7 @@ app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
 import { SpotPositionsExecution } from "./execution/spot-positions-execution"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
-import { BinancePriceGetter } from "../../interfaces/exchange/binance/binance-price-getter"
+import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-price-getter"
 
 import { RedisClient } from "redis"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"

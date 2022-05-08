@@ -36,7 +36,7 @@ import {
   SpotMarketBuyByQuoteQuantityCommand,
   SpotStopMarketSellCommand,
 } from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
-import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
+import { CurrentPriceGetter } from "../../../interfaces/exchanges/generic/price-getter"
 /* END Edge specific code */
 
 /**

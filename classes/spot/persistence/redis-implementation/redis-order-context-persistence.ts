@@ -7,7 +7,7 @@ import {
   exchange_identifier_to_redis_key_snippet,
 } from "../../../../events/shared/exchange-identifier"
 import { OrderContextPersistence } from "../interface/order-context-persistence"
-import { OrderContext_V1 } from "../../exchanges/interfaces/spot-execution-engine"
+import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
 
 type OrderId = string
 

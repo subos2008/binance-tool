@@ -1,5 +1,6 @@
 import { BigNumber } from "bignumber.js"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
 import { AuthorisedEdgeType } from "../../abstractions/position-identifier"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -7,7 +8,6 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { OrderContext_V1 } from "../../exchanges/interfaces/spot-execution-engine"
 export type OrderId = string
 
 export interface OrderContextPersistence {

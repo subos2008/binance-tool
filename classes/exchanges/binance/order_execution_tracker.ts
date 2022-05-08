@@ -26,7 +26,7 @@ import {
 import { AuthorisedEdgeType } from "../../spot/abstractions/position-identifier"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { OrderContextPersistence } from "../../spot/persistence/interface/order-context-persistence"
-import { OrderContext_V1 } from "../../spot/exchanges/interfaces/spot-execution-engine"
+import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
 
 export class OrderExecutionTracker {
   send_message: Function

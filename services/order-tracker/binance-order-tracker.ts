@@ -47,8 +47,6 @@ import { OrderExecutionTracker } from "../../classes/exchanges/binance/order_exe
 import { BinanceOrderData } from "../../interfaces/order_callbacks"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
-let order_execution_tracker: OrderExecutionTracker | null = null
-
 class MyOrderCallbacks {
   send_message: SendMessageFunc
   logger: Logger
@@ -131,7 +129,7 @@ async function main() {
   let order_callbacks = new MyOrderCallbacks({ logger, send_message })
   let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
 
-  order_execution_tracker = new OrderExecutionTracker({
+  let spot_order_execution_tracker = new OrderExecutionTracker({
     ee,
     send_message,
     logger,
@@ -140,23 +138,11 @@ async function main() {
     exchange_identifier: { type: "spot", version: "v3", exchange: "binance", account: "default" },
   })
 
-  order_execution_tracker
-    .main()
-    .catch((err) => {
-      Sentry.captureException(err)
-      if (err.name && err.name === "FetchError") {
-        logger.error(`${err.name}: Likely unable to connect to Binance and/or Telegram: ${err}`)
-      } else {
-        logger.error(`Error in main loop: ${err}`)
-        logger.error({ err })
-        logger.error(`Error in main loop: ${err.stack}`)
-        send_message(`Error in main loop: ${err}`)
-      }
-      soft_exit(1)
-    })
-    .then(() => {
-      logger.info("order_execution_tracker.main() returned.")
-    })
+  spot_order_execution_tracker.main().catch((err: any) => {
+    Sentry.captureException(err)
+    logger.error({ err })
+    soft_exit(1)
+  })
 }
 
 // TODO: exceptions / sentry
@@ -174,6 +160,5 @@ function soft_exit(exit_code: number | null = null) {
   logger.warn(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`)
   if (exit_code) process.exitCode = exit_code
-  if (order_execution_tracker) order_execution_tracker.shutdown_streams()
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }

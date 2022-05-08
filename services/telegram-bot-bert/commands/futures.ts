@@ -1,11 +1,9 @@
 import { Telegraf, Context, NarrowedContext, Types } from "telegraf"
 import { FuturesTradeAbstractionServiceClient } from "../../binance/futures/trade-abstraction/client/tas-client"
 import { Logger } from "../../../interfaces/logger"
-import { AuthorisedEdgeType, check_edge } from "../../../classes/spot/abstractions/position-identifier"
 import * as Sentry from "@sentry/node"
 import {
   TradeAbstractionOpenFuturesShortCommand,
-  TradeAbstractionOpenFuturesShortCommand_OCO_Exit,
   TradeAbstractionOpenFuturesShortResult,
 } from "../../binance/futures/trade-abstraction/interfaces/open_futures_short"
 

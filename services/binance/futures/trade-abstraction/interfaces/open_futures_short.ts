@@ -1,10 +1,22 @@
 import BigNumber from "bignumber.js"
-import { AuthorisedEdgeType } from "../../../classes/spot/abstractions/position-identifier"
+
+// TAS level
+export interface TradeAbstractionOpenFuturesShortCommand {
+  object_type: "TradeAbstractionOpenFuturesShortCommand"
+  base_asset: string
+  quote_asset?: string // added by the TAS before it hits the EE
+  edge: string
+  direction: "short"
+  action: "open"
+  trigger_price?: string
+  signal_timestamp_ms: string
+}
 
 export interface TradeAbstractionOpenFuturesShortCommand_OCO_Exit {
+  object_type: "TradeAbstractionOpenFuturesShortCommand_OCO_Exit"
   base_asset: string
   quote_asset: string // added by the TAS before it hits the EE
-  edge: AuthorisedEdgeType
+  edge: string
   direction: "short"
   action: "open"
   trigger_price?: string

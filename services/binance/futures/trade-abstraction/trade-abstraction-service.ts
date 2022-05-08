@@ -16,9 +16,9 @@ import {
   is_authorised_edge,
   SpotPositionIdentifier_V3,
 } from "../../classes/spot/abstractions/position-identifier"
-import { SpotPositionsExecution } from "./execution/spot-positions-execution"
+import { SpotPositionsExecution } from "./execution/futures-positions-execution"
 import Sentry from "../../lib/sentry"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
+import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_futures_short"
 import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close_spot"
 
 /**

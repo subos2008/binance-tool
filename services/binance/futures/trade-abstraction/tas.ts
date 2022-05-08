@@ -42,7 +42,7 @@ function dogstatsderrorhandler(err: Error) {
 }
 
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
+import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_futures_short"
 import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close_spot"
 import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
@@ -86,7 +86,7 @@ const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
-import { SpotPositionsExecution } from "./execution/spot-positions-execution"
+import { SpotPositionsExecution } from "./execution/futures-positions-execution"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 import { BinancePriceGetter } from "../../interfaces/exchange/binance/binance-price-getter"
 

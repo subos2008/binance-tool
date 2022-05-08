@@ -14,7 +14,7 @@ import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
 import {
   OrderContext_V1,
   SpotExecutionEngine,
-} from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
+} from "../../../../../classes/spot/exchanges/interfaces/spot-execution-engine"
 import { SpotPositionsPersistance } from "../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SendMessageFunc } from "../../../lib/telegram-v2"
 import { PositionSizer } from "../fixed-position-sizer"
@@ -26,9 +26,9 @@ import {
 } from "../../../classes/spot/abstractions/position-identifier"
 import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
 import {
-  TradeAbstractionOpenSpotLongCommand_OCO_Exit,
-  TradeAbstractionOpenSpotLongResult,
-} from "../interfaces/open_spot"
+  TradeAbstractionOpenFuturesShortCommand_OCO_Exit,
+  TradeAbstractionOpenFuturesShortResult,
+} from "../interfaces/open_futures_short"
 
 /* Edge specific code */
 import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
@@ -92,8 +92,8 @@ export class SpotPositionsExecution_OCOExit {
   }
 
   async open_position(
-    args: TradeAbstractionOpenSpotLongCommand_OCO_Exit
-  ): Promise<TradeAbstractionOpenSpotLongResult> {
+    args: TradeAbstractionOpenFuturesShortCommand_OCO_Exit
+  ): Promise<TradeAbstractionOpenFuturesShortResult> {
     try {
       let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
 
@@ -149,8 +149,8 @@ export class SpotPositionsExecution_OCOExit {
         let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
         this.logger.info(tags, msg)
         // this.send_message(msg, { edge, base_asset })
-        let ret: TradeAbstractionOpenSpotLongResult = {
-          object_type: "TradeAbstractionOpenSpotLongResult",
+        let ret: TradeAbstractionOpenFuturesShortResult = {
+          object_type: "TradeAbstractionOpenFuturesShortResult",
           version: 1,
           edge,
           base_asset,
@@ -234,8 +234,8 @@ export class SpotPositionsExecution_OCOExit {
         }
         await this.ee.market_sell(market_sell_cmd)
 
-        let ret: TradeAbstractionOpenSpotLongResult = {
-          object_type: "TradeAbstractionOpenSpotLongResult",
+        let ret: TradeAbstractionOpenFuturesShortResult = {
+          object_type: "TradeAbstractionOpenFuturesShortResult",
           version: 1,
           status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS",
           msg: `${prefix}: ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`,
@@ -251,8 +251,8 @@ export class SpotPositionsExecution_OCOExit {
         return ret
       }
 
-      let res: TradeAbstractionOpenSpotLongResult = {
-        object_type: "TradeAbstractionOpenSpotLongResult",
+      let res: TradeAbstractionOpenFuturesShortResult = {
+        object_type: "TradeAbstractionOpenFuturesShortResult",
         version: 1,
         base_asset,
         quote_asset,

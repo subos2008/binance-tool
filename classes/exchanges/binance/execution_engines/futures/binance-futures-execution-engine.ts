@@ -1,3 +1,12 @@
+import { BigNumber } from "bignumber.js"
+BigNumber.DEBUG = true // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function () {
+  throw Error("BigNumber .valueOf called!")
+}
+import * as Sentry from "@sentry/node"
+Sentry.init({})
+
 import { AlgoUtils } from "../spot/_internal/binance_algo_utils_v2"
 import { Logger } from "../../../../../interfaces/logger"
 import { strict as assert } from "assert"
@@ -7,12 +16,7 @@ import binance, { CancelOrderResult, FuturesOrder, NewFuturesOrder, NewOcoOrder,
 import { Binance, ExchangeInfo } from "binance-api-node"
 import { BinanceFuturesExchangeInfoGetter } from "../../exchange-info-getter"
 import { randomUUID } from "crypto"
-import { BigNumber } from "bignumber.js"
-BigNumber.DEBUG = true // Prevent NaN
-// Prevent type coercion
-BigNumber.prototype.valueOf = function () {
-  throw Error("BigNumber .valueOf called!")
-}
+
 
 // interface BinanceFuturesStopLimitOrderCommand {}
 
@@ -186,12 +190,12 @@ export class BinanceFuturesExecutionEngine implements FuturesExecutionEngine {
 
     let exchange_info = await this.get_exchange_info()
     let base_amount = cmd.base_amount
-    let pair = cmd.market_identifier.symbol
+    let symbol = cmd.market_identifier.symbol
     let target_price = cmd.take_profit_price
     let stop_price = cmd.stop_price
     let limit_price = cmd.stop_limit_price
 
-    assert(pair && target_price && base_amount && stop_price && limit_price)
+    assert(symbol && target_price && base_amount && stop_price && limit_price)
     assert(BigNumber.isBigNumber(base_amount))
     assert(BigNumber.isBigNumber(target_price))
     assert(BigNumber.isBigNumber(limit_price))
@@ -199,15 +203,15 @@ export class BinanceFuturesExecutionEngine implements FuturesExecutionEngine {
     try {
       base_amount = this.utils.munge_amount_and_check_notionals({
         exchange_info,
-        pair,
+        pair: symbol,
         base_amount,
         stop_price,
         limit_price,
         target_price,
       })
-      stop_price = this.utils.munge_and_check_price({ exchange_info, symbol: pair, price: stop_price })
-      limit_price = this.utils.munge_and_check_price({ exchange_info, symbol: pair, price: limit_price })
-      target_price = this.utils.munge_and_check_price({ exchange_info, symbol: pair, price: target_price })
+      stop_price = this.utils.munge_and_check_price({ exchange_info, symbol: symbol, price: stop_price })
+      limit_price = this.utils.munge_and_check_price({ exchange_info, symbol: symbol, price: limit_price })
+      target_price = this.utils.munge_and_check_price({ exchange_info, symbol: symbol, price: target_price })
       let quantity = base_amount.toFixed()
       //   export interface NewOcoOrder {
       //     symbol: string;
@@ -226,12 +230,13 @@ export class BinanceFuturesExecutionEngine implements FuturesExecutionEngine {
       //     recvWindow?: number;
       //     useServerTime?: boolean;
       // }
-      let args: NewOcoOrder = {
+      let stop_order_args: NewFuturesOrder = {
         useServerTime: true,
-        symbol: pair,
+        symbol: symbol,
         side: OrderSide.BUY,
+        reduceOnly: "true",
         quantity,
-        price: target_price.toFixed(),
+        // price: target_price.toFixed(),
         stopPrice: stop_price.toFixed(),
         stopLimitPrice: limit_price.toFixed(),
         listClientOrderId: oco_list_ClientOrderId,
@@ -239,7 +244,7 @@ export class BinanceFuturesExecutionEngine implements FuturesExecutionEngine {
         stopClientOrderId: stop_ClientOrderId,
       }
       this.logger.info(
-        `${pair} Creating OCO ORDER for ${quantity} at target ${target_price.toFixed()} stop triggered at ${stop_price.toFixed()}`
+        `${symbol} Creating OCO ORDER for ${quantity} at target ${target_price.toFixed()} stop triggered at ${stop_price.toFixed()}`
       )
       //   export interface OcoOrder {
       //     orderListId: number;
@@ -252,7 +257,10 @@ export class BinanceFuturesExecutionEngine implements FuturesExecutionEngine {
       //     orders: Order[];
       //     orderReports: Order[];
       // }
-      let order: OcoOrder = await ee.orderOco(args)
+
+      // Actually we don't want oco orders, preferably reduce only orders on both sides
+      // AND I guess we need to clean up those orders when the position
+      let order: FuturesOrder = await ee.futuresOrder(args)
 
     /**
      *   export interface OcoOrder {
@@ -278,7 +286,7 @@ export class BinanceFuturesExecutionEngine implements FuturesExecutionEngine {
     throw new Error(msg)
   }
 } catch (err: any) {
-  let context = { symbol: pair, class: "AlgoUtils", method: "munge_and_create_oco_order" }
+  let context = { symbol, class: "AlgoUtils", method: "munge_and_create_oco_order" }
   Sentry.captureException(err, {
     tags: context,
   })

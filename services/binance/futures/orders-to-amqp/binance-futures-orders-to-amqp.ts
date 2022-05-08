@@ -19,7 +19,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { BinanceOrderData } from "../../../../interfaces/order_callbacks"
+import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { HealthAndReadinessSubsystem } from "../../../../classes/health_and_readiness"
 import { RedisClient } from "redis"

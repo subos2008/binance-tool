@@ -88,7 +88,7 @@ class BinanceOrdersToSendMessageForwarder {
       ? new BigNumber(data.averageExecutionPrice).toFixed()
       : "(null)"
     this.send_message(
-      `Order filled ${data.symbol} ${data.orderType} ${data.side} at ${price}/${averageExecutionPrice}  (edge: ${data.edge})`
+      `Order filled ${data.symbol} ${data.orderType} ${data.side} at ${averageExecutionPrice} (price: ${price}) (edge: ${data.edge})`
     )
   }
 

@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/node"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 import { Edge60EntrySignalProcessor } from "./interfaces"
 import { Edge60Forwarder } from "./forwarder"
+import { Edge60ForwarderToEdge62 } from "./forwarder-to-edge62"
 
 export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
   send_message: Function
@@ -39,7 +40,7 @@ export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
       forward_short_signals_as_close_position: true,
     })
 
-    this.edge62 = new Edge60Forwarder({
+    this.edge62 = new Edge60ForwarderToEdge62({
       send_message,
       logger,
       event_name,

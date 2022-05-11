@@ -1,6 +1,6 @@
 /* AlgoUtils but exchangeInfo is passed in explicitly */
 
-import * as utils from "../../../../../../lib/utils"
+import * as utils from "../../../../../lib/utils"
 import { strict as assert } from "assert"
 
 import BigNumber from "bignumber.js"
@@ -9,9 +9,9 @@ BigNumber.DEBUG = true // Prevent NaN
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
-import { Logger } from "../../../../../../interfaces/logger"
-import { TradingRules } from "../../../../../../lib/trading_rules"
-import Sentry from "../../../../../../lib/sentry"
+import { Logger } from "../../../../../interfaces/logger"
+import { TradingRules } from "../../../../../lib/trading_rules"
+import Sentry from "../../../../../lib/sentry"
 import {
   ExchangeInfo,
   NewOcoOrder,

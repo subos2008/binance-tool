@@ -1,11 +1,11 @@
 import { AlgoUtils } from "./_internal/binance_algo_utils_v2"
-import { Logger } from "../../../../../interfaces/logger"
+import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
-import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
-import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
+import { MarketIdentifier_V3 } from "../../../../events/shared/market-identifier"
+import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import binance, { CancelOrderResult, OcoOrder, Order } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
-import { BinanceExchangeInfoGetter } from "../../exchange-info-getter"
+import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
 import { randomUUID } from "crypto"
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -22,9 +22,9 @@ import {
   SpotOCOSellCommand,
   SpotLimitBuyCommand,
   SpotExecutionEngineBuyResult,
-} from "../../../../../interfaces/exchanges/spot-execution-engine"
-import { OrderContextPersistence } from "../../../../spot/persistence/interface/order-context-persistence"
-import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
+} from "../../../../interfaces/exchanges/spot-execution-engine"
+import { OrderContextPersistence } from "../../../../classes/spot/persistence/interface/order-context-persistence"
+import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)

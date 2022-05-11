@@ -44,7 +44,6 @@ function dogstatsderrorhandler(err: Error) {
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
 import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close_spot"
-import { BinanceSpotExecutionEngine } from "../../classes/exchanges/binance/execution_engines/spot/binance-spot-execution-engine"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
@@ -93,6 +92,7 @@ import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-p
 import { RedisClient } from "redis"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
 import { TradeAbstractionService } from "./trade-abstraction-service"
+import { BinanceSpotExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()

@@ -215,6 +215,7 @@ export class OrderExecutionTracker {
         object_type: "BinanceOrderData",
         version: 1,
         exchange_identifier: this.exchange_identifier,
+        exchange_type: this.exchange_identifier.type,
         order_id,
         order_is_is_client_order_id,
       }

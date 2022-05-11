@@ -12,6 +12,7 @@ import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { TradeAbstractionOpenFuturesShortCommand, TradeAbstractionOpenFuturesShortResult } from "./interfaces/open_futures_short"
 import { AuthorisedEdgeType, check_edge, is_authorised_edge } from "../../../../classes/spot/abstractions/position-identifier"
+import { FuturesEdgeToExecutorMapper } from "./execution/futures-edge-to-executor-mapper"
 // import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 // import {
 //   AuthorisedEdgeType,
@@ -108,24 +109,27 @@ export class FuturesTradeAbstractionService {
     //   return obj
     // }
 
-    let result: TradeAbstractionOpenFuturesShortResult = await this.futures_ee.open_position(cmd)
-    if (
-      result.status != "INTERNAL_SERVER_ERROR" &&
-      result.status != "ENTRY_FAILED_TO_FILL" &&
-      result.status != "UNAUTHORISED" &&
-      result.status != "ALREADY_IN_POSITION" &&
-      result.status != "TRADING_IN_ASSET_PROHIBITED"
-    ) {
-      result.created_stop_order = result.stop_order_id ? true : false
-      result.created_take_profit_order = result.take_profit_order_id ? true : false
-    }
+    throw new Error(`futures open_short not implemented`)
 
-    let { execution_timestamp_ms } = result
-    result.signal_to_execution_slippage_ms = execution_timestamp_ms
-      ? new BigNumber(execution_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
-      : undefined
 
-    return result
+    // let result: TradeAbstractionOpenFuturesShortResult = await this.futures_ee.open_position(cmd)
+    // if (
+    //   result.status != "INTERNAL_SERVER_ERROR" &&
+    //   result.status != "ENTRY_FAILED_TO_FILL" &&
+    //   result.status != "UNAUTHORISED" &&
+    //   result.status != "ALREADY_IN_POSITION" &&
+    //   result.status != "TRADING_IN_ASSET_PROHIBITED"
+    // ) {
+    //   result.created_stop_order = result.stop_order_id ? true : false
+    //   result.created_take_profit_order = result.take_profit_order_id ? true : false
+    // }
+
+    // let { execution_timestamp_ms } = result
+    // result.signal_to_execution_slippage_ms = execution_timestamp_ms
+    //   ? new BigNumber(execution_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
+    //   : undefined
+
+    // return result
   }
 
   // // or signal_short or signal_exit/close

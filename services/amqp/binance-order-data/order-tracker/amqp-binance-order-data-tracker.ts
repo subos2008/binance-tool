@@ -32,7 +32,7 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import { AMQP_BinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-order-execution-tracker"
+import { AMQP_BinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-binance-order-data-listener"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })

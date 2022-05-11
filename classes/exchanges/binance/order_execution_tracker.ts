@@ -91,14 +91,10 @@ export class OrderExecutionTracker {
   }
 
   async monitor_user_stream() {
-    type processor_func = (data: ExecutionReport) => Promise<void>
+    type processor_func = (data: ExecutionReport | OrderUpdate) => Promise<void>
 
-    const process_execution_report: processor_func = async (data: ExecutionReport) => {
+    const process_execution_report: processor_func = async (data: ExecutionReport | OrderUpdate) => {
       try {
-        const { eventType } = data
-        if (eventType !== "executionReport") {
-          return
-        }
         this.processExecutionReport(data)
       } catch (err) {
         Sentry.withScope(function (scope) {
@@ -108,10 +104,10 @@ export class OrderExecutionTracker {
           scope.setTag("orderType", data.orderType)
           scope.setTag("orderStatus", data.orderStatus)
           scope.setTag("executionType", data.executionType)
-          scope.setTag("order_id", data.newClientOrderId)
+          // scope.setTag("order_id", data.newClientOrderId)
           Sentry.captureException(err)
         })
-        let msg = `SHIT: error calling processExecutionReport for pair ${data.symbol}`
+        let msg = `Error calling processExecutionReport for pair ${data.symbol}`
         this.logger.error(data, msg)
         this.logger.error({ err })
         this.send_message(msg)
@@ -126,7 +122,7 @@ export class OrderExecutionTracker {
           ) => {
             this.logger.info(data)
             if (data.eventType === "executionReport") {
-              process_execution_report(data as ExecutionReport)
+              process_execution_report(data)
             }
           }
         )
@@ -143,8 +139,8 @@ export class OrderExecutionTracker {
               | MarginCall
           ) => {
             this.logger.info(data)
-            if (data.eventType === "executionReport") {
-              process_execution_report(data as ExecutionReport)
+            if (data.eventType === "ORDER_TRADE_UPDATE") {
+              process_execution_report(data)
             }
           }
         )
@@ -161,6 +157,7 @@ export class OrderExecutionTracker {
         exchange_identifier: this.exchange_identifier,
         order_id: data.order_id,
       })
+      if (!order_context) throw new Error(`No OrderContext found for order ${data.order_id}`)
       let { edge } = order_context
       this.logger.info(
         data,
@@ -175,141 +172,147 @@ export class OrderExecutionTracker {
     }
   }
 
-  async processExecutionReport(_data: ExecutionReport) {
-    const {
-      symbol,
-      price,
-      quantity,
-      side,
-      orderType,
-      orderStatus,
-      orderRejectReason,
-      totalTradeQuantity,
-      totalQuoteTradeQuantity,
-      newClientOrderId,
-      orderId,
-      orderListId,
-      originalClientOrderId,
-    } = _data
+  async processExecutionReport(_data: ExecutionReport | OrderUpdate) {
+    let bod: BinanceOrderData
+    if (_data.eventType === "executionReport") {
+      const {
+        symbol,
+        price,
+        quantity,
+        side,
+        orderType,
+        orderStatus,
+        totalTradeQuantity,
+        totalQuoteTradeQuantity,
+        newClientOrderId,
+        orderId,
+        orderListId,
+        originalClientOrderId,
+      } = _data
 
-    let order_id: string, order_is_is_client_order_id: boolean
-    if (newClientOrderId) {
-      order_is_is_client_order_id = true
-      order_id = newClientOrderId
-      console.info(JSON.stringify(_data))
-    } else if (originalClientOrderId) {
-      order_is_is_client_order_id = true
-      order_id = originalClientOrderId
-      console.info(JSON.stringify(_data))
-    } else {
-      this.logger.warn(
-        `No newClientOrderId in ExecutionReport, oderId: ${orderId}, orderListId: ${orderListId}`,
-        _data
-      )
-      console.info(JSON.stringify(_data))
-
-      order_is_is_client_order_id = false
-      order_id = _data.orderId.toString()
-    }
-
-    let data: BinanceOrderData = {
-      ..._data,
-      order_id,
-      order_is_is_client_order_id,
-      version: 1,
-      object_type: "BinanceOrderData",
-      exchange_identifier: this.exchange_identifier,
-    }
-    // How can I automagically check an input matches the expected type?
-
-    try {
-      // Average price can be found by doing totalQuoteTradeQuantity (Z) divided by totalTradeQuantity (z).
-      // https://binance-docs.github.io/apidocs/spot/en/#payload-balance-update
-      if (totalQuoteTradeQuantity && totalTradeQuantity)
-        data.averageExecutionPrice = new BigNumber(totalQuoteTradeQuantity).div(totalTradeQuantity).toFixed(8)
-    } catch (err) {
-      this.logger.error(_data, err)
-      Sentry.withScope(function (scope) {
-        scope.setTag("operation", "processExecutionReport")
-        scope.setTag("pair", symbol)
-        scope.setTag("order_id", order_id || "undefined")
-        Sentry.captureException(err)
-      })
-    }
-
-    // This bit of code is horrible
-    let edge: AuthorisedEdgeType | undefined
-    try {
-      /** Add edge and order_context if known */
-      let order_context: OrderContext_V1 = await this.get_order_context_for_order(data)
-      data.order_context = order_context
-      data.edge = order_context.edge
-    } catch (err) {
-      this.logger.error(_data, err)
-      Sentry.withScope(function (scope) {
-        scope.setTag("operation", "processExecutionReport")
-        scope.setTag("pair", symbol)
-        scope.setTag("order_id", order_id || "undefined")
-        Sentry.captureException(err)
-      })
-      edge = "undefined"
-    }
-
-    try {
-      if (this.print_all_trades) {
-        this.logger.info(_data, `${symbol} ${side} ${orderType} ORDER #${order_id} (${orderStatus})`)
-        this.logger.info(
-          _data,
-          `..price: ${price}, quantity: ${quantity}, averageExecutionPrice: ${data.averageExecutionPrice}`
+      let order_id: string, order_is_is_client_order_id: boolean
+      if (newClientOrderId) {
+        order_is_is_client_order_id = true
+        order_id = newClientOrderId
+        console.info(JSON.stringify(_data))
+      } else if (originalClientOrderId) {
+        order_is_is_client_order_id = true
+        order_id = originalClientOrderId
+        console.info(JSON.stringify(_data))
+      } else {
+        this.logger.warn(
+          `No newClientOrderId in ExecutionReport, oderId: ${orderId}, orderListId: ${orderListId}`,
+          _data
         )
+        console.info(JSON.stringify(_data))
+
+        order_is_is_client_order_id = false
+        order_id = _data.orderId.toString()
       }
 
-      if (orderStatus === "NEW") {
-        // Originally orders were all first added here but as we re-architect they will become
-        // more likely to pre-exist
-        if (this.order_callbacks && this.order_callbacks.order_created)
-          await this.order_callbacks.order_created(data)
-        return
+      bod = {
+        ..._data,
+        object_type: "BinanceOrderData",
+        version: 1,
+        exchange_identifier: this.exchange_identifier,
+        order_id,
+        order_is_is_client_order_id,
       }
 
-      if (orderStatus === "PARTIALLY_FILLED") {
+      try {
+        // Average price can be found by doing totalQuoteTradeQuantity (Z) divided by totalTradeQuantity (z).
+        // https://binance-docs.github.io/apidocs/spot/en/#payload-balance-update
+        if (totalQuoteTradeQuantity && totalTradeQuantity)
+          bod.averageExecutionPrice = new BigNumber(totalQuoteTradeQuantity).div(totalTradeQuantity).toFixed(8)
+      } catch (err) {
+        this.logger.error(_data, err)
+        Sentry.withScope(function (scope) {
+          scope.setTag("operation", "processExecutionReport")
+          scope.setTag("pair", symbol)
+          scope.setTag("order_id", order_id || "undefined")
+          Sentry.captureException(err)
+        })
+      }
+
+      // This bit of code is horrible
+      let edge: AuthorisedEdgeType | undefined
+      try {
+        /** Add edge and order_context if known */
+        let order_context: OrderContext_V1 = await this.get_order_context_for_order(bod)
+        bod.order_context = order_context
+        bod.edge = order_context.edge
+      } catch (err) {
+        this.logger.error(_data, err)
+        Sentry.withScope(function (scope) {
+          scope.setTag("operation", "processExecutionReport")
+          scope.setTag("pair", symbol)
+          scope.setTag("order_id", order_id || "undefined")
+          Sentry.captureException(err)
+        })
+        edge = "undefined"
+      }
+
+      try {
+        if (this.print_all_trades) {
+          this.logger.info(_data, `${symbol} ${side} ${orderType} ORDER #${order_id} (${orderStatus})`)
+          this.logger.info(
+            _data,
+            `..price: ${price}, quantity: ${quantity}, averageExecutionPrice: ${bod.averageExecutionPrice}`
+          )
+        }
+
+        if (orderStatus === "NEW") {
+          // Originally orders were all first added here but as we re-architect they will become
+          // more likely to pre-exist
+          if (this.order_callbacks && this.order_callbacks.order_created)
+            await this.order_callbacks.order_created(bod)
+          return
+        }
+
+        if (orderStatus === "PARTIALLY_FILLED") {
+          if (this.order_callbacks && this.order_callbacks.order_filled_or_partially_filled)
+            await this.order_callbacks.order_filled_or_partially_filled(bod)
+          return
+        }
+
+        if (orderStatus === "CANCELED" /*&& orderRejectReason === "NONE"*/) {
+          // `Order was cancelled, presumably by user. Exiting.`, (orderRejectReason === "NONE happens when user cancelled)
+          if (this.order_callbacks && this.order_callbacks.order_cancelled)
+            await this.order_callbacks.order_cancelled(bod)
+          return
+        }
+
+        // EXPIRED can happen on OCO orders when the other side hits or if a token is de-listed
+        // Can also happen on IOC limit buys, used to prevent slippage on entry
+        if (orderStatus === "EXPIRED") {
+          if (this.order_callbacks && this.order_callbacks.order_expired)
+            await this.order_callbacks.order_expired(bod)
+          return
+        }
+
+        if (orderStatus !== "FILLED") {
+          throw new Error(`Unexpected orderStatus: ${orderStatus}. Reason: ${bod.orderRejectReason}`)
+        }
+
         if (this.order_callbacks && this.order_callbacks.order_filled_or_partially_filled)
-          await this.order_callbacks.order_filled_or_partially_filled(data)
-        return
+          await this.order_callbacks.order_filled_or_partially_filled(bod)
+        if (this.order_callbacks) await this.order_callbacks.order_filled(bod)
+      } catch (err) {
+        this.logger.error(_data, err)
+        Sentry.withScope(function (scope) {
+          scope.setTag("operation", "processExecutionReport")
+          scope.setTag("pair", symbol)
+          if (edge) scope.setTag("edge", edge)
+          if (order_id) scope.setTag("order_id", order_id)
+          Sentry.captureException(err)
+        })
+        throw err
       }
-
-      if (orderStatus === "CANCELED" /*&& orderRejectReason === "NONE"*/) {
-        // `Order was cancelled, presumably by user. Exiting.`, (orderRejectReason === "NONE happens when user cancelled)
-        if (this.order_callbacks && this.order_callbacks.order_cancelled)
-          await this.order_callbacks.order_cancelled(data)
-        return
-      }
-
-      // EXPIRED can happen on OCO orders when the other side hits or if a token is de-listed
-      // Can also happen on IOC limit buys, used to prevent slippage on entry
-      if (orderStatus === "EXPIRED") {
-        if (this.order_callbacks && this.order_callbacks.order_expired)
-          await this.order_callbacks.order_expired(data)
-        return
-      }
-
-      if (orderStatus !== "FILLED") {
-        throw new Error(`Unexpected orderStatus: ${orderStatus}. Reason: ${data.orderRejectReason}`)
-      }
-
-      if (this.order_callbacks && this.order_callbacks.order_filled_or_partially_filled)
-        await this.order_callbacks.order_filled_or_partially_filled(data)
-      if (this.order_callbacks) await this.order_callbacks.order_filled(data)
-    } catch (err) {
-      this.logger.error(_data, err)
-      Sentry.withScope(function (scope) {
-        scope.setTag("operation", "processExecutionReport")
-        scope.setTag("pair", symbol)
-        if (edge) scope.setTag("edge", edge)
-        if (order_id) scope.setTag("order_id", order_id)
-        Sentry.captureException(err)
-      })
-      throw err
+    } else if (_data.eventType === "ORDER_TRADE_UPDATE") {
+      this.logger.error(`ORDER_TRADE_UPDATE processing not implemented`)
+      return
+    } else {
+      throw new Error(`Unknown eventType: ${(_data as any).eventType}`)
     }
   }
 

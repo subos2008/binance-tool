@@ -9,17 +9,17 @@ import { MarketIdentifier_V3 } from "../../../../../../events/shared/market-iden
 import { ExchangeIdentifier_V3 } from "../../../../../../events/shared/exchange-identifier"
 import { OrderContext_V1 } from "../../../../../../interfaces/orders/order-context"
 
-export interface FuturesMarketSellByQuoteQuantityCommand {
-  order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V3
-  quote_amount: BigNumber
-}
+// export interface FuturesMarketSellByQuoteQuantityCommand {
+//   order_context: OrderContext_V1
+//   market_identifier: MarketIdentifier_V3
+//   quote_amount: BigNumber
+// }
 
-export interface FuturesMarketSellCommand {
-  order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V3
-  base_amount: BigNumber
-}
+// export interface FuturesMarketSellCommand {
+//   order_context: OrderContext_V1
+//   market_identifier: MarketIdentifier_V3
+//   base_amount: BigNumber
+// }
 
 // export interface FuturesOCOBuyCommand {
 //   object_type: "FuturesOCOBuyCommand"
@@ -34,13 +34,13 @@ export interface FuturesMarketSellCommand {
 //   oco_list_ClientOrderId: string
 // }
 
-export interface FuturesExecutionEngineSellResult {
-  object_type: "FuturesExecutionEngineSellResult"
-  executed_quote_quantity: BigNumber
-  executed_price: BigNumber
-  executed_base_quantity: BigNumber
-  execution_timestamp_ms: string | undefined
-}
+// export interface FuturesExecutionEngineSellResult {
+//   object_type: "FuturesExecutionEngineSellResult"
+//   executed_quote_quantity: BigNumber
+//   executed_price: BigNumber
+//   executed_base_quantity: BigNumber
+//   execution_timestamp_ms: string | undefined
+// }
 
 export interface FuturesExecutionEngine {
   get_market_identifier_for({
@@ -60,7 +60,7 @@ export interface FuturesExecutionEngine {
 
   // market_sell_by_quote_quantity(args: FuturesMarketSellByQuoteQuantityCommand): Promise<FuturesExecutionEngineSellResult>
   
-  limit_sell_by_quote_quantity(args: FuturesMarketSellByQuoteQuantityCommand): Promise<FuturesExecutionEngineSellResult>
+  // limit_sell_by_quote_quantity(args: FuturesMarketSellByQuoteQuantityCommand): Promise<FuturesExecutionEngineSellResult>
 
   get_exchange_identifier(): ExchangeIdentifier_V3
 

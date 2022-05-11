@@ -25,6 +25,7 @@ import {
   SpotPositionPublisher,
 } from "../../classes/spot/abstractions/spot-position-publisher"
 import { SendMessageFunc } from "../../lib/telegram-v2"
+import { OrderContext_V1 } from "../../interfaces/orders/order-context"
 
 type check_func = ({
   volume,
@@ -145,11 +146,11 @@ export class SpotPositionTracker {
   private async load_position_for_order(generic_order_data: GenericOrderData): Promise<SpotPosition> {
     let { baseAsset, order_id } = generic_order_data
 
-    let edge: AuthorisedEdgeType | undefined
+    let edge: string | undefined
     try {
       /* We can expect this to error, certainly initally as we have stops already open,
       Any manually created orders will also throw here */
-      let order_context = await this.order_context_persistence.get_order_context_for_order({
+      let order_context: OrderContext_V1 = await this.order_context_persistence.get_order_context_for_order({
         exchange_identifier: generic_order_data.exchange_identifier,
         order_id,
       })

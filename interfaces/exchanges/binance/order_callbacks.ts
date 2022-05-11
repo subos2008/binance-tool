@@ -51,7 +51,7 @@ export interface BinanceOrderData extends ExecutionReport {
   orderStatus: OrderStatus_LT
   totalQuoteTradeQuantity: string
   averageExecutionPrice?: string // Added by us
-  edge?: AuthorisedEdgeType // Added by us
+  edge?: string // Added by us
   order_context?: OrderContext_V1 // Added by us
 }
 

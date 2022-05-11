@@ -47,31 +47,31 @@ export class FuturesEdgeToExecutorMapper {
   // price_getter: CurrentPriceGetter
 
   /* executors - really need to refactor this */
-  oco_executor: FuturesPositionsExecution_OCOExit
+  // oco_executor: FuturesPositionsExecution_OCOExit
 
   constructor({
     logger,
     ee,
-    positions_persistance,
+    // positions_persistance,
     send_message,
     position_sizer,
-    price_getter,
+    // price_getter,
   }: {
     logger: Logger
     ee: FuturesExecutionEngine
-    positions_persistance: SpotPositionsPersistance
+    // positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
     position_sizer: PositionSizer
-    price_getter: CurrentPriceGetter
+    // price_getter: FuturesCurrentPriceGetter
   }) {
     assert(logger)
     this.logger = logger
     assert(ee)
     this.ee = ee
-    this.positions_persistance = positions_persistance
+    // this.positions_persistance = positions_persistance
     this.send_message = send_message
     this.position_sizer = position_sizer
-    this.price_getter = price_getter
+    // this.price_getter = price_getter
     // this.oco_executor = new SpotPositionsExecution_OCOExit({
     //   logger,
     //   ee,
@@ -83,19 +83,21 @@ export class FuturesEdgeToExecutorMapper {
   }
 
   in_position({ base_asset, edge }: { base_asset: string; edge: string }) {
-    return this.positions_persistance.in_position({
-      base_asset,
-      exchange_identifier: this.ee.get_exchange_identifier(),
-      edge,
-    })
+    throw new Error(`futures in_position not implemented`)
+    // return this.positions_persistance.in_position({
+    //   base_asset,
+    //   exchange_identifier: this.ee.get_exchange_identifier(),
+    //   edge,
+    // })
   }
 
   exisiting_position_size({ base_asset, edge }: { base_asset: string; edge: string }) {
-    return this.positions_persistance.position_size({
-      base_asset,
-      exchange_identifier: this.ee.get_exchange_identifier(),
-      edge,
-    })
+    throw new Error(`futures exisiting_position_size not implemented`)
+    // return this.positions_persistance.position_size({
+    //   base_asset,
+    //   exchange_identifier: this.ee.get_exchange_identifier(),
+    //   edge,
+    // })
   }
 
   // Used when constructing orders
@@ -115,51 +117,52 @@ export class FuturesEdgeToExecutorMapper {
   //     stop_price: BigNumber
   //   }
   async open_short_position(args: TradeAbstractionOpenFuturesShortCommand): Promise<TradeAbstractionOpenFuturesShortResult> {
-    try {
-      args.edge = check_edge(args.edge)
-      let { edge, quote_asset } = args
-      if (!quote_asset) throw new Error(`quote_asset not defined`)
+    throw new Error(`futures open_short_position not implemented`)
+    // try {
+    //   args.edge = check_edge(args.edge)
+    //   let { edge, quote_asset } = args
+    //   if (!quote_asset) throw new Error(`quote_asset not defined`)
 
-      /**
-       * Check if already in a position
-       */
-      if (await this.in_position(args)) {
-        let msg = `Already in position on ${args.edge}:${args.base_asset}`
-        this.send_message(msg, { edge })
-        throw new Error(msg)
-      }
+    //   /**
+    //    * Check if already in a position
+    //    */
+    //   if (await this.in_position(args)) {
+    //     let msg = `Already in position on ${args.edge}:${args.base_asset}`
+    //     this.send_message(msg, { edge })
+    //     throw new Error(msg)
+    //   }
 
-      switch (args.edge) {
-        case "edge62":
-          return this.oco_executor.open_position({
-            ...args,
-            quote_asset,
-            edge_percentage_stop: new BigNumber(7),
-            edge_percentage_stop_limit: new BigNumber(15),
-            edge_percentage_take_profit: new BigNumber(7),
-            edge_percentage_buy_limit: new BigNumber(0.5),
-          })
-        default:
-          let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
-          this.send_message(msg, { edge })
-          throw new Error(msg)
-      }
-    } catch (err: any) {
-      this.logger.error({ err })
-      Sentry.captureException(err)
-      let result: TradeAbstractionOpenFuturesShortResult = {
-        object_type: "TradeAbstractionOpenFuturesShortResult",
-        version: 1,
-        base_asset: args.base_asset,
-        quote_asset: args.quote_asset,
-        edge: args.edge,
-        status: "INTERNAL_SERVER_ERROR",
-        msg: err.message,
-        err,
-        execution_timestamp_ms: Date.now().toString(),
-      }
-      return result
-    }
+    //   switch (args.edge) {
+    //     case "edge62":
+    //       return this.oco_executor.open_position({
+    //         ...args,
+    //         quote_asset,
+    //         edge_percentage_stop: new BigNumber(7),
+    //         edge_percentage_stop_limit: new BigNumber(15),
+    //         edge_percentage_take_profit: new BigNumber(7),
+    //         edge_percentage_buy_limit: new BigNumber(0.5),
+    //       })
+    //     default:
+    //       let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
+    //       this.send_message(msg, { edge })
+    //       throw new Error(msg)
+    //   }
+    // } catch (err: any) {
+    //   this.logger.error({ err })
+    //   Sentry.captureException(err)
+    //   let result: TradeAbstractionOpenFuturesShortResult = {
+    //     object_type: "TradeAbstractionOpenFuturesShortResult",
+    //     version: 1,
+    //     base_asset: args.base_asset,
+    //     quote_asset: args.quote_asset,
+    //     edge: args.edge,
+    //     status: "INTERNAL_SERVER_ERROR",
+    //     msg: err.message,
+    //     err,
+    //     execution_timestamp_ms: Date.now().toString(),
+    //   }
+    //   return result
+    // }
   }
 
   // async close_position({

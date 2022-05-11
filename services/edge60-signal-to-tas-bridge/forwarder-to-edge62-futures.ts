@@ -81,7 +81,7 @@ export class Edge60ForwarderToEdge62Futures implements Edge60EntrySignalProcesso
             let tp = trigger_price.times("0.93").toFixed()
             let sl = trigger_price.times("1.07").toFixed()
             this.send_message(
-              `${edge} SHORT ${base_asset} - Trigger Price: ${trigger_price.toFixed()} TP ${tp} SL ${sl}`,
+              `${edge} SHORT ${base_asset} - Trigger Price: ${trigger_price.toFixed()} TP ${tp} SL ${sl} URL https://www.binance.com/en/futures/${signal.market_identifier.symbol.toUpperCase()}`,
               tags
             )
           } catch (e) {

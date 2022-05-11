@@ -30,17 +30,17 @@ All trades are vs USD, the backend decides which USD evivalent asset to use, cou
 
 To enter a long spot position:
 
-  /spot long LINK [edge##] [STOP_PRICE]
+  /spot long LINK [edgeNN] [STOP_PRICE]
 
 To close an open long spot position:
 
-  /spot close LINK [edge##]
+  /spot close LINK [edgeNN]
 
 Futures positions:
 
-  /futures short LINK <edge##>
-  /futures short LINK <edge##>
-  /futures close LINK [edge##] (Not implemented?)
+  /futures short LINK <edgeNN>
+  /futures short LINK <edgeNN>
+  /futures close LINK [edgeNN] (Not implemented?)
 
 To view open spot positions:
 

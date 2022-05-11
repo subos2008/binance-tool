@@ -50,7 +50,7 @@ import { Connection } from "amqplib"
 import { GenericTopicPublisher } from "../../../../classes/amqp/generic-publishers"
 import { MyEventNameType } from "../../../../classes/amqp/message-routing"
 
-import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/order_execution_tracker"
+import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/spot-order-execution-tracker"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { Balance, Portfolio, SpotPortfolio } from "../../../../interfaces/portfolio"

@@ -18,7 +18,6 @@ import {
   Binance,
   ExecutionReport,
   MarginCall,
-  OrderUpdate,
   OutboundAccountInfo,
   OutboundAccountPosition,
   UserDataStreamEvent,
@@ -91,9 +90,9 @@ export class OrderExecutionTracker {
   }
 
   async monitor_user_stream() {
-    type processor_func = (data: ExecutionReport | OrderUpdate) => Promise<void>
+    type processor_func = (data: ExecutionReport ) => Promise<void>
 
-    const process_execution_report: processor_func = async (data: ExecutionReport | OrderUpdate) => {
+    const process_execution_report: processor_func = async (data: ExecutionReport ) => {
       try {
         this.processExecutionReport(data)
       } catch (err) {
@@ -127,24 +126,6 @@ export class OrderExecutionTracker {
           }
         )
         break
-      case "futures":
-        this.closeUserWebsocket = await this.ee.ws.futuresUser(
-          async (
-            data:
-              | OutboundAccountInfo
-              | ExecutionReport
-              | AccountUpdate
-              | OrderUpdate
-              | AccountConfigUpdate
-              | MarginCall
-          ) => {
-            this.logger.info(data)
-            if (data.eventType === "ORDER_TRADE_UPDATE") {
-              process_execution_report(data)
-            }
-          }
-        )
-        break
       default:
         throw new Error(`Unknown exchange type: ${this.exchange_identifier.type}`)
     }
@@ -172,7 +153,7 @@ export class OrderExecutionTracker {
     }
   }
 
-  async processExecutionReport(_data: ExecutionReport | OrderUpdate) {
+  async processExecutionReport(_data: ExecutionReport ) {
     let bod: BinanceOrderData
     if (_data.eventType === "executionReport") {
       const {
@@ -309,9 +290,6 @@ export class OrderExecutionTracker {
         })
         throw err
       }
-    } else if (_data.eventType === "ORDER_TRADE_UPDATE") {
-      this.logger.error(`ORDER_TRADE_UPDATE processing not implemented`)
-      return
     } else {
       throw new Error(`Unknown eventType: ${(_data as any).eventType}`)
     }

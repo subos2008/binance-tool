@@ -54,7 +54,7 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/order_execution_tracker"
+import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/spot-order-execution-tracker"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { Balance, Portfolio } from "../../../../interfaces/portfolio"
 import { Binance as BinanceType } from "binance-api-node"

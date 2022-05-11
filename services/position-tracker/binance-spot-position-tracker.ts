@@ -44,7 +44,7 @@ import { BinanceOrderData, OrderCallbacks } from "../../interfaces/exchanges/bin
 import { SpotPositionTracker } from "./position-tracker"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
-import { BinanceSpotExecutionEngine } from "../../classes/exchanges/binance/execution_engines/spot/binance-spot-execution-engine"
+import { BinanceSpotExecutionEngine } from "../spot-trade-abstraction/execution/execution_engines/binance-spot-execution-engine"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"

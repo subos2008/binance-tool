@@ -38,7 +38,7 @@ import BigNumber from "bignumber.js"
  * }
  */
 
-export class Edge60ForwarderToEdge62 implements Edge60EntrySignalProcessor {
+export class Edge60ForwarderToEdge62Spot implements Edge60EntrySignalProcessor {
   send_message: Function
   logger: Logger
   event_name: MyEventNameType

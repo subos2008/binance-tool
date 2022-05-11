@@ -6,7 +6,8 @@ import * as Sentry from "@sentry/node"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 import { Edge60EntrySignalProcessor } from "./interfaces"
 import { Edge60Forwarder } from "./forwarder"
-import { Edge60ForwarderToEdge62 } from "./forwarder-to-edge62"
+import { Edge60ForwarderToEdge62Spot } from "./forwarder-to-edge62-spot"
+import { Edge60ForwarderToEdge62Futures } from "./forwarder-to-edge62-futures"
 
 export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
   send_message: Function
@@ -14,7 +15,8 @@ export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
   event_name: MyEventNameType
   tas_client: SpotTradeAbstractionServiceClient
   edge60: Edge60EntrySignalProcessor
-  edge62: Edge60EntrySignalProcessor
+  edge62_spot: Edge60EntrySignalProcessor
+  edge62_futures: Edge60EntrySignalProcessor
 
   constructor({
     send_message,
@@ -40,12 +42,17 @@ export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
       forward_short_signals_as_close_position: true,
     })
 
-    this.edge62 = new Edge60ForwarderToEdge62({
+    this.edge62_spot = new Edge60ForwarderToEdge62Spot({
       send_message,
       logger,
       event_name,
       edge: "edge62",
       forward_short_signals_as_close_position: false,
+    })
+
+    this.edge62_futures = new Edge60ForwarderToEdge62Futures({
+      send_message,
+      logger,
     })
   }
 
@@ -63,7 +70,14 @@ export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
     }
 
     try {
-      await this.edge62.process_edge60_entry_signal(signal)
+      await this.edge62_spot.process_edge60_entry_signal(signal)
+    } catch (err) {
+      this.logger.error({ err })
+      Sentry.captureException(err)
+    }
+
+    try {
+      await this.edge62_futures.process_edge60_entry_signal(signal)
     } catch (err) {
       this.logger.error({ err })
       Sentry.captureException(err)

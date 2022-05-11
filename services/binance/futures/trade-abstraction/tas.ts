@@ -41,13 +41,7 @@ function dogstatsderrorhandler(err: Error) {
   logger.error({ err }, `DogStatsD: Socket errors caught here: ${err}`)
 }
 
-import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_futures_short"
-import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close_spot"
-import { BinanceSpotExecutionEngine } from "../../classes/spot/exchanges/binance/binance-spot-execution-engine"
-import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
-import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
-import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
+import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 
 import express, { NextFunction, Request, Response } from "express"
 import { FixedPositionSizer } from "./fixed-position-sizer"
@@ -81,51 +75,55 @@ app.use(
 
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
-import { HealthAndReadiness } from "../../classes/health_and_readiness"
+import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
-import { SpotPositionsExecution } from "./execution/futures-positions-execution"
-import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
-import { BinancePriceGetter } from "../../interfaces/exchange/binance/binance-price-getter"
+import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
+import { SpotPositionsExecution } from "./execution/futures-edge-to-executor-mapper"
+import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 import { RedisClient } from "redis"
-import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
-import { TradeAbstractionService } from "./trade-abstraction-service"
+import { AuthorisedEdgeType, check_edge } from "../../../../classes/spot/abstractions/position-identifier"
+import { FuturesTradeAbstractionService } from "./futures-trade-abstraction-service"
+import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
+import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
+import { CurrentPriceGetter } from "../../../../interfaces/exchanges/generic/price-getter"
+import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
+import { TradeAbstractionOpenFuturesShortCommand, TradeAbstractionOpenFuturesShortResult } from "./interfaces/open_futures_short"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
 
 const order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
-const binance_spot_ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
-const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
+const binance_futures_ee = new BinanceFuturesExecutionEngine({ logger, order_context_persistence })
+// const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
 const position_sizer = new FixedPositionSizer({ logger })
-const exchange_identifier = binance_spot_ee.get_exchange_identifier()
-const price_getter = new BinancePriceGetter({
+const exchange_identifier = binance_futures_ee.get_exchange_identifier()
+const price_getter: CurrentPriceGetter = new BinancePriceGetter({
   logger,
-  ee: binance_spot_ee.get_raw_binance_ee(),
+  ee: binance_futures_ee.get_raw_binance_ee(),
   cache_timeout_ms: 400,
 })
-const positions = new SpotPositionsQuery({
-  logger,
-  positions_persistance,
-  send_message,
-  exchange_identifier: binance_spot_ee.get_exchange_identifier(),
-})
-const spot_ee: SpotPositionsExecution = new SpotPositionsExecution({
-  logger,
-  position_sizer,
-  positions_persistance,
-  ee: binance_spot_ee,
-  send_message,
-  price_getter,
-})
-let tas: TradeAbstractionService = new TradeAbstractionService({
-  positions,
+// const positions = new SpotPositionsQuery({
+//   logger,
+//   positions_persistance,
+//   send_message,
+//   exchange_identifier: binance_futures_ee.get_exchange_identifier(),
+// })
+// const spot_ee: SpotPositionsExecution = new SpotPositionsExecution({
+//   logger,
+//   position_sizer,
+//   positions_persistance,
+//   ee: binance_futures_ee,
+//   send_message,
+//   price_getter,
+// })
+let tas: FuturesTradeAbstractionService = new FuturesTradeAbstractionService({
+  // positions,
   logger,
   quote_asset /* global */,
-  spot_ee,
+  futures_ee: binance_futures_ee,
 })
 var dogstatsd = new StatsD({
   errorHandler: dogstatsderrorhandler,
@@ -133,16 +131,16 @@ var dogstatsd = new StatsD({
   prefix: "trading_engine.tas.",
 })
 
-app.get("/positions", async function (req: Request, res: Response, next: NextFunction) {
-  try {
-    res.status(200).json(await tas.open_positions())
-  } catch (err) {
-    res.status(500)
-    next(err)
-  }
-})
+// app.get("/positions", async function (req: Request, res: Response, next: NextFunction) {
+//   try {
+//     res.status(200).json(await tas.open_positions())
+//   } catch (err) {
+//     res.status(500)
+//     next(err)
+//   }
+// })
 
-app.get("/spot/long", async function (req: Request, res: Response, next: NextFunction) {
+app.get("/futures/short", async function (req: Request, res: Response, next: NextFunction) {
   try {
     let { edge: edge_unchecked, base_asset, action, direction, trigger_price, signal_timestamp_ms } = req.query
 
@@ -154,10 +152,10 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
     )
     assert(typeof base_asset == "string", new Error(`InputChecking: typeof base_asset unexpected`))
     assert(
-      typeof signal_timestamp_ms == "string",
+      typeof signal_timestamp_ms == "number", // for some reason this is string in the spot TAS
       new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms}`)
     )
-    assert(direction === "long", new Error(`InputChecking: expected long direction`))
+    assert(direction === "short", new Error(`InputChecking: expected short direction`))
     assert(action === "open", new Error(`InputChecking: expected action to be open`))
 
     let edge: AuthorisedEdgeType
@@ -166,11 +164,19 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
     } catch (err) {
       throw new Error(`UnauthorisedEdge: ${edge_unchecked}`)
     }
-    let tags: { [name: string]: string } = { edge, base_asset, direction, quote_asset, action }
-
-    let cmd: TradeAbstractionOpenSpotLongCommand = {
+    let tags: { [name: string]: string } = {
       edge,
-      direction: "long",
+      base_asset,
+      direction,
+      quote_asset,
+      action,
+      exchange_type: exchange_identifier.type,
+    }
+
+    let cmd: TradeAbstractionOpenFuturesShortCommand = {
+      object_type: "TradeAbstractionOpenFuturesShortCommand",
+      edge,
+      direction: "short",
       action: "open",
       base_asset,
       trigger_price,
@@ -189,7 +195,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       Sentry.captureException(err)
     }
 
-    let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd)
+    let result: TradeAbstractionOpenFuturesShortResult = await tas.open_spot_long(cmd)
     tags.status = result.status
 
     try {

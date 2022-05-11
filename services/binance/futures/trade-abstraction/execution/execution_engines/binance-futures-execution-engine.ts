@@ -7,14 +7,14 @@ BigNumber.prototype.valueOf = function () {
 import * as Sentry from "@sentry/node"
 Sentry.init({})
 
-import { AlgoUtils } from "../spot/_internal/binance_algo_utils_v2"
-import { Logger } from "../../../../../interfaces/logger"
+import { AlgoUtils } from "../../../../../spot-trade-abstraction/execution/execution_engines/_internal/binance_algo_utils_v2"
+import { Logger } from "../../../../../../interfaces/logger"
 import { strict as assert } from "assert"
-import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
-import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
+import { MarketIdentifier_V3 } from "../../../../../../events/shared/market-identifier"
+import { ExchangeIdentifier_V3 } from "../../../../../../events/shared/exchange-identifier"
 import binance, { CancelOrderResult, FuturesOrder, NewFuturesOrder, NewOcoOrder, NewOrderMarketQuote, OcoOrder, Order, OrderSide, OrderType } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
-import { BinanceFuturesExchangeInfoGetter } from "../../exchange-info-getter"
+import { BinanceFuturesExchangeInfoGetter } from "../../../../../../classes/exchanges/binance/exchange-info-getter"
 import { randomUUID } from "crypto"
 
 
@@ -25,9 +25,9 @@ import {
   FuturesLimitSellByQuoteQuantityCommand,
   FuturesOCOBuyCommand,
   FuturesExecutionEngineSellResult,
-} from "../../../../../interfaces/exchanges/futures-execution-engine"
-import { OrderContextPersistence } from "../../../../spot/persistence/interface/order-context-persistence"
-import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
+} from "./futures-execution-engine"
+import { OrderContextPersistence } from "../../../../../../classes/spot/persistence/interface/order-context-persistence"
+import { OrderContext_V1 } from "../../../../../../interfaces/orders/order-context"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)
@@ -112,19 +112,20 @@ export class BinanceFuturesExecutionEngine implements FuturesExecutionEngine {
     return { clientOrderId }
   }
 
-  async market_sell_by_quote_quantity(
-    cmd: FuturesMarketSellByQuoteQuantityCommand
+  async limit_sell_by_quote_quantity(
+    cmd: FuturesLimitSellByQuoteQuantityCommand
   ): Promise<FuturesExecutionEngineSellResult> {
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let side = OrderSide.SELL
-    let type = OrderType.MARKET
+    let type = OrderType.LIMIT
     let quoteOrderQty = cmd.quote_amount.toFixed()
     let symbol = cmd.market_identifier.symbol
-    let args: NewOrderMarketQuote = {
+    let args: NewFuturesOrder = {
       side,
       symbol,
       type,
       quoteOrderQty,
+      limitPrice,
       newClientOrderId: clientOrderId,
     }
     this.logger.info(`Creating ${symbol} ${type} ${side} ORDER for quoteOrderQty ${quoteOrderQty}`)

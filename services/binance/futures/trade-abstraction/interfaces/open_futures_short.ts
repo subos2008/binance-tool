@@ -9,7 +9,7 @@ export interface TradeAbstractionOpenFuturesShortCommand {
   direction: "short"
   action: "open"
   trigger_price?: string
-  signal_timestamp_ms: string
+  signal_timestamp_ms: number
 }
 
 export interface TradeAbstractionOpenFuturesShortCommand_OCO_Exit {

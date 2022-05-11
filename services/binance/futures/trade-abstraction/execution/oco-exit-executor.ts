@@ -10,26 +10,19 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../../../../interfaces/logger"
-import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
-import { SpotPositionsPersistance } from "../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { SendMessageFunc } from "../../../lib/telegram-v2"
+import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SendMessageFunc } from "../../../../../lib/telegram-v2"
 import { PositionSizer } from "../fixed-position-sizer"
-import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 
-import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
 import {
   TradeAbstractionOpenFuturesShortCommand_OCO_Exit,
   TradeAbstractionOpenFuturesShortResult,
 } from "../interfaces/open_futures_short"
+import { FuturesExecutionEngine } from "./execution_engines/futures-execution-engine"
+import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
+import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 
-/* Edge specific code */
-import { CurrentPriceGetter } from "../../../interfaces/exchange/generic/price-getter"
-import {
-  SpotLimitBuyCommand,
-  SpotMarketSellCommand,
-  SpotOCOSellCommand,
-} from "../../../classes/spot/exchanges/interfaces/spot-execution-engine"
-/* END Edge specific code */
 
 /**
  * If this does the execution of spot position entry/exit
@@ -41,13 +34,13 @@ import {
  * Note this is instantiated with a particular exchange, the exchange identifier is
  * fixed at instantiation
  */
-export class SpotPositionsExecution_OCOExit {
+export class FuturesPositionsExecution_OCOExit {
   logger: Logger
-  ee: SpotExecutionEngine
+  ee: FuturesExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
   positions_persistance: SpotPositionsPersistance
-  price_getter: CurrentPriceGetter
+  // price_getter: CurrentPriceGetter
 
   constructor({
     logger,
@@ -55,14 +48,14 @@ export class SpotPositionsExecution_OCOExit {
     positions_persistance,
     send_message,
     position_sizer,
-    price_getter,
+    // price_getter,
   }: {
     logger: Logger
-    ee: SpotExecutionEngine
+    ee: FuturesExecutionEngine
     positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
     position_sizer: PositionSizer
-    price_getter: CurrentPriceGetter
+    // price_getter: CurrentPriceGetter
   }) {
     assert(logger)
     this.logger = logger
@@ -71,7 +64,7 @@ export class SpotPositionsExecution_OCOExit {
     this.positions_persistance = positions_persistance
     this.send_message = send_message
     this.position_sizer = position_sizer
-    this.price_getter = price_getter
+    // this.price_getter = price_getter
   }
 
   // Used when constructing orders
@@ -100,7 +93,7 @@ export class SpotPositionsExecution_OCOExit {
       let tags = { edge, base_asset, quote_asset }
 
       let market_identifier: MarketIdentifier_V3 = this.get_market_identifier_for({ ...args, quote_asset })
-      let trigger_price: BigNumber | undefined
+      let trigger_price: BigNumber
       if (trigger_price_string) {
         trigger_price = new BigNumber(trigger_price_string)
       } else {
@@ -119,22 +112,22 @@ export class SpotPositionsExecution_OCOExit {
       let base_amount = quote_amount.dividedBy(limit_price)
 
       this.logger.info(tags, {
-        object_type: "SpotPositionExecutionOpenRequest",
         ...args,
+        object_type: "SpotPositionExecutionOpenRequest",
         buy_limit_price: limit_price,
         quote_amount,
         base_amount,
       })
 
-      let cmd: SpotLimitBuyCommand = {
-        object_type: "SpotLimitBuyCommand",
+      let cmd: FuturesLimitSellCommand = {
+        object_type: "FuturesLimitSellCommand",
         order_context,
         market_identifier,
         base_amount,
         limit_price,
         timeInForce: "IOC",
       }
-      let buy_result = await this.ee.limit_buy(cmd)
+      let buy_result = await this.ee.limit_sell_by_quote_quantity(cmd)
       let { executed_quote_quantity, executed_price, executed_base_quantity, execution_timestamp_ms } = buy_result
 
       if (executed_base_quantity.isZero()) {

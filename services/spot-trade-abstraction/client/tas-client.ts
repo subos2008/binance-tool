@@ -51,7 +51,7 @@ export class SpotTradeAbstractionServiceClient {
    */
   private async _call(method: Method, endpoint: string, params?: string | object): Promise<any> {
     try {
-      const options = {
+      const options :AxiosRequestConfig= {
         url: endpoint,
         timeout: 10 * 1000, // ms, 1000 = 1 second
         headers: {},
@@ -60,8 +60,9 @@ export class SpotTradeAbstractionServiceClient {
           // Do your own parsing here if needed ie JSON.parse(res);
           return JSONBigNumber.parse(res)
         },
-        json: false, // avoid parsing json with the built in libs as they use floating point numbers
+        // json: false, // avoid parsing json with the built in libs as they use floating point numbers
         params,
+        validateStatus: (status) => status < 500
       }
 
       let response = await axios(options)

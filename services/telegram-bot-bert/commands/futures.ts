@@ -48,7 +48,7 @@ export class Commands_Futures {
 
   // This should not throw or return anything interesting
   async open_short(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]): Promise<void> {
-    let signal_timestamp_ms = (+Date.now()).toString()
+    let signal_timestamp_ms = Date.now()
     let base_asset = args.shift()?.toUpperCase()
     if (!base_asset) {
       ctx.reply(`base_asset not defined.`)

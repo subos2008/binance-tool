@@ -38,8 +38,8 @@ To close an open long spot position:
 
 Futures positions:
 
-  /futures short LINK <edgeNN>
-  /futures short LINK <edgeNN>
+  /futures short LINK [edgeNN]
+  /futures short LINK [edgeNN]
   /futures close LINK [edgeNN] (Not implemented?)
 
 To view open spot positions:

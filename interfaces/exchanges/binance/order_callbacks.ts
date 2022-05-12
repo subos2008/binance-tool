@@ -55,6 +55,29 @@ export interface BinanceOrderData /* extends ExecutionReport */ {
   edge?: string // Added by us
   order_context?: OrderContext_V1 // Added by us
 }
+export interface FuturesBinanceOrderData /* extends OrderUpdate */ {
+  object_type: "FuturesBinanceOrderData"
+  version: 1
+  exchange_identifier: ExchangeIdentifier_V3
+  exchange_type: ExchangeType
+  order_id: string
+  order_is_is_client_order_id: boolean // Added by us: did we use newClientOrderId to set orderId
+  orderTime: number
+  totalTradeQuantity: string // NB: we might rename this to totalBaseTradeQuantity in exchange_neutral
+  symbol: string
+  side: "BUY" | "SELL"
+  orderType: OrderType_LT
+  // isOrderWorking: boolean // for stop loss limits this is false on creation and true once triggered
+  // orderRejectReason: OrderRejectReason
+  price: string
+  stopPrice: string
+  quantity: string
+  orderStatus: OrderStatus_LT
+  // totalQuoteTradeQuantity: string
+  averageExecutionPrice?: string // Added by us
+  edge?: string // Added by us
+  order_context?: OrderContext_V1 // Added by us
+}
 
 export interface OrderCallbacks {
   order_cancelled?(data: BinanceOrderData): Promise<void>
@@ -62,4 +85,12 @@ export interface OrderCallbacks {
   order_filled_or_partially_filled?(data: BinanceOrderData): Promise<void>
   order_created?(data: BinanceOrderData): Promise<void>
   order_expired?(data: BinanceOrderData): Promise<void>
+}
+
+export interface FuturesOrderCallbacks {
+  order_cancelled?(data: FuturesBinanceOrderData): Promise<void>
+  order_filled(data: FuturesBinanceOrderData): Promise<void>
+  order_filled_or_partially_filled?(data: FuturesBinanceOrderData): Promise<void>
+  order_created?(data: FuturesBinanceOrderData): Promise<void>
+  order_expired?(data: FuturesBinanceOrderData): Promise<void>
 }

@@ -19,21 +19,24 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
+import {
+  FuturesBinanceOrderData,
+  FuturesOrderCallbacks,
+} from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { HealthAndReadinessSubsystem } from "../../../../classes/health_and_readiness"
 import { RedisClient } from "redis"
 import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
-import { BinanceOrderPublisher } from "../../lib/binance-order-publisher"
-import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/order_execution_tracker"
+import { FuturesOrderExecutionTracker } from "../../../../classes/exchanges/binance/futures-order-execution-tracker"
+import { BinanceFuturesOrderDataPublisher } from "../../lib/binance-futures-order-data-publisher"
 
-export class BinanceFuturesOrdersToAMQP {
+export class BinanceFuturesOrdersToAMQP implements FuturesOrderCallbacks {
   logger: Logger
   ee: BinanceType
-  order_execution_tracker: OrderExecutionTracker
+  order_execution_tracker: FuturesOrderExecutionTracker
   exchange_identifier: ExchangeIdentifier_V3
   health_and_readiness: HealthAndReadinessSubsystem
-  publisher: BinanceOrderPublisher
+  publisher: BinanceFuturesOrderDataPublisher
 
   constructor({
     send_message,
@@ -61,7 +64,7 @@ export class BinanceFuturesOrdersToAMQP {
     })
     let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
 
-    this.order_execution_tracker = new OrderExecutionTracker({
+    this.order_execution_tracker = new FuturesOrderExecutionTracker({
       ee: this.ee,
       send_message,
       logger,
@@ -70,7 +73,7 @@ export class BinanceFuturesOrdersToAMQP {
       exchange_identifier,
     })
 
-    this.publisher = new BinanceOrderPublisher({
+    this.publisher = new BinanceFuturesOrderDataPublisher({
       logger,
       health_and_readiness,
     })
@@ -84,7 +87,7 @@ export class BinanceFuturesOrdersToAMQP {
   // What about partial fills?
   // I think should should be a more raw interface - not using the callbacks interface but instead
   // mapping and sending all messages, with an alert in the mapper when it sees anything it doesn't recognise
-  async order_filled(data: BinanceOrderData): Promise<void> {
+  async order_filled(data: FuturesBinanceOrderData): Promise<void> {
     this.logger.info(`Binance: ${data.side} order on ${data.symbol} filled.`)
     await this.publisher.publish(data)
   }

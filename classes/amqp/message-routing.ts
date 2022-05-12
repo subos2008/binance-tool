@@ -4,6 +4,7 @@ export type MyEventNameType =
   | "SpotPortfolio"
   | "Edge56EntrySignal"
   | "BinanceOrderData"
+  | "FuturesBinanceOrderData"
   | "Edge58EntrySignal"
   | "Edge60EntrySignal"
   | "Edge61EntrySignal"

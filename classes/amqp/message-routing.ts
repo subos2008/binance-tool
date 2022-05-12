@@ -83,6 +83,13 @@ export class MessageRouting {
           exchange_type: "topic",
           durable: false,
         }
+      case "FuturesBinanceOrderData":
+        return {
+          routing_key: "futures-binance-order-data",
+          exchange_name: "binance-tool",
+          exchange_type: "topic",
+          durable: false,
+        }
       case "SpotPositionOpened":
         return {
           routing_key: "spot-positions",

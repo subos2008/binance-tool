@@ -48,7 +48,12 @@ export function roundTicks(price: BigNumber, tickSize: number) {
     maximumFractionDigits: 8,
   })
   // . not present for tickSize on some markets (i.e. 1 for MKRBUSD)
-  const precision = formatter.format(tickSize).split(".")?.[1].length || 0
+  let precision: number
+  try {
+    precision = formatter.format(tickSize).split(".")?.[1]?.length || 0
+  } catch (e) {
+    precision = 0
+  }
   if (typeof price === "string") price = new BigNumber(price)
   return price.toFixed(precision)
 }

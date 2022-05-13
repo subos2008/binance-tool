@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: amqp-futures-binance-order-data-tracker
+  name: portfolio-to-influxdb
   labels:
 {{ include "mychart.labels" . | indent 4 }}
-    binance-tool/service: "amqp-futures-binance-order-data-tracker"
+    binance-tool/service: "portfolio-to-influxdb"
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -16,25 +16,24 @@ spec:
       labels:
         app.kubernetes.io/name: {{ include "mychart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
-        binance-tool/service: "amqp-futures-binance-order-data-tracker"
+        binance-tool/service: "portfolio-to-influxdb"
       annotations:
-        ad.datadoghq.com/tags: '{"service": "amqp-futures-binance-order-data-tracker"}'
-        ad.datadoghq.com/amqp-futures-binance-order-data-tracker.logs: >-
+        ad.datadoghq.com/tags: '{"service": "portfolio-to-influxdb"}'
+        ad.datadoghq.com/portfolio-to-influxdb.logs: >-
           [{
             "source": "nodejs",
-            "service": "amqp-futures-binance-order-data-tracker"
+            "service": "portfolio-to-influxdb"
           }]   
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
     {{- end }}
-      volumes:
       containers:
-        - name: amqp-futures-binance-order-data-tracker
+        - name: portfolio-to-influxdb
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["node", "./out/./services/amqp/futures-binance-order-data/order-tracker/amqp-futures-binance-order-data-tracker"]
+          command: ["node", "./out/services/portfolio-to-influxdb/portfolio-to-influxdb-service"]
           ports:
           - name: http
             containerPort: 80
@@ -49,9 +48,7 @@ spec:
               port: http
           env:
             - name: SENTRY_DSN
-              value: "https://fdceaf9d5e984c6aad15f6ec0301f1f5@o369902.ingest.sentry.io/5286784"
+              value: "https://eef07174512a4c75a326ed7e28165240@o369902.ingest.sentry.io/6111716"
 {{- include "telegram.vars" . | nindent 12 }}
-{{- include "binance.vars" . | nindent 12 }}
-{{- include "datadog.vars" . | nindent 12 }}
-{{- include "redis.vars" . | nindent 12 }}
 {{- include "amqp.vars" . | nindent 12 }}
+{{- include "influxdb.vars" . | nindent 12 }}

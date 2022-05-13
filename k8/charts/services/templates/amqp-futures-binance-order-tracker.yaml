@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amqp-futures-binance-order-data-tracker
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "amqp-futures-binance-order-data-tracker"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "amqp-futures-binance-order-data-tracker"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "amqp-futures-binance-order-data-tracker"}'
+        ad.datadoghq.com/amqp-futures-binance-order-data-tracker.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "amqp-futures-binance-order-data-tracker"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+      containers:
+        - name: amqp-futures-binance-order-data-tracker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "./out/./services/amqp/futures-binance-order-data/order-tracker/amqp-futures-binance-order-data-tracker"]
+          ports:
+          - name: http
+            containerPort: 80
+            protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          env:
+            - name: SENTRY_DSN
+              value: "https://fdceaf9d5e984c6aad15f6ec0301f1f5@o369902.ingest.sentry.io/5286784"
+{{- include "telegram.vars" . | nindent 12 }}
+{{- include "binance.vars" . | nindent 12 }}
+{{- include "datadog.vars" . | nindent 12 }}
+{{- include "redis.vars" . | nindent 12 }}
+{{- include "amqp.vars" . | nindent 12 }}

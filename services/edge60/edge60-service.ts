@@ -326,6 +326,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     for (let i = 0; i < base_assets.length; i++) {
       let base_asset = base_assets[i]
       let symbol = to_symbol(base_asset)
+      let tags = { base_asset, symbol, edge }
       // not all of these will be on Binance, they just throw if missing
       try {
         // Last N closed candles exist between N+1 ago and now (actually and midnight last night)
@@ -362,7 +363,10 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
           edge60_parameters,
           base_asset,
         })
-        this.logger.info(`Setup edge for ${symbol} with ${initial_candles.length} initial candles`)
+        this.logger.info(
+          { ...tags, object_type: "EdgeMarketInitialization" },
+          `Setup edge for ${symbol} with ${initial_candles.length} initial candles`
+        )
         await sleep(200) // 1200 calls allowed per minute per IP address
       } catch (err: any) {
         Sentry.captureException(err)

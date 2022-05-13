@@ -78,6 +78,7 @@ const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
+app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"

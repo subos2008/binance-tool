@@ -15,20 +15,15 @@ kind: Deployment
 metadata:
   name: futures-trade-abstraction
   labels:
-{{ include "mychart.labels" . | indent 4 }}
     binance-tool/service: "futures-trade-abstraction"
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "mychart.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
       app: futures-trade-abstraction
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "mychart.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
         binance-tool/service: "futures-trade-abstraction"
         app: futures-trade-abstraction
       annotations:
@@ -47,7 +42,7 @@ spec:
         - name: futures-trade-abstraction
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/futures-trade-abstraction/tas.ts"]
+          command: ["./services/binance-futures/trade-abstraction/tas.ts"]
           ports:
           - name: http
             containerPort: 3000
@@ -62,7 +57,7 @@ spec:
               port: http
           env:
             - name: SENTRY_DSN
-              value: "https://5a68a728462448d08b613731e9e51d0d@o369902.ingest.sentry.io/6151233"
+              value: "https://79ec51cc53f64c6fa2227c5108f65cfd@o369902.ingest.sentry.io/6402822" # binance-futures-tas
 {{- include "binance-futures.vars" . | nindent 12 }}
 {{- include "telegram.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}

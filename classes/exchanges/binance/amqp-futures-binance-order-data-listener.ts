@@ -15,7 +15,10 @@ import { MessageProcessor } from "../../amqp/interfaces"
 import { HealthAndReadiness } from "../../health_and_readiness"
 import { MyEventNameType } from "../../amqp/message-routing"
 import { Channel } from "amqplib"
-import { FuturesBinanceOrderData, FuturesOrderCallbacks } from "../../../interfaces/exchanges/binance/order_callbacks"
+import {
+  FuturesBinanceOrderData,
+  FuturesOrderCallbacks,
+} from "../../../interfaces/exchanges/binance/order_callbacks"
 import { SendMessageFunc } from "../../../lib/telegram-v2"
 
 export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
@@ -24,6 +27,7 @@ export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
   health_and_readiness: HealthAndReadiness
   order_callbacks: FuturesOrderCallbacks
   print_all_trades: boolean = false
+  service_name: string | undefined
 
   constructor({
     send_message,
@@ -31,18 +35,21 @@ export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
     health_and_readiness,
     order_callbacks,
     print_all_trades,
+    service_name,
   }: {
     send_message: SendMessageFunc
     logger: Logger
     health_and_readiness: HealthAndReadiness
     order_callbacks: FuturesOrderCallbacks
     print_all_trades?: boolean
+    service_name?: string
   }) {
     this.logger = logger
     this.send_message = send_message
     this.health_and_readiness = health_and_readiness
     this.order_callbacks = order_callbacks
     if (print_all_trades) this.print_all_trades = true
+    this.service_name = service_name
   }
 
   async start() {
@@ -66,6 +73,7 @@ export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
       event_name,
       message_processor: this,
       health_and_readiness,
+      service_name: this.service_name,
     })
   }
 
@@ -82,17 +90,7 @@ export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
   }
 
   async processBinanceOrderDataMessage(data: FuturesBinanceOrderData) {
-    const {
-      symbol,
-      price,
-      quantity,
-      side,
-      orderType,
-      orderStatus,
-      order_id,
-      edge,
-      exchange_identifier,
-    } = data
+    const { symbol, price, quantity, side, orderType, orderStatus, order_id, edge, exchange_identifier } = data
 
     let tags = {
       edge,

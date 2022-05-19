@@ -112,6 +112,7 @@ async function main() {
     send_message,
     logger,
     health_and_readiness,
+    service_name,
     order_callbacks: new BinanceOrdersToSendMessageForwarder({ logger, send_message }),
   })
 

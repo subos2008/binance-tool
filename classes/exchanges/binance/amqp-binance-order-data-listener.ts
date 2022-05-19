@@ -24,6 +24,7 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
   health_and_readiness: HealthAndReadiness
   order_callbacks: OrderCallbacks
   print_all_trades: boolean = false
+  service_name: string | undefined
 
   constructor({
     send_message,
@@ -31,18 +32,21 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
     health_and_readiness,
     order_callbacks,
     print_all_trades,
+    service_name,
   }: {
     send_message: SendMessageFunc
     logger: Logger
     health_and_readiness: HealthAndReadiness
     order_callbacks: OrderCallbacks
     print_all_trades?: boolean
+    service_name?: string
   }) {
     this.logger = logger
     this.send_message = send_message
     this.health_and_readiness = health_and_readiness
     this.order_callbacks = order_callbacks
     if (print_all_trades) this.print_all_trades = true
+    this.service_name = service_name
   }
 
   async start() {
@@ -66,6 +70,7 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
       event_name,
       message_processor: this,
       health_and_readiness,
+      service_name: this.service_name,
     })
   }
 
@@ -82,17 +87,7 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
   }
 
   async processBinanceOrderDataMessage(data: BinanceOrderData) {
-    const {
-      symbol,
-      price,
-      quantity,
-      side,
-      orderType,
-      orderStatus,
-      order_id,
-      edge,
-      exchange_identifier,
-    } = data
+    const { symbol, price, quantity, side, orderType, orderStatus, order_id, edge, exchange_identifier } = data
 
     let tags = {
       edge,

@@ -101,10 +101,12 @@ export class ListenerFactory {
     event_name,
     message_processor,
     health_and_readiness,
+    service_name,
   }: {
     message_processor: MessageProcessor
     event_name: MyEventNameType
     health_and_readiness: HealthAndReadinessSubsystem
+    service_name?: string
   }) {
     Sentry.withScope(async (scope) => {
       scope.setTag("event_name", event_name)
@@ -112,6 +114,7 @@ export class ListenerFactory {
         assert(message_processor && event_name)
         await this.connect({
           event_name,
+          queue_name: event_name + "-" + service_name,
           health_and_readiness,
           message_processor: new MessageProcessorIsolator({
             event_name,
@@ -122,7 +125,10 @@ export class ListenerFactory {
         })
       } catch (err) {
         health_and_readiness.healthy(false)
-        this.logger.error({ err },`Error connecting MessageProcessor for event_name '${event_name}' to amqp server`)
+        this.logger.error(
+          { err },
+          `Error connecting MessageProcessor for event_name '${event_name}' to amqp server`
+        )
         Sentry.captureException(err)
         // throw err // don't throw when setting up isolated infrastructure
       }
@@ -133,10 +139,13 @@ export class ListenerFactory {
     event_name,
     message_processor,
     health_and_readiness,
+    // does message routing have queue_name_prefix?
+    queue_name,
   }: {
     message_processor: MessageProcessor
     event_name: MyEventNameType
     health_and_readiness: HealthAndReadinessSubsystem
+    queue_name?: string
   }) {
     // TODO: durable, exclusive, noAck, ... lots of configurable shit here...
     let { routing_key, exchange_name, exchange_type, durable } = MessageRouting.amqp_routing({ event_name })
@@ -153,14 +162,21 @@ export class ListenerFactory {
     health_and_readiness.ready(true)
     // TODO: do we not look at the return code here?
     await channel.assertExchange(exchange_name, exchange_type, { durable })
-    const q = await channel.assertQueue("", { exclusive: true })
+    let exclusive: boolean
+    if (queue_name) {
+      exclusive = false
+    } else {
+      exclusive = true
+      queue_name = ""
+    }
+    const q = await channel.assertQueue(queue_name, { exclusive })
     await channel.bindQueue(q.queue, exchange_name, routing_key)
     let wrapper_func = function (event: any) {
       message_processor.process_message(event, channel)
     }
     channel.consume(q.queue, wrapper_func, { noAck: false })
     this.logger.info(
-      `ListenerFactory: Waiting for new '${event_name}' events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}.`
+      `ListenerFactory: Waiting for new '${event_name}' events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}, service_name "${queue_name}"`
     )
   }
 }

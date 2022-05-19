@@ -5,13 +5,13 @@ import { strict as assert } from "assert"
 
 require("dotenv").config()
 
+const service_name = "amqp-futures-binance-order-data-tracker"
+
 import * as Sentry from "@sentry/node"
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
-  scope.setTag("service", "order-tracker")
+  scope.setTag("service", service_name)
 })
-
-const service_name = "amqp-futures-binance-order-data-tracker"
 
 import { Logger } from "../../../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
@@ -116,6 +116,7 @@ async function main() {
     logger,
     health_and_readiness,
     order_callbacks: new BinanceOrdersToSendMessageForwarder({ logger, send_message }),
+    service_name,
   })
 
   await order_execution_tracker.start()

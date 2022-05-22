@@ -133,6 +133,13 @@ var dogstatsd = new StatsD({
   prefix: "trading_engine.tas.",
 })
 
+try {
+  dogstatsd.increment(`.service-started`, 1, 1, {})
+} catch (e) {
+  logger.warn(`Failed to submit metrics to DogStatsD`)
+  Sentry.captureException(e)
+}
+
 app.get("/positions", async function (req: Request, res: Response, next: NextFunction) {
   try {
     res.status(200).json(await tas.open_positions())

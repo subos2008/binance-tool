@@ -134,7 +134,14 @@ var dogstatsd = new StatsD({
 })
 
 try {
-  dogstatsd.increment(`.service-started`, 1, 1, {})
+  dogstatsd.increment(`.service-started`, 1, 1, function (error, bytes) {
+    //this only gets called once after all messages have been sent
+    if (error) {
+      console.error("Oh noes! There was an error submitting metrics to DogStatsD:", error)
+    } else {
+      console.log("Successfully sent", bytes, "bytes to DogStatsD")
+    }
+  })
 } catch (e) {
   logger.warn(`Failed to submit metrics to DogStatsD`)
   Sentry.captureException(e)

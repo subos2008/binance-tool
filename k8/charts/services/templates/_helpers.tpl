@@ -98,6 +98,10 @@ Environment variables
 {{- define "datadog.vars" -}}
 - name: DD_LOGS_INJECTION
   value: "true"
+- name: DD_AGENT_HOST
+  valueFrom:
+    fieldRef:
+      fieldPath: status.hostIP
 {{- end -}}
 
 {{- define "redis.vars" -}}

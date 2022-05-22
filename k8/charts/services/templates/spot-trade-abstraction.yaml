@@ -66,3 +66,4 @@ spec:
 {{- include "binance-cluster-spot-tas.vars" . | nindent 12 }}
 {{- include "telegram.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}
+{{- include "datadog.vars" . | nindent 12 }}

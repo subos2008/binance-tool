@@ -42,7 +42,7 @@ spec:
         - name: futures-trade-abstraction
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/binance-futures/trade-abstraction/tas.ts"]
+          command: ["node", "./out/./services/binance/futures/trade-abstraction/tas"]
           ports:
           - name: http
             containerPort: 3000

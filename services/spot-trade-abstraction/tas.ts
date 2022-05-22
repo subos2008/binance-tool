@@ -2,6 +2,9 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
+// This line must come before importing any instrumented module.
+const tracer = require('dd-trace').init()
+
 /** Config: */
 import { config } from "../../config"
 const quote_asset = config.tas_quote_asset.toUpperCase()

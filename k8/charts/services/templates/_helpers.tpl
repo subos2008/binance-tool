@@ -96,9 +96,7 @@ Environment variables
 {{- end -}}
 
 {{- define "datadog.vars" -}}
-- name: DD_LOGS_ENABLED
-  value: "true"
-- name: DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL
+- name: DD_LOGS_INJECTION
   value: "true"
 {{- end -}}
 

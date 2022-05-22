@@ -132,7 +132,7 @@ let tas: TradeAbstractionService = new TradeAbstractionService({
 var dogstatsd = new StatsD({
   errorHandler: dogstatsderrorhandler,
   globalTags: { service_name, exchange_type: exchange_identifier.type, exchange: exchange_identifier.exchange },
-  prefix: "trading_engine.tas.",
+  prefix: "trading_engine.tas",
 })
 
 try {
@@ -199,7 +199,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       let signal_to_cmd_received_slippage_ms = Number(
         new BigNumber(cmd_received_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
       )
-      dogstatsd.gauge("signal_to_cmd_received_slippage_ms", signal_to_cmd_received_slippage_ms, undefined, tags)
+      dogstatsd.gauge(".signal_to_cmd_received_slippage_ms", signal_to_cmd_received_slippage_ms, undefined, tags)
     } catch (err) {
       logger.warn({ ...tags, err }, `Failed to submit metric to DogStatsD`)
       Sentry.captureException(err)
@@ -211,7 +211,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
     try {
       if (result.signal_to_execution_slippage_ms)
         dogstatsd.gauge(
-          "signal_to_execution_slippage_ms",
+          ".signal_to_execution_slippage_ms",
           Number(result.signal_to_execution_slippage_ms),
           undefined,
           tags
@@ -220,7 +220,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       let execution_time_ms = new BigNumber(result.execution_timestamp_ms || +Date.now())
         .minus(cmd_received_timestamp_ms)
         .toFixed()
-      dogstatsd.gauge("execution_time_ms", Number(execution_time_ms), undefined, tags)
+      dogstatsd.gauge(".execution_time_ms", Number(execution_time_ms), undefined, tags)
     } catch (err) {
       logger.warn({ ...tags, err }, `Failed to submit metrics to DogStatsD`)
       Sentry.captureException(err)

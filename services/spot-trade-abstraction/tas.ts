@@ -2,8 +2,7 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
-// This line must come before importing any instrumented module.
-const tracer = require('dd-trace').init()
+import "./tracer"; // must come before importing any instrumented module.
 
 /** Config: */
 import { config } from "../../config"

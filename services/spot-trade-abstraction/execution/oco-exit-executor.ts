@@ -16,11 +16,8 @@ import { SendMessageFunc } from "../../../lib/telegram-v2"
 import { PositionSizer } from "../fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import {
-  AuthorisedEdgeType,
-  check_edge,
   SpotPositionIdentifier_V3,
 } from "../../../classes/spot/abstractions/position-identifier"
-import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
 import {
   TradeAbstractionOpenSpotLongCommand_OCO_Exit,
   TradeAbstractionOpenSpotLongResult,

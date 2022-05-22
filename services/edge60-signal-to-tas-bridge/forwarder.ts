@@ -9,15 +9,13 @@ import { Logger } from "../../interfaces/logger"
 import * as Sentry from "@sentry/node"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 import {
-  TradeAbstractionOpenSpotLongCommand,
   TradeAbstractionOpenSpotLongResult,
 } from "../spot-trade-abstraction/interfaces/open_spot"
 import {
-  TradeAbstractionCloseLongCommand,
   TradeAbstractionCloseSpotLongResult,
 } from "../spot-trade-abstraction/interfaces/close_spot"
 import { Edge60EntrySignalProcessor } from "./interfaces"
-import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
+import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
 
 /**
  * interface Edge60PositionEntrySignal {

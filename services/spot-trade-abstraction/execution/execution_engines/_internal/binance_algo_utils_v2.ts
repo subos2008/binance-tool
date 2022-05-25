@@ -183,7 +183,7 @@ export class AlgoUtils {
       let price_string = price.toFixed()
       let quantity = base_amount.toFixed()
       let args: NewOrderSpot = {
-        useServerTime: true,
+        // useServerTime: true,
         symbol: pair,
         side: "BUY",
         type: OrderType.LIMIT,
@@ -255,7 +255,7 @@ export class AlgoUtils {
       base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, price })
       let quantity = base_amount.toFixed()
       let args: NewOrderSpot = {
-        useServerTime: true,
+        // useServerTime: true,
         symbol: pair,
         side: "SELL",
         type: OrderType.LIMIT,
@@ -332,7 +332,7 @@ export class AlgoUtils {
       //     useServerTime?: boolean;
       // }
       let args: NewOcoOrder = {
-        useServerTime: true,
+        // useServerTime: true,
         symbol: pair,
         side: "SELL" as OrderSide,
         quantity,
@@ -406,7 +406,7 @@ export class AlgoUtils {
       base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, stop_price })
       let quantity = base_amount.toFixed()
       let args: NewOrderSpot = {
-        useServerTime: true,
+        // useServerTime: true,
         symbol: pair,
         side: "SELL",
         type: OrderType.STOP_LOSS_LIMIT,
@@ -444,7 +444,7 @@ export class AlgoUtils {
     try {
       let quantity = base_amount.toFixed()
       let args: any = {
-        useServerTime: true,
+        // useServerTime: true,
         side: "BUY",
         symbol: pair,
         type: "MARKET",
@@ -480,7 +480,7 @@ export class AlgoUtils {
     try {
       let quoteOrderQty = quote_amount.toFixed()
       let args: any = {
-        useServerTime: true,
+        // useServerTime: true,
         side: "BUY",
         symbol: pair,
         type: "MARKET",
@@ -516,7 +516,7 @@ export class AlgoUtils {
     try {
       let quantity = base_amount.toFixed()
       let args: any = {
-        useServerTime: true,
+        // useServerTime: true,
         side: "SELL",
         symbol: pair,
         type: "MARKET",

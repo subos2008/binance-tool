@@ -102,6 +102,10 @@ Environment variables
   valueFrom:
     fieldRef:
       fieldPath: status.hostIP
+- name: DD_SERVICE
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.labels['tags.datadoghq.com/service']
 {{- end -}}
 
 {{- define "redis.vars" -}}

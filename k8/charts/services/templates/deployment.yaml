@@ -17,6 +17,7 @@ spec:
         app.kubernetes.io/name: {{ include "mychart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
         binance-tool/service: "position-performance"
+        tags.datadoghq.com/service: "position-performance"
       annotations:
         ad.datadoghq.com/tags: '{"service": "position-performance"}'
         ad.datadoghq.com/position-performance.logs: >-

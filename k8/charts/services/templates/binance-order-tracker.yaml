@@ -17,6 +17,7 @@ spec:
         app.kubernetes.io/name: {{ include "mychart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
         binance-tool/service: "binance-order-tracker"
+        tags.datadoghq.com/service: "binance-order-tracker"
       annotations:
         ad.datadoghq.com/tags: '{"service": "binance-order-tracker"}'
         ad.datadoghq.com/binance-order-tracker.logs: >-

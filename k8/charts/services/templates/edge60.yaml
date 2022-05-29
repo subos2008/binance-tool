@@ -17,6 +17,7 @@ spec:
         app.kubernetes.io/name: {{ include "mychart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
         binance-tool/service: "edge60"
+        tags.datadoghq.com/service: "edge60-signals"
       annotations:
         ad.datadoghq.com/tags: '{"service": "edge60"}'
         ad.datadoghq.com/edge60.logs: >-

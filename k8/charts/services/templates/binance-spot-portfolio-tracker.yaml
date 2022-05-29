@@ -17,6 +17,7 @@ spec:
         app.kubernetes.io/name: {{ include "mychart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
         binance-tool/service: "portfolio-tracker"
+        tags.datadoghq.com/service: "portfolio-tracker"
       annotations:
         ad.datadoghq.com/tags: '{"service": "portfolio-tracker"}'
         ad.datadoghq.com/portfolio-tracker.logs: >-

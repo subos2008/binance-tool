@@ -17,6 +17,7 @@ spec:
         app.kubernetes.io/name: {{ include "mychart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
         binance-tool/service: "binance-spot-portfolio-to-amqp"
+        tags.datadoghq.com/service: "binance-spot-portfolio-to-amqp"
       annotations:
         ad.datadoghq.com/tags: '{"service": "binance-spot-portfolio-to-amqp"}'
         ad.datadoghq.com/binance-spot-portfolio-to-amqp.logs: >-

@@ -17,6 +17,7 @@ spec:
         app.kubernetes.io/name: {{ include "mychart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
         binance-tool/service: "binance-orders-to-amqp"
+        tags.datadoghq.com/service: "binance-orders-to-amqp"
       annotations:
         ad.datadoghq.com/tags: '{"service": "binance-orders-to-amqp"}'
         ad.datadoghq.com/binance-orders-to-amqp.logs: >-

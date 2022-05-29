@@ -57,7 +57,7 @@ export class EdgeDirectionSignalPublisher {
           direction,
         }
         if (base_asset) tags.base_asset = base_asset
-        this.statsd.increment(`trading-engine.edge-signal-long-short`, 1, undefined, tags)
+        this.statsd.increment(`trading_engine.edge_signal_long_short`, 1, undefined, tags)
       }
     } catch (e) {
       this.logger.warn(`Failed to submit metrics to DogStatsD`)

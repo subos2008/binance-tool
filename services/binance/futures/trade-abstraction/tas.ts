@@ -2,6 +2,8 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
+import "./tracer"; // must come before importing any instrumented module.
+
 /** Config: */
 import { config } from "../../../../config"
 const quote_asset = config.tas_quote_asset.toUpperCase()

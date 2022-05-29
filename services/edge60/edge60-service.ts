@@ -4,6 +4,8 @@
 
 console.log(`--- Service starting ---`)
 
+import "./tracer"; // must come before importing any instrumented module.
+
 /** Config: */
 const num_coins_to_monitor = 500
 const quote_symbol = "USDT".toUpperCase()

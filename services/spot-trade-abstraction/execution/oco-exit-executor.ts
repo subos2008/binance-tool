@@ -15,9 +15,7 @@ import { SpotPositionsPersistance } from "../../../classes/spot/persistence/inte
 import { SendMessageFunc } from "../../../lib/telegram-v2"
 import { PositionSizer } from "../fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
-import {
-  SpotPositionIdentifier_V3,
-} from "../../../classes/spot/abstractions/position-identifier"
+import { SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
 import {
   TradeAbstractionOpenSpotLongCommand_OCO_Exit,
   TradeAbstractionOpenSpotLongResult,
@@ -25,7 +23,12 @@ import {
 
 /* Edge specific code */
 import { CurrentPriceGetter } from "../../../interfaces/exchanges/generic/price-getter"
-import { SpotExecutionEngine, SpotLimitBuyCommand, SpotMarketSellCommand, SpotOCOSellCommand } from "../../../interfaces/exchanges/spot-execution-engine"
+import {
+  SpotExecutionEngine,
+  SpotLimitBuyCommand,
+  SpotMarketSellCommand,
+  SpotOCOSellCommand,
+} from "../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
 
 /* END Edge specific code */
@@ -85,9 +88,9 @@ export class SpotPositionsExecution_OCOExit {
   async open_position(
     args: TradeAbstractionOpenSpotLongCommand_OCO_Exit
   ): Promise<TradeAbstractionOpenSpotLongResult> {
+    let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
+    let tags = { edge, base_asset, quote_asset }
     try {
-      let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
-
       let {
         edge_percentage_stop,
         edge_percentage_stop_limit,
@@ -96,7 +99,6 @@ export class SpotPositionsExecution_OCOExit {
       } = args
 
       let prefix = `${edge}:${base_asset} open spot long: `
-      let tags = { edge, base_asset, quote_asset }
 
       let market_identifier: MarketIdentifier_V3 = this.get_market_identifier_for({ ...args, quote_asset })
       let trigger_price: BigNumber | undefined
@@ -137,27 +139,24 @@ export class SpotPositionsExecution_OCOExit {
       let { executed_quote_quantity, executed_price, executed_base_quantity, execution_timestamp_ms } = buy_result
 
       if (executed_base_quantity.isZero()) {
-        let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
-        this.logger.info(tags, msg)
-        // this.send_message(msg, { edge, base_asset })
-        let ret: TradeAbstractionOpenSpotLongResult = {
+        let msg = `${prefix}: IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
+        let spot_long_result: TradeAbstractionOpenSpotLongResult = {
           object_type: "TradeAbstractionOpenSpotLongResult",
           version: 1,
           edge,
           base_asset,
           quote_asset,
           status: "ENTRY_FAILED_TO_FILL",
-          msg: `${prefix}: ENTRY_FAILED_TO_FILL`,
+          msg,
           execution_timestamp_ms,
         }
-        this.logger.info(tags, ret)
-        return ret
+        this.logger.info(tags, spot_long_result)
+        return spot_long_result
       } else {
         let msg = `${edge}:${
           args.base_asset
         } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
         this.logger.info(tags, msg)
-        // this.send_message(msg, { edge, base_asset })
       }
 
       /** BUY completed  */
@@ -217,6 +216,7 @@ export class SpotPositionsExecution_OCOExit {
         Sentry.captureException(err)
 
         /** If we failed to create the OCO order then dump the position */
+        // TODO: if this is because the price has gone up we could create a trailing stop instead
         this.logger.warn(tags, `Failed to create OCO order, dumping position`)
         let market_sell_cmd: SpotMarketSellCommand = {
           order_context,
@@ -225,7 +225,7 @@ export class SpotPositionsExecution_OCOExit {
         }
         await this.ee.market_sell(market_sell_cmd)
 
-        let ret: TradeAbstractionOpenSpotLongResult = {
+        let spot_long_result: TradeAbstractionOpenSpotLongResult = {
           object_type: "TradeAbstractionOpenSpotLongResult",
           version: 1,
           status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS",
@@ -238,11 +238,11 @@ export class SpotPositionsExecution_OCOExit {
           created_stop_order: false,
           created_take_profit_order: false,
         }
-        this.logger.info(tags, ret)
-        return ret
+        this.logger.info(tags, spot_long_result)
+        return spot_long_result
       }
 
-      let res: TradeAbstractionOpenSpotLongResult = {
+      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
         object_type: "TradeAbstractionOpenSpotLongResult",
         version: 1,
         base_asset,
@@ -262,17 +262,27 @@ export class SpotPositionsExecution_OCOExit {
         msg: `${prefix}: SUCCESS`,
         execution_timestamp_ms,
       }
-      this.logger.object(res)
-      return res
-    } catch (err) {
+      this.logger.info(tags, spot_long_result) // This was logger.object before
+      return spot_long_result
+    } catch (err: any) {
+      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
+        object_type: "TradeAbstractionOpenSpotLongResult",
+        version: 1,
+        base_asset,
+        edge,
+        status: "INTERNAL_SERVER_ERROR",
+        msg: `INTERNAL_SERVER_ERROR: ${err.message}`,
+        err,
+        execution_timestamp_ms: Date.now() + "",
+      }
+      this.logger.error(tags, spot_long_result)
       Sentry.captureException(err)
       this.logger.error({ err })
       this.send_message(`FAILED opening spot position ${args.edge}:${args.base_asset} using ${args.quote_asset}`, {
         edge: args.edge,
         base_asset: args.base_asset,
       })
-
-      throw err
+      return spot_long_result
     }
   }
 }

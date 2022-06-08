@@ -136,6 +136,8 @@ export class SpotPositionsExecution {
   //     stop_price: BigNumber
   //   }
   async open_position(args: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
+    let { edge, quote_asset, base_asset } = args
+    let tags = { edge, quote_asset, base_asset }
     try {
       args.edge = check_edge(args.edge)
       let { edge, quote_asset } = args
@@ -146,7 +148,7 @@ export class SpotPositionsExecution {
        */
       if (await this.in_position(args)) {
         let msg = `Already in position on ${args.edge}:${args.base_asset}`
-        this.send_message(msg, { edge })
+        this.send_message(msg, tags)
         throw new Error(msg)
       }
 
@@ -178,13 +180,13 @@ export class SpotPositionsExecution {
           })
         default:
           let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
-          this.send_message(msg, { edge })
+          this.send_message(msg, tags)
           throw new Error(msg)
       }
     } catch (err: any) {
-      this.logger.error({ err })
+      this.logger.error(tags, { err })
       Sentry.captureException(err)
-      let result: TradeAbstractionOpenSpotLongResult = {
+      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
         object_type: "TradeAbstractionOpenSpotLongResult",
         version: 1,
         base_asset: args.base_asset,
@@ -195,7 +197,8 @@ export class SpotPositionsExecution {
         err,
         execution_timestamp_ms: Date.now().toString(),
       }
-      return result
+      this.logger.error(tags, spot_long_result)
+      return spot_long_result
     }
   }
 
@@ -214,7 +217,7 @@ export class SpotPositionsExecution {
     let prefix: string = `Closing ${edge}:${base_asset} spot position:`
 
     if (!(await this.in_position({ base_asset, edge }))) {
-      let obj: TradeAbstractionCloseSpotLongResult_NOT_FOUND = {
+      let spot_long_result: TradeAbstractionCloseSpotLongResult_NOT_FOUND = {
         object_type: "TradeAbstractionCloseSpotLongResult",
         version: 1,
         status: "NOT_FOUND",
@@ -223,8 +226,7 @@ export class SpotPositionsExecution {
         base_asset,
         edge,
       }
-      this.logger.warn({ edge, base_asset }, obj)
-      return obj
+      this.logger.warn({ edge, base_asset }, spot_long_result)
     }
 
     /**
@@ -311,8 +313,8 @@ export class SpotPositionsExecution {
       return obj
     } catch (err) {
       let msg = `Failed to exit position on ${symbol}`
-      this.logger.warn(msg)
-      this.logger.warn({ err })
+      this.logger.error(msg)
+      this.logger.error({ err })
       Sentry.captureException(err)
       this.send_message(msg, { edge })
       throw err

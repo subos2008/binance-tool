@@ -24,7 +24,11 @@ import {
   TradeAbstractionOpenSpotLongCommand__StopLimitExit,
   TradeAbstractionOpenSpotLongResult,
 } from "../interfaces/open_spot"
-import { SpotExecutionEngine, SpotLimitBuyCommand, SpotStopMarketSellCommand } from "../../../interfaces/exchanges/spot-execution-engine"
+import {
+  SpotExecutionEngine,
+  SpotLimitBuyCommand,
+  SpotStopMarketSellCommand,
+} from "../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
 import { CurrentPriceGetter } from "../../../interfaces/exchanges/generic/price-getter"
 
@@ -154,18 +158,18 @@ export class SpotPositionsExecution_StopLimitExit {
       // let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
       // this.logger.info(tags, msg)
       // this.send_message(msg, { edge, base_asset })
-      let ret: TradeAbstractionOpenSpotLongResult = {
+      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
         object_type: "TradeAbstractionOpenSpotLongResult",
         version: 1,
         edge,
         base_asset,
         quote_asset,
         status: "ENTRY_FAILED_TO_FILL",
-        msg: `${prefix}: ENTRY_FAILED_TO_FILL`,
+        msg: `${prefix}: ENTRY_FAILED_TO_FILL, IOC limit buy executed zero`,
         execution_timestamp_ms,
       }
-      this.logger.object(tags, ret)
-      return ret
+      this.logger.info(tags, spot_long_result) // this was logger.object before
+      return spot_long_result
     } else {
       let msg = `${edge}:${
         args.base_asset
@@ -207,19 +211,24 @@ export class SpotPositionsExecution_StopLimitExit {
         base_asset: args.base_asset,
         edge: args.edge,
       }
+      this.logger.warn(
+        tags,
+        `e60: can throw instead of returning enum status result. it also won't exit if the stop creation fails`
+      )
       await this.positions_persistance.set_stop_order(spot_position_identifier, stop_order_id.toString())
-      this.logger.warn(tags, `e60: can throw instead of returning enum status result`)
     } catch (err) {
       Sentry.captureException(err)
       let msg = `Failed to create stop limit order for ${args.edge}:${args.base_asset} on ${
         stop_cmd.market_identifier.symbol
       } at ${stop_price.toFixed()}`
       this.send_message(msg, tags)
-      this.logger.error(tags)
+      this.logger.error(tags, { err })
+      this.logger.error(tags, "ERROR: this position has no stop and will not be dumped")
+      // TODO: this should dump the position
       throw err
     }
 
-    let res: TradeAbstractionOpenSpotLongResult = {
+    let spot_long_result: TradeAbstractionOpenSpotLongResult = {
       object_type: "TradeAbstractionOpenSpotLongResult",
       version: 1,
       base_asset,
@@ -236,7 +245,7 @@ export class SpotPositionsExecution_StopLimitExit {
       created_take_profit_order: false,
       created_stop_order: true,
     }
-    this.logger.info(res)
-    return res
+    this.logger.info(tags, spot_long_result)
+    return spot_long_result
   }
 }

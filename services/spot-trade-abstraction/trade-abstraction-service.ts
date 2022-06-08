@@ -5,7 +5,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import {disallowed_base_assets_for_entry} from '../../lib/stable-coins'
+import { disallowed_base_assets_for_entry } from "../../lib/stable-coins"
 
 import { Logger } from "../../interfaces/logger"
 import { strict as assert } from "assert"
@@ -57,10 +57,12 @@ export class TradeAbstractionService {
     assert.equal(cmd.action, "open")
     cmd.quote_asset = this.quote_asset
 
+    let tags = { edge: cmd.edge, base_asset: cmd.base_asset, quote_asset: cmd.quote_asset }
+
     if (!is_authorised_edge(cmd.edge)) {
       let err = new Error(`UnauthorisedEdge ${cmd.edge}`)
       this.logger.warn({ err })
-      let obj: TradeAbstractionOpenSpotLongResult = {
+      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
         object_type: "TradeAbstractionOpenSpotLongResult",
         version: 1,
         base_asset: cmd.base_asset,
@@ -70,13 +72,14 @@ export class TradeAbstractionService {
         msg: err.message,
         err,
       }
-      return obj
+      this.logger.info(tags, spot_long_result)
+      return spot_long_result
     }
 
     if (disallowed_base_assets_for_entry.includes(cmd.base_asset)) {
       let err = new Error(`Opening spot long positions in ${cmd.base_asset} is explicity disallowed`)
       this.logger.warn({ err })
-      let obj: TradeAbstractionOpenSpotLongResult = {
+      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
         object_type: "TradeAbstractionOpenSpotLongResult",
         version: 1,
         base_asset: cmd.base_asset,
@@ -86,7 +89,8 @@ export class TradeAbstractionService {
         msg: err.message,
         err,
       }
-      return obj
+      this.logger.info(tags, spot_long_result)
+      return spot_long_result
     }
 
     let edge: AuthorisedEdgeType = check_edge(cmd.edge)
@@ -98,7 +102,7 @@ export class TradeAbstractionService {
     })
 
     if (existing_spot_position_size.isGreaterThan(0)) {
-      let obj: TradeAbstractionOpenSpotLongResult = {
+      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
         object_type: "TradeAbstractionOpenSpotLongResult",
         version: 1,
         base_asset: cmd.base_asset,
@@ -107,7 +111,8 @@ export class TradeAbstractionService {
         status: "ALREADY_IN_POSITION",
         msg: `TradeAbstractionOpenSpotLongResult: ${edge}${cmd.base_asset}: ALREADY_IN_POSITION`,
       }
-      return obj
+      this.logger.info(tags, spot_long_result)
+      return spot_long_result
     }
 
     let result: TradeAbstractionOpenSpotLongResult = await this.spot_ee.open_position(cmd)

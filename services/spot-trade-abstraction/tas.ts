@@ -2,7 +2,7 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
-import "./tracer"; // must come before importing any instrumented module.
+import "./tracer" // must come before importing any instrumented module.
 
 /** Config: */
 import { config } from "../../config"
@@ -230,7 +230,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
 
     switch (result.status) {
       case "SUCCESS":
-        logger.info(result, msg)
+        // logger.info(result, msg)
         send_message(
           `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.signal_to_execution_slippage_ms}ms`,
           tags
@@ -238,27 +238,27 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
         res.status(201).json(result) // 201: Created
         break
       case "ALREADY_IN_POSITION":
-        logger.info(result, msg)
+        // logger.info(result, msg)
         send_message(`${edge}:${base_asset} ${result.status}`, tags)
         res.status(409).json(result) // 409: Conflict
         break
       case "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS":
-        logger.error(result, msg)
+        // logger.error(result, msg)
         send_message(`${edge}:${base_asset} ${result.status}`, tags)
         res.status(200).json(result) // 200: Success... but not 201, so not actually created
         break
       case "ENTRY_FAILED_TO_FILL":
-        logger.info(result, msg)
+        // logger.info(result, msg)
         send_message(`${edge}:${base_asset}: ${result.status}`, tags)
         res.status(200).json(result) // 200: Success... but not 201, so not actually created
         break
       case "UNAUTHORISED":
-        logger.warn(result, msg)
+        // logger.warn(result, msg)
         send_message(`${edge}:${base_asset}: ${result.status}`, tags)
         res.status(403).json(result)
         break
       case "INTERNAL_SERVER_ERROR":
-        logger.error(result, msg)
+        // logger.error(result, msg)
         send_message(`${edge}:${base_asset}: ${result.status}: ${result.msg}`, tags)
         res.status(500).json(result)
         break
@@ -272,10 +272,13 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
   } catch (err: any) {
     if ((err.message = ~/InputChecking/)) {
       res.status(400)
-      logger.warn(
+      logger.error(
         `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
       )
+      logger.error({ err })
     } else {
+      logger.error("Internal error: ${err}")
+      logger.error({ err })
       res.status(500)
     }
     res.json({ msg: "failed" })
@@ -309,8 +312,7 @@ app.get("/spot/close", async function (req: Request, res: Response, next: NextFu
       base_asset,
     }
     let result: TradeAbstractionCloseSpotLongResult = await tas.close_spot_long(cmd)
-    logger.info(tags, `Success`)
-    logger.info(result)
+    logger.info(result) // move to log at creation
     res.status(result.http_status).json(result)
   } catch (err) {
     Sentry.captureException(err)

@@ -180,6 +180,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
     try {
       edge = check_edge(edge_unchecked)
     } catch (err) {
+      // TODO: a throw? surely we can improve on this...
       throw new Error(`UnauthorisedEdge: ${edge_unchecked}`)
     }
     let tags: { [name: string]: string } = { edge, base_asset, direction, quote_asset, action }

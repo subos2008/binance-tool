@@ -46,6 +46,7 @@ import { get_redis_client } from "../../lib/redis-v4"
 import { RedisClientType } from "redis-v4"
 import { UploadToMongoDB } from "./upload-for-tableau-via-mongodb"
 import { SpotEdgePerformanceEvent } from "./interfaces"
+import { SendDatadogMetrics } from "./send-datadog-metrics"
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
@@ -55,7 +56,7 @@ class EventLogger implements MessageProcessor {
   health_and_readiness: HealthAndReadiness
   persistence: RedisEdgePerformancePersistence
   mongodb_uploader: UploadToMongoDB
-
+  metrics: SendDatadogMetrics
   constructor({
     send_message,
     logger,
@@ -74,6 +75,7 @@ class EventLogger implements MessageProcessor {
     this.health_and_readiness = health_and_readiness
     this.persistence = persistence
     this.mongodb_uploader = new UploadToMongoDB()
+    this.metrics = new SendDatadogMetrics()
   }
 
   async start() {
@@ -137,6 +139,13 @@ class EventLogger implements MessageProcessor {
 
       try {
         await this.mongodb_uploader.ingest_event(o)
+      } catch (e: any) {
+        this.logger.error(e)
+        Sentry.captureException(e)
+      }
+
+      try {
+        await this.metrics.ingest_event(o)
       } catch (e: any) {
         this.logger.error(e)
         Sentry.captureException(e)

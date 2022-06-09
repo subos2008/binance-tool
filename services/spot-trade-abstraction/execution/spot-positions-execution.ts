@@ -197,7 +197,7 @@ export class SpotPositionsExecution {
         err,
         execution_timestamp_ms: Date.now().toString(),
       }
-      this.logger.error(tags, spot_long_result)
+      this.logger.error(spot_long_result)
       return spot_long_result
     }
   }
@@ -226,7 +226,7 @@ export class SpotPositionsExecution {
         base_asset,
         edge,
       }
-      this.logger.warn({ edge, base_asset }, spot_long_result)
+      this.logger.warn(spot_long_result)
     }
 
     /**

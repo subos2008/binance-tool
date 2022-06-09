@@ -150,7 +150,7 @@ export class SpotPositionsExecution_OCOExit {
           msg,
           execution_timestamp_ms,
         }
-        this.logger.info(tags, spot_long_result)
+        this.logger.info(spot_long_result)
         return spot_long_result
       } else {
         let msg = `${edge}:${
@@ -238,7 +238,7 @@ export class SpotPositionsExecution_OCOExit {
           created_stop_order: false,
           created_take_profit_order: false,
         }
-        this.logger.info(tags, spot_long_result)
+        this.logger.info(spot_long_result)
         return spot_long_result
       }
 
@@ -262,7 +262,7 @@ export class SpotPositionsExecution_OCOExit {
         msg: `${prefix}: SUCCESS`,
         execution_timestamp_ms,
       }
-      this.logger.info(tags, spot_long_result) // This was logger.object before
+      this.logger.info(spot_long_result) // This was logger.object before
       return spot_long_result
     } catch (err: any) {
       let spot_long_result: TradeAbstractionOpenSpotLongResult = {
@@ -275,7 +275,7 @@ export class SpotPositionsExecution_OCOExit {
         err,
         execution_timestamp_ms: Date.now() + "",
       }
-      this.logger.error(tags, spot_long_result)
+      this.logger.error(spot_long_result)
       Sentry.captureException(err)
       this.logger.error({ err })
       this.send_message(`FAILED opening spot position ${args.edge}:${args.base_asset} using ${args.quote_asset}`, {

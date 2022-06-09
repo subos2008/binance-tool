@@ -72,7 +72,7 @@ export class TradeAbstractionService {
         msg: err.message,
         err,
       }
-      this.logger.info(tags, spot_long_result)
+      this.logger.info(spot_long_result)
       return spot_long_result
     }
 
@@ -89,7 +89,7 @@ export class TradeAbstractionService {
         msg: err.message,
         err,
       }
-      this.logger.info(tags, spot_long_result)
+      this.logger.info(spot_long_result)
       return spot_long_result
     }
 
@@ -111,7 +111,7 @@ export class TradeAbstractionService {
         status: "ALREADY_IN_POSITION",
         msg: `TradeAbstractionOpenSpotLongResult: ${edge}${cmd.base_asset}: ALREADY_IN_POSITION`,
       }
-      this.logger.info(tags, spot_long_result)
+      this.logger.info(spot_long_result)
       return spot_long_result
     }
 

@@ -168,7 +168,7 @@ export class SpotPositionsExecution_StopLimitExit {
         msg: `${prefix}: ENTRY_FAILED_TO_FILL, IOC limit buy executed zero`,
         execution_timestamp_ms,
       }
-      this.logger.info(tags, spot_long_result) // this was logger.object before
+      this.logger.info(spot_long_result) // this was logger.object before
       return spot_long_result
     } else {
       let msg = `${edge}:${
@@ -245,7 +245,7 @@ export class SpotPositionsExecution_StopLimitExit {
       created_take_profit_order: false,
       created_stop_order: true,
     }
-    this.logger.info(tags, spot_long_result)
+    this.logger.info(spot_long_result)
     return spot_long_result
   }
 }

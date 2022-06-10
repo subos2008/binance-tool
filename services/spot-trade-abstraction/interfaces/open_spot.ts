@@ -193,3 +193,18 @@ export type TradeAbstractionOpenSpotLongResult =
   | TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION
   | TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
   | TradeAbstractionOpenSpotLongResult_TRADING_IN_ASSET_PROHIBITED
+
+  export interface TradeAbstractionOpenSpotLongEntryResult {
+    object_type: "TradeAbstractionOpenSpotLongEntryResult"
+    version: 1
+    edge: string
+    base_asset: string
+    quote_asset: string
+    buy_limit_price?: string
+    executed_quote_quantity?: string
+    executed_price?: string
+    executed_base_quantity?: string
+    execution_timestamp_ms: string | undefined
+    status: "ENTRY_FAILED_TO_FILL" | "SUCCESS" | "INSUFFICIENT_BALANCE" | "INTERNAL_SERVER_ERROR"
+    msg: string
+  }

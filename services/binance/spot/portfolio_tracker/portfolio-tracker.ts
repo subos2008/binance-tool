@@ -36,8 +36,14 @@ Sentry.configureScope(function (scope: any) {
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { StatsD, Tags } from "hot-shots"
-const dogstatsd = new StatsD()
-
+function dogstatsderrorhandler(err: Error) {
+  logger.error({ err }, `DogStatsD: Socket errors caught here: ${err}`)
+}
+var dogstatsd = new StatsD({
+  errorHandler: dogstatsderrorhandler,
+  globalTags: { service_name },
+  prefix: "trading_engine",
+})
 // redis + events publishing + binance
 
 // TODO: periodically verify we have the same local values as the exchange
@@ -99,7 +105,7 @@ class PortfolioTracker implements MasterPortfolioClass {
     this.report_current_portfolio() // this line is going to be a problem when we have multiple exchanges
 
     try {
-      this.logger.info(`submitting metrics`)
+      this.logger.info(`Submitting metrics for ${portfolio.balances.length} balances`)
       // Submit metrics
       for (const balance of portfolio.balances) {
         let base_asset = balance.asset
@@ -108,8 +114,8 @@ class PortfolioTracker implements MasterPortfolioClass {
           let exchange = exchange_identifier.exchange
           let account = exchange_identifier.account
           let tags: Tags = { base_asset, quote_asset, exchange, account }
-          let stat = `trading-engine.portfilio.spot.holdings.${quote_asset}`
-          dogstatsd.gauge(stat, Number(quote_amount), undefined, tags)
+          dogstatsd.gauge(`.portfolio.spot.holdings.${quote_asset}` , Number(quote_amount), undefined, tags)
+          dogstatsd.gauge(`.portfolio.spot.holdings`, Number(quote_amount), undefined, tags) // Guess, this is easier to work with
           this.logger.info(tags, `Submited metric portfolio in ${quote_asset} for ${base_asset}`)
         }
       }

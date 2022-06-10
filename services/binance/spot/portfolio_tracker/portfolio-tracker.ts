@@ -109,12 +109,17 @@ class PortfolioTracker implements MasterPortfolioClass {
       // Submit metrics
       for (const balance of portfolio.balances) {
         let base_asset = balance.asset
+        if (balance.quote_equivalents) {
+          this.logger.info(
+            `Submitting metrics for ${base_asset}: ${Object.keys(balance.quote_equivalents).join(", ")}`
+          )
+        } else this.logger.info(`No balance.quote_equivalents for ${base_asset}: `)
         for (const quote_asset in balance.quote_equivalents) {
           let quote_amount = balance.quote_equivalents[quote_asset]
           let exchange = exchange_identifier.exchange
           let account = exchange_identifier.account
           let tags: Tags = { base_asset, quote_asset, exchange, account }
-          dogstatsd.gauge(`.portfolio.spot.holdings.${quote_asset}` , Number(quote_amount), undefined, tags)
+          dogstatsd.gauge(`.portfolio.spot.holdings.${quote_asset}`, Number(quote_amount), undefined, tags)
           dogstatsd.gauge(`.portfolio.spot.holdings`, Number(quote_amount), undefined, tags) // Guess, this is easier to work with
           this.logger.info(tags, `Submited metric portfolio in ${quote_asset} for ${base_asset}`)
         }

@@ -36,7 +36,7 @@ Sentry.configureScope(function (scope: any) {
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { StatsD, Tags } from "hot-shots"
-const statsd = new StatsD()
+const dogstatsd = new StatsD()
 
 // redis + events publishing + binance
 
@@ -109,7 +109,7 @@ class PortfolioTracker implements MasterPortfolioClass {
           let account = exchange_identifier.account
           let tags: Tags = { base_asset, quote_asset, exchange, account }
           let stat = `trading-engine.portfilio.spot.holdings.${quote_asset}`
-          statsd.gauge(stat, Number(quote_amount), undefined, tags)
+          dogstatsd.gauge(stat, Number(quote_amount), undefined, tags)
           this.logger.info(tags, `Submited metric portfolio in ${quote_asset} for ${base_asset}`)
         }
       }

@@ -59,7 +59,7 @@ import { BaseAssetsList } from "./base-assets-list"
 import { Edge60EntrySignals } from "./edge60-entry-signals"
 import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
 
-var statsd = new StatsD()
+var dogstatsd = new StatsD()
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -73,7 +73,7 @@ function sleep(ms: number) {
 }
 
 let publisher: GenericTopicPublisher = new GenericTopicPublisher({ logger, event_name: "Edge60EntrySignal" })
-let publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({ logger, statsd })
+let publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({ logger, dogstatsd })
 
 const edge60_parameters: Edge60Parameters = {
   days_of_price_history: 22,

@@ -27,13 +27,13 @@ import { ExchangeType } from "./exchange-identifier"
 
 export class EdgeDirectionSignalPublisher {
   logger: Logger
-  statsd: StatsD | undefined
+  dogstatsd: StatsD | undefined
   publisher: GenericTopicPublisher
   event_name: MyEventNameType = "EdgeDirectionSignal"
 
-  constructor(args: { logger: Logger; statsd: StatsD }) {
+  constructor(args: { logger: Logger; dogstatsd: StatsD }) {
     this.logger = args.logger
-    this.statsd = args.statsd
+    this.dogstatsd = args.dogstatsd
     this.publisher = new GenericTopicPublisher({
       logger: args.logger,
       event_name: this.event_name,
@@ -50,14 +50,14 @@ export class EdgeDirectionSignalPublisher {
 
   publish(event: EdgeDirectionSignal, options?: Options.Publish): Promise<boolean> {
     try {
-      if (this.statsd) {
+      if (this.dogstatsd) {
         let { edge, direction, base_asset } = event
         let tags: Tags = {
           edge,
           direction,
         }
         if (base_asset) tags.base_asset = base_asset
-        this.statsd.increment(`trading_engine.edge_signal_long_short`, 1, undefined, tags)
+        this.dogstatsd.increment(`trading_engine.edge_signal_long_short`, 1, undefined, tags)
       }
     } catch (e) {
       this.logger.warn(`Failed to submit metrics to DogStatsD`)

@@ -119,8 +119,51 @@ class PortfolioTracker implements MasterPortfolioClass {
           let exchange = exchange_identifier.exchange
           let account = exchange_identifier.account
           let tags: Tags = { base_asset, quote_asset, exchange, account }
-          dogstatsd.gauge(`.portfolio.spot.holdings.${quote_asset}`, Number(quote_amount), undefined, tags)
-          dogstatsd.gauge(`.portfolio.spot.holdings`, Number(quote_amount), undefined, tags) // Guess, this is easier to work with
+
+          dogstatsd.gauge(
+            `.portfolio.spot.holdings.${quote_asset}`,
+            Number(quote_amount),
+            undefined,
+            tags,
+            function (err, bytes) {
+              if (err) {
+                console.error(
+                  "Oh noes! There was an error submitting .portfolio.spot.holdings.${quote_asset} metrics to DogStatsD for ${edge}:${base_asset}:",
+                  err
+                )
+                console.error(err)
+                Sentry.captureException(err)
+              } else {
+                console.log(
+                  "Successfully sent",
+                  bytes,
+                  "bytes .portfolio.spot.holdings.${quote_asset} to DogStatsD for ${edge}:${base_asset}"
+                )
+              }
+            }
+          )
+          dogstatsd.gauge(
+            `.portfolio.spot.holdings`,
+            Number(quote_amount),
+            undefined,
+            tags,
+            function (err, bytes) {
+              if (err) {
+                console.error(
+                  "Oh noes! There was an error submitting .portfolio.spot.holdings metrics to DogStatsD for ${edge}:${base_asset}:",
+                  err
+                )
+                console.error(err)
+                Sentry.captureException(err)
+              } else {
+                console.log(
+                  "Successfully sent",
+                  bytes,
+                  "bytes .portfolio.spot.holdings to DogStatsD for ${edge}:${base_asset}"
+                )
+              }
+            }
+          ) // Guess, this is easier to work with
           this.logger.info(tags, `Submited metric portfolio in ${quote_asset} for ${base_asset}`)
         }
       }

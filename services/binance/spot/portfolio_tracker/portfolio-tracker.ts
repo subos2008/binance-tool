@@ -103,7 +103,15 @@ class PortfolioTracker implements MasterPortfolioClass {
     // TODO: account not used in ExchangeIdentifier: default (default added so this appears in greps)
     this.portfolios[exchange_identifier.exchange] = portfolio
     this.report_current_portfolio() // this line is going to be a problem when we have multiple exchanges
+  }
 
+  async submit_portfolio_as_metrics({
+    // exchange_identifier,
+    portfolio,
+  }: {
+    // exchange_identifier: ExchangeIdentifier
+    portfolio: Portfolio
+  }) {
     try {
       this.logger.info(`Submitting metrics for ${portfolio.balances.length} balances`)
       // Submit metrics
@@ -116,9 +124,9 @@ class PortfolioTracker implements MasterPortfolioClass {
         } else this.logger.info(`No balance.quote_equivalents for ${base_asset}: `)
         for (const quote_asset in balance.quote_equivalents) {
           let quote_amount = balance.quote_equivalents[quote_asset]
-          let exchange = exchange_identifier.exchange
-          let account = exchange_identifier.account
-          let tags: Tags = { base_asset, quote_asset, exchange, account }
+          // let exchange = exchange_identifier.exchange
+          // let account = exchange_identifier.account
+          let tags: Tags = { base_asset, quote_asset /*exchange, account*/ }
 
           dogstatsd.gauge(
             `.portfolio.spot.holdings.${quote_asset}`,
@@ -288,6 +296,7 @@ class PortfolioTracker implements MasterPortfolioClass {
       .calculate_portfolio_value_in_quote_currency({ quote_currency: "BUSD", portfolio })
       .total.dp(0)
       .toFixed()
+    this.submit_portfolio_as_metrics({ portfolio })
     return portfolio
   }
 }

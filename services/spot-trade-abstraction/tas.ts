@@ -210,6 +210,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
     tags.status = result.status
 
     try {
+      dogstatsd.increment(".trading_abstraction_open_spot_long_result", tags)
       if (result.signal_to_execution_slippage_ms)
         dogstatsd.distribution(
           ".signal_to_execution_slippage_ms",

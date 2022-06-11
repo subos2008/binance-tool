@@ -154,6 +154,25 @@ interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION {
   execution_timestamp_ms?: string
   signal_to_execution_slippage_ms?: string
 }
+
+interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE {
+  object_type: "TradeAbstractionOpenSpotLongResult"
+  version: 1
+  base_asset: string
+  quote_asset?: string
+  edge: string
+
+  status: "INSUFFICIENT_BALANCE"
+
+  msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+  err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
+
+  trigger_price?: string
+  executed_price?: string // null if nothing bought
+  execution_timestamp_ms?: string
+  signal_to_execution_slippage_ms?: string
+}
+
 interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
   object_type: "TradeAbstractionOpenSpotLongResult"
   version: 1
@@ -193,18 +212,5 @@ export type TradeAbstractionOpenSpotLongResult =
   | TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION
   | TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
   | TradeAbstractionOpenSpotLongResult_TRADING_IN_ASSET_PROHIBITED
+  | TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE
 
-  export interface TradeAbstractionOpenSpotLongEntryResult {
-    object_type: "TradeAbstractionOpenSpotLongEntryResult"
-    version: 1
-    edge: string
-    base_asset: string
-    quote_asset: string
-    buy_limit_price?: string
-    executed_quote_quantity?: string
-    executed_price?: string
-    executed_base_quantity?: string
-    execution_timestamp_ms: string | undefined
-    status: "ENTRY_FAILED_TO_FILL" | "SUCCESS" | "INSUFFICIENT_BALANCE" | "INTERNAL_SERVER_ERROR"
-    msg: string
-  }

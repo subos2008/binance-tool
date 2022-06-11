@@ -17,8 +17,7 @@ import { PositionSizer } from "../fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
 import {
-  TradeAbstractionOpenSpotLongCommand_OCO_Exit,
-  TradeAbstractionOpenSpotLongEntryResult,
+  TradeAbstractionOpenSpotLongCommand_OCO_Exit, TradeAbstractionOpenSpotLongResult,
 } from "../interfaces/open_spot"
 
 /* Edge specific code */
@@ -87,7 +86,7 @@ export class SpotPositionsExecution_BuyLimit {
 
   async buy_limit_entry(
     args: TradeAbstractionOpenSpotLongCommand_OCO_Exit
-  ): Promise<TradeAbstractionOpenSpotLongEntryResult> {
+  ): Promise<TradeAbstractionOpenSpotLongResult> {
     let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
     let tags = { edge, base_asset, quote_asset }
     let prefix = `${edge}:${base_asset} open spot long: `
@@ -129,47 +128,42 @@ export class SpotPositionsExecution_BuyLimit {
         if ((err.message = ~/Account has insufficient balance for requested action./)) {
           let msg = `${edge}:${args.base_asset} Account has insufficient balance`
 
-          let spot_long_entry_result: TradeAbstractionOpenSpotLongEntryResult = {
-            object_type: "TradeAbstractionOpenSpotLongEntryResult",
+          let spot_long_result: TradeAbstractionOpenSpotLongResult = {
+            object_type: "TradeAbstractionOpenSpotLongResult",
             version: 1,
             msg,
             edge,
             base_asset,
             quote_asset,
-            buy_limit_price: buy_limit_price.toString(),
             status: "INSUFFICIENT_BALANCE",
             execution_timestamp_ms: Date.now() + "",
           }
-          this.logger.info(spot_long_entry_result)
-          return spot_long_entry_result
+          this.logger.info(spot_long_result)
+          return spot_long_result
         } else throw err
       }
       let { executed_quote_quantity, executed_price, executed_base_quantity, execution_timestamp_ms } = buy_result
 
       if (executed_base_quantity.isZero()) {
         let msg = `${prefix}: ENTRY_FAILED_TO_FILL: IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
-        let spot_long_entry_result: TradeAbstractionOpenSpotLongEntryResult = {
-          object_type: "TradeAbstractionOpenSpotLongEntryResult",
+        let spot_long_result: TradeAbstractionOpenSpotLongResult = {
+          object_type: "TradeAbstractionOpenSpotLongResult",
           version: 1,
           edge,
           base_asset,
           quote_asset,
-          executed_quote_quantity: executed_quote_quantity.toFixed(),
-          executed_price: executed_price.toFixed(),
-          executed_base_quantity: executed_base_quantity.toFixed(),
-          buy_limit_price: buy_limit_price.toString(),
           status: "ENTRY_FAILED_TO_FILL",
           msg,
           execution_timestamp_ms,
         }
-        this.logger.info(spot_long_entry_result)
-        return spot_long_entry_result
+        this.logger.info(spot_long_result)
+        return spot_long_result
       } else {
         let msg = `${edge}:${
           args.base_asset
         } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
-        let spot_long_entry_result: TradeAbstractionOpenSpotLongEntryResult = {
-          object_type: "TradeAbstractionOpenSpotLongEntryResult",
+        let spot_long_result: TradeAbstractionOpenSpotLongResult = {
+          object_type: "TradeAbstractionOpenSpotLongResult",
           version: 1,
           msg,
           edge,
@@ -178,12 +172,13 @@ export class SpotPositionsExecution_BuyLimit {
           executed_quote_quantity: executed_quote_quantity.toFixed(),
           executed_price: executed_price.toFixed(),
           executed_base_quantity: executed_base_quantity.toFixed(),
-          buy_limit_price: buy_limit_price.toString(),
           status: "SUCCESS",
           execution_timestamp_ms,
+          created_stop_order: false,
+          created_take_profit_order: false,
         }
-        this.logger.info(spot_long_entry_result)
-        return spot_long_entry_result
+        this.logger.info(spot_long_result)
+        return spot_long_result
       }
     } catch (err: any) {
       Sentry.captureException(err)
@@ -191,23 +186,24 @@ export class SpotPositionsExecution_BuyLimit {
       let msg = `${prefix}: INTERNAL_SERVER_ERROR opening spot position using ${
         args.quote_asset
       }: ${err.toString()}`
-      let spot_long_entry_result: TradeAbstractionOpenSpotLongEntryResult = {
-        object_type: "TradeAbstractionOpenSpotLongEntryResult",
+      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
+        object_type: "TradeAbstractionOpenSpotLongResult",
         version: 1,
         msg,
+        err,
         edge,
         base_asset,
         quote_asset,
         status: "INTERNAL_SERVER_ERROR",
         execution_timestamp_ms: Date.now() + "",
       }
-      this.logger.error(spot_long_entry_result)
+      this.logger.error(spot_long_result)
       this.send_message(msg, {
         edge: args.edge,
         base_asset: args.base_asset,
       })
 
-      return spot_long_entry_result
+      return spot_long_result
     }
   }
 }

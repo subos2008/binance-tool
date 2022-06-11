@@ -25,7 +25,14 @@ export class SendDatadogMetrics {
 
   async ingest_event(event: SpotEdgePerformanceEvent) {
     let { edge, exchange, exchange_type, loss, base_asset } = event
-    let tags: Tags = { edge, exchange, exchange_type, base_asset, result: loss ? "loss" : "win" }
+    let tags: Tags = {
+      edge,
+      exchange,
+      exchange_type,
+      base_asset,
+      result: loss ? "loss" : "win",
+      direction: "long", // spot
+    }
     this.dogstatsd.increment(`.position_closed`, 1, 1, tags, function (err, bytes) {
       if (err) {
         console.error(

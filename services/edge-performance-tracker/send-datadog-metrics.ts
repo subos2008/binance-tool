@@ -19,7 +19,7 @@ export class SendDatadogMetrics {
       //   exchange_type: exchange_identifier.type,
       //   exchange: exchange_identifier.exchange,
       // },
-      prefix: "trading_engine",
+      prefix: "trading_engine.edge_performance",
     })
   }
 
@@ -45,5 +45,46 @@ export class SendDatadogMetrics {
         console.log("Successfully sent", bytes, "bytes .position_closed to DogStatsD for ${edge}:${base_asset}")
       }
     })
+    this.dogstatsd.distribution(`.days_in_position`, event.days_in_position, tags, function (err, bytes) {
+      if (err) {
+        console.error(
+          "Oh noes! There was an error submitting .days_in_position metrics to DogStatsD for ${edge}:${base_asset}:",
+          err
+        )
+        console.error(err)
+        Sentry.captureException(err)
+      } else {
+        console.log("Successfully sent", bytes, "bytes .days_in_position to DogStatsD for ${edge}:${base_asset}")
+      }
+    })
+    this.dogstatsd.distribution(`.abs_quote_change`, Number(event.abs_quote_change), tags, function (err, bytes) {
+      if (err) {
+        console.error(
+          "Oh noes! There was an error submitting .abs_quote_change metrics to DogStatsD for ${edge}:${base_asset}:",
+          err
+        )
+        console.error(err)
+        Sentry.captureException(err)
+      } else {
+        console.log("Successfully sent", bytes, "bytes .abs_quote_change to DogStatsD for ${edge}:${base_asset}")
+      }
+    })
+    if (event.percentage_quote_change)
+      this.dogstatsd.distribution(`.abs_quote_change`, event.percentage_quote_change, tags, function (err, bytes) {
+        if (err) {
+          console.error(
+            "Oh noes! There was an error submitting .percentage_quote_change metrics to DogStatsD for ${edge}:${base_asset}:",
+            err
+          )
+          console.error(err)
+          Sentry.captureException(err)
+        } else {
+          console.log(
+            "Successfully sent",
+            bytes,
+            "bytes .percentage_quote_change to DogStatsD for ${edge}:${base_asset}"
+          )
+        }
+      })
   }
 }

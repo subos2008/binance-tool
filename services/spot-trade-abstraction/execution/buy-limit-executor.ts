@@ -18,6 +18,7 @@ import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifie
 import { SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
 import {
   TradeAbstractionOpenSpotLongCommand_OCO_Exit,
+  TradeAbstractionOpenSpotLongCommand__StopLimitExit,
   TradeAbstractionOpenSpotLongResult,
 } from "../interfaces/open_spot"
 
@@ -86,7 +87,7 @@ export class SpotPositionsExecution_BuyLimit {
   }
 
   async buy_limit_entry(
-    args: TradeAbstractionOpenSpotLongCommand_OCO_Exit
+    args: TradeAbstractionOpenSpotLongCommand_OCO_Exit | TradeAbstractionOpenSpotLongCommand__StopLimitExit
   ): Promise<TradeAbstractionOpenSpotLongResult> {
     let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
     let tags = { edge, base_asset, quote_asset }

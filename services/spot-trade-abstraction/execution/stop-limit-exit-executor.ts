@@ -31,6 +31,7 @@ import {
 } from "../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
 import { CurrentPriceGetter } from "../../../interfaces/exchanges/generic/price-getter"
+import { SpotPositionsExecution_BuyLimit } from "./buy-limit-executor"
 
 /* Edge specific code */
 /* END Edge specific code */
@@ -52,6 +53,7 @@ export class SpotPositionsExecution_StopLimitExit {
   position_sizer: PositionSizer
   positions_persistance: SpotPositionsPersistance
   price_getter: CurrentPriceGetter
+  limit_buy_executor: SpotPositionsExecution_BuyLimit
 
   constructor({
     logger,
@@ -76,6 +78,14 @@ export class SpotPositionsExecution_StopLimitExit {
     this.send_message = send_message
     this.position_sizer = position_sizer
     this.price_getter = price_getter
+    this.limit_buy_executor = new SpotPositionsExecution_BuyLimit({
+      logger,
+      ee,
+      positions_persistance,
+      send_message,
+      position_sizer,
+      price_getter,
+    })
   }
 
   // Used when constructing orders
@@ -129,74 +139,29 @@ export class SpotPositionsExecution_StopLimitExit {
      * TODO: trading rules
      */
 
-    let quote_amount = await this.position_sizer.position_size_in_quote_asset({ ...args, quote_asset })
-    let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
-    let limit_price_factor = new BigNumber(100).plus(edge_percentage_buy_limit).div(100)
-    let limit_price = trigger_price.times(limit_price_factor)
-    let base_amount = quote_amount.dividedBy(limit_price)
+    let buy_result: TradeAbstractionOpenSpotLongResult = await this.limit_buy_executor.buy_limit_entry(args)
 
-    this.logger.info(tags, {
-      object_type: "SpotPositionExecutionOpenRequest",
-      ...args,
-      buy_limit_price: limit_price,
-      quote_amount,
-      base_amount,
-    })
-
-    let cmd: SpotLimitBuyCommand = {
-      object_type: "SpotLimitBuyCommand",
-      order_context,
-      market_identifier,
-      base_amount,
-      limit_price,
-      timeInForce: "IOC",
-    }
-    let buy_result = await this.ee.limit_buy(cmd)
-    let { executed_quote_quantity, executed_price, executed_base_quantity, execution_timestamp_ms } = buy_result
-
-    if (executed_base_quantity.isZero()) {
-      // let msg = `${edge}:${args.base_asset} IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
-      // this.logger.info(tags, msg)
-      // this.send_message(msg, { edge, base_asset })
-      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
-        object_type: "TradeAbstractionOpenSpotLongResult",
-        version: 1,
-        edge,
-        base_asset,
-        quote_asset,
-        status: "ENTRY_FAILED_TO_FILL",
-        msg: `${prefix}: ENTRY_FAILED_TO_FILL, IOC limit buy executed zero`,
-        execution_timestamp_ms,
-      }
-      this.logger.info(spot_long_result) // this was logger.object before
-      return spot_long_result
-    } else {
-      let msg = `${edge}:${
-        args.base_asset
-      } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
-      this.logger.info(tags, msg)
-      // this.send_message(msg, { edge, base_asset })
+    if (buy_result.status !== "SUCCESS") {
+      return buy_result
     }
 
+    let { execution_timestamp_ms } = buy_result
+    let executed_price: BigNumber = new BigNumber(buy_result.executed_price)
+    let executed_base_quantity: BigNumber = new BigNumber(buy_result.executed_base_quantity)
+    let executed_quote_quantity: BigNumber = new BigNumber(buy_result.executed_quote_quantity)
+    
     /** BUY completed  */
+
+    let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
 
     let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
     let stop_price = executed_price.times(stop_price_factor)
-
-    this.logger.object(tags, {
-      object_type: "SpotPositionExecutionCreateStopExitOrderRequest",
-      ...args,
-      buy_limit_price: limit_price,
-      quote_amount,
-      base_amount,
-      stop_price,
-    })
 
     let stop_order_id: OrderId | undefined
     let stop_cmd: SpotStopMarketSellCommand = {
       object_type: "SpotStopMarketSellCommand",
       order_context,
-      market_identifier: cmd.market_identifier,
+      market_identifier,
       base_amount: executed_base_quantity,
       trigger_price: stop_price,
     }

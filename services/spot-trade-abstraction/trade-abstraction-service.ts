@@ -121,7 +121,8 @@ export class TradeAbstractionService {
       result.status != "ENTRY_FAILED_TO_FILL" &&
       result.status != "UNAUTHORISED" &&
       result.status != "ALREADY_IN_POSITION" &&
-      result.status != "TRADING_IN_ASSET_PROHIBITED"
+      result.status != "TRADING_IN_ASSET_PROHIBITED" &&
+      result.status != "INSUFFICIENT_BALANCE"
     ) {
       result.created_stop_order = result.stop_order_id ? true : false
       result.created_take_profit_order = result.take_profit_order_id ? true : false

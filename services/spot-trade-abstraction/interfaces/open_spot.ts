@@ -53,7 +53,7 @@ interface TradeAbstractionOpenSpotLongResult_SUCCESS {
   // Buy execution
   executed_quote_quantity: string
   executed_base_quantity: string
-  executed_price?: string // can be null if nothing bought
+  executed_price: string // can be null if nothing bought
   execution_timestamp_ms?: string
   signal_to_execution_slippage_ms?: string
 

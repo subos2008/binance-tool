@@ -52,12 +52,44 @@ export interface SpotOCOSellCommand {
   oco_list_ClientOrderId: string
 }
 
-export interface SpotExecutionEngineBuyResult {
+interface SpotExecutionEngineBuyResult_SUCCESS {
+  object_type: "SpotExecutionEngineBuyResult"
+  version: 2
+  market_identifier: MarketIdentifier_V3
+  order_context: OrderContext_V1
+  status: "SUCCESS"
+  msg: string
   executed_quote_quantity: BigNumber
   executed_price: BigNumber
   executed_base_quantity: BigNumber
   execution_timestamp_ms: string | undefined
 }
+
+interface SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE {
+  object_type: "SpotExecutionEngineBuyResult"
+  version: 2
+  market_identifier: MarketIdentifier_V3
+  order_context: OrderContext_V1
+  msg: string
+  status: "INSUFFICIENT_BALANCE"
+  execution_timestamp_ms: string | undefined
+}
+
+interface SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR {
+  object_type: "SpotExecutionEngineBuyResult"
+  version: 2
+  market_identifier: MarketIdentifier_V3
+  order_context: OrderContext_V1
+  status: "INTERNAL_SERVER_ERROR" // exception caught
+  msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+  err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
+  execution_timestamp_ms: string
+}
+
+export type SpotExecutionEngineBuyResult =
+  | SpotExecutionEngineBuyResult_SUCCESS
+  | SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE
+  | SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR
 
 export interface SpotExecutionEngine {
   get_market_identifier_for({
@@ -75,7 +107,8 @@ export interface SpotExecutionEngine {
     order_context: OrderContext_V1
   ): Promise<{ clientOrderId: string }>
 
-  market_buy_by_quote_quantity(args: SpotMarketBuyByQuoteQuantityCommand): Promise<SpotExecutionEngineBuyResult>
+  // This was getting 4% slippage on Binance, vs <0.5% on limit buys
+  // market_buy_by_quote_quantity(args: SpotMarketBuyByQuoteQuantityCommand): Promise<SpotExecutionEngineBuyResult>
 
   limit_buy(args: SpotLimitBuyCommand): Promise<SpotExecutionEngineBuyResult>
 

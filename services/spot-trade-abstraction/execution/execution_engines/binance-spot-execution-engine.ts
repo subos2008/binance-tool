@@ -109,48 +109,86 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     return { clientOrderId }
   }
 
-  async market_buy_by_quote_quantity(
-    cmd: SpotMarketBuyByQuoteQuantityCommand
-  ): Promise<SpotExecutionEngineBuyResult> {
-    let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
-    let result = await this.utils.create_market_buy_order_by_quote_amount({
-      pair: cmd.market_identifier.symbol,
-      quote_amount: cmd.quote_amount,
-      clientOrderId,
-    })
-    if (result) {
-      return {
-        executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
-        // Note we use cumBase instead of executedQty for futures version..?
-        executed_base_quantity: new BigNumber(result.executedQty),
-        executed_price: new BigNumber(result.cummulativeQuoteQty).dividedBy(result.executedQty),
-        execution_timestamp_ms: result.transactTime?.toString(),
-      }
-    }
-    throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)
-  }
+  // async market_buy_by_quote_quantity(
+  //   cmd: SpotMarketBuyByQuoteQuantityCommand
+  // ): Promise<SpotExecutionEngineBuyResult> {
+  //   let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
+  //   let result = await this.utils.create_market_buy_order_by_quote_amount({
+  //     pair: cmd.market_identifier.symbol,
+  //     quote_amount: cmd.quote_amount,
+  //     clientOrderId,
+  //   })
+  //   if (result) {
+  //     return {
+  //       executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
+  //       // Note we use cumBase instead of executedQty for futures version..?
+  //       executed_base_quantity: new BigNumber(result.executedQty),
+  //       executed_price: new BigNumber(result.cummulativeQuoteQty).dividedBy(result.executedQty),
+  //       execution_timestamp_ms: result.transactTime?.toString(),
+  //     }
+  //   }
+  //   throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)
+  // }
 
   async limit_buy(cmd: SpotLimitBuyCommand): Promise<SpotExecutionEngineBuyResult> {
     this.logger.object(cmd)
+    let { market_identifier, order_context } = cmd
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
-    let result: Order = await this.utils.create_limit_buy_order({
-      exchange_info: await this.get_exchange_info(),
-      price: cmd.limit_price,
-      pair: cmd.market_identifier.symbol,
-      base_amount: cmd.base_amount,
-      clientOrderId,
-      timeInForce: "IOC",
-    })
-    this.logger.object({ object_type: "BinanceOrder", ...result })
-    if (result) {
-      return {
+    let prefix = `${cmd.market_identifier.symbol} SpotExecutionEngineBuyResult`
+    try {
+      let result: Order
+      result = await this.utils.create_limit_buy_order({
+        exchange_info: await this.get_exchange_info(),
+        price: cmd.limit_price,
+        pair: cmd.market_identifier.symbol,
+        base_amount: cmd.base_amount,
+        clientOrderId,
+        timeInForce: "IOC",
+      })
+      this.logger.object({ object_type: "BinanceOrder", ...result })
+      let spot_long_result: SpotExecutionEngineBuyResult = {
+        object_type: "SpotExecutionEngineBuyResult",
+        version: 2,
+        msg: `${prefix}: SUCCESS`,
+        market_identifier,
+        order_context,
+        status: "SUCCESS",
         executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
         executed_base_quantity: new BigNumber(result.executedQty),
         executed_price: new BigNumber(result.cummulativeQuoteQty).dividedBy(result.executedQty),
         execution_timestamp_ms: result.transactTime?.toString(),
       }
+      this.logger.info(spot_long_result)
+      return spot_long_result
+    } catch (err: any) {
+      // TODO: can we do a more clean/complete job of catching exceptions from Binance?
+      if ((err.message = ~/Account has insufficient balance for requested action/)) {
+        let spot_long_result: SpotExecutionEngineBuyResult = {
+          object_type: "SpotExecutionEngineBuyResult",
+          version: 2,
+          msg: `${prefix}:  Account has insufficient balance`,
+          market_identifier,
+          order_context,
+          status: "INSUFFICIENT_BALANCE",
+          execution_timestamp_ms: Date.now() + "",
+        }
+        this.logger.info(spot_long_result)
+        return spot_long_result
+      } else {
+        let spot_long_result: SpotExecutionEngineBuyResult = {
+          object_type: "SpotExecutionEngineBuyResult",
+          version: 2,
+          err,
+          msg: `${prefix}: INTERNAL_SERVER_ERROR: ${err.message}`,
+          market_identifier,
+          order_context,
+          execution_timestamp_ms: Date.now() + "",
+          status: "INTERNAL_SERVER_ERROR",
+        }
+        this.logger.error(spot_long_result)
+        return spot_long_result
+      }
     }
-    throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)
   }
 
   /** implemented as a stop_limit */

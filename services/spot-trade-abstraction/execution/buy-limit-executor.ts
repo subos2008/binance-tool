@@ -17,7 +17,8 @@ import { PositionSizer } from "../fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
 import {
-  TradeAbstractionOpenSpotLongCommand_OCO_Exit, TradeAbstractionOpenSpotLongResult,
+  TradeAbstractionOpenSpotLongCommand_OCO_Exit,
+  TradeAbstractionOpenSpotLongResult,
 } from "../interfaces/open_spot"
 
 /* Edge specific code */
@@ -121,27 +122,19 @@ export class SpotPositionsExecution_BuyLimit {
         timeInForce: "IOC",
       }
 
-      let buy_result: SpotExecutionEngineBuyResult
-      try {
-        buy_result = await this.ee.limit_buy(cmd)
-      } catch (err: any) {
-        if ((err.message = ~/Account has insufficient balance for requested action./)) {
-          let msg = `${edge}:${args.base_asset} Account has insufficient balance`
+      let buy_result: SpotExecutionEngineBuyResult = await this.ee.limit_buy(cmd)
 
-          let spot_long_result: TradeAbstractionOpenSpotLongResult = {
-            object_type: "TradeAbstractionOpenSpotLongResult",
-            version: 1,
-            msg,
-            edge,
-            base_asset,
-            quote_asset,
-            status: "INSUFFICIENT_BALANCE",
-            execution_timestamp_ms: Date.now() + "",
-          }
-          this.logger.info(spot_long_result)
-          return spot_long_result
-        } else throw err
+      if (buy_result.status !== "SUCCESS") {
+        return {
+          ...buy_result,
+          object_type: "TradeAbstractionOpenSpotLongResult",
+          version: 1,
+          edge,
+          base_asset,
+          quote_asset,
+        }
       }
+
       let { executed_quote_quantity, executed_price, executed_base_quantity, execution_timestamp_ms } = buy_result
 
       if (executed_base_quantity.isZero()) {

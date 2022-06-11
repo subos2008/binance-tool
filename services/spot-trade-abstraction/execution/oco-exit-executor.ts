@@ -18,6 +18,7 @@ import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifie
 import { SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
 import {
   TradeAbstractionOpenSpotLongCommand_OCO_Exit,
+  TradeAbstractionOpenSpotLongEntryResult,
   TradeAbstractionOpenSpotLongResult,
 } from "../interfaces/open_spot"
 
@@ -30,6 +31,7 @@ import {
   SpotOCOSellCommand,
 } from "../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
+import { SpotPositionsExecution_BuyLimit } from "./buy-limit-executor"
 
 /* END Edge specific code */
 
@@ -50,6 +52,7 @@ export class SpotPositionsExecution_OCOExit {
   position_sizer: PositionSizer
   positions_persistance: SpotPositionsPersistance
   price_getter: CurrentPriceGetter
+  limit_buy_executor: SpotPositionsExecution_BuyLimit
 
   constructor({
     logger,
@@ -74,6 +77,14 @@ export class SpotPositionsExecution_OCOExit {
     this.send_message = send_message
     this.position_sizer = position_sizer
     this.price_getter = price_getter
+    this.limit_buy_executor = new SpotPositionsExecution_BuyLimit({
+      logger,
+      ee,
+      positions_persistance,
+      send_message,
+      position_sizer,
+      price_getter,
+    })
   }
 
   // Used when constructing orders
@@ -116,48 +127,16 @@ export class SpotPositionsExecution_OCOExit {
       let quote_amount = await this.position_sizer.position_size_in_quote_asset({ ...args, quote_asset })
       let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
       let limit_price_factor = new BigNumber(100).plus(edge_percentage_buy_limit).div(100)
-      let limit_price = trigger_price.times(limit_price_factor)
-      let base_amount = quote_amount.dividedBy(limit_price)
+      let buy_limit_price = trigger_price.times(limit_price_factor)
+      let base_amount = quote_amount.dividedBy(buy_limit_price)
 
-      this.logger.info(tags, {
-        object_type: "SpotPositionExecutionOpenRequest",
-        ...args,
-        buy_limit_price: limit_price,
-        quote_amount,
-        base_amount,
-      })
+      let buy_result: TradeAbstractionOpenSpotLongEntryResult = await this.limit_buy_executor.buy_limit_entry(args)
+      let { executed_base_quantity, executed_quote_quantity} = buy_result
 
-      let cmd: SpotLimitBuyCommand = {
-        object_type: "SpotLimitBuyCommand",
-        order_context,
-        market_identifier,
-        base_amount,
-        limit_price,
-        timeInForce: "IOC",
+      if(buy_result.status !== 'SUCCESS') {
+        return buy_result
       }
-      let buy_result = await this.ee.limit_buy(cmd)
-      let { executed_quote_quantity, executed_price, executed_base_quantity, execution_timestamp_ms } = buy_result
-
-      if (executed_base_quantity.isZero()) {
-        let msg = `${prefix}: IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
-        let spot_long_result: TradeAbstractionOpenSpotLongResult = {
-          object_type: "TradeAbstractionOpenSpotLongResult",
-          version: 1,
-          edge,
-          base_asset,
-          quote_asset,
-          status: "ENTRY_FAILED_TO_FILL",
-          msg,
-          execution_timestamp_ms,
-        }
-        this.logger.info(spot_long_result)
-        return spot_long_result
-      } else {
-        let msg = `${edge}:${
-          args.base_asset
-        } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
-        this.logger.info(tags, msg)
-      }
+      
 
       /** BUY completed  */
 
@@ -172,7 +151,7 @@ export class SpotPositionsExecution_OCOExit {
       this.logger.info(tags, {
         object_type: "SpotPositionExecutionCreateOCOExitOrderRequest",
         ...args,
-        buy_limit_price: limit_price,
+        buy_limit_price,
         quote_amount,
         base_amount,
         stop_price,
@@ -181,12 +160,12 @@ export class SpotPositionsExecution_OCOExit {
       })
 
       let { clientOrderId: stop_ClientOrderId } = await this.ee.store_order_context_and_generate_clientOrderId(
-        cmd.order_context
+        order_context
       )
       let { clientOrderId: take_profit_ClientOrderId } =
-        await this.ee.store_order_context_and_generate_clientOrderId(cmd.order_context)
+        await this.ee.store_order_context_and_generate_clientOrderId(order_context)
       let { clientOrderId: oco_list_ClientOrderId } = await this.ee.store_order_context_and_generate_clientOrderId(
-        cmd.order_context
+        order_context
       )
       let spot_position_identifier: SpotPositionIdentifier_V3 = {
         exchange_identifier: this.get_exchange_identifier(),
@@ -198,7 +177,7 @@ export class SpotPositionsExecution_OCOExit {
       let oco_cmd: SpotOCOSellCommand = {
         object_type: "SpotOCOSellCommand",
         order_context,
-        market_identifier: cmd.market_identifier,
+        market_identifier,
         base_amount: executed_base_quantity,
         stop_price,
         stop_limit_price,

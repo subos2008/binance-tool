@@ -87,9 +87,7 @@ export class SpotPositionsExecution_BuyLimit {
 
   async buy_limit_entry(
     args: TradeAbstractionOpenSpotLongCommand_OCO_Exit
-  ) /*: Promise<TradeAbstractionOpenSpotLongEntryResult>*/ {
-    let execution_timestamp_ms: string | undefined = Date.now() + ""
-
+  ): Promise<TradeAbstractionOpenSpotLongEntryResult> {
     let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
     let tags = { edge, base_asset, quote_asset }
     let prefix = `${edge}:${base_asset} open spot long: `
@@ -114,14 +112,6 @@ export class SpotPositionsExecution_BuyLimit {
       let limit_price_factor = new BigNumber(100).plus(edge_percentage_buy_limit).div(100)
       let buy_limit_price = trigger_price.times(limit_price_factor)
       let base_amount = quote_amount.dividedBy(buy_limit_price)
-
-      this.logger.info({
-        object_type: "SpotPositionExecutionOpenRequest",
-        ...args,
-        buy_limit_price,
-        quote_amount,
-        base_amount,
-      })
 
       let cmd: SpotLimitBuyCommand = {
         object_type: "SpotLimitBuyCommand",

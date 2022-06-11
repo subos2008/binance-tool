@@ -18,7 +18,6 @@ import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifie
 import { SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
 import {
   TradeAbstractionOpenSpotLongCommand_OCO_Exit,
-  TradeAbstractionOpenSpotLongEntryResult,
   TradeAbstractionOpenSpotLongResult,
 } from "../interfaces/open_spot"
 
@@ -26,7 +25,6 @@ import {
 import { CurrentPriceGetter } from "../../../interfaces/exchanges/generic/price-getter"
 import {
   SpotExecutionEngine,
-  SpotLimitBuyCommand,
   SpotMarketSellCommand,
   SpotOCOSellCommand,
 } from "../../../interfaces/exchanges/spot-execution-engine"
@@ -106,7 +104,6 @@ export class SpotPositionsExecution_OCOExit {
         edge_percentage_stop,
         edge_percentage_stop_limit,
         edge_percentage_take_profit,
-        edge_percentage_buy_limit,
       } = args
 
       let prefix = `${edge}:${base_asset} open spot long: `
@@ -124,22 +121,17 @@ export class SpotPositionsExecution_OCOExit {
        * TODO: trading rules
        */
 
-      let quote_amount = await this.position_sizer.position_size_in_quote_asset({ ...args, quote_asset })
-      let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
-      let limit_price_factor = new BigNumber(100).plus(edge_percentage_buy_limit).div(100)
-      let buy_limit_price = trigger_price.times(limit_price_factor)
-      let base_amount = quote_amount.dividedBy(buy_limit_price)
+      let buy_result: TradeAbstractionOpenSpotLongResult = await this.limit_buy_executor.buy_limit_entry(args)
 
-      let buy_result: TradeAbstractionOpenSpotLongEntryResult = await this.limit_buy_executor.buy_limit_entry(args)
-      let { executed_base_quantity, executed_quote_quantity} = buy_result
-
-      if(buy_result.status !== 'SUCCESS') {
+      if (buy_result.status !== "SUCCESS") {
         return buy_result
       }
-      
+
+      let { executed_base_quantity, executed_quote_quantity, executed_price, execution_timestamp_ms } = buy_result
 
       /** BUY completed  */
 
+      let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
       let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
       let stop_price = trigger_price.times(stop_price_factor)
       let stop_limit_price_factor = new BigNumber(100).minus(edge_percentage_stop_limit).div(100)
@@ -147,17 +139,6 @@ export class SpotPositionsExecution_OCOExit {
 
       let take_profit_price_factor = new BigNumber(100).plus(edge_percentage_take_profit).div(100)
       let take_profit_price = trigger_price.times(take_profit_price_factor)
-
-      this.logger.info(tags, {
-        object_type: "SpotPositionExecutionCreateOCOExitOrderRequest",
-        ...args,
-        buy_limit_price,
-        quote_amount,
-        base_amount,
-        stop_price,
-        take_profit_price,
-        stop_limit_price,
-      })
 
       let { clientOrderId: stop_ClientOrderId } = await this.ee.store_order_context_and_generate_clientOrderId(
         order_context
@@ -174,11 +155,13 @@ export class SpotPositionsExecution_OCOExit {
       }
       await this.positions_persistance.set_oco_order(spot_position_identifier, oco_list_ClientOrderId)
 
+      let base_amount = new BigNumber(executed_base_quantity)
+
       let oco_cmd: SpotOCOSellCommand = {
         object_type: "SpotOCOSellCommand",
         order_context,
         market_identifier,
-        base_amount: executed_base_quantity,
+        base_amount,
         stop_price,
         stop_limit_price,
         take_profit_price,
@@ -200,7 +183,7 @@ export class SpotPositionsExecution_OCOExit {
         let market_sell_cmd: SpotMarketSellCommand = {
           order_context,
           market_identifier,
-          base_amount: executed_base_quantity,
+          base_amount,
         }
         await this.ee.market_sell(market_sell_cmd)
 
@@ -227,14 +210,14 @@ export class SpotPositionsExecution_OCOExit {
         base_asset,
         quote_asset,
         edge,
-        executed_quote_quantity: executed_quote_quantity.toFixed(),
-        executed_base_quantity: executed_base_quantity.toFixed(),
+        executed_quote_quantity,
+        executed_base_quantity,
         oco_order_id: oco_list_ClientOrderId,
         created_stop_order: true,
         stop_order_id: stop_ClientOrderId,
         created_take_profit_order: true,
         take_profit_order_id: take_profit_ClientOrderId,
-        executed_price: executed_price.toFixed(),
+        executed_price,
         stop_price: stop_price.toFixed(),
         take_profit_price: take_profit_price.toFixed(),
         status: "SUCCESS",

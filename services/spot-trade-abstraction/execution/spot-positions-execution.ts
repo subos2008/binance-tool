@@ -227,6 +227,7 @@ export class SpotPositionsExecution {
         edge,
       }
       this.logger.info(spot_long_result)
+      return spot_long_result
     }
 
     /**

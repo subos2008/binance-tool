@@ -226,7 +226,7 @@ export class SpotPositionsExecution {
         base_asset,
         edge,
       }
-      this.logger.warn(spot_long_result)
+      this.logger.info(spot_long_result)
     }
 
     /**

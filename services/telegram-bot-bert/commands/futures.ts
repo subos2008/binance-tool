@@ -24,7 +24,12 @@ export class Commands_Futures {
   async futures(ctx: NarrowedContext<Context, Types.MountMap["text"]>) {
     try {
       // let [command, base_asset, edge_unchecked, stop_price, tp_price] =
-      let args: string[] = ctx.message.text.split(/ /).slice(1)
+      let args: string[] = ctx.message.text.split(/ /)
+      let foo: string = args[0]
+      if (args[0] !== "/futures") {
+        ctx.reply(`Expected /futures, got ${foo}`)
+      }
+      args = args.slice(1)
       let command = args.shift()
 
       switch (command) {

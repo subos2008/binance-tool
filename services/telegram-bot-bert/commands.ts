@@ -84,9 +84,11 @@ export class Commands {
         await this.spot(ctx, args.slice(1))
       } else if (args[0] == "/positions") {
         await this.list_positions(ctx, args.slice(1))
+      } else if (args[0] == "/futures") {
+        await this.futures.futures(ctx)
       } else {
         // Not a command - just people speaking in a channel
-        // ctx.reply(ctx.message.text)
+        ctx.reply(`Unrecognised: ${ctx.message.text}`)
       }
     } catch (err) {
       ctx.reply(`Internal error 🤪`)

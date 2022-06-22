@@ -142,11 +142,11 @@ class PortfolioTracker implements MasterPortfolioClass {
                 console.error(err)
                 Sentry.captureException(err)
               } else {
-                console.log(
-                  "Successfully sent",
-                  bytes,
-                  "bytes .portfolio.spot.holdings.${quote_asset} to DogStatsD for ${edge}:${base_asset}"
-                )
+                // console.log(
+                //   "Successfully sent",
+                //   bytes,
+                //   "bytes .portfolio.spot.holdings.${quote_asset} to DogStatsD for ${edge}:${base_asset}"
+                // )
               }
             }
           )
@@ -164,11 +164,11 @@ class PortfolioTracker implements MasterPortfolioClass {
                 console.error(err)
                 Sentry.captureException(err)
               } else {
-                console.log(
-                  "Successfully sent",
-                  bytes,
-                  "bytes .portfolio.spot.holdings to DogStatsD for ${edge}:${base_asset}"
-                )
+                // console.log(
+                //   "Successfully sent",
+                //   bytes,
+                //   "bytes .portfolio.spot.holdings to DogStatsD for ${edge}:${base_asset}"
+                // )
               }
             }
           ) // Guess, this is easier to work with

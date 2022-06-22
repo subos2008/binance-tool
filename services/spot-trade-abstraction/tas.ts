@@ -141,7 +141,7 @@ try {
     if (error) {
       console.error("Oh noes! There was an error submitting metrics to DogStatsD:", error)
     } else {
-      console.log("Successfully sent", bytes, "bytes to DogStatsD")
+      // console.log("Successfully sent", bytes, "bytes to DogStatsD")
     }
   })
 } catch (e) {

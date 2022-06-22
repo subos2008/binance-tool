@@ -15,7 +15,11 @@ const JSONBigNumber = require("./JSONBigNumber")
 import { URL } from "url"
 
 import * as Sentry from "@sentry/node"
-import { BinanceStyleSpotPrices, SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstractions/position-identifier"
+import {
+  BinanceStyleSpotPrices,
+  SpotPositionIdentifier_V3,
+} from "../../../../../classes/spot/abstractions/position-identifier"
+import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
   scope.setTag("class", "SpotTradeAbstractionServiceClient")
@@ -28,7 +32,14 @@ export class SpotTradeAbstractionServiceClient {
     this.logger = logger
   }
 
-  async prices(): Promise<BinanceStyleSpotPrices[]> {
+  async get_exchange_identifier(): Promise<ExchangeIdentifier_V3> {
+    let response = await this._call("GET", new URL("/exchange_identifier", TAS_URL).toString())
+    this.logger.info(`Returned exchange_identifier:`)
+    this.logger.object(response)
+    return response
+  }
+
+  async prices(): Promise<BinanceStyleSpotPrices> {
     let response = await this._call("GET", new URL("/prices", TAS_URL).toString())
     this.logger.info(`Returned prices:`)
     this.logger.object(response)
@@ -58,7 +69,7 @@ export class SpotTradeAbstractionServiceClient {
    */
   private async _call(method: Method, endpoint: string, params?: string | object): Promise<any> {
     try {
-      const options :AxiosRequestConfig= {
+      const options: AxiosRequestConfig = {
         url: endpoint,
         timeout: 10 * 1000, // ms, 1000 = 1 second
         headers: {},
@@ -69,7 +80,7 @@ export class SpotTradeAbstractionServiceClient {
         },
         // json: false, // avoid parsing json with the built in libs as they use floating point numbers
         params,
-        validateStatus: (status) => status < 500
+        validateStatus: (status) => status < 500,
       }
 
       let response = await axios(options)

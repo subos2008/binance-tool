@@ -149,6 +149,15 @@ try {
   Sentry.captureException(e)
 }
 
+app.get("/exchange_identifier", async function (req: Request, res: Response, next: NextFunction) {
+  try {
+    res.status(200).json(await tas.get_exchange_identifier())
+  } catch (err) {
+    res.status(500)
+    next(err)
+  }
+})
+
 app.get("/prices", async function (req: Request, res: Response, next: NextFunction) {
   try {
     res.status(200).json(await tas.prices())
@@ -209,7 +218,12 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
       let signal_to_cmd_received_slippage_ms = Number(
         new BigNumber(cmd_received_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
       )
-      dogstatsd.distribution(".signal_to_cmd_received_slippage_ms", signal_to_cmd_received_slippage_ms, undefined, tags)
+      dogstatsd.distribution(
+        ".signal_to_cmd_received_slippage_ms",
+        signal_to_cmd_received_slippage_ms,
+        undefined,
+        tags
+      )
     } catch (err) {
       logger.warn({ ...tags, err }, `Failed to submit metric to DogStatsD`)
       Sentry.captureException(err)

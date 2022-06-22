@@ -15,7 +15,7 @@ const JSONBigNumber = require("./JSONBigNumber")
 import { URL } from "url"
 
 import * as Sentry from "@sentry/node"
-import { SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstractions/position-identifier"
+import { BinanceStyleSpotPrices, SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstractions/position-identifier"
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
   scope.setTag("class", "SpotTradeAbstractionServiceClient")
@@ -26,6 +26,13 @@ export class SpotTradeAbstractionServiceClient {
 
   constructor({ logger }: { logger: Logger }) {
     this.logger = logger
+  }
+
+  async prices(): Promise<BinanceStyleSpotPrices[]> {
+    let response = await this._call("GET", new URL("/prices", TAS_URL).toString())
+    this.logger.info(`Returned prices:`)
+    this.logger.object(response)
+    return response
   }
 
   async positions(): Promise<SpotPositionIdentifier_V3[]> {

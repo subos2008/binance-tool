@@ -149,6 +149,15 @@ try {
   Sentry.captureException(e)
 }
 
+app.get("/prices", async function (req: Request, res: Response, next: NextFunction) {
+  try {
+    res.status(200).json(await tas.prices())
+  } catch (err) {
+    res.status(500)
+    next(err)
+  }
+})
+
 app.get("/positions", async function (req: Request, res: Response, next: NextFunction) {
   try {
     res.status(200).json(await tas.open_positions())

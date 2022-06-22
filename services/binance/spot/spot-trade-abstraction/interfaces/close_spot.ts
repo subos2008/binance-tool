@@ -1,4 +1,4 @@
-import { SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
+import { SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstractions/position-identifier"
 
 interface CloseSpotLongResult_BASE {
   object_type: "TradeAbstractionCloseSpotLongResult"

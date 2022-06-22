@@ -1,8 +1,8 @@
-import { Logger } from "../../interfaces/logger"
+import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
 
 import { BigNumber } from "bignumber.js"
-import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
+import { AuthorisedEdgeType } from "../../../../classes/spot/abstractions/position-identifier"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {

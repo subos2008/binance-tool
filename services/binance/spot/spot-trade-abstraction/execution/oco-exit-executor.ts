@@ -1,6 +1,6 @@
 import { strict as assert } from "assert"
 
-import Sentry from "../../../lib/sentry"
+import Sentry from "../../../../../lib/sentry"
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -9,26 +9,26 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../../interfaces/logger"
-import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
-import { SpotPositionsPersistance } from "../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { SendMessageFunc } from "../../../lib/telegram-v2"
+import { Logger } from "../../../../../interfaces/logger"
+import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
+import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SendMessageFunc } from "../../../../../lib/telegram-v2"
 import { PositionSizer } from "../fixed-position-sizer"
-import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
-import { SpotPositionIdentifier_V3 } from "../../../classes/spot/abstractions/position-identifier"
+import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
+import { SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstractions/position-identifier"
 import {
   TradeAbstractionOpenSpotLongCommand_OCO_Exit,
   TradeAbstractionOpenSpotLongResult,
 } from "../interfaces/open_spot"
 
 /* Edge specific code */
-import { CurrentPriceGetter } from "../../../interfaces/exchanges/generic/price-getter"
+import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import {
   SpotExecutionEngine,
   SpotMarketSellCommand,
   SpotOCOSellCommand,
-} from "../../../interfaces/exchanges/spot-execution-engine"
-import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
+} from "../../../../../interfaces/exchanges/spot-execution-engine"
+import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { SpotPositionsExecution_BuyLimit } from "./buy-limit-executor"
 
 /* END Edge specific code */

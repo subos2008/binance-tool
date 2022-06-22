@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js"
-import { AuthorisedEdgeType } from "../../../classes/spot/abstractions/position-identifier"
+import { AuthorisedEdgeType } from "../../../../../classes/spot/abstractions/position-identifier"
 
 export interface TradeAbstractionOpenSpotLongCommand {
   base_asset: string

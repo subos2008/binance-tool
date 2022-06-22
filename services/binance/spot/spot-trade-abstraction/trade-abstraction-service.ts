@@ -5,19 +5,19 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { disallowed_base_assets_for_entry } from "../../lib/stable-coins"
+import { disallowed_base_assets_for_entry } from "../../../../lib/stable-coins"
 
-import { Logger } from "../../interfaces/logger"
+import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
-import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
+import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
 import {
   AuthorisedEdgeType,
   check_edge,
   is_authorised_edge,
   SpotPositionIdentifier_V3,
-} from "../../classes/spot/abstractions/position-identifier"
+} from "../../../../classes/spot/abstractions/position-identifier"
 import { SpotPositionsExecution } from "./execution/spot-positions-execution"
-import Sentry from "../../lib/sentry"
+import Sentry from "../../../../lib/sentry"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
 import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close_spot"
 

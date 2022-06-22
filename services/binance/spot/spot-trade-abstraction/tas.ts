@@ -5,7 +5,7 @@
 import "./tracer" // must come before importing any instrumented module.
 
 /** Config: */
-import { config } from "../../config"
+import { config } from "../../../../config"
 const quote_asset = config.tas_quote_asset.toUpperCase()
 
 import { strict as assert } from "assert"
@@ -18,8 +18,8 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "../../interfaces/logger"
-import { Logger as LoggerClass } from "../../lib/faux_logger"
+import { Logger } from "../../../../interfaces/logger"
+import { Logger as LoggerClass } from "../../../../lib/faux_logger"
 const logger: Logger = new LoggerClass({ silent: false })
 
 logger.info({ hello: "world" }, "Service starting")
@@ -43,12 +43,12 @@ function dogstatsderrorhandler(err: Error) {
   logger.error({ err }, `DogStatsD: Socket errors caught here: ${err}`)
 }
 
-import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
+import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
 import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close_spot"
-import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
-import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
-import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
+import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
+import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 
 import express, { NextFunction, Request, Response } from "express"
 import { FixedPositionSizer } from "./fixed-position-sizer"
@@ -82,17 +82,17 @@ app.use(
 
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
-import { HealthAndReadiness } from "../../classes/health_and_readiness"
+import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
+import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 import { SpotPositionsExecution } from "./execution/spot-positions-execution"
-import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
-import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-price-getter"
+import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 
 import { RedisClient } from "redis"
-import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
+import { AuthorisedEdgeType, check_edge } from "../../../../classes/spot/abstractions/position-identifier"
 import { TradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
 

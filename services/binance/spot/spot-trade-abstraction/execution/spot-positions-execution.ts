@@ -1,6 +1,6 @@
 import { strict as assert } from "assert"
 
-import Sentry from "../../../lib/sentry"
+import Sentry from "../../../../../lib/sentry"
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -9,29 +9,29 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../../interfaces/logger"
-import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
-import { SpotPositionsPersistance } from "../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { SendMessageFunc } from "../../../lib/telegram-v2"
+import { Logger } from "../../../../../interfaces/logger"
+import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
+import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SendMessageFunc } from "../../../../../lib/telegram-v2"
 import { PositionSizer } from "../fixed-position-sizer"
-import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import {
   AuthorisedEdgeType,
   check_edge,
   SpotPositionIdentifier_V3,
-} from "../../../classes/spot/abstractions/position-identifier"
-import { OrderId } from "../../../classes/spot/persistence/interface/order-context-persistence"
+} from "../../../../../classes/spot/abstractions/position-identifier"
+import { OrderId } from "../../../../../classes/spot/persistence/interface/order-context-persistence"
 import { SpotPositionsExecution_StopLimitExit } from "./stop-limit-exit-executor"
 import { SpotPositionsExecution_OCOExit } from "./oco-exit-executor"
-import { CurrentPriceGetter } from "../../../interfaces/exchanges/generic/price-getter"
+import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/open_spot"
 import {
   TradeAbstractionCloseSpotLongResult,
   TradeAbstractionCloseSpotLongResult_NOT_FOUND,
   TradeAbstractionCloseSpotLongResult_SUCCESS,
 } from "../interfaces/close_spot"
-import { SpotExecutionEngine } from "../../../interfaces/exchanges/spot-execution-engine"
-import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
+import { SpotExecutionEngine } from "../../../../../interfaces/exchanges/spot-execution-engine"
+import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 
 /**
  * If this does the execution of spot position entry/exit

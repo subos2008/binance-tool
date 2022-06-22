@@ -11,7 +11,7 @@ const service_name = "edge-signal-to-tas-bridge"
 require("dotenv").config()
 
 import { ListenerFactory } from "../../classes/amqp/listener-factory"
-import { SpotTradeAbstractionServiceClient } from "../spot-trade-abstraction/client/tas-client"
+import { SpotTradeAbstractionServiceClient } from "../binance/spot/spot-trade-abstraction/client/tas-client"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { MessageProcessor } from "../../classes/amqp/interfaces"
 import { MyEventNameType } from "../../classes/amqp/message-routing"

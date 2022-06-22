@@ -1,6 +1,5 @@
 export type MyEventNameType =
   | "InternalConnectivityTestEvent"
-  | "SpotBinancePortfolio"
   | "SpotPortfolio"
   | "Edge56EntrySignal"
   | "BinanceOrderData"
@@ -23,14 +22,6 @@ export class MessageRouting {
       case "InternalConnectivityTestEvent":
         return {
           routing_key: "connectivity-test-events",
-          exchange_name: "binance-tool",
-          exchange_type: "topic",
-          durable: false,
-        }
-
-      case "SpotBinancePortfolio":
-        return {
-          routing_key: "portfolio",
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,

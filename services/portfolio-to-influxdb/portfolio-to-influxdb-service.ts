@@ -72,7 +72,7 @@ class EventLogger implements MessageProcessor {
   }
 
   async register_message_processors() {
-    let event_name: MyEventNameType = "SpotBinancePortfolio"
+    let event_name: MyEventNameType = "SpotPortfolio"
     let listener_factory = new ListenerFactory({ logger })
     let health_and_readiness = this.health_and_readiness.addSubsystem({
       name: event_name,

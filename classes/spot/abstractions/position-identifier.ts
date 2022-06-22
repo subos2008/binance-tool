@@ -64,3 +64,7 @@ export interface SpotPositionsQuery_V3 {
   edge?: AuthorisedEdgeType // if edge is null return an array if there are multiple open positions
   base_asset: string
 }
+
+export type BinanceStyleSpotPrices = {
+  [index: string]: string
+}

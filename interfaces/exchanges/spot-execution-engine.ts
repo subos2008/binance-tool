@@ -9,6 +9,7 @@ import { OrderContext_V1 } from "../orders/order-context"
 import { OrderId } from "../../classes/spot/persistence/interface/order-context-persistence"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
+import { BinanceStyleSpotPrices } from "../../classes/spot/abstractions/position-identifier"
 
 export interface SpotMarketBuyByQuoteQuantityCommand {
   order_context: OrderContext_V1
@@ -122,4 +123,7 @@ export interface SpotExecutionEngine {
   market_sell(cmd: SpotMarketSellCommand): Promise<void>
 
   oco_sell_order(cmd: SpotOCOSellCommand): Promise<void>
+
+  // This is more of a query - we want caching and perhaps a different 'query' interface
+  prices(): Promise<BinanceStyleSpotPrices>
 }

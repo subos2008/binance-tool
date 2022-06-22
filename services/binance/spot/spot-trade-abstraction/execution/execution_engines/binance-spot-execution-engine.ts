@@ -25,6 +25,7 @@ import {
 } from "../../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContextPersistence } from "../../../../../../classes/spot/persistence/interface/order-context-persistence"
 import { OrderContext_V1 } from "../../../../../../interfaces/orders/order-context"
+import { BinanceStyleSpotPrices } from "../../../../../../classes/spot/abstractions/position-identifier"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)
@@ -291,5 +292,9 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
     this.logger.warn(msg)
     this.logger.info(order)
     throw new Error(msg)
+  }
+
+  prices(): Promise<BinanceStyleSpotPrices> {
+    return ee.prices()
   }
 }

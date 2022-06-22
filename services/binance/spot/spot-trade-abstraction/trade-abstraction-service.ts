@@ -12,6 +12,7 @@ import { strict as assert } from "assert"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
 import {
   AuthorisedEdgeType,
+  BinanceStyleSpotPrices,
   check_edge,
   is_authorised_edge,
   SpotPositionIdentifier_V3,
@@ -20,6 +21,7 @@ import { SpotPositionsExecution } from "./execution/spot-positions-execution"
 import Sentry from "../../../../lib/sentry"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
 import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close_spot"
+import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands
@@ -47,6 +49,14 @@ export class TradeAbstractionService {
     this.quote_asset = quote_asset
     this.positions = positions
     this.spot_ee = spot_ee
+  }
+
+  get_exchange_identifier(): ExchangeIdentifier_V3 {
+    return this.spot_ee.ee.get_exchange_identifier()
+  }
+
+  prices(): Promise<BinanceStyleSpotPrices> {
+    return this.spot_ee.ee.prices()
   }
 
   // or signal_long

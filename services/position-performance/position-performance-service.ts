@@ -16,15 +16,12 @@ const update_interval_seconds: number = Number(process.env.UPDATE_INTERVAL_SECON
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()
-import { RedisClient } from "redis"
 
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
-
-import { Binance } from "binance-api-node"
 
 import * as Sentry from "@sentry/node"
 import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
@@ -33,15 +30,15 @@ import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
-import { BinanceSpotExecutionEngine } from "../spot-trade-abstraction/execution/execution_engines/binance-spot-execution-engine"
-import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { SpotTradeAbstractionServiceClient } from "../binance/spot/spot-trade-abstraction/client/tas-client"
+import { CurrentAllPricesGetter } from "../../interfaces/exchanges/generic/price-getter"
 
 export class PositionPerformance {
   send_message: (msg: string) => void
   logger: Logger
   spot_positions_persistance: SpotPositionsPersistance
   spot_positions_query: SpotPositionsQuery
-  ee: BinanceSpotExecutionEngine
+  ee: CurrentAllPricesGetter
   prices: Prices | undefined
 
   constructor({
@@ -55,7 +52,7 @@ export class PositionPerformance {
     logger: Logger
     spot_positions_persistance: SpotPositionsPersistance
     spot_positions_query: SpotPositionsQuery
-    ee: BinanceSpotExecutionEngine
+    ee: CurrentAllPricesGetter
   }) {
     assert(logger)
     this.ee = ee
@@ -132,8 +129,7 @@ export class PositionPerformance {
   }
 
   async update() {
-    let ee: Binance = this.ee.get_raw_binance_ee()
-    this.prices = await ee.prices()
+    this.prices = await this.ee.prices()
     await this.list_positions()
   }
 }
@@ -141,12 +137,11 @@ export class PositionPerformance {
 async function main() {
   const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   const spot_positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
-  const order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
-  const binance = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
+  const ee = new SpotTradeAbstractionServiceClient({ logger })
 
   const spot_positions_query = new SpotPositionsQuery({
     logger,
-    exchange_identifier: binance.get_exchange_identifier(),
+    exchange_identifier: await ee.get_exchange_identifier(),
     positions_persistance: spot_positions_persistance,
     send_message,
   })
@@ -154,7 +149,7 @@ async function main() {
   let position_performance = new PositionPerformance({
     logger,
     send_message,
-    ee: binance,
+    ee,
     spot_positions_persistance,
     spot_positions_query,
   })

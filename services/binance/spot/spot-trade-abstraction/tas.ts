@@ -46,16 +46,18 @@ function dogstatsderrorhandler(err: Error) {
 import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
 import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close_spot"
-import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
-import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 
 import express, { NextFunction, Request, Response } from "express"
-import { FixedPositionSizer } from "./fixed-position-sizer"
 const winston = require("winston")
 const expressWinston = require("express-winston")
 
 var app = express()
+
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+
+import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 
 app.use(
   expressWinston.logger({
@@ -80,55 +82,29 @@ app.use(
   })
 ) // for parsing application/x-www-form-urlencoded
 
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-
-import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
-app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
-
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
-import { SpotPositionsExecution } from "./execution/spot-positions-execution"
 import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
-import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 
 import { RedisClient } from "redis"
 import { AuthorisedEdgeType, check_edge } from "../../../../classes/spot/abstractions/position-identifier"
+
 import { TradeAbstractionService } from "./trade-abstraction-service"
-import { BinanceSpotExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
+import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
 
 const order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
-const binance_spot_ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
-const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
-const position_sizer = new FixedPositionSizer({ logger })
-const exchange_identifier = binance_spot_ee.get_exchange_identifier()
-const price_getter = new BinancePriceGetter({
-  logger,
-  ee: binance_spot_ee.get_raw_binance_ee(),
-  cache_timeout_ms: 400,
-})
-const positions = new SpotPositionsQuery({
-  logger,
-  positions_persistance,
-  send_message,
-  exchange_identifier: binance_spot_ee.get_exchange_identifier(),
-})
-const spot_ee: SpotPositionsExecution = new SpotPositionsExecution({
-  logger,
-  position_sizer,
-  positions_persistance,
-  ee: binance_spot_ee,
-  send_message,
-  price_getter,
-})
+const ee = new ExecutionEngine({ logger, order_context_persistence })
+const exchange_identifier = ee.get_exchange_identifier()
+
 let tas: TradeAbstractionService = new TradeAbstractionService({
-  positions,
   logger,
   quote_asset /* global */,
-  spot_ee,
+  ee,
+  send_message,
 })
+
 var dogstatsd = new StatsD({
   errorHandler: dogstatsderrorhandler,
   globalTags: { service_name, exchange_type: exchange_identifier.type, exchange: exchange_identifier.exchange },

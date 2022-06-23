@@ -22,12 +22,18 @@ import Sentry from "../../../../lib/sentry"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
 import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close_spot"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
+import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
+import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
+import { SendMessageFunc } from "../../../../lib/telegram-v2"
 
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands
  */
 export class TradeAbstractionService {
   logger: Logger
+  send_message: SendMessageFunc
   quote_asset: string
   private positions: SpotPositionsQuery // query state of existing open positions
   private spot_ee: SpotPositionsExecution
@@ -35,20 +41,39 @@ export class TradeAbstractionService {
   constructor({
     logger,
     quote_asset,
-    positions,
-    spot_ee,
+    ee,
+    send_message,
   }: {
     logger: Logger
     quote_asset: string
-    positions: SpotPositionsQuery
-    spot_ee: SpotPositionsExecution
+    ee: ExecutionEngine
+    send_message: SendMessageFunc
   }) {
     assert(logger)
     this.logger = logger
+    this.send_message = send_message
     assert(quote_asset)
     this.quote_asset = quote_asset
-    this.positions = positions
-    this.spot_ee = spot_ee
+    const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
+
+    this.positions = new SpotPositionsQuery({
+      logger,
+      positions_persistance,
+      send_message,
+      exchange_identifier: ee.get_exchange_identifier(),
+    })
+    const price_getter = new BinancePriceGetter({
+      logger,
+      ee: ee.get_raw_binance_ee(),
+      cache_timeout_ms: 400,
+    })
+    this.spot_ee = new SpotPositionsExecution({
+      logger,
+      positions_persistance,
+      ee,
+      send_message,
+      price_getter,
+    })
   }
 
   get_exchange_identifier(): ExchangeIdentifier_V3 {

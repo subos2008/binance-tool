@@ -37,12 +37,12 @@ export class FuturesTradeAbstractionServiceClient {
   // }
 
   async open_short(cmd: TradeAbstractionOpenFuturesShortCommand): Promise<TradeAbstractionOpenFuturesShortResult> {
-    let response = await this._call("GET", new URL("/futures/short", TAS_URL).toString(), cmd)
+    let response = await this._call("GET", new URL("/short", TAS_URL).toString(), cmd)
     return response
   }
 
   // async close_spot_long(cmd: TradeAbstractionCloseLongCommand): Promise<TradeAbstractionCloseSpotLongResult> {
-  //   let response = await this._call("GET", new URL("/spot/close", TAS_URL).toString(), cmd)
+  //   let response = await this._call("GET", new URL("/close", TAS_URL).toString(), cmd)
   //   this.logger.object(response)
   //   return response
   // }

@@ -4,16 +4,16 @@
 
 import { strict as assert } from "assert"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
-import { SpotTradeAbstractionServiceClient } from "../binance/spot/spot-trade-abstraction/client/tas-client"
+import { SpotTradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
 import { Logger } from "../../interfaces/logger"
 import * as Sentry from "@sentry/node"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 import {
   TradeAbstractionOpenSpotLongResult,
-} from "../binance/spot/spot-trade-abstraction/interfaces/open_spot"
+} from "../binance/spot/trade-abstraction/interfaces/open_spot"
 import {
   TradeAbstractionCloseSpotLongResult,
-} from "../binance/spot/spot-trade-abstraction/interfaces/close_spot"
+} from "../binance/spot/trade-abstraction/interfaces/close_spot"
 import { Edge60EntrySignalProcessor } from "./interfaces"
 import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
 

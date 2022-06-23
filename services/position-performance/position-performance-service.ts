@@ -30,7 +30,7 @@ import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
-import { SpotTradeAbstractionServiceClient } from "../binance/spot/spot-trade-abstraction/client/tas-client"
+import { SpotTradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
 import { CurrentAllPricesGetter } from "../../interfaces/exchanges/generic/price-getter"
 
 export class PositionPerformance {

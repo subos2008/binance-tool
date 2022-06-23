@@ -1,16 +1,16 @@
 import { Telegraf, Context, NarrowedContext, Types } from "telegraf"
 import { Logger } from "../../interfaces/logger"
-import { SpotTradeAbstractionServiceClient } from "../binance/spot/spot-trade-abstraction/client/tas-client"
+import { SpotTradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
 
 import * as Sentry from "@sentry/node"
 import {
   TradeAbstractionOpenSpotLongCommand,
   TradeAbstractionOpenSpotLongResult,
-} from "../binance/spot/spot-trade-abstraction/interfaces/open_spot"
+} from "../binance/spot/trade-abstraction/interfaces/open_spot"
 import {
   TradeAbstractionCloseLongCommand,
   TradeAbstractionCloseSpotLongResult,
-} from "../binance/spot/spot-trade-abstraction/interfaces/close_spot"
+} from "../binance/spot/trade-abstraction/interfaces/close_spot"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
 import {
   TradeAbstractionOpenFuturesShortCommand_OCO_Exit,

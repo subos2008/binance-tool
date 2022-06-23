@@ -100,11 +100,7 @@ export class SpotPositionsExecution_OCOExit {
     let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
     let tags = { edge, base_asset, quote_asset }
     try {
-      let {
-        edge_percentage_stop,
-        edge_percentage_stop_limit,
-        edge_percentage_take_profit,
-      } = args
+      let { edge_percentage_stop, edge_percentage_stop_limit, edge_percentage_take_profit } = args
 
       let prefix = `${edge}:${base_asset} open spot long: `
 
@@ -191,6 +187,7 @@ export class SpotPositionsExecution_OCOExit {
           object_type: "TradeAbstractionOpenSpotLongResult",
           version: 1,
           status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS",
+          http_status: 418,
           msg: `${prefix}: ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`,
           edge,
           base_asset,
@@ -221,6 +218,7 @@ export class SpotPositionsExecution_OCOExit {
         stop_price: stop_price.toFixed(),
         take_profit_price: take_profit_price.toFixed(),
         status: "SUCCESS",
+        http_status: 201,
         msg: `${prefix}: SUCCESS`,
         execution_timestamp_ms,
       }
@@ -233,6 +231,7 @@ export class SpotPositionsExecution_OCOExit {
         base_asset,
         edge,
         status: "INTERNAL_SERVER_ERROR",
+        http_status: 500,
         msg: `INTERNAL_SERVER_ERROR: ${err.message}`,
         err,
         execution_timestamp_ms: Date.now() + "",

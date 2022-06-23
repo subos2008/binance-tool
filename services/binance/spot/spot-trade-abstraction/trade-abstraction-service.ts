@@ -27,6 +27,7 @@ import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persiste
 import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
 import { SendMessageFunc } from "../../../../lib/telegram-v2"
+import { RedisClient } from "redis"
 
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands
@@ -43,11 +44,13 @@ export class TradeAbstractionService {
     quote_asset,
     ee,
     send_message,
+    redis,
   }: {
     logger: Logger
     quote_asset: string
     ee: ExecutionEngine
     send_message: SendMessageFunc
+    redis: RedisClient
   }) {
     assert(logger)
     this.logger = logger
@@ -104,6 +107,7 @@ export class TradeAbstractionService {
         quote_asset: this.quote_asset,
         edge: cmd.edge,
         status: "UNAUTHORISED",
+        http_status: 403,
         msg: err.message,
         err,
       }
@@ -121,6 +125,7 @@ export class TradeAbstractionService {
         quote_asset: this.quote_asset,
         edge: cmd.edge,
         status: "UNAUTHORISED",
+        http_status: 403,
         msg: err.message,
         err,
       }
@@ -144,6 +149,7 @@ export class TradeAbstractionService {
         quote_asset: this.quote_asset,
         edge,
         status: "ALREADY_IN_POSITION",
+        http_status: 409,
         msg: `TradeAbstractionOpenSpotLongResult: ${edge}${cmd.base_asset}: ALREADY_IN_POSITION`,
       }
       this.logger.info(spot_long_result)

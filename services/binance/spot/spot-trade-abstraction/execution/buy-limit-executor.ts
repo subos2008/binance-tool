@@ -147,6 +147,7 @@ export class SpotPositionsExecution_BuyLimit {
           base_asset,
           quote_asset,
           status: "ENTRY_FAILED_TO_FILL",
+          http_status: 200,
           msg,
           execution_timestamp_ms,
         }
@@ -167,6 +168,7 @@ export class SpotPositionsExecution_BuyLimit {
           executed_price: executed_price.toFixed(),
           executed_base_quantity: executed_base_quantity.toFixed(),
           status: "SUCCESS",
+          http_status: 201,
           execution_timestamp_ms,
           created_stop_order: false,
           created_take_profit_order: false,
@@ -189,6 +191,7 @@ export class SpotPositionsExecution_BuyLimit {
         base_asset,
         quote_asset,
         status: "INTERNAL_SERVER_ERROR",
+        http_status: 500,
         execution_timestamp_ms: Date.now() + "",
       }
       this.logger.error(spot_long_result)

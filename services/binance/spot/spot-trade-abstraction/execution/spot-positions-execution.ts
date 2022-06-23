@@ -192,6 +192,7 @@ export class SpotPositionsExecution {
         quote_asset: args.quote_asset,
         edge: args.edge,
         status: "INTERNAL_SERVER_ERROR",
+        http_status: 500,
         msg: err.message,
         err,
         execution_timestamp_ms: Date.now().toString(),

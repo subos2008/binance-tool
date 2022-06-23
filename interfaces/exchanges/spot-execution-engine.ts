@@ -59,6 +59,7 @@ interface SpotExecutionEngineBuyResult_SUCCESS {
   market_identifier: MarketIdentifier_V3
   order_context: OrderContext_V1
   status: "SUCCESS"
+  http_status: 201
   msg: string
   executed_quote_quantity: BigNumber
   executed_price: BigNumber
@@ -73,6 +74,7 @@ interface SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE {
   order_context: OrderContext_V1
   msg: string
   status: "INSUFFICIENT_BALANCE"
+  http_status: 402 // 402: Payment Required
   execution_timestamp_ms: string | undefined
 }
 
@@ -82,6 +84,7 @@ interface SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR {
   market_identifier: MarketIdentifier_V3
   order_context: OrderContext_V1
   status: "INTERNAL_SERVER_ERROR" // exception caught
+  http_status: 500
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
   execution_timestamp_ms: string

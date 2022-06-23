@@ -46,6 +46,7 @@ interface TradeAbstractionOpenSpotLongResult_SUCCESS {
 
   status: "SUCCESS" // full or partial entry, all good
   msg: string // human readable summary
+  http_status: 201 // 201: Created
 
   // signal
   trigger_price?: string
@@ -75,6 +76,7 @@ interface TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR {
   edge: string
 
   status: "INTERNAL_SERVER_ERROR" // exception caught
+  http_status: 500
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -92,6 +94,7 @@ interface TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL {
   edge: string
 
   status: "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill
+  http_status: 200 // 200: Success... but not 201, so not actually created
 
   msg: string // human readable summary
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -111,6 +114,7 @@ interface TradeAbstractionOpenSpotLongResult_UNAUTHORISED {
   edge: string
 
   status: "UNAUTHORISED" // atm means edge not recognised
+  http_status: 403
 
   msg: string // human readable summary
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -128,6 +132,7 @@ interface TradeAbstractionOpenSpotLongResult_TRADING_IN_ASSET_PROHIBITED {
   edge: string
 
   status: "TRADING_IN_ASSET_PROHIBITED" // some assets like stable coins we refuse to enter
+  http_status: 403 // Double check this is correct when online sometime
 
   msg: string
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -145,6 +150,7 @@ interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION {
   edge: string
 
   status: "ALREADY_IN_POSITION" // Didn't enter because already in this position
+  http_status: 409 // 409: Conflict
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -155,6 +161,7 @@ interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION {
   signal_to_execution_slippage_ms?: string
 }
 
+console.warn(`What http_status do we want for INSUFFICIENT_BALANCE?`)
 interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE {
   object_type: "TradeAbstractionOpenSpotLongResult"
   version: 1
@@ -163,6 +170,7 @@ interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE {
   edge: string
 
   status: "INSUFFICIENT_BALANCE"
+  http_status: 402 // 402: Payment Required
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -173,6 +181,7 @@ interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE {
   signal_to_execution_slippage_ms?: string
 }
 
+console.warn(`What http_status do we want for ABORTED_FAILED_TO_CREATE_EXIT_ORDERS?`)
 interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
   object_type: "TradeAbstractionOpenSpotLongResult"
   version: 1
@@ -181,6 +190,7 @@ interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDER
   edge: string
 
   status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
+  http_status: 418 // 418: Help What Should I be
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -213,4 +223,3 @@ export type TradeAbstractionOpenSpotLongResult =
   | TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
   | TradeAbstractionOpenSpotLongResult_TRADING_IN_ASSET_PROHIBITED
   | TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE
-

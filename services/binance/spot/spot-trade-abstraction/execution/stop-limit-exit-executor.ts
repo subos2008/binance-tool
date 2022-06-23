@@ -149,7 +149,7 @@ export class SpotPositionsExecution_StopLimitExit {
     let executed_price: BigNumber = new BigNumber(buy_result.executed_price)
     let executed_base_quantity: BigNumber = new BigNumber(buy_result.executed_base_quantity)
     let executed_quote_quantity: BigNumber = new BigNumber(buy_result.executed_quote_quantity)
-    
+
     /** BUY completed  */
 
     let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
@@ -205,6 +205,7 @@ export class SpotPositionsExecution_StopLimitExit {
       executed_price: executed_price.toFixed(),
       stop_price: stop_price.toFixed(),
       status: "SUCCESS",
+      http_status: 201,
       msg: `${prefix}: SUCCESS`,
       execution_timestamp_ms,
       created_take_profit_order: false,

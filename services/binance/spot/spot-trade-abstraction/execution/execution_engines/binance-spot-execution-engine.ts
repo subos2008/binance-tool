@@ -154,6 +154,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
         market_identifier,
         order_context,
         status: "SUCCESS",
+        http_status: 201,
         executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
         executed_base_quantity: new BigNumber(result.executedQty),
         executed_price: new BigNumber(result.cummulativeQuoteQty).dividedBy(result.executedQty),
@@ -171,6 +172,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
           market_identifier,
           order_context,
           status: "INSUFFICIENT_BALANCE",
+          http_status: 402, // 402: Payment Required
           execution_timestamp_ms: Date.now() + "",
         }
         this.logger.info(spot_long_result)
@@ -185,6 +187,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
           order_context,
           execution_timestamp_ms: Date.now() + "",
           status: "INTERNAL_SERVER_ERROR",
+          http_status: 500,
         }
         this.logger.error(spot_long_result)
         return spot_long_result

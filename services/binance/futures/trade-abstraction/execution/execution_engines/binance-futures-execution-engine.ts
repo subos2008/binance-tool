@@ -7,7 +7,6 @@ BigNumber.prototype.valueOf = function () {
 import * as Sentry from "@sentry/node"
 Sentry.init({})
 
-import { AlgoUtils } from "../../../../../spot-trade-abstraction/execution/execution_engines/_internal/binance_algo_utils_v2"
 import { Logger } from "../../../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { MarketIdentifier_V3 } from "../../../../../../events/shared/market-identifier"
@@ -37,6 +36,7 @@ import {
 } from "./futures-execution-engine"
 import { OrderContextPersistence } from "../../../../../../classes/spot/persistence/interface/order-context-persistence"
 import { OrderContext_V1 } from "../../../../../../interfaces/orders/order-context"
+import { AlgoUtils } from "../../../../spot/spot-trade-abstraction/execution/execution_engines/_internal/binance_algo_utils_v2"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)

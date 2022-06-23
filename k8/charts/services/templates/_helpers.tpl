@@ -182,3 +182,8 @@ Environment variables
       key: MONGODB_URL
       name: mongodb-wo
 {{- end -}}
+
+{{- define "binance-spot-tas.vars" -}}
+- name: SPOT_TRADE_ABSTRACTION_SERVICE_URL
+  value: "http://spot-trade-abstraction.binance-tool"
+{{- end -}}

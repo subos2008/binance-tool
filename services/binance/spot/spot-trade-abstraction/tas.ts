@@ -176,7 +176,7 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
   }
 })
 
-app.get("/spot/long", async function (req: Request, res: Response, next: NextFunction) {
+app.get("/long", async function (req: Request, res: Response, next: NextFunction) {
   try {
     let { edge: edge_unchecked, base_asset, action, direction, trigger_price, signal_timestamp_ms } = req.query
 
@@ -311,7 +311,7 @@ app.get("/spot/long", async function (req: Request, res: Response, next: NextFun
   }
 })
 
-app.get("/spot/close", async function (req: Request, res: Response, next: NextFunction) {
+app.get("/close", async function (req: Request, res: Response, next: NextFunction) {
   try {
     let { edge, base_asset, action, direction } = req.query
     let tags: { [name: string]: string } = { edge, base_asset, direction, quote_asset, action } as {

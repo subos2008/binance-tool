@@ -2,7 +2,7 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
-import "./tracer"; // must come before importing any instrumented module.
+import "./tracer" // must come before importing any instrumented module.
 
 /** Config: */
 import { config } from "../../../../config"
@@ -44,9 +44,12 @@ function dogstatsderrorhandler(err: Error) {
 }
 
 import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
+import {
+  TradeAbstractionOpenFuturesShortCommand,
+  TradeAbstractionOpenFuturesShortResult,
+} from "./interfaces/open_futures_short"
 
 import express, { NextFunction, Request, Response } from "express"
-import { FixedPositionSizer } from "./fixed-position-sizer"
 const winston = require("winston")
 const expressWinston = require("express-winston")
 
@@ -56,7 +59,6 @@ const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })
-
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 
@@ -83,28 +85,23 @@ app.use(
   })
 ) // for parsing application/x-www-form-urlencoded
 
-
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 import { RedisClient } from "redis"
 import { AuthorisedEdgeType, check_edge } from "../../../../classes/spot/abstractions/position-identifier"
-import { FuturesTradeAbstractionService } from "./futures-trade-abstraction-service"
-import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
-import {
-  TradeAbstractionOpenFuturesShortCommand,
-  TradeAbstractionOpenFuturesShortResult,
-} from "./interfaces/open_futures_short"
+
+import { FuturesTradeAbstractionService as TradeAbstractionService } from "./futures-trade-abstraction-service"
+import { BinanceFuturesExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
 
 const order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
-const binance_futures_ee = new BinanceFuturesExecutionEngine({ logger, order_context_persistence })
 // const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
-const position_sizer = new FixedPositionSizer({ logger })
-const exchange_identifier = binance_futures_ee.get_exchange_identifier()
-// const price_getter: CurrentPriceGetter = new BinancePriceGetter({
+const ee = new ExecutionEngine({ logger, order_context_persistence })
+const exchange_identifier = ee.get_exchange_identifier()
+// const price_getter: CurrentPriceGetter = new BinanceFuturesPriceGetter({
 //   logger,
 //   ee: binance_futures_ee.get_raw_binance_ee(),
 //   cache_timeout_ms: 400,
@@ -115,24 +112,48 @@ const exchange_identifier = binance_futures_ee.get_exchange_identifier()
 //   send_message,
 //   exchange_identifier: binance_futures_ee.get_exchange_identifier(),
 // })
-// const spot_ee: SpotPositionsExecution = new SpotPositionsExecution({
-//   logger,
-//   position_sizer,
-//   positions_persistance,
-//   ee: binance_futures_ee,
-//   send_message,
-//   price_getter,
-// })
-// let tas: FuturesTradeAbstractionService = new FuturesTradeAbstractionService({
-//   // positions,
-//   logger,
-//   quote_asset /* global */,
-//   futures_ee: binance_futures_ee,
-// })
+let tas: TradeAbstractionService = new TradeAbstractionService({
+  // positions,
+  logger,
+  quote_asset /* global */,
+  ee,
+})
 var dogstatsd = new StatsD({
   errorHandler: dogstatsderrorhandler,
   globalTags: { service_name, exchange_type: exchange_identifier.type, exchange: exchange_identifier.exchange },
-  prefix: "trading_engine.tas.",
+  prefix: ".trading_engine.tas",
+})
+
+try {
+  dogstatsd.increment(`.service_started`, 1, 1, function (error, bytes) {
+    //this only gets called once after all messages have been sent
+    if (error) {
+      console.error("Oh noes! There was an error submitting metrics to DogStatsD:", error)
+    } else {
+      // console.log("Successfully sent", bytes, "bytes to DogStatsD")
+    }
+  })
+} catch (e) {
+  logger.warn(`Failed to submit metrics to DogStatsD`)
+  Sentry.captureException(e)
+}
+
+app.get("/exchange_identifier", async function (req: Request, res: Response, next: NextFunction) {
+  try {
+    res.status(200).json(await tas.get_exchange_identifier())
+  } catch (err) {
+    res.status(500)
+    next(err)
+  }
+})
+
+app.get("/prices", async function (req: Request, res: Response, next: NextFunction) {
+  try {
+    res.status(200).json(await tas.prices())
+  } catch (err) {
+    res.status(500)
+    next(err)
+  }
 })
 
 app.get("/positions", async function (req: Request, res: Response, next: NextFunction) {
@@ -144,7 +165,8 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
   }
 })
 
-app.get("/futures/short", async function (req: Request, res: Response, next: NextFunction) {
+app.get("/short", async function (req: Request, res: Response, next: NextFunction) {
+  logger.error(`/short: should this detect and close any open long position?`)
   try {
     let { edge: edge_unchecked, base_asset, action, direction, trigger_price, signal_timestamp_ms } = req.query
 
@@ -193,19 +215,24 @@ app.get("/futures/short", async function (req: Request, res: Response, next: Nex
       let signal_to_cmd_received_slippage_ms = Number(
         new BigNumber(cmd_received_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
       )
-      dogstatsd.gauge("signal_to_cmd_received_slippage_ms", signal_to_cmd_received_slippage_ms, undefined, tags)
+      dogstatsd.distribution(
+        ".signal_to_cmd_received_slippage_ms",
+        signal_to_cmd_received_slippage_ms,
+        undefined,
+        tags
+      )
     } catch (err) {
       logger.warn({ ...tags, err }, `Failed to submit metric to DogStatsD`)
       Sentry.captureException(err)
     }
 
-    let result: TradeAbstractionOpenFuturesShortResult = await tas.open_spot_long(cmd)
+    let result: TradeAbstractionOpenFuturesShortResult = await tas.open_short(cmd)
     tags.status = result.status
 
     try {
       if (result.signal_to_execution_slippage_ms)
-        dogstatsd.gauge(
-          "signal_to_execution_slippage_ms",
+        dogstatsd.distribution(
+          ".signal_to_execution_slippage_ms",
           Number(result.signal_to_execution_slippage_ms),
           undefined,
           tags
@@ -214,7 +241,7 @@ app.get("/futures/short", async function (req: Request, res: Response, next: Nex
       let execution_time_ms = new BigNumber(result.execution_timestamp_ms || +Date.now())
         .minus(cmd_received_timestamp_ms)
         .toFixed()
-      dogstatsd.gauge("execution_time_ms", Number(execution_time_ms), undefined, tags)
+      dogstatsd.distribution(".execution_time_ms", Number(execution_time_ms), undefined, tags)
     } catch (err) {
       logger.warn({ ...tags, err }, `Failed to submit metrics to DogStatsD`)
       Sentry.captureException(err)
@@ -224,7 +251,7 @@ app.get("/futures/short", async function (req: Request, res: Response, next: Nex
 
     switch (result.status) {
       case "SUCCESS":
-        logger.info(result, msg)
+        // logger.info(result, msg)
         send_message(
           `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.signal_to_execution_slippage_ms}ms`,
           tags
@@ -232,27 +259,27 @@ app.get("/futures/short", async function (req: Request, res: Response, next: Nex
         res.status(201).json(result) // 201: Created
         break
       case "ALREADY_IN_POSITION":
-        logger.info(result, msg)
+        // logger.info(result, msg)
         send_message(`${edge}:${base_asset} ${result.status}`, tags)
         res.status(409).json(result) // 409: Conflict
         break
       case "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS":
-        logger.error(result, msg)
+        // logger.error(result, msg)
         send_message(`${edge}:${base_asset} ${result.status}`, tags)
         res.status(200).json(result) // 200: Success... but not 201, so not actually created
         break
       case "ENTRY_FAILED_TO_FILL":
-        logger.info(result, msg)
+        // logger.info(result, msg)
         send_message(`${edge}:${base_asset}: ${result.status}`, tags)
         res.status(200).json(result) // 200: Success... but not 201, so not actually created
         break
       case "UNAUTHORISED":
-        logger.warn(result, msg)
+        // logger.warn(result, msg)
         send_message(`${edge}:${base_asset}: ${result.status}`, tags)
         res.status(403).json(result)
         break
       case "INTERNAL_SERVER_ERROR":
-        logger.error(result, msg)
+        // logger.error(result, msg)
         send_message(`${edge}:${base_asset}: ${result.status}: ${result.msg}`, tags)
         res.status(500).json(result)
         break
@@ -266,10 +293,13 @@ app.get("/futures/short", async function (req: Request, res: Response, next: Nex
   } catch (err: any) {
     if ((err.message = ~/InputChecking/)) {
       res.status(400)
-      logger.warn(
+      logger.error(
         `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
       )
+      logger.error({ err })
     } else {
+      logger.error("Internal error: ${err}")
+      logger.error({ err })
       res.status(500)
     }
     res.json({ msg: "failed" })
@@ -277,7 +307,7 @@ app.get("/futures/short", async function (req: Request, res: Response, next: Nex
   }
 })
 
-app.get("/spot/close", async function (req: Request, res: Response, next: NextFunction) {
+app.get("/close", async function (req: Request, res: Response, next: NextFunction) {
   try {
     let { edge, base_asset, action, direction } = req.query
     let tags: { [name: string]: string } = { edge, base_asset, direction, quote_asset, action } as {

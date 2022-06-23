@@ -5,14 +5,23 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import {disallowed_base_assets_for_entry} from '../../../../lib/stable-coins'
+import { disallowed_base_assets_for_entry } from "../../../../lib/stable-coins"
 
 import Sentry from "../../../../lib/sentry"
 import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
-import { TradeAbstractionOpenFuturesShortCommand, TradeAbstractionOpenFuturesShortResult } from "./interfaces/open_futures_short"
-import { AuthorisedEdgeType, check_edge, is_authorised_edge } from "../../../../classes/spot/abstractions/position-identifier"
+import {
+  TradeAbstractionOpenFuturesShortCommand,
+  TradeAbstractionOpenFuturesShortResult,
+} from "./interfaces/open_futures_short"
+import {
+  AuthorisedEdgeType,
+  check_edge,
+  is_authorised_edge,
+} from "../../../../classes/spot/abstractions/position-identifier"
 import { FuturesEdgeToExecutorMapper } from "./execution/futures-edge-to-executor-mapper"
+import { FuturesExecutionEngine } from "./execution/execution_engines/futures-execution-engine"
+import { FixedPositionSizer, PositionSizer } from "./fixed-position-sizer"
 // import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 // import {
 //   AuthorisedEdgeType,
@@ -24,29 +33,39 @@ import { FuturesEdgeToExecutorMapper } from "./execution/futures-edge-to-executo
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands
  */
+
 export class FuturesTradeAbstractionService {
   logger: Logger
   quote_asset: string
   // private positions: SpotPositionsQuery // query state of existing open positions
-  private futures_ee: FuturesEdgeToExecutorMapper
+  private ee: FuturesExecutionEngine
+  private eem: FuturesEdgeToExecutorMapper
+  position_sizer: PositionSizer
 
   constructor({
     logger,
     quote_asset,
     // positions,
-    futures_ee,
+    ee,
   }: {
     logger: Logger
     quote_asset: string
     // positions: SpotPositionsQuery
-    futures_ee: FuturesEdgeToExecutorMapper
+    ee: FuturesExecutionEngine
   }) {
     assert(logger)
     this.logger = logger
     assert(quote_asset)
     this.quote_asset = quote_asset
     // this.positions = positions
-    this.futures_ee = futures_ee
+    this.ee = ee
+    this.position_sizer = new FixedPositionSizer({ logger })
+    this.eem = new FuturesEdgeToExecutorMapper({
+      logger,
+      ee,
+      send_message,
+      position_sizer,
+    })
   }
 
   async open_short(cmd: TradeAbstractionOpenFuturesShortCommand): Promise<TradeAbstractionOpenFuturesShortResult> {
@@ -111,8 +130,7 @@ export class FuturesTradeAbstractionService {
 
     throw new Error(`futures open_short not implemented`)
 
-
-    // let result: TradeAbstractionOpenFuturesShortResult = await this.futures_ee.open_position(cmd)
+    // let result: TradeAbstractionOpenFuturesShortResult = await this.ee.open_position(cmd)
     // if (
     //   result.status != "INTERNAL_SERVER_ERROR" &&
     //   result.status != "ENTRY_FAILED_TO_FILL" &&
@@ -143,7 +161,7 @@ export class FuturesTradeAbstractionService {
 
   //   this.logger.warn(`Position exit is not atomic with check for existing position`)
   //   try {
-  //     let result: TradeAbstractionCloseSpotLongResult = await this.futures_ee.close_position({
+  //     let result: TradeAbstractionCloseSpotLongResult = await this.ee.close_position({
   //       quote_asset,
   //       ...cmd,
   //       edge,

@@ -13,7 +13,7 @@ import { Logger } from "../../../../../interfaces/logger"
 import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
 import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SendMessageFunc } from "../../../../../lib/telegram-v2"
-import { PositionSizer } from "../fixed-position-sizer"
+import { FixedPositionSizer, PositionSizer } from "../fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import {
   AuthorisedEdgeType,
@@ -67,14 +67,12 @@ export class SpotPositionsExecution {
     ee,
     positions_persistance,
     send_message,
-    position_sizer,
     price_getter,
   }: {
     logger: Logger
     ee: SpotExecutionEngine
     positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
-    position_sizer: PositionSizer
     price_getter: CurrentPriceGetter
   }) {
     assert(logger)
@@ -83,6 +81,7 @@ export class SpotPositionsExecution {
     this.ee = ee
     this.positions_persistance = positions_persistance
     this.send_message = send_message
+    let position_sizer = new FixedPositionSizer({ logger })
     this.position_sizer = position_sizer
     this.price_getter = price_getter
     this.stop_limit_executor = new SpotPositionsExecution_StopLimitExit({

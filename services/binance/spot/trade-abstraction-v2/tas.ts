@@ -38,11 +38,6 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import { StatsD } from "hot-shots"
-function dogstatsderrorhandler(err: Error) {
-  logger.error({ err }, `DogStatsD: Socket errors caught here: ${err}`)
-}
-
 import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 import {
   TradeAbstractionOpenSpotLongCommand as TradeAbstractionOpenLongCommand,
@@ -92,6 +87,8 @@ import { RedisClient } from "redis"
 
 import { TradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
+import { SendDatadogMetrics } from "./send-datadog-metrics"
+import { Tags } from "hot-shots"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
@@ -99,6 +96,8 @@ let redis: RedisClient = get_redis_client()
 const order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
 const ee = new ExecutionEngine({ logger, order_context_persistence })
 const exchange_identifier = ee.get_exchange_identifier()
+
+const metrics = new SendDatadogMetrics({ service_name, logger, exchange_identifier })
 
 let tas: TradeAbstractionService = new TradeAbstractionService({
   logger,
@@ -108,25 +107,7 @@ let tas: TradeAbstractionService = new TradeAbstractionService({
   redis,
 })
 
-var dogstatsd = new StatsD({
-  errorHandler: dogstatsderrorhandler,
-  globalTags: { service_name, exchange_type: exchange_identifier.type, exchange: exchange_identifier.exchange },
-  prefix: "trading_engine.tas",
-})
-
-try {
-  dogstatsd.increment(`.service_started`, 1, 1, function (error, bytes) {
-    //this only gets called once after all messages have been sent
-    if (error) {
-      console.error("Oh noes! There was an error submitting metrics to DogStatsD:", error)
-    } else {
-      // console.log("Successfully sent", bytes, "bytes to DogStatsD")
-    }
-  })
-} catch (e) {
-  logger.warn(`Failed to submit metrics to DogStatsD`)
-  Sentry.captureException(e)
-}
+metrics.service_started()
 
 app.get("/exchange_identifier", async function (req: Request, res: Response, next: NextFunction) {
   try {
@@ -219,41 +200,9 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
 
     let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd)
     tags.status = result.status
-  
 
-    try {
-      let signal_to_cmd_received_slippage_ms = Number(
-        new BigNumber(cmd_received_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
-      )
-      dogstatsd.distribution(
-        ".signal_to_cmd_received_slippage_ms",
-        signal_to_cmd_received_slippage_ms,
-        undefined,
-        tags
-      )
-    } catch (err) {
-      logger.warn({ ...tags, err }, `Failed to submit metric to DogStatsD`)
-      Sentry.captureException(err)
-    }
-
-    try {
-      dogstatsd.increment(".trading_abstraction_open_spot_long_result", tags)
-      if (result.signal_to_execution_slippage_ms)
-        dogstatsd.distribution(
-          ".signal_to_execution_slippage_ms",
-          Number(result.signal_to_execution_slippage_ms),
-          undefined,
-          tags
-        )
-      // Probably being a bit anal with my avoidance of floating point here...
-      let execution_time_ms = new BigNumber(result.execution_timestamp_ms || +Date.now())
-        .minus(cmd_received_timestamp_ms)
-        .toFixed(0)
-      dogstatsd.distribution(".execution_time_ms", Number(execution_time_ms), undefined, tags)
-    } catch (err) {
-      logger.warn({ ...tags, err }, `Failed to submit metrics to DogStatsD`)
-      Sentry.captureException(err)
-    }
+    metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
+    metrics.trading_abstraction_open_spot_long_result({ result, tags, cmd_received_timestamp_ms })
 
     res.status(result.http_status).json(result)
 

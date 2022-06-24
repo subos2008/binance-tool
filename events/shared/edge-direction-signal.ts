@@ -13,8 +13,7 @@ export interface EdgeDirectionSignal {
   quote_asset?: string
   symbol: string
   exchange_type: ExchangeType
-  signal_timestamp_ms: string
-
+  signal_timestamp_ms: number
   market_identifier: MarketIdentifier_V3
 }
 

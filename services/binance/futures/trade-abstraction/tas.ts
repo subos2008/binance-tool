@@ -43,9 +43,9 @@ function dogstatsderrorhandler(err: Error) {
   logger.error({ err }, `DogStatsD: Socket errors caught here: ${err}`)
 }
 
-import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 import {
-  TradeAbstractionOpenFuturesShortCommand,
+  TradeAbstractionOpenLongCommand,
+  TradeAbstractionOpenFuturesShortCommand as TradeAbstractionOpenShortCommand,
   TradeAbstractionOpenFuturesShortResult,
 } from "./interfaces/open_futures_short"
 
@@ -55,6 +55,7 @@ const expressWinston = require("express-winston")
 
 var app = express()
 
+import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
@@ -89,7 +90,6 @@ import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
 
 import { RedisClient } from "redis"
-import { AuthorisedEdgeType, check_edge } from "../../../../classes/spot/abstractions/position-identifier"
 
 import { FuturesTradeAbstractionService as TradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceFuturesExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
@@ -105,7 +105,7 @@ let tas: TradeAbstractionService = new TradeAbstractionService({
   logger,
   quote_asset /* global */,
   ee,
-  // send_message,
+  send_message,
   // redis,
 })
 
@@ -157,167 +157,266 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
 })
 
 app.get("/long", async function (req: Request, res: Response, next: NextFunction) {
-  try {
-    res.status(500).json({ msg: `/long not implemented` })
-  } catch (err) {
-    res.status(500)
-    next(err)
-  }
+  // logger.error(`/long: should this detect and close any open short position?`)
+  // try {
+  //   let cmd_received_timestamp_ms = +Date.now()
+  //   let { edge, base_asset, trigger_price, signal_timestamp_ms_string } = req.query
+  //   let signal_timestamp_ms = signal_timestamp_ms_string ? Number(signal_timestamp_ms_string) : undefined
+  //   const direction = "long",
+  //     action = "open"
+  //   try {
+  //     /* input checking */
+  //     assert(typeof edge == "string", new Error(`InputChecking: typeof edge unexpected`))
+  //     assert(
+  //       typeof trigger_price == "string" || typeof trigger_price == "undefined",
+  //       new Error(`InputChecking: typeof trigger_price unexpected: ${typeof trigger_price}`)
+  //     )
+  //     assert(typeof base_asset == "string", new Error(`InputChecking: typeof base_asset unexpected`))
+  //     assert(
+  //       typeof signal_timestamp_ms == "number", // for some reason this is string in the spot TAS
+  //       new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms}`)
+  //     )
+  //   } catch (err: any) {
+  //     let spot_long_result: TradeAbstractionOpenSpotLongResult = {
+  //       object_type: "TradeAbstractionOpenSpotLongResult",
+  //       version: 1,
+  //       base_asset: base_asset as string,
+  //       quote_asset,
+  //       edge: edge as string,
+  //       status: "BAD_INPUTS",
+  //       http_status: 400,
+  //       msg: `TradeAbstractionOpenSpotLongResult: ${edge}${base_asset}: BAD_INPUTS`,
+  //       err,
+  //       execution_timestamp_ms: cmd_received_timestamp_ms,
+  //     }
+  //     res.status(400).json(spot_long_result)
+  //     logger.error(
+  //       `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
+  //     )
+  //     logger.error({ err })
+  //     return
+  //   }
+  //   let tags: { [name: string]: string } = {
+  //     edge,
+  //     base_asset,
+  //     direction,
+  //     quote_asset,
+  //     action,
+  //     exchange_type: exchange_identifier.type,
+  //   }
+  //   let cmd: TradeAbstractionOpenLongCommand = {
+  //     object_type: "TradeAbstractionOpenLongCommand",
+  //     edge,
+  //     direction,
+  //     action,
+  //     base_asset,
+  //     trigger_price,
+  //     signal_timestamp_ms,
+  //   }
+  //   let result: TradeAbstractionLongResult = await tas.long(cmd)
+  //   tags.status = result.status
+  //   try {
+  //     let signal_to_cmd_received_slippage_ms = Number(
+  //       new BigNumber(cmd_received_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
+  //     )
+  //     dogstatsd.distribution(
+  //       ".signal_to_cmd_received_slippage_ms",
+  //       signal_to_cmd_received_slippage_ms,
+  //       undefined,
+  //       tags
+  //     )
+  //   } catch (err) {
+  //     logger.warn({ ...tags, err }, `Failed to submit metric to DogStatsD`)
+  //     Sentry.captureException(err)
+  //   }
+  //   try {
+  //     if (result.signal_to_execution_slippage_ms)
+  //       dogstatsd.distribution(
+  //         ".signal_to_execution_slippage_ms",
+  //         Number(result.signal_to_execution_slippage_ms),
+  //         undefined,
+  //         tags
+  //       )
+  //     // Probably being a bit anal with my avoidance of floating point here...
+  //     let execution_time_ms = new BigNumber(result.execution_timestamp_ms || +Date.now())
+  //       .minus(cmd_received_timestamp_ms)
+  //       .toFixed()
+  //     dogstatsd.distribution(".execution_time_ms", Number(execution_time_ms), undefined, tags)
+  //   } catch (err) {
+  //     logger.warn({ ...tags, err }, `Failed to submit metrics to DogStatsD`)
+  //     Sentry.captureException(err)
+  //   }
+  //   let msg: string = `TradeAbstractionOpenSpotLongResult: ${result.edge}:${result.base_asset}: ${result.status}`
+  //   res.status(result.http_status).json(result)
+  //   if (result.status === "SUCCESS") {
+  //     send_message(
+  //       `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.signal_to_execution_slippage_ms}ms`,
+  //       tags
+  //     )
+  //   } else {
+  //     send_message(`${edge}:${base_asset}: ${result.status}: ${result.msg}`, tags)
+  //   }
+  //   // send_message(result.msg, tags)
+  //   if (result.http_status === 500) {
+  //     logger.error(result, msg)
+  //     Sentry.captureException(new Error(msg))
+  //   }
+  // } catch (err: any) {
+  //   if ((err.message = ~/InputChecking/)) {
+  //     res.status(400)
+  //     logger.error(
+  //       `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
+  //     )
+  //     logger.error({ err })
+  //   } else {
+  //     logger.error("Internal error: ${err}")
+  //     logger.error({ err })
+  //     res.status(500)
+  //   }
+  //   res.json({ msg: "failed" })
+  //   next(err)
+  // }
 })
 
 app.get("/short", async function (req: Request, res: Response, next: NextFunction) {
-  logger.error(`/short: should this detect and close any open long position?`)
-  try {
-    let { edge: edge_unchecked, base_asset, action, direction, trigger_price, signal_timestamp_ms } = req.query
-
-    /* input checking */
-    assert(typeof edge_unchecked == "string", new Error(`InputChecking: typeof edge unexpected`))
-    assert(
-      typeof trigger_price == "string" || typeof trigger_price == "undefined",
-      new Error(`InputChecking: typeof trigger_price unexpected: ${typeof trigger_price}`)
-    )
-    assert(typeof base_asset == "string", new Error(`InputChecking: typeof base_asset unexpected`))
-    assert(
-      typeof signal_timestamp_ms == "number", // for some reason this is string in the spot TAS
-      new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms}`)
-    )
-    assert(direction === "short", new Error(`InputChecking: expected short direction`))
-    assert(action === "open", new Error(`InputChecking: expected action to be open`))
-
-    let edge: AuthorisedEdgeType
-    try {
-      edge = check_edge(edge_unchecked)
-    } catch (err) {
-      throw new Error(`UnauthorisedEdge: ${edge_unchecked}`)
-    }
-    let tags: { [name: string]: string } = {
-      edge,
-      base_asset,
-      direction,
-      quote_asset,
-      action,
-      exchange_type: exchange_identifier.type,
-    }
-
-    let cmd: TradeAbstractionOpenFuturesShortCommand = {
-      object_type: "TradeAbstractionOpenFuturesShortCommand",
-      edge,
-      direction: "short",
-      action: "open",
-      base_asset,
-      trigger_price,
-      signal_timestamp_ms,
-    }
-
-    let cmd_received_timestamp_ms = +Date.now()
-
-    try {
-      let signal_to_cmd_received_slippage_ms = Number(
-        new BigNumber(cmd_received_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
-      )
-      dogstatsd.distribution(
-        ".signal_to_cmd_received_slippage_ms",
-        signal_to_cmd_received_slippage_ms,
-        undefined,
-        tags
-      )
-    } catch (err) {
-      logger.warn({ ...tags, err }, `Failed to submit metric to DogStatsD`)
-      Sentry.captureException(err)
-    }
-
-    let result: TradeAbstractionOpenFuturesShortResult = await tas.open_short(cmd)
-    tags.status = result.status
-
-    try {
-      if (result.signal_to_execution_slippage_ms)
-        dogstatsd.distribution(
-          ".signal_to_execution_slippage_ms",
-          Number(result.signal_to_execution_slippage_ms),
-          undefined,
-          tags
-        )
-      // Probably being a bit anal with my avoidance of floating point here...
-      let execution_time_ms = new BigNumber(result.execution_timestamp_ms || +Date.now())
-        .minus(cmd_received_timestamp_ms)
-        .toFixed()
-      dogstatsd.distribution(".execution_time_ms", Number(execution_time_ms), undefined, tags)
-    } catch (err) {
-      logger.warn({ ...tags, err }, `Failed to submit metrics to DogStatsD`)
-      Sentry.captureException(err)
-    }
-
-    let msg: string = `TradeAbstractionOpenSpotLongResult: ${result.edge}:${result.base_asset}: ${result.status}`
-
-    res.status(result.http_status).json(result)
-
-    if (result.status === "SUCCESS") {
-      send_message(
-        `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.signal_to_execution_slippage_ms}ms`,
-        tags
-      )
-    } else {
-      send_message(`${edge}:${base_asset}: ${result.status}: ${result.msg}`, tags)
-    }
-
-    // send_message(result.msg, tags)
-
-    if (result.http_status === 500) {
-      logger.error(result, msg)
-      Sentry.captureException(new Error(msg))
-    }
-   
-  } catch (err: any) {
-    if ((err.message = ~/InputChecking/)) {
-      res.status(400)
-      logger.error(
-        `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
-      )
-      logger.error({ err })
-    } else {
-      logger.error("Internal error: ${err}")
-      logger.error({ err })
-      res.status(500)
-    }
-    res.json({ msg: "failed" })
-    next(err)
-  }
+  // logger.error(`/short: should this detect and close any open long position?`)
+  // try {
+  //   let { edge: edge_unchecked, base_asset, action, direction, trigger_price, signal_timestamp_ms } = req.query
+  //   /* input checking */
+  //   assert(typeof edge_unchecked == "string", new Error(`InputChecking: typeof edge unexpected`))
+  //   assert(
+  //     typeof trigger_price == "string" || typeof trigger_price == "undefined",
+  //     new Error(`InputChecking: typeof trigger_price unexpected: ${typeof trigger_price}`)
+  //   )
+  //   assert(typeof base_asset == "string", new Error(`InputChecking: typeof base_asset unexpected`))
+  //   assert(
+  //     typeof signal_timestamp_ms == "number", // for some reason this is string in the spot TAS
+  //     new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms}`)
+  //   )
+  //   assert(direction === "short", new Error(`InputChecking: expected short direction`))
+  //   assert(action === "open", new Error(`InputChecking: expected action to be open`))
+  //   let edge: AuthorisedEdgeType
+  //   try {
+  //     edge = check_edge(edge_unchecked)
+  //   } catch (err) {
+  //     throw new Error(`UnauthorisedEdge: ${edge_unchecked}`)
+  //   }
+  //   let tags: { [name: string]: string } = {
+  //     edge,
+  //     base_asset,
+  //     direction,
+  //     quote_asset,
+  //     action,
+  //     exchange_type: exchange_identifier.type,
+  //   }
+  //   let cmd: TradeAbstractionOpenFuturesShortCommand = {
+  //     object_type: "TradeAbstractionOpenFuturesShortCommand",
+  //     edge,
+  //     direction: "short",
+  //     action: "open",
+  //     base_asset,
+  //     trigger_price,
+  //     signal_timestamp_ms,
+  //   }
+  //   let cmd_received_timestamp_ms = +Date.now()
+  //   try {
+  //     let signal_to_cmd_received_slippage_ms = Number(
+  //       new BigNumber(cmd_received_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
+  //     )
+  //     dogstatsd.distribution(
+  //       ".signal_to_cmd_received_slippage_ms",
+  //       signal_to_cmd_received_slippage_ms,
+  //       undefined,
+  //       tags
+  //     )
+  //   } catch (err) {
+  //     logger.warn({ ...tags, err }, `Failed to submit metric to DogStatsD`)
+  //     Sentry.captureException(err)
+  //   }
+  //   let result: TradeAbstractionOpenFuturesShortResult = await tas.open_short(cmd)
+  //   tags.status = result.status
+  //   try {
+  //     if (result.signal_to_execution_slippage_ms)
+  //       dogstatsd.distribution(
+  //         ".signal_to_execution_slippage_ms",
+  //         Number(result.signal_to_execution_slippage_ms),
+  //         undefined,
+  //         tags
+  //       )
+  //     // Probably being a bit anal with my avoidance of floating point here...
+  //     let execution_time_ms = new BigNumber(result.execution_timestamp_ms || +Date.now())
+  //       .minus(cmd_received_timestamp_ms)
+  //       .toFixed()
+  //     dogstatsd.distribution(".execution_time_ms", Number(execution_time_ms), undefined, tags)
+  //   } catch (err) {
+  //     logger.warn({ ...tags, err }, `Failed to submit metrics to DogStatsD`)
+  //     Sentry.captureException(err)
+  //   }
+  //   let msg: string = `TradeAbstractionOpenSpotLongResult: ${result.edge}:${result.base_asset}: ${result.status}`
+  //   res.status(result.http_status).json(result)
+  //   if (result.status === "SUCCESS") {
+  //     send_message(
+  //       `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.signal_to_execution_slippage_ms}ms`,
+  //       tags
+  //     )
+  //   } else {
+  //     send_message(`${edge}:${base_asset}: ${result.status}: ${result.msg}`, tags)
+  //   }
+  //   // send_message(result.msg, tags)
+  //   if (result.http_status === 500) {
+  //     logger.error(result, msg)
+  //     Sentry.captureException(new Error(msg))
+  //   }
+  // } catch (err: any) {
+  //   if ((err.message = ~/InputChecking/)) {
+  //     res.status(400)
+  //     logger.error(
+  //       `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
+  //     )
+  //     logger.error({ err })
+  //   } else {
+  //     logger.error("Internal error: ${err}")
+  //     logger.error({ err })
+  //     res.status(500)
+  //   }
+  //   res.json({ msg: "failed" })
+  //   next(err)
+  // }
 })
 
 app.get("/close", async function (req: Request, res: Response, next: NextFunction) {
-  try {
-    let { edge, base_asset, action, direction } = req.query
-    let tags: { [name: string]: string } = { edge, base_asset, direction, quote_asset, action } as {
-      edge: string
-      base_asset: string
-      direction: string
-      quote_asset: string
-      action: string
-    }
-
-    assert(edge)
-    assert(base_asset)
-    assert(edge)
-    assert(typeof edge == "string")
-    assert(base_asset)
-    assert(typeof base_asset == "string")
-    assert(direction === "long")
-    assert(action === "close")
-    let cmd: TradeAbstractionCloseLongCommand = {
-      edge,
-      direction: "long",
-      action: "close",
-      base_asset,
-    }
-    let result: TradeAbstractionCloseSpotLongResult = await tas.close_spot_long(cmd)
-    logger.info(tags, `Success`)
-    logger.info(result)
-    res.status(result.http_status).json(result)
-  } catch (err) {
-    Sentry.captureException(err)
-    res.status(500).json({ msg: "internal server error" })
-    next(err)
-  }
+  // try {
+  //   let { edge, base_asset, action, direction } = req.query
+  //   let tags: { [name: string]: string } = { edge, base_asset, direction, quote_asset, action } as {
+  //     edge: string
+  //     base_asset: string
+  //     direction: string
+  //     quote_asset: string
+  //     action: string
+  //   }
+  //   assert(edge)
+  //   assert(base_asset)
+  //   assert(edge)
+  //   assert(typeof edge == "string")
+  //   assert(base_asset)
+  //   assert(typeof base_asset == "string")
+  //   assert(direction === "long")
+  //   assert(action === "close")
+  //   let cmd: TradeAbstractionCloseLongCommand = {
+  //     edge,
+  //     direction: "long",
+  //     action: "close",
+  //     base_asset,
+  //   }
+  //   let result: TradeAbstractionCloseSpotLongResult = await tas.close_spot_long(cmd)
+  //   logger.info(tags, `Success`)
+  //   logger.info(result)
+  //   res.status(result.http_status).json(result)
+  // } catch (err) {
+  //   Sentry.captureException(err)
+  //   res.status(500).json({ msg: "internal server error" })
+  //   next(err)
+  // }
 })
 
 // Finally, start our server

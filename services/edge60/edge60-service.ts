@@ -278,7 +278,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
       base_asset: market_identifier.base_asset,
       quote_asset: market_identifier.quote_asset,
       symbol: market_identifier.symbol,
-      signal_timestamp_ms: signal_timestamp_ms.toString(),
+      signal_timestamp_ms: signal_timestamp_ms,
     }
     this.logger.info(JSON.stringify(event))
     const options = {

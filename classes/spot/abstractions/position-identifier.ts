@@ -13,7 +13,7 @@ export function create_position_identifier_from_tuple({
   account: "default"
   exchange: string
   exchange_type: "spot"
-  edge: AuthorisedEdgeType
+  edge: string
 }): SpotPositionIdentifier_V3 {
   if (!(baseAsset && account && exchange))
     throw new Error(`missing element in create_position_identifier_from_tuple`)
@@ -55,13 +55,13 @@ export function check_edge(edge: string | undefined): AuthorisedEdgeType {
 }
 export interface SpotPositionIdentifier_V3 {
   exchange_identifier: ExchangeIdentifier_V3 // yeah exchange, not market, for spot - but market for futures
-  edge: AuthorisedEdgeType
+  edge: string
   base_asset: string
 }
 
 export interface SpotPositionsQuery_V3 {
   exchange_identifier: ExchangeIdentifier_V3 // yeah exchange, not market, for spot - but market for futures
-  edge?: AuthorisedEdgeType // if edge is null return an array if there are multiple open positions
+  edge?: string // if edge is null return an array if there are multiple open positions
   base_asset: string
 }
 

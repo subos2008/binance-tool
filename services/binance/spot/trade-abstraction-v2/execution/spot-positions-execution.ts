@@ -16,7 +16,6 @@ import { SendMessageFunc } from "../../../../../lib/telegram-v2"
 import { FixedPositionSizer, PositionSizer } from "../fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import {
-  AuthorisedEdgeType,
   check_edge,
   SpotPositionIdentifier_V3,
 } from "../../../../../classes/spot/abstractions/position-identifier"
@@ -102,7 +101,7 @@ export class SpotPositionsExecution {
     })
   }
 
-  in_position({ base_asset, edge }: { base_asset: string; edge: AuthorisedEdgeType }) {
+  in_position({ base_asset, edge }: { base_asset: string; edge: string }) {
     return this.positions_persistance.in_position({
       base_asset,
       exchange_identifier: this.ee.get_exchange_identifier(),
@@ -110,7 +109,7 @@ export class SpotPositionsExecution {
     })
   }
 
-  exisiting_position_size({ base_asset, edge }: { base_asset: string; edge: AuthorisedEdgeType }) {
+  exisiting_position_size({ base_asset, edge }: { base_asset: string; edge: string }) {
     return this.positions_persistance.position_size({
       base_asset,
       exchange_identifier: this.ee.get_exchange_identifier(),
@@ -145,7 +144,7 @@ export class SpotPositionsExecution {
       /**
        * Check if already in a position
        */
-      if (await this.in_position({ ...args, edge: check_edge(args.edge) })) {
+      if (await this.in_position(args)) {
         let msg = `Already in position on ${args.edge}:${args.base_asset}`
         this.send_message(msg, tags)
         throw new Error(msg)
@@ -211,7 +210,7 @@ export class SpotPositionsExecution {
     quote_asset: string
     base_asset: string
     direction: string
-    edge: AuthorisedEdgeType
+    edge: string
   }): Promise<TradeAbstractionCloseSpotLongResult> {
     assert.equal(direction, "long") // spot positions are always long
     let prefix: string = `Closing ${edge}:${base_asset} spot position:`

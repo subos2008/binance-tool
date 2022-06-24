@@ -8,6 +8,7 @@ BigNumber.prototype.valueOf = function () {
 import { MarketIdentifier_V3 } from "../../../../../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../../../../../events/shared/exchange-identifier"
 import { OrderContext_V1 } from "../../../../../../interfaces/orders/order-context"
+import { BinanceStyleSpotPrices } from "../../../../../../classes/spot/abstractions/position-identifier"
 
 // export interface FuturesMarketSellByQuoteQuantityCommand {
 //   order_context: OrderContext_V1
@@ -53,13 +54,16 @@ export interface FuturesExecutionEngine {
 
   base_asset_for_symbol(symbol: string): Promise<string>
 
+  // All symbols current prices
+  prices(): Promise<BinanceStyleSpotPrices>
+
   // Generate a suitable clientOrderId for the exchange
   store_order_context_and_generate_clientOrderId(
     order_context: OrderContext_V1
   ): Promise<{ clientOrderId: string }>
 
   // market_sell_by_quote_quantity(args: FuturesMarketSellByQuoteQuantityCommand): Promise<FuturesExecutionEngineSellResult>
-  
+
   // limit_sell_by_quote_quantity(args: FuturesMarketSellByQuoteQuantityCommand): Promise<FuturesExecutionEngineSellResult>
 
   get_exchange_identifier(): ExchangeIdentifier_V3

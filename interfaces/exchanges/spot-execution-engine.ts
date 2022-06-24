@@ -64,7 +64,7 @@ interface SpotExecutionEngineBuyResult_SUCCESS {
   executed_quote_quantity: BigNumber
   executed_price: BigNumber
   executed_base_quantity: BigNumber
-  execution_timestamp_ms: string | undefined
+  execution_timestamp_ms: number | undefined
 }
 
 interface SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE {
@@ -75,7 +75,7 @@ interface SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE {
   msg: string
   status: "INSUFFICIENT_BALANCE"
   http_status: 402 // 402: Payment Required
-  execution_timestamp_ms: string | undefined
+  execution_timestamp_ms: number | undefined
 }
 
 interface SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR {
@@ -87,7 +87,7 @@ interface SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR {
   http_status: 500
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
-  execution_timestamp_ms: string
+  execution_timestamp_ms: number
 }
 
 export type SpotExecutionEngineBuyResult =

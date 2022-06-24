@@ -1,6 +1,16 @@
 import BigNumber from "bignumber.js"
 
 // TAS level
+export interface TradeAbstractionOpenLongCommand {
+  object_type: "TradeAbstractionOpenLongCommand"
+  base_asset: string
+  quote_asset?: string // added by the TAS before it hits the EE
+  edge: string
+  direction: "long"
+  action: "open"
+  trigger_price?: string
+  signal_timestamp_ms: string
+}
 export interface TradeAbstractionOpenFuturesShortCommand {
   object_type: "TradeAbstractionOpenFuturesShortCommand"
   base_asset: string

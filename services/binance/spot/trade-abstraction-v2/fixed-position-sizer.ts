@@ -13,7 +13,7 @@ export interface PositionSizer {
   position_size_in_quote_asset(args: {
     base_asset: string
     quote_asset: string
-    edge: string // check if authorised edge inside PositionSizer
+    edge: string
   }): Promise<BigNumber>
 }
 export class FixedPositionSizer implements PositionSizer {
@@ -33,7 +33,7 @@ export class FixedPositionSizer implements PositionSizer {
     quote_asset: string
     edge: string
   }): Promise<BigNumber> {
-    check_edge(edge) // throw if edge is not valid - what better place than the PositionSizer for that? :)
+    check_edge(edge)
     return new BigNumber(100)
   }
 }

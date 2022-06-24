@@ -7,6 +7,8 @@ BigNumber.prototype.valueOf = function () {
 
 import { disallowed_base_assets_for_entry } from "../../../../lib/stable-coins"
 
+import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
+
 import Sentry from "../../../../lib/sentry"
 import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
@@ -16,12 +18,14 @@ import {
 } from "./interfaces/open_futures_short"
 import {
   AuthorisedEdgeType,
+  BinanceStyleSpotPrices,
   check_edge,
   is_authorised_edge,
 } from "../../../../classes/spot/abstractions/position-identifier"
 import { FuturesEdgeToExecutorMapper } from "./execution/futures-edge-to-executor-mapper"
 import { FuturesExecutionEngine } from "./execution/execution_engines/futures-execution-engine"
 import { FixedPositionSizer, PositionSizer } from "./fixed-position-sizer"
+import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 // import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 // import {
 //   AuthorisedEdgeType,
@@ -47,11 +51,13 @@ export class FuturesTradeAbstractionService {
     quote_asset,
     // positions,
     ee,
+    send_message,
   }: {
     logger: Logger
     quote_asset: string
     // positions: SpotPositionsQuery
     ee: FuturesExecutionEngine
+    send_message: SendMessageFunc
   }) {
     assert(logger)
     this.logger = logger
@@ -64,8 +70,21 @@ export class FuturesTradeAbstractionService {
       logger,
       ee,
       send_message,
-      position_sizer,
+      position_sizer: this.position_sizer,
     })
+  }
+
+  get_exchange_identifier(): ExchangeIdentifier_V3 {
+    return this.ee.get_exchange_identifier()
+  }
+
+  async prices(): Promise<BinanceStyleSpotPrices> {
+    return this.ee.prices()
+  }
+
+  async open_positions() /*: Promise<SpotPositionIdentifier_V3[]>*/ {
+    throw new Error(`Not implemented`)
+    // return this.positions.open_positions()
   }
 
   async open_short(cmd: TradeAbstractionOpenFuturesShortCommand): Promise<TradeAbstractionOpenFuturesShortResult> {

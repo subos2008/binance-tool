@@ -133,6 +133,7 @@ export class Commands {
       if (command == "long") {
         let signal_timestamp_ms = (+Date.now()).toString()
         let result: TradeAbstractionOpenSpotLongResult = await this.open_spot_long(ctx, {
+          object_type: "TradeAbstractionOpenLongCommand",
           base_asset,
           edge,
           direction: "long",

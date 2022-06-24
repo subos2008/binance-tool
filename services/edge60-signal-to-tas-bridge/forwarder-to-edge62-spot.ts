@@ -83,6 +83,7 @@ export class Edge60ForwarderToEdge62Spot implements Edge60EntrySignalProcessor {
       case "long":
         this.logger.info(tags, `long signal, attempting to open ${edge} spot long position on ${base_asset}`)
         result = await this.tas_client.open_spot_long({
+          object_type: "TradeAbstractionOpenLongCommand",
           base_asset,
           edge,
           direction: "long",

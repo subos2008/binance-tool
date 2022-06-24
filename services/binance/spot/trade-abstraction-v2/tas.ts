@@ -206,16 +206,17 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
 
     res.status(result.http_status).json(result)
 
-    if (result.status === "SUCCESS") {
-      send_message(
-        `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.signal_to_execution_slippage_ms}ms`,
-        tags
-      )
-    } else {
-      send_message(`${edge}:${base_asset}: ${result.status}: ${result.msg}`, tags)
-    }
-
-    // send_message(result.msg, tags)
+    send_message(result.msg, tags)
+    
+    // We should be sending the msg from the result really
+    // if (result.status === "SUCCESS") {
+    //   send_message(
+    //     `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.signal_to_execution_slippage_ms}ms`,
+    //     tags
+    //   )
+    // } else {
+    //   send_message(`${edge}:${base_asset}: ${result.status}: ${result.msg}`, tags)
+    // }
 
     if (result.http_status === 500) {
       let msg: string = `TradeAbstractionOpenSpotLongResult: ${result.edge}:${result.base_asset}: ${result.status}: ${result.msg}`

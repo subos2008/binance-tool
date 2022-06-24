@@ -159,7 +159,7 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
   try {
     let cmd_received_timestamp_ms = +Date.now()
 
-    let { edge, base_asset, trigger_price, signal_timestamp_ms } = req.query
+    let { edge, base_asset, trigger_price, signal_timestamp_ms: signal_timestamp_ms_string } = req.query
     const direction = "long",
       action = "open"
 
@@ -172,8 +172,8 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
       )
       assert(typeof base_asset == "string", new Error(`InputChecking: typeof base_asset unexpected`))
       assert(
-        typeof signal_timestamp_ms == "string",
-        new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms}`)
+        typeof signal_timestamp_ms_string == "string",
+        new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms_string}`)
       )
     } catch (err: any) {
       let spot_long_result: TradeAbstractionOpenSpotLongResult = {
@@ -196,7 +196,9 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
       return
     }
 
-    let tags: { [name: string]: string } = {
+    let signal_timestamp_ms = Number(signal_timestamp_ms_string)
+
+    let tags: Tags = {
       edge,
       base_asset,
       direction,

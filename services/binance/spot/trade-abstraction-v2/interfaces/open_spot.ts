@@ -7,7 +7,7 @@ export interface TradeAbstractionOpenSpotLongCommand {
   direction: "long"
   action: "open"
   trigger_price?: string
-  signal_timestamp_ms: string
+  signal_timestamp_ms: number
 }
 
 export interface TradeAbstractionOpenSpotLongCommand__StopLimitExit {
@@ -17,7 +17,7 @@ export interface TradeAbstractionOpenSpotLongCommand__StopLimitExit {
   direction: "long"
   action: "open"
   trigger_price?: string
-  signal_timestamp_ms: string
+  signal_timestamp_ms: number
   edge_percentage_stop: BigNumber
   edge_percentage_buy_limit: BigNumber
 }
@@ -29,7 +29,7 @@ export interface TradeAbstractionOpenSpotLongCommand_OCO_Exit {
   direction: "long"
   action: "open"
   trigger_price?: string
-  signal_timestamp_ms: string
+  signal_timestamp_ms: number
   edge_percentage_stop: BigNumber
   edge_percentage_stop_limit: BigNumber
   edge_percentage_take_profit: BigNumber

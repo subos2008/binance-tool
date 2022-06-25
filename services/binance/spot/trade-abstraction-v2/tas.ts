@@ -2,6 +2,18 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
+// OG message format:
+
+// We should be sending the msg from the cmd_result really
+// if (cmd_result.status === "SUCCESS") {
+//   send_message(
+//     `${edge}:${base_asset} ${cmd_result.status} ${cmd.direction} entry ${cmd_result.status} at price ${cmd_result.executed_price}, stop at ${cmd_result.stop_price}, tp at ${cmd_result.take_profit_price}, execution time ${cmd_result.signal_to_execution_slippage_ms}ms`,
+//     tags
+//   )
+// } else {
+//   send_message(`${edge}:${base_asset}: ${cmd_result.status}: ${cmd_result.msg}`, tags)
+// }
+
 import "./tracer" // must come before importing any instrumented module.
 
 /** Config: */
@@ -88,7 +100,7 @@ import { RedisClient } from "redis"
 import { TradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
 import { SendDatadogMetrics } from "./send-datadog-metrics"
-import { Tags } from "hot-shots"
+import { QueryParamsToCmd } from "./query-params-to-cmd"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
@@ -136,101 +148,54 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
   }
 })
 
+let mapper = new QueryParamsToCmd({ logger })
+
 app.get("/long", async function (req: Request, res: Response, next: NextFunction) {
   try {
     let cmd_received_timestamp_ms = +Date.now()
 
-    let { edge, base_asset, trigger_price, signal_timestamp_ms: signal_timestamp_ms_string } = req.query
-    const direction = "long",
-      action = "open"
+    let { result: mapper_result, tags } = mapper.long(req, {
+      cmd_received_timestamp_ms,
+      quote_asset,
+      exchange_identifier,
+    })
 
-    try {
-      /* input checking */
-      assert(typeof edge == "string", new Error(`InputChecking: typeof edge unexpected`))
-      assert(
-        typeof trigger_price == "string" || typeof trigger_price == "undefined",
-        new Error(`InputChecking: typeof trigger_price unexpected: ${typeof trigger_price}`)
-      )
-      assert(typeof base_asset == "string", new Error(`InputChecking: typeof base_asset unexpected`))
-      assert(
-        typeof signal_timestamp_ms_string == "string",
-        new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms_string}`)
-      )
-    } catch (err: any) {
-      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
-        object_type: "TradeAbstractionOpenSpotLongResult",
-        version: 1,
-        base_asset: base_asset as string,
-        quote_asset,
-        edge: edge as string,
-        status: "BAD_INPUTS",
-        http_status: 400,
-        msg: `TradeAbstractionOpenSpotLongResult: ${edge}${base_asset}: BAD_INPUTS`,
-        err,
-        execution_timestamp_ms: cmd_received_timestamp_ms,
-      }
-      res.status(400).json(spot_long_result)
-      logger.error(
-        `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
-      )
-      logger.error({ err })
+    if (mapper_result.object_type === "TradeAbstractionOpenSpotLongResult") {
+      res.status(mapper_result.http_status).json(mapper_result)
       return
     }
 
-    let signal_timestamp_ms = Number(signal_timestamp_ms_string)
-
-    let tags: Tags = {
-      edge,
-      base_asset,
-      direction,
-      quote_asset,
-      action,
-      exchange_type: exchange_identifier.type,
+    if ((mapper_result.object_type as any) !== "TradeAbstractionOpenLongCommand") {
+      throw new Error(`Unexpected object_type: ${mapper_result.object_type}`)
     }
 
-    let cmd: TradeAbstractionOpenLongCommand = {
-      object_type: "TradeAbstractionOpenLongCommand",
-      edge,
-      direction,
-      action,
-      base_asset,
-      trigger_price,
-      signal_timestamp_ms,
-    }
+    let cmd: TradeAbstractionOpenLongCommand = mapper_result
+    let cmd_result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd)
+    tags.status = cmd_result.status
 
-    let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd)
-    tags.status = result.status
+    let { signal_timestamp_ms } = cmd
 
     metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
-    metrics.trading_abstraction_open_spot_long_result({ result, tags, cmd_received_timestamp_ms })
+    metrics.trading_abstraction_open_spot_long_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
 
-    res.status(result.http_status).json(result)
+    res.status(cmd_result.http_status).json(cmd_result)
 
-    send_message(result.msg, tags)
-    
-    // We should be sending the msg from the result really
-    // if (result.status === "SUCCESS") {
-    //   send_message(
-    //     `${edge}:${base_asset} ${result.status} ${cmd.direction} entry ${result.status} at price ${result.executed_price}, stop at ${result.stop_price}, tp at ${result.take_profit_price}, execution time ${result.signal_to_execution_slippage_ms}ms`,
-    //     tags
-    //   )
-    // } else {
-    //   send_message(`${edge}:${base_asset}: ${result.status}: ${result.msg}`, tags)
-    // }
+    send_message(cmd_result.msg, tags)
 
-    if (result.http_status === 500) {
-      let msg: string = `TradeAbstractionOpenSpotLongResult: ${result.edge}:${result.base_asset}: ${result.status}: ${result.msg}`
-      logger.error(result, msg)
-      Sentry.captureException(new Error(msg))
+    if (cmd_result.http_status === 500) {
+      let msg: string = `TradeAbstractionOpenSpotLongResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
+      logger.error(cmd_result, msg) // TODO: Tags?
+      Sentry.captureException(new Error(msg)) // TODO: Tags?
     }
   } catch (err: any) {
-    logger.error("Internal error: ${err}")
+    logger.error("Internal Server Error: ${err}")
     logger.error({ err })
     res.status(500).json({ msg: "Internal Server Error" })
     next(err)
   }
 })
 
+// TODO: long is a lot more evolved than close
 app.get("/close", async function (req: Request, res: Response, next: NextFunction) {
   try {
     let { edge, base_asset, action, direction } = req.query
@@ -256,9 +221,9 @@ app.get("/close", async function (req: Request, res: Response, next: NextFunctio
       action: "close",
       base_asset,
     }
-    let result: TradeAbstractionCloseSpotLongResult = await tas.close_spot_long(cmd)
-    logger.info(result) // move to log at creation
-    res.status(result.http_status).json(result)
+    let cmd_result: TradeAbstractionCloseSpotLongResult = await tas.close_spot_long(cmd)
+    logger.info(cmd_result) // move to log at creation
+    res.status(cmd_result.http_status).json(cmd_result)
   } catch (err) {
     Sentry.captureException(err)
     res.status(500).json({ msg: "internal server error" })

@@ -1,15 +1,50 @@
 import { strict as assert } from "assert"
 import { Request, Response } from "express"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
+import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/long"
 import { Logger } from "../../../../interfaces/logger"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { Tags } from "hot-shots"
+// import { Tags } from "hot-shots"
+
+type Tags = { [key: string]: string }
 
 export class QueryParamsToCmd {
   logger: Logger
 
   constructor({ logger }: { logger: Logger }) {
     this.logger = logger
+  }
+
+  /* You have to catch exceptions in the calling code */
+  check_inputs(
+    req: Request,
+    tags: Tags,
+    { cmd_received_timestamp_ms, quote_asset }: { cmd_received_timestamp_ms: number; quote_asset: string }
+  ): {
+    edge: string
+    base_asset: string
+    signal_timestamp_ms: number
+    trigger_price: string | undefined
+    tags: Tags
+  } {
+    let { edge, base_asset, trigger_price, signal_timestamp_ms: signal_timestamp_ms_string } = req.query
+
+    assert(typeof edge == "string", new Error(`InputChecking: typeof edge unexpected`))
+    tags.edge = edge
+
+    assert(
+      typeof trigger_price == "string" || typeof trigger_price == "undefined",
+      new Error(`InputChecking: typeof trigger_price unexpected: ${typeof trigger_price}`)
+    )
+    assert(typeof base_asset == "string", new Error(`InputChecking: typeof base_asset unexpected`))
+    tags.base_asset = base_asset
+    assert(
+      typeof signal_timestamp_ms_string == "string",
+      new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms_string}`)
+    )
+
+    let signal_timestamp_ms = Number(signal_timestamp_ms_string)
+
+    return { edge, base_asset, signal_timestamp_ms, trigger_price, tags }
   }
 
   long(
@@ -23,7 +58,6 @@ export class QueryParamsToCmd {
     result: TradeAbstractionOpenSpotLongResult | TradeAbstractionOpenSpotLongCommand
     tags: { [key: string]: string }
   } {
-    let { edge, base_asset, trigger_price, signal_timestamp_ms: signal_timestamp_ms_string } = req.query
     const direction = "long",
       action = "open"
 
@@ -32,30 +66,25 @@ export class QueryParamsToCmd {
       quote_asset,
       action,
       exchange_type: exchange_identifier.type,
+      exchange: exchange_identifier.exchange,
     }
 
     /* input checking */
+    let edge, base_asset, signal_timestamp_ms, trigger_price
     try {
-      assert(typeof edge == "string", new Error(`InputChecking: typeof edge unexpected`))
-      tags.edge = edge
-
-      assert(
-        typeof trigger_price == "string" || typeof trigger_price == "undefined",
-        new Error(`InputChecking: typeof trigger_price unexpected: ${typeof trigger_price}`)
-      )
-      assert(typeof base_asset == "string", new Error(`InputChecking: typeof base_asset unexpected`))
-      tags.base_asset = base_asset
-      assert(
-        typeof signal_timestamp_ms_string == "string",
-        new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms_string}`)
-      )
+      ;({ edge, base_asset, signal_timestamp_ms, trigger_price } = this.check_inputs(req, tags, {
+        cmd_received_timestamp_ms,
+        quote_asset,
+      }))
     } catch (err: any) {
       let result: TradeAbstractionOpenSpotLongResult = {
         object_type: "TradeAbstractionOpenSpotLongResult",
         version: 1,
-        base_asset: base_asset as string,
+        base_asset,
         quote_asset,
-        edge: edge as string,
+        edge,
+        direction,
+        action,
         status: "BAD_INPUTS",
         http_status: 400,
         msg: `TradeAbstractionOpenSpotLongResult: ${edge}${base_asset}: BAD_INPUTS`,
@@ -68,8 +97,6 @@ export class QueryParamsToCmd {
       this.logger.error({ err })
       return { result, tags }
     }
-
-    let signal_timestamp_ms = Number(signal_timestamp_ms_string)
 
     let result: TradeAbstractionOpenSpotLongCommand = {
       object_type: "TradeAbstractionOpenLongCommand",

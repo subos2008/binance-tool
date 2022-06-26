@@ -88,9 +88,11 @@ interface TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR {
 interface TradeAbstractionOpenSpotLongResult_BAD_INPUTS {
   object_type: "TradeAbstractionOpenSpotLongResult"
   version: 1
-  base_asset: string
+  base_asset?: string
   quote_asset?: string
-  edge: string
+  edge?: string
+  direction?: string
+  action?: string
 
   status: "BAD_INPUTS" // exception caught
   http_status: 400
@@ -218,7 +220,7 @@ interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDER
   executed_quote_quantity: string
   executed_base_quantity: string
   executed_price?: string // can be null if nothing bought
-  execution_timestamp_ms?: number
+  execution_timestamp_ms?: number // TODO: should all these be optional?
   signal_to_execution_slippage_ms?: string
 
   created_stop_order: boolean

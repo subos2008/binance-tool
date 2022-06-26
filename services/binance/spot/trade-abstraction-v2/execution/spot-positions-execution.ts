@@ -23,12 +23,12 @@ import { OrderId } from "../../../../../classes/spot/persistence/interface/order
 import { SpotPositionsExecution_StopLimitExit } from "./stop-limit-exit-executor"
 import { SpotPositionsExecution_OCOExit } from "./oco-exit-executor"
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/open_spot"
+import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/long"
 import {
   TradeAbstractionCloseSpotLongResult,
   TradeAbstractionCloseSpotLongResult_NOT_FOUND,
   TradeAbstractionCloseSpotLongResult_SUCCESS,
-} from "../interfaces/close_spot"
+} from "../interfaces/close"
 import { SpotExecutionEngine } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 

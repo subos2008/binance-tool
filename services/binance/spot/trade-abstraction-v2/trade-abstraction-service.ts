@@ -19,8 +19,8 @@ import {
 } from "../../../../classes/spot/abstractions/position-identifier"
 import { SpotPositionsExecution } from "./execution/spot-positions-execution"
 import Sentry from "../../../../lib/sentry"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/open_spot"
-import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close_spot"
+import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/long"
+import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
@@ -180,7 +180,7 @@ export class TradeAbstractionService {
 
   // or signal_short or signal_exit/close
   // Spot so we can only be long or no-position
-  async close_spot_long(cmd: TradeAbstractionCloseLongCommand): Promise<TradeAbstractionCloseSpotLongResult> {
+  async close(cmd: TradeAbstractionCloseLongCommand): Promise<TradeAbstractionCloseSpotLongResult> {
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "close")
     let edge: AuthorisedEdgeType = cmd.edge as AuthorisedEdgeType

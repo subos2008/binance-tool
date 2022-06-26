@@ -20,7 +20,7 @@ import {
   TradeAbstractionOpenSpotLongCommand_OCO_Exit,
   TradeAbstractionOpenSpotLongCommand__StopLimitExit,
   TradeAbstractionOpenSpotLongResult,
-} from "../interfaces/open_spot"
+} from "../interfaces/long"
 
 /* Edge specific code */
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"

@@ -8,8 +8,8 @@ if (!TAS_URL.startsWith("http")) {
 
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"
 import { Logger } from "../../../../../interfaces/logger"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/open_spot"
-import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "../interfaces/close_spot"
+import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/long"
+import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "../interfaces/close"
 
 const JSONBigNumber = require("./JSONBigNumber")
 import { URL } from "url"
@@ -58,7 +58,7 @@ export class SpotTradeAbstractionServiceClient {
     return response
   }
 
-  async close_spot_long(cmd: TradeAbstractionCloseLongCommand): Promise<TradeAbstractionCloseSpotLongResult> {
+  async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {
     let response = await this._call("GET", new URL("/close", TAS_URL).toString(), cmd)
     this.logger.object(response)
     return response

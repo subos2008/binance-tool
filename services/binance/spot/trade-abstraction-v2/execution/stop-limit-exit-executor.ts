@@ -23,7 +23,7 @@ import { OrderId } from "../../../../../classes/spot/persistence/interface/order
 import {
   TradeAbstractionOpenSpotLongCommand__StopLimitExit,
   TradeAbstractionOpenSpotLongResult,
-} from "../interfaces/open_spot"
+} from "../interfaces/long"
 import {
   SpotExecutionEngine,
   SpotLimitBuyCommand,

@@ -19,7 +19,7 @@ import { SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstracti
 import {
   TradeAbstractionOpenSpotLongCommand_OCO_Exit,
   TradeAbstractionOpenSpotLongResult,
-} from "../interfaces/open_spot"
+} from "../interfaces/long"
 
 /* Edge specific code */
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"

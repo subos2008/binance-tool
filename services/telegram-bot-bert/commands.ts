@@ -15,7 +15,7 @@ import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/
 import {
   TradeAbstractionOpenFuturesShortCommand_OCO_Exit,
   TradeAbstractionOpenFuturesShortResult,
-} from "../binance/futures/trade-abstraction/interfaces/open_futures_short"
+} from "../binance/futures/trade-abstraction/interfaces/short"
 import { FuturesTradeAbstractionServiceClient } from "../binance/futures/trade-abstraction/client/tas-client"
 import { Commands_Futures } from "./commands/futures"
 Sentry.init({})

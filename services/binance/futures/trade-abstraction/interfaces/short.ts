@@ -11,8 +11,8 @@ export interface TradeAbstractionOpenLongCommand {
   trigger_price?: string
   signal_timestamp_ms: string
 }
-export interface TradeAbstractionOpenFuturesShortCommand {
-  object_type: "TradeAbstractionOpenFuturesShortCommand"
+export interface TradeAbstractionOpenShortCommand {
+  object_type: "TradeAbstractionOpenShortCommand"
   base_asset: string
   quote_asset?: string // added by the TAS before it hits the EE
   edge: string
@@ -22,8 +22,8 @@ export interface TradeAbstractionOpenFuturesShortCommand {
   signal_timestamp_ms: number
 }
 
-export interface TradeAbstractionOpenFuturesShortCommand_OCO_Exit {
-  object_type: "TradeAbstractionOpenFuturesShortCommand_OCO_Exit"
+export interface TradeAbstractionOpenShortCommand_OCO_Exit {
+  object_type: "TradeAbstractionOpenShortCommand_OCO_Exit"
   base_asset: string
   quote_asset: string // added by the TAS before it hits the EE
   edge: string
@@ -37,8 +37,8 @@ export interface TradeAbstractionOpenFuturesShortCommand_OCO_Exit {
   edge_percentage_buy_limit: BigNumber
 }
 
-interface TradeAbstractionOpenFuturesShortResult_SUCCESS {
-  object_type: "TradeAbstractionOpenFuturesShortResult"
+interface TradeAbstractionOpenShortResult_SUCCESS {
+  object_type: "TradeAbstractionOpenShortResult"
   version: 1
   base_asset: string
   quote_asset: string
@@ -67,8 +67,8 @@ interface TradeAbstractionOpenFuturesShortResult_SUCCESS {
   oco_order_id?: string | number | undefined
 }
 
-interface TradeAbstractionOpenFuturesShortResult_INTERNAL_SERVER_ERROR {
-  object_type: "TradeAbstractionOpenFuturesShortResult"
+interface TradeAbstractionOpenShortResult_INTERNAL_SERVER_ERROR {
+  object_type: "TradeAbstractionOpenShortResult"
   version: 1
   base_asset: string
   quote_asset?: string
@@ -84,8 +84,8 @@ interface TradeAbstractionOpenFuturesShortResult_INTERNAL_SERVER_ERROR {
   signal_to_execution_slippage_ms?: string
 }
 
-interface TradeAbstractionOpenFuturesShortResult_ENTRY_FAILED_TO_FILL {
-  object_type: "TradeAbstractionOpenFuturesShortResult"
+interface TradeAbstractionOpenShortResult_ENTRY_FAILED_TO_FILL {
+  object_type: "TradeAbstractionOpenShortResult"
   version: 1
   base_asset: string
   quote_asset?: string
@@ -103,8 +103,8 @@ interface TradeAbstractionOpenFuturesShortResult_ENTRY_FAILED_TO_FILL {
   execution_timestamp_ms?: string
   signal_to_execution_slippage_ms?: string
 }
-interface TradeAbstractionOpenFuturesShortResult_UNAUTHORISED {
-  object_type: "TradeAbstractionOpenFuturesShortResult"
+interface TradeAbstractionOpenShortResult_UNAUTHORISED {
+  object_type: "TradeAbstractionOpenShortResult"
   version: 1
   base_asset: string
   quote_asset?: string
@@ -120,8 +120,8 @@ interface TradeAbstractionOpenFuturesShortResult_UNAUTHORISED {
   signal_to_execution_slippage_ms?: string
 }
 
-interface TradeAbstractionOpenFuturesShortResult_TRADING_IN_ASSET_PROHIBITED {
-  object_type: "TradeAbstractionOpenFuturesShortResult"
+interface TradeAbstractionOpenShortResult_TRADING_IN_ASSET_PROHIBITED {
+  object_type: "TradeAbstractionOpenShortResult"
   version: 1
   base_asset: string
   quote_asset?: string
@@ -137,8 +137,8 @@ interface TradeAbstractionOpenFuturesShortResult_TRADING_IN_ASSET_PROHIBITED {
   signal_to_execution_slippage_ms?: string
 }
 
-interface TradeAbstractionOpenFuturesShortResult_ALREADY_IN_POSITION {
-  object_type: "TradeAbstractionOpenFuturesShortResult"
+interface TradeAbstractionOpenShortResult_ALREADY_IN_POSITION {
+  object_type: "TradeAbstractionOpenShortResult"
   version: 1
   base_asset: string
   quote_asset?: string
@@ -154,8 +154,8 @@ interface TradeAbstractionOpenFuturesShortResult_ALREADY_IN_POSITION {
   execution_timestamp_ms?: string
   signal_to_execution_slippage_ms?: string
 }
-interface TradeAbstractionOpenFuturesShortResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
-  object_type: "TradeAbstractionOpenFuturesShortResult"
+interface TradeAbstractionOpenShortResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
+  object_type: "TradeAbstractionOpenShortResult"
   version: 1
   base_asset: string
   quote_asset?: string
@@ -185,11 +185,11 @@ interface TradeAbstractionOpenFuturesShortResult_ABORTED_FAILED_TO_CREATE_EXIT_O
   oco_order_id?: string | number | undefined
 }
 
-export type TradeAbstractionOpenFuturesShortResult =
-  | TradeAbstractionOpenFuturesShortResult_SUCCESS
-  | TradeAbstractionOpenFuturesShortResult_INTERNAL_SERVER_ERROR
-  | TradeAbstractionOpenFuturesShortResult_ENTRY_FAILED_TO_FILL
-  | TradeAbstractionOpenFuturesShortResult_UNAUTHORISED
-  | TradeAbstractionOpenFuturesShortResult_ALREADY_IN_POSITION
-  | TradeAbstractionOpenFuturesShortResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
-  | TradeAbstractionOpenFuturesShortResult_TRADING_IN_ASSET_PROHIBITED
+export type TradeAbstractionOpenShortResult =
+  | TradeAbstractionOpenShortResult_SUCCESS
+  | TradeAbstractionOpenShortResult_INTERNAL_SERVER_ERROR
+  | TradeAbstractionOpenShortResult_ENTRY_FAILED_TO_FILL
+  | TradeAbstractionOpenShortResult_UNAUTHORISED
+  | TradeAbstractionOpenShortResult_ALREADY_IN_POSITION
+  | TradeAbstractionOpenShortResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
+  | TradeAbstractionOpenShortResult_TRADING_IN_ASSET_PROHIBITED

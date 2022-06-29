@@ -16,7 +16,7 @@ import * as Sentry from "@sentry/node"
 import {
   TradeAbstractionOpenFuturesShortCommand,
   TradeAbstractionOpenFuturesShortResult,
-} from "../interfaces/open_futures_short"
+} from "../interfaces/short"
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
   scope.setTag("class", "SpotTradeAbstractionServiceClient")

@@ -5,7 +5,7 @@ import * as Sentry from "@sentry/node"
 import {
   TradeAbstractionOpenFuturesShortCommand,
   TradeAbstractionOpenFuturesShortResult,
-} from "../../binance/futures/trade-abstraction/interfaces/open_futures_short"
+} from "../../binance/futures/trade-abstraction/interfaces/short"
 
 export class Commands_Futures {
   futures_tas_client: FuturesTradeAbstractionServiceClient

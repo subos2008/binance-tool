@@ -31,7 +31,7 @@ import { HealthAndReadinessSubsystem } from "../../../../classes/health_and_read
 import { MyEventNameType } from "../../../../classes/amqp/message-routing"
 import { Connection } from "amqplib"
 import { RedisClient } from "redis"
-import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { BinanceOrderPublisher } from "../../lib/binance-order-publisher"
 
 const exchange_identifier: ExchangeIdentifier_V3 = {

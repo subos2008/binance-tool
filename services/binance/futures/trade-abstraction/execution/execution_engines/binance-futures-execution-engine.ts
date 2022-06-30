@@ -34,7 +34,7 @@ import {
   // FuturesOCOBuyCommand,
   // FuturesExecutionEngineSellResult,
 } from "./futures-execution-engine"
-import { OrderContextPersistence } from "../../../../../../classes/spot/persistence/interface/order-context-persistence"
+import { OrderContextPersistence } from "../../../../../../classes/persistent_state/interface/order-context-persistence"
 import { OrderContext_V1 } from "../../../../../../interfaces/orders/order-context"
 import { AlgoUtils } from "../../../../spot/trade-abstraction/execution/execution_engines/_internal/binance_algo_utils_v2"
 import { BinanceStyleSpotPrices } from "../../../../../../classes/spot/abstractions/position-identifier"
@@ -90,17 +90,26 @@ export class BinanceFuturesExecutionEngine implements FuturesExecutionEngine {
   }
 
   // Used when storing things like Position state
-  get_market_identifier_for({
+  // TODO: this should use exchange info
+  async get_market_identifier_for({
     quote_asset,
     base_asset,
   }: {
     quote_asset: string
     base_asset: string
-  }): MarketIdentifier_V3 {
+  }): Promise<MarketIdentifier_V3> {
+    let exchange_info = await this.get_exchange_info()
+    let symbols = exchange_info.symbols
+    let match = symbols.find(
+      (s) => s.baseAsset === base_asset.toUpperCase() && s.quoteAsset == quote_asset.toUpperCase()
+    )
+    if (!match) throw new Error(`No match for symbol ${base_asset}:${quote_asset} in exchange_info symbols`)
+    let symbol = match.symbol
+
     return {
       version: "v3",
       exchange_identifier: this.get_exchange_identifier(),
-      symbol: `${base_asset.toUpperCase()}${quote_asset.toUpperCase()}`,
+      symbol,
       base_asset,
       quote_asset,
     }

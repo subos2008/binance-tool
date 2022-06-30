@@ -23,7 +23,7 @@ import {
   SpotLimitBuyCommand,
   SpotExecutionEngineBuyResult,
 } from "../../../../../../interfaces/exchanges/spot-execution-engine"
-import { OrderContextPersistence } from "../../../../../../classes/spot/persistence/interface/order-context-persistence"
+import { OrderContextPersistence } from "../../../../../../classes/persistent_state/interface/order-context-persistence"
 import { OrderContext_V1 } from "../../../../../../interfaces/orders/order-context"
 import { BinanceStyleSpotPrices } from "../../../../../../classes/spot/abstractions/position-identifier"
 

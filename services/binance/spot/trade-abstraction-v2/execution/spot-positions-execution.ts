@@ -19,18 +19,20 @@ import {
   check_edge,
   SpotPositionIdentifier_V3,
 } from "../../../../../classes/spot/abstractions/position-identifier"
-import { OrderId } from "../../../../../classes/spot/persistence/interface/order-context-persistence"
+import { OrderId } from "../../../../../classes/persistent_state/interface/order-context-persistence"
 import { SpotPositionsExecution_StopLimitExit } from "./stop-limit-exit-executor"
 import { SpotPositionsExecution_OCOExit } from "./oco-exit-executor"
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/long"
 import {
-  TradeAbstractionCloseSpotLongResult,
-  TradeAbstractionCloseSpotLongResult_NOT_FOUND,
-  TradeAbstractionCloseSpotLongResult_SUCCESS,
+  TradeAbstractionCloseCommand,
+  TradeAbstractionCloseResult,
+  TradeAbstractionCloseResult_NOT_FOUND,
+  TradeAbstractionCloseResult_SUCCESS,
 } from "../interfaces/close"
 import { SpotExecutionEngine } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
+import { TradeAbstractionCloseSpotLongResult_SUCCESS } from "../../trade-abstraction/interfaces/close_spot"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -201,29 +203,28 @@ export class SpotPositionsExecution {
     }
   }
 
-  async close_position({
-    quote_asset,
-    base_asset,
-    direction,
-    edge,
-  }: {
-    quote_asset: string
-    base_asset: string
-    direction: string
-    edge: string
-  }): Promise<TradeAbstractionCloseSpotLongResult> {
-    assert.equal(direction, "long") // spot positions are always long
+  async close_position(
+    cmd: TradeAbstractionCloseCommand,
+    { quote_asset }: { quote_asset: string }
+  ): Promise<TradeAbstractionCloseResult> {
+    let { edge, base_asset, action } = cmd
     let prefix: string = `Closing ${edge}:${base_asset} spot position:`
 
+    let execution_timestamp_ms = +Date.now()
+    let signal_to_execution_slippage_ms = execution_timestamp_ms - cmd.signal_timestamp_ms
+
     if (!(await this.in_position({ base_asset, edge }))) {
-      let spot_long_result: TradeAbstractionCloseSpotLongResult_NOT_FOUND = {
-        object_type: "TradeAbstractionCloseSpotLongResult",
+      let spot_long_result: TradeAbstractionCloseResult_NOT_FOUND = {
+        object_type: "TradeAbstractionCloseResult",
         version: 1,
         status: "NOT_FOUND",
         http_status: 404,
-        msg: `Spot Close: there is no known long spot position on ${base_asset}, skipping close request`,
+        msg: `${edge}:${base_asset}: NOT_FOUND: Spot Close: there is no known long spot position on ${base_asset}, skipping close request`,
         base_asset,
         edge,
+        execution_timestamp_ms,
+        signal_to_execution_slippage_ms,
+        action,
       }
       this.logger.info(spot_long_result)
       return spot_long_result
@@ -300,8 +301,8 @@ export class SpotPositionsExecution {
       await this.ee.market_sell({ order_context, market_identifier, base_amount }) // throws if it fails
       // let executed_amount = // .. actually we might not have this info immediately
 
-      let obj: TradeAbstractionCloseSpotLongResult_SUCCESS = {
-        object_type: "TradeAbstractionCloseSpotLongResult",
+      let obj: TradeAbstractionCloseResult_SUCCESS = {
+        object_type: "TradeAbstractionCloseResult",
         version: 1,
         status: "SUCCESS",
         http_status: 200,
@@ -309,6 +310,12 @@ export class SpotPositionsExecution {
         base_asset,
         quote_asset,
         edge,
+        execution_timestamp_ms,
+        signal_to_execution_slippage_ms,
+        action,
+        executed_quote_quantity,
+        executed_base_quantity,
+        executed_price,
       }
       return obj
     } catch (err) {

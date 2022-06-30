@@ -6,7 +6,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { OrderContext_V1 } from "../orders/order-context"
-import { OrderId } from "../../classes/spot/persistence/interface/order-context-persistence"
+import { OrderId } from "../../classes/persistent_state/interface/order-context-persistence"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
 import { BinanceStyleSpotPrices } from "../../classes/spot/abstractions/position-identifier"

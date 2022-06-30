@@ -201,7 +201,7 @@ import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order
 import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 import { PortfolioPublisher } from "./portfolio-publisher"
 import { PortfolioTracker } from "./portfolio-tracker"
-import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
 

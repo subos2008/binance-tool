@@ -58,7 +58,7 @@ import { Balance, Portfolio, SpotPortfolio } from "../../../../interfaces/portfo
 import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../../../classes/health_and_readiness"
 import { RedisClient } from "redis"
-import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { SendMessageFunc } from "../../../../lib/telegram-v2"
 
 // Let's keep this code, could become part of ensuring same format events accross exchanges

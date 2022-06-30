@@ -23,7 +23,7 @@ import { RedisClient } from "redis"
 import { SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
 import { SpotPositionObject } from "../../abstractions/spot-position"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
-import { OrderId } from "../interface/order-context-persistence"
+import { OrderId } from "../../../persistent_state/interface/order-context-persistence"
 
 export class RedisSpotPositionsPersistance implements SpotPositionsPersistance {
   logger: Logger

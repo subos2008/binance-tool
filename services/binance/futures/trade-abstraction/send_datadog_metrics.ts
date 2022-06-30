@@ -84,18 +84,18 @@ export class SendDatadogMetrics {
     }
   }
 
-  trading_abstraction_open_spot_long_result({
+  trading_abstraction_open_short_result({
     result,
     cmd_received_timestamp_ms,
     tags,
   }: {
-    result: TradeAbstractionOpenSpotLongResult
+    result: TradeAbstractionOpenShortResult
     cmd_received_timestamp_ms: number
     tags: Tags
   }) {
     try {
       // TODO: add command_recieved_to_execution_slippage
-      this.dogstatsd.increment(".trading_abstraction_open_spot_long_result", tags)
+      this.dogstatsd.increment(".trading_abstraction_open_short_result", tags)
       if (result.signal_to_execution_slippage_ms)
         this.dogstatsd.distribution(
           ".signal_to_execution_slippage_ms",

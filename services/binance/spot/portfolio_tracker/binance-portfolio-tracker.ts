@@ -69,7 +69,7 @@ import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/spo
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { Balance, Portfolio } from "../../../../interfaces/portfolio"
-import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 
 export class BinancePortfolioTracker implements PortfolioBitchClass {
   send_message: Function

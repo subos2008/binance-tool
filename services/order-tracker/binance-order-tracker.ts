@@ -45,7 +45,7 @@ const BinanceFoo = require("binance-api-node").default
 import { Binance } from "binance-api-node"
 import { OrderExecutionTracker } from "../../classes/exchanges/binance/spot-order-execution-tracker"
 import { BinanceOrderData } from "../../interfaces/exchanges/binance/order_callbacks"
-import { RedisOrderContextPersistance } from "../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistance } from "../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 
 class MyOrderCallbacks {
   send_message: SendMessageFunc

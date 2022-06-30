@@ -54,8 +54,8 @@ import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 import {
   TradeAbstractionOpenSpotLongCommand as TradeAbstractionOpenLongCommand,
   TradeAbstractionOpenSpotLongResult,
-} from "./interfaces/open_spot"
-import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close_spot"
+} from "./interfaces/long"
+import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 
 import express, { NextFunction, Request, Response } from "express"
 const winston = require("winston")
@@ -93,7 +93,7 @@ app.use(
 ) // for parsing application/x-www-form-urlencoded
 
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
-import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 
 import { RedisClient } from "redis"
 
@@ -150,7 +150,40 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
 
 let mapper = new QueryParamsToCmd({ logger })
 
-app.get("/long", async function (req: Request, res: Response, next: NextFunction) {
+// TODO: long is a lot more evolved than close
+app.get("/close", async function (req: Request, res: Response, next: NextFunction) {
+  // TODO: use mapper
+  try {
+    let cmd_received_timestamp_ms = +Date.now()
+
+    let { result: mapper_result, tags } = mapper.close(req, {
+      cmd_received_timestamp_ms,
+      quote_asset,
+      exchange_identifier,
+    })
+
+    if (mapper_result.object_type === "TradeAbstractionCloseResult") {
+      res.status(mapper_result.http_status).json(mapper_result)
+      return
+    }
+
+    if (mapper_result.object_type === "TradeAbstractionCloseCommand") {
+      let cmd: TradeAbstractionCloseCommand = mapper_result
+      let cmd_result: TradeAbstractionCloseResult = await tas.close(cmd)
+      logger.info(cmd_result) // TODO: move to log at creation
+      res.status(cmd_result.http_status).json(cmd_result)
+      return
+    }
+
+    throw new Error(`Unexpected object_type: ${(mapper_result as any).object_type}`)
+  } catch (err) {
+    Sentry.captureException(err)
+    res.status(500).json({ msg: "internal server error" })
+    next(err)
+  }
+})
+
+app.get("/long", async function (req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     let cmd_received_timestamp_ms = +Date.now()
 
@@ -165,28 +198,29 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
       return
     }
 
-    if ((mapper_result.object_type as any) !== "TradeAbstractionOpenLongCommand") {
-      throw new Error(`Unexpected object_type: ${mapper_result.object_type}`)
+    if (mapper_result.object_type === "TradeAbstractionOpenLongCommand") {
+      let cmd: TradeAbstractionOpenLongCommand = mapper_result
+      let cmd_result: TradeAbstractionOpenSpotLongResult = await tas.long(cmd)
+      tags.status = cmd_result.status
+
+      let { signal_timestamp_ms } = cmd
+
+      metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
+      metrics.trading_abstraction_open_spot_long_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
+
+      res.status(cmd_result.http_status).json(cmd_result)
+
+      send_message(cmd_result.msg, tags)
+
+      if (cmd_result.http_status === 500) {
+        let msg: string = `TradeAbstractionOpenSpotLongResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
+        logger.error(cmd_result, msg) // TODO: Tags?
+        Sentry.captureException(new Error(msg)) // TODO: Tags?
+      }
+      return
     }
 
-    let cmd: TradeAbstractionOpenLongCommand = mapper_result
-    let cmd_result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd)
-    tags.status = cmd_result.status
-
-    let { signal_timestamp_ms } = cmd
-
-    metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
-    metrics.trading_abstraction_open_spot_long_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
-
-    res.status(cmd_result.http_status).json(cmd_result)
-
-    send_message(cmd_result.msg, tags)
-
-    if (cmd_result.http_status === 500) {
-      let msg: string = `TradeAbstractionOpenSpotLongResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
-      logger.error(cmd_result, msg) // TODO: Tags?
-      Sentry.captureException(new Error(msg)) // TODO: Tags?
-    }
+    throw new Error(`Unexpected object_type: ${(mapper_result as any).object_type}`)
   } catch (err: any) {
     logger.error("Internal Server Error: ${err}")
     logger.error({ err })
@@ -195,41 +229,10 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
   }
 })
 
-// TODO: long is a lot more evolved than close
-app.get("/close", async function (req: Request, res: Response, next: NextFunction) {
-  try {
-    let { edge, base_asset, action, direction } = req.query
-    let tags: { [name: string]: string } = { edge, base_asset, direction, quote_asset, action } as {
-      edge: string
-      base_asset: string
-      direction: string
-      quote_asset: string
-      action: string
-    }
-
-    assert(edge)
-    assert(base_asset)
-    assert(edge)
-    assert(typeof edge == "string")
-    assert(base_asset)
-    assert(typeof base_asset == "string")
-    assert(direction === "long")
-    assert(action === "close")
-    let cmd: TradeAbstractionCloseLongCommand = {
-      edge,
-      direction: "long",
-      action: "close",
-      base_asset,
-    }
-    let cmd_result: TradeAbstractionCloseSpotLongResult = await tas.close_spot_long(cmd)
-    logger.info(cmd_result) // move to log at creation
-    res.status(cmd_result.http_status).json(cmd_result)
-  } catch (err) {
-    Sentry.captureException(err)
-    res.status(500).json({ msg: "internal server error" })
-    next(err)
-  }
-})
+/**
+ * "/short" is equivalent to "/close" for spot exchanges
+ * 
+ */
 
 // Finally, start our server
 // $  npm install -g localtunnel && lt --port 3000

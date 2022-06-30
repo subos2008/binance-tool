@@ -20,7 +20,6 @@ import {
 import { SpotPositionsExecution } from "./execution/spot-positions-execution"
 import Sentry from "../../../../lib/sentry"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/long"
-import { TradeAbstractionCloseLongCommand, TradeAbstractionCloseSpotLongResult } from "./interfaces/close"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
@@ -28,6 +27,7 @@ import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/bin
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
 import { SendMessageFunc } from "../../../../lib/telegram-v2"
 import { RedisClient } from "redis"
+import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands
@@ -89,7 +89,7 @@ export class TradeAbstractionService {
 
   // or signal_long
   // Spot so we can only be long or no-position
-  async open_spot_long(cmd: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
+  async long(cmd: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
     this.logger.info(cmd)
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
@@ -180,20 +180,13 @@ export class TradeAbstractionService {
 
   // or signal_short or signal_exit/close
   // Spot so we can only be long or no-position
-  async close(cmd: TradeAbstractionCloseLongCommand): Promise<TradeAbstractionCloseSpotLongResult> {
-    assert.equal(cmd.direction, "long")
+  async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {
     assert.equal(cmd.action, "close")
-    let edge: AuthorisedEdgeType = cmd.edge as AuthorisedEdgeType
-    let { base_asset } = cmd
     let { quote_asset } = this
 
     this.logger.warn(`Position exit is not atomic with check for existing position`)
     try {
-      let result: TradeAbstractionCloseSpotLongResult = await this.spot_ee.close_position({
-        quote_asset,
-        ...cmd,
-        edge,
-      })
+      let result: TradeAbstractionCloseResult = await this.spot_ee.close_position({ quote_asset, ...cmd })
       return result
     } catch (err) {
       Sentry.captureException(err)

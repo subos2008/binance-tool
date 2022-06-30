@@ -17,8 +17,8 @@ import { AuthorisedEdgeType, SpotPositionIdentifier_V3 } from "../../../../class
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
 import { SpotPosition } from "../../../../classes/spot/abstractions/spot-position"
 import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { OrderContextPersistence } from "../../../../classes/spot/persistence/interface/order-context-persistence"
-import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { OrderContextPersistence } from "../../../../classes/persistent_state/interface/order-context-persistence"
+import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import {
   SpotPositionClosedEvent_V1,
   SpotPositionOpenedEvent_V1,

@@ -16,7 +16,7 @@ import { SpotPositionIdentifier_V3, AuthorisedEdgeType } from "../../../abstract
 import { SpotPositionObject } from "../../../abstractions/spot-position"
 import { GenericOrderData } from "../../../../../types/exchange_neutral/generic_order_data"
 import { SpotPositionInitialisationData } from "../../interface/spot-positions-persistance"
-import { OrderId } from "../../interface/order-context-persistence"
+import { OrderId } from "../../../../persistent_state/interface/order-context-persistence"
 
 // We store as integers in redis because it uses hardware for floating point calculations
 function to_sats(input: string | BigNumber): string {

@@ -8,7 +8,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { AuthorisedEdgeType, SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
-import { OrderId } from "./order-context-persistence"
+import { OrderId } from "../../../persistent_state/interface/order-context-persistence"
 import { SpotPositionObject } from "../../abstractions/spot-position"
 
 // export interface PositionReservationCommand {

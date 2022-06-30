@@ -1,13 +1,13 @@
 import { RedisClient } from "redis"
-import { Logger } from "../../../../interfaces/logger"
+import { Logger } from "../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { promisify } from "util"
 import {
   ExchangeIdentifier_V3,
   exchange_identifier_to_redis_key_snippet,
-} from "../../../../events/shared/exchange-identifier"
+} from "../../../events/shared/exchange-identifier"
 import { OrderContextPersistence } from "../interface/order-context-persistence"
-import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
+import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
 
 type OrderId = string
 

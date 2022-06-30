@@ -50,7 +50,7 @@ export interface FuturesExecutionEngine {
   }: {
     quote_asset: string
     base_asset: string
-  }): MarketIdentifier_V3
+  }): Promise<MarketIdentifier_V3>
 
   base_asset_for_symbol(symbol: string): Promise<string>
 

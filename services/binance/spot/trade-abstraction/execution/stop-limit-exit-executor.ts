@@ -19,7 +19,7 @@ import {
   AuthorisedEdgeType,
   SpotPositionIdentifier_V3,
 } from "../../../../../classes/spot/abstractions/position-identifier"
-import { OrderId } from "../../../../../classes/spot/persistence/interface/order-context-persistence"
+import { OrderId } from "../../../../../classes/persistent_state/interface/order-context-persistence"
 import {
   TradeAbstractionOpenSpotLongCommand__StopLimitExit,
   TradeAbstractionOpenSpotLongResult,

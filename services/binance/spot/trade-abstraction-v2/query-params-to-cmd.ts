@@ -3,6 +3,7 @@ import { Request, Response } from "express"
 import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/long"
 import { Logger } from "../../../../interfaces/logger"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 // import { Tags } from "hot-shots"
 
 type Tags = { [key: string]: string }
@@ -95,6 +96,7 @@ export class QueryParamsToCmd {
         `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
       )
       this.logger.error({ err })
+      this.logger.error({ ...tags, ...result })
       return { result, tags }
     }
 
@@ -107,6 +109,70 @@ export class QueryParamsToCmd {
       trigger_price,
       signal_timestamp_ms,
     }
+    this.logger.info({ ...tags, ...result })
+    return { result, tags }
+  }
+
+  close(
+    req: Request,
+    {
+      cmd_received_timestamp_ms,
+      quote_asset,
+      exchange_identifier,
+    }: { cmd_received_timestamp_ms: number; quote_asset: string; exchange_identifier: ExchangeIdentifier_V3 }
+  ): {
+    result: TradeAbstractionCloseResult | TradeAbstractionCloseCommand
+    tags: { [key: string]: string }
+  } {
+    const action = "close"
+
+    let tags: Tags = {
+      quote_asset,
+      action,
+      exchange_type: exchange_identifier.type,
+      exchange: exchange_identifier.exchange,
+    }
+
+    /* input checking */
+    let edge, base_asset, signal_timestamp_ms, trigger_price
+    try {
+      ;({ edge, base_asset, signal_timestamp_ms, trigger_price } = this.check_inputs(req, tags, {
+        cmd_received_timestamp_ms,
+        quote_asset,
+      }))
+    } catch (err: any) {
+      let result: TradeAbstractionCloseResult = {
+        object_type: "TradeAbstractionCloseResult",
+        version: 1,
+        base_asset,
+        quote_asset,
+        edge,
+        action,
+        status: "BAD_INPUTS",
+        http_status: 400,
+        msg: `TradeAbstractionOpenSpotLongResult: ${edge}${base_asset}: BAD_INPUTS`,
+        err,
+        execution_timestamp_ms: cmd_received_timestamp_ms,
+      }
+      this.logger.error(
+        `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
+      )
+      this.logger.error({ err })
+      this.logger.error({ ...tags, ...result })
+      return { result, tags }
+    }
+
+    let result: TradeAbstractionCloseCommand = {
+      object_type: "TradeAbstractionCloseCommand",
+      version: 1,
+      edge,
+      action,
+      base_asset,
+      trigger_price,
+      signal_timestamp_ms,
+    }
+    this.logger.info({ ...tags, ...result })
+
     return { result, tags }
   }
 }

@@ -46,7 +46,7 @@ import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/i
 import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { BinanceSpotExecutionEngine } from "../../../binance/spot/trade-abstraction/execution/execution_engines/binance-spot-execution-engine"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
-import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { AMQP_BinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-binance-order-data-listener"
 

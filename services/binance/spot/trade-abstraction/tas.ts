@@ -86,7 +86,7 @@ app.use(
 ) // for parsing application/x-www-form-urlencoded
 
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
-import { RedisOrderContextPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 
 import { RedisClient } from "redis"
 

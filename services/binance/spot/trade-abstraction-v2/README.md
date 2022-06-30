@@ -20,3 +20,11 @@ However, currently the entry/exit for each edge is hardcoded in the execution lo
 
 1. Get a long signal, check we have a position and a stop at the end
 1. Get a short signal, check the stop order is cancelled and we have exited the position
+
+
+
+TAS -> TradeAbstractionService ->
+  ee: BinanceSpotExecutionEngine
+  spot_ee: SpotPositionsExecution(ee:BinanceSpotExecutionEngine as SpotExecutionEngine)
+    -> SpotPositionsExecution_StopLimitExit(ee)
+    -> SpotPositionsExecution_OCOExit

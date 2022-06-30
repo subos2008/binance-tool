@@ -15,7 +15,7 @@ import { strict as assert } from "assert"
 import {
   TradeAbstractionOpenFuturesShortCommand,
   TradeAbstractionOpenFuturesShortResult,
-} from "./interfaces/open_futures_short"
+} from "./interfaces/short"
 import {
   AuthorisedEdgeType,
   BinanceStyleSpotPrices,
@@ -87,7 +87,7 @@ export class FuturesTradeAbstractionService {
     // return this.positions.open_positions()
   }
 
-  async open_short(cmd: TradeAbstractionOpenFuturesShortCommand): Promise<TradeAbstractionOpenFuturesShortResult> {
+  async short(cmd: TradeAbstractionOpenFuturesShortCommand): Promise<TradeAbstractionOpenFuturesShortResult> {
     this.logger.info(cmd)
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")

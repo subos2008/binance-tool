@@ -92,6 +92,7 @@ import { RedisClient } from "redis"
 
 import { FuturesTradeAbstractionService  } from "./trade-abstraction-service"
 import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
+import { SendDatadogMetrics } from "./send_datadog_metrics"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
@@ -108,25 +109,9 @@ let tas: FuturesTradeAbstractionService = new FuturesTradeAbstractionService({
   // redis,
 })
 
-var dogstatsd = new StatsD({
-  errorHandler: dogstatsderrorhandler,
-  globalTags: { service_name, exchange_type: exchange_identifier.type, exchange: exchange_identifier.exchange },
-  prefix: "trading_engine.tas",
-})
+const metrics = new SendDatadogMetrics({ service_name, logger, exchange_identifier })
 
-try {
-  dogstatsd.increment(`.service_started`, 1, 1, function (error, bytes) {
-    //this only gets called once after all messages have been sent
-    if (error) {
-      console.error("Oh noes! There was an error submitting metrics to DogStatsD:", error)
-    } else {
-      // console.log("Successfully sent", bytes, "bytes to DogStatsD")
-    }
-  })
-} catch (e) {
-  logger.warn(`Failed to submit metrics to DogStatsD`)
-  Sentry.captureException(e)
-}
+metrics.service_started()
 
 app.get("/exchange_identifier", async function (req: Request, res: Response, next: NextFunction) {
   try {

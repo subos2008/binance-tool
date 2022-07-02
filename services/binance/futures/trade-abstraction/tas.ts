@@ -45,8 +45,7 @@ function dogstatsderrorhandler(err: Error) {
 
 import {
   TradeAbstractionOpenShortCommand,
-  TradeAbstractionOpenFuturesShortCommand as TradeAbstractionOpenShortCommand,
-  TradeAbstractionOpenFuturesShortResult,
+  TradeAbstractionOpenShortResult,
 } from "./interfaces/short"
 
 import express, { NextFunction, Request, Response } from "express"
@@ -173,7 +172,7 @@ app.get("/short", async function (req: Request, res: Response, next: NextFunctio
 
     if (mapper_result.object_type === "TradeAbstractionOpenShortCommand") {
       let cmd: TradeAbstractionOpenShortCommand = mapper_result
-      let cmd_result: TradeAbstractionOpenSpotShortResult = await tas.short(cmd)
+      let cmd_result: TradeAbstractionOpenShortResult = await tas.short(cmd)
       tags.status = cmd_result.status
 
       let { signal_timestamp_ms } = cmd

@@ -3,8 +3,8 @@ import { FuturesTradeAbstractionServiceClient } from "../../binance/futures/trad
 import { Logger } from "../../../interfaces/logger"
 import * as Sentry from "@sentry/node"
 import {
-  TradeAbstractionOpenFuturesShortCommand,
-  TradeAbstractionOpenFuturesShortResult,
+  TradeAbstractionOpenShortCommand,
+  TradeAbstractionOpenShortResult,
 } from "../../binance/futures/trade-abstraction/interfaces/short"
 
 export class Commands_Futures {
@@ -64,8 +64,8 @@ export class Commands_Futures {
       ctx.reply(`edge not defined.`)
       return
     }
-    let cmd: TradeAbstractionOpenFuturesShortCommand = {
-      object_type: "TradeAbstractionOpenFuturesShortCommand",
+    let cmd: TradeAbstractionOpenShortCommand = {
+      object_type: "TradeAbstractionOpenShortCommand",
       base_asset,
       edge,
       direction: "short",
@@ -74,7 +74,7 @@ export class Commands_Futures {
     }
 
     try {
-      let result: TradeAbstractionOpenFuturesShortResult = await this.futures_tas_client.open_short(cmd)
+      let result: TradeAbstractionOpenShortResult = await this.futures_tas_client.open_short(cmd)
       ctx.reply(`${result.msg}`)
       return
     } catch (err) {

@@ -14,8 +14,8 @@ import { URL } from "url"
 
 import * as Sentry from "@sentry/node"
 import {
-  TradeAbstractionOpenFuturesShortCommand,
-  TradeAbstractionOpenFuturesShortResult,
+  TradeAbstractionOpenShortCommand,
+  TradeAbstractionOpenShortResult,
 } from "../interfaces/short"
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
@@ -36,7 +36,7 @@ export class FuturesTradeAbstractionServiceClient {
   //   return response
   // }
 
-  async open_short(cmd: TradeAbstractionOpenFuturesShortCommand): Promise<TradeAbstractionOpenFuturesShortResult> {
+  async open_short(cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
     let response = await this._call("GET", new URL("/short", TAS_URL).toString(), cmd)
     return response
   }

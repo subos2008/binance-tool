@@ -12,10 +12,7 @@ import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 import Sentry from "../../../../lib/sentry"
 import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
-import {
-  TradeAbstractionOpenFuturesShortCommand,
-  TradeAbstractionOpenFuturesShortResult,
-} from "./interfaces/short"
+import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "./interfaces/short"
 import {
   AuthorisedEdgeType,
   BinanceStyleSpotPrices,
@@ -87,7 +84,7 @@ export class FuturesTradeAbstractionService {
     // return this.positions.open_positions()
   }
 
-  async short(cmd: TradeAbstractionOpenFuturesShortCommand): Promise<TradeAbstractionOpenFuturesShortResult> {
+  async short(cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
     this.logger.info(cmd)
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
@@ -96,8 +93,8 @@ export class FuturesTradeAbstractionService {
     if (!is_authorised_edge(cmd.edge)) {
       let err = new Error(`UnauthorisedEdge ${cmd.edge}`)
       this.logger.warn({ err })
-      let obj: TradeAbstractionOpenFuturesShortResult = {
-        object_type: "TradeAbstractionOpenFuturesShortResult",
+      let obj: TradeAbstractionOpenShortResult = {
+        object_type: "TradeAbstractionOpenShortResult",
         version: 1,
         base_asset: cmd.base_asset,
         quote_asset: this.quote_asset,
@@ -112,8 +109,8 @@ export class FuturesTradeAbstractionService {
     if (disallowed_base_assets_for_entry.includes(cmd.base_asset)) {
       let err = new Error(`Opening spot long positions in ${cmd.base_asset} is explicity disallowed`)
       this.logger.warn({ err })
-      let obj: TradeAbstractionOpenFuturesShortResult = {
-        object_type: "TradeAbstractionOpenFuturesShortResult",
+      let obj: TradeAbstractionOpenShortResult = {
+        object_type: "TradeAbstractionOpenShortResult",
         version: 1,
         base_asset: cmd.base_asset,
         quote_asset: this.quote_asset,

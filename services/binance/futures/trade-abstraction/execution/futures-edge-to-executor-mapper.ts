@@ -14,6 +14,11 @@ import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identif
 import { SendMessageFunc } from "../../../../../lib/telegram-v2"
 import { PositionSizer } from "../fixed-position-sizer"
 import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "../interfaces/short"
+import {
+  LimitSellByQuoteQuantityWithTPandSLCommand,
+  TradeAbstractionOpenShortCommand,
+  TradeAbstractionOpenShortResult,
+} from "../interfaces/short"
 
 import { FuturesExecutionEngine } from "./execution_engines/futures-execution-engine"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
@@ -21,9 +26,10 @@ import { check_edge } from "../../../../../classes/spot/abstractions/position-id
 import { FuturesPositionsExecution_OCOExit } from "./oco-exit-executor"
 import { BinanceFuturesExecutionEngine } from "./execution_engines/binance-futures-execution-engine"
 
+import { map_tas_to_ee_cmd_short } from "../../../../../edges/edge62/edge62-tas-to-ee-mapper"
 /**
  * This class exists to make sure the definition of each edge is internal to the TAS
- * 
+ *
  * If this does the execution of spot position entry/exit
  *
  * It is a low level class intended to be used by the TAS
@@ -124,22 +130,24 @@ export class FuturesEdgeToExecutorMapper {
   //     stop_price: BigNumber
   //   }
   async short(args: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
+  async short(tas_cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
     try {
-      args.edge = check_edge(args.edge)
-      let { edge, quote_asset } = args
+      tas_cmd.edge = check_edge(tas_cmd.edge)
+      let { edge, quote_asset, base_asset, direction } = tas_cmd
+      let tags = { edge, quote_asset, base_asset, direction }
       if (!quote_asset) throw new Error(`quote_asset not defined`)
 
-      this.logger.error(`Futures short not checking if already in position`)
+      this.logger.error(`FuturesEdgeToExecutorMapper:short() not checking if already in position`)
       /**
        * Check if already in a position
        */
-      // if (await this.in_position(args)) {
-      //   let msg = `Already in position on ${args.edge}:${args.base_asset}`
+      // if (await this.in_position(tas_cmd)) {
+      //   let msg = `Already in position on ${tas_cmd.edge}:${tas_cmd.base_asset}`
       //   this.send_message(msg, { edge })
       //   throw new Error(msg)
       // }
 
-      switch (args.edge) {
+      switch (tas_cmd.edge) {
         case "edge62":
           return this.oco_executor.open_position({
             ...args,
@@ -149,9 +157,15 @@ export class FuturesEdgeToExecutorMapper {
             edge_percentage_take_profit: new BigNumber(7),
             edge_percentage_buy_limit: new BigNumber(0.5),
           let trigger_price: BigNumber = await this.trigger_price(tags, tas_cmd)
+          let cmd: LimitSellByQuoteQuantityWithTPandSLCommand = await map_tas_to_ee_cmd_short({
+            tas_cmd,
+            order_context,
+            ee: this.ee,
+            trigger_price,
+            quote_amount,
           })
         default:
-          let msg = `Opening positions on edge ${args.edge} not permitted at the moment`
+          let msg = `Opening positions on edge ${tas_cmd.edge} not permitted at the moment`
           this.send_message(msg, { edge })
           throw new Error(msg)
       }
@@ -161,9 +175,9 @@ export class FuturesEdgeToExecutorMapper {
       let result: TradeAbstractionOpenShortResult = {
         object_type: "TradeAbstractionOpenShortResult",
         version: 1,
-        base_asset: args.base_asset,
-        quote_asset: args.quote_asset,
-        edge: args.edge,
+        base_asset: tas_cmd.base_asset,
+        quote_asset: tas_cmd.quote_asset,
+        edge: tas_cmd.edge,
         status: "INTERNAL_SERVER_ERROR",
         msg: err.message,
         err,

@@ -19,6 +19,7 @@ import { FuturesExecutionEngine } from "./execution_engines/futures-execution-en
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import { check_edge } from "../../../../../classes/spot/abstractions/position-identifier"
 import { FuturesPositionsExecution_OCOExit } from "./oco-exit-executor"
+import { BinanceFuturesExecutionEngine } from "./execution_engines/binance-futures-execution-engine"
 
 /**
  * This class exists to make sure the definition of each edge is internal to the TAS
@@ -41,7 +42,7 @@ export interface FuturesPositionExecutionCloseResult {
 
 export class FuturesEdgeToExecutorMapper {
   logger: Logger
-  ee: FuturesExecutionEngine
+  ee: BinanceFuturesExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
   positions_persistance: SpotPositionsPersistance
@@ -59,7 +60,7 @@ export class FuturesEdgeToExecutorMapper {
     // price_getter,
   }: {
     logger: Logger
-    ee: FuturesExecutionEngine
+    ee: BinanceFuturesExecutionEngine
     // positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
     position_sizer: PositionSizer

@@ -42,7 +42,7 @@ export class FuturesTradeAbstractionService {
   logger: Logger
   quote_asset: string
   // private positions: SpotPositionsQuery // query state of existing open positions
-  private ee: FuturesExecutionEngine
+  private ee: BinanceFuturesExecutionEngine
   private eem: FuturesEdgeToExecutorMapper
   position_sizer: PositionSizer
 
@@ -56,7 +56,7 @@ export class FuturesTradeAbstractionService {
     logger: Logger
     quote_asset: string
     // positions: SpotPositionsQuery
-    ee: FuturesExecutionEngine
+    ee: BinanceFuturesExecutionEngine
     send_message: SendMessageFunc
   }) {
     assert(logger)

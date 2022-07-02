@@ -23,6 +23,8 @@ import { FuturesEdgeToExecutorMapper } from "./execution/futures-edge-to-executo
 import { FuturesExecutionEngine } from "./execution/execution_engines/futures-execution-engine"
 import { FixedPositionSizer, PositionSizer } from "../../../../edges/position-sizer/fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
+import { BinanceFuturesPriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 // import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 // import {
 //   AuthorisedEdgeType,
@@ -63,11 +65,17 @@ export class FuturesTradeAbstractionService {
     // this.positions = positions
     this.ee = ee
     this.position_sizer = new FixedPositionSizer({ logger })
+    let price_getter = new BinanceFuturesPriceGetter({
+      logger,
+      ee: ee.get_raw_binance_ee(),
+      cache_timeout_ms: 3000,
+    })
     this.eem = new FuturesEdgeToExecutorMapper({
       logger,
       ee,
       send_message,
       position_sizer: this.position_sizer,
+      price_getter,
     })
   }
 

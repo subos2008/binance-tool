@@ -46,10 +46,10 @@ export class FuturesEdgeToExecutorMapper {
   send_message: SendMessageFunc
   position_sizer: PositionSizer
   positions_persistance: SpotPositionsPersistance
-  // price_getter: CurrentPriceGetter
 
   /* executors - really need to refactor this */
   oco_executor: FuturesPositionsExecution_OCOExit
+  price_getter: CurrentPriceGetter
 
   constructor({
     logger,
@@ -57,14 +57,14 @@ export class FuturesEdgeToExecutorMapper {
     // positions_persistance,
     send_message,
     position_sizer,
-    // price_getter,
+    price_getter,
   }: {
     logger: Logger
     ee: BinanceFuturesExecutionEngine
     // positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
     position_sizer: PositionSizer
-    // price_getter: FuturesCurrentPriceGetter
+    price_getter: CurrentPriceGetter
   }) {
     assert(logger)
     this.logger = logger
@@ -73,7 +73,6 @@ export class FuturesEdgeToExecutorMapper {
     // this.positions_persistance = positions_persistance
     this.send_message = send_message
     this.position_sizer = position_sizer
-    // this.price_getter = price_getter
     this.oco_executor = new FuturesPositionsExecution_OCOExit({
       logger,
       ee,
@@ -82,6 +81,7 @@ export class FuturesEdgeToExecutorMapper {
       position_sizer,
       // price_getter,
     })
+    this.price_getter = price_getter
   }
 
   in_position({ base_asset, edge }: { base_asset: string; edge: string }) {
@@ -102,13 +102,18 @@ export class FuturesEdgeToExecutorMapper {
     // })
   }
 
-  // Used when constructing orders
-  private get_market_identifier_for(args: { quote_asset: string; base_asset: string }): MarketIdentifier_V3 {
-    return this.ee.get_market_identifier_for(args)
-  }
-
-  private get_exchange_identifier(): ExchangeIdentifier_V3 {
-    return this.ee.get_exchange_identifier()
+  private async trigger_price(tags: Tags, tas_cmd: TradeAbstractionOpenShortCommand): Promise<BigNumber> {
+    if (tas_cmd.trigger_price) return new BigNumber(tas_cmd.trigger_price)
+    let { quote_asset, base_asset } = tas_cmd
+    let market_identifier = await this.ee.get_market_identifier_for({ quote_asset, base_asset })
+    let trigger_price = await this.price_getter.get_current_price({ market_symbol: market_identifier.symbol })
+    this.logger.warn(
+      tags,
+      `Using current price as trigger_price (${trigger_price.toFixed()})for ${tas_cmd.edge}:${
+        tas_cmd.base_asset
+      } entry`
+    )
+    return trigger_price
   }
 
   /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
@@ -143,6 +148,7 @@ export class FuturesEdgeToExecutorMapper {
             edge_percentage_stop_limit: new BigNumber(15),
             edge_percentage_take_profit: new BigNumber(7),
             edge_percentage_buy_limit: new BigNumber(0.5),
+          let trigger_price: BigNumber = await this.trigger_price(tags, tas_cmd)
           })
         default:
           let msg = `Opening positions on edge ${args.edge} not permitted at the moment`

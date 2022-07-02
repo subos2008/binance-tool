@@ -13,7 +13,6 @@ import { Logger } from "../../../../../interfaces/logger"
 import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
 import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SendMessageFunc } from "../../../../../lib/telegram-v2"
-import { FixedPositionSizer, PositionSizer } from "../fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import {
   AuthorisedEdgeType,
@@ -32,6 +31,7 @@ import {
 } from "../interfaces/close_spot"
 import { SpotExecutionEngine } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
+import { FixedPositionSizer, PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
 
 /**
  * If this does the execution of spot position entry/exit

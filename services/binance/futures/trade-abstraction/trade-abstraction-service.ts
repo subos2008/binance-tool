@@ -24,7 +24,7 @@ import {
 } from "../../../../classes/spot/abstractions/position-identifier"
 import { FuturesEdgeToExecutorMapper } from "./execution/futures-edge-to-executor-mapper"
 import { FuturesExecutionEngine } from "./execution/execution_engines/futures-execution-engine"
-import { FixedPositionSizer, PositionSizer } from "./fixed-position-sizer"
+import { FixedPositionSizer, PositionSizer } from "../../../../edges/position-sizer/fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 // import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 // import {

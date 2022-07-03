@@ -38,7 +38,7 @@ export class FuturesOrderExecutionTracker {
   closeUserWebsocket: Function | undefined
   order_callbacks: FuturesOrderCallbacks | undefined
   print_all_trades: boolean = false
-  order_context_persistence: OrderContextPersistence
+  order_context_persistence: OrderContextPersistence | undefined
   exchange_identifier: ExchangeIdentifier_V3
 
   // All numbers are expected to be passed in as strings
@@ -56,7 +56,7 @@ export class FuturesOrderExecutionTracker {
     logger: Logger
     order_callbacks: FuturesOrderCallbacks
     print_all_trades?: boolean
-    order_context_persistence: OrderContextPersistence
+    order_context_persistence?: OrderContextPersistence
     exchange_identifier: ExchangeIdentifier_V3
   }) {
     assert(logger)
@@ -141,14 +141,22 @@ export class FuturesOrderExecutionTracker {
     }
   }
 
-  async get_order_context_for_order(data: { order_id: string; symbol: string }): Promise<OrderContext_V1> {
+  // Originally used to throw if edge (OrderContext_V1) not defined, now returns undefined
+  async get_order_context_for_order(data: {
+    order_id: string
+    symbol: string
+  }): Promise<OrderContext_V1 | undefined> {
     let order_context: OrderContext_V1 | undefined = undefined
     try {
+      if (!this.order_context_persistence) return undefined
       order_context = await this.order_context_persistence.get_order_context_for_order({
         exchange_identifier: this.exchange_identifier,
         order_id: data.order_id,
       })
-      if (!order_context) throw new Error(`No OrderContext found for order ${data.order_id}`)
+      if (!order_context) {
+        this.logger.warn(`No OrderContext found for order ${data.order_id}`)
+        return undefined
+      }
       let { edge } = order_context
       this.logger.info(
         data,
@@ -164,11 +172,10 @@ export class FuturesOrderExecutionTracker {
   }
 
   async processOrderUpdate(_data: OrderUpdate) {
-    
     if (_data.eventType !== "ORDER_TRADE_UPDATE") {
       throw new Error(`Unknown eventType: ${(_data as any).eventType}`)
     }
-    
+
     let bod: FuturesBinanceOrderData
     const {
       symbol,
@@ -229,9 +236,9 @@ export class FuturesOrderExecutionTracker {
     let edge: AuthorisedEdgeType | undefined
     try {
       /** Add edge and order_context if known */
-      let order_context: OrderContext_V1 = await this.get_order_context_for_order(bod)
+      let order_context: OrderContext_V1 | undefined = await this.get_order_context_for_order(bod)
       bod.order_context = order_context
-      bod.edge = order_context.edge
+      bod.edge = order_context?.edge
     } catch (err) {
       this.logger.error(_data, err)
       Sentry.withScope(function (scope) {

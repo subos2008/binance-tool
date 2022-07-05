@@ -8,7 +8,6 @@ import {
   TradeAbstractionOpenSpotLongResult,
 } from "../binance/spot/trade-abstraction/interfaces/open_spot"
 import {
-  TradeAbstractionCloseLongCommand,
   TradeAbstractionCloseSpotLongResult,
 } from "../binance/spot/trade-abstraction/interfaces/close_spot"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"

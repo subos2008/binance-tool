@@ -10,35 +10,25 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../../../../interfaces/logger"
-import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
 import { SendMessageFunc } from "../../../../../lib/telegram-v2"
-import { PositionSizer } from "../fixed-position-sizer"
-import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "../interfaces/short"
+import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
 import {
   LimitSellByQuoteQuantityWithTPandSLCommand,
-  TradeAbstractionOpenShortCommand,
+  TradeAbstractionOpenShortCommand as IncommingTradeAbstractionOpenShortCommand,
   TradeAbstractionOpenShortResult,
 } from "../interfaces/short"
 
-import { FuturesExecutionEngine } from "./execution_engines/futures-execution-engine"
-import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
+interface TradeAbstractionOpenShortCommand extends IncommingTradeAbstractionOpenShortCommand {
+  quote_asset: string // added by the TAS before it hits the EE
+}
+
 import { check_edge } from "../../../../../classes/spot/abstractions/position-identifier"
-import { FuturesPositionsExecution_OCOExit } from "./oco-exit-executor"
 import { BinanceFuturesExecutionEngine } from "./execution_engines/binance-futures-execution-engine"
 
+import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import { map_tas_to_ee_cmd_short } from "../../../../../edges/edge62/edge62-tas-to-ee-mapper"
-/**
- * This class exists to make sure the definition of each edge is internal to the TAS
- *
- * If this does the execution of spot position entry/exit
- *
- * It is a low level class intended to be used by the TAS
- *
- * If you want to open positions in a safe way protected by the trading rules, use the tas-client instead
- *
- * Note this is instantiated with a particular exchange, the exchange identifier is
- * fixed at instantiation
- */
+import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
+import { Tags } from "hot-shots"
 
 export interface FuturesPositionExecutionCloseResult {
   base_asset: string
@@ -51,10 +41,7 @@ export class FuturesEdgeToExecutorMapper {
   ee: BinanceFuturesExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
-  positions_persistance: SpotPositionsPersistance
-
-  /* executors - really need to refactor this */
-  oco_executor: FuturesPositionsExecution_OCOExit
+  // positions_persistance: SpotPositionsPersistance
   price_getter: CurrentPriceGetter
 
   constructor({
@@ -79,14 +66,6 @@ export class FuturesEdgeToExecutorMapper {
     // this.positions_persistance = positions_persistance
     this.send_message = send_message
     this.position_sizer = position_sizer
-    this.oco_executor = new FuturesPositionsExecution_OCOExit({
-      logger,
-      ee,
-      // positions_persistance,
-      send_message,
-      position_sizer,
-      // price_getter,
-    })
     this.price_getter = price_getter
   }
 
@@ -122,14 +101,9 @@ export class FuturesEdgeToExecutorMapper {
     return trigger_price
   }
 
+  private async kludge(cmd: LimitSellByQuoteQuantityWithTPandSLCommand) {}
+
   /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
-  // {
-  //     executed_quote_quantity: string
-  //     stop_order_id: string | number | undefined
-  //     executed_price: BigNumber
-  //     stop_price: BigNumber
-  //   }
-  async short(args: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
   async short(tas_cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
     try {
       tas_cmd.edge = check_edge(tas_cmd.edge)
@@ -148,14 +122,9 @@ export class FuturesEdgeToExecutorMapper {
       // }
 
       switch (tas_cmd.edge) {
-        case "edge62":
-          return this.oco_executor.open_position({
-            ...args,
-            quote_asset,
-            edge_percentage_stop: new BigNumber(7),
-            edge_percentage_stop_limit: new BigNumber(15),
-            edge_percentage_take_profit: new BigNumber(7),
-            edge_percentage_buy_limit: new BigNumber(0.5),
+        case "edge62": {
+          let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
+          let quote_amount = await this.position_sizer.position_size_in_quote_asset({ ...tas_cmd, quote_asset })
           let trigger_price: BigNumber = await this.trigger_price(tags, tas_cmd)
           let cmd: LimitSellByQuoteQuantityWithTPandSLCommand = await map_tas_to_ee_cmd_short({
             tas_cmd,
@@ -164,10 +133,27 @@ export class FuturesEdgeToExecutorMapper {
             trigger_price,
             quote_amount,
           })
+          let result: TradeAbstractionOpenShortResult =
+            await this.ee.limit_sell_by_quote_quantity_with_market_tp_and_sl(cmd)
+          return result
+        }
         default:
-          let msg = `Opening positions on edge ${tas_cmd.edge} not permitted at the moment`
-          this.send_message(msg, { edge })
-          throw new Error(msg)
+          let msg = `${edge}${base_asset}: BAD_INPUTS: TAS does not know how to process ${direction} on this edge`
+          let err = new Error(msg)
+          let result: TradeAbstractionOpenShortResult = {
+            object_type: "TradeAbstractionOpenShortResult",
+            version: 1,
+            base_asset: base_asset as string,
+            quote_asset,
+            edge: edge as string,
+            status: "BAD_INPUTS",
+            http_status: 400,
+            msg,
+            err,
+            execution_timestamp_ms: Date.now(),
+          }
+          this.logger.error(msg)
+          return result
       }
     } catch (err: any) {
       this.logger.error({ err })
@@ -181,7 +167,7 @@ export class FuturesEdgeToExecutorMapper {
         status: "INTERNAL_SERVER_ERROR",
         msg: err.message,
         err,
-        execution_timestamp_ms: Date.now().toString(),
+        execution_timestamp_ms: Date.now(),
       }
       return result
     }

@@ -1,14 +1,7 @@
-const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
-if (TAS_URL === undefined) {
-  throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
-}
-if (!TAS_URL.startsWith("http")) {
-  throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL should contain http/s!")
-}
-
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"
 import { Logger } from "../../../../../interfaces/logger"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/long"
+import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "../interfaces/long"
+import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "../interfaces/short"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "../interfaces/close"
 
 const JSONBigNumber = require("./JSONBigNumber")
@@ -27,40 +20,56 @@ Sentry.configureScope(function (scope: any) {
 
 export class TradeAbstractionServiceClient {
   logger: Logger
+  TAS_URL: string
 
-  constructor({ logger }: { logger: Logger }) {
+  // Let TAS_URL be undefined becuase we check it here
+  constructor({ logger, TAS_URL }: { logger: Logger; TAS_URL: string | undefined }) {
     this.logger = logger
+
+    if (TAS_URL === undefined) {
+      throw new Error("TAS_URL must be provided!")
+    }
+    if (!TAS_URL.startsWith("http")) {
+      throw new Error("TAS_URL should contain http/s!")
+    }
+
+    this.TAS_URL = TAS_URL
   }
 
   async get_exchange_identifier(): Promise<ExchangeIdentifier_V3> {
-    let response = await this._call("GET", new URL("/exchange_identifier", TAS_URL).toString())
+    let response = await this._call("GET", new URL("/exchange_identifier", this.TAS_URL).toString())
     this.logger.info(`Returned exchange_identifier:`)
     this.logger.object(response)
     return response
   }
 
   async prices(): Promise<BinanceStyleSpotPrices> {
-    let response = await this._call("GET", new URL("/prices", TAS_URL).toString())
+    let response = await this._call("GET", new URL("/prices", this.TAS_URL).toString())
     this.logger.info(`Returned prices:`)
     this.logger.object(response)
     return response
   }
 
   async positions(): Promise<SpotPositionIdentifier_V3[]> {
-    let response = await this._call("GET", new URL("/positions", TAS_URL).toString())
+    let response = await this._call("GET", new URL("/positions", this.TAS_URL).toString())
     this.logger.info(`Returned positions:`)
     this.logger.object(response)
     return response
   }
 
-  async open_spot_long(cmd: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
-    let response = await this._call("GET", new URL("/long", TAS_URL).toString(), cmd)
+  async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {
+    let response = await this._call("GET", new URL("/close", this.TAS_URL).toString(), cmd)
+    this.logger.object(response)
     return response
   }
 
-  async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {
-    let response = await this._call("GET", new URL("/close", TAS_URL).toString(), cmd)
-    this.logger.object(response)
+  async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
+    let response = await this._call("GET", new URL("/long", this.TAS_URL).toString(), cmd)
+    return response
+  }
+
+  async short(cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
+    let response = await this._call("GET", new URL("/short", this.TAS_URL).toString(), cmd)
     return response
   }
 

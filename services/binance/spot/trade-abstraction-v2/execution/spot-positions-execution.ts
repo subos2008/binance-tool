@@ -313,9 +313,9 @@ export class SpotPositionsExecution {
         execution_timestamp_ms,
         signal_to_execution_slippage_ms,
         action,
-        executed_quote_quantity,
-        executed_base_quantity,
-        executed_price,
+        // executed_quote_quantity, // TODO: add these later if we can
+        // executed_base_quantity,
+        // executed_price,
       }
       return obj
     } catch (err) {

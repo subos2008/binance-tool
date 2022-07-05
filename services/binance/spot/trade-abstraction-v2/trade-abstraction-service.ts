@@ -186,7 +186,7 @@ export class TradeAbstractionService {
 
     this.logger.warn(`Position exit is not atomic with check for existing position`)
     try {
-      let result: TradeAbstractionCloseResult = await this.spot_ee.close_position({ quote_asset, ...cmd })
+      let result: TradeAbstractionCloseResult = await this.spot_ee.close_position(cmd, { quote_asset })
       return result
     } catch (err) {
       Sentry.captureException(err)

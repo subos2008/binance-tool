@@ -43,9 +43,9 @@ export interface TradeAbstractionCloseResult_SUCCESS extends CloseResult_BASE {
   quote_asset: string
 
   // execution
-  executed_quote_quantity: string
-  executed_base_quantity: string
-  executed_price: string
+  executed_quote_quantity?: string // TODO: add later
+  executed_base_quantity?: string // TODO: add later
+  executed_price?: string // TODO: add later
   signal_to_execution_slippage_ms: number
   execution_timestamp_ms: number
 }

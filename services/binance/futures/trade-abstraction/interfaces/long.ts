@@ -1,4 +1,3 @@
-import BigNumber from "bignumber.js"
 export interface TradeAbstractionOpenLongCommand {
   object_type: "TradeAbstractionOpenLongCommand"
   base_asset: string
@@ -10,33 +9,8 @@ export interface TradeAbstractionOpenLongCommand {
   signal_timestamp_ms: number
 }
 
-export interface TradeAbstractionOpenSpotLongCommand__StopLimitExit {
-  base_asset: string
-  quote_asset: string // added by the TAS before it hits the EE
-  edge: string
-  direction: "long"
-  action: "open"
-  trigger_price?: string
-  signal_timestamp_ms: number
-  edge_percentage_stop: BigNumber
-  edge_percentage_buy_limit: BigNumber
-}
 
-export interface TradeAbstractionOpenSpotLongCommand_OCO_Exit {
-  base_asset: string
-  quote_asset: string // added by the TAS before it hits the EE
-  edge: string
-  direction: "long"
-  action: "open"
-  trigger_price?: string
-  signal_timestamp_ms: number
-  edge_percentage_stop: BigNumber
-  edge_percentage_stop_limit: BigNumber
-  edge_percentage_take_profit: BigNumber
-  edge_percentage_buy_limit: BigNumber
-}
-
-interface TradeAbstractionOpenSpotLongResult_SUCCESS {
+interface TradeAbstractionOpenLongResult_SUCCESS {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -55,7 +29,7 @@ interface TradeAbstractionOpenSpotLongResult_SUCCESS {
   executed_base_quantity: string
   executed_price: string // can be null if nothing bought
   execution_timestamp_ms?: number
-  signal_to_execution_slippage_ms?: string
+  signal_to_execution_slippage_ms?: number
 
   created_stop_order: boolean
   stop_order_id?: string | number | undefined
@@ -67,7 +41,27 @@ interface TradeAbstractionOpenSpotLongResult_SUCCESS {
   oco_order_id?: string | number | undefined
 }
 
-interface TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR {
+interface TradeAbstractionOpenLongResult_BAD_INPUTS {
+  object_type: "TradeAbstractionOpenLongResult"
+  version: 1
+  base_asset?: string
+  quote_asset?: string
+  edge?: string
+  direction?: string
+  action?: string
+  
+  status: "BAD_INPUTS" // exception caught
+  http_status: 400
+  
+  msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+  err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
+  
+  trigger_price?: string
+  execution_timestamp_ms: number
+  signal_to_execution_slippage_ms?: number
+}
+
+interface TradeAbstractionOpenLongResult_INTERNAL_SERVER_ERROR {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -82,30 +76,9 @@ interface TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR {
 
   trigger_price?: string
   execution_timestamp_ms: number
-  signal_to_execution_slippage_ms?: string
+  signal_to_execution_slippage_ms?: number
 }
-
-interface TradeAbstractionOpenSpotLongResult_BAD_INPUTS {
-  object_type: "TradeAbstractionOpenLongResult"
-  version: 1
-  base_asset?: string
-  quote_asset?: string
-  edge?: string
-  direction?: string
-  action?: string
-
-  status: "BAD_INPUTS" // exception caught
-  http_status: 400
-
-  msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
-  err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
-
-  trigger_price?: string
-  execution_timestamp_ms: number
-  signal_to_execution_slippage_ms?: string
-}
-
-interface TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL {
+interface TradeAbstractionOpenLongResult_ENTRY_FAILED_TO_FILL {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -123,9 +96,9 @@ interface TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL {
 
   // Buy execution
   execution_timestamp_ms?: number
-  signal_to_execution_slippage_ms?: string
+  signal_to_execution_slippage_ms?: number
 }
-interface TradeAbstractionOpenSpotLongResult_UNAUTHORISED {
+interface TradeAbstractionOpenLongResult_UNAUTHORISED {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -140,10 +113,10 @@ interface TradeAbstractionOpenSpotLongResult_UNAUTHORISED {
 
   trigger_price?: string
   execution_timestamp_ms?: number
-  signal_to_execution_slippage_ms?: string
+  signal_to_execution_slippage_ms?: number
 }
 
-interface TradeAbstractionOpenSpotLongResult_TRADING_IN_ASSET_PROHIBITED {
+interface TradeAbstractionOpenLongResult_TRADING_IN_ASSET_PROHIBITED {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -158,10 +131,10 @@ interface TradeAbstractionOpenSpotLongResult_TRADING_IN_ASSET_PROHIBITED {
 
   trigger_price?: string
   execution_timestamp_ms?: number
-  signal_to_execution_slippage_ms?: string
+  signal_to_execution_slippage_ms?: number
 }
 
-interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION {
+interface TradeAbstractionOpenLongResult_ALREADY_IN_POSITION {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -177,11 +150,11 @@ interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION {
   trigger_price?: string
   executed_price?: string // null if nothing bought
   execution_timestamp_ms?: number
-  signal_to_execution_slippage_ms?: string
+  signal_to_execution_slippage_ms?: number
 }
 
-console.warn(`What http_status do we want for INSUFFICIENT_BALANCE?`)
-interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE {
+console.warn(`What http_status do we want for INSUFFICIENT_BALANCE?`) // 200?
+interface TradeAbstractionOpenLongResult_INSUFFICIENT_BALANCE {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -189,7 +162,7 @@ interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE {
   edge: string
 
   status: "INSUFFICIENT_BALANCE"
-  http_status: 402 // 402: Payment Required
+  http_status: 402 // 402: Payment Required, or 200: It was a success really - even if not a 201
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -197,11 +170,11 @@ interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE {
   trigger_price?: string
   executed_price?: string // null if nothing bought
   execution_timestamp_ms?: number
-  signal_to_execution_slippage_ms?: string
+  signal_to_execution_slippage_ms?: number
 }
 
 console.warn(`What http_status do we want for ABORTED_FAILED_TO_CREATE_EXIT_ORDERS?`)
-interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
+interface TradeAbstractionOpenLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -209,7 +182,7 @@ interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDER
   edge: string
 
   status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
-  http_status: 418 // 418: Help What Should I be
+  http_status: 418 // TODO: 418: Help What Should I be
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -221,7 +194,7 @@ interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDER
   executed_base_quantity: string
   executed_price?: string // can be null if nothing bought
   execution_timestamp_ms?: number // TODO: should all these be optional?
-  signal_to_execution_slippage_ms?: string
+  signal_to_execution_slippage_ms?: number
 
   created_stop_order: boolean
   stop_order_id?: string | number | undefined
@@ -234,12 +207,12 @@ interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDER
 }
 
 export type TradeAbstractionOpenLongResult =
-  | TradeAbstractionOpenSpotLongResult_SUCCESS
-  | TradeAbstractionOpenSpotLongResult_BAD_INPUTS
-  | TradeAbstractionOpenSpotLongResult_UNAUTHORISED
-  | TradeAbstractionOpenSpotLongResult_TRADING_IN_ASSET_PROHIBITED
-  | TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION
-  | TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE
-  | TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL
-  | TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
-  | TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR
+  | TradeAbstractionOpenLongResult_SUCCESS
+  | TradeAbstractionOpenLongResult_BAD_INPUTS
+  | TradeAbstractionOpenLongResult_UNAUTHORISED
+  | TradeAbstractionOpenLongResult_TRADING_IN_ASSET_PROHIBITED
+  | TradeAbstractionOpenLongResult_ALREADY_IN_POSITION
+  | TradeAbstractionOpenLongResult_INSUFFICIENT_BALANCE
+  | TradeAbstractionOpenLongResult_ENTRY_FAILED_TO_FILL
+  | TradeAbstractionOpenLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
+  | TradeAbstractionOpenLongResult_INTERNAL_SERVER_ERROR

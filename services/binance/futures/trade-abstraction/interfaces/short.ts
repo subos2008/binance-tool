@@ -1,29 +1,6 @@
-// TAS level
-// export interface TradeAbstractionOpenLongCommand {
-//   object_type: "TradeAbstractionOpenLongCommand"
-//   base_asset: string
-//   quote_asset?: string // added by the TAS before it hits the EE
-//   edge: string
-//   direction: "long"
-//   action: "open"
-//   trigger_price?: string
-//   signal_timestamp_ms: number
-// }
-
-import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
-import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
-
-import { BigNumber } from "bignumber.js"
-BigNumber.DEBUG = true // Prevent NaN
-// Prevent type coercion
-BigNumber.prototype.valueOf = function () {
-  throw Error("BigNumber .valueOf called!")
-}
-
 export interface TradeAbstractionOpenShortCommand {
   object_type: "TradeAbstractionOpenShortCommand"
   base_asset: string
-  quote_asset: string // added by the TAS before it hits the EE
   edge: string
   direction: "short"
   action: "open"
@@ -31,27 +8,6 @@ export interface TradeAbstractionOpenShortCommand {
   signal_timestamp_ms: number
 }
 
-export interface LimitSellByQuoteQuantityWithTPandSLCommand {
-  object_type: "LimitSellByQuoteQuantityWithTPandSLCommand"
-  version: 1
-  order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V3
-  quote_amount: BigNumber
-  sell_limit_price: BigNumber
-  take_profit_price: BigNumber
-  stop_price: BigNumber
-}
-
-// let short_entry_cmd: LimitSellByQuoteQuantityWithTPandSLCommand = {
-//   object_type: "LimitSellByQuoteQuantityWithTPandSLCommand",
-//   version: 1,
-//   order_context,
-//   market_identifier,
-//   quote_amount,
-//   sell_limit_price,
-//   take_profit_price,
-//   stop_price,
-// }
 
 interface TradeAbstractionOpenShortResult_SUCCESS {
   object_type: "TradeAbstractionOpenShortResult"
@@ -62,6 +18,9 @@ interface TradeAbstractionOpenShortResult_SUCCESS {
 
   status: "SUCCESS" // full or partial entry, all good
   msg: string // human readable summary
+  http_status: 201 // 201: Created
+
+  buy_filled: true
 
   // signal
   trigger_price?: string
@@ -69,7 +28,7 @@ interface TradeAbstractionOpenShortResult_SUCCESS {
   // Buy execution
   executed_quote_quantity: string
   executed_base_quantity: string
-  executed_price?: string // can be null if nothing bought
+  executed_price: string // can be null if nothing bought
   execution_timestamp_ms?: number
   signal_to_execution_slippage_ms?: number
 
@@ -93,6 +52,8 @@ interface TradeAbstractionOpenShortResult_BAD_INPUTS {
   status: "BAD_INPUTS" // exception caught
   http_status: 400
 
+  buy_filled: false
+
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
 
@@ -109,6 +70,9 @@ interface TradeAbstractionOpenShortResult_INTERNAL_SERVER_ERROR {
   edge: string
 
   status: "INTERNAL_SERVER_ERROR" // exception caught
+  http_status: 500
+
+  buy_filled?: boolean
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -126,13 +90,15 @@ interface TradeAbstractionOpenShortResult_ENTRY_FAILED_TO_FILL {
   edge: string
 
   status: "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill
+  http_status: 200 // 200: Success... but not 201, so not actually created
+
+  buy_filled: false
 
   msg: string // human readable summary
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
 
   // signal
   trigger_price?: string
-  http_status: 200
 
   // Buy execution
   execution_timestamp_ms?: number
@@ -146,6 +112,9 @@ interface TradeAbstractionOpenShortResult_UNAUTHORISED {
   edge: string
 
   status: "UNAUTHORISED" // atm means edge not recognised
+  http_status: 403
+
+  buy_filled: false
 
   msg: string // human readable summary
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -163,6 +132,9 @@ interface TradeAbstractionOpenShortResult_TRADING_IN_ASSET_PROHIBITED {
   edge: string
 
   status: "TRADING_IN_ASSET_PROHIBITED" // some assets like stable coins we refuse to enter
+  http_status: 403
+
+  buy_filled: false
 
   msg: string
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -180,6 +152,9 @@ interface TradeAbstractionOpenShortResult_ALREADY_IN_POSITION {
   edge: string
 
   status: "ALREADY_IN_POSITION" // Didn't enter because already in this position
+  http_status: 409 // 409: Conflict
+
+  buy_filled: false
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -189,6 +164,30 @@ interface TradeAbstractionOpenShortResult_ALREADY_IN_POSITION {
   execution_timestamp_ms?: number
   signal_to_execution_slippage_ms?: number
 }
+
+console.warn(`What http_status do we want for INSUFFICIENT_BALANCE?`) // 200?
+interface TradeAbstractionOpenShortResult_INSUFFICIENT_BALANCE {
+  object_type: "TradeAbstractionOpenShortResult"
+  version: 1
+  base_asset: string
+  quote_asset?: string
+  edge: string
+
+  status: "INSUFFICIENT_BALANCE"
+  http_status: 402 // 402: Payment Required, or 200: It was a success really - even if not a 201
+
+  buy_filled: false // rename entered position? or is that additional?
+
+  msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
+  err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
+
+  trigger_price?: string
+  executed_price?: string // null if nothing bought
+  execution_timestamp_ms?: number
+  signal_to_execution_slippage_ms?: number
+}
+
+console.warn(`What http_status do we want for ABORTED_FAILED_TO_CREATE_EXIT_ORDERS?`)
 interface TradeAbstractionOpenShortResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
   object_type: "TradeAbstractionOpenShortResult"
   version: 1
@@ -197,6 +196,9 @@ interface TradeAbstractionOpenShortResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
   edge: string
 
   status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
+  http_status: 418 // TODO: 418: Help What Should I be
+
+  buy_filled: boolean
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -223,9 +225,10 @@ interface TradeAbstractionOpenShortResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
 export type TradeAbstractionOpenShortResult =
   | TradeAbstractionOpenShortResult_SUCCESS
   | TradeAbstractionOpenShortResult_BAD_INPUTS
-  | TradeAbstractionOpenShortResult_INTERNAL_SERVER_ERROR
-  | TradeAbstractionOpenShortResult_ENTRY_FAILED_TO_FILL
   | TradeAbstractionOpenShortResult_UNAUTHORISED
-  | TradeAbstractionOpenShortResult_ALREADY_IN_POSITION
-  | TradeAbstractionOpenShortResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
   | TradeAbstractionOpenShortResult_TRADING_IN_ASSET_PROHIBITED
+  | TradeAbstractionOpenShortResult_ALREADY_IN_POSITION
+  | TradeAbstractionOpenShortResult_INSUFFICIENT_BALANCE
+  | TradeAbstractionOpenShortResult_ENTRY_FAILED_TO_FILL
+  | TradeAbstractionOpenShortResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
+  | TradeAbstractionOpenShortResult_INTERNAL_SERVER_ERROR

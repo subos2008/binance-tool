@@ -4,7 +4,7 @@
 
 import { strict as assert } from "assert"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
-import { SpotTradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
+import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
 import { Logger } from "../../interfaces/logger"
 import * as Sentry from "@sentry/node"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
@@ -42,7 +42,7 @@ export class Edge60ForwarderToEdge62Futures implements Edge60EntrySignalProcesso
   send_message: Function
   logger: Logger
   // event_name: MyEventNameType
-  tas_client: SpotTradeAbstractionServiceClient
+  tas_client: TradeAbstractionServiceClient
   edge: AuthorisedEdgeType = "edge62"
 
   constructor({ send_message, logger }: { send_message: (msg: string) => void; logger: Logger }) {
@@ -50,7 +50,7 @@ export class Edge60ForwarderToEdge62Futures implements Edge60EntrySignalProcesso
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-    this.tas_client = new SpotTradeAbstractionServiceClient({ logger })
+    this.tas_client = new TradeAbstractionServiceClient({ logger })
   }
 
   async process_edge60_entry_signal(signal: Edge60PositionEntrySignal) {

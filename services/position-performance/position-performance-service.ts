@@ -30,7 +30,7 @@ import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
-import { SpotTradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
+import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
 import { CurrentAllPricesGetter } from "../../interfaces/exchanges/generic/price-getter"
 
 export class PositionPerformance {
@@ -137,7 +137,7 @@ export class PositionPerformance {
 async function main() {
   const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   const spot_positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
-  const ee = new SpotTradeAbstractionServiceClient({ logger })
+  const ee = new TradeAbstractionServiceClient({ logger })
 
   const spot_positions_query = new SpotPositionsQuery({
     logger,

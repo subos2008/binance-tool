@@ -1,5 +1,5 @@
 import { Telegraf, Context, NarrowedContext, Types } from "telegraf"
-import { FuturesTradeAbstractionServiceClient } from "../../binance/futures/trade-abstraction/client/tas-client"
+import { TradeAbstractionServiceClient } from "../../binance/futures/trade-abstraction/client/tas-client"
 import { Logger } from "../../../interfaces/logger"
 import * as Sentry from "@sentry/node"
 import {
@@ -8,7 +8,7 @@ import {
 } from "../../binance/futures/trade-abstraction/interfaces/short"
 
 export class Commands_Futures {
-  futures_tas_client: FuturesTradeAbstractionServiceClient
+  futures_tas_client: TradeAbstractionServiceClient
   logger: Logger
 
   constructor(args: { bot: Telegraf; logger: Logger }) {

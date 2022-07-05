@@ -11,7 +11,7 @@ const service_name = "edge-signal-to-tas-bridge"
 require("dotenv").config()
 
 import { ListenerFactory } from "../../classes/amqp/listener-factory"
-import { SpotTradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
+import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { MessageProcessor } from "../../classes/amqp/interfaces"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
@@ -51,7 +51,7 @@ class Edge60MessageProcessor implements MessageProcessor {
   send_message: Function
   logger: Logger
   event_name: MyEventNameType
-  tas_client: SpotTradeAbstractionServiceClient
+  tas_client: TradeAbstractionServiceClient
   fanout: Edge60EntrySignalProcessor
 
   constructor({
@@ -69,7 +69,7 @@ class Edge60MessageProcessor implements MessageProcessor {
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-    this.tas_client = new SpotTradeAbstractionServiceClient({ logger })
+    this.tas_client = new TradeAbstractionServiceClient({ logger })
     this.event_name = event_name
     this.fanout = new Edge60EntrySignalFanout({ logger, event_name, send_message })
     const amqp_health: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({

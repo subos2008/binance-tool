@@ -22,10 +22,10 @@ import {
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 Sentry.init({})
 Sentry.configureScope(function (scope: any) {
-  scope.setTag("class", "SpotTradeAbstractionServiceClient")
+  scope.setTag("class", "TradeAbstractionServiceClient")
 })
 
-export class SpotTradeAbstractionServiceClient {
+export class TradeAbstractionServiceClient {
   logger: Logger
 
   constructor({ logger }: { logger: Logger }) {

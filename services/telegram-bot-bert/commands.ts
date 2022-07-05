@@ -1,6 +1,6 @@
 import { Telegraf, Context, NarrowedContext, Types } from "telegraf"
 import { Logger } from "../../interfaces/logger"
-import { SpotTradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
+import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
 
 import * as Sentry from "@sentry/node"
 import {
@@ -12,7 +12,6 @@ import {
   TradeAbstractionCloseSpotLongResult,
 } from "../binance/spot/trade-abstraction/interfaces/close_spot"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
-import { FuturesTradeAbstractionServiceClient } from "../binance/futures/trade-abstraction/client/tas-client"
 import { Commands_Futures } from "./commands/futures"
 Sentry.init({})
 // Sentry.configureScope(function (scope: any) {
@@ -51,7 +50,7 @@ To check the bot is listening:
  * Probably add session here later
  */
 export class Commands {
-  spot_tas_client: SpotTradeAbstractionServiceClient
+  spot_tas_client: TradeAbstractionServiceClient
   logger: Logger
 
   // commands
@@ -59,7 +58,7 @@ export class Commands {
 
   constructor({ bot, logger }: { bot: Telegraf; logger: Logger }) {
     this.logger = logger
-    this.spot_tas_client = new SpotTradeAbstractionServiceClient({ logger })
+    this.spot_tas_client = new TradeAbstractionServiceClient({ logger })
     // Set the bot response
     // Order is important
     bot.help((ctx) => ctx.replyWithHTML(help_text))

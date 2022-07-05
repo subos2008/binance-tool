@@ -45,9 +45,9 @@ interface TradeAbstractionOpenShortResult_SUCCESS {
 interface TradeAbstractionOpenShortResult_BAD_INPUTS {
   object_type: "TradeAbstractionOpenShortResult"
   version: 1
-  base_asset: string
+  base_asset?: string
   quote_asset?: string
-  edge: string
+  edge?: string
 
   status: "BAD_INPUTS" // exception caught
   http_status: 400

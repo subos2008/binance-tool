@@ -20,7 +20,6 @@ import {
   is_authorised_edge,
 } from "../../../../classes/spot/abstractions/position-identifier"
 import { FuturesEdgeToExecutorMapper } from "./execution/futures-edge-to-executor-mapper"
-import { FuturesExecutionEngine } from "./execution/execution_engines/futures-execution-engine"
 import { FixedPositionSizer, PositionSizer } from "../../../../edges/position-sizer/fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
@@ -96,7 +95,6 @@ export class FuturesTradeAbstractionService {
     this.logger.info(cmd)
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
-    cmd.quote_asset = this.quote_asset
 
     if (!is_authorised_edge(cmd.edge)) {
       let err = new Error(`UnauthorisedEdge ${cmd.edge}`)
@@ -108,6 +106,8 @@ export class FuturesTradeAbstractionService {
         quote_asset: this.quote_asset,
         edge: cmd.edge,
         status: "UNAUTHORISED",
+        http_status: 403,
+        buy_filled: false,
         msg: err.message,
         err,
       }
@@ -124,6 +124,8 @@ export class FuturesTradeAbstractionService {
         quote_asset: this.quote_asset,
         edge: cmd.edge,
         status: "UNAUTHORISED",
+        http_status: 403,
+        buy_filled: false,
         msg: err.message,
         err,
       }

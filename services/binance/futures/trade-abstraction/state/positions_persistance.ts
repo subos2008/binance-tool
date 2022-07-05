@@ -5,6 +5,8 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+import { Logger } from "../../../../../interfaces/logger"
+
 // import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
 // import { OrderId } from "./order-context-persistence"
 // import { FuturesPositionObject } from "../../abstractions/spot-position"
@@ -56,19 +58,19 @@ export type FuturesPositionInitialisationData = {
   edge: string // added this
 }
 
-export function genericOrderDataToFuturesPositionInitialisationData(
-  o: GenericOrderData
-): FuturesPositionInitialisationData {
-  return {
-    initial_entry_timestamp: o.orderTime,
-    position_size: new BigNumber(o.totalBaseTradeQuantity),
-    initial_quote_invested: new BigNumber(o.totalQuoteTradeQuantity),
-    initial_entry_quote_asset: o.quoteAsset,
-    initial_entry_price: new BigNumber(o.averageExecutionPrice),
-    // orders: [o],
-    edge,
-  }
-}
+// export function genericOrderDataToFuturesPositionInitialisationData(
+//   o: GenericOrderData
+// ): FuturesPositionInitialisationData {
+//   return {
+//     initial_entry_timestamp: o.orderTime,
+//     position_size: new BigNumber(o.totalBaseTradeQuantity),
+//     initial_quote_invested: new BigNumber(o.totalQuoteTradeQuantity),
+//     initial_entry_quote_asset: o.quoteAsset,
+//     initial_entry_price: new BigNumber(o.averageExecutionPrice),
+//     // orders: [o],
+//     edge,
+//   }
+// }
 
 export class FuturesPositionsPersistance {
   logger: Logger

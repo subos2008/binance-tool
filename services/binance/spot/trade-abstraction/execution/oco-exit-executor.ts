@@ -13,7 +13,6 @@ import { Logger } from "../../../../../interfaces/logger"
 import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
 import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SendMessageFunc } from "../../../../../lib/telegram-v2"
-import { PositionSizer } from "../fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import { SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstractions/position-identifier"
 import {
@@ -30,6 +29,7 @@ import {
 } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { SpotPositionsExecution_BuyLimit } from "./buy-limit-executor"
+import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
 
 /* END Edge specific code */
 

@@ -6,12 +6,12 @@ import {
   ExchangeIdentifier_V3,
   exchange_identifier_to_redis_key_snippet,
 } from "../../../events/shared/exchange-identifier"
-import { OrderContextPersistence } from "../interface/order-context-persistence"
-import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
+import { OrderContextPersistence, OrderContextPersistence_V2 } from "../interface/order-context-persistence"
+import { OrderContext_V1, OrderContext_V2 } from "../../../interfaces/orders/order-context"
 
 type OrderId = string
 
-export class RedisOrderContextPersistance implements OrderContextPersistence {
+export class RedisOrderContextPersistance implements OrderContextPersistence, OrderContextPersistence_V2 {
   logger: Logger
   redis: RedisClient
   getAsync: any
@@ -34,7 +34,7 @@ export class RedisOrderContextPersistance implements OrderContextPersistence {
   async set_order_context_for_order(args: {
     exchange_identifier: ExchangeIdentifier_V3
     order_id: OrderId
-    order_context: OrderContext_V1
+    order_context: OrderContext_V2
   }): Promise<void> {
     let { order_id, exchange_identifier } = args
     let json = JSON.stringify(args.order_context)
@@ -47,14 +47,14 @@ export class RedisOrderContextPersistance implements OrderContextPersistence {
   async get_order_context_for_order(args: {
     exchange_identifier: ExchangeIdentifier_V3
     order_id: OrderId
-  }): Promise<OrderContext_V1> {
+  }): Promise<OrderContext_V1 | OrderContext_V2> {
     let { order_id, exchange_identifier } = args
     if (!order_id) throw new Error(`null order_id in get_order_context_for_order: ${order_id}`)
 
     let json = await this.getAsync(this._key(exchange_identifier, order_id))
     if (!json) throw new Error(`No OrderContext found for order ${order_id}`)
 
-    let order_context: OrderContext_V1 = JSON.parse(json)
+    let order_context: OrderContext_V1 | OrderContext_V2 = JSON.parse(json)
 
     return order_context
   }

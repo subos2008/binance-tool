@@ -1,5 +1,6 @@
 import { LimitSellByQuoteQuantityWithTPandSLCommand, TradeAbstractionOpenShortCommand } from "../../services/binance/futures/trade-abstraction/interfaces/short"
 import { OrderContext_V1 } from "../../interfaces/orders/order-context"
+import { OrderContext_V2 } from "../../interfaces/orders/order-context"
 
 import { BigNumber } from "bignumber.js"
 import { BinanceFuturesExecutionEngine } from "../../services/binance/futures/trade-abstraction/execution/execution_engines/binance-futures-execution-engine"
@@ -17,7 +18,7 @@ let edge_percentage_sell_limit = new BigNumber(0.5)
 export async function map_tas_to_ee_cmd_short(args: {
   tas_cmd: TradeAbstractionOpenShortCommand
   ee: BinanceFuturesExecutionEngine
-  order_context: OrderContext_V1
+  order_context: OrderContext_V2
   trigger_price: BigNumber
   quote_amount: BigNumber
 }): Promise<LimitSellByQuoteQuantityWithTPandSLCommand> {

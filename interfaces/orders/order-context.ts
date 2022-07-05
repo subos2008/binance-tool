@@ -7,3 +7,10 @@
   version: 1
   edge: string
 }
+
+ export interface OrderContext_V2 {
+  object_type: "OrderContext"
+  version: 1
+  edge: string
+  trade_id: string
+}

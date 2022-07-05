@@ -1,4 +1,5 @@
 import { strict as assert } from "assert"
+import { randomUUID } from "crypto"
 
 import Sentry from "../../../../../lib/sentry"
 
@@ -27,7 +28,7 @@ import { BinanceFuturesExecutionEngine } from "./execution_engines/binance-futur
 
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import { map_tas_to_ee_cmd_short } from "../../../../../edges/edge62/edge62-tas-to-ee-mapper"
-import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
+import { OrderContext_V1, OrderContext_V2 } from "../../../../../interfaces/orders/order-context"
 import { Tags } from "hot-shots"
 
 export interface FuturesPositionExecutionCloseResult {
@@ -123,7 +124,8 @@ export class FuturesEdgeToExecutorMapper {
 
       switch (tas_cmd.edge) {
         case "edge62": {
-          let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
+          let trade_id = randomUUID()
+          let order_context: OrderContext_V2 = { edge, object_type: "OrderContext", version: 1, trade_id }
           let quote_amount = await this.position_sizer.position_size_in_quote_asset({ ...tas_cmd, quote_asset })
           let trigger_price: BigNumber = await this.trigger_price(tags, tas_cmd)
           let cmd: LimitSellByQuoteQuantityWithTPandSLCommand = await map_tas_to_ee_cmd_short({

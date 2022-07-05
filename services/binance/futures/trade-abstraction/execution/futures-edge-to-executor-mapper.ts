@@ -14,7 +14,6 @@ import { Logger } from "../../../../../interfaces/logger"
 import { SendMessageFunc } from "../../../../../lib/telegram-v2"
 import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
 import {
-  LimitSellByQuoteQuantityWithTPandSLCommand,
   TradeAbstractionOpenShortCommand as IncommingTradeAbstractionOpenShortCommand,
   TradeAbstractionOpenShortResult,
 } from "../interfaces/short"
@@ -24,7 +23,10 @@ interface TradeAbstractionOpenShortCommand extends IncommingTradeAbstractionOpen
 }
 
 import { check_edge } from "../../../../../classes/spot/abstractions/position-identifier"
-import { BinanceFuturesExecutionEngine } from "./execution_engines/binance-futures-execution-engine"
+import {
+  BinanceFuturesExecutionEngine,
+  LimitSellByQuoteQuantityWithTPandSLCommand,
+} from "./execution_engines/binance-futures-execution-engine"
 
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import { map_tas_to_ee_cmd_short } from "../../../../../edges/edge62/edge62-tas-to-ee-mapper"
@@ -102,8 +104,6 @@ export class FuturesEdgeToExecutorMapper {
     return trigger_price
   }
 
-  private async kludge(cmd: LimitSellByQuoteQuantityWithTPandSLCommand) {}
-
   /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
   async short(tas_cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
     try {
@@ -134,9 +134,10 @@ export class FuturesEdgeToExecutorMapper {
             ee: this.ee,
             trigger_price,
             quote_amount,
+            quote_asset,
           })
           let result: TradeAbstractionOpenShortResult =
-            await this.ee.limit_sell_by_quote_quantity_with_market_tp_and_sl(cmd)
+            await this.ee.limit_sell_by_quote_quantity_with_market_tp_and_sl(tags, cmd)
           return result
         }
         default:
@@ -150,6 +151,7 @@ export class FuturesEdgeToExecutorMapper {
             edge: edge as string,
             status: "BAD_INPUTS",
             http_status: 400,
+            buy_filled: false,
             msg,
             err,
             execution_timestamp_ms: Date.now(),
@@ -167,6 +169,7 @@ export class FuturesEdgeToExecutorMapper {
         quote_asset: tas_cmd.quote_asset,
         edge: tas_cmd.edge,
         status: "INTERNAL_SERVER_ERROR",
+        http_status: 500,
         msg: err.message,
         err,
         execution_timestamp_ms: Date.now(),

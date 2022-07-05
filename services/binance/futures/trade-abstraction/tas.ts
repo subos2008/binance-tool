@@ -38,15 +38,7 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import { StatsD } from "hot-shots"
-function dogstatsderrorhandler(err: Error) {
-  logger.error({ err }, `DogStatsD: Socket errors caught here: ${err}`)
-}
-
-import {
-  TradeAbstractionOpenShortCommand,
-  TradeAbstractionOpenShortResult,
-} from "./interfaces/short"
+import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "./interfaces/short"
 
 import express, { NextFunction, Request, Response } from "express"
 const winston = require("winston")
@@ -90,9 +82,10 @@ import { RedisOrderContextPersistance } from "../../../../classes/persistent_sta
 
 import { RedisClient } from "redis"
 
-import { FuturesTradeAbstractionService  } from "./trade-abstraction-service"
+import { FuturesTradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
 import { SendDatadogMetrics } from "./send_datadog_metrics"
+import { QueryParamsToCmdMapper } from "./query-params-to-cmd-mapper"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
@@ -108,6 +101,8 @@ let tas: FuturesTradeAbstractionService = new FuturesTradeAbstractionService({
   send_message,
   // redis,
 })
+
+let mapper = new QueryParamsToCmdMapper({ logger })
 
 const metrics = new SendDatadogMetrics({ service_name, logger, exchange_identifier })
 
@@ -150,7 +145,7 @@ app.get("/short", async function (req: Request, res: Response, next: NextFunctio
       exchange_identifier,
     })
 
-    if (mapper_result.object_type === "TradeAbstractionOpenSpotShortResult") {
+    if (mapper_result.object_type === "TradeAbstractionOpenShortResult") {
       res.status(mapper_result.http_status).json(mapper_result)
       return
     }

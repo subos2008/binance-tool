@@ -213,8 +213,9 @@ export class QueryParamsToCmdMapper {
         base_asset,
         quote_asset,
         edge,
-        direction,
-        action,
+        // direction,
+        // action,
+        buy_filled: false,
         status: "BAD_INPUTS",
         http_status: 400,
         msg: `TradeAbstractionOpenSpotShortResult: ${edge}${base_asset}: BAD_INPUTS`,
@@ -230,7 +231,7 @@ export class QueryParamsToCmdMapper {
     }
 
     let result: TradeAbstractionOpenShortCommand = {
-      object_type: "TradeAbstractionShortCommand",
+      object_type: "TradeAbstractionOpenShortCommand",
       edge,
       direction,
       action,

@@ -19,7 +19,7 @@ import {
 } from "../../../../classes/spot/abstractions/position-identifier"
 import { SpotPositionsExecution } from "./execution/spot-positions-execution"
 import Sentry from "../../../../lib/sentry"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "./interfaces/long"
+import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
@@ -89,7 +89,7 @@ export class TradeAbstractionService {
 
   // or signal_long
   // Spot so we can only be long or no-position
-  async long(cmd: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
+  async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
     this.logger.info(cmd)
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
@@ -100,8 +100,8 @@ export class TradeAbstractionService {
     if (!is_authorised_edge(cmd.edge)) {
       let err = new Error(`UnauthorisedEdge ${cmd.edge}`)
       this.logger.warn({ err })
-      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
-        object_type: "TradeAbstractionOpenSpotLongResult",
+      let spot_long_result: TradeAbstractionOpenLongResult = {
+        object_type: "TradeAbstractionOpenLongResult",
         version: 1,
         base_asset: cmd.base_asset,
         quote_asset: this.quote_asset,
@@ -118,8 +118,8 @@ export class TradeAbstractionService {
     if (disallowed_base_assets_for_entry.includes(cmd.base_asset)) {
       let err = new Error(`Opening spot long positions in ${cmd.base_asset} is explicity disallowed`)
       this.logger.warn({ err })
-      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
-        object_type: "TradeAbstractionOpenSpotLongResult",
+      let spot_long_result: TradeAbstractionOpenLongResult = {
+        object_type: "TradeAbstractionOpenLongResult",
         version: 1,
         base_asset: cmd.base_asset,
         quote_asset: this.quote_asset,
@@ -142,21 +142,21 @@ export class TradeAbstractionService {
     })
 
     if (existing_spot_position_size.isGreaterThan(0)) {
-      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
-        object_type: "TradeAbstractionOpenSpotLongResult",
+      let spot_long_result: TradeAbstractionOpenLongResult = {
+        object_type: "TradeAbstractionOpenLongResult",
         version: 1,
         base_asset: cmd.base_asset,
         quote_asset: this.quote_asset,
         edge,
         status: "ALREADY_IN_POSITION",
         http_status: 409,
-        msg: `TradeAbstractionOpenSpotLongResult: ${edge}${cmd.base_asset}: ALREADY_IN_POSITION`,
+        msg: `TradeAbstractionOpenLongResult: ${edge}${cmd.base_asset}: ALREADY_IN_POSITION`,
       }
       this.logger.info(spot_long_result)
       return spot_long_result
     }
 
-    let result: TradeAbstractionOpenSpotLongResult = await this.spot_ee.open_position(cmd)
+    let result: TradeAbstractionOpenLongResult = await this.spot_ee.open_position(cmd)
     if (
       result.status != "INTERNAL_SERVER_ERROR" &&
       result.status != "ENTRY_FAILED_TO_FILL" &&

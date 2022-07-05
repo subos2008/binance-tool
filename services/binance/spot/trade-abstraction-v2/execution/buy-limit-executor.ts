@@ -19,7 +19,7 @@ import { SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstracti
 import {
   TradeAbstractionOpenSpotLongCommand_OCO_Exit,
   TradeAbstractionOpenSpotLongCommand__StopLimitExit,
-  TradeAbstractionOpenSpotLongResult,
+  TradeAbstractionOpenLongResult,
 } from "../interfaces/long"
 
 /* Edge specific code */
@@ -88,7 +88,7 @@ export class SpotPositionsExecution_BuyLimit {
 
   async buy_limit_entry(
     args: TradeAbstractionOpenSpotLongCommand_OCO_Exit | TradeAbstractionOpenSpotLongCommand__StopLimitExit
-  ): Promise<TradeAbstractionOpenSpotLongResult> {
+  ): Promise<TradeAbstractionOpenLongResult> {
     let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
     let tags = { edge, base_asset, quote_asset }
     let prefix = `${edge}:${base_asset} open spot long: `
@@ -128,7 +128,7 @@ export class SpotPositionsExecution_BuyLimit {
       if (buy_result.status !== "SUCCESS") {
         return {
           ...buy_result,
-          object_type: "TradeAbstractionOpenSpotLongResult",
+          object_type: "TradeAbstractionOpenLongResult",
           version: 1,
           edge,
           base_asset,
@@ -140,8 +140,8 @@ export class SpotPositionsExecution_BuyLimit {
 
       if (executed_base_quantity.isZero()) {
         let msg = `${prefix}: ENTRY_FAILED_TO_FILL: IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
-        let spot_long_result: TradeAbstractionOpenSpotLongResult = {
-          object_type: "TradeAbstractionOpenSpotLongResult",
+        let spot_long_result: TradeAbstractionOpenLongResult = {
+          object_type: "TradeAbstractionOpenLongResult",
           version: 1,
           edge,
           base_asset,
@@ -157,8 +157,8 @@ export class SpotPositionsExecution_BuyLimit {
         let msg = `${edge}:${
           args.base_asset
         } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
-        let spot_long_result: TradeAbstractionOpenSpotLongResult = {
-          object_type: "TradeAbstractionOpenSpotLongResult",
+        let spot_long_result: TradeAbstractionOpenLongResult = {
+          object_type: "TradeAbstractionOpenLongResult",
           version: 1,
           msg,
           edge,
@@ -182,8 +182,8 @@ export class SpotPositionsExecution_BuyLimit {
       let msg = `${prefix}: INTERNAL_SERVER_ERROR opening spot position using ${
         args.quote_asset
       }: ${err.toString()}`
-      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
-        object_type: "TradeAbstractionOpenSpotLongResult",
+      let spot_long_result: TradeAbstractionOpenLongResult = {
+        object_type: "TradeAbstractionOpenLongResult",
         version: 1,
         msg,
         err,

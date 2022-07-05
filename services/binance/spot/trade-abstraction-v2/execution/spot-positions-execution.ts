@@ -23,7 +23,7 @@ import { OrderId } from "../../../../../classes/persistent_state/interface/order
 import { SpotPositionsExecution_StopLimitExit } from "./stop-limit-exit-executor"
 import { SpotPositionsExecution_OCOExit } from "./oco-exit-executor"
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
-import { TradeAbstractionOpenSpotLongCommand, TradeAbstractionOpenSpotLongResult } from "../interfaces/long"
+import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "../interfaces/long"
 import {
   TradeAbstractionCloseCommand,
   TradeAbstractionCloseResult,
@@ -135,7 +135,7 @@ export class SpotPositionsExecution {
   //     executed_price: BigNumber
   //     stop_price: BigNumber
   //   }
-  async open_position(args: TradeAbstractionOpenSpotLongCommand): Promise<TradeAbstractionOpenSpotLongResult> {
+  async open_position(args: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
     let { edge, quote_asset, base_asset } = args
     let tags = { edge, quote_asset, base_asset }
     try {
@@ -186,8 +186,8 @@ export class SpotPositionsExecution {
     } catch (err: any) {
       this.logger.error(tags, { err })
       Sentry.captureException(err)
-      let spot_long_result: TradeAbstractionOpenSpotLongResult = {
-        object_type: "TradeAbstractionOpenSpotLongResult",
+      let spot_long_result: TradeAbstractionOpenLongResult = {
+        object_type: "TradeAbstractionOpenLongResult",
         version: 1,
         base_asset: args.base_asset,
         quote_asset: args.quote_asset,

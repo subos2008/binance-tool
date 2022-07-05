@@ -22,7 +22,7 @@ import {
 import { OrderId } from "../../../../../classes/persistent_state/interface/order-context-persistence"
 import {
   TradeAbstractionOpenSpotLongCommand__StopLimitExit,
-  TradeAbstractionOpenSpotLongResult,
+  TradeAbstractionOpenLongResult,
 } from "../interfaces/long"
 import {
   SpotExecutionEngine,
@@ -117,7 +117,7 @@ export class SpotPositionsExecution_StopLimitExit {
 
   async open_position(
     args: TradeAbstractionOpenSpotLongCommand__StopLimitExit
-  ): Promise<TradeAbstractionOpenSpotLongResult> {
+  ): Promise<TradeAbstractionOpenLongResult> {
     let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
     let { edge_percentage_stop, edge_percentage_buy_limit } = args
     let tags = { edge, base_asset, quote_asset }
@@ -139,7 +139,7 @@ export class SpotPositionsExecution_StopLimitExit {
      * TODO: trading rules
      */
 
-    let buy_result: TradeAbstractionOpenSpotLongResult = await this.limit_buy_executor.buy_limit_entry(args)
+    let buy_result: TradeAbstractionOpenLongResult = await this.limit_buy_executor.buy_limit_entry(args)
 
     if (buy_result.status !== "SUCCESS") {
       return buy_result
@@ -193,8 +193,8 @@ export class SpotPositionsExecution_StopLimitExit {
       throw err
     }
 
-    let spot_long_result: TradeAbstractionOpenSpotLongResult = {
-      object_type: "TradeAbstractionOpenSpotLongResult",
+    let spot_long_result: TradeAbstractionOpenLongResult = {
+      object_type: "TradeAbstractionOpenLongResult",
       version: 1,
       base_asset,
       quote_asset,

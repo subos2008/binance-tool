@@ -14,7 +14,7 @@ BigNumber.prototype.valueOf = function () {
 import * as Sentry from "@sentry/node"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { Logger } from "../../../../interfaces/logger"
-import { TradeAbstractionOpenSpotLongResult } from "./interfaces/long"
+import { TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { TradeAbstractionCloseResult } from "./interfaces/close"
 Sentry.init({})
 
@@ -89,7 +89,7 @@ export class SendDatadogMetrics {
     cmd_received_timestamp_ms,
     tags,
   }: {
-    result: TradeAbstractionOpenSpotLongResult
+    result: TradeAbstractionOpenLongResult
     cmd_received_timestamp_ms: number
     tags: Tags
   }) {

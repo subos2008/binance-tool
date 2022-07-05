@@ -52,8 +52,8 @@ process.on("unhandledRejection", (err) => {
 
 import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 import {
-  TradeAbstractionOpenSpotLongCommand as TradeAbstractionOpenLongCommand,
-  TradeAbstractionOpenSpotLongResult,
+  TradeAbstractionOpenLongCommand as TradeAbstractionOpenLongCommand,
+  TradeAbstractionOpenLongResult,
 } from "./interfaces/long"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 
@@ -193,14 +193,14 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
       exchange_identifier,
     })
 
-    if (mapper_result.object_type === "TradeAbstractionOpenSpotLongResult") {
+    if (mapper_result.object_type === "TradeAbstractionOpenLongResult") {
       res.status(mapper_result.http_status).json(mapper_result)
       return
     }
 
     if (mapper_result.object_type === "TradeAbstractionOpenLongCommand") {
       let cmd: TradeAbstractionOpenLongCommand = mapper_result
-      let cmd_result: TradeAbstractionOpenSpotLongResult = await tas.long(cmd)
+      let cmd_result: TradeAbstractionOpenLongResult = await tas.long(cmd)
       tags.status = cmd_result.status
 
       let { signal_timestamp_ms } = cmd
@@ -213,7 +213,7 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
       send_message(cmd_result.msg, tags)
 
       if (cmd_result.http_status === 500) {
-        let msg: string = `TradeAbstractionOpenSpotLongResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
+        let msg: string = `TradeAbstractionOpenLongResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
         logger.error(cmd_result, msg) // TODO: Tags?
         Sentry.captureException(new Error(msg)) // TODO: Tags?
       }

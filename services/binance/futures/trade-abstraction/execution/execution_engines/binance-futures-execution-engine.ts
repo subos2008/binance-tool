@@ -11,33 +11,17 @@ import { Logger } from "../../../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { MarketIdentifier_V3 } from "../../../../../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../../../../../events/shared/exchange-identifier"
-import binance, {
-  CancelOrderResult,
-  FuturesOrder,
-  NewFuturesOrder,
-  NewOcoOrder,
-  NewOrderMarketQuote,
-  OcoOrder,
-  Order,
-  OrderSide,
-  OrderType,
-} from "binance-api-node"
+import binance, { FuturesOrder, NewFuturesOrder, OrderSide, OrderType } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
 import { BinanceFuturesExchangeInfoGetter } from "../../../../../../classes/exchanges/binance/exchange-info-getter"
 import { randomUUID } from "crypto"
 
 // interface BinanceFuturesStopLimitOrderCommand {}
 
-import {
-  FuturesExecutionEngine,
-  // FuturesLimitSellByQuoteQuantityCommand,
-  // FuturesOCOBuyCommand,
-  // FuturesExecutionEngineSellResult,
-} from "./futures-execution-engine"
-import { OrderContextPersistence } from "../../../../../../classes/persistent_state/interface/order-context-persistence"
-import { OrderContext_V1 } from "../../../../../../interfaces/orders/order-context"
-import { AlgoUtils } from "../../../../spot/trade-abstraction/execution/execution_engines/_internal/binance_algo_utils_v2"
+import { OrderContextPersistence_V2 } from "../../../../../../classes/persistent_state/interface/order-context-persistence"
+import { OrderContext_V2 } from "../../../../../../interfaces/orders/order-context"
 import { BinanceStyleSpotPrices } from "../../../../../../classes/spot/abstractions/position-identifier"
+import { TradeAbstractionOpenShortResult } from "../../interfaces/short"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)
@@ -48,24 +32,62 @@ var ee: Binance = binance({
   apiSecret: process.env.BINANCE_API_SECRET,
 })
 
-export class BinanceFuturesExecutionEngine implements FuturesExecutionEngine {
+export interface TradeAbstractionOpenSpotLongCommand__StopLimitExit {
+  base_asset: string
+  quote_asset: string // added by the TAS before it hits the EE
+  edge: string
+  direction: "long"
+  action: "open"
+  trigger_price?: string
+  signal_timestamp_ms: number
+  edge_percentage_stop: BigNumber
+  edge_percentage_buy_limit: BigNumber
+}
+
+export interface TradeAbstractionOpenSpotLongCommand_OCO_Exit {
+  base_asset: string
+  quote_asset: string // added by the TAS before it hits the EE
+  edge: string
+  direction: "long"
+  action: "open"
+  trigger_price?: string
+  signal_timestamp_ms: number
+  edge_percentage_stop: BigNumber
+  edge_percentage_stop_limit: BigNumber
+  edge_percentage_take_profit: BigNumber
+  edge_percentage_buy_limit: BigNumber
+}
+
+export interface LimitSellByQuoteQuantityCommand {
+  order_context: OrderContext_V2
+  market_identifier: MarketIdentifier_V3
+  quote_amount: BigNumber
+  sell_limit_price: BigNumber
+  take_profit_price: BigNumber
+  stop_price: BigNumber
+}
+
+export interface LimitSellByQuoteQuantityWithTPandSLCommand extends LimitSellByQuoteQuantityCommand {
+  take_profit_price: BigNumber
+  stop_price: BigNumber
+}
+
+export class BinanceFuturesExecutionEngine {
   logger: Logger
   ei_getter: BinanceFuturesExchangeInfoGetter
-  order_context_persistence: OrderContextPersistence
-  utils: AlgoUtils
+  order_context_persistence: OrderContextPersistence_V2
 
   constructor({
     logger,
     order_context_persistence,
   }: {
     logger: Logger
-    order_context_persistence: OrderContextPersistence
+    order_context_persistence: OrderContextPersistence_V2
   }) {
     assert(logger)
     this.logger = logger
     this.ei_getter = new BinanceFuturesExchangeInfoGetter({ ee })
     this.order_context_persistence = order_context_persistence
-    this.utils = new AlgoUtils({ logger, ee })
   }
 
   get_exchange_identifier(): ExchangeIdentifier_V3 {
@@ -90,7 +112,6 @@ export class BinanceFuturesExecutionEngine implements FuturesExecutionEngine {
   }
 
   // Used when storing things like Position state
-  // TODO: this should use exchange info
   async get_market_identifier_for({
     quote_asset,
     base_asset,
@@ -124,7 +145,7 @@ export class BinanceFuturesExecutionEngine implements FuturesExecutionEngine {
   }
 
   async store_order_context_and_generate_clientOrderId(
-    order_context: OrderContext_V1
+    order_context: OrderContext_V2
   ): Promise<{ clientOrderId: string }> {
     let clientOrderId = randomUUID()
     await this.order_context_persistence.set_order_context_for_order({
@@ -135,188 +156,211 @@ export class BinanceFuturesExecutionEngine implements FuturesExecutionEngine {
     return { clientOrderId }
   }
 
-  //   async limit_sell_by_quote_quantity(
-  //     cmd: FuturesLimitSellByQuoteQuantityCommand
-  //   ): Promise<FuturesExecutionEngineSellResult> {
-  //     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
-  //     let side = OrderSide.SELL
-  //     let type = OrderType.LIMIT
-  //     let quoteOrderQty = cmd.quote_amount.toFixed()
-  //     let symbol = cmd.market_identifier.symbol
-  //     let args: NewFuturesOrder = {
-  //       side,
-  //       symbol,
-  //       type,
-  //       quoteOrderQty,
-  //       limitPrice,
-  //       newClientOrderId: clientOrderId,
-  //     }
-  //     this.logger.info(`Creating ${symbol} ${type} ${side} ORDER for quoteOrderQty ${quoteOrderQty}`)
-  //     let result :FuturesOrder = await ee.futuresOrder(args)
-  //     this.logger.info(`order id: ${result.clientOrderId}`)
-  //     assert.equal(result.clientOrderId, clientOrderId)
+  async limit_sell_by_quote_quantity(
+    tags: { base_asset: string; quote_asset: string; edge: string },
+    cmd: LimitSellByQuoteQuantityCommand
+  ): Promise<TradeAbstractionOpenShortResult> {
+    let prefix = `${cmd.market_identifier.symbol}: `
 
-  //     /**
-  //      * export interface FuturesOrder {
-  //      *   clientOrderId: string
-  //      *   cumQty: string
-  //      *   cumQuote: string
-  //      *   executedQty: string
-  //      *   orderId: number
-  //      *   avgPrice: string
-  //      *   origQty: string
-  //      *   price: string
-  //      *   reduceOnly: boolean
-  //      *   side: OrderSide_LT
-  //      *   positionSide: PositionSide_LT
-  //      *   status: OrderStatus_LT
-  //      *   stopPrice: string
-  //      *   closePosition: boolean
-  //      *   symbol: string
-  //      *   timeInForce: TimeInForce_LT
-  //      *   type: OrderType_LT
-  //      *   origType: OrderType_LT
-  //      *   activatePrice: string
-  //      *   priceRate: string
-  //      *   updateTime: number
-  //      *   workingType: WorkingType_LT
-  //      * }
-  //      */
-  //     if (result) {
-  //       return {
-  //         object_type: "FuturesExecutionEngineSellResult",
-  //         executed_quote_quantity: new BigNumber(result.cumQuote),
-  //         executed_base_quantity: new BigNumber(result.cumQty),
-  //         executed_price: new BigNumber(result.cumQuote).dividedBy(result.cumQty),
-  //         execution_timestamp_ms: result.updateTime?.toString(),
-  //       }
-  //     }
-  //     throw new Error(`Something bad happened executing market_sell_by_quote_quantity`)
-  //   }
+    try {
+      let side = OrderSide.SELL
+      let type = OrderType.LIMIT
 
-  //   // // throws on failure
-  //   // async cancel_oco_order({ order_id, symbol }: { symbol: string; order_id: string }): Promise<void> {
-  //   //   this.logger.info(`Cancelling clientOrderId ${order_id} oco order on symbol ${symbol}`)
-  //   //   let result = await ee.cancelOrderOco({ symbol, listClientOrderId: order_id })
-  //   //   if (result.listOrderStatus === "ALL_DONE") {
-  //   //     this.logger.info(`Sucesfully cancelled order ${order_id}`)
-  //   //     return
-  //   //   }
-  //   //   let msg = `Failed to cancel oco order ${order_id} on ${symbol}, status ${result.listOrderStatus}`
-  //   //   this.logger.warn(msg)
-  //   //   this.logger.warn(result)
-  //   //   throw new Error(msg)
-  //   // }
+      let { base_asset, edge, quote_asset } = tags
 
-  //   async oco_buy_order(cmd: FuturesOCOBuyCommand): Promise<void> {
-  //     this.logger.object(cmd)
-  //     let { stop_ClientOrderId, take_profit_ClientOrderId, oco_list_ClientOrderId } = cmd
+      let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
+      let symbol = cmd.market_identifier.symbol
+      let base_amount = cmd.quote_amount.dividedBy(cmd.sell_limit_price)
+      /* docs: https://binance-docs.github.io/apidocs/futures/en/#new-order-trade */
 
-  //     let exchange_info = await this.get_exchange_info()
-  //     let base_amount = cmd.base_amount
-  //     let symbol = cmd.market_identifier.symbol
-  //     let target_price = cmd.take_profit_price
-  //     let stop_price = cmd.stop_price
-  //     let limit_price = cmd.stop_limit_price
+      // TODO: munge limitPrice and quantity
+      let quantity = base_amount.toFixed(8)
 
-  //     assert(symbol && target_price && base_amount && stop_price && limit_price)
-  //     assert(BigNumber.isBigNumber(base_amount))
-  //     assert(BigNumber.isBigNumber(target_price))
-  //     assert(BigNumber.isBigNumber(limit_price))
+      let buy_order_cmd: NewFuturesOrder = {
+        side,
+        symbol,
+        type,
+        quantity,
+        price: cmd.sell_limit_price.toNumber(),
+        newClientOrderId: clientOrderId,
+        timeInForce: "IOC",
+        reduceOnly: "false",
+      }
+      this.logger.object({ object_type: "BinanceNewFuturesOrder", ...buy_order_cmd })
 
-  //     try {
-  //       base_amount = this.utils.munge_amount_and_check_notionals({
-  //         exchange_info,
-  //         pair: symbol,
-  //         base_amount,
-  //         stop_price,
-  //         limit_price,
-  //         target_price,
-  //       })
-  //       stop_price = this.utils.munge_and_check_price({ exchange_info, symbol: symbol, price: stop_price })
-  //       limit_price = this.utils.munge_and_check_price({ exchange_info, symbol: symbol, price: limit_price })
-  //       target_price = this.utils.munge_and_check_price({ exchange_info, symbol: symbol, price: target_price })
-  //       let quantity = base_amount.toFixed()
-  //       //   export interface NewOcoOrder {
-  //       //     symbol: string;
-  //       //     listClientOrderId?: string;
-  //       //     side: OrderSide;
-  //       //     quantity: string;
-  //       //     limitClientOrderId?: string;
-  //       //     price: string;
-  //       //     limitIcebergQty?: string;
-  //       //     stopClientOrderId?: string;
-  //       //     stopPrice: string;
-  //       //     stopLimitPrice?: string;
-  //       //     stopIcebergQty?: string;
-  //       //     stopLimitTimeInForce?: TimeInForce;
-  //       //     newOrderRespType?: NewOrderRespType;
-  //       //     recvWindow?: number;
-  //       //     useServerTime?: boolean;
-  //       // }
-  //       let stop_order_args: NewFuturesOrder = {
-  //         useServerTime: true,
-  //         symbol: symbol,
-  //         side: OrderSide.BUY,
-  //         reduceOnly: "true",
-  //         quantity,
-  //         // price: target_price.toFixed(),
-  //         stopPrice: stop_price.toFixed(),
-  //         stopLimitPrice: limit_price.toFixed(),
-  //         listClientOrderId: oco_list_ClientOrderId,
-  //         limitClientOrderId: take_profit_ClientOrderId,
-  //         stopClientOrderId: stop_ClientOrderId,
-  //       }
-  //       this.logger.info(
-  //         `${symbol} Creating OCO ORDER for ${quantity} at target ${target_price.toFixed()} stop triggered at ${stop_price.toFixed()}`
-  //       )
-  //       //   export interface OcoOrder {
-  //       //     orderListId: number;
-  //       //     contingencyType: ContingencyType;
-  //       //     listStatusType: ListStatusType;
-  //       //     listOrderStatus: ListOrderStatus;
-  //       //     listClientOrderId: string;
-  //       //     transactionTime: number;
-  //       //     symbol: string;
-  //       //     orders: Order[];
-  //       //     orderReports: Order[];
-  //       // }
+      this.logger.info(`Creating ${symbol} ${type} ${side} ORDER for quoteOrderQty ${cmd.quote_amount}`)
+      let buy_order: FuturesOrder = await ee.futuresOrder(buy_order_cmd)
+      this.logger.object({ object_type: "BinanceFuturesOrder", ...buy_order })
 
-  //       // Actually we don't want oco orders, preferably reduce only orders on both sides
-  //       // AND I guess we need to clean up those orders when the position
-  //       let order: FuturesOrder = await ee.futuresOrder(args)
+      let execution_timestamp_ms: number = buy_order.updateTime
 
-  //     /**
-  //      *   export interface OcoOrder {
-  //      *     orderListId: number
-  //      *     contingencyType: OcoOrderType.CONTINGENCY_TYPE
-  //      *     listStatusType: ListStatusType_LT
-  //      *     listOrderStatus: ListOrderStatus_LT
-  //      *     listClientOrderId: string
-  //      *     transactionTime: number
-  //      *     symbol: string
-  //      *     orders: Order[]
-  //      *     orderReports: Order[]
-  //      * }
-  //      */
-  //     this.logger.object({ object_type: "BinanceOrder", ...order })
-  //     if (order && order.listClientOrderId) {
-  //       // looks like success
-  //       return
-  //     }
-  //     let msg = `Failed to create oco sell order for ${cmd.market_identifier.symbol}`
-  //     this.logger.warn(msg)
-  //     this.logger.info(order)
-  //     throw new Error(msg)
-  //   }
-  // } catch (err: any) {
-  //   let context = { symbol, class: "AlgoUtils", method: "munge_and_create_oco_order" }
-  //   Sentry.captureException(err, {
-  //     tags: context,
-  //   })
-  //   this.logger.error(context, `OCO error: ${err.body}`)
-  //   this.logger.error({ err })
-  //   throw err
-  // }
-  // }
+      let entry_result: TradeAbstractionOpenShortResult = {
+        object_type: "TradeAbstractionOpenShortResult",
+        version: 1,
+        msg: `${prefix}: SUCCESS: Entry Phase`,
+        status: "SUCCESS",
+        http_status: 201,
+
+        base_asset,
+        quote_asset,
+        edge,
+
+        // MISSING:
+        // trigger_price?: string
+        execution_timestamp_ms,
+        // signal_to_execution_slippage_ms?: number,
+
+        // Buy execution
+        buy_filled: true,
+        executed_quote_quantity: buy_order.cumQuote,
+        executed_base_quantity: buy_order.executedQty,
+        executed_price: buy_order.avgPrice,
+
+        created_stop_order: false,
+        created_take_profit_order: false,
+      }
+      this.logger.info(entry_result)
+      return entry_result
+    } catch (err: any) {
+      // TODO: can we do a more clean/complete job of catching exceptions from Binance?
+      if ((err.message = ~/Account has insufficient balance for requested action/)) {
+        let entry_result: TradeAbstractionOpenShortResult = {
+          object_type: "TradeAbstractionOpenShortResult",
+          version: 1,
+          msg: `${prefix}:  Account has insufficient balance`,
+          status: "INSUFFICIENT_BALANCE",
+          http_status: 402, // 402: Payment Required
+          execution_timestamp_ms: Date.now(),
+          base_asset: tags.base_asset,
+          edge: tags.edge,
+          buy_filled: false,
+        }
+        this.logger.info(entry_result)
+        return entry_result
+      } else {
+        let entry_result: TradeAbstractionOpenShortResult = {
+          object_type: "TradeAbstractionOpenShortResult",
+          version: 1,
+          err,
+          msg: `${prefix}: INTERNAL_SERVER_ERROR: ${err.message}`,
+          execution_timestamp_ms: Date.now(),
+          status: "INTERNAL_SERVER_ERROR",
+          http_status: 500,
+          base_asset: tags.base_asset,
+          edge: tags.edge,
+        }
+        this.logger.error(entry_result)
+        return entry_result
+      }
+    }
+  }
+
+  async limit_sell_by_quote_quantity_with_market_tp_and_sl(
+    tags: { base_asset: string; quote_asset: string; edge: string },
+    cmd: LimitSellByQuoteQuantityWithTPandSLCommand
+    // other: { trigger_price: string; signal_timestamp_ms: number }
+  ): Promise<TradeAbstractionOpenShortResult> {
+    /**
+     * processing of entry order result could be detached - as in we get the order result from AMQP
+     * instead of via the return promise.
+     */
+    let buy_result: TradeAbstractionOpenShortResult = await this.limit_sell_by_quote_quantity(tags, cmd)
+
+    if (buy_result.status !== "SUCCESS") {
+      return buy_result
+    }
+
+    let prefix = `${cmd.market_identifier.symbol}: `
+
+    // Create two orders - STOP_MARKET and TAKE_PROFIT_MARKET
+
+    /** TODO: Add STOP */
+    let created_stop_order = false
+    let created_take_profit_order = false
+    try {
+      {
+        let side = OrderSide.BUY
+        let symbol = cmd.market_identifier.symbol
+
+        let { clientOrderId: stop_ClientOrderId } = await this.store_order_context_and_generate_clientOrderId(
+          cmd.order_context
+        )
+        let type = OrderType.STOP_MARKET
+        let stop_order_cmd: NewFuturesOrder = {
+          side,
+          symbol,
+          type,
+          stopPrice: cmd.sell_limit_price.toNumber(), // Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders.
+          newClientOrderId: stop_ClientOrderId,
+          closePosition: "true",
+        }
+        this.logger.object({ object_type: "BinanceNewFuturesOrder", ...stop_order_cmd })
+        this.logger.info(`Creating ${symbol} ${type} ${side} ORDER (closePosition)}`)
+        // https://binance-docs.github.io/apidocs/futures/en/#new-order-trade
+        let stop_order: FuturesOrder = await ee.futuresOrder(stop_order_cmd)
+        this.logger.object({ object_type: "BinanceFuturesOrder", ...stop_order })
+        created_stop_order = true
+      }
+
+      /** TODO: Add TP */
+      {
+        let side = OrderSide.BUY
+        let symbol = cmd.market_identifier.symbol
+
+        let { clientOrderId: take_profit_ClientOrderId } =
+          await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
+        let type = OrderType.TAKE_PROFIT_MARKET
+        let take_profit_order_cmd: NewFuturesOrder = {
+          side,
+          symbol,
+          type,
+          stopPrice: cmd.sell_limit_price.toNumber(), // Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders.
+          newClientOrderId: take_profit_ClientOrderId,
+          closePosition: "true",
+        }
+        this.logger.object({ object_type: "BinanceNewFuturesOrder", ...take_profit_order_cmd })
+        this.logger.info(`Creating ${symbol} ${type} ${side} ORDER (closePosition)}`)
+        // https://binance-docs.github.io/apidocs/futures/en/#new-order-trade
+        let take_profit_order: FuturesOrder = await ee.futuresOrder(take_profit_order_cmd)
+        this.logger.object({ object_type: "BinanceFuturesOrder", ...take_profit_order })
+        created_take_profit_order = true
+      }
+
+      let { base_asset, quote_asset, edge } = tags
+      let { executed_quote_quantity, executed_base_quantity, executed_price } = buy_result
+
+      // TODO: copy in code from the other classes here - we should have a bunch of constructions of return types
+      let result: TradeAbstractionOpenShortResult = {
+        object_type: "TradeAbstractionOpenShortResult",
+        version: 1,
+        msg: `${prefix}: SUCCESS: Entry and added SL, TP`,
+        status: "SUCCESS",
+        http_status: 201,
+
+        base_asset,
+        quote_asset,
+        edge,
+
+        // MISSING:
+        // trigger_price?: string
+        execution_timestamp_ms: Date.now(), // TODO: start vs finished execution timestamps..?
+        // signal_to_execution_slippage_ms?: number,
+
+        // Buy execution
+        buy_filled: true,
+        executed_quote_quantity,
+        executed_base_quantity,
+        executed_price,
+
+        created_stop_order,
+        created_take_profit_order,
+      }
+
+      this.logger.object(result)
+      return result
+    } catch (err) {
+      throw new Error(`TODO: close position and return ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`)
+      //TODO: close position and return ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
+    }
+  }
 }

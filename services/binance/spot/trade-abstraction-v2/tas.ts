@@ -100,7 +100,7 @@ import { RedisClient } from "redis"
 import { TradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
 import { SendDatadogMetrics } from "./send-datadog-metrics"
-import { QueryParamsToCmd } from "./query-params-to-cmd"
+import { QueryParamsToCmdMapper } from "./query-params-to-cmd-mapper"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
@@ -148,7 +148,7 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
   }
 })
 
-let mapper = new QueryParamsToCmd({ logger })
+let mapper = new QueryParamsToCmdMapper({ logger })
 
 // TODO: long is a lot more evolved than close
 app.get("/close", async function (req: Request, res: Response, next: NextFunction) {

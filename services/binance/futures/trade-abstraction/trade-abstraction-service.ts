@@ -24,6 +24,7 @@ import { FixedPositionSizer, PositionSizer } from "../../../../edges/position-si
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
 import { BinanceFuturesPriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
+import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 // import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 // import {
 //   AuthorisedEdgeType,
@@ -110,6 +111,8 @@ export class FuturesTradeAbstractionService {
         buy_filled: false,
         msg: err.message,
         err,
+        created_stop_order: false,
+        created_take_profit_order: false,
       }
       return obj
     }
@@ -128,6 +131,8 @@ export class FuturesTradeAbstractionService {
         buy_filled: false,
         msg: err.message,
         err,
+        created_stop_order: false,
+        created_take_profit_order: false,
       }
       return obj
     }
@@ -135,6 +140,7 @@ export class FuturesTradeAbstractionService {
     let edge: AuthorisedEdgeType = check_edge(cmd.edge)
 
     this.logger.warn(`Position entry is not atomic with check for existing position`)
+
     this.logger.error(`Futures TAS existion position check: unimplemented`)
     // let existing_spot_position_size: BigNumber = await this.positions.exisiting_position_size({
     //   base_asset: cmd.base_asset,
@@ -154,26 +160,18 @@ export class FuturesTradeAbstractionService {
     //   return obj
     // }
 
-    throw new Error(`futures open_short not implemented`)
+    let { quote_asset } = this
+    let result: TradeAbstractionOpenShortResult = await this.eem.short({ ...cmd, quote_asset })
 
-    // let result: TradeAbstractionOpenFuturesShortResult = await this.ee.open_position(cmd)
-    // if (
-    //   result.status != "INTERNAL_SERVER_ERROR" &&
-    //   result.status != "ENTRY_FAILED_TO_FILL" &&
-    //   result.status != "UNAUTHORISED" &&
-    //   result.status != "ALREADY_IN_POSITION" &&
-    //   result.status != "TRADING_IN_ASSET_PROHIBITED"
-    // ) {
-    //   result.created_stop_order = result.stop_order_id ? true : false
-    //   result.created_take_profit_order = result.take_profit_order_id ? true : false
-    // }
+    result.created_stop_order = result.stop_order_id ? true : false
+    result.created_take_profit_order = result.take_profit_order_id ? true : false
 
-    // let { execution_timestamp_ms } = result
-    // result.signal_to_execution_slippage_ms = execution_timestamp_ms
-    //   ? new BigNumber(execution_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
-    //   : undefined
+    let { execution_timestamp_ms } = result
+    result.signal_to_execution_slippage_ms = execution_timestamp_ms
+      ? execution_timestamp_ms - cmd.signal_timestamp_ms
+      : undefined
 
-    // return result
+    return result
   }
 
   async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {

@@ -86,6 +86,7 @@ import { FuturesTradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
 import { SendDatadogMetrics } from "./send_datadog_metrics"
 import { QueryParamsToCmdMapper } from "./query-params-to-cmd-mapper"
+import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
@@ -211,7 +212,7 @@ app.get("/short", async function (req: Request, res: Response, next: NextFunctio
       send_message(cmd_result.msg, tags)
 
       if (cmd_result.http_status === 500) {
-        let msg: string = `TradeAbstractionOpenSpotShortResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
+        let msg: string = `TradeAbstractionOpenShortResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
         logger.error(cmd_result, msg) // TODO: Tags?
         Sentry.captureException(new Error(msg)) // TODO: Tags?
       }

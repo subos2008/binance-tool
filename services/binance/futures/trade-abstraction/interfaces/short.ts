@@ -8,7 +8,6 @@ export interface TradeAbstractionOpenShortCommand {
   signal_timestamp_ms: number
 }
 
-
 interface TradeAbstractionOpenShortResult_SUCCESS {
   object_type: "TradeAbstractionOpenShortResult"
   version: 1
@@ -53,7 +52,11 @@ interface TradeAbstractionOpenShortResult_BAD_INPUTS {
   http_status: 400
 
   buy_filled: false
-
+  created_stop_order: false
+  created_take_profit_order: false
+  stop_order_id?: string | number | undefined
+  take_profit_order_id?: string | number | undefined
+  
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
 
@@ -73,6 +76,10 @@ interface TradeAbstractionOpenShortResult_INTERNAL_SERVER_ERROR {
   http_status: 500
 
   buy_filled?: boolean
+  created_stop_order?: boolean
+  created_take_profit_order?: boolean
+  stop_order_id?: string | number | undefined
+  take_profit_order_id?: string | number | undefined
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -93,6 +100,10 @@ interface TradeAbstractionOpenShortResult_ENTRY_FAILED_TO_FILL {
   http_status: 200 // 200: Success... but not 201, so not actually created
 
   buy_filled: false
+  created_stop_order: false
+  created_take_profit_order: false
+  stop_order_id?: string | number | undefined
+  take_profit_order_id?: string | number | undefined
 
   msg: string // human readable summary
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -115,6 +126,10 @@ interface TradeAbstractionOpenShortResult_UNAUTHORISED {
   http_status: 403
 
   buy_filled: false
+  created_stop_order: false
+  created_take_profit_order: false
+  stop_order_id?: string | number | undefined
+  take_profit_order_id?: string | number | undefined
 
   msg: string // human readable summary
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -135,6 +150,10 @@ interface TradeAbstractionOpenShortResult_TRADING_IN_ASSET_PROHIBITED {
   http_status: 403
 
   buy_filled: false
+  created_stop_order: false
+  created_take_profit_order: false
+  stop_order_id?: string | number | undefined
+  take_profit_order_id?: string | number | undefined
 
   msg: string
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -155,6 +174,10 @@ interface TradeAbstractionOpenShortResult_ALREADY_IN_POSITION {
   http_status: 409 // 409: Conflict
 
   buy_filled: false
+  created_stop_order: false
+  created_take_profit_order: false
+  stop_order_id?: string | number | undefined
+  take_profit_order_id?: string | number | undefined
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -177,6 +200,10 @@ interface TradeAbstractionOpenShortResult_INSUFFICIENT_BALANCE {
   http_status: 402 // 402: Payment Required, or 200: It was a success really - even if not a 201
 
   buy_filled: false // rename entered position? or is that additional?
+  created_stop_order: false
+  created_take_profit_order: false
+  stop_order_id?: string | number | undefined
+  take_profit_order_id?: string | number | undefined
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
@@ -214,6 +241,7 @@ interface TradeAbstractionOpenShortResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
 
   created_stop_order: boolean
   stop_order_id?: string | number | undefined
+  
   stop_price?: string
 
   created_take_profit_order: boolean

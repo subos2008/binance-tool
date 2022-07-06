@@ -94,8 +94,10 @@ export class FuturesTradeAbstractionService {
 
   async short(cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
     this.logger.info(cmd)
-    assert.equal(cmd.direction, "long")
+    assert.equal(cmd.direction, "short")
     assert.equal(cmd.action, "open")
+
+    let { direction } = cmd
 
     if (!is_authorised_edge(cmd.edge)) {
       let err = new Error(`UnauthorisedEdge ${cmd.edge}`)
@@ -118,7 +120,7 @@ export class FuturesTradeAbstractionService {
     }
 
     if (disallowed_base_assets_for_entry.includes(cmd.base_asset)) {
-      let err = new Error(`Opening spot long positions in ${cmd.base_asset} is explicity disallowed`)
+      let err = new Error(`Opening ${direction} positions in ${cmd.base_asset} is explicity disallowed`)
       this.logger.warn({ err })
       let obj: TradeAbstractionOpenShortResult = {
         object_type: "TradeAbstractionOpenShortResult",

@@ -13,7 +13,10 @@ export class Commands_Futures {
 
   constructor(args: { bot: Telegraf; logger: Logger }) {
     this.logger = args.logger
-    this.futures_tas_client = new FuturesTradeAbstractionServiceClient(args)
+    this.futures_tas_client = new TradeAbstractionServiceClient({
+      ...args,
+      TAS_URL: process.env.FUTURES_TRADE_ABSTRACTION_SERVICE_URL,
+    })
     args.bot.command("futures", (ctx) => {
       ctx.reply(`Futures handler processing message: ${ctx.message.text}`)
       this.logger.info(ctx)
@@ -34,10 +37,13 @@ export class Commands_Futures {
 
       switch (command) {
         case "short":
-          let check_void: Promise<void> = this.open_short(ctx, args)
+          let check_void: void = await this.open_short(ctx, args)
           break
         // case "close":
         //   let result = await this.close_futures_short(ctx, { asset: base_asset, edge })
+        //   ctx.reply(`Futures short close on ${edge}:${base_asset}: ${result.status}`)
+        // case "positions":
+        //   let result = await this.close(ctx, { asset: base_asset, edge })
         //   ctx.reply(`Futures short close on ${edge}:${base_asset}: ${result.status}`)
         default:
           ctx.reply(`Command not recognised: ${command}`)
@@ -53,28 +59,61 @@ export class Commands_Futures {
 
   // This should not throw or return anything interesting
   async open_short(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]): Promise<void> {
-    let signal_timestamp_ms = Date.now()
-    let base_asset = args.shift()?.toUpperCase()
-    if (!base_asset) {
-      ctx.reply(`base_asset not defined.`)
-      return
-    }
-    let edge = args.shift()
-    if (!edge) {
-      ctx.reply(`edge not defined.`)
-      return
-    }
-    let cmd: TradeAbstractionOpenShortCommand = {
-      object_type: "TradeAbstractionOpenShortCommand",
-      base_asset,
-      edge,
-      direction: "short",
-      action: "open",
-      signal_timestamp_ms,
-    }
-
     try {
-      let result: TradeAbstractionOpenShortResult = await this.futures_tas_client.open_short(cmd)
+      let signal_timestamp_ms = Date.now()
+      let base_asset = args.shift()?.toUpperCase()
+      if (!base_asset) {
+        ctx.reply(`base_asset not defined.`)
+        return
+      }
+      let edge = args.shift()
+      if (!edge) {
+        ctx.reply(`edge not defined.`)
+        return
+      }
+      let cmd: TradeAbstractionOpenShortCommand = {
+        object_type: "TradeAbstractionOpenShortCommand",
+        base_asset,
+        edge,
+        direction: "short",
+        action: "open",
+        signal_timestamp_ms,
+      }
+
+      let result: TradeAbstractionOpenShortResult = await this.futures_tas_client.short(cmd)
+      ctx.reply(`${result.msg}`)
+      return
+    } catch (err) {
+      this.logger.error({ err })
+      Sentry.captureException(err)
+      ctx.reply(`Exception caught.`)
+    }
+  }
+
+  // This should not throw or return anything interesting
+  async positions(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]): Promise<void> {
+    try {
+      let signal_timestamp_ms = Date.now()
+      let base_asset = args.shift()?.toUpperCase()
+      if (!base_asset) {
+        ctx.reply(`base_asset not defined.`)
+        return
+      }
+      let edge = args.shift()
+      if (!edge) {
+        ctx.reply(`edge not defined.`)
+        return
+      }
+      let cmd: TradeAbstractionOpenShortCommand = {
+        object_type: "TradeAbstractionOpenShortCommand",
+        base_asset,
+        edge,
+        direction: "short",
+        action: "open",
+        signal_timestamp_ms,
+      }
+
+      let result: TradeAbstractionOpenShortResult = await this.futures_tas_client.short(cmd)
       ctx.reply(`${result.msg}`)
       return
     } catch (err) {

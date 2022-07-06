@@ -159,14 +159,14 @@ app.get("/close", async function (req: Request, res: Response, next: NextFunctio
       let { signal_timestamp_ms } = cmd
 
       metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
-      metrics.trading_abstraction_open_short_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
+      metrics.trading_abstraction_close_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
 
       res.status(cmd_result.http_status).json(cmd_result)
 
       send_message(cmd_result.msg, tags)
 
       if (cmd_result.http_status === 500) {
-        let msg: string = `TradeAbstractionOpenSpotShortResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
+        let msg: string = `TradeAbstractionCloseResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
         logger.error(cmd_result, msg) // TODO: Tags?
         Sentry.captureException(new Error(msg)) // TODO: Tags?
       }

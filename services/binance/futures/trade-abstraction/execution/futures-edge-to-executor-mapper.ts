@@ -170,7 +170,7 @@ export class FuturesEdgeToExecutorMapper {
         base_asset: tas_cmd.base_asset,
         quote_asset: tas_cmd.quote_asset,
         edge: tas_cmd.edge,
-        status: "INTERNAL_SERVER_ERROR",
+        status: "INTERNAL_SERVER_ERROR", // TODO: this is why we want an object per trade entry - so we have state about what orders are created / filled. If we had that we can call generic close on errors
         http_status: 500,
         msg: err.message,
         err,

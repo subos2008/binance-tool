@@ -44,8 +44,7 @@ export class Commands_Futures {
           let check_void: void = await this.open_short(ctx, args)
           break
         case "close":
-          let result = await this.close(ctx, { asset: base_asset, edge })
-          ctx.reply(`Futures short close on ${edge}:${base_asset}: ${result.status}`)
+          let result: void = await this.close(ctx, args)
         // case "positions":
         //   let result = await this.close(ctx, { asset: base_asset, edge })
         //   ctx.reply(`Futures short close on ${edge}:${base_asset}: ${result.status}`)
@@ -85,6 +84,7 @@ export class Commands_Futures {
       }
 
       let result: TradeAbstractionOpenShortResult = await this.futures_tas_client.short(cmd)
+      ctx.reply(`Futures short close on ${edge}:${base_asset}: ${result.status}`)
       ctx.reply(`${result.msg}`)
       return
     } catch (err) {

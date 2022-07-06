@@ -179,7 +179,6 @@ export class BinanceFuturesExecutionEngine {
     this.logger.error(result)
     return result
 
-
     // try {
     //   // let side = OrderSide.SELL
 
@@ -345,6 +344,8 @@ export class BinanceFuturesExecutionEngine {
           base_asset: tags.base_asset,
           edge: tags.edge,
           buy_filled: false,
+          created_stop_order: false,
+          created_take_profit_order: false,
         }
         this.logger.info(entry_result)
         return entry_result
@@ -359,6 +360,8 @@ export class BinanceFuturesExecutionEngine {
           http_status: 500,
           base_asset: tags.base_asset,
           edge: tags.edge,
+          created_stop_order: false,
+          created_take_profit_order: false,
         }
         this.logger.error(entry_result)
         return entry_result

@@ -155,6 +155,8 @@ export class FuturesEdgeToExecutorMapper {
             msg,
             err,
             execution_timestamp_ms: Date.now(),
+            created_stop_order: false,
+            created_take_profit_order: false,
           }
           this.logger.error(msg)
           return result

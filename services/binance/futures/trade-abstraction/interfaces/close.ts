@@ -3,7 +3,6 @@ import { SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstracti
 interface CloseResult_BASE {
   object_type: "TradeAbstractionCloseResult"
   version: 1
-  action: "close"
   msg: string // human readable text for this object
 
   // signal

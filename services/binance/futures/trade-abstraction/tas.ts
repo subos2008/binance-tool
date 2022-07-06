@@ -135,6 +135,52 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
   }
 })
 
+app.get("/close", async function (req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    let cmd_received_timestamp_ms = +Date.now()
+
+    let { result: mapper_result, tags } = mapper.close(req, {
+      cmd_received_timestamp_ms,
+      quote_asset,
+      exchange_identifier,
+    })
+
+    if (mapper_result.object_type === "TradeAbstractionCloseResult") {
+      res.status(mapper_result.http_status).json(mapper_result)
+      return
+    }
+
+    if (mapper_result.object_type === "TradeAbstractionCloseCommand") {
+      let cmd: TradeAbstractionCloseCommand = mapper_result
+      let cmd_result: TradeAbstractionCloseResult = await tas.close(cmd)
+      tags.status = cmd_result.status
+
+      let { signal_timestamp_ms } = cmd
+
+      metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
+      metrics.trading_abstraction_open_short_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
+
+      res.status(cmd_result.http_status).json(cmd_result)
+
+      send_message(cmd_result.msg, tags)
+
+      if (cmd_result.http_status === 500) {
+        let msg: string = `TradeAbstractionOpenSpotShortResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
+        logger.error(cmd_result, msg) // TODO: Tags?
+        Sentry.captureException(new Error(msg)) // TODO: Tags?
+      }
+      return
+    }
+
+    throw new Error(`Unexpected object_type: ${(mapper_result as any).object_type}`)
+  } catch (err: any) {
+    logger.error("Internal Server Error: ${err}")
+    logger.error({ err })
+    res.status(500).json({ msg: "Internal Server Error" })
+    next(err)
+  }
+})
+
 app.get("/short", async function (req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     let cmd_received_timestamp_ms = +Date.now()

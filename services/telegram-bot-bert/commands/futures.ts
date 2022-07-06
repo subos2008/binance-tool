@@ -6,6 +6,10 @@ import {
   TradeAbstractionOpenShortCommand,
   TradeAbstractionOpenShortResult,
 } from "../../binance/futures/trade-abstraction/interfaces/short"
+import {
+  TradeAbstractionCloseCommand,
+  TradeAbstractionCloseResult,
+} from "../../binance/futures/trade-abstraction/interfaces/close"
 
 export class Commands_Futures {
   futures_tas_client: TradeAbstractionServiceClient
@@ -39,9 +43,9 @@ export class Commands_Futures {
         case "short":
           let check_void: void = await this.open_short(ctx, args)
           break
-        // case "close":
-        //   let result = await this.close_futures_short(ctx, { asset: base_asset, edge })
-        //   ctx.reply(`Futures short close on ${edge}:${base_asset}: ${result.status}`)
+        case "close":
+          let result = await this.close(ctx, { asset: base_asset, edge })
+          ctx.reply(`Futures short close on ${edge}:${base_asset}: ${result.status}`)
         // case "positions":
         //   let result = await this.close(ctx, { asset: base_asset, edge })
         //   ctx.reply(`Futures short close on ${edge}:${base_asset}: ${result.status}`)
@@ -81,6 +85,39 @@ export class Commands_Futures {
       }
 
       let result: TradeAbstractionOpenShortResult = await this.futures_tas_client.short(cmd)
+      ctx.reply(`${result.msg}`)
+      return
+    } catch (err) {
+      this.logger.error({ err })
+      Sentry.captureException(err)
+      ctx.reply(`Exception caught.`)
+    }
+  }
+
+  // This should not throw or return anything interesting
+  async close(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]): Promise<void> {
+    try {
+      let signal_timestamp_ms = Date.now()
+      let base_asset = args.shift()?.toUpperCase()
+      if (!base_asset) {
+        ctx.reply(`base_asset not defined.`)
+        return
+      }
+      let edge = args.shift()
+      if (!edge) {
+        ctx.reply(`edge not defined.`)
+        return
+      }
+      let cmd: TradeAbstractionCloseCommand = {
+        object_type: "TradeAbstractionCloseCommand",
+        version: 1,
+        base_asset,
+        edge,
+        action: "close",
+        signal_timestamp_ms,
+      }
+
+      let result: TradeAbstractionCloseResult = await this.futures_tas_client.close(cmd)
       ctx.reply(`${result.msg}`)
       return
     } catch (err) {

@@ -22,6 +22,7 @@ import { OrderContextPersistence_V2 } from "../../../../../../classes/persistent
 import { OrderContext_V2 } from "../../../../../../interfaces/orders/order-context"
 import { BinanceStyleSpotPrices } from "../../../../../../classes/spot/abstractions/position-identifier"
 import { TradeAbstractionOpenShortResult } from "../../interfaces/short"
+import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "../../interfaces/close"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)
@@ -154,6 +155,116 @@ export class BinanceFuturesExecutionEngine {
       order_context,
     })
     return { clientOrderId }
+  }
+
+  async close(
+    tags: { base_asset: string; quote_asset: string; edge: string },
+    cmd: TradeAbstractionCloseCommand,
+    args: { market_identifier: MarketIdentifier_V3; order_context: OrderContext_V2 }
+  ): Promise<TradeAbstractionCloseResult> {
+    let prefix = `${args.market_identifier.symbol}: `
+
+    let err = new Error(`Not implemented: close`)
+    let result: TradeAbstractionCloseResult = {
+      object_type: "TradeAbstractionCloseResult",
+      version: 1,
+      err,
+      msg: `${prefix}: NOT_IMPLEMENTED: ${err.message}`,
+      execution_timestamp_ms: Date.now(),
+      status: "INTERNAL_SERVER_ERROR",
+      http_status: 500,
+      base_asset: tags.base_asset,
+      edge: tags.edge,
+    }
+    this.logger.error(result)
+    return result
+
+
+    // try {
+    //   // let side = OrderSide.SELL
+
+    //   let { base_asset, edge, quote_asset } = tags
+
+    //   let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(args.order_context)
+    //   let symbol = args.market_identifier.symbol
+
+    //   /* docs: https://binance-docs.github.io/apidocs/futures/en/#new-order-trade */
+
+    //   let type = OrderType.MARKET
+    //   let close_cmd: NewFuturesOrder = {
+    //     side,
+    //     symbol,
+    //     type,
+    //     newClientOrderId: clientOrderId,
+    //     reduceOnly: "true",
+    //   }
+    //   this.logger.object({ object_type: "BinanceNewFuturesOrder", ...buy_order_cmd })
+
+    //   this.logger.info(`Creating ${symbol} ${type} ${side} ORDER for quoteOrderQty ${cmd.quote_amount}`)
+    //   let buy_order: FuturesOrder = await ee.futuresOrder(buy_order_cmd)
+    //   this.logger.object({ object_type: "BinanceFuturesOrder", ...buy_order })
+
+    //   let execution_timestamp_ms: number = buy_order.updateTime
+
+    //   let entry_result: TradeAbstractionOpenShortResult = {
+    //     object_type: "TradeAbstractionOpenShortResult",
+    //     version: 1,
+    //     msg: `${prefix}: SUCCESS: Entry Phase`,
+    //     status: "SUCCESS",
+    //     http_status: 201,
+
+    //     base_asset,
+    //     quote_asset,
+    //     edge,
+
+    //     // MISSING:
+    //     // trigger_price?: string
+    //     execution_timestamp_ms,
+    //     // signal_to_execution_slippage_ms?: number,
+
+    //     // Buy execution
+    //     buy_filled: true,
+    //     executed_quote_quantity: buy_order.cumQuote,
+    //     executed_base_quantity: buy_order.executedQty,
+    //     executed_price: buy_order.avgPrice,
+
+    //     created_stop_order: false,
+    //     created_take_profit_order: false,
+    //   }
+    //   this.logger.info(entry_result)
+    //   return entry_result
+    // } catch (err: any) {
+    //   // TODO: can we do a more clean/complete job of catching exceptions from Binance?
+    //   if ((err.message = ~/Account has insufficient balance for requested action/)) {
+    //     let entry_result: TradeAbstractionOpenShortResult = {
+    //       object_type: "TradeAbstractionOpenShortResult",
+    //       version: 1,
+    //       msg: `${prefix}:  Account has insufficient balance`,
+    //       status: "INSUFFICIENT_BALANCE",
+    //       http_status: 402, // 402: Payment Required
+    //       execution_timestamp_ms: Date.now(),
+    //       base_asset: tags.base_asset,
+    //       edge: tags.edge,
+    //       buy_filled: false,
+    //     }
+    //     this.logger.info(entry_result)
+    //     return entry_result
+    //   } else {
+    //     let entry_result: TradeAbstractionOpenShortResult = {
+    //       object_type: "TradeAbstractionOpenShortResult",
+    //       version: 1,
+    //       err,
+    //       msg: `${prefix}: INTERNAL_SERVER_ERROR: ${err.message}`,
+    //       execution_timestamp_ms: Date.now(),
+    //       status: "INTERNAL_SERVER_ERROR",
+    //       http_status: 500,
+    //       base_asset: tags.base_asset,
+    //       edge: tags.edge,
+    //     }
+    //     this.logger.error(entry_result)
+    //     return entry_result
+    //   }
+    // }
   }
 
   async limit_sell_by_quote_quantity(

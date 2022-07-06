@@ -176,29 +176,32 @@ export class FuturesTradeAbstractionService {
     // return result
   }
 
-  // // or signal_short or signal_exit/close
-  // // Spot so we can only be long or no-position
-  // async close_spot_long(cmd: TradeAbstractionCloseLongCommand): Promise<TradeAbstractionCloseSpotLongResult> {
-  //   assert.equal(cmd.direction, "long")
-  //   assert.equal(cmd.action, "close")
-  //   let edge: AuthorisedEdgeType = cmd.edge as AuthorisedEdgeType
-  //   let { base_asset } = cmd
-  //   let { quote_asset } = this
+  async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {
+    try {
+      throw new Error(`Not implemented`)
+      // assert.equal(cmd.action, "close")
+      // let edge: AuthorisedEdgeType = cmd.edge as AuthorisedEdgeType
+      // let { base_asset } = cmd
+      // let { quote_asset } = this
 
-  //   this.logger.warn(`Position exit is not atomic with check for existing position`)
-  //   try {
-  //     let result: TradeAbstractionCloseSpotLongResult = await this.ee.close_position({
-  //       quote_asset,
-  //       ...cmd,
-  //       edge,
-  //     })
-  //     return result
-  //   } catch (err) {
-  //     Sentry.captureException(err)
-  //     this.logger.error({ err })
-  //     throw err
-  //   }
-  // }
+      // let market_identifier = await this.ee.get_market_identifier_for({ quote_asset, base_asset })
+      // this.logger.warn(`Position exit is not atomic with check for existing position`)
+      // let tags = { base_asset, quote_asset, edge }
+      // let result: TradeAbstractionCloseResult = await this.ee.close(
+      //   tags,
+      //   {
+      //     ...cmd,
+      //     edge,
+      //   },
+      //   { market_identifier }
+      // )
+      // return result
+    } catch (err) {
+      Sentry.captureException(err)
+      this.logger.error({ err })
+      throw err
+    }
+  }
 
   // async open_positions(): Promise<SpotPositionIdentifier_V3[]> {
   //   return this.positions.open_positions()

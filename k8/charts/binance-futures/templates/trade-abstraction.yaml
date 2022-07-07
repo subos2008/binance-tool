@@ -1,37 +1,39 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: futures-trade-abstraction
+  name: binance-futures-trade-abstraction
 spec:
   type: ClusterIP
   ports:
   - port: 80
     targetPort: 3000
   selector:
-    app: futures-trade-abstraction
+    app: binance-futures-trade-abstraction
 ---    
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: futures-trade-abstraction
+  name: binance-futures-trade-abstraction
   labels:
-    binance-tool/service: "futures-trade-abstraction"
+    binance-tool/service: "binance-futures-trade-abstraction"
+    tags.datadoghq.com/service: "binance-futures-trade-abstraction"
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: futures-trade-abstraction
+      app: binance-futures-trade-abstraction
   template:
     metadata:
       labels:
-        binance-tool/service: "futures-trade-abstraction"
-        app: futures-trade-abstraction
+        binance-tool/service: "binance-futures-trade-abstraction"
+        app: binance-futures-trade-abstraction
+        tags.datadoghq.com/service: "binance-futures-trade-abstraction"
       annotations:
-        ad.datadoghq.com/tags: '{"service": "futures-trade-abstraction"}'
-        ad.datadoghq.com/futures-trade-abstraction.logs: >-
+        ad.datadoghq.com/tags: '{"service": "binance-futures-trade-abstraction"}'
+        ad.datadoghq.com/binance-futures-trade-abstraction.logs: >-
           [{
             "source": "nodejs",
-            "service": "futures-trade-abstraction"
+            "service": "binance-futures-trade-abstraction"
           }]   
     spec:
     {{- with .Values.imagePullSecrets }}
@@ -39,7 +41,7 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       containers:
-        - name: futures-trade-abstraction
+        - name: binance-futures-trade-abstraction
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "./out/./services/binance/futures/trade-abstraction/tas"]
@@ -51,13 +53,14 @@ spec:
             httpGet:
               path: /health
               port: http
-          readinessProbe:
-            httpGet:
-              path: /ready
-              port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /ready
+          #     port: http
           env:
             - name: SENTRY_DSN
               value: "https://79ec51cc53f64c6fa2227c5108f65cfd@o369902.ingest.sentry.io/6402822" # binance-futures-tas
 {{- include "binance-futures.vars" . | nindent 12 }}
 {{- include "telegram.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}
+{{- include "datadog.vars" . | nindent 12 }}

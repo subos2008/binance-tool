@@ -9,6 +9,9 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+import { config } from "../../config"
+const quote_currency = config.binance.spot.tas_quote_asset
+
 import { HealthAndReadinessSubsystem } from "../../../../classes/health_and_readiness"
 import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
 import { Logger } from "../../../../interfaces/logger"
@@ -128,7 +131,7 @@ export class PortfolioTracker implements MasterPortfolioClass {
     }).portfolio
     portfolio = this.portfolio_utils.add_quote_value_to_portfolio_balances({
       portfolio,
-      quote_currency: "USDT",
+      quote_currency,
     }).portfolio
     portfolio.btc_value = this.portfolio_utils
       .calculate_portfolio_value_in_quote_currency({ quote_currency: "BTC", portfolio })
@@ -136,7 +139,7 @@ export class PortfolioTracker implements MasterPortfolioClass {
       .toFixed()
     if (!portfolio.prices) throw new Error(`No prices`)
     portfolio.usd_value = this.portfolio_utils
-      .calculate_portfolio_value_in_quote_currency({ quote_currency: "BUSD", portfolio })
+      .calculate_portfolio_value_in_quote_currency({ quote_currency, portfolio })
       .total.dp(0)
       .toFixed()
     return portfolio

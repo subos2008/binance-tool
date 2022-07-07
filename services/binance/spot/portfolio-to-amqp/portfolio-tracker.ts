@@ -9,7 +9,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { config } from "../../config"
+import { config } from "../../../../config"
 const quote_currency = config.binance.spot.tas_quote_asset
 
 import { HealthAndReadinessSubsystem } from "../../../../classes/health_and_readiness"

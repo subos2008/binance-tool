@@ -1,3 +1,6 @@
 export const config = {
-  tas_quote_asset: "BUSD",
+  binance: {
+    spot: { tas_quote_asset: "BUSD" },
+    futures: { tas_quote_asset: "USDT" },
+  },
 }

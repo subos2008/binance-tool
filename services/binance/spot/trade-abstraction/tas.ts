@@ -6,7 +6,7 @@ import "./tracer" // must come before importing any instrumented module.
 
 /** Config: */
 import { config } from "../../../../config"
-const quote_asset = config.tas_quote_asset.toUpperCase()
+const quote_asset = config.binance.spot.tas_quote_asset.toUpperCase()
 
 import { strict as assert } from "assert"
 require("dotenv").config()
@@ -217,7 +217,6 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
 
     let result: TradeAbstractionOpenSpotLongResult = await tas.open_spot_long(cmd)
     tags.status = result.status
-  
 
     try {
       let signal_to_cmd_received_slippage_ms = Number(

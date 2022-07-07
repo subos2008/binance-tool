@@ -18,7 +18,7 @@ import "./tracer" // must come before importing any instrumented module.
 
 /** Config: */
 import { config } from "../../../../config"
-const quote_asset = config.tas_quote_asset.toUpperCase()
+const quote_asset = config.binance.spot.tas_quote_asset.toUpperCase()
 
 import { strict as assert } from "assert"
 require("dotenv").config()
@@ -231,7 +231,7 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
 
 /**
  * "/short" is equivalent to "/close" for spot exchanges
- * 
+ *
  */
 
 // Finally, start our server

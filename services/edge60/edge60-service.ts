@@ -4,7 +4,7 @@
 
 console.log(`--- Service starting ---`)
 
-import "./tracer"; // must come before importing any instrumented module.
+import "./tracer" // must come before importing any instrumented module.
 
 /** Config: */
 const num_coins_to_monitor = 500
@@ -40,6 +40,9 @@ BigNumber.prototype.valueOf = function () {
 
 import express from "express"
 
+import { config } from "../../config"
+const tas_quote_asset = config.binance.spot.tas_quote_asset
+
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { LongShortEntrySignalsCallbacks } from "./interfaces"
@@ -47,7 +50,6 @@ import { Edge60Parameters, Edge60PositionEntrySignal } from "../../events/shared
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { DirectionPersistance } from "./direction-persistance"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
-import { config } from "../../config"
 import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
 import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
 import { get_redis_client } from "../../lib/redis-v4"
@@ -315,7 +317,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     })
     let base_assets: string[] = await base_assets_generator.get_base_assets_list({
       signals_quote_asset: quote_symbol,
-      tas_quote_asset: config.tas_quote_asset,
+      tas_quote_asset: tas_quote_asset,
     })
     this.logger.info(`V2 target markets: ${base_assets.join(", ")}`)
 

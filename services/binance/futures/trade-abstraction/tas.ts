@@ -6,7 +6,7 @@ import "./tracer" // must come before importing any instrumented module.
 
 /** Config: */
 import { config } from "../../../../config"
-const quote_asset = config.tas_quote_asset.toUpperCase()
+const quote_asset = config.binance.futures.tas_quote_asset.toUpperCase()
 
 import { strict as assert } from "assert"
 require("dotenv").config()

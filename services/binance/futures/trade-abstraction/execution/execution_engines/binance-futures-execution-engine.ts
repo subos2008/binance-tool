@@ -333,6 +333,9 @@ export class BinanceFuturesExecutionEngine {
       this.logger.info(entry_result)
       return entry_result
     } catch (err: any) {
+      Sentry.captureException(err)
+      this.logger.error({ err })
+
       // TODO: can we do a more clean/complete job of catching exceptions from Binance?
       if ((err.message = ~/Account has insufficient balance for requested action/)) {
         let entry_result: TradeAbstractionOpenShortResult = {

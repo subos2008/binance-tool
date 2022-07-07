@@ -10,6 +10,27 @@ export interface Balance {
   quote_equivalents?: { [name: string]: string }
 }
 
+export interface FuturesBalance {
+  // exchange_identifier: ExchangeIdentifier
+  asset: string
+  quote_equivalents?: { [name: string]: string }
+
+  /* from Binance FuturesAsset - note there are also Positions */
+  walletBalance: string
+  unrealizedProfit: string
+  marginBalance: string
+  maintMargin: string
+  initialMargin: string
+  positionInitialMargin: string
+  openOrderInitialMargin: string
+  maxWithdrawAmount: string
+  crossWalletBalance: string
+  crossUnPnl: string
+  availableBalance: string
+  marginAvailable: boolean
+  updateTime: number
+}
+
 export interface Prices {
   [name: string]: string
 }
@@ -19,6 +40,15 @@ export interface Portfolio {
   usd_value?: string
   btc_value?: string
   balances: Balance[]
+  prices?: Prices
+  positions?: { [name: string]: SpotPosition }
+}
+
+export interface FuturesPortfolio {
+  object_type: string
+  usd_value?: string
+  btc_value?: string
+  balances: FuturesBalance[]
   prices?: Prices
   positions?: { [name: string]: SpotPosition }
 }

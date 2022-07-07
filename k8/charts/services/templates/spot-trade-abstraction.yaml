@@ -15,7 +15,7 @@ kind: Deployment
 metadata:
   name: spot-trade-abstraction
   labels:
-{{ include "mychart.labels" . | indent 4 }}
+# {{ include "mychart.labels" . | indent 4 }}
     binance-tool/service: "spot-trade-abstraction"
     tags.datadoghq.com/service: "spot-trade-abstraction"
 spec:
@@ -60,7 +60,7 @@ spec:
               port: http
           # readinessProbe:
           #   httpGet:
-          #     path: /health
+          #     path: /ready
           #     port: http
           env:
             - name: SENTRY_DSN

@@ -286,7 +286,7 @@ export class BinanceFuturesExecutionEngine {
     // TODO: munge limitPrice and quantity
     let quantity = base_amount.toFixed(8)
 
-    let buy_order_cmd: NewFuturesOrder = {
+    let order_cmd: NewFuturesOrder = {
       side,
       symbol,
       type,
@@ -296,11 +296,11 @@ export class BinanceFuturesExecutionEngine {
       timeInForce: "IOC",
       // reduceOnly: "false",
     }
-    this.logger.object({ object_type: "BinanceNewFuturesOrder", ...buy_order_cmd })
+    this.logger.object({ object_type: "BinanceNewFuturesOrder", ...order_cmd })
 
     try {
       this.logger.info(`Creating ${symbol} ${type} ${side} ORDER for quoteOrderQty ${cmd.quote_amount}`)
-      let buy_order: FuturesOrder = await ee.futuresOrder(buy_order_cmd)
+      let buy_order: FuturesOrder = await ee.futuresOrder(order_cmd)
       this.logger.object({ object_type: "BinanceFuturesOrder", ...buy_order })
 
       let execution_timestamp_ms: number = buy_order.updateTime

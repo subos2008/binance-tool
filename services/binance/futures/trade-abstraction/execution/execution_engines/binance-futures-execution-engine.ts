@@ -337,7 +337,7 @@ export class BinanceFuturesExecutionEngine {
       this.logger.error({ err })
 
       // TODO: can we do a more clean/complete job of catching exceptions from Binance?
-      if ((err.message = ~/Account has insufficient balance for requested action/)) {
+      if ((err.message =~ /Account has insufficient balance for requested action/)) {
         let entry_result: TradeAbstractionOpenShortResult = {
           object_type: "TradeAbstractionOpenShortResult",
           version: 1,

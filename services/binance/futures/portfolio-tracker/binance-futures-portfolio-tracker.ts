@@ -46,7 +46,6 @@ import { Logger } from "../../../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
 
 import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -58,6 +57,7 @@ BigNumber.prototype.valueOf = function () {
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
+  const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
@@ -98,7 +98,7 @@ export class BinancePortfolioTracker implements FuturesPortfolioBitchClass, Futu
     this.master = master
     this.send_message = send_message
     logger.info("Live monitoring mode")
-    this.exchange_identifier = { exchange: "binance", account: "default", type: "spot", version: "v3" }
+    this.exchange_identifier = { exchange: "binance", account: "default", type: "futures", version: "v3" }
     if (!process.env.BINANCE_API_KEY) throw new Error(`Missing BINANCE_API_KEY in ENV`)
     if (!process.env.BINANCE_API_SECRET) throw new Error(`Missing BINANCE_API_SECRET in ENV`)
     this.ee = Binance({

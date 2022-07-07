@@ -22,7 +22,7 @@
 //  1. Could also check redis-trades matches position sizes
 
 import { strict as assert } from "assert"
-const service_name = "portfolio-tracker"
+const service_name = "binance-futures-portfolio-tracker"
 
 import { MasterPortfolioClass, FuturesPortfolioBitchClass } from "./interfaces"
 
@@ -131,14 +131,14 @@ class PortfolioTracker implements MasterPortfolioClass {
           let tags: Tags = { base_asset, quote_asset /*exchange, account*/ }
 
           dogstatsd.gauge(
-            `.portfolio.spot.holdings.${quote_asset}`,
+            `.portfolio.futures.holdings.${quote_asset}`,
             Number(quote_amount),
             undefined,
             tags,
             function (err, bytes) {
               if (err) {
                 console.error(
-                  "Oh noes! There was an error submitting .portfolio.spot.holdings.${quote_asset} metrics to DogStatsD for ${edge}:${base_asset}:",
+                  "Oh noes! There was an error submitting .portfolio.futures.holdings.${quote_asset} metrics to DogStatsD for ${edge}:${base_asset}:",
                   err
                 )
                 console.error(err)
@@ -147,20 +147,20 @@ class PortfolioTracker implements MasterPortfolioClass {
                 // console.log(
                 //   "Successfully sent",
                 //   bytes,
-                //   "bytes .portfolio.spot.holdings.${quote_asset} to DogStatsD for ${edge}:${base_asset}"
+                //   "bytes .portfolio.futures.holdings.${quote_asset} to DogStatsD for ${edge}:${base_asset}"
                 // )
               }
             }
           )
           dogstatsd.gauge(
-            `.portfolio.spot.holdings`,
+            `.portfolio.futures.holdings`,
             Number(quote_amount),
             undefined,
             tags,
             function (err, bytes) {
               if (err) {
                 console.error(
-                  "Oh noes! There was an error submitting .portfolio.spot.holdings metrics to DogStatsD for ${edge}:${base_asset}:",
+                  "Oh noes! There was an error submitting .portfolio.futures.holdings metrics to DogStatsD for ${edge}:${base_asset}:",
                   err
                 )
                 console.error(err)
@@ -169,7 +169,7 @@ class PortfolioTracker implements MasterPortfolioClass {
                 // console.log(
                 //   "Successfully sent",
                 //   bytes,
-                //   "bytes .portfolio.spot.holdings to DogStatsD for ${edge}:${base_asset}"
+                //   "bytes .portfolio.futures.holdings to DogStatsD for ${edge}:${base_asset}"
                 // )
               }
             }

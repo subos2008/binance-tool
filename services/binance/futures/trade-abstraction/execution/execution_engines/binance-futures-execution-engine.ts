@@ -270,34 +270,35 @@ export class BinanceFuturesExecutionEngine {
     tags: { base_asset: string; quote_asset: string; edge: string },
     cmd: LimitSellByQuoteQuantityCommand
   ): Promise<TradeAbstractionOpenShortResult> {
+    //TODO: add try around this code
     let prefix = `${cmd.market_identifier.symbol}: `
 
+    let side = OrderSide.SELL
+    let type = OrderType.LIMIT
+
+    let { base_asset, edge, quote_asset } = tags
+
+    let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
+    let symbol = cmd.market_identifier.symbol
+    let base_amount = cmd.quote_amount.dividedBy(cmd.sell_limit_price)
+    /* docs: https://binance-docs.github.io/apidocs/futures/en/#new-order-trade */
+
+    // TODO: munge limitPrice and quantity
+    let quantity = base_amount.toFixed(8)
+
+    let buy_order_cmd: NewFuturesOrder = {
+      side,
+      symbol,
+      type,
+      quantity,
+      price: cmd.sell_limit_price.toNumber(),
+      newClientOrderId: clientOrderId,
+      timeInForce: "IOC",
+      reduceOnly: "false",
+    }
+    this.logger.object({ object_type: "BinanceNewFuturesOrder", ...buy_order_cmd })
+
     try {
-      let side = OrderSide.SELL
-      let type = OrderType.LIMIT
-
-      let { base_asset, edge, quote_asset } = tags
-
-      let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
-      let symbol = cmd.market_identifier.symbol
-      let base_amount = cmd.quote_amount.dividedBy(cmd.sell_limit_price)
-      /* docs: https://binance-docs.github.io/apidocs/futures/en/#new-order-trade */
-
-      // TODO: munge limitPrice and quantity
-      let quantity = base_amount.toFixed(8)
-
-      let buy_order_cmd: NewFuturesOrder = {
-        side,
-        symbol,
-        type,
-        quantity,
-        price: cmd.sell_limit_price.toNumber(),
-        newClientOrderId: clientOrderId,
-        timeInForce: "IOC",
-        reduceOnly: "false",
-      }
-      this.logger.object({ object_type: "BinanceNewFuturesOrder", ...buy_order_cmd })
-
       this.logger.info(`Creating ${symbol} ${type} ${side} ORDER for quoteOrderQty ${cmd.quote_amount}`)
       let buy_order: FuturesOrder = await ee.futuresOrder(buy_order_cmd)
       this.logger.object({ object_type: "BinanceFuturesOrder", ...buy_order })
@@ -337,7 +338,7 @@ export class BinanceFuturesExecutionEngine {
         let entry_result: TradeAbstractionOpenShortResult = {
           object_type: "TradeAbstractionOpenShortResult",
           version: 1,
-          msg: `${prefix}:  Account has insufficient balance`,
+          msg: `${prefix}:  Account has insufficient balance attempting to buy ${quantity} ${symbol}`,
           status: "INSUFFICIENT_BALANCE",
           http_status: 402, // 402: Payment Required
           execution_timestamp_ms: Date.now(),

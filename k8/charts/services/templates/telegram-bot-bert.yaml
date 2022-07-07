@@ -66,7 +66,7 @@ spec:
             - name: SPOT_TRADE_ABSTRACTION_SERVICE_URL
               value: "http://spot-trade-abstraction"
             - name: FUTURES_TRADE_ABSTRACTION_SERVICE_URL
-              value: "http://futures-trade-abstraction.binance-futures"
+              value: "http://binance-futures-trade-abstraction.binance-futures"
             - name: DEBUG
               value: "telegraf:*"
 {{- include "telegram-bot-bert.vars" . | nindent 12 }}

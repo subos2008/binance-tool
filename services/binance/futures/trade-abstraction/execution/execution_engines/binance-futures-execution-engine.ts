@@ -337,9 +337,9 @@ export class BinanceFuturesExecutionEngine {
       this.logger.error({ err })
 
       // TODO: catch "Invalid API-key, IP, or permissions for action"
-      
+
       // TODO: can we do a more clean/complete job of catching exceptions from Binance?
-      if ((err.message =~ /Account has insufficient balance for requested action/)) {
+      if ((err.message.match(/Account has insufficient balance for requested action/))) {
         let entry_result: TradeAbstractionOpenShortResult = {
           object_type: "TradeAbstractionOpenShortResult",
           version: 1,

@@ -274,7 +274,7 @@ export class BinanceFuturesExecutionEngine {
     let prefix = `${cmd.market_identifier.symbol}: `
 
     let side = OrderSide.SELL
-    let type = OrderType.LIMIT
+    let type = OrderType.MARKET
 
     let { base_asset, edge, quote_asset } = tags
 
@@ -291,10 +291,10 @@ export class BinanceFuturesExecutionEngine {
       symbol,
       type,
       quantity,
-      price: cmd.sell_limit_price.toNumber(),
+      // price: cmd.sell_limit_price.toNumber(),
       newClientOrderId: clientOrderId,
       timeInForce: "IOC",
-      reduceOnly: "false",
+      // reduceOnly: "false",
     }
     this.logger.object({ object_type: "BinanceNewFuturesOrder", ...buy_order_cmd })
 

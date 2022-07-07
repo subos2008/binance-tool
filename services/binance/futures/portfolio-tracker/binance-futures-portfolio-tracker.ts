@@ -25,7 +25,7 @@ import { strict as assert } from "assert"
 const service_name = "binance-futures-portfolio-tracker"
 
 import { MasterPortfolioClass, FuturesPortfolioBitchClass } from "./interfaces"
-import { Binance as BinanceType, FuturesAsset } from "binance-api-node"
+import { Binance as BinanceType, FuturesAsset, FuturesBalanceResult } from "binance-api-node"
 import Binance from "binance-api-node"
 
 require("dotenv").config()
@@ -154,6 +154,13 @@ export class BinancePortfolioTracker implements FuturesPortfolioBitchClass, Futu
     } catch (err) {
       Sentry.captureException(err)
       throw err
+    }
+  }
+
+  async print_accout_balance(): Promise<void> {
+    let balances: FuturesBalanceResult[] = await this.ee.futuresAccountBalance()
+    for (const balance of balances) {
+      this.logger.object(balance)
     }
   }
 }

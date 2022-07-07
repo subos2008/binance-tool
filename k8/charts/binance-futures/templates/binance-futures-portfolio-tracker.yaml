@@ -34,7 +34,7 @@ spec:
         - name: binance-futures-portfolio-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["node", "./out/./services/binance/futures/portfolio-tracker/binance-futures-portfolio-tracker"]
+          command: ["node", "./out/./services/binance/futures/portfolio-tracker/portfolio-tracker-service"]
           ports:
             - name: http
               containerPort: 80

@@ -74,11 +74,13 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-// import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
-import { Portfolio, Balance, FuturesPortfolio, FuturesBalance } from "../../../../interfaces/portfolio"
+import { FuturesPortfolio } from "../../../../interfaces/portfolio"
 import { BinancePortfolioTracker } from "./binance-futures-portfolio-tracker"
 import { ExchangeIdentifier } from "../../../../events/shared/exchange-identifier"
+import { PortfolioUtils } from "./futures-portfolio-utils"
 
+const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger, sentry: Sentry })
+const send_message = new SendMessage({ service_name, logger }).build()
 class PortfolioTracker implements MasterPortfolioClass {
   send_message: SendMessageFunc
   logger: Logger
@@ -283,9 +285,6 @@ class PortfolioTracker implements MasterPortfolioClass {
   }
 }
 
-const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger, sentry: Sentry })
-const send_message = new SendMessage({ service_name, logger }).build()
-
 async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
@@ -321,7 +320,6 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 }
 
 import express from "express"
-import { PortfolioUtils } from "./futures-portfolio-utils"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 const port = "80"

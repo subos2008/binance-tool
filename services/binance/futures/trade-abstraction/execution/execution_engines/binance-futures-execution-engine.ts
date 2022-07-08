@@ -23,6 +23,7 @@ import { OrderContext_V2 } from "../../../../../../interfaces/orders/order-conte
 import { BinanceStyleSpotPrices } from "../../../../../../classes/spot/abstractions/position-identifier"
 import { TradeAbstractionOpenShortResult } from "../../interfaces/short"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "../../interfaces/close"
+import { BinanceMunger } from "./binance-munging"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)
@@ -77,6 +78,7 @@ export class BinanceFuturesExecutionEngine {
   logger: Logger
   ei_getter: BinanceFuturesExchangeInfoGetter
   order_context_persistence: OrderContextPersistence_V2
+  munger: BinanceMunger
 
   constructor({
     logger,
@@ -89,6 +91,7 @@ export class BinanceFuturesExecutionEngine {
     this.logger = logger
     this.ei_getter = new BinanceFuturesExchangeInfoGetter({ ee })
     this.order_context_persistence = order_context_persistence
+    this.munger = new BinanceMunger()
   }
 
   get_exchange_identifier(): ExchangeIdentifier_V3 {
@@ -274,31 +277,35 @@ export class BinanceFuturesExecutionEngine {
     let prefix = `${cmd.market_identifier.symbol}: `
 
     let side = OrderSide.SELL
-    let type = OrderType.MARKET
+    let type = OrderType.LIMIT
 
     let { base_asset, edge, quote_asset } = tags
 
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let symbol = cmd.market_identifier.symbol
-    let base_amount = cmd.quote_amount.dividedBy(cmd.sell_limit_price)
     /* docs: https://binance-docs.github.io/apidocs/futures/en/#new-order-trade */
 
-    // TODO: munge limitPrice and quantity
-    let quantity = base_amount.toFixed(8)
+    // munge limitPrice and quantity
+    let exchange_info: ExchangeInfo = await this.ei_getter.get_exchange_info()
+    let price = this.munger.munge_and_check_price({ exchange_info, price: cmd.sell_limit_price, symbol })
+
+    let base_amount = cmd.quote_amount.dividedBy(cmd.sell_limit_price)
+    base_amount = this.munger.munge_and_check_quantity({ exchange_info, symbol, quantity: base_amount })
 
     let order_cmd: NewFuturesOrder = {
       side,
       symbol,
       type,
-      quantity,
-      // price: cmd.sell_limit_price.toNumber(),
+      quantity: base_amount.toString(),
+      price: price.toNumber(),
       newClientOrderId: clientOrderId,
       timeInForce: "IOC",
-      // reduceOnly: "false",
     }
     this.logger.object({ object_type: "BinanceNewFuturesOrder", ...order_cmd })
 
     try {
+      // TODO: munge limitPrice and quantity
+
       this.logger.info(`Creating ${symbol} ${type} ${side} ORDER for quoteOrderQty ${cmd.quote_amount}`)
       let buy_order: FuturesOrder = await ee.futuresOrder(order_cmd)
       this.logger.object({ object_type: "BinanceFuturesOrder", ...buy_order })
@@ -338,12 +345,14 @@ export class BinanceFuturesExecutionEngine {
 
       // TODO: catch "Invalid API-key, IP, or permissions for action"
 
+      // TODO: munge limitPrice and quantity
+
       // TODO: can we do a more clean/complete job of catching exceptions from Binance?
-      if ((err.message.match(/Account has insufficient balance for requested action/))) {
+      if (err.message.match(/Account has insufficient balance for requested action/)) {
         let entry_result: TradeAbstractionOpenShortResult = {
           object_type: "TradeAbstractionOpenShortResult",
           version: 1,
-          msg: `${prefix}:  Account has insufficient balance attempting to buy ${quantity} ${symbol}`,
+          msg: `${prefix}:  Account has insufficient balance`,
           status: "INSUFFICIENT_BALANCE",
           http_status: 402, // 402: Payment Required
           execution_timestamp_ms: Date.now(),

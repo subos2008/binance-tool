@@ -39,7 +39,7 @@ export class FixedPositionSizer implements PositionSizer {
   }): Promise<BigNumber> {
     check_edge(edge) // throw if edge is not valid - what better place than the PositionSizer for that? :)
     if (edge === "edge62") {
-      if (direction === "short") return new BigNumber(300) // make this $1k if we can
+      if (direction === "short") return new BigNumber(600) // make this $1k if we can
       if (direction === "long") return new BigNumber(50)
     }
     if (edge === "edge60") {

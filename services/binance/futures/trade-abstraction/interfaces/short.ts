@@ -24,7 +24,11 @@ interface TradeAbstractionOpenShortResult_SUCCESS {
   // signal
   trigger_price?: string
 
-  // Buy execution
+  // Post munging requested values
+  requested_quote_quantity: string
+  requested_price: string
+
+  // Actual execution
   executed_quote_quantity: string
   executed_base_quantity: string
   executed_price: string // can be null if nothing bought
@@ -56,7 +60,7 @@ interface TradeAbstractionOpenShortResult_BAD_INPUTS {
   created_take_profit_order: false
   stop_order_id?: string | number | undefined
   take_profit_order_id?: string | number | undefined
-  
+
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
 
@@ -241,7 +245,7 @@ interface TradeAbstractionOpenShortResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
 
   created_stop_order: boolean
   stop_order_id?: string | number | undefined
-  
+
   stop_price?: string
 
   created_take_profit_order: boolean

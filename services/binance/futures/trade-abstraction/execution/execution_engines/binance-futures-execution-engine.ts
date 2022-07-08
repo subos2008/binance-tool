@@ -330,8 +330,10 @@ export class BinanceFuturesExecutionEngine {
 
         // Buy execution
         buy_filled: true,
+        requested_quote_quantity: base_amount.toString(),
         executed_quote_quantity: buy_order.cumQuote,
         executed_base_quantity: buy_order.executedQty,
+        requested_price: price.toString(),
         executed_price: buy_order.avgPrice,
 
         created_stop_order: false,
@@ -460,8 +462,7 @@ export class BinanceFuturesExecutionEngine {
 
       // TODO: copy in code from the other classes here - we should have a bunch of constructions of return types
       let result: TradeAbstractionOpenShortResult = {
-        object_type: "TradeAbstractionOpenShortResult",
-        version: 1,
+        ...buy_result,
         msg: `${prefix}: SUCCESS: Entry and added SL, TP`,
         status: "SUCCESS",
         http_status: 201,
@@ -469,17 +470,6 @@ export class BinanceFuturesExecutionEngine {
         base_asset,
         quote_asset,
         edge,
-
-        // MISSING:
-        // trigger_price?: string
-        execution_timestamp_ms: Date.now(), // TODO: start vs finished execution timestamps..?
-        // signal_to_execution_slippage_ms?: number,
-
-        // Buy execution
-        buy_filled: true,
-        executed_quote_quantity,
-        executed_base_quantity,
-        executed_price,
 
         created_stop_order,
         created_take_profit_order,

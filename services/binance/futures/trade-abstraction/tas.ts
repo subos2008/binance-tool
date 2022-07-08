@@ -10,7 +10,7 @@ const quote_asset = config.binance.futures.tas_quote_asset.toUpperCase()
 
 import { strict as assert } from "assert"
 require("dotenv").config()
-const service_name = "spot-trade-abstraction"
+const service_name = "binance-futures-trade-abstraction"
 
 import * as Sentry from "@sentry/node"
 Sentry.init({})

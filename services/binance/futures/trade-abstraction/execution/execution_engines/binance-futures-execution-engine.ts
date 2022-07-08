@@ -404,6 +404,7 @@ export class BinanceFuturesExecutionEngine {
     let prefix = `${cmd.market_identifier.symbol}: `
 
     // Create two orders - STOP_MARKET and TAKE_PROFIT_MARKET
+    let exchange_info: ExchangeInfo = await this.ei_getter.get_exchange_info()
 
     /** TODO: Add STOP */
     let created_stop_order = false
@@ -416,12 +417,17 @@ export class BinanceFuturesExecutionEngine {
         let { clientOrderId: stop_ClientOrderId } = await this.store_order_context_and_generate_clientOrderId(
           cmd.order_context
         )
+
+        let stopPrice = this.munger
+          .munge_and_check_price({ exchange_info, symbol, price: cmd.stop_price })
+          .toNumber()
+
         let type = OrderType.STOP_MARKET
         let stop_order_cmd: NewFuturesOrder = {
           side,
           symbol,
           type,
-          stopPrice: cmd.sell_limit_price.toNumber(), // Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders.
+          stopPrice, // Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders.
           newClientOrderId: stop_ClientOrderId,
           closePosition: "true",
         }
@@ -440,12 +446,17 @@ export class BinanceFuturesExecutionEngine {
 
         let { clientOrderId: take_profit_ClientOrderId } =
           await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
+
+        let stopPrice = this.munger
+          .munge_and_check_price({ exchange_info, symbol, price: cmd.take_profit_price })
+          .toNumber()
+
         let type = OrderType.TAKE_PROFIT_MARKET
         let take_profit_order_cmd: NewFuturesOrder = {
           side,
           symbol,
           type,
-          stopPrice: cmd.sell_limit_price.toNumber(), // Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders.
+          stopPrice, // Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders.
           newClientOrderId: take_profit_ClientOrderId,
           closePosition: "true",
         }

@@ -84,7 +84,7 @@ export class Commands_Futures {
       }
 
       let result: TradeAbstractionOpenShortResult = await this.futures_tas_client.short(cmd)
-      ctx.reply(`Futures short close on ${edge}:${base_asset}: ${result.status}`)
+      ctx.reply(`Futures short opened on ${edge}:${base_asset}: ${result.status}`)
       ctx.reply(`${result.msg}`)
       return
     } catch (err) {

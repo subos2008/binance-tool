@@ -53,5 +53,7 @@ spec:
               value: "https://d58e2a72040a48689a2e1933aa2e45da@o369902.ingest.sentry.io/6171400"
             - name: SPOT_TRADE_ABSTRACTION_SERVICE_URL
               value: "http://spot-trade-abstraction"
+            - name: FUTURES_TRADE_ABSTRACTION_SERVICE_URL
+              value: "http://binance-futures-trade-abstraction.binance-futures"
 {{- include "telegram.vars" . | nindent 12 }}
 {{- include "amqp.vars" . | nindent 12 }}

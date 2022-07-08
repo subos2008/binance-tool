@@ -4,7 +4,7 @@
 
 import { strict as assert } from "assert"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
-import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
+import { TradeAbstractionServiceClient } from "../binance/futures/trade-abstraction/client/tas-client"
 import { Logger } from "../../interfaces/logger"
 import * as Sentry from "@sentry/node"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
@@ -19,6 +19,7 @@ import {
 import { Edge60EntrySignalProcessor } from "./interfaces"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
 import BigNumber from "bignumber.js"
+import { TradeAbstractionOpenShortResult } from "../binance/futures/trade-abstraction/interfaces/short"
 
 /**
  * interface Edge60PositionEntrySignal {
@@ -50,7 +51,8 @@ export class Edge60ForwarderToEdge62Futures implements Edge60EntrySignalProcesso
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-    this.tas_client = new TradeAbstractionServiceClient({ logger })
+    let TAS_URL = process.env.FUTURES_TRADE_ABSTRACTION_SERVICE_URL
+    this.tas_client = new TradeAbstractionServiceClient({ logger, TAS_URL })
   }
 
   async process_edge60_entry_signal(signal: Edge60PositionEntrySignal) {
@@ -62,7 +64,7 @@ export class Edge60ForwarderToEdge62Futures implements Edge60EntrySignalProcesso
     let direction = signal.edge60_entry_signal.direction
     let tags = { base_asset, edge, direction }
 
-    let result: TradeAbstractionOpenSpotLongResult | TradeAbstractionCloseSpotLongResult
+    let result: TradeAbstractionOpenShortResult
     switch (signal.edge60_entry_signal.direction) {
       case "long":
         // Long signal is a nop on the futures exchange atm
@@ -87,12 +89,15 @@ export class Edge60ForwarderToEdge62Futures implements Edge60EntrySignalProcesso
           } catch (e) {
             console.error(e)
           }
-          // result = await this.tas_client.open_futures_short({
-          //   base_asset,
-          //   edge,
-          //   direction: "long", // this direction is confising, it's the direction of the position to close, i.e. short = long
-          //   action: "close",
-          // })
+          let signal_timestamp_ms = signal.edge60_entry_signal.signal_timestamp_ms
+          result = await this.tas_client.short({
+            object_type: "TradeAbstractionOpenShortCommand",
+            base_asset,
+            edge,
+            direction: "short", // this direction is confising, it's the direction of the position to close, i.e. short = long
+            action: "open",
+            signal_timestamp_ms,
+          })
         } catch (err: any) {
           /**
            * There are probably valid cases for this - like these was no long position open

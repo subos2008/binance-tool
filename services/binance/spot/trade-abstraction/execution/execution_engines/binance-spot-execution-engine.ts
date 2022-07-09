@@ -14,6 +14,9 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+import * as Sentry from "@sentry/node"
+Sentry.init({})
+
 import {
   SpotExecutionEngine,
   SpotStopMarketSellCommand,
@@ -163,8 +166,11 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       this.logger.info(spot_long_result)
       return spot_long_result
     } catch (err: any) {
+      Sentry.captureException(err)
+      this.logger.error({ err })
+
       // TODO: can we do a more clean/complete job of catching exceptions from Binance?
-      if ((err.message = ~/Account has insufficient balance for requested action/)) {
+      if ((err.message.match(/Account has insufficient balance for requested action/))) {
         let spot_long_result: SpotExecutionEngineBuyResult = {
           object_type: "SpotExecutionEngineBuyResult",
           version: 2,

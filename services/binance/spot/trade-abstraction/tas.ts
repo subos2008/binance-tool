@@ -188,6 +188,7 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
       }
+      logger.error(spot_long_result)
       res.status(400).json(spot_long_result)
       logger.error(
         `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`

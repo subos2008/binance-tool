@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: binance-spot-trade-abstraction-v2
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+  selector:
+    app: binance-spot-trade-abstraction-v2
+---    
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: binance-spot-trade-abstraction-v2
+  labels:
+# {{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "binance-spot-trade-abstraction-v2"
+    tags.datadoghq.com/service: "binance-spot-trade-abstraction-v2"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app: binance-spot-trade-abstraction-v2
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "binance-spot-trade-abstraction-v2"
+        app: binance-spot-trade-abstraction-v2
+        tags.datadoghq.com/service: "binance-spot-trade-abstraction-v2"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "binance-spot-trade-abstraction-v2"}'
+        ad.datadoghq.com/service.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "binance-spot-trade-abstraction-v2"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["./services/binance/spot/trade-abstraction-v2/tas.ts"]
+          ports:
+          - name: http
+            containerPort: 3000
+            protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /ready
+          #     port: http
+          env:
+            - name: SENTRY_DSN
+              value: "https://5a68a728462448d08b613731e9e51d0d@o369902.ingest.sentry.io/6151233"
+{{- include "binance-cluster-spot-tas.vars" . | nindent 12 }}
+{{- include "telegram.vars" . | nindent 12 }}
+{{- include "redis.vars" . | nindent 12 }}
+{{- include "datadog.vars" . | nindent 12 }}

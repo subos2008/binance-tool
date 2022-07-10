@@ -5,7 +5,7 @@ import { Logger } from "../../interfaces/logger"
 import * as Sentry from "@sentry/node"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 import { Edge60EntrySignalProcessor } from "./interfaces"
-import { Edge60Forwarder } from "./forwarder"
+import { Edge60ForwarderToEdge60Spot } from "./forwarder-to-edge60-spot"
 import { Edge60ForwarderToEdge62Spot } from "./forwarder-to-edge62-spot"
 import { Edge60ForwarderToEdge62Futures } from "./forwarder-to-edge62-futures"
 
@@ -34,7 +34,7 @@ export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
     this.tas_client = new TradeAbstractionServiceClient({ logger })
     this.event_name = event_name
 
-    this.edge60 = new Edge60Forwarder({
+    this.edge60 = new Edge60ForwarderToEdge60Spot({
       send_message,
       logger,
       event_name,

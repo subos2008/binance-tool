@@ -35,7 +35,7 @@ import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-ide
  * }
  */
 
-export class Edge60Forwarder implements Edge60EntrySignalProcessor {
+export class Edge60ForwarderToEdge60Spot implements Edge60EntrySignalProcessor {
   send_message: Function
   logger: Logger
   event_name: MyEventNameType

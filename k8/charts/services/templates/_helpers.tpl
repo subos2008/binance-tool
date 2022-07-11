@@ -185,5 +185,10 @@ Environment variables
 
 {{- define "binance-spot-tas.vars" -}}
 - name: SPOT_TRADE_ABSTRACTION_SERVICE_URL
-  value: "http://spot-trade-abstraction.binance-tool"
+  value: "http://binance-spot-trade-abstraction-v2.binance-tool"
+{{- end -}}
+
+{{- define "binance-futures-tas.vars" -}}
+- name: FUTURES_TRADE_ABSTRACTION_SERVICE_URL
+  value: "http://binance-futures-trade-abstraction.binance-futures"
 {{- end -}}

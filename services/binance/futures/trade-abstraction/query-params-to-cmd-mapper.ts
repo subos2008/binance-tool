@@ -39,6 +39,11 @@ export class QueryParamsToCmdMapper {
     )
     assert(typeof base_asset == "string", new Error(`InputChecking: typeof base_asset unexpected`))
     tags.base_asset = base_asset
+
+    if (typeof signal_timestamp_ms_string == "undefined") {
+      signal_timestamp_ms_string = Date.now().toString()
+    }
+
     assert(
       typeof signal_timestamp_ms_string == "string",
       new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms_string}`)

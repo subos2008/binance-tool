@@ -7,7 +7,7 @@ replicaCount: 1
 image:
   repository: "ghcr.io/subos2008/binance-tool/binance-tool"
   tag: latest
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 redis:
   # if create_local is true we install a redis subchart

@@ -38,6 +38,7 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
+import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "./interfaces/short"
 
 import express, { NextFunction, Request, Response } from "express"
@@ -46,7 +47,6 @@ const expressWinston = require("express-winston")
 
 var app = express()
 
-import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
@@ -95,6 +95,8 @@ const order_context_persistence = new RedisOrderContextPersistance({ logger, red
 const ee = new BinanceFuturesExecutionEngine({ logger, order_context_persistence })
 const exchange_identifier = ee.get_exchange_identifier()
 
+const metrics = new SendDatadogMetrics({ service_name, logger, exchange_identifier })
+
 let tas: FuturesTradeAbstractionService = new FuturesTradeAbstractionService({
   logger,
   quote_asset /* global */,
@@ -105,7 +107,6 @@ let tas: FuturesTradeAbstractionService = new FuturesTradeAbstractionService({
 
 let mapper = new QueryParamsToCmdMapper({ logger })
 
-const metrics = new SendDatadogMetrics({ service_name, logger, exchange_identifier })
 
 metrics.service_started()
 
@@ -175,6 +176,7 @@ app.get("/close", async function (req: Request, res: Response, next: NextFunctio
 
     throw new Error(`Unexpected object_type: ${(mapper_result as any).object_type}`)
   } catch (err: any) {
+    Sentry.captureException(err)
     logger.error("Internal Server Error: ${err}")
     logger.error({ err })
     res.status(500).json({ msg: "Internal Server Error" })

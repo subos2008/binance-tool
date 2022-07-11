@@ -52,7 +52,7 @@ spec:
             - name: SENTRY_DSN
               value: "https://d58e2a72040a48689a2e1933aa2e45da@o369902.ingest.sentry.io/6171400"
             - name: SPOT_TRADE_ABSTRACTION_SERVICE_URL
-              value: "http://spot-trade-abstraction"
+              value: "http://binance-spot-trade-abstraction-v2"
             - name: FUTURES_TRADE_ABSTRACTION_SERVICE_URL
               value: "http://binance-futures-trade-abstraction.binance-futures"
 {{- include "telegram.vars" . | nindent 12 }}

@@ -64,7 +64,7 @@ spec:
             - name: SENTRY_DSN
               value: "https://d9432d76fae6438b87ca9bf63e5b098d@o369902.ingest.sentry.io/6152177"
             - name: SPOT_TRADE_ABSTRACTION_SERVICE_URL
-              value: "http://spot-trade-abstraction"
+              value: "http://binance-spot-trade-abstraction-v2"
             - name: FUTURES_TRADE_ABSTRACTION_SERVICE_URL
               value: "http://binance-futures-trade-abstraction.binance-futures"
             - name: DEBUG

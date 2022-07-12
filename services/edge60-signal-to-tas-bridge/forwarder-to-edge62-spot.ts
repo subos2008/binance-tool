@@ -8,12 +8,8 @@ import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction
 import { Logger } from "../../interfaces/logger"
 import * as Sentry from "@sentry/node"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
-import {
-  TradeAbstractionOpenSpotLongResult,
-} from "../binance/spot/trade-abstraction/interfaces/open_spot"
-import {
-  TradeAbstractionCloseSpotLongResult,
-} from "../binance/spot/trade-abstraction/interfaces/close_spot"
+import { TradeAbstractionOpenSpotLongResult } from "../binance/spot/trade-abstraction/interfaces/open_spot"
+import { TradeAbstractionCloseSpotLongResult } from "../binance/spot/trade-abstraction/interfaces/close_spot"
 import { Edge60EntrySignalProcessor } from "./interfaces"
 import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
 import BigNumber from "bignumber.js"
@@ -93,42 +89,8 @@ export class Edge60ForwarderToEdge62Spot implements Edge60EntrySignalProcessor {
         })
         break
       case "short":
-        if (this.forward_short_signals_as_close_position) {
-          try {
-            this.logger.info(
-              tags,
-              `short signal, attempting to close any ${edge} spot long position on ${base_asset}`
-            )
-            try {
-              //hack
-              let trigger_price = new BigNumber(signal.edge60_entry_signal.signal_price)
-              let tp = trigger_price.times("0.93").toFixed()
-              let sl = trigger_price.times("1.07").toFixed()
-              this.send_message(
-                `${edge} SHORT ${base_asset} - Trigger Price: ${trigger_price.toFixed()} TP ${tp} SL ${sl}`,
-                tags
-              )
-            } catch (e) {
-              console.error(e)
-            }
-            result = await this.tas_client.close_spot_long({
-              base_asset,
-              edge,
-              direction: "long", // this direction is confising, it's the direction of the position to close, i.e. short = long
-              action: "close",
-            })
-          } catch (err: any) {
-            /**
-             * There are probably valid cases for this - like these was no long position open
-             */
-            if (err.status == 404) {
-              this.logger.info(tags, `404 - position not found closing ${base_asset} spot long`)
-              return
-            }
-            this.logger.warn(tags, { err })
-            Sentry.captureException(err)
-          }
-        }
+        // Do nothing
+        // this.logger.info(`Skipping short signal for edge62 spot forwarder`)
         break
       default:
         throw new Error(`Unknown direction: ${signal.edge60_entry_signal.direction}`)

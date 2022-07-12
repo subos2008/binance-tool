@@ -130,7 +130,7 @@ class EventLogger implements MessageProcessor {
       try {
         let msg: string = `Closed position on ${edge}:${base_asset} with percentage_quote_change of ${
           percentage_quote_change ? new BigNumber(percentage_quote_change.toString()).dp(2).toFixed() : "unknown"
-        }%, in position for ${days_in_position} days`
+        }%, in position for ${new BigNumber(days_in_position).toFixed(2)} days`
         this.send_message(msg, { edge })
       } catch (e: any) {
         this.logger.error(e)

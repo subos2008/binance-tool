@@ -68,7 +68,6 @@ export class Edge60ForwarderToEdge62Futures implements Edge60EntrySignalProcesso
     switch (signal.edge60_entry_signal.direction) {
       case "long":
         // Long signal is a nop on the futures exchange atm
-
         this.logger.info(tags, `Ignoring ${edge} ${direction} signal on ${base_asset} for futures forwarding`)
         break
       case "short":
@@ -78,7 +77,7 @@ export class Edge60ForwarderToEdge62Futures implements Edge60EntrySignalProcesso
           //   `short signal, attempting to close any ${edge} spot long position on ${base_asset}`
           // )
           try {
-            //hack
+            //hack - print the values for if we are doing a manual entry
             let trigger_price = new BigNumber(signal.edge60_entry_signal.signal_price)
             let tp = trigger_price.times("0.93").toFixed()
             let sl = trigger_price.times("1.07").toFixed()
@@ -90,12 +89,14 @@ export class Edge60ForwarderToEdge62Futures implements Edge60EntrySignalProcesso
             console.error(e)
           }
           let signal_timestamp_ms = signal.edge60_entry_signal.signal_timestamp_ms
+          let trigger_price = signal.edge60_entry_signal.signal_price
           result = await this.tas_client.short({
             object_type: "TradeAbstractionOpenShortCommand",
             base_asset,
             edge,
             direction: "short", // this direction is confising, it's the direction of the position to close, i.e. short = long
             action: "open",
+            trigger_price,
             signal_timestamp_ms,
           })
         } catch (err: any) {

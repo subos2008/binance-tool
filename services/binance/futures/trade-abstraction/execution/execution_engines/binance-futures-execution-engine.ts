@@ -315,7 +315,7 @@ export class BinanceFuturesExecutionEngine {
       let executed_base_quantity = new BigNumber(buy_order.executedQty)
 
       if (executed_base_quantity.isZero()) {
-        let msg = `${prefix}: ENTRY_FAILED_TO_FILL: IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
+        let msg = `${prefix}: ENTRY_FAILED_TO_FILL: IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${cmd.sell_limit_price} limit price)`
         let result: TradeAbstractionOpenShortResult = {
           object_type: "TradeAbstractionOpenShortResult",
           version: 1,

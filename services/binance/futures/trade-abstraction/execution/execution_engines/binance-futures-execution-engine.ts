@@ -312,6 +312,29 @@ export class BinanceFuturesExecutionEngine {
 
       let execution_timestamp_ms: number = buy_order.updateTime
 
+      let executed_base_quantity = new BigNumber(buy_order.executedQty)
+
+      if (executed_base_quantity.isZero()) {
+        let msg = `${prefix}: ENTRY_FAILED_TO_FILL: IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
+        let result: TradeAbstractionOpenShortResult = {
+          object_type: "TradeAbstractionOpenShortResult",
+          version: 1,
+          edge,
+          base_asset,
+          quote_asset,
+          status: "ENTRY_FAILED_TO_FILL",
+          http_status: 200,
+          msg,
+          execution_timestamp_ms,
+          buy_filled: false,
+          created_stop_order: false,
+          created_take_profit_order: false,
+        }
+        this.logger.info(result)
+        return result
+      }
+
+      // TODO: check what the BinanceFuturesOrder said for OGN
       let entry_result: TradeAbstractionOpenShortResult = {
         object_type: "TradeAbstractionOpenShortResult",
         version: 1,

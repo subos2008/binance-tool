@@ -304,6 +304,7 @@ export class BinanceFuturesExecutionEngine {
       price: price.toNumber(),
       newClientOrderId: clientOrderId,
       timeInForce: "IOC",
+      newOrderRespType: "RESULT",
     }
     this.logger.object({ object_type: "BinanceNewFuturesOrder", ...order_cmd })
 
@@ -316,29 +317,26 @@ export class BinanceFuturesExecutionEngine {
 
       let execution_timestamp_ms: number = buy_order.updateTime
 
-      
-      // TODO: this does not work! IOC futures orders return the NEW order and not the FILLED one - there os no quantity executed amount
-      // TODO: thankfully this doesn't matter as the SL/TP orders use closePosition
-      // let executed_base_quantity = new BigNumber(buy_order.executedQty)
-      // if (executed_base_quantity.isZero()) {
-      //   let msg = `${prefix}: ENTRY_FAILED_TO_FILL: IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${cmd.sell_limit_price} limit price)`
-      //   let result: TradeAbstractionOpenShortResult = {
-      //     object_type: "TradeAbstractionOpenShortResult",
-      //     version: 1,
-      //     edge,
-      //     base_asset,
-      //     quote_asset,
-      //     status: "ENTRY_FAILED_TO_FILL",
-      //     http_status: 200,
-      //     msg,
-      //     execution_timestamp_ms,
-      //     buy_filled: false,
-      //     created_stop_order: false,
-      //     created_take_profit_order: false,
-      //   }
-      //   this.logger.info(result)
-      //   return result
-      // }
+      let executed_base_quantity = new BigNumber(buy_order.executedQty)
+      if (executed_base_quantity.isZero()) {
+        let msg = `${prefix}: ENTRY_FAILED_TO_FILL: IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${cmd.sell_limit_price} limit price)`
+        let result: TradeAbstractionOpenShortResult = {
+          object_type: "TradeAbstractionOpenShortResult",
+          version: 1,
+          edge,
+          base_asset,
+          quote_asset,
+          status: "ENTRY_FAILED_TO_FILL",
+          http_status: 200,
+          msg,
+          execution_timestamp_ms,
+          buy_filled: false,
+          created_stop_order: false,
+          created_take_profit_order: false,
+        }
+        this.logger.info(result)
+        return result
+      }
 
       // TODO: check what the BinanceFuturesOrder said for OGN
       let entry_result: TradeAbstractionOpenShortResult = {
@@ -459,6 +457,7 @@ export class BinanceFuturesExecutionEngine {
           stopPrice, // Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders.
           newClientOrderId: stop_ClientOrderId,
           closePosition: "true",
+          newOrderRespType: "RESULT",
         }
         this.logger.object({ object_type: "BinanceNewFuturesOrder", ...stop_order_cmd })
         this.logger.info(`Creating ${symbol} ${type} ${side} ORDER (closePosition)}`)
@@ -488,6 +487,7 @@ export class BinanceFuturesExecutionEngine {
           stopPrice, // Used with STOP/STOP_MARKET or TAKE_PROFIT/TAKE_PROFIT_MARKET orders.
           newClientOrderId: take_profit_ClientOrderId,
           closePosition: "true",
+          newOrderRespType: "RESULT",
         }
         this.logger.object({ object_type: "BinanceNewFuturesOrder", ...take_profit_order_cmd })
         this.logger.info(`Creating ${symbol} ${type} ${side} ORDER (closePosition)}`)

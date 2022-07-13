@@ -1,6 +1,6 @@
 import { strict as assert } from "assert"
 
-import * as Sentry from "@sentry/node"
+import Sentry from "../../../../lib/sentry"
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN

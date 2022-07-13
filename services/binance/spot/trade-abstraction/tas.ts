@@ -12,8 +12,7 @@ import { strict as assert } from "assert"
 require("dotenv").config()
 const service_name = "spot-trade-abstraction"
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../../../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })

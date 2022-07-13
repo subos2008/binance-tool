@@ -2,14 +2,9 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
-import { strict as assert } from "assert"
 const service_name = "binance-orders-to-amqp"
 
-import { Binance as BinanceType } from "binance-api-node"
-import Binance from "binance-api-node"
-
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })

@@ -14,8 +14,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../../../../../../lib/sentry"
 
 import {
   SpotExecutionEngine,

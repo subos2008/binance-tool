@@ -7,13 +7,12 @@ import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "../in
 const JSONBigNumber = require("./JSONBigNumber")
 import { URL } from "url"
 
-import * as Sentry from "@sentry/node"
 import {
   BinanceStyleSpotPrices,
   SpotPositionIdentifier_V3,
 } from "../../../../../classes/spot/abstractions/position-identifier"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
-Sentry.init({})
+import Sentry from "../../../../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("class", "TradeAbstractionServiceClient")
 })

@@ -2,7 +2,7 @@ import * as Sentry from '@sentry/node';
 
 // DEPRICATED! Don't set DSN in options, set SENTRY_DSN in the environment instead.
 
-// Sentry.init({}); I'm guessing init is not needed if we are setting nothing?
+Sentry.init({});
 
 export default Sentry
 

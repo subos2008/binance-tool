@@ -4,9 +4,7 @@ BigNumber.DEBUG = true // Prevent NaN
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
-import * as Sentry from "@sentry/node"
-Sentry.init({})
-
+import Sentry from "../../../../../../lib/sentry"
 import { Logger } from "../../../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { MarketIdentifier_V4 } from "../../../../../../events/shared/market-identifier"

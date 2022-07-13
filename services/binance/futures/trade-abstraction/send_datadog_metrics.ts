@@ -11,13 +11,12 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import * as Sentry from "@sentry/node"
+import Sentry from "../../../../lib/sentry"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { Logger } from "../../../../interfaces/logger"
 // import { TradeAbstractionOpenSpotLongResult } from "./interfaces/long"
 import { TradeAbstractionCloseResult } from "./interfaces/close"
 import { TradeAbstractionOpenShortResult } from "./interfaces/short"
-Sentry.init({})
 
 export class SendDatadogMetrics {
   dogstatsd: StatsD

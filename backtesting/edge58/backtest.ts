@@ -26,8 +26,7 @@ import binance, { Candle, CandleChartResult } from "binance-api-node"
 import { Binance } from "binance-api-node"
 const exchange = "binance"
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })

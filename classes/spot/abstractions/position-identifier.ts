@@ -1,7 +1,7 @@
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../../../lib/sentry"
+
 export function create_position_identifier_from_tuple({
   baseAsset,
   account,

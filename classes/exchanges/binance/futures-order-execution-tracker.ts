@@ -13,7 +13,7 @@ import {
   FuturesOrderCallbacks,
 } from "../../../interfaces/exchanges/binance/order_callbacks"
 
-import * as Sentry from "@sentry/node"
+import Sentry from "../../../lib/sentry"
 import {
   AccountConfigUpdate,
   AccountUpdate,

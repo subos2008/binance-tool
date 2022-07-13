@@ -9,7 +9,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import * as Sentry from "@sentry/node"
+import Sentry from "../../../../../lib/sentry"
 
 import { RedisClient } from "redis"
 import { SpotPositionIdentifier_V3, AuthorisedEdgeType } from "../../../abstractions/position-identifier"

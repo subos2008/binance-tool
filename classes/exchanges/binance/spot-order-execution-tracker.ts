@@ -10,7 +10,7 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../../interfaces/logger"
 import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/exchanges/binance/order_callbacks"
 
-import * as Sentry from "@sentry/node"
+import Sentry from "../../../lib/sentry"
 import {
   AccountConfigUpdate,
   AccountUpdate,
@@ -90,9 +90,9 @@ export class OrderExecutionTracker {
   }
 
   async monitor_user_stream() {
-    type processor_func = (data: ExecutionReport ) => Promise<void>
+    type processor_func = (data: ExecutionReport) => Promise<void>
 
-    const process_execution_report: processor_func = async (data: ExecutionReport ) => {
+    const process_execution_report: processor_func = async (data: ExecutionReport) => {
       try {
         this.processExecutionReport(data)
       } catch (err) {
@@ -153,7 +153,7 @@ export class OrderExecutionTracker {
     }
   }
 
-  async processExecutionReport(_data: ExecutionReport ) {
+  async processExecutionReport(_data: ExecutionReport) {
     let bod: BinanceOrderData
     if (_data.eventType === "executionReport") {
       const {

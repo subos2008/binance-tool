@@ -6,8 +6,7 @@
  * Event/message listener
  */
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../../../lib/sentry"
 
 import { ListenerFactory } from "../../amqp/listener-factory"
 import { Logger } from "../../../lib/faux_logger"

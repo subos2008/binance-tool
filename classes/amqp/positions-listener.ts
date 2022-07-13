@@ -6,7 +6,7 @@ const amqp_exchange_name = 'positions';
 
 const connect_options = require("../../lib/amqp/connect_options").default
 
-import * as Sentry from '@sentry/node';
+import Sentry from "../../lib/sentry"
 
 import { connect, Connection } from "amqplib";
 import { Logger } from '../../interfaces/logger'

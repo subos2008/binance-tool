@@ -4,7 +4,7 @@
 
 const connect_options = require("../../lib/amqp/connect_options").default
 
-import * as Sentry from "@sentry/node"
+import Sentry from "../../lib/sentry"
 
 import { Channel, connect, Connection } from "amqplib"
 import { assert } from "console"

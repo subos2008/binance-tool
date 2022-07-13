@@ -1,5 +1,5 @@
 
-import * as Sentry from '@sentry/node';
+import Sentry from "../../lib/sentry"
 
 import { strict as assert } from 'assert';
 const { promisify } = require("util");

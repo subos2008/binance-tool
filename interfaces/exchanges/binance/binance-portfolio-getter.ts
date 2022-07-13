@@ -2,7 +2,7 @@ import { Binance } from "binance-api-node"
 import { Balance } from "../../portfolio"
 import { CurrentPortfolioGetter } from "../generic/portfolio-getter"
 
-import * as Sentry from "@sentry/node"
+import Sentry from "../../../lib/sentry"
 
 export class BinancePortfolioGetter implements CurrentPortfolioGetter {
   ee: Binance

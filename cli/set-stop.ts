@@ -2,7 +2,7 @@
 
 require("dotenv").config()
 
-import * as Sentry from "@sentry/node"
+import Sentry from "../lib/sentry"
 Sentry.init({
   dsn: "https://ebe019da62da46189b217c476ec1ab62@o369902.ingest.sentry.io/5326470",
 })

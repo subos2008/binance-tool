@@ -1,4 +1,4 @@
-import * as Sentry from "@sentry/node" // what happens if you don't call init?
+import Sentry from "../../lib/sentry"
 
 import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
 import { MarketIdentifier_V4 } from "./market-identifier"

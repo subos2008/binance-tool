@@ -5,7 +5,7 @@ const price_data_expiration_seconds = "60"
 import { strict as assert } from "assert"
 import { Logger } from "../../interfaces/logger"
 
-import * as Sentry from "@sentry/node"
+import Sentry from "../../lib/sentry"
 
 const exchange = "prices"
 assert(exchange)

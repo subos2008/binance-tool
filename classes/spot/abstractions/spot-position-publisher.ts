@@ -5,8 +5,8 @@ import { strict as assert } from "assert"
  * Used for logging/accounting etc
  */
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+ import Sentry from "../../../lib/sentry"
+
 // Sentry.configureScope(function (scope: any) {
 //   scope.setTag("service", service_name)
 // })

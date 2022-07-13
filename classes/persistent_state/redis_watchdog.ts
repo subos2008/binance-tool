@@ -4,7 +4,7 @@ const { promisify } = require("util")
 import { Logger } from "../../interfaces/logger"
 import { RedisClient } from "redis"
 
-import * as Sentry from "@sentry/node"
+import Sentry from "../../lib/sentry"
 
 export class RedisWatchdog {
   logger: Logger

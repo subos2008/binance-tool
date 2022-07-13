@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../interfaces/logger";
 import { TradingRules } from "./trading_rules";
 
-import * as Sentry from '@sentry/node';
+import Sentry from "../lib/sentry"
 
 export class PositionSizer {
   logger: Logger

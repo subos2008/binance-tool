@@ -1,3 +1,16 @@
+/**
+ * Usage patterns:
+ *
+ * logger.object(obj) // don't pass separate tags when logging an object
+ * logger.info({err}) // { err => err } invokes special internal handlers
+ * logger.info({err}, msg)
+ * logger.info(tags, msg) // Add tags to a string msg
+ * logger.info({...tags, ...obj}) // log an object with tags by merging them
+ *
+ * Do not:
+ * Pass both tags and an object, merge them into an object
+ */
+
 import * as bunyan from "bunyan"
 
 import { Logger as LoggerInterface } from "../interfaces/logger"
@@ -42,35 +55,35 @@ export class Logger implements LoggerInterface {
       this.bunyan.info(obj, ...params)
     }
   }
-  notice(obj: Object,...params: any[]) {
+  notice(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.info(obj,...params)
+      this.bunyan.info(obj, ...params)
     }
   }
-  error(obj: Object,...params: any[]) {
+  error(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.error(obj,...params)
+      this.bunyan.error(obj, ...params)
     }
   }
 
-  fatal(obj: Object,...params: any[]) {
+  fatal(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.fatal(obj,...params)
+      this.bunyan.fatal(obj, ...params)
     }
   }
-  warn(obj: Object,...params: any[]) {
+  warn(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.warn(obj,...params)
+      this.bunyan.warn(obj, ...params)
     }
   }
-  debug(obj: Object,...params: any[]) {
+  debug(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.debug(obj,...params)
+      this.bunyan.debug(obj, ...params)
     }
   }
-  silly(obj: Object,...params: any[]) {
+  silly(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.debug(obj,...params)
+      this.bunyan.debug(obj, ...params)
     }
   }
 }

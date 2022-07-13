@@ -23,7 +23,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import * as Sentry from "@sentry/node"
+import Sentry from "../../lib/sentry"
 import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
 import { Prices } from "../../interfaces/portfolio"
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"

@@ -13,8 +13,7 @@ BigNumber.prototype.valueOf = () => {
   throw new Error("valueOf called on BigNumber")
 }
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../../lib/sentry"
 
 import { SpotEdgePerformanceEvent } from "./interfaces"
 

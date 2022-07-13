@@ -7,8 +7,7 @@
  *
  * */
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../../lib/sentry"
 // Sentry.configureScope(function (scope: any) {
 //   scope.setTag("service", service_name)
 // })
@@ -100,7 +99,7 @@ export class Edge60EntrySignals {
       let low = new BigNumber(candle["low"])
       let { high: highest_price } = this.price_history_candles.get_highest_value()
       let { low: lowest_price } = this.price_history_candles.get_lowest_value()
-      
+
       // Debug info
       let debug_string = `${symbol}: H: ${high.toFixed()} vs ${highest_price.toFixed()} L: ${low.toFixed()} vs ${lowest_price.toFixed()}`
       // let high_candles

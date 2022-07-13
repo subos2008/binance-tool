@@ -12,8 +12,7 @@ const connection_check_interval_seconds: number = Number(process.env.CONNECTION_
 // TODO: this needs to be long enough that there would have been a trade in the timeframe
 const check_positions_interval_seconds: number = Number(process.env.CHECK_POSITIONS_INTERVAL_SECONDS) || 60
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", "redis-monitor")
 })

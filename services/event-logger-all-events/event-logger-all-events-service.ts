@@ -14,8 +14,7 @@ import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/h
 
 require("dotenv").config()
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })

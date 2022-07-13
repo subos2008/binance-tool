@@ -1,7 +1,7 @@
 import { Telegraf, Context, NarrowedContext, Types } from "telegraf"
 import { TradeAbstractionServiceClient } from "../../binance/futures/trade-abstraction/client/tas-client"
 import { Logger } from "../../../interfaces/logger"
-import * as Sentry from "@sentry/node"
+import Sentry from "../../../lib/sentry"
 import {
   TradeAbstractionOpenShortCommand,
   TradeAbstractionOpenShortResult,

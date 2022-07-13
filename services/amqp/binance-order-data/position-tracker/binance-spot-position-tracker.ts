@@ -9,8 +9,7 @@ import { is_too_small_to_trade } from "../../../../lib/utils"
 
 require("dotenv").config()
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../../../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })

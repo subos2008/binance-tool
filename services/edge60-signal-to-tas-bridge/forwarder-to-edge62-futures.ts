@@ -6,7 +6,7 @@ import { strict as assert } from "assert"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { TradeAbstractionServiceClient } from "../binance/futures/trade-abstraction/client/tas-client"
 import { Logger } from "../../interfaces/logger"
-import * as Sentry from "@sentry/node"
+import Sentry from "../../lib/sentry"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 import {
   TradeAbstractionOpenSpotLongCommand,

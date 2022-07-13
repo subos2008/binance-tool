@@ -4,8 +4,7 @@ function dogstatsderrorhandler(err: Error) {
   console.error({ err }, `DogStatsD: Socket errors caught here: ${err}`)
 }
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../../lib/sentry"
 
 import { SpotEdgePerformanceEvent } from "./interfaces"
 

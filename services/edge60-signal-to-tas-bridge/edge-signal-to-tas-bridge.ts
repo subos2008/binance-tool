@@ -18,13 +18,12 @@ import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { Channel } from "amqplib"
 import express from "express"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
-import * as Sentry from "@sentry/node"
 // import { Logger } from "../../interfaces/logger"
 import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 import { Edge60EntrySignalProcessor } from "./interfaces"
 import { Edge60EntrySignalFanout } from "./fanout"
 
-Sentry.init({})
+import Sentry from "../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })

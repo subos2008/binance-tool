@@ -2,7 +2,7 @@ import { Telegraf, Context, NarrowedContext, Types } from "telegraf"
 import { Logger } from "../../interfaces/logger"
 import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
 
-import * as Sentry from "@sentry/node"
+
 import {
   TradeAbstractionOpenSpotLongCommand,
   TradeAbstractionOpenSpotLongResult,
@@ -12,7 +12,7 @@ import {
 } from "../binance/spot/trade-abstraction/interfaces/close_spot"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
 import { Commands_Futures } from "./commands/futures"
-Sentry.init({})
+import Sentry from "../../lib/sentry"
 // Sentry.configureScope(function (scope: any) {
 //   scope.setTag("service", service_name)
 // })

@@ -7,8 +7,7 @@ require("dotenv").config()
 
 const service_name = "amqp-futures-binance-order-data-tracker"
 
-import * as Sentry from "@sentry/node"
-Sentry.init({})
+import Sentry from "../../../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })

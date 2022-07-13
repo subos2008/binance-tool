@@ -5,7 +5,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import * as Sentry from "@sentry/node"
+import Sentry from "../../../../lib/sentry"
 import { strict as assert } from "assert"
 
 import { RedisClient } from "redis"

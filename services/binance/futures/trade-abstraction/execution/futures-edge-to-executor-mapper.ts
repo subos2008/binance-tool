@@ -16,6 +16,7 @@ import { PositionSizer } from "../../../../../edges/position-sizer/fixed-positio
 import {
   TradeAbstractionOpenShortCommand as IncommingTradeAbstractionOpenShortCommand,
   TradeAbstractionOpenShortResult,
+  TradeAbstractionOpenShortResult_NOT_FOUND,
 } from "../interfaces/short"
 
 interface TradeAbstractionOpenShortCommand extends IncommingTradeAbstractionOpenShortCommand {
@@ -106,10 +107,11 @@ export class FuturesEdgeToExecutorMapper {
 
   /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
   async short(tas_cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
+    let { edge, quote_asset, base_asset, direction } = tas_cmd
+    let tags = { edge, quote_asset, base_asset, direction }
+
     try {
       tas_cmd.edge = check_edge(tas_cmd.edge)
-      let { edge, quote_asset, base_asset, direction } = tas_cmd
-      let tags = { edge, quote_asset, base_asset, direction }
       if (!quote_asset) throw new Error(`quote_asset not defined`)
 
       this.logger.error(`FuturesEdgeToExecutorMapper:short() not checking if already in position`)
@@ -162,6 +164,27 @@ export class FuturesEdgeToExecutorMapper {
           return result
       }
     } catch (err: any) {
+      if (err.message.match(/^NOT_FOUND:/)) {
+        // TODO: we could add "status" to Error objects
+        let result: TradeAbstractionOpenShortResult_NOT_FOUND = {
+          object_type: "TradeAbstractionOpenShortResult",
+          version: 1,
+          base_asset,
+          quote_asset,
+          // edge: string,
+          status: "NOT_FOUND",
+          http_status: 404,
+          buy_filled: false,
+          created_stop_order: false,
+          created_take_profit_order: false,
+          msg: err.message,
+          err,
+          execution_timestamp_ms: Date.now(),
+          // signal_to_execution_slippage_ms: number,
+        }
+        this.logger.info(tags, result)
+        return result
+      }
       this.logger.error({ err })
       Sentry.captureException(err)
       let result: TradeAbstractionOpenShortResult = {

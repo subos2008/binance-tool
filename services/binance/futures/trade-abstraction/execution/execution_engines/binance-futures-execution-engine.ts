@@ -21,7 +21,7 @@ import { randomUUID } from "crypto"
 import { OrderContextPersistence_V2 } from "../../../../../../classes/persistent_state/interface/order-context-persistence"
 import { OrderContext_V2 } from "../../../../../../interfaces/orders/order-context"
 import { BinanceStyleSpotPrices } from "../../../../../../classes/spot/abstractions/position-identifier"
-import { TradeAbstractionOpenShortResult } from "../../interfaces/short"
+import { TradeAbstractionOpenShortResult, TradeAbstractionOpenShortResult_NOT_FOUND } from "../../interfaces/short"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "../../interfaces/close"
 import { BinanceMunger } from "./binance-munging"
 
@@ -128,7 +128,11 @@ export class BinanceFuturesExecutionEngine {
     let match = symbols.find(
       (s) => s.baseAsset === base_asset.toUpperCase() && s.quoteAsset == quote_asset.toUpperCase()
     )
-    if (!match) throw new Error(`No match for symbol ${base_asset}:${quote_asset} in exchange_info symbols`)
+    if (!match) {
+      let msg = `NOT_FOUND: No match for symbol ${base_asset}:${quote_asset} in exchange_info symbols`
+      let err = new Error(msg)
+      throw err
+    }
     let symbol = match.symbol
 
     let result: MarketIdentifier_V4 = {

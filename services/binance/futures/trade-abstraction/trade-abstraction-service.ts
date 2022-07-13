@@ -162,23 +162,23 @@ export class FuturesTradeAbstractionService {
     //   return obj
     // }
 
-    let { quote_asset } = this
-    let result: TradeAbstractionOpenShortResult = await this.eem.short({ ...cmd, quote_asset })
-
-    result.created_stop_order = result.stop_order_id ? true : false
-    result.created_take_profit_order = result.take_profit_order_id ? true : false
-
-    let { execution_timestamp_ms } = result
-    result.signal_to_execution_slippage_ms = execution_timestamp_ms
+      let { quote_asset } = this
+      let result: TradeAbstractionOpenShortResult = await this.eem.short({ ...cmd, quote_asset })
+      
+      result.created_stop_order = result.stop_order_id ? true : false
+      result.created_take_profit_order = result.take_profit_order_id ? true : false
+      
+      let { execution_timestamp_ms } = result
+      result.signal_to_execution_slippage_ms = execution_timestamp_ms
       ? execution_timestamp_ms - cmd.signal_timestamp_ms
       : undefined
-
-    return result
+      
+      return result
   }
 
   async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {
     try {
-      throw new Error(`Not implemented`)
+      throw new Error(`close Not implemented`)
       // assert.equal(cmd.action, "close")
       // let edge: AuthorisedEdgeType = cmd.edge as AuthorisedEdgeType
       // let { base_asset } = cmd

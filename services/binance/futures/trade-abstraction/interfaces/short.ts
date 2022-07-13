@@ -69,6 +69,29 @@ interface TradeAbstractionOpenShortResult_BAD_INPUTS {
   signal_to_execution_slippage_ms?: number
 }
 
+export interface TradeAbstractionOpenShortResult_NOT_FOUND {
+  object_type: "TradeAbstractionOpenShortResult"
+  version: 1
+  base_asset: string
+  quote_asset: string
+  edge?: string
+
+  status: "NOT_FOUND" // exception caught
+  http_status: 404
+
+  buy_filled: false
+  created_stop_order: false
+  created_take_profit_order: false
+  stop_order_id?: string | number | undefined // Hmm, need to have these
+  take_profit_order_id?: string | number | undefined // Hmm, need to have these
+
+  msg: string // if we catch an exception the message goes here
+  err: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here
+
+  execution_timestamp_ms: number
+  signal_to_execution_slippage_ms?: number
+}
+
 interface TradeAbstractionOpenShortResult_INTERNAL_SERVER_ERROR {
   object_type: "TradeAbstractionOpenShortResult"
   version: 1
@@ -259,6 +282,7 @@ export type TradeAbstractionOpenShortResult =
   | TradeAbstractionOpenShortResult_BAD_INPUTS
   | TradeAbstractionOpenShortResult_UNAUTHORISED
   | TradeAbstractionOpenShortResult_TRADING_IN_ASSET_PROHIBITED
+  | TradeAbstractionOpenShortResult_NOT_FOUND
   | TradeAbstractionOpenShortResult_ALREADY_IN_POSITION
   | TradeAbstractionOpenShortResult_INSUFFICIENT_BALANCE
   | TradeAbstractionOpenShortResult_ENTRY_FAILED_TO_FILL

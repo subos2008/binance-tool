@@ -1,7 +1,7 @@
 import { AlgoUtils } from "./_internal/binance_algo_utils_v2"
 import { Logger } from "../../../../../../interfaces/logger"
 import { strict as assert } from "assert"
-import { MarketIdentifier_V3 } from "../../../../../../events/shared/market-identifier"
+import { MarketIdentifier_V4 } from "../../../../../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../../../../../events/shared/exchange-identifier"
 import binance, { CancelOrderResult, OcoOrder, Order } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
@@ -83,9 +83,10 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
   }: {
     quote_asset: string
     base_asset: string
-  }): MarketIdentifier_V3 {
+  }): MarketIdentifier_V4 {
     return {
-      version: "v3",
+      object_type: "MarketIdentifier",
+      version: 4,
       exchange_identifier: this.get_exchange_identifier(),
       symbol: `${base_asset.toUpperCase()}${quote_asset.toUpperCase()}`,
       base_asset,
@@ -170,7 +171,7 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       this.logger.error({ err })
 
       // TODO: can we do a more clean/complete job of catching exceptions from Binance?
-      if ((err.message.match(/Account has insufficient balance for requested action/))) {
+      if (err.message.match(/Account has insufficient balance for requested action/)) {
         let spot_long_result: SpotExecutionEngineBuyResult = {
           object_type: "SpotExecutionEngineBuyResult",
           version: 2,

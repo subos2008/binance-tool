@@ -25,7 +25,7 @@ import { HealthAndReadinessSubsystem } from "../../health_and_readiness"
 import { AuthorisedEdgeType } from "./position-identifier"
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
 import _ from "lodash"
-import { MarketIdentifier_V3 } from "../../../events/shared/market-identifier"
+import { MarketIdentifier_V4 } from "../../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 
 type _shared_v1 = {

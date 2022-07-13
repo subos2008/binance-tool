@@ -9,7 +9,7 @@ Sentry.init({})
 
 import { Logger } from "../../../../../../interfaces/logger"
 import { strict as assert } from "assert"
-import { MarketIdentifier_V3 } from "../../../../../../events/shared/market-identifier"
+import { MarketIdentifier_V4 } from "../../../../../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../../../../../events/shared/exchange-identifier"
 import binance, { FuturesOrder, NewFuturesOrder, OrderSide, OrderType } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
@@ -62,7 +62,7 @@ export interface TradeAbstractionOpenSpotLongCommand_OCO_Exit {
 
 export interface LimitSellByQuoteQuantityCommand {
   order_context: OrderContext_V2
-  market_identifier: MarketIdentifier_V3
+  market_identifier: MarketIdentifier_V4
   quote_amount: BigNumber
   sell_limit_price: BigNumber
   take_profit_price: BigNumber
@@ -122,7 +122,7 @@ export class BinanceFuturesExecutionEngine {
   }: {
     quote_asset: string
     base_asset: string
-  }): Promise<MarketIdentifier_V3> {
+  }): Promise<MarketIdentifier_V4> {
     let exchange_info = await this.get_exchange_info()
     let symbols = exchange_info.symbols
     let match = symbols.find(
@@ -131,13 +131,15 @@ export class BinanceFuturesExecutionEngine {
     if (!match) throw new Error(`No match for symbol ${base_asset}:${quote_asset} in exchange_info symbols`)
     let symbol = match.symbol
 
-    return {
-      version: "v3",
+    let result: MarketIdentifier_V4 = {
+      object_type: "MarketIdentifier",
+      version: 4,
       exchange_identifier: this.get_exchange_identifier(),
       symbol,
       base_asset,
       quote_asset,
     }
+    return result
   }
 
   async base_asset_for_symbol(symbol: string): Promise<string> {
@@ -163,7 +165,7 @@ export class BinanceFuturesExecutionEngine {
   async close(
     tags: { base_asset: string; quote_asset: string; edge: string },
     cmd: TradeAbstractionCloseCommand,
-    args: { market_identifier: MarketIdentifier_V3; order_context: OrderContext_V2 }
+    args: { market_identifier: MarketIdentifier_V4; order_context: OrderContext_V2 }
   ): Promise<TradeAbstractionCloseResult> {
     let prefix = `${args.market_identifier.symbol}: `
 

@@ -1,4 +1,4 @@
-import { MarketIdentifier_V3 } from "./market-identifier"
+import { MarketIdentifier_V4 } from "./market-identifier"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 
 export type Edge60Parameters = {
@@ -12,7 +12,7 @@ export interface Edge60PositionEntrySignal {
   base_asset?: string
   direction: "long" | "short"
   msg: string
-  market_identifier: MarketIdentifier_V3
+  market_identifier: MarketIdentifier_V4
   edge60_parameters: Edge60Parameters
   edge60_entry_signal: {
     direction: "long" | "short"

@@ -10,7 +10,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../../../../interfaces/logger"
-import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
+import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identifier"
 import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SendMessageFunc } from "../../../../../lib/telegram-v2"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
@@ -119,7 +119,7 @@ export class SpotPositionsExecution {
   }
 
   // Used when constructing orders
-  private get_market_identifier_for(args: { quote_asset: string; base_asset: string }): MarketIdentifier_V3 {
+  private get_market_identifier_for(args: { quote_asset: string; base_asset: string }): MarketIdentifier_V4 {
     return this.ee.get_market_identifier_for(args)
   }
 

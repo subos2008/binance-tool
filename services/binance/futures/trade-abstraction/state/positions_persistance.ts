@@ -22,7 +22,7 @@ export interface FuturesPositionIdentifier_V1 {
 // export interface PositionReservationCommand {
 //   trade_id: string
 //   timeout_ms: number
-//   market_identifier: MarketIdentifier_V3
+//   market_identifier: MarketIdentifier_V4
 // }
 
 // export interface PositionIdentifier {

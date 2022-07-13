@@ -21,6 +21,15 @@ export interface MarketIdentifier_V3 {
   symbol: string
 }
 
+export interface MarketIdentifier_V4 {
+  object_type: "MarketIdentifier"
+  version: 4
+  exchange_identifier: ExchangeIdentifier_V3
+  base_asset?: string
+  quote_asset?: string
+  symbol: string
+}
+
 export function create_market_identifier_from_tuple({
   base_asset,
   quote_asset,

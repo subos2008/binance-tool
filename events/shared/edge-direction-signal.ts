@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/node" // what happens if you don't call init?
 
 import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
-import { MarketIdentifier_V3 } from "./market-identifier"
+import { MarketIdentifier_V4 } from "./market-identifier"
 
 /** For edges that signal flip-flop long/short */
 export interface EdgeDirectionSignal {
@@ -14,7 +14,7 @@ export interface EdgeDirectionSignal {
   symbol: string
   exchange_type: ExchangeType
   signal_timestamp_ms: number
-  market_identifier: MarketIdentifier_V3
+  market_identifier: MarketIdentifier_V4
 }
 
 import { Options } from "amqplib"

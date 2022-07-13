@@ -10,7 +10,7 @@
 //   signal_timestamp_ms: number
 // }
 
-import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
+import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identifier"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 
 import { BigNumber } from "bignumber.js"
@@ -35,7 +35,7 @@ export interface LimitSellByQuoteQuantityWithTPandSLCommand {
   object_type: "LimitSellByQuoteQuantityWithTPandSLCommand"
   version: 1
   order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V3
+  market_identifier: MarketIdentifier_V4
   quote_amount: BigNumber
   sell_limit_price: BigNumber
   take_profit_price: BigNumber

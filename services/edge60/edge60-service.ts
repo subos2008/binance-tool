@@ -50,7 +50,7 @@ import { Edge60Parameters, Edge60PositionEntrySignal } from "../../events/shared
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { DirectionPersistance } from "./direction-persistance"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
-import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
+import { MarketIdentifier_V4 } from "../../events/shared/market-identifier"
 import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
 import { get_redis_client } from "../../lib/redis-v4"
 import { RedisClientType } from "redis-v4"
@@ -171,8 +171,9 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
         Sentry.captureException(e)
       }
 
-      let market_identifier: MarketIdentifier_V3 = {
-        version: "v3",
+      let market_identifier: MarketIdentifier_V4 = {
+        object_type: "MarketIdentifier",
+        version: 4,
         // TODO: pull exchange_identifier from ee
         exchange_identifier: { version: "v3", exchange, type: "spot", account: "default" },
         symbol,
@@ -228,7 +229,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     previous_direction: "long" | "short"
     market_data_for_symbol: CoinGeckoMarketData | undefined
     signal_timestamp_ms: number
-    market_identifier: MarketIdentifier_V3
+    market_identifier: MarketIdentifier_V4
   }) {
     const edge: AuthorisedEdgeType = "edge60"
     let base_asset = market_identifier.base_asset
@@ -268,7 +269,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     direction: "long" | "short"
     signal_timestamp_ms: number
     base_asset: string
-    market_identifier: MarketIdentifier_V3
+    market_identifier: MarketIdentifier_V4
   }) {
     let event: EdgeDirectionSignal = {
       object_type: "EdgeDirectionSignal",

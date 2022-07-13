@@ -20,7 +20,7 @@
 //   TradeAbstractionOpenShortResult,
 // } from "../interfaces/short"
 // import { FuturesExecutionEngine } from "./execution_engines/futures-execution-engine"
-// import { MarketIdentifier_V3 } from "../../../../../events/shared/market-identifier"
+// import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identifier"
 // import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 // import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 
@@ -69,7 +69,7 @@
 //   }
 
 //   // Used when constructing orders
-//   private get_market_identifier_for(args: { quote_asset: string; base_asset: string }): MarketIdentifier_V3 {
+//   private get_market_identifier_for(args: { quote_asset: string; base_asset: string }): MarketIdentifier_V4 {
 //     return this.ee.get_market_identifier_for(args)
 //   }
 

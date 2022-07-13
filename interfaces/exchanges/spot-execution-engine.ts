@@ -7,20 +7,20 @@ BigNumber.prototype.valueOf = function () {
 
 import { OrderContext_V1 } from "../orders/order-context"
 import { OrderId } from "../../classes/persistent_state/interface/order-context-persistence"
-import { MarketIdentifier_V3 } from "../../events/shared/market-identifier"
+import { MarketIdentifier_V4 } from "../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
 import { BinanceStyleSpotPrices } from "../../classes/spot/abstractions/position-identifier"
 
 export interface SpotMarketBuyByQuoteQuantityCommand {
   order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V3
+  market_identifier: MarketIdentifier_V4
   quote_amount: BigNumber
 }
 
 export interface SpotLimitBuyCommand {
   object_type: "SpotLimitBuyCommand"
   order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V3
+  market_identifier: MarketIdentifier_V4
   base_amount: BigNumber
   limit_price: BigNumber
   timeInForce: "IOC"
@@ -28,14 +28,14 @@ export interface SpotLimitBuyCommand {
 
 export interface SpotMarketSellCommand {
   order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V3
+  market_identifier: MarketIdentifier_V4
   base_amount: BigNumber
 }
 
 export interface SpotStopMarketSellCommand {
   object_type: "SpotStopMarketSellCommand"
   order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V3
+  market_identifier: MarketIdentifier_V4
   base_amount: BigNumber
   trigger_price: BigNumber
 }
@@ -43,7 +43,7 @@ export interface SpotStopMarketSellCommand {
 export interface SpotOCOSellCommand {
   object_type: "SpotOCOSellCommand"
   order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V3
+  market_identifier: MarketIdentifier_V4
   base_amount: BigNumber
   take_profit_price: BigNumber
   stop_price: BigNumber
@@ -56,7 +56,7 @@ export interface SpotOCOSellCommand {
 interface SpotExecutionEngineBuyResult_SUCCESS {
   object_type: "SpotExecutionEngineBuyResult"
   version: 2
-  market_identifier: MarketIdentifier_V3
+  market_identifier: MarketIdentifier_V4
   order_context: OrderContext_V1
   status: "SUCCESS"
   http_status: 201
@@ -70,7 +70,7 @@ interface SpotExecutionEngineBuyResult_SUCCESS {
 interface SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE {
   object_type: "SpotExecutionEngineBuyResult"
   version: 2
-  market_identifier: MarketIdentifier_V3
+  market_identifier: MarketIdentifier_V4
   order_context: OrderContext_V1
   msg: string
   status: "INSUFFICIENT_BALANCE"
@@ -81,7 +81,7 @@ interface SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE {
 interface SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR {
   object_type: "SpotExecutionEngineBuyResult"
   version: 2
-  market_identifier: MarketIdentifier_V3
+  market_identifier: MarketIdentifier_V4
   order_context: OrderContext_V1
   status: "INTERNAL_SERVER_ERROR" // exception caught
   http_status: 500
@@ -102,7 +102,7 @@ export interface SpotExecutionEngine {
   }: {
     quote_asset: string
     base_asset: string
-  }): MarketIdentifier_V3
+  }): MarketIdentifier_V4
 
   base_asset_for_symbol(symbol: string): Promise<string>
 

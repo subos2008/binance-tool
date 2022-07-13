@@ -22,7 +22,7 @@ import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-ide
  *   object_type: "Edge60EntrySignal"
  *   version: "v1"
  *   edge: "edge60"
- *   market_identifier: MarketIdentifier_V3
+ *   market_identifier: MarketIdentifier_V4
  *   edge60_parameters: Edge60Parameters
  *   edge60_entry_signal: {
  *     direction: "long" | "short"

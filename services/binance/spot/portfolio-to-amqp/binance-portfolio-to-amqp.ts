@@ -35,7 +35,7 @@ const exchange_identifier: ExchangeIdentifier_V3 = {
   account: "default",
 }
 
-import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
+import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
 
 import { Logger } from "../../../../lib/faux_logger"
 const _logger = new Logger({ silent: false })

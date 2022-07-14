@@ -1,5 +1,5 @@
 import { Logger } from "../interfaces/logger"
-import { SendMessageFunc } from "../lib/telegram-v2"
+import { SendMessageFunc } from "./send_message/publish"
 import { Request, Response } from "express"
 import Sentry from "../lib/sentry"
 import { randomUUID } from "crypto"

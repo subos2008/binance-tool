@@ -70,7 +70,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
+import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })

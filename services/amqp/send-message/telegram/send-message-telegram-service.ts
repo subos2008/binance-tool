@@ -36,6 +36,7 @@ import { SendMessageToTelegramForwarder } from "./forwarder"
 
 let send_message_obj = new SendMessage({ logger })
 let send_message = send_message_obj.func(service_name)
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 
 async function main() {
   const execSync = require("child_process").execSync
@@ -59,6 +60,8 @@ main().catch((err) => {
   soft_exit(1, `Error in main loop: ${err}`)
 })
 
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+
 // Note this method returns!
 function soft_exit(exit_code: number | null = null, reason: string) {
   service_is_healthy.healthy(false) // it seems service isn't exiting on soft exit, but add this to make sure
@@ -69,8 +72,6 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 import express from "express"
 var app = express()

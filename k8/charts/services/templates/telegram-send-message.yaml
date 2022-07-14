@@ -62,6 +62,6 @@ spec:
               value: "https://5d63880d2c7a4814b84b35b77d3df700@o369902.ingest.sentry.io/6573496"
             # - name: DEBUG
             #   value: "telegraf:*"
-{{- include "telegram.vars.vars" . | nindent 12 }}
+{{- include "telegram.vars" . | nindent 12 }}
 {{- include "binance-spot-tas.vars" . | nindent 12 }}
 {{- include "binance-futures-tas.vars" . | nindent 12 }}

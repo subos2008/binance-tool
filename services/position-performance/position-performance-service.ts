@@ -26,7 +26,7 @@ BigNumber.prototype.valueOf = function () {
 import Sentry from "../../lib/sentry"
 import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
 import { Prices } from "../../interfaces/portfolio"
-import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
+import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"

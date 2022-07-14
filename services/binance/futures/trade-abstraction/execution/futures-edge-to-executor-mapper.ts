@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../../../../interfaces/logger"
-import { SendMessageFunc } from "../../../../../lib/telegram-v2"
+import { SendMessageFunc } from "../../../../../classes/send_message/publish"
 import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
 import {
   TradeAbstractionOpenShortCommand as IncommingTradeAbstractionOpenShortCommand,

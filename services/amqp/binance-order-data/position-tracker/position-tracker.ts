@@ -24,7 +24,7 @@ import {
   SpotPositionOpenedEvent_V1,
   SpotPositionPublisher,
 } from "../../../../classes/spot/abstractions/spot-position-publisher"
-import { SendMessageFunc } from "../../../../lib/telegram-v2"
+import { SendMessageFunc } from "../../../../classes/send_message/publish"
 import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
 
 type check_func = ({

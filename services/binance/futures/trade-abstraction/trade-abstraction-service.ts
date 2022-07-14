@@ -7,7 +7,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { disallowed_base_assets_for_entry } from "../../../../lib/stable-coins"
 
-import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
+import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
 
 import Sentry from "../../../../lib/sentry"
 import { Logger } from "../../../../interfaces/logger"

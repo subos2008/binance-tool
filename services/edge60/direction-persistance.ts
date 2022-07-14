@@ -1,6 +1,6 @@
 import { RedisClientType } from "redis-v4"
 import { Logger } from "../../interfaces/logger"
-import { SendMessageFunc } from "../../lib/telegram-v2"
+import { SendMessageFunc } from "../../classes/send_message/publish"
 
 export type Direction = "short" | "long" // Redis returns null for unset
 

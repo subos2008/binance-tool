@@ -23,6 +23,12 @@
 
 import { strict as assert } from "assert"
 const service_name = "portfolio-tracker"
+let exchange_identifier: ExchangeIdentifier_V3 = {
+  version: "v3",
+  exchange: "binance",
+  type: "spot",
+  account: "default",
+}
 
 import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 
@@ -76,7 +82,7 @@ process.on("unhandledRejection", (err) => {
 import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
 import { Portfolio, Balance } from "../../../../interfaces/portfolio"
 import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
-import { ExchangeIdentifier } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 
 class PortfolioTracker implements MasterPortfolioClass {
   send_message: SendMessageFunc
@@ -113,7 +119,62 @@ class PortfolioTracker implements MasterPortfolioClass {
   }) {
     try {
       this.logger.info(`Submitting metrics for ${portfolio.balances.length} balances`)
-      // Submit metrics
+
+      // Submit entire portfolio metrics
+
+      if (portfolio.usd_value) {
+        let tags: Tags = { exchange: exchange_identifier.exchange, exchange_type: exchange_identifier.type }
+        dogstatsd.gauge(
+          `.portfolio.spot.holdings.total.usd_equiv`,
+          Number(portfolio.usd_value),
+          undefined,
+          tags,
+          function (err, bytes) {
+            if (err) {
+              console.error(
+                "Oh noes! There was an error submitting .portfolio.spot.holdings.${quote_asset} metrics to DogStatsD for ${edge}:${base_asset}:",
+                err
+              )
+              console.error(err)
+              Sentry.captureException(err)
+            } else {
+              // console.log(
+              //   "Successfully sent",
+              //   bytes,
+              //   "bytes .portfolio.spot.holdings.${quote_asset} to DogStatsD for ${edge}:${base_asset}"
+              // )
+            }
+          }
+        )
+      }
+
+      if (portfolio.btc_value) {
+        let tags: Tags = { exchange: exchange_identifier.exchange, exchange_type: exchange_identifier.type }
+        dogstatsd.gauge(
+          `.portfolio.spot.holdings.total.btc_equiv`,
+          Number(portfolio.usd_value),
+          undefined,
+          tags,
+          function (err, bytes) {
+            if (err) {
+              console.error(
+                "Oh noes! There was an error submitting .portfolio.spot.holdings.${quote_asset} metrics to DogStatsD for ${edge}:${base_asset}:",
+                err
+              )
+              console.error(err)
+              Sentry.captureException(err)
+            } else {
+              // console.log(
+              //   "Successfully sent",
+              //   bytes,
+              //   "bytes .portfolio.spot.holdings.${quote_asset} to DogStatsD for ${edge}:${base_asset}"
+              // )
+            }
+          }
+        )
+      }
+
+      // Submit individual metrics
       for (const balance of portfolio.balances) {
         let base_asset = balance.asset
         if (balance.quote_equivalents) {

@@ -152,7 +152,7 @@ class PortfolioTracker implements MasterPortfolioClass {
         let tags: Tags = { exchange: exchange_identifier.exchange, exchange_type: exchange_identifier.type }
         dogstatsd.gauge(
           `.portfolio.spot.holdings.total.btc_equiv`,
-          Number(portfolio.usd_value),
+          Number(portfolio.btc_value),
           undefined,
           tags,
           function (err, bytes) {

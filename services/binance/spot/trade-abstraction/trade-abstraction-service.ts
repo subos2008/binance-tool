@@ -26,7 +26,7 @@ import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/i
 import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
-import { SendMessageFunc } from "../../../../classes/send_message/publish"
+import { SendMessageFunc } from "../../../../lib/telegram-v2"
 import { RedisClient } from "redis"
 
 /**

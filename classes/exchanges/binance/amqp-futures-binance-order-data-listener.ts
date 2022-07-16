@@ -18,7 +18,7 @@ import {
   FuturesBinanceOrderData,
   FuturesOrderCallbacks,
 } from "../../../interfaces/exchanges/binance/order_callbacks"
-import { SendMessageFunc } from "../../send_message/publish"
+import { SendMessageFunc } from "../../../lib/telegram-v2"
 
 export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
   send_message: Function

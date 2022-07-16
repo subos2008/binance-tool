@@ -42,7 +42,7 @@ function dogstatsderrorhandler(err: Error) {
   logger.error({ err }, `DogStatsD: Socket errors caught here: ${err}`)
 }
 
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 import {
   TradeAbstractionOpenSpotLongCommand as TradeAbstractionOpenLongCommand,
   TradeAbstractionOpenSpotLongResult,

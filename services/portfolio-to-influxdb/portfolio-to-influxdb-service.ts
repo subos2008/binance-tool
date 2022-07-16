@@ -23,7 +23,7 @@ const logger = new Logger({ silent: false })
 
 logger.info(`Service starting.`)
 
-import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
+import { SendMessage, SendMessageFunc } from "../../lib/telegram-v2"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
 process.on("unhandledRejection", (err) => {

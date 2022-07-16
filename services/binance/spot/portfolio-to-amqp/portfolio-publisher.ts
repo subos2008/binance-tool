@@ -58,7 +58,7 @@ import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../../../classes/health_and_readiness"
 import { RedisClient } from "redis"
 import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
-import { SendMessageFunc } from "../../../../classes/send_message/publish"
+import { SendMessageFunc } from "../../../../lib/telegram-v2"
 
 // Let's keep this code, could become part of ensuring same format events accross exchanges
 export class PortfolioPublisher {

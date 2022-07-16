@@ -12,7 +12,7 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../../../../interfaces/logger"
 import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identifier"
 import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { SendMessageFunc } from "../../../../../classes/send_message/publish"
+import { SendMessageFunc } from "../../../../../lib/telegram-v2"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import {
   check_edge,

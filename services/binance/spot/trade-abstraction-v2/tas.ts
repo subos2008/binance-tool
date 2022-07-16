@@ -49,7 +49,7 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+import { SendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 import {
   TradeAbstractionOpenLongCommand as TradeAbstractionOpenLongCommand,
   TradeAbstractionOpenLongResult,

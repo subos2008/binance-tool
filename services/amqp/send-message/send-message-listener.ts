@@ -73,6 +73,7 @@ export class AMQP_SendMessageListener implements MessageProcessor {
 
   async process_message(amqp_message: Message, channel: Channel): Promise<void> {
     try {
+      this.logger.info(amqp_message.content.toString())
       let i: SendMessageEvent = JSON.parse(amqp_message.content.toString())
       this.logger.info(i)
       await this.callback.processSendMessageEvent(i)

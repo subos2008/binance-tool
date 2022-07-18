@@ -3,6 +3,7 @@ import fetch from "node-fetch"
 import { ContextTags, SendMessageFunc } from "../../../../classes/send_message/publish"
 import { Logger } from "../../../../interfaces/logger"
 import Sentry from "../../../../lib/sentry"
+import { Channel } from "amqplib"
 
 export class SendMessage {
   private logger: Logger
@@ -18,11 +19,7 @@ export class SendMessage {
     return process.env.TELEGRAM_CHAT_ID as string
   }
 
-  func(service_name: string): SendMessageFunc {
-    return this.send_message.bind(this, service_name)
-  }
-
-  async send_message(service_name: string, message: string, _tags?: ContextTags) {
+  async send_message(ack_func: () => void, service_name: string, message: string, _tags?: ContextTags) {
     let tags: any = _tags || {}
     tags.object_type = "SendMessage"
     this.logger.info(tags, message)
@@ -35,11 +32,19 @@ export class SendMessage {
         // https://core.telegram.org/bots/faq#my-bot-is-hitting-limits-how-do-i-avoid-this
         Sentry.captureException(new Error(`Hit rate limit on telegram API (429)`))
         this.logger.warn(`Hit rate limit on telegram API (429)`)
-        setTimeout(this.send_message.bind(this, message, tags), 1000 * 60)
+        setTimeout(this.send_message.bind(this, ack_func, message, tags), 1000 * 61)
       }
       if (response.status != 200) {
         throw new Error(`Response status code from telegram api: ${response.status} ${response.statusText}`)
       }
+      // Success, let's ACK the event
+      // TODO: actually this isn't a great model as the events go to different channels and so
+      // are rate limited separately - this code will prevent one channels messages getting delivered if
+      // any channel is getting rate limited
+      // What if we had multiple consumers on a queue? How does AMQP handle multiple consumers?
+      // Is suppose this service could split up into different queues and have a handler for each of those
+      // queues to forward to telegram
+      ack_func()
     } catch (err) {
       // few things throw
       Sentry.captureException(err)

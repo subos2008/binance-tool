@@ -34,18 +34,20 @@ import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { SendMessage } from "./send-message"
 import { SendMessageToTelegramForwarder } from "./forwarder"
 
-let send_message_obj = new SendMessage({ logger })
-let send_message = send_message_obj.func(service_name)
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+import { SendMessage as RawSendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
+const raw_send_message: SendMessageFunc = new RawSendMessage({ service_name, logger }).build()
+const health_and_readiness = new HealthAndReadiness({ logger, send_message: raw_send_message })
 
 async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
+  let send_message = new SendMessage({ logger })
+
   let listener = new AMQP_SendMessageListener({
     logger,
     health_and_readiness,
-    callback: new SendMessageToTelegramForwarder({ send_message: send_message_obj, logger }),
+    callback: new SendMessageToTelegramForwarder({ send_message: send_message, logger }),
     service_name,
   })
 
@@ -71,7 +73,6 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   // Sentry.close(500)
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
-
 
 import express from "express"
 var app = express()

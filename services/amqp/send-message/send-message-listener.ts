@@ -20,8 +20,12 @@ import { HealthAndReadiness } from "../../../classes/health_and_readiness"
 import { MessageProcessor } from "../../../classes/amqp/interfaces"
 
 export interface SendMessageCallback {
-  processSendMessageEvent(event: SendMessageEvent): Promise<void>
+  processSendMessageEvent(event: SendMessageEvent, ack_func: () => void): Promise<void>
 }
+
+// TODO: ACK only if successful
+
+//let foo :SendMessageEvent = { "object_type":"SendMessage", "service_name": "ryan_test", "msg": "Hello World!", "tags": {}}
 
 export class AMQP_SendMessageListener implements MessageProcessor {
   logger: Logger
@@ -76,8 +80,10 @@ export class AMQP_SendMessageListener implements MessageProcessor {
       this.logger.info(amqp_message.content.toString())
       let i: SendMessageEvent = JSON.parse(amqp_message.content.toString())
       this.logger.info(i)
-      await this.callback.processSendMessageEvent(i)
-      channel.ack(amqp_message)
+      let ack_func: () => void = channel.ack.bind(channel, amqp_message)
+      await this.callback.processSendMessageEvent(i, ack_func)
+      // channel.ack(amqp_message) // Moved ACK to send when message is sucessful
+      // Note: this can be after 60 seconds if we hit the telegram rate limit (we will)
     } catch (err: any) {
       this.logger.error({ err })
       Sentry.captureException(err)

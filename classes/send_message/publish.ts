@@ -50,11 +50,18 @@ export class SendMessage {
 
   async send_message(message: string, _tags?: ContextTags) {
     try {
-      this.publisher.publish
+      let tags = _tags || {}
+      let event: SendMessageEvent = {
+        object_type: "SendMessage",
+        msg: message,
+        service_name: this.service_name,
+        tags,
+      }
+      await this.publisher.publish(event)
     } catch (err) {
       this.logger.error({ err, msg: `Failed to send message: ${message}` })
       Sentry.captureException(err)
-      if (this.health_and_readiness) this.health_and_readiness.healthy(true)
+      if (this.health_and_readiness) this.health_and_readiness.healthy(false)
     }
   }
 }

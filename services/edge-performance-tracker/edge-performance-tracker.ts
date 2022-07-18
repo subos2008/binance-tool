@@ -109,7 +109,7 @@ class EventLogger implements MessageProcessor {
       let loss = percentage_quote_change ? percentage_quote_change < 0 : undefined
 
       let duration = Duration.fromMillis(i.exit_timestamp_ms - i.initial_entry_timestamp_ms)
-      let days_in_position = duration.as("days")
+      let days_in_position = new BigNumber(duration.as("days").toString()).dp(2).toNumber()
 
       let o: SpotEdgePerformanceEvent = {
         object_type: "SpotEdgePerformanceEvent",
@@ -129,7 +129,7 @@ class EventLogger implements MessageProcessor {
       try {
         let msg: string = `Closed position on ${edge}:${base_asset} with percentage_quote_change of ${
           percentage_quote_change ? new BigNumber(percentage_quote_change.toString()).dp(2).toFixed() : "unknown"
-        }%, in position for ${new BigNumber(days_in_position).toFixed(2)} days`
+        }%, in position for ${days_in_position} days`
         this.send_message(msg, { edge })
       } catch (e: any) {
         this.logger.error(e)

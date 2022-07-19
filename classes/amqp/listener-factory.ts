@@ -61,9 +61,10 @@ class MessageProcessorIsolator implements MessageProcessor {
   }
   async process_message(event: any, channel: Channel): Promise<void> {
     // TODO: sentry scope
+    let raw_body = event.content.toString()
     let Body
     try {
-      Body = JSON.parse(event.content.toString())
+      Body = JSON.parse(raw_body)
       if (Body.object_type === this.event_name) {
         return this.message_processor.process_message(event, channel)
       } else {
@@ -82,7 +83,7 @@ class MessageProcessorIsolator implements MessageProcessor {
       // Eat any exceptions to prevent this handler from affecting the process
       // Designed for having multiple independent listeners in one process
       let event_name = this.event_name
-      Sentry.captureException(err, { extra: Body, tags: { event_name } })
+      Sentry.captureException(err, { extra: { raw_body, Body }, tags: { event_name } })
       this.logger.warn({ err })
     }
   }

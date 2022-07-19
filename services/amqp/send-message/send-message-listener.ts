@@ -78,7 +78,19 @@ export class AMQP_SendMessageListener implements MessageProcessor {
   async process_message(amqp_message: Message, channel: Channel): Promise<void> {
     try {
       this.logger.info(amqp_message.content.toString())
-      let i: SendMessageEvent = JSON.parse(amqp_message.content.toString())
+      let i: SendMessageEvent | undefined
+      try {
+        i = JSON.parse(amqp_message.content.toString()) as SendMessageEvent
+      } catch (err) {
+        // Couldn't parse message as JSON - eat it
+        this.logger.error({ err })
+        this.logger.error(
+          `Unable to parse incomming AMQP message content as JSON: ${amqp_message.content.toString()}`
+        )
+        this.logger.error(amqp_message)
+        // channel.ack(amqp_message)
+        return
+      }
       this.logger.info(i)
       let ack_func: () => void = channel.ack.bind(channel, amqp_message)
       await this.callback.processSendMessageEvent(i, ack_func)

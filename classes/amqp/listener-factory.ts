@@ -64,7 +64,15 @@ class MessageProcessorIsolator implements MessageProcessor {
     let raw_body = event.content.toString()
     let Body
     try {
-      Body = JSON.parse(raw_body)
+      try {
+        Body = JSON.parse(raw_body)
+      } catch (err) {
+        // Eat and log any messages that are badly formed JSON
+        let event_name = this.event_name
+        Sentry.captureException(err, { extra: { raw_body }, tags: { event_name } })
+        this.logger.error({ err })
+        channel.ack(event) // stop re-delivery of badly formed messages
+      }
       if (Body.object_type === this.event_name) {
         return this.message_processor.process_message(event, channel)
       } else {
@@ -84,7 +92,7 @@ class MessageProcessorIsolator implements MessageProcessor {
       // Designed for having multiple independent listeners in one process
       let event_name = this.event_name
       Sentry.captureException(err, { extra: { raw_body, Body }, tags: { event_name } })
-      this.logger.warn({ err })
+      this.logger.error({ err })
     }
   }
 }

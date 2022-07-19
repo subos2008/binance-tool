@@ -30,7 +30,7 @@ import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
-import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
+import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
 import { CurrentAllPricesGetter } from "../../interfaces/exchanges/generic/price-getter"
 
 export class PositionPerformance {

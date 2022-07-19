@@ -4,7 +4,7 @@
 
 import { strict as assert } from "assert"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
-import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
+import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
 import { Logger } from "../../interfaces/logger"
 import Sentry from "../../lib/sentry"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"

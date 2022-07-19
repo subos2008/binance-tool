@@ -1,6 +1,6 @@
 import { Telegraf, Context, NarrowedContext, Types } from "telegraf"
 import { Logger } from "../../interfaces/logger"
-import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction/client/tas-client"
+import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
 
 
 import {

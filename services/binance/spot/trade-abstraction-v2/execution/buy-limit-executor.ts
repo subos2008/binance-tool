@@ -19,6 +19,7 @@ import {
   TradeAbstractionOpenSpotLongCommand_OCO_Exit,
   TradeAbstractionOpenSpotLongCommand__StopLimitExit,
   TradeAbstractionOpenLongResult,
+  TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS,
 } from "../interfaces/long"
 
 /* Edge specific code */
@@ -124,6 +125,18 @@ export class SpotPositionsExecution_BuyLimit {
       }
 
       let buy_result: SpotExecutionEngineBuyResult = await this.ee.limit_buy(cmd)
+
+      if (buy_result.status == "TOO_MANY_REQUESTS") {
+        let result: TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS = {
+          ...buy_result,
+          object_type: "TradeAbstractionOpenLongResult",
+          version: 1,
+          edge,
+          base_asset,
+          quote_asset,
+        }
+        return result
+      }
 
       if (buy_result.status !== "SUCCESS") {
         return {

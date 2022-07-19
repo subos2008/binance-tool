@@ -180,6 +180,11 @@ app.get("/close", async function (req: Request, res: Response, next: NextFunctio
 
       send_message(cmd_result.msg, tags)
 
+      // TODO - 429's for /close
+      // if (cmd_result.http_status === 429) {
+      //   res.setHeader('Retry-After', cmd_result.retry_after_seconds)
+      // }
+
       if (cmd_result.http_status === 500) {
         let msg: string = `TradeAbstractionCloseResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
         logger.error(cmd_result, msg) // TODO: Tags?
@@ -226,6 +231,10 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
       res.status(cmd_result.http_status).json(cmd_result)
 
       send_message(cmd_result.msg, tags)
+
+      if (cmd_result.http_status === 429) {
+        res.setHeader("Retry-After", cmd_result.retry_after_seconds)
+      }
 
       if (cmd_result.http_status === 500) {
         let msg: string = `TradeAbstractionOpenLongResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`

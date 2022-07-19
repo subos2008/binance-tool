@@ -90,10 +90,25 @@ interface SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR {
   execution_timestamp_ms: number
 }
 
+interface SpotExecutionEngineBuyResult_TOO_MANY_REQUESTS {
+  object_type: "SpotExecutionEngineBuyResult"
+  version: 2
+  market_identifier: MarketIdentifier_V4
+  order_context: OrderContext_V1
+  status: "TOO_MANY_REQUESTS" // exception caught
+  http_status: 429
+  msg: string
+  err: any
+  execution_timestamp_ms: number
+
+  retry_after_seconds: number // can go to Retry-After header
+}
+
 export type SpotExecutionEngineBuyResult =
   | SpotExecutionEngineBuyResult_SUCCESS
   | SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE
   | SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR
+  | SpotExecutionEngineBuyResult_TOO_MANY_REQUESTS
 
 export interface SpotExecutionEngine {
   get_market_identifier_for({

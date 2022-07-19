@@ -125,6 +125,27 @@ interface TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL {
   execution_timestamp_ms?: number
   signal_to_execution_slippage_ms?: string
 }
+
+export interface TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS {
+  object_type: "TradeAbstractionOpenLongResult"
+  version: 1
+  base_asset: string
+  quote_asset?: string
+  edge: string
+
+  status: "TOO_MANY_REQUESTS" // exception caught
+  http_status: 429
+
+  msg: string
+  err: any
+
+  trigger_price?: string
+  execution_timestamp_ms: number
+  signal_to_execution_slippage_ms?: string
+
+  retry_after_seconds: number // can go to Retry-After header
+}
+
 interface TradeAbstractionOpenSpotLongResult_UNAUTHORISED {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
@@ -241,5 +262,6 @@ export type TradeAbstractionOpenLongResult =
   | TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION
   | TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE
   | TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL
+  | TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS
   | TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
   | TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR

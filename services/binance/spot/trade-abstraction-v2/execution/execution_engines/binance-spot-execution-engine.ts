@@ -170,11 +170,26 @@ export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
       this.logger.error({ err })
 
       // TODO: can we do a more clean/complete job of catching exceptions from Binance?
-      if (err.message.match(/Account has insufficient balance for requested action/)) {
+      if (err.message.match(/Too many new orders/ || err.code === -1015)) {
         let spot_long_result: SpotExecutionEngineBuyResult = {
           object_type: "SpotExecutionEngineBuyResult",
           version: 2,
-          msg: `${prefix}:  Account has insufficient balance`,
+          msg: `${prefix}:  ${err.message}`,
+          err,
+          market_identifier,
+          order_context,
+          status: "TOO_MANY_REQUESTS",
+          http_status: 429,
+          execution_timestamp_ms: Date.now(),
+          retry_after_seconds: 11,
+        }
+        this.logger.info(spot_long_result)
+        return spot_long_result
+      } else if (err.message.match(/Account has insufficient balance for requested action/)) {
+        let spot_long_result: SpotExecutionEngineBuyResult = {
+          object_type: "SpotExecutionEngineBuyResult",
+          version: 2,
+          msg: `${prefix}: ${err.message}`,
           market_identifier,
           order_context,
           status: "INSUFFICIENT_BALANCE",

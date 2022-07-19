@@ -164,7 +164,8 @@ export class TradeAbstractionService {
       result.status != "ALREADY_IN_POSITION" &&
       result.status != "TRADING_IN_ASSET_PROHIBITED" &&
       result.status != "INSUFFICIENT_BALANCE" &&
-      result.status != "BAD_INPUTS"
+      result.status != "BAD_INPUTS" &&
+      result.status != "TOO_MANY_REQUESTS"
     ) {
       result.created_stop_order = result.stop_order_id ? true : false
       result.created_take_profit_order = result.take_profit_order_id ? true : false

@@ -9,6 +9,8 @@ import { is_too_small_to_trade } from "../../../../lib/utils"
 
 require("dotenv").config()
 
+let account = "default"
+
 import Sentry from "../../../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
@@ -37,17 +39,16 @@ import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()
 
-import { ExchangeInfo } from "binance-api-node"
-import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/spot-order-execution-tracker"
+import binance, { Binance, ExchangeInfo } from "binance-api-node"
 import { BinanceOrderData, OrderCallbacks } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { SpotPositionTracker } from "./position-tracker"
 import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
-import { BinanceSpotExecutionEngine } from "../../../binance/spot/trade-abstraction/execution/execution_engines/binance-spot-execution-engine"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
 import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { AMQP_BinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-binance-order-data-listener"
+import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
 
 let order_execution_tracker: AMQP_BinanceOrderDataListener | null = null
 
@@ -97,10 +98,16 @@ class MyOrderCallbacks implements OrderCallbacks {
 let position_tracker: SpotPositionTracker
 
 async function main() {
-  let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+  assert(process.env.BINANCE_API_KEY)
+  assert(process.env.BINANCE_API_SECRET)
+  const ee: Binance = binance({
+    apiKey: process.env.BINANCE_API_KEY || "foo",
+    apiSecret: process.env.BINANCE_API_SECRET || "foo",
+  })
+  const exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
+  let exchange_info = await exchange_info_getter.get_exchange_info() // TODO: should update this every now and then
+  let exchange_identifier = exchange_info_getter.get_exchange_identifier()
 
-  const ee = new BinanceSpotExecutionEngine({ logger, order_context_persistence })
-  let exchange_info = await ee.get_exchange_info() // TODO: should update this every now and then
   const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 
   // return true if the position size passed it would be considered an untradeably small balance on the exchange
@@ -122,12 +129,11 @@ async function main() {
     return result
   }
   const spot_positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
-  let exchange_identifier = ee.get_exchange_identifier()
   const spot_positions_query = new SpotPositionsQuery({
     logger,
     positions_persistance: spot_positions_persistance,
     send_message,
-    exchange_identifier,
+    exchange_identifier: { ...exchange_identifier, account, version: "v3" },
   })
 
   position_tracker = new SpotPositionTracker({

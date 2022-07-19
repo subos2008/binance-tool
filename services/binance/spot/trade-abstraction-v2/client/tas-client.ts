@@ -58,44 +58,38 @@ export class TradeAbstractionServiceClient {
   }
 
   async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {
-    let tas_response: TradeAbstractionCloseResult | undefined
-    // do {
     let response = await this.get(new URL("/close", this.TAS_URL).toString(), cmd)
     this.logger.object(response)
-    tas_response = response.data as TradeAbstractionCloseResult
-    // TODO: need to return something if we get bullshit back, throw right
-    if (tas_response?.object_type !== "TradeAbstractionCloseResult")
-      throw new Error(`Unexpected result, expected object_type 'TradeAbstractionCloseResult`)
-    // } while (tas_response.http_status === 429) // TODO
+    let tas_response = response.data as TradeAbstractionCloseResult
+    if (tas_response?.object_type !== "TradeAbstractionCloseResult") {
+      let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionCloseResult`)
+      Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
+      this.logger.error({ err })
+    }
     return tas_response
   }
 
   async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
-    let tas_response: TradeAbstractionOpenLongResult | undefined
     let response = await this.get(new URL("/long", this.TAS_URL).toString(), cmd)
-
     this.logger.object(response)
-    tas_response = response.data as TradeAbstractionOpenLongResult
+    let tas_response = response.data as TradeAbstractionOpenLongResult
     if (tas_response?.object_type !== "TradeAbstractionOpenLongResult") {
       let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenLongResult`)
       Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
       this.logger.error({ err })
-      throw err
     }
-
     return tas_response
   }
 
   async short(cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
-    let tas_response: TradeAbstractionOpenShortResult | undefined
-    // do {
     let response = await this.get(new URL("/short", this.TAS_URL).toString(), cmd)
     this.logger.object(response)
-    tas_response = response.data as TradeAbstractionOpenShortResult
-    // TODO: need to return something if we get bullshit back, throw right
-    if (tas_response?.object_type !== "TradeAbstractionOpenShortResult")
-      throw new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenLongResult`)
-    // } while (tas_response.http_status === 429) // TODO
+    let tas_response = response.data as TradeAbstractionOpenShortResult
+    if (tas_response?.object_type !== "TradeAbstractionOpenShortResult") {
+      let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenShortResult`)
+      Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
+      this.logger.error({ err })
+    }
     return tas_response
   }
 

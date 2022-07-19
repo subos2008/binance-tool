@@ -81,6 +81,7 @@ export class AMQP_SendMessageListener implements MessageProcessor {
       let i: SendMessageEvent | undefined
       try {
         i = JSON.parse(amqp_message.content.toString()) as SendMessageEvent
+        this.logger.info(i)
       } catch (err) {
         // Couldn't parse message as JSON - eat it
         this.logger.error({ err })
@@ -91,7 +92,6 @@ export class AMQP_SendMessageListener implements MessageProcessor {
         // channel.ack(amqp_message)
         return
       }
-      this.logger.info(i)
       let ack_func: () => void = channel.ack.bind(channel, amqp_message)
       await this.callback.processSendMessageEvent(i, ack_func)
       // channel.ack(amqp_message) // Moved ACK to send when message is sucessful

@@ -15,21 +15,18 @@ import { SpotPositionsPersistance } from "../../../../../classes/spot/persistenc
 import { SendMessageFunc } from "../../../../../classes/send_message/publish"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import { SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstractions/position-identifier"
-import {
-  TradeAbstractionOpenSpotLongCommand_OCO_Exit,
-  TradeAbstractionOpenLongResult,
-} from "../interfaces/long"
+import { TradeAbstractionOpenSpotLongCommand_OCO_Exit, TradeAbstractionOpenLongResult } from "../interfaces/long"
 
 /* Edge specific code */
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import {
-  SpotExecutionEngine,
   SpotMarketSellCommand,
   SpotOCOSellCommand,
 } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { SpotPositionsExecution_BuyLimit } from "./buy-limit-executor"
 import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
+import { BinanceSpotExecutionEngine } from "./execution_engines/binance-spot-execution-engine"
 
 /* END Edge specific code */
 
@@ -45,7 +42,7 @@ import { PositionSizer } from "../../../../../edges/position-sizer/fixed-positio
  */
 export class SpotPositionsExecution_OCOExit {
   logger: Logger
-  ee: SpotExecutionEngine
+  ee: BinanceSpotExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
   positions_persistance: SpotPositionsPersistance
@@ -61,7 +58,7 @@ export class SpotPositionsExecution_OCOExit {
     price_getter,
   }: {
     logger: Logger
-    ee: SpotExecutionEngine
+    ee: BinanceSpotExecutionEngine
     positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
     position_sizer: PositionSizer

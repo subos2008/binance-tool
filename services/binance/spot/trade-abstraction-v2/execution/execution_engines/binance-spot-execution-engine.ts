@@ -17,7 +17,6 @@ BigNumber.prototype.valueOf = function () {
 import Sentry from "../../../../../../lib/sentry"
 
 import {
-  SpotExecutionEngine,
   SpotStopMarketSellCommand,
   SpotMarketBuyByQuoteQuantityCommand,
   SpotMarketSellCommand,
@@ -38,7 +37,7 @@ var ee: Binance = binance({
   apiSecret: process.env.BINANCE_API_SECRET,
 })
 
-export class BinanceSpotExecutionEngine implements SpotExecutionEngine {
+export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   utils: AlgoUtils
   logger: Logger
   ei_getter: BinanceExchangeInfoGetter

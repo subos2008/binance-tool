@@ -29,9 +29,9 @@ import {
   TradeAbstractionCloseResult_NOT_FOUND,
   TradeAbstractionCloseResult_SUCCESS,
 } from "../interfaces/close"
-import { SpotExecutionEngine } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { FixedPositionSizer, PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
+import { BinanceSpotExecutionEngine } from "./execution_engines/binance-spot-execution-engine"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -52,7 +52,7 @@ export interface SpotPositionExecutionCloseResult {
 
 export class SpotPositionsExecution {
   logger: Logger
-  ee: SpotExecutionEngine
+  ee: BinanceSpotExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
   positions_persistance: SpotPositionsPersistance
@@ -70,7 +70,7 @@ export class SpotPositionsExecution {
     price_getter,
   }: {
     logger: Logger
-    ee: SpotExecutionEngine
+    ee: BinanceSpotExecutionEngine
     positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
     price_getter: CurrentPriceGetter

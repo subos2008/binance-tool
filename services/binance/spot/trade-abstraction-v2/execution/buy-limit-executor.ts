@@ -25,13 +25,13 @@ import {
 /* Edge specific code */
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import {
-  SpotExecutionEngine,
   SpotExecutionEngineBuyResult,
   // SpotExecutionEngineBuyResult,
   SpotLimitBuyCommand,
 } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
+import { BinanceSpotExecutionEngine } from "./execution_engines/binance-spot-execution-engine"
 
 /* END Edge specific code */
 
@@ -47,7 +47,7 @@ import { PositionSizer } from "../../../../../edges/position-sizer/fixed-positio
  */
 export class SpotPositionsExecution_BuyLimit {
   logger: Logger
-  ee: SpotExecutionEngine
+  ee: BinanceSpotExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
   positions_persistance: SpotPositionsPersistance
@@ -62,7 +62,7 @@ export class SpotPositionsExecution_BuyLimit {
     price_getter,
   }: {
     logger: Logger
-    ee: SpotExecutionEngine
+    ee: BinanceSpotExecutionEngine
     positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
     position_sizer: PositionSizer

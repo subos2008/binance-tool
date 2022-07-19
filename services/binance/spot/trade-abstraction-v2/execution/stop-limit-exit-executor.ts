@@ -23,15 +23,12 @@ import {
   TradeAbstractionOpenSpotLongCommand__StopLimitExit,
   TradeAbstractionOpenLongResult,
 } from "../interfaces/long"
-import {
-  SpotExecutionEngine,
-  SpotLimitBuyCommand,
-  SpotStopMarketSellCommand,
-} from "../../../../../interfaces/exchanges/spot-execution-engine"
+import { SpotStopMarketSellCommand } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import { SpotPositionsExecution_BuyLimit } from "./buy-limit-executor"
 import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
+import { BinanceSpotExecutionEngine } from "./execution_engines/binance-spot-execution-engine"
 
 /* Edge specific code */
 /* END Edge specific code */
@@ -48,7 +45,7 @@ import { PositionSizer } from "../../../../../edges/position-sizer/fixed-positio
  */
 export class SpotPositionsExecution_StopLimitExit {
   logger: Logger
-  ee: SpotExecutionEngine
+  ee: BinanceSpotExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
   positions_persistance: SpotPositionsPersistance
@@ -64,7 +61,7 @@ export class SpotPositionsExecution_StopLimitExit {
     price_getter,
   }: {
     logger: Logger
-    ee: SpotExecutionEngine
+    ee: BinanceSpotExecutionEngine
     positions_persistance: SpotPositionsPersistance
     send_message: SendMessageFunc
     position_sizer: PositionSizer

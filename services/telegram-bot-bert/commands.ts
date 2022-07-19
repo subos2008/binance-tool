@@ -1,18 +1,14 @@
 import { Telegraf, Context, NarrowedContext, Types } from "telegraf"
 import { Logger } from "../../interfaces/logger"
 import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
-
-
-import {
-  TradeAbstractionOpenSpotLongCommand,
-  TradeAbstractionOpenSpotLongResult,
-} from "../binance/spot/trade-abstraction/interfaces/open_spot"
-import {
-  TradeAbstractionCloseSpotLongResult,
-} from "../binance/spot/trade-abstraction/interfaces/close_spot"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
 import { Commands_Futures } from "./commands/futures"
 import Sentry from "../../lib/sentry"
+import {
+  TradeAbstractionOpenLongCommand,
+  TradeAbstractionOpenLongResult,
+} from "../binance/spot/trade-abstraction-v2/interfaces/long"
+import { TradeAbstractionCloseResult } from "../binance/spot/trade-abstraction-v2/interfaces/close"
 // Sentry.configureScope(function (scope: any) {
 //   scope.setTag("service", service_name)
 // })
@@ -45,6 +41,11 @@ To check the bot is listening:
   /hi
 `
 
+const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
+if (TAS_URL === undefined) {
+  throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
+}
+
 /**
  * Probably add session here later
  */
@@ -57,7 +58,7 @@ export class Commands {
 
   constructor({ bot, logger }: { bot: Telegraf; logger: Logger }) {
     this.logger = logger
-    this.spot_tas_client = new TradeAbstractionServiceClient({ logger })
+    this.spot_tas_client = new TradeAbstractionServiceClient({ logger, TAS_URL })
     // Set the bot response
     // Order is important
     bot.help((ctx) => ctx.replyWithHTML(help_text))
@@ -97,7 +98,10 @@ export class Commands {
     }
     let msg = postions
       .map(
-        (pi) => `${pi.exchange_identifier.exchange} ${pi.exchange_identifier.type} ${pi.base_asset.toUpperCase()}`
+        (pi) =>
+          `${pi.exchange_identifier.exchange} ${pi.exchange_identifier.type}  ${
+            pi.edge
+          }:${pi.base_asset.toUpperCase()}`
       )
       .join("\n")
 
@@ -125,8 +129,8 @@ export class Commands {
       }
 
       if (command == "long") {
-        let signal_timestamp_ms = (+Date.now()).toString()
-        let result: TradeAbstractionOpenSpotLongResult = await this.open_spot_long(ctx, {
+        let signal_timestamp_ms = Date.now()
+        let result: TradeAbstractionOpenLongResult = await this.open_spot_long(ctx, {
           object_type: "TradeAbstractionOpenLongCommand",
           base_asset,
           edge,
@@ -151,12 +155,12 @@ export class Commands {
 
   async open_spot_long(
     ctx: NarrowedContext<Context, Types.MountMap["text"]>,
-    cmd: TradeAbstractionOpenSpotLongCommand
-  ): Promise<TradeAbstractionOpenSpotLongResult> {
+    cmd: TradeAbstractionOpenLongCommand
+  ): Promise<TradeAbstractionOpenLongResult> {
     // let msg = `${cmd.edge.toUpperCase()}: opening spot long on ${cmd.base_asset} (unchecked)`
     // ctx.reply(msg)
     try {
-      let result: TradeAbstractionOpenSpotLongResult = await this.spot_tas_client.open_spot_long(cmd)
+      let result: TradeAbstractionOpenLongResult = await this.spot_tas_client.long(cmd)
       return result
     } catch (err) {
       this.logger.error({ err })
@@ -168,14 +172,16 @@ export class Commands {
   async close_spot_long(
     ctx: NarrowedContext<Context, Types.MountMap["text"]>,
     { asset, edge }: { asset: string; edge: string }
-  ): Promise<TradeAbstractionCloseSpotLongResult> {
+  ): Promise<TradeAbstractionCloseResult> {
     let msg = `${edge.toUpperCase()}: closing spot long on ${asset}`
     ctx.reply(msg)
-    let result: TradeAbstractionCloseSpotLongResult = await this.spot_tas_client.close_spot_long({
+    let result: TradeAbstractionCloseResult = await this.spot_tas_client.close({
+      object_type: "TradeAbstractionCloseCommand",
+      version: 1,
       base_asset: asset,
       edge,
-      direction: "long",
       action: "close",
+      signal_timestamp_ms: Date.now(),
     })
     ctx.reply(`Spot long close on ${edge}:${asset}: ${result.status}`)
     return result

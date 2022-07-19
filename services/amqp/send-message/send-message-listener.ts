@@ -23,8 +23,6 @@ export interface SendMessageCallback {
   processSendMessageEvent(event: SendMessageEvent, ack_func: () => void): Promise<void>
 }
 
-// TODO: ACK only if successful
-
 //let foo :SendMessageEvent = { "object_type":"SendMessage", "service_name": "ryan_test", "msg": "Hello World!", "tags": {}}
 
 export class AMQP_SendMessageListener implements MessageProcessor {
@@ -76,6 +74,7 @@ export class AMQP_SendMessageListener implements MessageProcessor {
   }
 
   async process_message(amqp_message: Message, channel: Channel): Promise<void> {
+    // Warning: the isolated listener has similar code
     try {
       this.logger.info(amqp_message.content.toString())
       let i: SendMessageEvent | undefined
@@ -85,12 +84,13 @@ export class AMQP_SendMessageListener implements MessageProcessor {
         i.msg = `B ${i.msg}`
       } catch (err) {
         // Couldn't parse message as JSON - eat it
+        // Actually, the MessageIsolator will do this probably before we get here
         this.logger.error({ err })
         this.logger.error(
           `Unable to parse incomming AMQP message content as JSON: ${amqp_message.content.toString()}`
         )
         this.logger.error(amqp_message)
-        // channel.ack(amqp_message)
+        channel.ack(amqp_message)
         return
       }
       let ack_func: () => void = channel.ack.bind(channel, amqp_message)

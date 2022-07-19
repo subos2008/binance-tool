@@ -8,11 +8,15 @@ import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
 import { Logger } from "../../interfaces/logger"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
-import { TradeAbstractionOpenSpotLongResult } from "../binance/spot/trade-abstraction/interfaces/open_spot"
-import { TradeAbstractionCloseSpotLongResult } from "../binance/spot/trade-abstraction/interfaces/close_spot"
 import { Edge60EntrySignalProcessor } from "./interfaces"
 import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
-import BigNumber from "bignumber.js"
+import { TradeAbstractionCloseResult } from "../binance/spot/trade-abstraction-v2/interfaces/close"
+import { TradeAbstractionOpenLongResult } from "../binance/spot/trade-abstraction-v2/interfaces/long"
+
+const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
+if (TAS_URL === undefined) {
+  throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
+}
 
 /**
  * interface Edge60PositionEntrySignal {
@@ -57,7 +61,7 @@ export class Edge60ForwarderToEdge62Spot implements Edge60EntrySignalProcessor {
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-    this.tas_client = new TradeAbstractionServiceClient({ logger })
+    this.tas_client = new TradeAbstractionServiceClient({ logger, TAS_URL })
     this.event_name = event_name
     this.edge = edge
     this.forward_short_signals_as_close_position = forward_short_signals_as_close_position
@@ -74,18 +78,18 @@ export class Edge60ForwarderToEdge62Spot implements Edge60EntrySignalProcessor {
     }
     let tags = { base_asset, edge }
 
-    let result: TradeAbstractionOpenSpotLongResult | TradeAbstractionCloseSpotLongResult
+    let result: TradeAbstractionOpenLongResult | TradeAbstractionCloseResult
     switch (signal.edge60_entry_signal.direction) {
       case "long":
         this.logger.info(tags, `long signal, attempting to open ${edge} spot long position on ${base_asset}`)
-        result = await this.tas_client.open_spot_long({
+        result = await this.tas_client.long({
           object_type: "TradeAbstractionOpenLongCommand",
           base_asset,
           edge,
           direction: "long",
           action: "open",
           trigger_price: signal.edge60_entry_signal.signal_price,
-          signal_timestamp_ms: signal.edge60_entry_signal.signal_timestamp_ms.toString(),
+          signal_timestamp_ms: signal.edge60_entry_signal.signal_timestamp_ms,
         })
         break
       case "short":

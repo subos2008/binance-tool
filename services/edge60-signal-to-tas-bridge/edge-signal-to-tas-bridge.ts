@@ -68,7 +68,7 @@ class Edge60MessageProcessor implements MessageProcessor {
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-    this.tas_client = new TradeAbstractionServiceClient({ logger })
+    this.tas_client = new TradeAbstractionServiceClient({ logger, TAS_URL })
     this.event_name = event_name
     this.fanout = new Edge60EntrySignalFanout({ logger, event_name, send_message })
     const amqp_health: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({

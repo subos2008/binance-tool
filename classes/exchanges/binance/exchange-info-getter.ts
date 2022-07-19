@@ -1,4 +1,5 @@
 import { Binance, ExchangeInfo } from "binance-api-node"
+import { ExchangeIdentifier_V4 } from "../../../events/shared/exchange-identifier"
 
 import { Logger } from "../../../lib/faux_logger"
 const logger = new Logger({ silent: false })
@@ -11,6 +12,10 @@ export class BinanceExchangeInfoGetter {
   constructor({ ee, minutes_to_cache_expiry }: { ee: Binance; minutes_to_cache_expiry?: number }) {
     this.ee = ee
     if (minutes_to_cache_expiry) this.minutes_to_cache_expiry = minutes_to_cache_expiry
+  }
+
+  get_exchange_identifier(): ExchangeIdentifier_V4 {
+    return { version: 4, exchange: "binance", type: "spot" }
   }
 
   async get_exchange_info(): Promise<ExchangeInfo> {

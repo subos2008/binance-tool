@@ -8,14 +8,6 @@ import { TradeAbstractionServiceClient } from "../binance/futures/trade-abstract
 import { Logger } from "../../interfaces/logger"
 import Sentry from "../../lib/sentry"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
-import {
-  TradeAbstractionOpenSpotLongCommand,
-  TradeAbstractionOpenSpotLongResult,
-} from "../binance/spot/trade-abstraction/interfaces/open_spot"
-import {
-  TradeAbstractionCloseLongCommand,
-  TradeAbstractionCloseSpotLongResult,
-} from "../binance/spot/trade-abstraction/interfaces/close_spot"
 import { Edge60EntrySignalProcessor } from "./interfaces"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
 import BigNumber from "bignumber.js"

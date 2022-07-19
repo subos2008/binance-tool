@@ -134,10 +134,15 @@ export class PositionPerformance {
   }
 }
 
+const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
+if (TAS_URL === undefined) {
+  throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
+}
+
 async function main() {
   const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   const spot_positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
-  const ee = new TradeAbstractionServiceClient({ logger })
+  const ee = new TradeAbstractionServiceClient({ logger, TAS_URL })
 
   const spot_positions_query = new SpotPositionsQuery({
     logger,

@@ -9,6 +9,11 @@ import { Edge60ForwarderToEdge60Spot } from "./forwarder-to-edge60-spot"
 import { Edge60ForwarderToEdge62Spot } from "./forwarder-to-edge62-spot"
 import { Edge60ForwarderToEdge62Futures } from "./forwarder-to-edge62-futures"
 
+const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
+if (TAS_URL === undefined) {
+  throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
+}
+
 export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
   send_message: Function
   logger: Logger
@@ -31,7 +36,7 @@ export class Edge60EntrySignalFanout implements Edge60EntrySignalProcessor {
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-    this.tas_client = new TradeAbstractionServiceClient({ logger })
+    this.tas_client = new TradeAbstractionServiceClient({ logger, TAS_URL })
     this.event_name = event_name
 
     this.edge60 = new Edge60ForwarderToEdge60Spot({

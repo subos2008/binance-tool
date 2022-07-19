@@ -76,7 +76,13 @@ export class GenericTopicPublisher {
   async shutdown_streams() {
     this.logger.warn(`shutdown_streams called`)
     // Waiting for a channel close is basically a flush
-    if (this.channel) await this.channel.close()
-    if (this.connection) await this.connection.close()
+    if (this.channel) {
+      await this.channel.close()
+      this.channel = undefined
+    }
+    if (this.connection) {
+      await this.connection.close()
+      this.connection = undefined
+    }
   }
 }

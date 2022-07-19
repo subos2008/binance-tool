@@ -31,7 +31,6 @@ import {
 } from "../interfaces/close"
 import { SpotExecutionEngine } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
-import { TradeAbstractionCloseSpotLongResult_SUCCESS } from "../../trade-abstraction/interfaces/close_spot"
 import { FixedPositionSizer, PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
 
 /**

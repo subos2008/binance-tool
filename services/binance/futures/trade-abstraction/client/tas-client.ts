@@ -13,6 +13,7 @@ import {
 } from "../../../../../classes/spot/abstractions/position-identifier"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import Sentry from "../../../../../lib/sentry"
+import { AxiosRetry } from "./axios-retry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("class", "TradeAbstractionServiceClient")
 })
@@ -21,7 +22,7 @@ export class TradeAbstractionServiceClient {
   logger: Logger
   TAS_URL: string
 
-  // Let TAS_URL be undefined becuase we check it here
+  // Let TAS_URL be undefined because we check it here
   constructor({ logger, TAS_URL }: { logger: Logger; TAS_URL: string | undefined }) {
     this.logger = logger
 
@@ -36,67 +37,65 @@ export class TradeAbstractionServiceClient {
   }
 
   async get_exchange_identifier(): Promise<ExchangeIdentifier_V3> {
-    let response = await this._call("GET", new URL("/exchange_identifier", this.TAS_URL).toString())
+    let response = await this.get(new URL("/exchange_identifier", this.TAS_URL).toString())
     this.logger.info(`Returned exchange_identifier:`)
-    this.logger.object(response)
-    return response
+    this.logger.object(response.data)
+    return response.data
   }
 
   async prices(): Promise<BinanceStyleSpotPrices> {
-    let response = await this._call("GET", new URL("/prices", this.TAS_URL).toString())
+    let response = await this.get(new URL("/prices", this.TAS_URL).toString())
     this.logger.info(`Returned prices:`)
-    this.logger.object(response)
-    return response
+    this.logger.object(response.data)
+    return response.data
   }
 
   async positions(): Promise<SpotPositionIdentifier_V3[]> {
-    let response = await this._call("GET", new URL("/positions", this.TAS_URL).toString())
+    let response = await this.get(new URL("/positions", this.TAS_URL).toString())
     this.logger.info(`Returned positions:`)
-    this.logger.object(response)
-    return response
+    this.logger.object(response.data)
+    return response.data
   }
 
   async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {
-    let response = await this._call("GET", new URL("/close", this.TAS_URL).toString(), cmd)
+    let response = await this.get(new URL("/close", this.TAS_URL).toString(), cmd)
     this.logger.object(response)
-    return response
+    let tas_response = response.data as TradeAbstractionCloseResult
+    if (tas_response?.object_type !== "TradeAbstractionCloseResult") {
+      let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionCloseResult`)
+      Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
+      this.logger.error({ err })
+    }
+    return tas_response
   }
 
   async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
-    let response = await this._call("GET", new URL("/long", this.TAS_URL).toString(), cmd)
-    return response
+    let response = await this.get(new URL("/long", this.TAS_URL).toString(), cmd)
+    this.logger.object(response)
+    let tas_response = response.data as TradeAbstractionOpenLongResult
+    if (tas_response?.object_type !== "TradeAbstractionOpenLongResult") {
+      let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenLongResult`)
+      Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
+      this.logger.error({ err })
+    }
+    return tas_response
   }
 
   async short(cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
-    let response = await this._call("GET", new URL("/short", this.TAS_URL).toString(), cmd)
-    return response
+    let response = await this.get(new URL("/short", this.TAS_URL).toString(), cmd)
+    this.logger.object(response)
+    let tas_response = response.data as TradeAbstractionOpenShortResult
+    if (tas_response?.object_type !== "TradeAbstractionOpenShortResult") {
+      let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenShortResult`)
+      Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
+      this.logger.error({ err })
+    }
+    return tas_response
   }
 
-  /**
-   * @private Make a HTTP request to a specific endpoint. Private endpoints are automatically signed.
-   */
-  private async _call(method: Method, endpoint: string, params?: string | object): Promise<any> {
-    try {
-      const options: AxiosRequestConfig = {
-        url: endpoint,
-        timeout: 10 * 1000, // ms, 1000 = 1 second
-        headers: {},
-        method: method,
-        transformResponse: (res: string) => {
-          // Do your own parsing here if needed ie JSON.parse(res);
-          return JSONBigNumber.parse(res)
-        },
-        // json: false, // avoid parsing json with the built in libs as they use floating point numbers
-        params,
-        validateStatus: (status) => status < 500,
-      }
-
-      let response = await axios(options)
-      return response.data
-    } catch (err) {
-      Sentry.captureException(err)
-      this.logger.error({ err })
-      throw err
-    }
+  private async get(endpoint: string, params?: string | object): Promise<AxiosResponse<any, any>> {
+    let axios_retry = new AxiosRetry({ logger: this.logger })
+    let response = await axios_retry.get(endpoint, params)
+    return response
   }
 }

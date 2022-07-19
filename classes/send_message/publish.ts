@@ -104,7 +104,7 @@ class SendMessagePublisher {
   async publish(event: SendMessageEvent): Promise<void> {
     if (!this.pub) {
       this.pub = new GenericTopicPublisher({ logger: this.logger, event_name: this.event_name })
-      this.connect()
+      await this.connect()
     }
     const options = {
       // expiration: event_expiration_seconds,

@@ -82,6 +82,7 @@ export class AMQP_SendMessageListener implements MessageProcessor {
       try {
         i = JSON.parse(amqp_message.content.toString()) as SendMessageEvent
         this.logger.info(i)
+        i.msg = `B ${i.msg}`
       } catch (err) {
         // Couldn't parse message as JSON - eat it
         this.logger.error({ err })

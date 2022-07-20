@@ -261,7 +261,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     throw new Error(msg)
   }
 
-  async market_sell(cmd: SpotMarketSellCommand): Promise<void> {
+  async market_sell(cmd: SpotMarketSellCommand): Promise<Order> {
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let order: Order | undefined = await this.utils.create_market_sell_order({
       base_amount: cmd.base_amount,
@@ -270,7 +270,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     })
     if (order && order.clientOrderId) {
       // looks like success
-      return
+      return order
     }
     let msg = `Failed to create market sell order for ${cmd.market_identifier.symbol}`
     this.logger.warn(msg)

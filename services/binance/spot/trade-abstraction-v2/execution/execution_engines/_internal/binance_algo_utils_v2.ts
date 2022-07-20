@@ -515,13 +515,14 @@ export class AlgoUtils {
     assert(BigNumber.isBigNumber(base_amount))
     try {
       let quantity = base_amount.toFixed()
-      let args: any = {
+      let args: NewOrderSpot = {
         // useServerTime: true,
         side: "SELL",
         symbol: pair,
-        type: "MARKET",
+        type: OrderType.MARKET,
         quantity,
         newClientOrderId: clientOrderId,
+        newOrderRespType: "RESULT",
       }
       this.logger.info(`Creating MARKET SELL ORDER for ${quantity} ${pair}`)
       let response = await this.ee.order(args)

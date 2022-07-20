@@ -76,6 +76,7 @@ import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
 import { Portfolio, Balance } from "../../../../interfaces/portfolio"
 import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
 import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { SendDatadogMetrics } from "./send-datadog-metrics"
 
 class PortfolioTracker implements MasterPortfolioClass {
   send_message: SendMessageFunc
@@ -263,7 +264,6 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 }
 
 import express from "express"
-import { SendDatadogMetrics } from "./send-datadog-metrics"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 const port = "80"

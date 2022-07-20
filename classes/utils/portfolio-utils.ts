@@ -128,7 +128,7 @@ export class PortfolioUtils {
           quote_amount,
         }
       } catch (err) {
-        this.logger.warn(`Failed to convert free balance of ${b.asset} to ${quote_currency}`)
+        this.logger.warn(`Failed to convert free balance of ${b.free} ${b.asset} to ${quote_currency}`)
         return { asset: b.asset, quote_amount: undefined }
       }
     }

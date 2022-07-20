@@ -190,14 +190,14 @@ main().catch((err) => {
   logger.error(`Error in main loop: ${err}`)
   logger.error({ err })
   logger.error(`Error in main loop: ${err.stack}`)
-  soft_exit(1)
+  soft_exit(1, `Error in main loop: ${err}`)
 })
 
 // Note this method returns!
-function soft_exit(exit_code: number | null = null) {
+function soft_exit(exit_code: number | null, reason: string) {
   service_is_healthy.healthy(false) // it seems service isn't exiting on soft exit, but add this to make sure
-  logger.warn(`soft_exit called, exit_code: ${exit_code}`)
-  if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`)
+  logger.error(`soft_exit called, exit_code: ${exit_code}, reason: ${reason}`)
+  if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}, reason: ${reason}`)
   if (exit_code) process.exitCode = exit_code
 }
 

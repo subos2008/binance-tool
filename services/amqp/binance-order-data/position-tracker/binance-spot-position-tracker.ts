@@ -133,7 +133,12 @@ async function main() {
     logger,
     positions_persistance: spot_positions_persistance,
     send_message,
-    exchange_identifier: { ...exchange_identifier, account, version: "v3" },
+    exchange_identifier: {
+      ...exchange_identifier,
+      account,
+      version: "v3",
+      type: exchange_identifier.exchange_type,
+    },
   })
 
   position_tracker = new SpotPositionTracker({

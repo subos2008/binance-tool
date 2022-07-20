@@ -20,7 +20,7 @@ export type ExchangeIdentifier_V3 = {
 export type ExchangeIdentifier_V4 = {
   version: 4
   exchange: string
-  type: ExchangeType
+  exchange_type: ExchangeType
   // An exchange isn't identified by an account
   // account: string // 'default' // we will want this eventually - PositionPersistance is ready for it
 }

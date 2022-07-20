@@ -15,7 +15,7 @@ export class BinanceExchangeInfoGetter {
   }
 
   get_exchange_identifier(): ExchangeIdentifier_V4 {
-    return { version: 4, exchange: "binance", type: "spot" }
+    return { version: 4, exchange: "binance", exchange_type: "spot" }
   }
 
   async get_exchange_info(): Promise<ExchangeInfo> {

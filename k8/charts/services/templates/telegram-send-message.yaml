@@ -19,7 +19,7 @@ spec:
         app: telegram-send-message
       annotations:
         ad.datadoghq.com/tags: '{"service": "telegram-send-message"}'
-        ad.datadoghq.com/service.logs: >-
+        ad.datadoghq.com/telegram-send-message.logs: >-
           [{
             "source": "nodejs",
           }]   

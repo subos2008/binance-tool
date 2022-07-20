@@ -23,14 +23,6 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-
-process.on("unhandledRejection", (err) => {
-  logger.error({ err })
-  Sentry.captureException(err)
-  send_message(`UnhandledPromiseRejection: ${err}`)
-})
-
 import Sentry from "../../lib/sentry"
 import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
 import { Prices } from "../../interfaces/portfolio"
@@ -41,6 +33,14 @@ import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positio
 import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
 import { CurrentAllPricesGetter } from "../../interfaces/exchanges/generic/price-getter"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
+
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+
+process.on("unhandledRejection", (err) => {
+  logger.error({ err })
+  Sentry.captureException(err)
+  send_message(`UnhandledPromiseRejection: ${err}`)
+})
 
 export class PositionPerformance {
   send_message: SendMessageFunc

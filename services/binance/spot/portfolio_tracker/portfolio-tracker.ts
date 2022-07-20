@@ -23,6 +23,7 @@
 
 import { strict as assert } from "assert"
 const service_name = "portfolio-tracker"
+
 let exchange_identifier: ExchangeIdentifier_V3 = {
   version: "v3",
   exchange: "binance",
@@ -40,15 +41,7 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-import { StatsD, Tags } from "hot-shots"
-function dogstatsderrorhandler(err: Error) {
-  logger.error({ err }, `DogStatsD: Socket errors caught here: ${err}`)
-}
-var dogstatsd = new StatsD({
-  errorHandler: dogstatsderrorhandler,
-  globalTags: { service_name },
-  prefix: "trading_engine",
-})
+
 // redis + events publishing + binance
 
 // TODO: periodically verify we have the same local values as the exchange
@@ -90,12 +83,14 @@ class PortfolioTracker implements MasterPortfolioClass {
   ee: any
   portfolios: { [exchange: string]: Portfolio } = {}
   exchanges: { [exchange: string]: PortfolioBitchClass } = {}
+  metrics: SendDatadogMetrics
 
   constructor({ send_message, logger }: { send_message: SendMessageFunc; logger: Logger }) {
     assert(logger)
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
+    this.metrics = new SendDatadogMetrics({ logger })
   }
 
   async set_portfolio_for_exchange({
@@ -108,137 +103,6 @@ class PortfolioTracker implements MasterPortfolioClass {
     // TODO: account not used in ExchangeIdentifier: default (default added so this appears in greps)
     this.portfolios[exchange_identifier.exchange] = portfolio
     this.report_current_portfolio() // this line is going to be a problem when we have multiple exchanges
-  }
-
-  async submit_portfolio_as_metrics({
-    // exchange_identifier,
-    portfolio,
-  }: {
-    // exchange_identifier: ExchangeIdentifier
-    portfolio: Portfolio
-  }) {
-    try {
-      this.logger.info(`Submitting metrics for ${portfolio.balances.length} balances`)
-
-      // Submit entire portfolio metrics
-
-      if (portfolio.usd_value) {
-        let tags: Tags = { exchange: exchange_identifier.exchange, exchange_type: exchange_identifier.type }
-        dogstatsd.gauge(
-          `.portfolio.spot.holdings.total.usd_equiv`,
-          Number(portfolio.usd_value),
-          undefined,
-          tags,
-          function (err, bytes) {
-            if (err) {
-              console.error(
-                "Oh noes! There was an error submitting .portfolio.spot.holdings.${quote_asset} metrics to DogStatsD for ${edge}:${base_asset}:",
-                err
-              )
-              console.error(err)
-              Sentry.captureException(err)
-            } else {
-              // console.log(
-              //   "Successfully sent",
-              //   bytes,
-              //   "bytes .portfolio.spot.holdings.${quote_asset} to DogStatsD for ${edge}:${base_asset}"
-              // )
-            }
-          }
-        )
-      }
-
-      if (portfolio.btc_value) {
-        let tags: Tags = { exchange: exchange_identifier.exchange, exchange_type: exchange_identifier.type }
-        dogstatsd.gauge(
-          `.portfolio.spot.holdings.total.btc_equiv`,
-          Number(portfolio.btc_value),
-          undefined,
-          tags,
-          function (err, bytes) {
-            if (err) {
-              console.error(
-                "Oh noes! There was an error submitting .portfolio.spot.holdings.${quote_asset} metrics to DogStatsD for ${edge}:${base_asset}:",
-                err
-              )
-              console.error(err)
-              Sentry.captureException(err)
-            } else {
-              // console.log(
-              //   "Successfully sent",
-              //   bytes,
-              //   "bytes .portfolio.spot.holdings.${quote_asset} to DogStatsD for ${edge}:${base_asset}"
-              // )
-            }
-          }
-        )
-      }
-
-      // Submit individual metrics
-      for (const balance of portfolio.balances) {
-        let base_asset = balance.asset
-        if (balance.quote_equivalents) {
-          this.logger.info(
-            `Submitting metrics for ${base_asset}: ${Object.keys(balance.quote_equivalents).join(", ")}`
-          )
-        } else this.logger.info(`No balance.quote_equivalents for ${base_asset}: `)
-        for (const quote_asset in balance.quote_equivalents) {
-          let quote_amount = balance.quote_equivalents[quote_asset]
-          // let exchange = exchange_identifier.exchange
-          // let account = exchange_identifier.account
-          let tags: Tags = { base_asset, quote_asset /*exchange, account*/ }
-
-          dogstatsd.gauge(
-            `.portfolio.spot.holdings.${quote_asset}`,
-            Number(quote_amount),
-            undefined,
-            tags,
-            function (err, bytes) {
-              if (err) {
-                console.error(
-                  "Oh noes! There was an error submitting .portfolio.spot.holdings.${quote_asset} metrics to DogStatsD for ${edge}:${base_asset}:",
-                  err
-                )
-                console.error(err)
-                Sentry.captureException(err)
-              } else {
-                // console.log(
-                //   "Successfully sent",
-                //   bytes,
-                //   "bytes .portfolio.spot.holdings.${quote_asset} to DogStatsD for ${edge}:${base_asset}"
-                // )
-              }
-            }
-          )
-          dogstatsd.gauge(
-            `.portfolio.spot.holdings`,
-            Number(quote_amount),
-            undefined,
-            tags,
-            function (err, bytes) {
-              if (err) {
-                console.error(
-                  "Oh noes! There was an error submitting .portfolio.spot.holdings metrics to DogStatsD for ${edge}:${base_asset}:",
-                  err
-                )
-                console.error(err)
-                Sentry.captureException(err)
-              } else {
-                // console.log(
-                //   "Successfully sent",
-                //   bytes,
-                //   "bytes .portfolio.spot.holdings to DogStatsD for ${edge}:${base_asset}"
-                // )
-              }
-            }
-          ) // Guess, this is easier to work with
-          this.logger.info(tags, `Submited metric portfolio in ${quote_asset} for ${base_asset}`)
-        }
-      }
-    } catch (err) {
-      Sentry.captureException(err)
-      console.error(err)
-    }
   }
 
   async update_and_report_portfolio() {
@@ -356,7 +220,7 @@ class PortfolioTracker implements MasterPortfolioClass {
       .calculate_portfolio_value_in_quote_currency({ quote_currency: "BUSD", portfolio })
       .total.dp(0)
       .toFixed()
-    this.submit_portfolio_as_metrics({ portfolio })
+    this.metrics.submit_portfolio_as_metrics({ portfolio, exchange_identifier })
     return portfolio
   }
 }
@@ -399,6 +263,7 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 }
 
 import express from "express"
+import { SendDatadogMetrics } from "./send-datadog-metrics"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 const port = "80"

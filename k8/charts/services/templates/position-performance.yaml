@@ -35,18 +35,18 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "./out/./services/position-performance/position-performance-service", "--live"]
-          # ports:
-          # - name: http
-          #   containerPort: 80
-          #   protocol: TCP
-          # livenessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: http
-          # readinessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: http
+          ports:
+          - name: http
+            containerPort: 80
+            protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
           env:
             - name: SENTRY_DSN
               value: "https://783401c8afe74f84a28d8482f756e380@o369902.ingest.sentry.io/6112675"

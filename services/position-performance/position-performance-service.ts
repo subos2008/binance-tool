@@ -23,6 +23,14 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+
+process.on("unhandledRejection", (err) => {
+  logger.error({ err })
+  Sentry.captureException(err)
+  send_message(`UnhandledPromiseRejection: ${err}`)
+})
+
 import Sentry from "../../lib/sentry"
 import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
 import { Prices } from "../../interfaces/portfolio"
@@ -32,9 +40,10 @@ import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/re
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
 import { CurrentAllPricesGetter } from "../../interfaces/exchanges/generic/price-getter"
+import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 
 export class PositionPerformance {
-  send_message: (msg: string) => void
+  send_message: SendMessageFunc
   logger: Logger
   spot_positions_persistance: SpotPositionsPersistance
   spot_positions_query: SpotPositionsQuery
@@ -47,12 +56,14 @@ export class PositionPerformance {
     spot_positions_persistance,
     spot_positions_query,
     ee,
+    health_and_readiness,
   }: {
-    send_message: (msg: string) => void
+    send_message: SendMessageFunc
     logger: Logger
     spot_positions_persistance: SpotPositionsPersistance
     spot_positions_query: SpotPositionsQuery
     ee: CurrentAllPricesGetter
+    health_and_readiness: HealthAndReadiness
   }) {
     assert(logger)
     this.ee = ee
@@ -72,6 +83,7 @@ export class PositionPerformance {
   }
 
   async list_positions() {
+    // TODO: go via the TAS - we get prices from the TAS
     logger.warn(`This implementation uses an initial_entry_price and not an average entry price`)
     let positions: SpotPosition[] = []
     let position_strings: string[] = []
@@ -139,8 +151,14 @@ if (TAS_URL === undefined) {
   throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
 }
 
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+const service_is_healthy: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
+  name: "global",
+  ready: true,
+  healthy: true,
+})
+
 async function main() {
-  const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   const spot_positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
   const ee = new TradeAbstractionServiceClient({ logger, TAS_URL })
 
@@ -157,6 +175,7 @@ async function main() {
     ee,
     spot_positions_persistance,
     spot_positions_query,
+    health_and_readiness,
   })
 
   // Update on intervals
@@ -175,13 +194,17 @@ main().catch((err) => {
 })
 
 // Note this method returns!
-// Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code: number | null = null) {
-  redis.quit()
-
+  service_is_healthy.healthy(false) // it seems service isn't exiting on soft exit, but add this to make sure
   logger.warn(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`)
   if (exit_code) process.exitCode = exit_code
-  // if (publisher) publisher.shutdown_streams()
-  // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
+
+import express from "express"
+var app = express()
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
+app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
+const port = "80"
+app.listen(port)
+logger.info(`Server on port ${port}`)

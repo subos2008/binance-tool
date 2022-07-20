@@ -130,7 +130,7 @@ export class Commands {
 
       if (command == "long") {
         let signal_timestamp_ms = Date.now()
-        let result: TradeAbstractionOpenLongResult = await this.open_spot_long(ctx, {
+        let result: TradeAbstractionOpenLongResult = await this.spot_tas_client.long({
           object_type: "TradeAbstractionOpenLongCommand",
           base_asset,
           edge,
@@ -145,28 +145,12 @@ export class Commands {
         let result = await this.close_spot_long(ctx, { asset: base_asset, edge })
         ctx.reply(`Spot long close on ${edge}:${base_asset}: ${result.status}`)
       }
-    } catch (err) {
-      this.logger.error({ err }, `Looks like command failed:`)
+    } catch (err: any) {
+      this.logger.error({ err }, `Looks like command failed: ${err.message}`)
       Sentry.captureException(err)
       ctx.reply(`Looks like it failed, see log for error`)
     }
     // ctx.replyWithHTML("<i>Are you sure?</i>")
-  }
-
-  async open_spot_long(
-    ctx: NarrowedContext<Context, Types.MountMap["text"]>,
-    cmd: TradeAbstractionOpenLongCommand
-  ): Promise<TradeAbstractionOpenLongResult> {
-    // let msg = `${cmd.edge.toUpperCase()}: opening spot long on ${cmd.base_asset} (unchecked)`
-    // ctx.reply(msg)
-    try {
-      let result: TradeAbstractionOpenLongResult = await this.spot_tas_client.long(cmd)
-      return result
-    } catch (err) {
-      this.logger.error({ err })
-      Sentry.captureException(err)
-      throw err
-    }
   }
 
   async close_spot_long(

@@ -54,7 +54,7 @@ export class AxiosRetry {
         // Sleep the amount of the Retry-After if present
         if (response.status === 429) {
           let ms = getMillisToSleep(response.headers["retry-after"])
-          this.logger.warn(`429 from TAS, retrying in ${ms} ms`)
+          this.logger.warn(`429 from TAS, retrying ${endpoint} in ${ms} ms`)
           await sleep(ms)
         }
       } while (response.status === 429)

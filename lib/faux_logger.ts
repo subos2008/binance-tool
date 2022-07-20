@@ -13,6 +13,8 @@
 
 import * as bunyan from "bunyan"
 
+import Sentry from "./sentry"
+
 import { Logger as LoggerInterface } from "../interfaces/logger"
 export class Logger implements LoggerInterface {
   silent: boolean
@@ -47,43 +49,76 @@ export class Logger implements LoggerInterface {
   object(obj: any) {
     if (!this.silent) {
       // wouldn't this just have a string msg? Yes... it does seem to work in DataDog though
-      this.bunyan.info(JSON.stringify(obj))
+      try {
+        this.bunyan.info(JSON.stringify(obj))
+      } catch (err) {
+        Sentry.captureException(err)
+      }
     }
   }
+  
   info(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.info(obj, ...params)
+      try {
+        this.bunyan.info(obj, ...params)
+      } catch (err) {
+        Sentry.captureException(err)
+      }
     }
   }
+
   notice(obj: Object, ...params: any[]) {
     if (!this.silent) {
       this.bunyan.info(obj, ...params)
     }
   }
+
   error(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.error(obj, ...params)
+      try {
+        this.bunyan.error(obj, ...params)
+      } catch (err) {
+        Sentry.captureException(err)
+      }
     }
   }
 
   fatal(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.fatal(obj, ...params)
+      try {
+        this.bunyan.fatal(obj, ...params)
+      } catch (err) {
+        Sentry.captureException(err)
+      }
     }
   }
   warn(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.warn(obj, ...params)
+      try {
+        this.bunyan.warn(obj, ...params)
+      } catch (err) {
+        Sentry.captureException(err)
+      }
     }
   }
+
   debug(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.debug(obj, ...params)
+      try {
+        this.bunyan.debug(obj, ...params)
+      } catch (err) {
+        Sentry.captureException(err)
+      }
     }
   }
+
   silly(obj: Object, ...params: any[]) {
     if (!this.silent) {
-      this.bunyan.debug(obj, ...params)
+      try {
+        this.bunyan.debug(obj, ...params)
+      } catch (err) {
+        Sentry.captureException(err)
+      }
     }
   }
 }

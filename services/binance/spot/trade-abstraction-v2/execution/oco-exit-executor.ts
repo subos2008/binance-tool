@@ -168,7 +168,8 @@ export class SpotPositionsExecution_OCOExit {
         let oco_result = await this.ee.oco_sell_order(oco_cmd)
       } catch (err) {
         this.logger.warn(tags, { err })
-        Sentry.captureException(err)
+        let eventid = Sentry.captureException(err) // TODO: this didn't work?
+        this.logger.warn(tags, `Sentry event id ${eventid}`)
 
         /** If we failed to create the OCO order then dump the position */
         // TODO: if this is because the price has gone up we could create a trailing stop instead

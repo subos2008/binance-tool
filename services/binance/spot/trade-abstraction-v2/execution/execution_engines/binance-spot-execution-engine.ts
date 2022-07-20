@@ -3,7 +3,7 @@ import { Logger } from "../../../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { MarketIdentifier_V4 } from "../../../../../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../../../../../events/shared/exchange-identifier"
-import binance, { CancelOrderResult, OcoOrder, Order } from "binance-api-node"
+import binance, { CancelOrderResult, OcoOrder, Order, TimeInForce_LT } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
 import { BinanceExchangeInfoGetter } from "../../../../../../classes/exchanges/binance/exchange-info-getter"
 import { randomUUID } from "crypto"
@@ -36,6 +36,10 @@ var ee: Binance = binance({
   apiKey: process.env.BINANCE_API_KEY,
   apiSecret: process.env.BINANCE_API_SECRET,
 })
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   utils: AlgoUtils
@@ -133,6 +137,28 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   //   throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)
   // }
 
+  async execute_with_429_retries<T>(func: () => Promise<T>): Promise<T> {
+    let allowed_retries = 3
+    do {
+      try {
+        return func()
+      } catch (err: any) {
+        allowed_retries = allowed_retries - 1
+        if (allowed_retries <= 0) throw err
+        if (err.message.match(/Too many new orders/ || err.code === -1015)) {
+          Sentry.captureException(err)
+          this.logger.warn({ err })
+          this.logger.warn(`429 from Binance, sleeping and retrying`)
+        } else {
+          throw err
+        }
+      }
+      await sleep(11 * 1000)
+    } while (allowed_retries > 0)
+    throw new Error(`Should not reach here`)
+  }
+
+  // TODO: copy 429 code from here
   async limit_buy(cmd: SpotLimitBuyCommand): Promise<SpotExecutionEngineBuyResult> {
     this.logger.object(cmd)
     let { market_identifier, order_context } = cmd
@@ -216,16 +242,22 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   }
 
   /** implemented as a stop_limit */
+  // TODO: add 429 try/catch logic
+  // TODO: port to return SpotExecutionEngineBuyResult
   async stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<{ order_id: string; stop_price: BigNumber }> {
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
-    let result = await this.utils.munge_and_create_stop_loss_limit_sell_order({
+    let args = {
       exchange_info: await this.get_exchange_info(),
       pair: cmd.market_identifier.symbol,
       base_amount: cmd.base_amount,
       stop_price: cmd.trigger_price,
       limit_price: cmd.trigger_price.times(0.8),
       clientOrderId,
-    })
+    }
+    let call = this.utils.munge_and_create_stop_loss_limit_sell_order.bind(this.utils, args)
+    // NB: this can throw 429's as it has a limited number of retries
+    // TODO: add a try/catch around this function making loud complaints about FAILED_TO_CREATE_EXIT_ORDERS
+    let result: Order = await this.execute_with_429_retries(call)
     if (!result?.clientOrderId) {
       throw new Error(`Failed to create stop order`)
     }
@@ -261,6 +293,9 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     throw new Error(msg)
   }
 
+  // TODO: add retries
+  // TODO: add 429 try/catch logic
+  // TODO: port to return SpotExecutionEngineBuyResult
   async market_sell(cmd: SpotMarketSellCommand): Promise<Order> {
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let order: Order | undefined = await this.utils.create_market_sell_order({
@@ -278,11 +313,13 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     throw new Error(msg)
   }
 
+  // TODO: add 429 try/catch logic
+  // TODO: port to return SpotExecutionEngineBuyResult
   async oco_sell_order(cmd: SpotOCOSellCommand): Promise<void> {
     this.logger.object(cmd)
     let { stop_ClientOrderId, take_profit_ClientOrderId, oco_list_ClientOrderId } = cmd
 
-    let order: OcoOrder | undefined = await this.utils.munge_and_create_oco_order({
+    let args = {
       exchange_info: await this.get_exchange_info(),
       base_amount: cmd.base_amount,
       pair: cmd.market_identifier.symbol,
@@ -292,20 +329,14 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
       target_price: cmd.take_profit_price,
       stop_price: cmd.stop_price,
       limit_price: cmd.stop_limit_price,
-    })
-    /**
-     *   export interface OcoOrder {
-     *     orderListId: number
-     *     contingencyType: OcoOrderType.CONTINGENCY_TYPE
-     *     listStatusType: ListStatusType_LT
-     *     listOrderStatus: ListOrderStatus_LT
-     *     listClientOrderId: string
-     *     transactionTime: number
-     *     symbol: string
-     *     orders: Order[]
-     *     orderReports: Order[]
-     * }
-     */
+    }
+
+    let call = this.utils.munge_and_create_oco_order.bind(this.utils, args)
+
+    // NB: this can throw 429's as it has a limited number of retries
+    // TODO: add a try/catch around this function making loud complaints about FAILED_TO_CREATE_EXIT_ORDERS
+    let order: OcoOrder | undefined = await this.execute_with_429_retries(call)
+
     this.logger.object({ object_type: "BinanceOrder", ...order })
     if (order && order.listClientOrderId) {
       // looks like success

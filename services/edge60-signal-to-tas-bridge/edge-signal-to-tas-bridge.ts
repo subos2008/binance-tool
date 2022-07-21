@@ -80,6 +80,7 @@ class Edge60MessageProcessor implements MessageProcessor {
       event_name,
       message_processor: this,
       health_and_readiness: amqp_health,
+      prefetch_one: false
     }) // Add arbitrary data argument
   }
 

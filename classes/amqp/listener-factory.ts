@@ -111,11 +111,13 @@ export class ListenerFactory {
     message_processor,
     health_and_readiness,
     service_name,
+    prefetch_one,
   }: {
     message_processor: MessageProcessor
     event_name: MyEventNameType
     health_and_readiness: HealthAndReadinessSubsystem
     service_name?: string
+    prefetch_one: boolean
   }) {
     Sentry.withScope(async (scope) => {
       scope.setTag("event_name", event_name)
@@ -131,6 +133,7 @@ export class ListenerFactory {
             logger: this.logger,
             health_and_readiness,
           }),
+          prefetch_one,
         })
       } catch (err) {
         health_and_readiness.healthy(false)
@@ -150,11 +153,13 @@ export class ListenerFactory {
     health_and_readiness,
     // does message routing have queue_name_prefix?
     queue_name,
+    prefetch_one,
   }: {
     message_processor: MessageProcessor
     event_name: MyEventNameType
     health_and_readiness: HealthAndReadinessSubsystem
     queue_name?: string
+    prefetch_one: boolean
   }) {
     // TODO: durable, exclusive, noAck, ... lots of configurable shit here...
     let { routing_key, exchange_name, exchange_type, durable } = MessageRouting.amqp_routing({ event_name })
@@ -179,6 +184,7 @@ export class ListenerFactory {
       queue_name = ""
     }
     const q = await channel.assertQueue(queue_name, { exclusive })
+    if (prefetch_one) channel.prefetch(1) // things rate limiting by witholding ACKs will need this
     await channel.bindQueue(q.queue, exchange_name, routing_key)
     let wrapper_func = function (event: any) {
       message_processor.process_message(event, channel)

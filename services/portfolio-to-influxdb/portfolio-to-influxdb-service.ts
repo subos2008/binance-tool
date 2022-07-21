@@ -82,6 +82,7 @@ class EventLogger implements MessageProcessor {
       event_name,
       message_processor: this,
       health_and_readiness,
+      prefetch_one: false
     })
   }
 

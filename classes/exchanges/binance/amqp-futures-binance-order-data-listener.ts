@@ -73,6 +73,7 @@ export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
       message_processor: this,
       health_and_readiness,
       service_name: this.service_name,
+      prefetch_one: false
     })
   }
 

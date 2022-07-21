@@ -23,7 +23,7 @@ import {
   TradeAbstractionOpenSpotLongCommand__StopLimitExit,
   TradeAbstractionOpenLongResult,
 } from "../interfaces/long"
-import { SpotStopMarketSellCommand } from "../../../../../interfaces/exchanges/spot-execution-engine"
+import { SpotStopMarketSellCommand, TradeContext } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import { SpotPositionsExecution_BuyLimit } from "./buy-limit-executor"
@@ -136,6 +136,8 @@ export class SpotPositionsExecution_StopLimitExit {
      * TODO: trading rules
      */
 
+    let trade_context: TradeContext = { base_asset, quote_asset, edge }
+
     let buy_result: TradeAbstractionOpenLongResult = await this.limit_buy_executor.buy_limit_entry(args)
 
     if (buy_result.status !== "SUCCESS") {
@@ -159,6 +161,7 @@ export class SpotPositionsExecution_StopLimitExit {
       object_type: "SpotStopMarketSellCommand",
       order_context,
       market_identifier,
+      trade_context,
       base_amount: executed_base_quantity,
       trigger_price: stop_price,
     }

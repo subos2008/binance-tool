@@ -32,12 +32,30 @@ export interface SpotMarketSellCommand {
   base_amount: BigNumber
 }
 
+export interface TradeContext {
+  base_asset: string
+  quote_asset?: string
+  edge: string
+}
+
 export interface SpotStopMarketSellCommand {
   object_type: "SpotStopMarketSellCommand"
   order_context: OrderContext_V1
   market_identifier: MarketIdentifier_V4
+  trade_context: TradeContext
   base_amount: BigNumber
   trigger_price: BigNumber
+}
+
+export interface SpotStopMarketSellResult {
+  // object_type: "SpotStopMarketSellResult"
+  order_id: OrderId
+  stop_price: BigNumber
+  // order_context: OrderContext_V1
+  // market_identifier: MarketIdentifier_V4
+  trade_context: TradeContext
+  // base_amount: BigNumber
+  // trigger_price: BigNumber
 }
 
 export interface SpotOCOSellCommand {
@@ -104,12 +122,6 @@ interface SpotExecutionEngineBuyResult_TOO_MANY_REQUESTS {
   retry_after_seconds: number // can go to Retry-After header
 }
 
-export interface TradeContext {
-  base_asset: string
-  quote_asset?: string
-  edge: string
-}
-
 interface SpotExecutionEngineBuyResult_ENTRY_FAILED_TO_FILL {
   object_type: "SpotExecutionEngineBuyResult"
   version: 2
@@ -158,7 +170,7 @@ export interface SpotExecutionEngine {
 
   get_exchange_identifier(): ExchangeIdentifier_V3
 
-  stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<{ order_id: OrderId; stop_price: BigNumber }>
+  stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<SpotStopMarketSellResult>
 
   cancel_order(args: { order_id: string; symbol: string }): Promise<void>
   cancel_oco_order(args: { order_id: string; symbol: string }): Promise<void>

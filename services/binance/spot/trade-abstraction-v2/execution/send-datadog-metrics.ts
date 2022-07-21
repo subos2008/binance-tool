@@ -14,13 +14,15 @@ BigNumber.prototype.valueOf = function () {
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import { Logger } from "../../../../../interfaces/logger"
 import {
-  TradeAbstractionOpenLongResult,
   TradeAbstractionOpenSpotLongCommand_OCO_Exit,
   TradeAbstractionOpenSpotLongCommand__StopLimitExit,
 } from "../interfaces/long"
-import { TradeAbstractionCloseResult } from "../interfaces/close"
 import Sentry from "../../../../../lib/sentry"
-import { SpotExecutionEngineBuyResult } from "../../../../../interfaces/exchanges/spot-execution-engine"
+import {
+  SpotExecutionEngineBuyResult,
+  SpotStopMarketSellCommand,
+  SpotStopMarketSellResult,
+} from "../../../../../interfaces/exchanges/spot-execution-engine"
 
 export class SendDatadogMetrics {
   dogstatsd: StatsD
@@ -37,6 +39,8 @@ export class SendDatadogMetrics {
       prefix: "trading_engine.tas.spot.binance.ee",
     })
   }
+
+  //trading_engine.tas.spot.binance.ee.buy_limit.request
 
   buy_limit_request(
     args: TradeAbstractionOpenSpotLongCommand_OCO_Exit | TradeAbstractionOpenSpotLongCommand__StopLimitExit
@@ -67,6 +71,46 @@ export class SendDatadogMetrics {
       let tags: Tags = { status, base_asset, quote_asset, edge }
 
       this.dogstatsd.increment(`.buy_limit.result`, 1, 1, tags, function (error, bytes) {
+        //this only gets called once after all messages have been sent
+        if (error) {
+          console.error("Oh noes! There was an error submitting metrics to DogStatsD:", error)
+        } else {
+          // console.log("Successfully sent", bytes, "bytes to DogStatsD")
+        }
+      })
+    } catch (e) {
+      this.logger.warn(`Failed to submit metrics to DogStatsD`)
+      Sentry.captureException(e)
+    }
+  }
+
+  stop_market_sell_request(args: SpotStopMarketSellCommand) {
+    try {
+      let { base_asset, quote_asset, edge } = args.trade_context
+      let tags: Tags = { base_asset, edge }
+      if (quote_asset) tags["quote_asset"] = quote_asset
+
+      this.dogstatsd.increment(`.stop_market_sell.request`, 1, 1, tags, function (error, bytes) {
+        //this only gets called once after all messages have been sent
+        if (error) {
+          console.error("Oh noes! There was an error submitting metrics to DogStatsD:", error)
+        } else {
+          // console.log("Successfully sent", bytes, "bytes to DogStatsD")
+        }
+      })
+    } catch (e) {
+      this.logger.warn(`Failed to submit metrics to DogStatsD`)
+      Sentry.captureException(e)
+    }
+  }
+
+  stop_market_sell_result(args: SpotStopMarketSellResult) {
+    try {
+      let { base_asset, quote_asset, edge } = args.trade_context
+      let tags: Tags = { base_asset, edge }
+      if (quote_asset) tags["quote_asset"] = quote_asset
+
+      this.dogstatsd.increment(`.stop_market_sell.result`, 1, 1, tags, function (error, bytes) {
         //this only gets called once after all messages have been sent
         if (error) {
           console.error("Oh noes! There was an error submitting metrics to DogStatsD:", error)

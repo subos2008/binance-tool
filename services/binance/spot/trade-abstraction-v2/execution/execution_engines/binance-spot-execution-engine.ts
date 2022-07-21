@@ -24,10 +24,12 @@ import {
   SpotLimitBuyCommand,
   SpotExecutionEngineBuyResult,
   TradeContext,
+  SpotStopMarketSellResult,
 } from "../../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContextPersistence } from "../../../../../../classes/persistent_state/interface/order-context-persistence"
 import { OrderContext_V1 } from "../../../../../../interfaces/orders/order-context"
 import { BinanceStyleSpotPrices } from "../../../../../../classes/spot/abstractions/position-identifier"
+import { SendDatadogMetrics } from "../send-datadog-metrics"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)
@@ -47,6 +49,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   logger: Logger
   ei_getter: BinanceExchangeInfoGetter
   order_context_persistence: OrderContextPersistence
+  metrics: SendDatadogMetrics
 
   constructor({
     logger,
@@ -60,6 +63,8 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     this.utils = new AlgoUtils({ logger, ee /* note global variable */ })
     this.ei_getter = new BinanceExchangeInfoGetter({ ee })
     this.order_context_persistence = order_context_persistence
+    let exchange_identifier = this.get_exchange_identifier()
+    this.metrics = new SendDatadogMetrics({ logger, exchange_identifier })
   }
 
   get_exchange_identifier(): ExchangeIdentifier_V3 {
@@ -260,7 +265,16 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   /** implemented as a stop_limit */
   // TODO: add 429 try/catch logic
   // TODO: port to return SpotExecutionEngineBuyResult
-  async stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<{ order_id: string; stop_price: BigNumber }> {
+  async stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<SpotStopMarketSellResult> {
+    try {
+      // TODO: move into the EE
+      // TODO: doesn't work with exceptions
+      this.metrics.stop_market_sell_request(cmd)
+    } catch (err) {
+      Sentry.captureException(err)
+      this.logger.error({ err })
+    }
+
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let args = {
       exchange_info: await this.get_exchange_info(),
@@ -273,12 +287,21 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     let call = this.utils.munge_and_create_stop_loss_limit_sell_order.bind(this.utils, args)
     // NB: this can throw 429's as it has a limited number of retries
     // TODO: add a try/catch around this function making loud complaints about FAILED_TO_CREATE_EXIT_ORDERS
-    let result: Order = await this.execute_with_429_retries(call)
-    if (!result?.clientOrderId) {
+    let order: Order = await this.execute_with_429_retries(call)
+    if (!order?.clientOrderId) {
       throw new Error(`Failed to create stop order`)
     }
-    let stop_price = result.stopPrice ? new BigNumber(result.stopPrice) : cmd.trigger_price
-    return { order_id: result.clientOrderId, stop_price }
+    let stop_price = order.stopPrice ? new BigNumber(order.stopPrice) : cmd.trigger_price
+    let result = { order_id: order.clientOrderId, stop_price, trade_context: cmd.trade_context }
+    try {
+      // TODO: move into the EE
+      // TODO: doesn't work with exceptions
+      this.metrics.stop_market_sell_result(result)
+    } catch (err) {
+      Sentry.captureException(err)
+      this.logger.error({ err })
+    }
+    return result
   }
 
   // throws on failure

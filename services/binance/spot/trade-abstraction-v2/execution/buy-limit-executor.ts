@@ -135,11 +135,12 @@ export class SpotPositionsExecution_BuyLimit {
           base_asset,
           quote_asset,
         }
+        this.logger.warn(result)
         return result
       }
 
       if (buy_result.status !== "SUCCESS") {
-        return {
+        let result: TradeAbstractionOpenLongResult = {
           ...buy_result,
           object_type: "TradeAbstractionOpenLongResult",
           version: 1,
@@ -147,6 +148,8 @@ export class SpotPositionsExecution_BuyLimit {
           base_asset,
           quote_asset,
         }
+        this.logger.warn(result)
+        return result
       }
 
       let { executed_quote_quantity, executed_price, executed_base_quantity, execution_timestamp_ms } = buy_result

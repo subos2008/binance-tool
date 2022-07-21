@@ -28,6 +28,7 @@ import {
   SpotExecutionEngineBuyResult,
   // SpotExecutionEngineBuyResult,
   SpotLimitBuyCommand,
+  TradeContext,
 } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
@@ -104,6 +105,7 @@ export class SpotPositionsExecution_BuyLimit {
       let { edge_percentage_buy_limit } = args
 
       let market_identifier: MarketIdentifier_V4 = this.get_market_identifier_for({ ...args, quote_asset })
+      let trade_context: TradeContext = { base_asset, quote_asset, edge }
       let trigger_price: BigNumber | undefined
       if (trigger_price_string) {
         trigger_price = new BigNumber(trigger_price_string)
@@ -131,7 +133,7 @@ export class SpotPositionsExecution_BuyLimit {
         timeInForce: "IOC",
       }
 
-      let buy_result: SpotExecutionEngineBuyResult = await this.ee.limit_buy(cmd)
+      let buy_result: SpotExecutionEngineBuyResult = await this.ee.limit_buy(cmd, trade_context)
 
       try {
         this.metrics.buy_limit_result(buy_result, { base_asset, quote_asset, edge })
@@ -140,20 +142,7 @@ export class SpotPositionsExecution_BuyLimit {
         this.logger.error({ err })
       }
 
-      if (buy_result.status == "TOO_MANY_REQUESTS") {
-        let result: TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS = {
-          ...buy_result,
-          object_type: "TradeAbstractionOpenLongResult",
-          version: 1,
-          edge,
-          base_asset,
-          quote_asset,
-        }
-        this.logger.warn(result)
-        return result
-      }
-
-      if (buy_result.status !== "SUCCESS") {
+      if (buy_result.status !== "FILLED") {
         let result: TradeAbstractionOpenLongResult = {
           ...buy_result,
           object_type: "TradeAbstractionOpenLongResult",
@@ -168,45 +157,27 @@ export class SpotPositionsExecution_BuyLimit {
 
       let { executed_quote_quantity, executed_price, executed_base_quantity, execution_timestamp_ms } = buy_result
 
-      if (executed_base_quantity.isZero()) {
-        // TODO: hmm, in metrics this is success
-        let msg = `${prefix}: ENTRY_FAILED_TO_FILL: IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
-        let spot_long_result: TradeAbstractionOpenLongResult = {
-          object_type: "TradeAbstractionOpenLongResult",
-          version: 1,
-          edge,
-          base_asset,
-          quote_asset,
-          status: "ENTRY_FAILED_TO_FILL",
-          http_status: 200,
-          msg,
-          execution_timestamp_ms,
-        }
-        this.logger.info(spot_long_result)
-        return spot_long_result
-      } else {
-        let msg = `${edge}:${
-          args.base_asset
-        } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
-        let spot_long_result: TradeAbstractionOpenLongResult = {
-          object_type: "TradeAbstractionOpenLongResult",
-          version: 1,
-          msg,
-          edge,
-          base_asset,
-          quote_asset,
-          executed_quote_quantity: executed_quote_quantity.toFixed(),
-          executed_price: executed_price.toFixed(),
-          executed_base_quantity: executed_base_quantity.toFixed(),
-          status: "SUCCESS",
-          http_status: 201,
-          execution_timestamp_ms,
-          created_stop_order: false,
-          created_take_profit_order: false,
-        }
-        this.logger.info(spot_long_result)
-        return spot_long_result
+      let msg = `${edge}:${
+        args.base_asset
+      } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
+      let spot_long_result: TradeAbstractionOpenLongResult = {
+        object_type: "TradeAbstractionOpenLongResult",
+        version: 1,
+        msg,
+        edge,
+        base_asset,
+        quote_asset,
+        executed_quote_quantity: executed_quote_quantity.toFixed(),
+        executed_price: executed_price.toFixed(),
+        executed_base_quantity: executed_base_quantity.toFixed(),
+        status: "SUCCESS",
+        http_status: 201,
+        execution_timestamp_ms,
+        created_stop_order: false,
+        created_take_profit_order: false,
       }
+      this.logger.info(spot_long_result)
+      return spot_long_result
     } catch (err: any) {
       Sentry.captureException(err)
       this.logger.error({ err })

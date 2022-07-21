@@ -23,6 +23,7 @@ import {
   SpotOCOSellCommand,
   SpotLimitBuyCommand,
   SpotExecutionEngineBuyResult,
+  TradeContext,
 } from "../../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContextPersistence } from "../../../../../../classes/persistent_state/interface/order-context-persistence"
 import { OrderContext_V1 } from "../../../../../../interfaces/orders/order-context"
@@ -159,7 +160,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   }
 
   // TODO: copy 429 code from here
-  async limit_buy(cmd: SpotLimitBuyCommand): Promise<SpotExecutionEngineBuyResult> {
+  async limit_buy(cmd: SpotLimitBuyCommand, trade_context: TradeContext): Promise<SpotExecutionEngineBuyResult> {
     this.logger.object(cmd)
     let { market_identifier, order_context } = cmd
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
@@ -175,18 +176,33 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
         timeInForce: "IOC",
       })
       this.logger.object({ object_type: "BinanceOrder", ...result })
-      let spot_long_result: SpotExecutionEngineBuyResult = {
-        object_type: "SpotExecutionEngineBuyResult",
-        version: 2,
-        msg: `${prefix}: SUCCESS`,
-        market_identifier,
-        order_context,
-        status: "SUCCESS",
-        http_status: 201,
-        executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
-        executed_base_quantity: new BigNumber(result.executedQty),
-        executed_price: new BigNumber(result.cummulativeQuoteQty).dividedBy(result.executedQty),
-        execution_timestamp_ms: result.transactTime,
+      let spot_long_result: SpotExecutionEngineBuyResult
+      let executed_base_quantity = new BigNumber(result.executedQty)
+      if (executed_base_quantity.isZero()) {
+        spot_long_result = {
+          object_type: "SpotExecutionEngineBuyResult",
+          version: 2,
+          market_identifier,
+          trade_context,
+          status: "ENTRY_FAILED_TO_FILL",
+          http_status: 200,
+          msg: `${prefix}: ENTRY_FAILED_TO_FILL`,
+          execution_timestamp_ms: result.transactTime || Date.now(),
+        }
+      } else {
+        spot_long_result = {
+          object_type: "SpotExecutionEngineBuyResult",
+          version: 2,
+          msg: `${prefix}: FILLED`,
+          market_identifier,
+          order_context,
+          status: "FILLED",
+          http_status: 201,
+          executed_quote_quantity: new BigNumber(result.cummulativeQuoteQty),
+          executed_base_quantity,
+          executed_price: new BigNumber(result.cummulativeQuoteQty).dividedBy(result.executedQty),
+          execution_timestamp_ms: result.transactTime,
+        }
       }
       this.logger.info(spot_long_result)
       return spot_long_result

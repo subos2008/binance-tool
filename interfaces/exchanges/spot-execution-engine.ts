@@ -53,12 +53,12 @@ export interface SpotOCOSellCommand {
   oco_list_ClientOrderId: string
 }
 
-interface SpotExecutionEngineBuyResult_SUCCESS {
+interface SpotExecutionEngineBuyResult_FILLED {
   object_type: "SpotExecutionEngineBuyResult"
   version: 2
   market_identifier: MarketIdentifier_V4
   order_context: OrderContext_V1
-  status: "SUCCESS"
+  status: "FILLED"
   http_status: 201
   msg: string
   executed_quote_quantity: BigNumber
@@ -104,11 +104,36 @@ interface SpotExecutionEngineBuyResult_TOO_MANY_REQUESTS {
   retry_after_seconds: number // can go to Retry-After header
 }
 
+export interface TradeContext {
+  base_asset: string
+  quote_asset?: string
+  edge: string
+}
+
+interface SpotExecutionEngineBuyResult_ENTRY_FAILED_TO_FILL {
+  object_type: "SpotExecutionEngineBuyResult"
+  version: 2
+
+  market_identifier: MarketIdentifier_V4
+
+  trade_context: TradeContext
+
+  status: "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill
+  http_status: 200 // 200: Success... but not 201, so not actually created
+
+  msg: string // human readable summary
+
+  // Buy execution
+  execution_timestamp_ms: number
+  signal_to_execution_slippage_ms?: string
+}
+
 export type SpotExecutionEngineBuyResult =
-  | SpotExecutionEngineBuyResult_SUCCESS
+  | SpotExecutionEngineBuyResult_FILLED
   | SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE
   | SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR
   | SpotExecutionEngineBuyResult_TOO_MANY_REQUESTS
+  | SpotExecutionEngineBuyResult_ENTRY_FAILED_TO_FILL
 
 export interface SpotExecutionEngine {
   get_market_identifier_for({

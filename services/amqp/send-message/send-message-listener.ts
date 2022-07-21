@@ -91,7 +91,7 @@ export class AMQP_SendMessageListener implements MessageProcessor {
           `Unable to parse incomming AMQP message content as JSON: ${amqp_message.content.toString()}`
         )
         this.logger.error(amqp_message)
-        channel.ack(amqp_message)
+        channel.nack(amqp_message) // nack
         return
       }
       let ack_func: () => void = channel.ack.bind(channel, amqp_message)

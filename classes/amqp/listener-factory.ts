@@ -71,7 +71,7 @@ class MessageProcessorIsolator implements MessageProcessor {
         let event_name = this.event_name
         Sentry.captureException(err, { extra: { raw_body }, tags: { event_name } })
         this.logger.error({ err })
-        channel.ack(event) // stop re-delivery of badly formed messages
+        channel.nack(event) // stop re-delivery of badly formed messages NACK
       }
       if (Body.object_type === this.event_name) {
         return this.message_processor.process_message(event, channel)

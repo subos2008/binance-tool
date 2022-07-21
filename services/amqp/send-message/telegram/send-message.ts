@@ -33,6 +33,7 @@ export class SendMessage {
         Sentry.captureException(new Error(`Hit rate limit on telegram API (429)`))
         this.logger.warn(`Hit rate limit on telegram API (429)`)
         setTimeout(this.send_message.bind(this, ack_func, message, tags), 1000 * 61)
+        return
       }
       if (response.status != 200) {
         throw new Error(`Response status code from telegram api: ${response.status} ${response.statusText}`)

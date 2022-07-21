@@ -147,7 +147,8 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     let allowed_retries = 3
     do {
       try {
-        return func()
+        let result: T = await func()
+        return result
       } catch (err: any) {
         allowed_retries = allowed_retries - 1
         if (allowed_retries <= 0) throw err

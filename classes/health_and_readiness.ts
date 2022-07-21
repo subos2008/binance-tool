@@ -169,17 +169,17 @@ export class HealthAndReadiness {
   }
 
   healthy(): boolean {
-    let healthy = !Object.values(this.subsystems)
-      .map((x) => x.healthy())
-      .includes(false)
+    let subsystems = Object.values(this.subsystems)
+    if (subsystems.length === 0) this.logger.warn(`/healthy on service with no registered subsystems`)
+    let healthy = !subsystems.map((x) => x.healthy()).includes(false)
     if (!healthy) this.surmise_state_to_logger()
     return healthy
   }
 
   ready(): boolean {
-    let ready = !Object.values(this.subsystems)
-      .map((x) => x.ready())
-      .includes(false)
+    let subsystems = Object.values(this.subsystems)
+    if (subsystems.length === 0) this.logger.warn(`/ready on service with no registered subsystems`)
+    let ready = !subsystems.map((x) => x.ready()).includes(false)
     if (!ready) this.surmise_state_to_logger()
     return ready
   }

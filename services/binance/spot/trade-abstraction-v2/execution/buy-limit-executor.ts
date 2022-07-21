@@ -14,13 +14,13 @@ import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identif
 import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SendMessageFunc } from "../../../../../classes/send_message/publish"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
-import { SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstractions/position-identifier"
 import {
   TradeAbstractionOpenSpotLongCommand_OCO_Exit,
   TradeAbstractionOpenSpotLongCommand__StopLimitExit,
   TradeAbstractionOpenLongResult,
   TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS,
 } from "../interfaces/long"
+import { SendDatadogMetrics } from "./send-datadog-metrics"
 
 /* Edge specific code */
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
@@ -52,6 +52,7 @@ export class SpotPositionsExecution_BuyLimit {
   position_sizer: PositionSizer
   positions_persistance: SpotPositionsPersistance
   price_getter: CurrentPriceGetter
+  metrics: SendDatadogMetrics
 
   constructor({
     logger,
@@ -76,6 +77,8 @@ export class SpotPositionsExecution_BuyLimit {
     this.send_message = send_message
     this.position_sizer = position_sizer
     this.price_getter = price_getter
+    let exchange_identifier = this.ee.get_exchange_identifier()
+    this.metrics = new SendDatadogMetrics({ logger, exchange_identifier })
   }
 
   // Used when constructing orders
@@ -83,15 +86,19 @@ export class SpotPositionsExecution_BuyLimit {
     return this.ee.get_market_identifier_for(args)
   }
 
-  private get_exchange_identifier(): ExchangeIdentifier_V3 {
-    return this.ee.get_exchange_identifier()
-  }
-
   async buy_limit_entry(
     args: TradeAbstractionOpenSpotLongCommand_OCO_Exit | TradeAbstractionOpenSpotLongCommand__StopLimitExit
   ): Promise<TradeAbstractionOpenLongResult> {
     let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
     let tags = { edge, base_asset, quote_asset }
+
+    try {
+      this.metrics.buy_limit_request(args)
+    } catch (err) {
+      Sentry.captureException(err)
+      this.logger.error({ err })
+    }
+
     let prefix = `${edge}:${base_asset} open spot long: `
     try {
       let { edge_percentage_buy_limit } = args
@@ -126,6 +133,13 @@ export class SpotPositionsExecution_BuyLimit {
 
       let buy_result: SpotExecutionEngineBuyResult = await this.ee.limit_buy(cmd)
 
+      try {
+        this.metrics.buy_limit_result(buy_result, { base_asset, quote_asset, edge })
+      } catch (err) {
+        Sentry.captureException(err)
+        this.logger.error({ err })
+      }
+
       if (buy_result.status == "TOO_MANY_REQUESTS") {
         let result: TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS = {
           ...buy_result,
@@ -155,6 +169,7 @@ export class SpotPositionsExecution_BuyLimit {
       let { executed_quote_quantity, executed_price, executed_base_quantity, execution_timestamp_ms } = buy_result
 
       if (executed_base_quantity.isZero()) {
+        // TODO: hmm, in metrics this is success
         let msg = `${prefix}: ENTRY_FAILED_TO_FILL: IOC limit buy executed zero, looks like we weren't fast enough to catch this one (${edge_percentage_buy_limit}% slip limit)`
         let spot_long_result: TradeAbstractionOpenLongResult = {
           object_type: "TradeAbstractionOpenLongResult",

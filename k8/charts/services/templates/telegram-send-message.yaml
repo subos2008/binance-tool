@@ -19,9 +19,10 @@ spec:
         app: telegram-send-message
       annotations:
         ad.datadoghq.com/tags: '{"service": "telegram-send-message"}'
-        ad.datadoghq.com/telegram-send-message.logs: >-
+        ad.datadoghq.com/service.logs: >-
           [{
             "source": "nodejs",
+            "service": "telegram-bot-bert"
           }]   
     spec:
     {{- with .Values.imagePullSecrets }}

@@ -16,6 +16,8 @@ Sentry.configureScope(function (scope: any) {
 import { Logger } from "../../../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
 
+logger.info(`Service starting`)
+
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion

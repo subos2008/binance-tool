@@ -176,7 +176,7 @@ app.get("/close", async function (req: Request, res: Response, next: NextFunctio
     throw new Error(`Unexpected object_type: ${(mapper_result as any).object_type}`)
   } catch (err: any) {
     Sentry.captureException(err)
-    logger.error("Internal Server Error: ${err}")
+    logger.error(`Internal Server Error: ${err}`)
     logger.error({ err })
     res.status(500).json({ msg: "Internal Server Error" })
     next(err)
@@ -222,7 +222,7 @@ app.get("/short", async function (req: Request, res: Response, next: NextFunctio
 
     throw new Error(`Unexpected object_type: ${(mapper_result as any).object_type}`)
   } catch (err: any) {
-    logger.error("Internal Server Error: ${err}")
+    logger.error(`Internal Server Error: ${err}`)
     logger.error({ err })
     res.status(500).json({ msg: "Internal Server Error" })
     next(err)

@@ -176,14 +176,14 @@ app.get("/close", async function (req: Request, res: Response, next: NextFunctio
       metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
       metrics.trading_abstraction_close_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
 
-      res.status(cmd_result.http_status).json(cmd_result)
-
-      send_message(cmd_result.msg, tags)
-
       // TODO - 429's for /close
       // if (cmd_result.http_status === 429) {
       //   res.setHeader('Retry-After', cmd_result.retry_after_seconds)
       // }
+
+      res.status(cmd_result.http_status).json(cmd_result)
+
+      send_message(cmd_result.msg, tags)
 
       if (cmd_result.http_status === 500) {
         let msg: string = `TradeAbstractionCloseResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
@@ -228,13 +228,13 @@ app.get("/long", async function (req: Request, res: Response, next: NextFunction
       metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
       metrics.trading_abstraction_open_spot_long_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
 
-      res.status(cmd_result.http_status).json(cmd_result)
-
-      send_message(cmd_result.msg, tags)
-
       if (cmd_result.http_status === 429) {
         res.setHeader("Retry-After", cmd_result.retry_after_seconds)
       }
+
+      res.status(cmd_result.http_status).json(cmd_result)
+
+      send_message(cmd_result.msg, tags)
 
       if (cmd_result.http_status === 500) {
         let msg: string = `TradeAbstractionOpenLongResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`

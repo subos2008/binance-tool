@@ -173,7 +173,7 @@ class PortfolioTracker implements MasterPortfolioClass {
               }
             }
           ) // Guess, this is easier to work with
-          this.logger.info(tags, `Submited metric portfolio in ${quote_asset} for ${base_asset}`)
+          // this.logger.info(tags, `Submited metric portfolio in ${quote_asset} for ${base_asset}`)
         }
       }
     } catch (err) {

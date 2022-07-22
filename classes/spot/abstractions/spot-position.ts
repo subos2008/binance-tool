@@ -124,7 +124,7 @@ export class SpotPosition {
     return new BigNumber(current_price).minus(initial_entry_price).dividedBy(initial_entry_price).times(100)
   }
 
-  /** this should be done in SpotPositionsExecution */
+  /** this should be done in SpotEdgeToExecutorMapper */
   // async close() {
   //   this.spot_positions_persistance.close_position(this.position_identifier)
   // }

@@ -1,6 +1,6 @@
 import { strict as assert } from "assert"
 
-import Sentry from "../../../../../lib/sentry"
+import Sentry from "../../../../lib/sentry"
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -9,29 +9,29 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../../../../interfaces/logger"
-import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identifier"
-import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { SendMessageFunc } from "../../../../../classes/send_message/publish"
-import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
+import { Logger } from "../../../../interfaces/logger"
+import { MarketIdentifier_V4 } from "../../../../events/shared/market-identifier"
+import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SendMessageFunc } from "../../../../classes/send_message/publish"
+import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import {
   check_edge,
   SpotPositionIdentifier_V3,
-} from "../../../../../classes/spot/abstractions/position-identifier"
-import { OrderId } from "../../../../../classes/persistent_state/interface/order-context-persistence"
-import { SpotPositionsExecution_StopLimitExit } from "./stop-limit-exit-executor"
-import { SpotPositionsExecution_OCOExit } from "./oco-exit-executor"
-import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
-import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "../interfaces/long"
+} from "../../../../classes/spot/abstractions/position-identifier"
+import { OrderId } from "../../../../classes/persistent_state/interface/order-context-persistence"
+import { SpotPositionsExecution_StopLimitExit } from "./execution/stop-limit-exit-executor"
+import { SpotPositionsExecution_OCOExit } from "./execution/oco-exit-executor"
+import { CurrentPriceGetter } from "../../../../interfaces/exchanges/generic/price-getter"
+import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
 import {
   TradeAbstractionCloseCommand,
   TradeAbstractionCloseResult,
   TradeAbstractionCloseResult_NOT_FOUND,
   TradeAbstractionCloseResult_SUCCESS,
-} from "../interfaces/close"
-import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
-import { FixedPositionSizer, PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
-import { BinanceSpotExecutionEngine } from "./execution_engines/binance-spot-execution-engine"
+} from "./interfaces/close"
+import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
+import { FixedPositionSizer, PositionSizer } from "../../../../edges/position-sizer/fixed-position-sizer"
+import { BinanceSpotExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
 
 /**
  * If this does the execution of spot position entry/exit
@@ -50,7 +50,7 @@ export interface SpotPositionExecutionCloseResult {
   edge: string
 }
 
-export class SpotPositionsExecution {
+export class SpotEdgeToExecutorMapper {
   logger: Logger
   ee: BinanceSpotExecutionEngine
   send_message: SendMessageFunc

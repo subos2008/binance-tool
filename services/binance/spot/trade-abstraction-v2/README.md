@@ -25,6 +25,6 @@ However, currently the entry/exit for each edge is hardcoded in the execution lo
 
 TAS -> TradeAbstractionService ->
   ee: BinanceSpotExecutionEngine
-  spot_ee: SpotPositionsExecution(ee:BinanceSpotExecutionEngine)
+  spot_ee: SpotEdgeToExecutorMapper(ee:BinanceSpotExecutionEngine)
     -> SpotPositionsExecution_StopLimitExit(ee)
     -> SpotPositionsExecution_OCOExit

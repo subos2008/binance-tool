@@ -17,7 +17,7 @@ import {
   is_authorised_edge,
   SpotPositionIdentifier_V3,
 } from "../../../../classes/spot/abstractions/position-identifier"
-import { SpotPositionsExecution } from "./execution/spot-positions-execution"
+import { SpotEdgeToExecutorMapper } from "./edge-to-executor-mapper"
 import Sentry from "../../../../lib/sentry"
 import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
@@ -37,7 +37,7 @@ export class TradeAbstractionService {
   send_message: SendMessageFunc
   quote_asset: string
   private positions: SpotPositionsQuery // query state of existing open positions
-  private spot_ee: SpotPositionsExecution
+  private spot_ee: SpotEdgeToExecutorMapper
 
   constructor({
     logger,
@@ -70,7 +70,7 @@ export class TradeAbstractionService {
       ee: ee.get_raw_binance_ee(),
       cache_timeout_ms: 400,
     })
-    this.spot_ee = new SpotPositionsExecution({
+    this.spot_ee = new SpotEdgeToExecutorMapper({
       logger,
       positions_persistance,
       ee,

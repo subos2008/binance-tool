@@ -14,8 +14,8 @@ BigNumber.prototype.valueOf = function () {
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import { Logger } from "../../../../../interfaces/logger"
 import {
-  TradeAbstractionOpenSpotLongCommand_OCO_Exit,
-  TradeAbstractionOpenSpotLongCommand__StopLimitExit,
+  TradeAbstractionOpenLongCommand_OCO_Exit,
+  TradeAbstractionOpenLongCommand_StopLimitExit,
 } from "../interfaces/long"
 import Sentry from "../../../../../lib/sentry"
 import {
@@ -43,7 +43,7 @@ export class SendDatadogMetrics {
   //trading_engine.tas.spot.binance.ee.buy_limit.request
 
   buy_limit_request(
-    args: TradeAbstractionOpenSpotLongCommand_OCO_Exit | TradeAbstractionOpenSpotLongCommand__StopLimitExit
+    args: TradeAbstractionOpenLongCommand_OCO_Exit | TradeAbstractionOpenLongCommand_StopLimitExit
   ) {
     try {
       let { base_asset, quote_asset, edge, direction, action } = args

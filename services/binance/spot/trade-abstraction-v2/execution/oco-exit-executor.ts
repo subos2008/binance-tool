@@ -15,7 +15,7 @@ import { SpotPositionsPersistance } from "../../../../../classes/spot/persistenc
 import { SendMessageFunc } from "../../../../../classes/send_message/publish"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import { SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstractions/position-identifier"
-import { TradeAbstractionOpenSpotLongCommand_OCO_Exit, TradeAbstractionOpenLongResult } from "../interfaces/long"
+import { TradeAbstractionOpenLongCommand_OCO_Exit, TradeAbstractionOpenLongResult } from "../interfaces/long"
 
 /* Edge specific code */
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
@@ -92,7 +92,7 @@ export class SpotPositionsExecution_OCOExit {
   }
 
   async open_position(
-    args: TradeAbstractionOpenSpotLongCommand_OCO_Exit
+    args: TradeAbstractionOpenLongCommand_OCO_Exit
   ): Promise<TradeAbstractionOpenLongResult> {
     let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
     let tags = { edge, base_asset, quote_asset }

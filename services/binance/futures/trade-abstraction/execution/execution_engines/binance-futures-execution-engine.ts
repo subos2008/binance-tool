@@ -32,7 +32,7 @@ var ee: Binance = binance({
   apiSecret: process.env.BINANCE_API_SECRET,
 })
 
-export interface TradeAbstractionOpenSpotLongCommand__StopLimitExit {
+export interface TradeAbstractionOpenLongCommand_StopLimitExit {
   base_asset: string
   quote_asset: string // added by the TAS before it hits the EE
   edge: string
@@ -44,7 +44,7 @@ export interface TradeAbstractionOpenSpotLongCommand__StopLimitExit {
   edge_percentage_buy_limit: BigNumber
 }
 
-export interface TradeAbstractionOpenSpotLongCommand_OCO_Exit {
+export interface TradeAbstractionOpenLongCommand_OCO_Exit {
   base_asset: string
   quote_asset: string // added by the TAS before it hits the EE
   edge: string

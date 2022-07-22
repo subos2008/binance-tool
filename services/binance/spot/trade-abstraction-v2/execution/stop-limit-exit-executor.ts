@@ -19,10 +19,7 @@ import {
   SpotPositionIdentifier_V3,
 } from "../../../../../classes/spot/abstractions/position-identifier"
 import { OrderId } from "../../../../../classes/persistent_state/interface/order-context-persistence"
-import {
-  TradeAbstractionOpenSpotLongCommand__StopLimitExit,
-  TradeAbstractionOpenLongResult,
-} from "../interfaces/long"
+import { TradeAbstractionOpenLongCommand_StopLimitExit, TradeAbstractionOpenLongResult } from "../interfaces/long"
 import { SpotStopMarketSellCommand, TradeContext } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
@@ -113,7 +110,7 @@ export class SpotPositionsExecution_StopLimitExit {
   /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
 
   async open_position(
-    args: TradeAbstractionOpenSpotLongCommand__StopLimitExit
+    args: TradeAbstractionOpenLongCommand_StopLimitExit
   ): Promise<TradeAbstractionOpenLongResult> {
     let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
     let { edge_percentage_stop, edge_percentage_buy_limit } = args

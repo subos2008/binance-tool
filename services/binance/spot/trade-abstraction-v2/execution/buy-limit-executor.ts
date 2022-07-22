@@ -15,8 +15,8 @@ import { SpotPositionsPersistance } from "../../../../../classes/spot/persistenc
 import { SendMessageFunc } from "../../../../../classes/send_message/publish"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import {
-  TradeAbstractionOpenSpotLongCommand_OCO_Exit,
-  TradeAbstractionOpenSpotLongCommand__StopLimitExit,
+  TradeAbstractionOpenLongCommand_OCO_Exit,
+  TradeAbstractionOpenLongCommand_StopLimitExit,
   TradeAbstractionOpenLongResult,
   TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS,
 } from "../interfaces/long"
@@ -88,7 +88,7 @@ export class SpotPositionsExecution_BuyLimit {
   }
 
   async buy_limit_entry(
-    args: TradeAbstractionOpenSpotLongCommand_OCO_Exit | TradeAbstractionOpenSpotLongCommand__StopLimitExit
+    args: TradeAbstractionOpenLongCommand_OCO_Exit | TradeAbstractionOpenLongCommand_StopLimitExit
   ): Promise<TradeAbstractionOpenLongResult> {
     let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
     let tags = { edge, base_asset, quote_asset }

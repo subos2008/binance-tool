@@ -1,6 +1,6 @@
 import { strict as assert } from "assert"
 import { randomUUID } from "crypto"
-import Sentry from "../../../../../lib/sentry"
+import Sentry from "../../../../lib/sentry"
 
 
 import { BigNumber } from "bignumber.js"
@@ -10,28 +10,28 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../../../../interfaces/logger"
-import { SendMessageFunc } from "../../../../../classes/send_message/publish"
-import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
+import { Logger } from "../../../../interfaces/logger"
+import { SendMessageFunc } from "../../../../classes/send_message/publish"
+import { PositionSizer } from "../../../../edges/position-sizer/fixed-position-sizer"
 import {
   TradeAbstractionOpenShortCommand as IncommingTradeAbstractionOpenShortCommand,
   TradeAbstractionOpenShortResult,
   TradeAbstractionOpenShortResult_NOT_FOUND,
-} from "../interfaces/short"
+} from "./interfaces/short"
 
 interface TradeAbstractionOpenShortCommand extends IncommingTradeAbstractionOpenShortCommand {
   quote_asset: string // added by the TAS before it hits the EE
 }
 
-import { check_edge } from "../../../../../classes/spot/abstractions/position-identifier"
+import { check_edge } from "../../../../classes/spot/abstractions/position-identifier"
 import {
   BinanceFuturesExecutionEngine,
   LimitSellByQuoteQuantityWithTPandSLCommand,
-} from "./execution_engines/binance-futures-execution-engine"
+} from "./execution/execution_engines/binance-futures-execution-engine"
 
-import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
-import { map_tas_to_ee_cmd_short } from "../../../../../edges/edge62/edge62-tas-to-ee-mapper"
-import { OrderContext_V1, OrderContext_V2 } from "../../../../../interfaces/orders/order-context"
+import { CurrentPriceGetter } from "../../../../interfaces/exchanges/generic/price-getter"
+import { map_tas_to_ee_cmd_short } from "../../../../edges/edge62/edge62-tas-to-ee-mapper"
+import { OrderContext_V1, OrderContext_V2 } from "../../../../interfaces/orders/order-context"
 import { Tags } from "hot-shots"
 
 export interface FuturesPositionExecutionCloseResult {

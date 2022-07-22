@@ -19,7 +19,7 @@ import {
   check_edge,
   is_authorised_edge,
 } from "../../../../classes/spot/abstractions/position-identifier"
-import { FuturesEdgeToExecutorMapper } from "./execution/futures-edge-to-executor-mapper"
+import { FuturesEdgeToExecutorMapper } from "./edge-to-executor-mapper"
 import { FixedPositionSizer, PositionSizer } from "../../../../edges/position-sizer/fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"

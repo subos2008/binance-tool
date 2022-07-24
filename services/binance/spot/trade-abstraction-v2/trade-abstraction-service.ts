@@ -6,7 +6,8 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { disallowed_base_assets_for_entry } from "../../../../lib/stable-coins"
-
+import { SendMessageFunc } from "../../../../classes/send_message/publish"
+import Sentry from "../../../../lib/sentry"
 import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
@@ -18,14 +19,12 @@ import {
   SpotPositionIdentifier_V3,
 } from "../../../../classes/spot/abstractions/position-identifier"
 import { SpotEdgeToExecutorMapper } from "./edge-to-executor-mapper"
-import Sentry from "../../../../lib/sentry"
 import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
-import { SendMessageFunc } from "../../../../classes/send_message/publish"
 import { RedisClient } from "redis"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 
@@ -95,12 +94,14 @@ export class TradeAbstractionService {
     assert.equal(cmd.action, "open")
     cmd.quote_asset = this.quote_asset
 
+    let { direction } = cmd
+
     let tags = { edge: cmd.edge, base_asset: cmd.base_asset, quote_asset: cmd.quote_asset }
 
     if (!is_authorised_edge(cmd.edge)) {
       let err = new Error(`UnauthorisedEdge ${cmd.edge}`)
       this.logger.warn({ err })
-      let spot_long_result: TradeAbstractionOpenLongResult = {
+      let obj: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
         version: 1,
         base_asset: cmd.base_asset,
@@ -111,14 +112,14 @@ export class TradeAbstractionService {
         msg: err.message,
         err,
       }
-      this.logger.info(spot_long_result)
-      return spot_long_result
+      this.logger.info(obj)
+      return obj
     }
 
     if (disallowed_base_assets_for_entry.includes(cmd.base_asset)) {
-      let err = new Error(`Opening spot long positions in ${cmd.base_asset} is explicity disallowed`)
+      let err = new Error(`Opening ${direction} position in ${cmd.base_asset} is explicity disallowed`)
       this.logger.warn({ err })
-      let spot_long_result: TradeAbstractionOpenLongResult = {
+      let obj: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
         version: 1,
         base_asset: cmd.base_asset,
@@ -129,8 +130,8 @@ export class TradeAbstractionService {
         msg: err.message,
         err,
       }
-      this.logger.info(spot_long_result)
-      return spot_long_result
+      this.logger.info(obj)
+      return obj
     }
 
     let edge: AuthorisedEdgeType = check_edge(cmd.edge)

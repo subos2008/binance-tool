@@ -2,18 +2,6 @@
 /* eslint-disable no-console */
 /* eslint func-names: ["warn", "as-needed"] */
 
-// OG message format:
-
-// We should be sending the msg from the cmd_result really
-// if (cmd_result.status === "SUCCESS") {
-//   send_message(
-//     `${edge}:${base_asset} ${cmd_result.status} ${cmd.direction} entry ${cmd_result.status} at price ${cmd_result.executed_price}, stop at ${cmd_result.stop_price}, tp at ${cmd_result.take_profit_price}, execution time ${cmd_result.signal_to_execution_slippage_ms}ms`,
-//     tags
-//   )
-// } else {
-//   send_message(`${edge}:${base_asset}: ${cmd_result.status}: ${cmd_result.msg}`, tags)
-// }
-
 import "./tracer" // must come before importing any instrumented module.
 
 /** Config: */
@@ -50,10 +38,7 @@ process.on("unhandledRejection", (err) => {
 })
 
 import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
-import {
-  TradeAbstractionOpenLongCommand as TradeAbstractionOpenLongCommand,
-  TradeAbstractionOpenLongResult,
-} from "./interfaces/long"
+import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 
 import express, { NextFunction, Request, Response } from "express"
@@ -120,6 +105,8 @@ let tas: TradeAbstractionService = new TradeAbstractionService({
   redis,
 })
 
+let mapper = new QueryParamsToCmdMapper({ logger })
+
 metrics.service_started()
 
 app.get("/exchange_identifier", async function (req: Request, res: Response, next: NextFunction) {
@@ -149,11 +136,8 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
   }
 })
 
-let mapper = new QueryParamsToCmdMapper({ logger })
-
 // TODO: long is a lot more evolved than close
-app.get("/close", async function (req: Request, res: Response, next: NextFunction) {
-  // TODO: use mapper
+app.get("/close", async function (req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     let cmd_received_timestamp_ms = +Date.now()
 

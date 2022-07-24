@@ -107,7 +107,6 @@ let tas: FuturesTradeAbstractionService = new FuturesTradeAbstractionService({
 
 let mapper = new QueryParamsToCmdMapper({ logger })
 
-
 metrics.service_started()
 
 app.get("/exchange_identifier", async function (req: Request, res: Response, next: NextFunction) {
@@ -163,6 +162,11 @@ app.get("/close", async function (req: Request, res: Response, next: NextFunctio
       metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
       metrics.trading_abstraction_close_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
 
+      // TODO - 429's for /close
+      // if (cmd_result.http_status === 429) {
+      //   res.setHeader('Retry-After', cmd_result.retry_after_seconds)
+      // }
+
       res.status(cmd_result.http_status).json(cmd_result)
 
       send_message(cmd_result.msg, tags)
@@ -209,6 +213,10 @@ app.get("/short", async function (req: Request, res: Response, next: NextFunctio
 
       metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
       metrics.trading_abstraction_open_short_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
+
+      if (cmd_result.http_status === 429) {
+        res.setHeader("Retry-After", cmd_result.retry_after_seconds)
+      }
 
       res.status(cmd_result.http_status).json(cmd_result)
 

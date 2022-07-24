@@ -153,7 +153,7 @@ export interface TradeAbstractionOpenShortResult_TOO_MANY_REQUESTS {
   status: "TOO_MANY_REQUESTS" // exception caught
   http_status: 429
 
-  buy_filled: false
+  buy_filled: false // Should rename this entry_filled
   created_stop_order: false
   created_take_profit_order: false
   stop_order_id?: string | number | undefined

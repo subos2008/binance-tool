@@ -83,9 +83,9 @@ import { RedisClient } from "redis"
 
 import { FuturesTradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
-import { SendDatadogMetrics } from "./send_datadog_metrics"
-import { QueryParamsToCmdMapper } from "./query-params-to-cmd-mapper"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
+import { SendDatadogMetrics } from "./send-datadog-metrics"
+import { QueryParamsToCmdMapper } from "./query-params-to-cmd-mapper"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()

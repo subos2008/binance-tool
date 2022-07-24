@@ -136,6 +136,7 @@ app.get("/positions", async function (req: Request, res: Response, next: NextFun
   }
 })
 
+// TODO: long is a lot more evolved than close
 app.get("/close", async function (req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     let cmd_received_timestamp_ms = +Date.now()

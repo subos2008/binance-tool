@@ -6,9 +6,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { disallowed_base_assets_for_entry } from "../../../../lib/stable-coins"
-
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
-
+import { SendMessageFunc } from "../../../../classes/send_message/publish"
 import Sentry from "../../../../lib/sentry"
 import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
@@ -26,12 +24,6 @@ import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/bin
 import { BinanceFuturesPriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 // import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
-// import {
-//   AuthorisedEdgeType,
-//   check_edge,
-//   is_authorised_edge,
-//   SpotPositionIdentifier_V3,
-// } from "../../classes/spot/abstractions/position-identifier"
 
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands
@@ -116,11 +108,12 @@ export class FuturesTradeAbstractionService {
         created_stop_order: false,
         created_take_profit_order: false,
       }
+      this.logger.info(obj)
       return obj
     }
 
     if (disallowed_base_assets_for_entry.includes(cmd.base_asset)) {
-      let err = new Error(`Opening ${direction} positions in ${cmd.base_asset} is explicity disallowed`)
+      let err = new Error(`Opening ${direction} position in ${cmd.base_asset} is explicity disallowed`)
       this.logger.warn({ err })
       let obj: TradeAbstractionOpenShortResult = {
         object_type: "TradeAbstractionOpenShortResult",
@@ -136,6 +129,8 @@ export class FuturesTradeAbstractionService {
         created_stop_order: false,
         created_take_profit_order: false,
       }
+      this.logger.info(obj)
+
       return obj
     }
 
@@ -162,18 +157,18 @@ export class FuturesTradeAbstractionService {
     //   return obj
     // }
 
-      let { quote_asset } = this
-      let result: TradeAbstractionOpenShortResult = await this.eem.short({ ...cmd, quote_asset })
-      
-      result.created_stop_order = result.stop_order_id ? true : false
-      result.created_take_profit_order = result.take_profit_order_id ? true : false
-      
-      let { execution_timestamp_ms } = result
-      result.signal_to_execution_slippage_ms = execution_timestamp_ms
+    let { quote_asset } = this
+    let result: TradeAbstractionOpenShortResult = await this.eem.short({ ...cmd, quote_asset })
+
+    result.created_stop_order = result.stop_order_id ? true : false
+    result.created_take_profit_order = result.take_profit_order_id ? true : false
+
+    let { execution_timestamp_ms } = result
+    result.signal_to_execution_slippage_ms = execution_timestamp_ms
       ? execution_timestamp_ms - cmd.signal_timestamp_ms
       : undefined
-      
-      return result
+
+    return result
   }
 
   async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {

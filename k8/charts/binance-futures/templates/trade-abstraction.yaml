@@ -53,10 +53,10 @@ spec:
             httpGet:
               path: /health
               port: http
-          # readinessProbe:
-          #   httpGet:
-          #     path: /ready
-          #     port: http
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
           env:
             - name: SENTRY_DSN
               value: "https://79ec51cc53f64c6fa2227c5108f65cfd@o369902.ingest.sentry.io/6402822" # binance-futures-tas

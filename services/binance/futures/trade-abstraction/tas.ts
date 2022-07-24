@@ -52,6 +52,7 @@ import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: false, healthy: true })
 
 app.use(
   expressWinston.logger({
@@ -235,4 +236,5 @@ app.get("/short", async function (req: Request, res: Response, next: NextFunctio
 let PORT = 3000
 app.listen(PORT, function () {
   logger.debug(`listening on port ${PORT}!`)
+  service_is_healthy.ready(true)
 })

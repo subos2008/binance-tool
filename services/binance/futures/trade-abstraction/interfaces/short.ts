@@ -142,6 +142,33 @@ interface TradeAbstractionOpenShortResult_ENTRY_FAILED_TO_FILL {
   execution_timestamp_ms?: number
   signal_to_execution_slippage_ms?: number
 }
+
+export interface TradeAbstractionOpenShortResult_TOO_MANY_REQUESTS {
+  object_type: "TradeAbstractionOpenShortResult"
+  version: 1
+  base_asset: string
+  quote_asset?: string
+  edge: string
+
+  status: "TOO_MANY_REQUESTS" // exception caught
+  http_status: 429
+
+  buy_filled: false
+  created_stop_order: false
+  created_take_profit_order: false
+  stop_order_id?: string | number | undefined
+  take_profit_order_id?: string | number | undefined
+
+  msg: string
+  err: any
+
+  trigger_price?: string
+  execution_timestamp_ms: number
+  signal_to_execution_slippage_ms?: string
+
+  retry_after_seconds: number // can go to Retry-After header
+}
+
 interface TradeAbstractionOpenShortResult_UNAUTHORISED {
   object_type: "TradeAbstractionOpenShortResult"
   version: 1
@@ -286,5 +313,6 @@ export type TradeAbstractionOpenShortResult =
   | TradeAbstractionOpenShortResult_ALREADY_IN_POSITION
   | TradeAbstractionOpenShortResult_INSUFFICIENT_BALANCE
   | TradeAbstractionOpenShortResult_ENTRY_FAILED_TO_FILL
+  | TradeAbstractionOpenShortResult_TOO_MANY_REQUESTS
   | TradeAbstractionOpenShortResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
   | TradeAbstractionOpenShortResult_INTERNAL_SERVER_ERROR

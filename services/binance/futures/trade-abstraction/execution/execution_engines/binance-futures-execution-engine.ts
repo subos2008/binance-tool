@@ -377,7 +377,24 @@ export class BinanceFuturesExecutionEngine {
       // TODO: munge limitPrice and quantity
 
       // TODO: can we do a more clean/complete job of catching exceptions from Binance?
-      if (err.message.match(/Account has insufficient balance for requested action/)) {
+      if (err.message.match(/Too many new orders/ || err.code === -1015)) {
+        let entry_result: TradeAbstractionOpenShortResult = {
+          object_type: "TradeAbstractionOpenShortResult",
+          version: 1,
+          msg: `${prefix}:  ${err.message}`,
+          err,
+          base_asset,
+          edge,
+          // market_identifier,
+          // order_context,
+          status: "TOO_MANY_REQUESTS",
+          http_status: 429,
+          execution_timestamp_ms: Date.now(),
+          retry_after_seconds: 11,
+        }
+        this.logger.info(entry_result)
+        return entry_result
+      } else if (err.message.match(/Account has insufficient balance for requested action/)) {
         let entry_result: TradeAbstractionOpenShortResult = {
           object_type: "TradeAbstractionOpenShortResult",
           version: 1,

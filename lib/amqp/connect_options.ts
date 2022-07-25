@@ -30,6 +30,7 @@ const connection_options: Options.Connect = {
   password: amqp_password,
   locale: "en_US",
   vhost,
+  heartbeat: 20, // Values within the 5 to 20 seconds range are optimal for most environments.
   // ca: splitca("./ca-certificates.crt")
 }
 

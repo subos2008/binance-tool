@@ -77,7 +77,9 @@ let publisher: GenericTopicPublisher = new GenericTopicPublisher({ logger, event
 let publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({ logger, dogstatsd })
 
 const edge60_parameters: Edge60Parameters = {
-  days_of_price_history: 22,
+  // days_of_price_history should be one less than the value we use in the TV high/low indicator
+  // because the high/low indicator includes the new candle in it's count
+  days_of_price_history: 21, 
 }
 
 let edge = "edge60"

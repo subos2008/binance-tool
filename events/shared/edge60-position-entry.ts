@@ -2,7 +2,8 @@ import { MarketIdentifier_V4 } from "./market-identifier"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 
 export type Edge60Parameters = {
-  days_of_price_history: 22 // didn't feel like just saying number '\o/`
+  // days_of_price_history should be one less than the number we use on the TV high/low indicator
+  days_of_price_history: 21 // didn't feel like just saying number '\o/`
 }
 
 export interface Edge60PositionEntrySignal {

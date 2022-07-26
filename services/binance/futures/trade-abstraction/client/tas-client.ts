@@ -59,31 +59,31 @@ export class TradeAbstractionServiceClient {
 
   async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {
     let response = await this.get(new URL("/close", this.TAS_URL).toString(), cmd)
-    this.logger.object(response)
+    this.logger.info(response)
     let tas_response = response.data as TradeAbstractionCloseResult
     if (tas_response?.object_type !== "TradeAbstractionCloseResult") {
       let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionCloseResult`)
-      Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
       this.logger.error({ err })
+      Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
     }
     return tas_response
   }
 
   async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
     let response = await this.get(new URL("/long", this.TAS_URL).toString(), cmd)
-    this.logger.object(response)
+    this.logger.info(response)
     let tas_response = response.data as TradeAbstractionOpenLongResult
     if (tas_response?.object_type !== "TradeAbstractionOpenLongResult") {
       let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenLongResult`)
-      Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
       this.logger.error({ err })
+      Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
     }
     return tas_response
   }
 
   async short(cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
     let response = await this.get(new URL("/short", this.TAS_URL).toString(), cmd)
-    this.logger.object(response)
+    this.logger.info(response)
     let tas_response = response.data as TradeAbstractionOpenShortResult
     if (tas_response?.object_type !== "TradeAbstractionOpenShortResult") {
       let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenShortResult`)

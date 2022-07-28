@@ -19,15 +19,21 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { Logger } from "../../lib/faux_logger"
+import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
+import influxdb from "../../lib/influxdb"
+import { MessageProcessor } from "../../classes/amqp/interfaces"
+import { Point } from "@influxdata/influxdb-client"
+import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
+import { MyEventNameType } from "../../classes/amqp/message-routing"
+import { Channel } from "amqplib"
+
 const logger = new Logger({ silent: false })
 
 logger.info(`Service starting.`)
 
-import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
-
 const health_and_readiness = new HealthAndReadiness({ logger })
-
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -35,15 +41,6 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import influxdb from "../../lib/influxdb"
-
-import { MessageProcessor } from "../../classes/amqp/interfaces"
-import { Point } from "@influxdata/influxdb-client"
-import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
-import { MyEventNameType } from "../../classes/amqp/message-routing"
-import { Channel } from "amqplib"
-
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 class EventLogger implements MessageProcessor {
   send_message: Function

@@ -13,12 +13,18 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { Logger } from "../../../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false })
-
 import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
-const health_and_readiness = new HealthAndReadiness({ logger })
+import { AMQP_FuturesBinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-futures-binance-order-data-listener"
+import {
+  FuturesBinanceOrderData,
+  FuturesOrderCallbacks,
+} from "../../../../interfaces/exchanges/binance/order_callbacks"
+import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 
+const logger: Logger = new Logger({ silent: false })
+const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -33,13 +39,6 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import { AMQP_FuturesBinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-futures-binance-order-data-listener"
-import {
-  FuturesBinanceOrderData,
-  FuturesOrderCallbacks,
-} from "../../../../interfaces/exchanges/binance/order_callbacks"
-import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 let order_execution_tracker: AMQP_FuturesBinanceOrderDataListener | null = null
 

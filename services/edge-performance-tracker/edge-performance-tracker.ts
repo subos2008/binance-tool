@@ -20,6 +20,20 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { Logger } from "../../lib/faux_logger"
+import { MessageProcessor } from "../../classes/amqp/interfaces"
+import { HealthAndReadiness } from "../../classes/health_and_readiness"
+import { MyEventNameType } from "../../classes/amqp/message-routing"
+import { Channel } from "amqplib"
+import express from "express"
+import { SpotPositionClosedEvent_V1 } from "../../classes/spot/abstractions/spot-position-publisher"
+import { BigNumber } from "bignumber.js"
+import { RedisEdgePerformancePersistence } from "./redis-edge-performance-persistence"
+import { get_redis_client } from "../../lib/redis-v4"
+import { RedisClientType } from "redis-v4"
+import { UploadToMongoDB } from "./upload-for-tableau-via-mongodb"
+import { SpotEdgePerformanceEvent } from "./interfaces"
+import { SendDatadogMetrics } from "./send-datadog-metrics"
+
 const logger = new Logger({ silent: false })
 
 logger.info(`Service starting.`)
@@ -34,19 +48,6 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import { MessageProcessor } from "../../classes/amqp/interfaces"
-import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
-import { MyEventNameType } from "../../classes/amqp/message-routing"
-import { Channel } from "amqplib"
-import express from "express"
-import { SpotPositionClosedEvent_V1 } from "../../classes/spot/abstractions/spot-position-publisher"
-import { BigNumber } from "bignumber.js"
-import { RedisEdgePerformancePersistence } from "./redis-edge-performance-persistence"
-import { get_redis_client } from "../../lib/redis-v4"
-import { RedisClientType } from "redis-v4"
-import { UploadToMongoDB } from "./upload-for-tableau-via-mongodb"
-import { SpotEdgePerformanceEvent } from "./interfaces"
-import { SendDatadogMetrics } from "./send-datadog-metrics"
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 class EventLogger implements MessageProcessor {

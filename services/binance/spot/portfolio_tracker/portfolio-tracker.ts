@@ -42,10 +42,17 @@ Sentry.configureScope(function (scope: any) {
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { Logger } from "../../../../lib/faux_logger"
+import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
+import { Portfolio, Balance } from "../../../../interfaces/portfolio"
+import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
+import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { SendDatadogMetrics } from "./send-datadog-metrics"
 
 const logger = new Logger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message = new SendMessage({ service_name, logger, health_and_readiness }).build()
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 // redis + events publishing + binance
 
@@ -58,7 +65,6 @@ const send_message = new SendMessage({ service_name, logger, health_and_readines
 // 3. Maintain portfolio state - probably just in-process
 // 4. Publish to telegram when portfolio changes
 
-
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -66,20 +72,12 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
-
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
   // TODO: set unhealthy?
 })
-
-import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
-import { Portfolio, Balance } from "../../../../interfaces/portfolio"
-import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
-import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { SendDatadogMetrics } from "./send-datadog-metrics"
 
 class PortfolioTracker implements MasterPortfolioClass {
   send_message: SendMessageFunc
@@ -250,8 +248,6 @@ main().catch((err) => {
   logger.error(`Error in main loop: ${err.stack}`)
   soft_exit(1, `Error in main loop: ${err}`)
 })
-
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit

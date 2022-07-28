@@ -21,19 +21,14 @@
 // Thoughts:
 //  1. Could also check redis-trades matches position sizes
 
-import { strict as assert } from "assert"
-const service_name = "portfolio-tracker"
+require("dotenv").config()
 
+import { strict as assert } from "assert"
 import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 import { Binance as BinanceType } from "binance-api-node"
 import Binance from "binance-api-node"
-
-require("dotenv").config()
-
 import Sentry from "../../../../lib/sentry"
-Sentry.configureScope(function (scope: any) {
-  scope.setTag("service", service_name)
-})
+
 
 // TODO:
 // 1. Take initial portfolio code from the position sizer
@@ -44,9 +39,6 @@ Sentry.configureScope(function (scope: any) {
 import { Logger } from "../../../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
 
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -54,19 +46,13 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-process.on("unhandledRejection", (err) => {
-  logger.error({ err })
-  Sentry.captureException(err)
-  send_message(`UnhandledPromiseRejection: ${err}`)
-})
-
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 set_redis_logger(logger)
 let redis = get_redis_client()
 
 import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/spot-order-execution-tracker"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
-import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { Balance, Portfolio } from "../../../../interfaces/portfolio"
 import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 

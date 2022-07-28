@@ -44,10 +44,10 @@ spec:
             httpGet:
               path: /health
               port: http
-          # readinessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: http
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
           env:
             - name: SENTRY_DSN
               value: "https://fd044b9bc259422ea55a1910e3801aa8@o369902.ingest.sentry.io/5618730"

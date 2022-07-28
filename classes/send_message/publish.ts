@@ -5,7 +5,7 @@ import Sentry from "../../lib/sentry"
 import { Logger } from "../../interfaces/logger"
 import { GenericTopicPublisher } from "../amqp/generic-publishers"
 import { MyEventNameType } from "../amqp/message-routing"
-import { HealthAndReadinessSubsystem } from "../health_and_readiness"
+import { HealthAndReadiness } from "../health_and_readiness"
 
 export type SendMessageFunc = (msg: string, tags?: ContextTags) => Promise<void>
 
@@ -27,7 +27,6 @@ export class SendMessage {
   service_name: string
   logger: Logger
   publisher: SendMessagePublisher
-  health_and_readiness: HealthAndReadinessSubsystem | undefined
 
   constructor({
     service_name,
@@ -36,11 +35,10 @@ export class SendMessage {
   }: {
     service_name: string
     logger: Logger
-    health_and_readiness?: HealthAndReadinessSubsystem
+    health_and_readiness: HealthAndReadiness
   }) {
     this.service_name = service_name
     this.logger = logger
-    this.health_and_readiness = health_and_readiness
     this.publisher = new SendMessagePublisher({ logger, health_and_readiness })
   }
 
@@ -57,11 +55,11 @@ export class SendMessage {
         service_name: this.service_name,
         tags,
       }
+      this.logger.info({ ...tags, ...event })
       await this.publisher.publish(event)
     } catch (err) {
       this.logger.error({ err, msg: `Failed to send message: ${message}` })
       Sentry.captureException(err)
-      if (this.health_and_readiness) this.health_and_readiness.healthy(false)
     }
   }
 }
@@ -71,55 +69,38 @@ class SendMessagePublisher {
   closeTradesWebSocket: (() => void) | undefined
   pub: GenericTopicPublisher | undefined
   event_name: MyEventNameType
-  health_and_readiness: HealthAndReadinessSubsystem | undefined
+  health_and_readiness: HealthAndReadiness
 
-  constructor({
-    logger,
-    health_and_readiness,
-  }: {
-    logger: Logger
-    health_and_readiness?: HealthAndReadinessSubsystem
-  }) {
+  constructor({ logger, health_and_readiness }: { logger: Logger; health_and_readiness: HealthAndReadiness }) {
     this.logger = logger
     this.health_and_readiness = health_and_readiness
     this.event_name = "SendMessage"
   }
 
   async connect(): Promise<void> {
-    try {
-      if (!this.pub) throw new Error(`this.pub not defined in connect()`)
-      await this.pub.connect()
-    } catch (err) {
-      this.logger.error({ err, msg: `Failed to connect to AMQP in SendMessagePublisher` })
-      Sentry.captureException(err)
-      if (this.health_and_readiness) this.health_and_readiness.ready(false)
-      throw err
+    if (!this.pub) {
+      this.pub = new GenericTopicPublisher({
+        logger: this.logger,
+        event_name: this.event_name,
+        health_and_readiness: this.health_and_readiness,
+      })
     }
-    if (this.health_and_readiness) {
-      this.health_and_readiness.ready(true)
-      this.health_and_readiness.healthy(true)
-    }
+    await this.pub.connect()
   }
 
   async publish(event: SendMessageEvent): Promise<void> {
-    if (!this.pub) {
-      this.pub = new GenericTopicPublisher({ logger: this.logger, event_name: this.event_name })
-      await this.connect()
-    }
+    if (!this.pub) this.logger.warn(`SendMessage using lazy connect`)
+    await this.connect()
+    if (!this.pub) throw new Error(`Failed to connect SendMessagePublisher in SendMessage`)
     const options = {
       // expiration: event_expiration_seconds,
       persistent: false,
       timestamp: Date.now(),
     }
-    try {
-      await this.pub.publish(event, options)
-    } catch (e) {
-      if (this.health_and_readiness) this.health_and_readiness.healthy(false)
-    }
+    await this.pub.publish(event, options)
   }
 
   async shutdown_streams() {
     if (this.pub) this.pub.shutdown_streams()
-    if (this.health_and_readiness) this.health_and_readiness.healthy(false)
   }
 }

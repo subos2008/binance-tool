@@ -30,10 +30,12 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
+
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
-  const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
@@ -46,10 +48,7 @@ const expressWinston = require("express-winston")
 
 var app = express()
 
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: false, healthy: true })

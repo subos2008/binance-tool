@@ -19,6 +19,8 @@ import { OrderExecutionTracker } from "../../classes/exchanges/binance/spot-orde
 import { BinanceOrderData } from "../../interfaces/exchanges/binance/order_callbacks"
 import { RedisOrderContextPersistance } from "../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
+import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
+import { Logger } from "./../../lib/faux_logger"
 
 // redis + events + binance
 
@@ -27,13 +29,9 @@ import { HealthAndReadiness } from "../../classes/health_and_readiness"
 // TODO: add watchdog on trades stream - it can stop responding without realising
 // TODO: - in the original implementations (iirc lib around binance has been replaced)
 
-import { Logger } from "./../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
-
-import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 import { BigNumber } from "bignumber.js"

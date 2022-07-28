@@ -90,14 +90,18 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
 
     this.exchange_identifier = { exchange: "binance", account: "default", type: "spot", version: "v3" }
 
-    this.publisher = new PortfolioPublisher({
-      logger,
-      event_name: "SpotPortfolio",
-      health_and_readiness: health_and_readiness.addSubsystem({
+    /*
+      : health_and_readiness.addSubsystem({
         name: "PortfolioPublisher",
         ready: false,
         healthy: false,
-      }),
+      })
+      */
+
+    this.publisher = new PortfolioPublisher({
+      logger,
+      event_name: "SpotPortfolio",
+      health_and_readiness,
       exchange_identifier: this.exchange_identifier,
     })
 
@@ -191,7 +195,9 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
 }
 
 let logger: Logger = _logger
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+const health_and_readiness = new HealthAndReadiness({ logger })
+
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 import express from "express"
 
 import { RedisClient } from "redis"
@@ -204,7 +210,6 @@ import { RedisOrderContextPersistance } from "../../../../classes/persistent_sta
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
 
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 async function main() {

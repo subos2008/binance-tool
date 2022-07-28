@@ -32,7 +32,9 @@ import { Logger } from "../../../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
 
 import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+const health_and_readiness = new HealthAndReadiness({ logger })
+
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger,health_and_readiness }).build()
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -58,8 +60,7 @@ import { BinanceFuturesOrdersToAMQP } from "./binance-futures-orders-to-amqp"
 
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 
-const health = new HealthAndReadiness({ logger, send_message })
-const service_is_healthy = health.addSubsystem({ name: "global", ready: true, healthy: true })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 async function main() {
   const execSync = require("child_process").execSync
@@ -69,11 +70,6 @@ async function main() {
   let redis = get_redis_client()
 
   try {
-    let health_and_readiness = health.addSubsystem({
-      name: "binance-orders-to-amqp",
-      ready: false,
-      healthy: false,
-    })
     let portfolio_to_amqp = new BinanceFuturesOrdersToAMQP({
       send_message,
       logger,
@@ -102,7 +98,7 @@ main().catch((err) => {
 import express from "express"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 var app = express()
-app.get("/health", health.health_handler.bind(health))
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

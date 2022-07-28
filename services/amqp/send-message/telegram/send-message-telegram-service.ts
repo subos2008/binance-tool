@@ -38,7 +38,7 @@ import { SendMessageToTelegramForwarder } from "./forwarder"
 
 import { SendMessage as RawSendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
 const raw_send_message: SendMessageFunc = new RawSendMessage({ service_name, logger }).build()
-const health_and_readiness = new HealthAndReadiness({ logger, send_message: raw_send_message })
+const health_and_readiness = new HealthAndReadiness({ logger })
 
 async function main() {
   const execSync = require("child_process").execSync

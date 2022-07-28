@@ -41,6 +41,11 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
+import { Logger } from "../../../../lib/faux_logger"
+
+const logger = new Logger({ silent: false })
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 // redis + events publishing + binance
 
@@ -53,8 +58,6 @@ import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 // 3. Maintain portfolio state - probably just in-process
 // 4. Publish to telegram when portfolio changes
 
-import { Logger } from "../../../../lib/faux_logger"
-const logger = new Logger({ silent: false })
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -68,8 +71,8 @@ import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/p
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
-  const send_message = new SendMessage({ service_name, logger }).build()
   send_message(`UnhandledPromiseRejection: ${err}`)
+  // TODO: set unhealthy?
 })
 
 import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
@@ -227,7 +230,6 @@ class PortfolioTracker implements MasterPortfolioClass {
 }
 
 const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger, sentry: Sentry })
-const send_message = new SendMessage({ service_name, logger }).build()
 
 async function main() {
   const execSync = require("child_process").execSync
@@ -249,7 +251,6 @@ main().catch((err) => {
   soft_exit(1, `Error in main loop: ${err}`)
 })
 
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 // Note this method returns!

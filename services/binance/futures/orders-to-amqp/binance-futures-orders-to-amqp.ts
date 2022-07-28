@@ -23,7 +23,7 @@ import {
   FuturesOrderCallbacks,
 } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { HealthAndReadinessSubsystem } from "../../../../classes/health_and_readiness"
+import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../../../classes/health_and_readiness"
 import { RedisClient } from "redis"
 import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { FuturesOrderExecutionTracker } from "../../../../classes/exchanges/binance/futures-order-execution-tracker"
@@ -34,7 +34,6 @@ export class BinanceFuturesOrdersToAMQP implements FuturesOrderCallbacks {
   ee: BinanceType
   order_execution_tracker: FuturesOrderExecutionTracker
   exchange_identifier: ExchangeIdentifier_V3
-  health_and_readiness: HealthAndReadinessSubsystem
   publisher: BinanceFuturesOrderDataPublisher
 
   constructor({
@@ -46,14 +45,13 @@ export class BinanceFuturesOrdersToAMQP implements FuturesOrderCallbacks {
   }: {
     send_message: (msg: string) => void
     logger: Logger
-    health_and_readiness: HealthAndReadinessSubsystem
+    health_and_readiness: HealthAndReadiness
     redis: RedisClient
     exchange_identifier: ExchangeIdentifier_V3
   }) {
     assert(logger)
     this.logger = logger
     assert(send_message)
-    this.health_and_readiness = health_and_readiness
     this.exchange_identifier = exchange_identifier
     if (!process.env.BINANCE_API_KEY) throw new Error(`Missing BINANCE_API_KEY in ENV`)
     if (!process.env.BINANCE_API_SECRET) throw new Error(`Missing BINANCE_API_SECRET in ENV`)

@@ -1,5 +1,5 @@
 import { Logger } from "../interfaces/logger"
-import { SendMessageFunc } from "./send_message/publish"
+import { ContextTags, SendMessageFunc } from "./send_message/publish"
 import { Request, Response } from "express"
 import Sentry from "../lib/sentry"
 import { randomUUID } from "crypto"
@@ -83,9 +83,13 @@ export class HealthAndReadiness {
   send_message: SendMessageFunc
   subsystems: { [id: string]: HealthAndReadinessSubsystem } = {}
 
-  constructor({ logger, send_message }: { logger: Logger; send_message: SendMessageFunc }) {
+  constructor({ logger }: { logger: Logger; }) {
     this.logger = logger
-    this.send_message = send_message || logger.info.bind(logger)
+    let foo: SendMessageFunc = async (msg: string, tags?: ContextTags) => {
+      if (tags) this.logger.info(tags, msg)
+      else this.logger.info(msg)
+    }
+    this.send_message = foo
   }
 
   addSubsystem({

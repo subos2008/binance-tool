@@ -23,6 +23,7 @@ import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { Logger } from "../../interfaces/logger"
 import { StatsD, Tags } from "hot-shots"
 import { ExchangeType } from "./exchange-identifier"
+import { HealthAndReadiness } from "../../classes/health_and_readiness"
 
 export class EdgeDirectionSignalPublisher {
   logger: Logger
@@ -30,12 +31,13 @@ export class EdgeDirectionSignalPublisher {
   publisher: GenericTopicPublisher
   event_name: MyEventNameType = "EdgeDirectionSignal"
 
-  constructor(args: { logger: Logger; dogstatsd: StatsD }) {
+  constructor(args: { logger: Logger; dogstatsd: StatsD; health_and_readiness: HealthAndReadiness }) {
     this.logger = args.logger
     this.dogstatsd = args.dogstatsd
     this.publisher = new GenericTopicPublisher({
       logger: args.logger,
       event_name: this.event_name,
+      health_and_readiness: args.health_and_readiness,
     })
   }
 

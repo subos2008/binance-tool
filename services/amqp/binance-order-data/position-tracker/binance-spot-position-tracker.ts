@@ -20,7 +20,9 @@ import { Logger } from "../../../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
 
 import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -107,8 +109,6 @@ async function main() {
   const exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
   let exchange_info = await exchange_info_getter.get_exchange_info() // TODO: should update this every now and then
   let exchange_identifier = exchange_info_getter.get_exchange_identifier()
-
-  const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 
   // return true if the position size passed it would be considered an untradeably small balance on the exchange
   let close_position_check_func = function ({

@@ -65,16 +65,13 @@ var dogstatsd = new StatsD()
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
-  const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+  const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
-
-let publisher: GenericTopicPublisher = new GenericTopicPublisher({ logger, event_name: "Edge60EntrySignal" })
-let publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({ logger, dogstatsd })
 
 const edge60_parameters: Edge60Parameters = {
   // days_of_price_history should be one less than the value we use in the TV high/low indicator
@@ -96,6 +93,8 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
   direction_persistance: DirectionPersistance
   exchange_info_getter: BinanceExchangeInfoGetter
   health_and_readiness: HealthAndReadiness
+  publisher: GenericTopicPublisher
+  publisher_for_EdgeDirectionSignal: EdgeDirectionSignalPublisher
 
   constructor({
     ee,
@@ -117,6 +116,12 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     this.direction_persistance = direction_persistance
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
     this.health_and_readiness = health_and_readiness
+    this.publisher = new GenericTopicPublisher({ logger, event_name: "Edge60EntrySignal", health_and_readiness })
+    this.publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({
+      logger,
+      dogstatsd,
+      health_and_readiness,
+    })
   }
 
   async enter_position({
@@ -259,7 +264,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
       persistent: true,
       timestamp: Date.now(),
     }
-    publisher.publish(event, options)
+    this.publisher.publish(event, options)
   }
 
   async publish_direction_to_amqp({
@@ -290,7 +295,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
       persistent: true,
       timestamp: Date.now(),
     }
-    publisher_for_EdgeDirectionSignal.publish(event, options)
+    this.publisher_for_EdgeDirectionSignal.publish(event, options)
   }
 
   async base_asset_for_symbol(symbol: string): Promise<string> {
@@ -307,6 +312,11 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     let data = this.market_data.find((x) => x.symbol.toUpperCase() === usym)
     // if (!data) throw new Error(`Market data for symbol ${usym} not found.`) // can happen if data updates and
     return data
+  }
+
+  async connect(): Promise<void> {
+    await this.publisher.connect()
+    await this.publisher_for_EdgeDirectionSignal.connect()
   }
 
   async run() {
@@ -402,8 +412,8 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
 
 let edge60: Edge60Service | null
 
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 const global_health = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 async function main() {
@@ -430,7 +440,7 @@ async function main() {
         redis,
       }),
     })
-    await publisher.connect()
+    await edge60.connect()
     await edge60.run()
   } catch (err) {
     logger.error({ err })

@@ -25,7 +25,8 @@ const logger = new Logger({ silent: false })
 logger.info(`Service starting.`)
 
 import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -46,7 +47,6 @@ import { RedisClientType } from "redis-v4"
 import { UploadToMongoDB } from "./upload-for-tableau-via-mongodb"
 import { SpotEdgePerformanceEvent } from "./interfaces"
 import { SendDatadogMetrics } from "./send-datadog-metrics"
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 class EventLogger implements MessageProcessor {
@@ -93,7 +93,7 @@ class EventLogger implements MessageProcessor {
       event_name,
       message_processor: this,
       health_and_readiness,
-      prefetch_one: false
+      prefetch_one: false,
     })
   }
 

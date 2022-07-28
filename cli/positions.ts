@@ -17,7 +17,8 @@ const logger: Logger = new LoggerClass({ silent: false })
 
 let service_name = "cli"
 import { SendMessage, SendMessageFunc } from "../classes/send_message/publish"
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 import { RedisClient } from "redis"
 import { get_redis_client, set_redis_logger } from "../lib/redis"
@@ -44,6 +45,7 @@ import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
 import { BinancePriceGetter } from "../interfaces/exchanges/binance/binance-price-getter"
 import { CurrentPriceGetter } from "../interfaces/exchanges/generic/price-getter"
 import { RedisSpotPositionsPersistance } from "../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
+import { HealthAndReadiness } from "../classes/health_and_readiness"
 
 require("dotenv").config()
 

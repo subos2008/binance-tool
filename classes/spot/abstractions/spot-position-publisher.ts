@@ -5,7 +5,7 @@ import { strict as assert } from "assert"
  * Used for logging/accounting etc
  */
 
- import Sentry from "../../../lib/sentry"
+import Sentry from "../../../lib/sentry"
 
 // Sentry.configureScope(function (scope: any) {
 //   scope.setTag("service", service_name)
@@ -21,7 +21,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { GenericTopicPublisher } from "../../amqp/generic-publishers"
-import { HealthAndReadinessSubsystem } from "../../health_and_readiness"
+import { HealthAndReadiness } from "../../health_and_readiness"
 import { AuthorisedEdgeType } from "./position-identifier"
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
 import _ from "lodash"
@@ -94,25 +94,26 @@ export class SpotPositionPublisher {
   logger: Logger
   publisher_opened: GenericTopicPublisher
   publisher_closed: GenericTopicPublisher
-  health_and_readiness: HealthAndReadinessSubsystem
+  health_and_readiness: HealthAndReadiness
 
-  constructor({
-    logger,
-    health_and_readiness,
-  }: {
-    logger: Logger
-    health_and_readiness: HealthAndReadinessSubsystem
-  }) {
+  constructor({ logger, health_and_readiness }: { logger: Logger; health_and_readiness: HealthAndReadiness }) {
     this.logger = logger
     this.health_and_readiness = health_and_readiness
-    this.publisher_opened = new GenericTopicPublisher({ logger, event_name: "SpotPositionOpened" })
-    this.publisher_closed = new GenericTopicPublisher({ logger, event_name: "SpotPositionClosed" })
+    this.publisher_opened = new GenericTopicPublisher({
+      logger,
+      event_name: "SpotPositionOpened",
+      health_and_readiness,
+    })
+    this.publisher_closed = new GenericTopicPublisher({
+      logger,
+      event_name: "SpotPositionClosed",
+      health_and_readiness,
+    })
   }
 
   async connect(): Promise<void> {
     await this.publisher_opened.connect()
     await this.publisher_closed.connect()
-    this.health_and_readiness.ready(true)
   }
 
   async publish_open(event: SpotPositionOpenedEvent_V1): Promise<void> {
@@ -121,11 +122,7 @@ export class SpotPositionPublisher {
       persistent: true,
       timestamp: Date.now(),
     }
-    try {
-      await this.publisher_opened.publish(event, options)
-    } catch (e) {
-      this.health_and_readiness.healthy(false)
-    }
+    await this.publisher_opened.publish(event, options)
   }
 
   async publish_closed(event: SpotPositionClosedEvent_V1): Promise<void> {
@@ -134,11 +131,7 @@ export class SpotPositionPublisher {
       persistent: true,
       timestamp: Date.now(),
     }
-    try {
-      await this.publisher_closed.publish(event, options)
-    } catch (e) {
-      this.health_and_readiness.healthy(false)
-    }
+    await this.publisher_closed.publish(event, options)
   }
 
   async shutdown_streams() {

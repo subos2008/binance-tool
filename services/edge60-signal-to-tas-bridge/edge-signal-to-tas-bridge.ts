@@ -31,7 +31,8 @@ Sentry.configureScope(function (scope: any) {
 import { Logger } from "./../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
 
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -80,7 +81,7 @@ class Edge60MessageProcessor implements MessageProcessor {
       event_name,
       message_processor: this,
       health_and_readiness: amqp_health,
-      prefetch_one: false
+      prefetch_one: false,
     }) // Add arbitrary data argument
   }
 
@@ -110,7 +111,6 @@ class Edge60MessageProcessor implements MessageProcessor {
   }
 }
 
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
   name: "global",
   ready: true,

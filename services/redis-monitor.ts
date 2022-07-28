@@ -22,7 +22,10 @@ const LoggerClass = require("../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
 import { SendMessage, SendMessageFunc } from "../classes/send_message/publish"
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
+
+logger.error(`No /health for this service`)
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -52,6 +55,7 @@ function ping() {
 }
 
 import { RedisTrades } from "../classes/persistent_state/redis_trades"
+import { HealthAndReadiness } from "../classes/health_and_readiness"
 const redis_trades = new RedisTrades({ logger, redis })
 
 async function main() {

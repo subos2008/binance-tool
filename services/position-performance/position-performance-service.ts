@@ -34,7 +34,8 @@ import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction
 import { CurrentAllPricesGetter } from "../../interfaces/exchanges/generic/price-getter"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -151,7 +152,6 @@ if (TAS_URL === undefined) {
   throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
 }
 
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
   name: "global",
   ready: true,

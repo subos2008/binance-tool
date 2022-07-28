@@ -23,7 +23,8 @@ import { Logger } from "./../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
 
 import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -88,7 +89,6 @@ class EventLogger implements MessageProcessor {
   }
 }
 
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
   name: "global",
   ready: true,

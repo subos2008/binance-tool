@@ -24,7 +24,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { BinanceOrderData } from "../../../interfaces/exchanges/binance/order_callbacks"
 import { GenericTopicPublisher } from "../../../classes/amqp/generic-publishers"
-import { HealthAndReadinessSubsystem } from "../../../classes/health_and_readiness"
+import { HealthAndReadiness } from "../../../classes/health_and_readiness"
 import { MyEventNameType } from "../../../classes/amqp/message-routing"
 import { Connection } from "amqplib"
 
@@ -35,24 +35,16 @@ export class BinanceOrderPublisher {
   channel: any
   pub: GenericTopicPublisher
   event_name: MyEventNameType = "BinanceOrderData"
-  health_and_readiness: HealthAndReadinessSubsystem
+  health_and_readiness: HealthAndReadiness
 
-  constructor({
-    logger,
-    health_and_readiness,
-  }: {
-    logger: Logger
-    health_and_readiness: HealthAndReadinessSubsystem
-  }) {
+  constructor({ logger, health_and_readiness }: { logger: Logger; health_and_readiness: HealthAndReadiness }) {
     this.logger = logger
     this.health_and_readiness = health_and_readiness
-    this.pub = new GenericTopicPublisher({ logger, event_name: this.event_name })
+    this.pub = new GenericTopicPublisher({ logger, event_name: this.event_name, health_and_readiness })
   }
 
   async connect(): Promise<void> {
     await this.pub.connect()
-    this.health_and_readiness.ready(true)
-    this.health_and_readiness.healthy(true)
   }
 
   async publish(event: BinanceOrderData): Promise<void> {
@@ -61,11 +53,7 @@ export class BinanceOrderPublisher {
       persistent: true,
       timestamp: Date.now(),
     }
-    try {
-      await this.pub.publish(event, options)
-    } catch (e) {
-      this.health_and_readiness.healthy(false)
-    }
+    await this.pub.publish(event, options)
   }
 
   async shutdown_streams() {

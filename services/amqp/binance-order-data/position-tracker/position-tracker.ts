@@ -79,14 +79,9 @@ export class SpotPositionTracker {
     this.order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
     this.spot_positions_persistance = spot_positions_persistance
     this.health_and_readiness = health_and_readiness
-    let health_and_readiness_subsystem = health_and_readiness.addSubsystem({
-      name: "spot-position-publisher",
-      ready: false,
-      healthy: false,
-    })
     this.spot_position_publisher = new SpotPositionPublisher({
       logger,
-      health_and_readiness: health_and_readiness_subsystem,
+      health_and_readiness: health_and_readiness,
     })
   }
 

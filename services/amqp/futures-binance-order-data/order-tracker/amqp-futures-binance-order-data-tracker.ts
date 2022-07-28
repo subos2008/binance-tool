@@ -16,7 +16,9 @@ import { Logger } from "../../../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
 
 import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
+const health_and_readiness = new HealthAndReadiness({ logger })
+
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -37,7 +39,6 @@ import {
   FuturesOrderCallbacks,
 } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 let order_execution_tracker: AMQP_FuturesBinanceOrderDataListener | null = null

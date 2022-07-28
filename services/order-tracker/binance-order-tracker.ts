@@ -12,6 +12,14 @@ Sentry.configureScope(function (scope: any) {
 
 const service_name = "order-tracker"
 
+import { get_redis_client, set_redis_logger } from "../../lib/redis"
+const BinanceFoo = require("binance-api-node").default
+import { Binance } from "binance-api-node"
+import { OrderExecutionTracker } from "../../classes/exchanges/binance/spot-order-execution-tracker"
+import { BinanceOrderData } from "../../interfaces/exchanges/binance/order_callbacks"
+import { RedisOrderContextPersistance } from "../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { HealthAndReadiness } from "../../classes/health_and_readiness"
+
 // redis + events + binance
 
 // TODO: sentry
@@ -25,6 +33,9 @@ const logger: Logger = new Logger({ silent: false })
 import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
 
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -37,14 +48,6 @@ process.on("unhandledRejection", (err) => {
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
-
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
-
-const BinanceFoo = require("binance-api-node").default
-import { Binance } from "binance-api-node"
-import { OrderExecutionTracker } from "../../classes/exchanges/binance/spot-order-execution-tracker"
-import { BinanceOrderData } from "../../interfaces/exchanges/binance/order_callbacks"
-import { RedisOrderContextPersistance } from "../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 
 class MyOrderCallbacks {
   send_message: SendMessageFunc
@@ -156,8 +159,17 @@ main().catch((err) => {
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code: number | null = null) {
+  service_is_healthy.healthy(false) // it seems service isn't exiting on soft exit, but add this to make sure
   logger.warn(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}`)
   if (exit_code) process.exitCode = exit_code
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
+
+import express from "express"
+var app = express()
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
+app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
+const port = "80"
+app.listen(port)
+logger.info(`Server on port ${port}`)

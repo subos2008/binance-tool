@@ -19,7 +19,6 @@
 const service_name = "binance-portfolio-to-amqp"
 
 import { strict as assert } from "assert"
-import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 
 require("dotenv").config()
 
@@ -36,9 +35,21 @@ const exchange_identifier: ExchangeIdentifier_V3 = {
 }
 
 import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
-
 import { Logger } from "../../../../lib/faux_logger"
-const _logger = new Logger({ silent: false })
+import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/spot-order-execution-tracker"
+import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { Balance, Portfolio } from "../../../../interfaces/portfolio"
+import { Binance as BinanceType } from "binance-api-node"
+import Binance from "binance-api-node"
+import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
+import { RedisClient } from "redis"
+import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
+import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
+import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
+import { PortfolioPublisher } from "./portfolio-publisher"
+import { PortfolioTracker } from "./portfolio-tracker"
+import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -47,17 +58,19 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+const logger = new Logger({ silent: false })
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+
+
 process.on("unhandledRejection", (err) => {
-  _logger.error({ err })
+  logger.error({ err })
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/spot-order-execution-tracker"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { Balance, Portfolio } from "../../../../interfaces/portfolio"
-import { Binance as BinanceType } from "binance-api-node"
-import Binance from "binance-api-node"
+
 
 export class BinancePortfolioToAMQP implements PortfolioBitchClass {
   send_message: SendMessageFunc
@@ -194,28 +207,13 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
   }
 }
 
-let logger: Logger = _logger
-const health_and_readiness = new HealthAndReadiness({ logger })
-
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-import express from "express"
-
-import { RedisClient } from "redis"
-import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
-import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
-import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
-import { PortfolioPublisher } from "./portfolio-publisher"
-import { PortfolioTracker } from "./portfolio-tracker"
-import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
-
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
-
+  
   try {
     let portfolio_to_amqp = new BinancePortfolioToAMQP({ send_message, logger, health_and_readiness, redis })
     await portfolio_to_amqp.start()
@@ -236,6 +234,7 @@ main().catch((err) => {
   logger.error(`Error in main loop: ${err.stack}`)
 })
 
+import express from "express"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))

@@ -17,10 +17,18 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { Logger } from "../../../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false })
-
+import binance, { Binance, ExchangeInfo } from "binance-api-node"
+import { BinanceOrderData, OrderCallbacks } from "../../../../interfaces/exchanges/binance/order_callbacks"
+import { SpotPositionTracker } from "./position-tracker"
+import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
+import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
+import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
+import { AMQP_BinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-binance-order-data-listener"
+import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
 import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
 
+const logger: Logger = new Logger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
@@ -40,17 +48,6 @@ process.on("unhandledRejection", (err) => {
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 set_redis_logger(logger)
 const redis = get_redis_client()
-
-import binance, { Binance, ExchangeInfo } from "binance-api-node"
-import { BinanceOrderData, OrderCallbacks } from "../../../../interfaces/exchanges/binance/order_callbacks"
-import { SpotPositionTracker } from "./position-tracker"
-import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
-import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
-import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
-import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-import { AMQP_BinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-binance-order-data-listener"
-import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
 
 let order_execution_tracker: AMQP_BinanceOrderDataListener | null = null
 

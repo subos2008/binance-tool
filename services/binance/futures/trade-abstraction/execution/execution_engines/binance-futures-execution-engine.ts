@@ -433,6 +433,33 @@ export class BinanceFuturesExecutionEngine {
     }
   }
 
+  async execute_with_429_retries<T>(func: () => Promise<T>): Promise<T> {
+    function sleep(ms: number) {
+      return new Promise((resolve) => setTimeout(resolve, ms))
+    }
+
+    let allowed_retries = 3
+    do {
+      try {
+        let result: T = await func()
+        return result
+      } catch (err: any) {
+        allowed_retries = allowed_retries - 1
+        if (allowed_retries <= 0) throw err
+        // For futures might look like: Too many requests; current limit of IP(x.x.x.x) is 2400 requests per minute. Please use the websocket for live updates to avoid polling the API.
+        if (err.message.match(/Too many/ || err.code === -1015)) {
+          Sentry.captureException(err)
+          this.logger.warn({ err })
+          this.logger.warn(`429 from Binance, sleeping and retrying`)
+        } else {
+          throw err
+        }
+      }
+      await sleep(11 * 1000) // TODO: there are multiple rate limits presumably and this constant is from spot - what aare the futures rules and can we get them from headers and ExchangeInfo
+    } while (allowed_retries > 0)
+    throw new Error(`Should not reach here`)
+  }
+
   async limit_sell_by_quote_quantity_with_market_tp_and_sl(
     tags: { base_asset: string; quote_asset: string; edge: string },
     cmd: LimitSellByQuoteQuantityWithTPandSLCommand
@@ -482,7 +509,8 @@ export class BinanceFuturesExecutionEngine {
         this.logger.object({ object_type: "BinanceNewFuturesOrder", ...stop_order_cmd })
         this.logger.info(`Creating ${symbol} ${type} ${side} ORDER (closePosition)}`)
         // https://binance-docs.github.io/apidocs/futures/en/#new-order-trade
-        let stop_order: FuturesOrder = await ee.futuresOrder(stop_order_cmd)
+        let call = ee.futuresOrder.bind(ee, stop_order_cmd)
+        let stop_order: FuturesOrder = await this.execute_with_429_retries(call)
         this.logger.object({ object_type: "BinanceFuturesOrder", ...stop_order })
         created_stop_order = true
       }
@@ -512,7 +540,8 @@ export class BinanceFuturesExecutionEngine {
         this.logger.object({ object_type: "BinanceNewFuturesOrder", ...take_profit_order_cmd })
         this.logger.info(`Creating ${symbol} ${type} ${side} ORDER (closePosition)}`)
         // https://binance-docs.github.io/apidocs/futures/en/#new-order-trade
-        let take_profit_order: FuturesOrder = await ee.futuresOrder(take_profit_order_cmd)
+        let call = ee.futuresOrder.bind(ee, take_profit_order_cmd)
+        let take_profit_order: FuturesOrder = await this.execute_with_429_retries(call)
         this.logger.object({ object_type: "BinanceFuturesOrder", ...take_profit_order })
         created_take_profit_order = true
       }

@@ -3,6 +3,7 @@
 export interface Logger {
   info(tags: Object, ...message: any[]): void
   error(tags: Object, ...message: any[]): void
+  fatal(tags: Object, ...message: any[]): void
   warn(tags: Object, ...message: any[]): void
   debug(tags: Object, ...message: any[]): void
   silly(tags: Object, ...message: any[]): void

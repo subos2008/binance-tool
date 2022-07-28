@@ -448,15 +448,15 @@ export class BinanceFuturesExecutionEngine {
       return buy_result
     }
 
-    let prefix = `${cmd.market_identifier.symbol}: `
-
-    // Create two orders - STOP_MARKET and TAKE_PROFIT_MARKET
-    let exchange_info: ExchangeInfo = await this.ei_getter.get_exchange_info()
-
-    /** TODO: Add STOP */
-    let created_stop_order = false
-    let created_take_profit_order = false
     try {
+      let prefix = `${cmd.market_identifier.symbol}: `
+
+      // Create two orders - STOP_MARKET and TAKE_PROFIT_MARKET
+      let exchange_info: ExchangeInfo = await this.ei_getter.get_exchange_info()
+
+      /** TODO: Add STOP */
+      let created_stop_order = false
+      let created_take_profit_order = false
       {
         let side = OrderSide.BUY
         let symbol = cmd.market_identifier.symbol
@@ -538,7 +538,9 @@ export class BinanceFuturesExecutionEngine {
       this.logger.object(result)
       return result
     } catch (err) {
-      throw new Error(`TODO: close position and return ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`)
+      let msg = `TODO: close position and return ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`
+      this.logger.fatal(msg)
+      throw new Error(msg)
       //TODO: close position and return ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
     }
   }

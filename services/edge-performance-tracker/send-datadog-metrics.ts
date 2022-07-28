@@ -69,7 +69,7 @@ export class SendDatadogMetrics {
       }
     })
     if (event.percentage_quote_change)
-      this.dogstatsd.distribution(`.abs_quote_change`, event.percentage_quote_change, tags, function (err, bytes) {
+      this.dogstatsd.distribution(`.percentage_quote_change`, event.percentage_quote_change, tags, function (err, bytes) {
         if (err) {
           console.error(
             "Oh noes! There was an error submitting .percentage_quote_change metrics to DogStatsD for ${edge}:${base_asset}:",

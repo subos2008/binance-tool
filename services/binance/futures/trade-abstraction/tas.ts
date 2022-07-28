@@ -17,12 +17,6 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "../../../../interfaces/logger"
-import { Logger as LoggerClass } from "../../../../lib/faux_logger"
-const logger: Logger = new LoggerClass({ silent: false })
-
-logger.info({ hello: "world" }, "Service starting")
-
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -30,8 +24,17 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+import { Logger } from "../../../../interfaces/logger"
+import { Logger as LoggerClass } from "../../../../lib/faux_logger"
+import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "./interfaces/short"
+import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
+
+const logger: Logger = new LoggerClass({ silent: false })
+logger.info({ hello: "world" }, "Service starting")
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: false, healthy: true })
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -39,19 +42,13 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
-import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "./interfaces/short"
-
 import express, { NextFunction, Request, Response } from "express"
 const winston = require("winston")
 const expressWinston = require("express-winston")
 
 var app = express()
-
-import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: false, healthy: true })
 
 app.use(
   expressWinston.logger({

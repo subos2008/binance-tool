@@ -44,21 +44,12 @@ Sentry.configureScope(function (scope: any) {
 import { Logger } from "../../../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
 
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
-
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
-
-process.on("unhandledRejection", (err) => {
-  logger.error({ err })
-  Sentry.captureException(err)
-  const send_message: SendMessageFunc = new SendMessage({ service_name, logger }).build()
-  send_message(`UnhandledPromiseRejection: ${err}`)
-})
 
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 set_redis_logger(logger)

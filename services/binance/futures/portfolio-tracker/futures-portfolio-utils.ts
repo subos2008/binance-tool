@@ -5,7 +5,6 @@
 import { strict as assert } from "assert"
 
 import { BigNumber } from "bignumber.js"
-import { FuturesAsset } from "binance-api-node"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -13,9 +12,9 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../../../interfaces/logger"
-import { Portfolio, Balance, Prices, FuturesPortfolio, FuturesBalance } from "../../../../interfaces/portfolio"
+import { Prices, FuturesPortfolio, FuturesBalance } from "../../../../interfaces/portfolio"
 
-let Sentry: any
+import Sentry from "../../../../lib/sentry"
 
 export class PortfolioUtils {
   logger: Logger
@@ -24,7 +23,6 @@ export class PortfolioUtils {
     assert(logger)
     this.logger = logger
     assert(sentry)
-    Sentry = sentry
   }
 
   // Get value of one asset in terms of another ()

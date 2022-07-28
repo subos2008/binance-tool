@@ -65,11 +65,14 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+const send_message = new SendMessage({ service_name, logger }).build()
+
+const health_and_readiness = new HealthAndReadiness({ logger, send_message })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
-  const send_message = new SendMessage({ service_name, logger }).build()
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
@@ -79,7 +82,6 @@ import { ExchangeIdentifier } from "../../../../events/shared/exchange-identifie
 import { PortfolioUtils } from "./futures-portfolio-utils"
 
 const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger, sentry: Sentry })
-const send_message = new SendMessage({ service_name, logger }).build()
 class PortfolioTracker implements MasterPortfolioClass {
   send_message: SendMessageFunc
   logger: Logger
@@ -304,9 +306,6 @@ main().catch((err) => {
   soft_exit(1, `Error in main loop: ${err}`)
 })
 
-const health_and_readiness = new HealthAndReadiness({ logger, send_message })
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
-
 // Note this method returns!
 // Shuts down everything that's keeping us alive so we exit
 function soft_exit(exit_code: number | null = null, reason: string) {
@@ -321,6 +320,7 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 import express from "express"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
+app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

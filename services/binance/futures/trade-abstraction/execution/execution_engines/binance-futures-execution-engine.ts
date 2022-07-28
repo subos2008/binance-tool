@@ -539,8 +539,10 @@ export class BinanceFuturesExecutionEngine {
       return result
     } catch (err) {
       let msg = `TODO: close position and return ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`
+      Sentry.captureException(err)
       this.logger.fatal(msg)
-      throw new Error(msg)
+      this.logger.fatal({ err })
+      throw err
       //TODO: close position and return ABORTED_FAILED_TO_CREATE_EXIT_ORDERS
     }
   }

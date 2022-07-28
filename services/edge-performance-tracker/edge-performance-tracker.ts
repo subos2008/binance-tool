@@ -140,6 +140,7 @@ class EventLogger implements MessageProcessor {
 
       try {
         await this.mongodb_uploader.ingest_event(o)
+        this.logger.info(`Uploaded to MongoDB`)
       } catch (e: any) {
         this.logger.error(e)
         Sentry.captureException(e)
@@ -147,6 +148,7 @@ class EventLogger implements MessageProcessor {
 
       try {
         await this.metrics.ingest_event(o)
+        this.logger.info(`Sent as metrics`)
       } catch (e: any) {
         this.logger.error(e)
         Sentry.captureException(e)
@@ -154,6 +156,7 @@ class EventLogger implements MessageProcessor {
 
       try {
         await this.persistence.ingest_event(i)
+        this.logger.info(`Ingested to persistance`)
       } catch (e: any) {
         this.logger.error(e)
         Sentry.captureException(e)

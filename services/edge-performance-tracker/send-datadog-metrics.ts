@@ -65,7 +65,7 @@ export class SendDatadogMetrics {
         console.error(err)
         Sentry.captureException(err)
       } else {
-        // console.log("Successfully sent", bytes, "bytes .abs_quote_change to DogStatsD for ${edge}:${base_asset}")
+        console.log("Successfully sent", bytes, "bytes .abs_quote_change to DogStatsD for ${edge}:${base_asset}")
       }
     })
     if (event.percentage_quote_change)

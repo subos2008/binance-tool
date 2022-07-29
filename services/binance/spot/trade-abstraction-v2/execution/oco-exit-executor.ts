@@ -213,7 +213,7 @@ export class SpotPositionsExecution_OCOExit {
         created_take_profit_order: true,
         take_profit_order_id: take_profit_ClientOrderId,
         executed_price,
-        stop_price: stop_price.toFixed(),
+        stop_price: stop_price.toFixed(), // TODO: these are unmunged
         take_profit_price: take_profit_price.toFixed(),
         status: "SUCCESS",
         http_status: 201,

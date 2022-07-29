@@ -40,6 +40,9 @@ var ee: Binance = binance({
   apiSecret: process.env.BINANCE_API_SECRET,
 })
 
+//https://github.com/aloysius-pgast/crypto-exchanges-gateway/blob/2f15a88b1c7b784fc3a9cf5d4bfc6b551eccdecb/app/exchanges/binance/exchange.js#L78
+// ee.getInfo().futures.
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }

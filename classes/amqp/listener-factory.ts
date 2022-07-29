@@ -165,7 +165,7 @@ export class ListenerFactory {
     let { routing_key, exchange_name, exchange_type, durable } = MessageRouting.amqp_routing({ event_name })
     let connection: Connection = await connect(connect_options)
     process.once("SIGINT", connection.close.bind(connection))
-    this.logger.info(`PositionsListener: Connection with AMQP server established.`)
+    this.logger.info(`ListenerFactory: Connection with AMQP server established.`)
     let channel: Channel = await connection.createChannel() // hangs
     let logger = this.logger
     channel.on("close", function () {

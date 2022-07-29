@@ -12,8 +12,10 @@ import { RedisClient } from "redis"
 import { Logger } from "../../../../interfaces/logger"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
-import { PositionPublisher } from "../../../../classes/amqp/positions-publisher"
-import { AuthorisedEdgeType, SpotPositionIdentifier_V3 } from "../../../../classes/spot/abstractions/position-identifier"
+import {
+  AuthorisedEdgeType,
+  SpotPositionIdentifier_V3,
+} from "../../../../classes/spot/abstractions/position-identifier"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
 import { SpotPosition } from "../../../../classes/spot/abstractions/spot-position"
 import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
@@ -40,7 +42,6 @@ type check_func = ({
 export class SpotPositionTracker {
   send_message: SendMessageFunc
   logger: Logger
-  position_publisher: PositionPublisher
   close_position_check_func: check_func
   order_context_persistence: OrderContextPersistence
   spot_positions_query: SpotPositionsQuery
@@ -65,15 +66,9 @@ export class SpotPositionTracker {
     spot_positions_persistance: SpotPositionsPersistance
     health_and_readiness: HealthAndReadiness
   }) {
-    assert(logger, "logger not set")
     this.logger = logger
     this.send_message = send_message
     this.spot_positions_query = spot_positions_query
-    this.position_publisher = new PositionPublisher({
-      logger,
-      send_message,
-      broker_name: "binance",
-    })
     assert(close_position_check_func, "close_position_check_func not set")
     this.close_position_check_func = close_position_check_func
     this.order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
@@ -102,27 +97,7 @@ export class SpotPositionTracker {
     if (!averageExecutionPrice) {
       throw new Error(`averageExecutionPrice not defined, unable to publish NewPositionEvent`)
     }
-    // Publish an event declaring the new position
-    try {
-      this.position_publisher.publish_new_position_event({
-        object_type: "NewPositionEvent",
-        exchange_identifier: position.position_identifier.exchange_identifier,
-        baseAsset,
-        position_base_size: totalBaseTradeQuantity,
-        position_initial_quote_spent: totalQuoteTradeQuantity,
-        position_initial_quoteAsset: quoteAsset,
-        position_initial_entry_price: averageExecutionPrice,
-        position_entry_timestamp_ms: orderTime,
-      })
-    } catch (err) {
-      console.error(err)
-      Sentry.withScope(function (scope) {
-        scope.setTag("baseAsset", baseAsset)
-        scope.setTag("exchange", exchange_identifier.exchange)
-        scope.setTag("account", exchange_identifier.account)
-        Sentry.captureException(err)
-      })
-    }
+
     // Publish a new style event declaring the opened position
     try {
       let event = await position.get_SpotPositionOpenedEvent()

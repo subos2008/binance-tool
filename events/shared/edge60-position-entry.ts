@@ -1,6 +1,9 @@
 import { MarketIdentifier_V4 } from "./market-identifier"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 
+// long and short signals based on breakouts with a fixed % stop. long=enter, short=close for spot
+// Note this edge does not perform well short, use edge62 instead
+
 export type Edge60Parameters = {
   // days_of_price_history should be one less than the number we use on the TV high/low indicator
   days_of_price_history: 21 // didn't feel like just saying number '\o/`

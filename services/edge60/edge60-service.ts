@@ -23,7 +23,7 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-const humanNumber = require("human-number")
+import humanNumber from "human-number"
 
 import { Logger } from "./../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
@@ -142,7 +142,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
       market_data_for_symbol = await this.market_data_for_symbol(symbol)
       if (market_data_for_symbol) {
         market_data_string = `RANK: ${market_data_for_symbol.market_cap_rank}, MCAP: ${humanNumber(
-          new BigNumber(market_data_for_symbol.market_cap).sd(2).toFixed()
+          new BigNumber(market_data_for_symbol.market_cap).sd(2).toNumber()
         )}`
       }
     } catch (e) {

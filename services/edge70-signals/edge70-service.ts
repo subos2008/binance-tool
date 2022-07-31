@@ -44,7 +44,7 @@ const tas_quote_asset = config.binance.spot.tas_quote_asset
 
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
-import { LongShortEntrySignalsCallbacks } from "./interfaces"
+import { LongShortSignalCallbacks } from "./interfaces"
 import { Edge60Parameters, Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
 import { DirectionPersistance } from "./direction-persistance"
@@ -55,10 +55,11 @@ import { get_redis_client } from "../../lib/redis-v4"
 import { RedisClientType } from "redis-v4"
 import { StatsD } from "hot-shots"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
-import { disallowed_base_assets_for_entry } from "../../lib/stable-coins"
 import { BaseAssetsList } from "./base-assets-list"
-import { Edge60EntrySignals } from "./signals"
+import { Edge70Signals } from "./signals"
 import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
+import { Edge70Parameters, Edge70Signal } from "../../events/shared/edge70-signal"
+import { TypedGenericTopicPublisher } from "../../classes/amqp/typed-generic-publisher"
 
 var dogstatsd = new StatsD()
 
@@ -73,16 +74,17 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-const edge60_parameters: Edge60Parameters = {
+const edge70_parameters: Edge70Parameters = {
   // days_of_price_history should be one less than the value we use in the TV high/low indicator
   // because the high/low indicator includes the new candle in it's count
-  days_of_price_history: 21, 
+  days_of_price_history_for_long: 44, // one less than the number we use on the TV high/low indicator
+  days_of_price_history_for_short: 21, // one less than the number we use on the TV high/low indicator
 }
 
-let edge = "edge60"
+const edge: "edge70" = "edge70"
 
-class Edge60Service implements LongShortEntrySignalsCallbacks {
-  edges: { [Key: string]: Edge60EntrySignals } = {}
+class Edge70SignalsService implements LongShortSignalCallbacks {
+  edges: { [Key: string]: Edge70Signals } = {}
   candles_collector: CandlesCollector
   ee: Binance
   logger: Logger
@@ -93,7 +95,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
   direction_persistance: DirectionPersistance
   exchange_info_getter: BinanceExchangeInfoGetter
   health_and_readiness: HealthAndReadiness
-  publisher: GenericTopicPublisher
+  signal_publisher: TypedGenericTopicPublisher<Edge70Signal>
   publisher_for_EdgeDirectionSignal: EdgeDirectionSignalPublisher
 
   constructor({
@@ -116,7 +118,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     this.direction_persistance = direction_persistance
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
     this.health_and_readiness = health_and_readiness
-    this.publisher = new GenericTopicPublisher({ logger, event_name: "Edge60EntrySignal", health_and_readiness })
+    this.signal_publisher = new TypedGenericTopicPublisher<Edge70Signal>({ logger, event_name: "Edge70Signal", health_and_readiness })
     this.publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({
       logger,
       dogstatsd,
@@ -124,7 +126,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     })
   }
 
-  async enter_position({
+  async process_long_short_signal({
     symbol,
     signal_price,
     direction,
@@ -167,7 +169,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     let entry_filter = direction_change
     if (entry_filter) {
       try {
-        let days = edge60_parameters.days_of_price_history
+        let days = edge70_parameters.days_of_price_history
         let msg = `trend reversal ${direction_string} entry signal on ${base_asset} at ${days}d price ${signal_price.toFixed()}. ${market_data_string}`
         this.logger.info(tags, msg)
         this.send_message(msg, { edge })
@@ -237,17 +239,16 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     signal_timestamp_ms: number
     market_identifier: MarketIdentifier_V4
   }) {
-    const edge: AuthorisedEdgeType = "edge60"
     let base_asset = market_identifier.base_asset
-    let event: Edge60PositionEntrySignal = {
-      object_type: "Edge60EntrySignal",
-      version: 2,
+    let event: Edge70Signal = {
+      object_type: "Edge70Signal",
+      version: 1,
       msg: `${edge} ${direction} signal on ${base_asset} (${symbol})`,
       base_asset,
       direction,
       edge,
       market_identifier,
-      edge60_parameters,
+      edge70_parameters,
       edge60_entry_signal: {
         direction,
         signal_price: signal_price.toFixed(),
@@ -264,7 +265,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
       persistent: true,
       timestamp: Date.now(),
     }
-    this.publisher.publish(event, options)
+    this.signal_publisher.publish(event, options)
   }
 
   async publish_direction_to_amqp({
@@ -315,7 +316,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
   }
 
   async connect(): Promise<void> {
-    await this.publisher.connect()
+    await this.signal_publisher.connect()
     await this.publisher_for_EdgeDirectionSignal.connect()
   }
 
@@ -338,7 +339,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     // not all of these will be on Binance
     this.market_data = await cg.get_top_market_data({ limit })
     let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
-    let required_initial_candles = Edge60EntrySignals.required_initial_candles(edge60_parameters)
+    let required_initial_candles = Edge70Signals.required_initial_candles(edge70_parameters)
     for (let i = 0; i < base_assets.length; i++) {
       let base_asset = base_assets[i]
       let symbol = to_symbol(base_asset)
@@ -370,13 +371,13 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
           if (partial_candle) assert(partial_candle.closeTime > Date.now()) // double check that was actually a partial candle
         }
 
-        this.edges[symbol] = new Edge60EntrySignals({
+        this.edges[symbol] = new Edge70Signals({
           logger: this.logger,
           initial_candles,
           symbol,
           market_data: this.market_data[i],
           callbacks: this,
-          edge60_parameters,
+          edge70_parameters,
           base_asset,
         })
         this.logger.info(
@@ -410,7 +411,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
   }
 }
 
-let edge60: Edge60Service | null
+let edge60: Edge70SignalsService | null
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
@@ -428,7 +429,7 @@ async function main() {
     const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
     let redis: RedisClientType = await get_redis_client(logger, redis_health)
 
-    edge60 = new Edge60Service({
+    edge60 = new Edge70SignalsService({
       ee,
       logger,
       send_message,

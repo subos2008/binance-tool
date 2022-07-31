@@ -23,17 +23,18 @@ import { Logger } from "../../interfaces/logger"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { Edge60Parameters } from "../../events/shared/edge60-position-entry"
 import { CandleChartResult } from "binance-api-node"
-import { EdgeCandle, LongShortEntrySignalsCallbacks } from "./interfaces"
+import { EdgeCandle, LongShortSignalCallbacks } from "./interfaces"
 import { LimitedLengthCandlesHistory } from "./limited-length-candles-history"
 import { DateTime } from "luxon"
+import { Edge70Parameters } from "../../events/shared/edge70-signal"
 
-export class Edge60EntrySignals {
+export class Edge70Signals {
   symbol: string
   base_asset: string
   logger: Logger
   market_data: CoinGeckoMarketData
 
-  callbacks: LongShortEntrySignalsCallbacks
+  callbacks: LongShortSignalCallbacks
   price_history_candles: LimitedLengthCandlesHistory
 
   constructor({
@@ -42,15 +43,15 @@ export class Edge60EntrySignals {
     symbol,
     market_data,
     callbacks,
-    edge60_parameters,
+    edge70_parameters,
     base_asset,
   }: {
     logger: Logger
     initial_candles: CandleChartResult[]
     symbol: string
     market_data: CoinGeckoMarketData
-    callbacks: LongShortEntrySignalsCallbacks
-    edge60_parameters: Edge60Parameters
+    callbacks: LongShortSignalCallbacks
+    edge70_parameters: Edge70Parameters
     base_asset: string
   }) {
     this.symbol = symbol
@@ -60,7 +61,7 @@ export class Edge60EntrySignals {
     this.base_asset = base_asset
 
     this.price_history_candles = new LimitedLengthCandlesHistory({
-      length: edge60_parameters.days_of_price_history,
+      length: edge70_parameters.days_of_price_history,
       initial_candles,
     })
 
@@ -131,7 +132,7 @@ export class Edge60EntrySignals {
           tags,
           `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: ${high.toFixed()} greater than ${highest_price.toFixed()}: ${debug_string}`
         )
-        this.callbacks.enter_position({
+        this.callbacks.process_long_short_signal({
           symbol: this.symbol,
           signal_price: potential_entry_price,
           trigger_price: potential_entry_price,
@@ -148,7 +149,7 @@ export class Edge60EntrySignals {
           tags,
           `Price entry signal ${direction} at ${potential_entry_price.toFixed()}: ${low.toFixed()} less than ${lowest_price.toFixed()}: ${debug_string}`
         )
-        this.callbacks.enter_position({
+        this.callbacks.process_long_short_signal({
           symbol: this.symbol,
           signal_price: potential_entry_price,
           trigger_price: potential_entry_price,

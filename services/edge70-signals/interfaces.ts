@@ -6,8 +6,8 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-export interface LongShortEntrySignalsCallbacks {
-  enter_position(args: PositionEntryArgs): void
+export interface LongShortSignalCallbacks {
+  process_long_short_signal(args: LongShortSignal): void
 }
 
 export interface EdgeCandle {
@@ -26,7 +26,7 @@ export interface StoredCandle {
   closeTime: number // milliseconds
 }
 
-export interface PositionEntryArgs {
+export interface LongShortSignal {
   symbol: string
   trigger_price: BigNumber
   signal_price: BigNumber

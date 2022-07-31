@@ -12,7 +12,7 @@ const quote_symbol = "USDT".toUpperCase()
 
 import { strict as assert } from "assert"
 require("dotenv").config()
-const service_name = "edge60"
+const service_name = "edge60" // beware changing this, it's used by direction persistance
 
 import binance, { ExchangeInfo } from "binance-api-node"
 import { Binance } from "binance-api-node"

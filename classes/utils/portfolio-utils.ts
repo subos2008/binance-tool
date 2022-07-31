@@ -97,14 +97,14 @@ export class PortfolioUtils {
     let base_quantity = new BigNumber(balance.free)
     if (balance.asset === quote_currency) {
       return base_quantity
-    } else {
-      return this.convert_base_to_quote_currency({
-        base_quantity,
-        base_currency: balance.asset,
-        quote_currency,
-        prices,
-      })
     }
+    if (base_quantity.isZero()) return base_quantity
+    return this.convert_base_to_quote_currency({
+      base_quantity,
+      base_currency: balance.asset,
+      quote_currency,
+      prices,
+    })
   }
 
   get_balances_with_free_greater_than({

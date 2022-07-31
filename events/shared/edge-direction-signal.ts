@@ -1,13 +1,12 @@
 import Sentry from "../../lib/sentry"
 
-import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
 import { MarketIdentifier_V4 } from "./market-identifier"
 
 /** For edges that signal flip-flop long/short */
 export interface EdgeDirectionSignal {
   object_type: "EdgeDirectionSignal"
   version: 1
-  edge: AuthorisedEdgeType
+  edge: string
   direction: "long" | "short"
   base_asset?: string
   quote_asset?: string

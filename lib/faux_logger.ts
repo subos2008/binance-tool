@@ -19,11 +19,17 @@ import { Logger as LoggerInterface } from "../interfaces/logger"
 export class Logger implements LoggerInterface {
   silent: boolean
   bunyan: bunyan
-  constructor({ silent, template }: { silent: boolean; template?: object } = { silent: false, template: {} }) {
+  constructor(
+    { silent, template, level }: { silent: boolean; template?: object; level?: bunyan.LogLevel } = {
+      silent: false,
+      template: {},
+    }
+  ) {
     if (!template) template = {}
     this.silent = silent
     let params = {
       name: "bunyan_stream_name", // Required
+      level,
       // level: <level name or number>,      // Optional, see "Levels" section
       // streams: [
       //   {
@@ -56,7 +62,7 @@ export class Logger implements LoggerInterface {
       }
     }
   }
-  
+
   info(obj: Object, ...params: any[]) {
     if (!this.silent) {
       try {

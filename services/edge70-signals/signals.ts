@@ -209,6 +209,8 @@ export class Edge70Signals {
       // Check for entry signal in both directions and ignore
       // NB: this means the stored market direction isn't changed
       if (signal_long && signal_short) {
+        // We could prefer short here instead but then that sets the market direction to long and we can
+        // do more trades in choppy markets
         let msg = `${symbol} Price entry signal both long and short, skipping...`
         this.logger.warn(tags, msg)
         this.logger.warn(tags, `Warning: signalled both directions - persistent market direction not updated`)

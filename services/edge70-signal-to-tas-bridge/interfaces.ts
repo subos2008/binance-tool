@@ -1,5 +1,5 @@
-import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
+import { Edge70Signal } from "../edge70-signals/interfaces/edge70-signal";
 
-export interface Edge60EntrySignalProcessor {
-  process_edge60_entry_signal: (signal: Edge60PositionEntrySignal) => Promise<void>
+export interface Edge70SignalProcessor {
+  process_signal: (signal: Edge70Signal) => Promise<void>
 }

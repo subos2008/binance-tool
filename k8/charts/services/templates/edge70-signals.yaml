@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge70-signals
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "edge70-signals"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "edge70-signals"
+        tags.datadoghq.com/service: "edge70-signals"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "edge70-signals"}'
+        ad.datadoghq.com/edge70-signals.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "edge70-signals"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+      containers:
+        - name: edge70-signals
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "./out/./services/edge70-signals/edge70-service", "--live"]
+          ports:
+          - name: http
+            containerPort: 80
+            protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+          env:
+            - name: SENTRY_DSN
+              value: "https://061417a8381f424d862e470111d60ca4@o369902.ingest.sentry.io/6621800"
+{{- include "binance.vars" . | nindent 12 }}
+{{- include "datadog.vars" . | nindent 12 }}
+{{- include "telegram.vars" . | nindent 12 }}
+{{- include "amqp.vars" . | nindent 12 }}
+{{- include "redis.vars" . | nindent 12 }}
+---

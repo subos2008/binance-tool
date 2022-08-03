@@ -232,15 +232,14 @@ export class Edge70Signals {
       tags.previous_direction = previous_direction || "(null)"
       await this.direction_persistance.set_direction(base_asset, direction)
       if (previous_direction === null) {
-        this.send_message(
-          `possible ${direction} signal on ${base_asset} - check manually if this is a trend reversal.`,
-          tags
-        )
+        let msg = `possible ${direction} signal on ${base_asset} - check manually if this is a trend reversal.`
+        this.logger.warn(tags, msg)
+        this.send_message(msg, tags)
         return
       }
       let direction_change = previous_direction !== direction
       if (!direction_change) {
-        this.logger.debug(tags, `${symbol} ${direction} price triggered but not trend reversal`)
+        this.logger.info(tags, `${symbol} ${direction} price triggered but not trend reversal`)
         return
       }
 

@@ -238,7 +238,7 @@ export class Edge70Signals {
       }
       let direction_change = previous_direction !== direction
       if (!direction_change) {
-        this.logger.info(tags, `${symbol} ${direction} price triggered but not trend reversal`)
+        this.logger.debug(tags, `${symbol} ${direction} price triggered but not trend reversal`)
         return
       }
 

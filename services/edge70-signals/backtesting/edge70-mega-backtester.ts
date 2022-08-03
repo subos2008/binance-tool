@@ -71,9 +71,12 @@ const edge70_parameters: Edge70Parameters = {
 //   end_date: new Date("2022-07-31"), // Nice test, signals long on 29th
 // }
 
+let symbols_to_run = 1
+let start_date = new Date("2020-08-01")
 const backtest_parameters = {
-  start_date: new Date("2020-08-01"),
-  end_date: new Date("2022-07-31"),
+  start_date,
+  end_date: DateTime.fromJSDate(start_date).plus({ days: 490 }).toJSDate(),
+  // end_date: new Date("2022-07-31"), // too many candle for API
 }
 
 const edge: "edge70-backtest" = "edge70-backtest"
@@ -209,20 +212,6 @@ class Edge70SignalsBacktester {
           await sleep(400) // 1200 calls allowed per minute per IP address, sleep(200) => 300/minute
           this.logger.warn(`Not sleeping...no rate limiting - add bottleneck`)
         }
-
-        /* delete any candles/edges that have less candles than expected */
-        let lens = Object.values(this.candles).map((c) => c.length)
-        let expected = Math.max(...lens)
-        this.logger.info(`Expecting ${expected} candles`)
-        let del_syms = 0
-        for (symbol in this.candles) {
-          if (this.candles[symbol].length < expected) {
-            delete this.candles[symbol]
-            delete this.edges[symbol]
-            del_syms++
-          }
-        }
-        this.logger.info(`Deleted ${del_syms} short histories`)
       } catch (err) {
         this.logger.error({ err })
         console.error(err)
@@ -230,6 +219,28 @@ class Edge70SignalsBacktester {
         throw err // rethrow in case it's a 429
       }
     }
+
+    /* delete any candles/edges that have less candles than expected */
+    let lens = Object.values(this.candles).map((c) => c.length)
+    let expected = Math.max(...lens)
+    this.logger.info(`Expecting ${expected} candles`)
+    let del_syms = 0
+    let expected_first_candle_closeTime
+    for (const symbol in this.candles) {
+      if (expected_first_candle_closeTime) {
+        // make sure all the candles start at the same time. API limit is 500 kilnes at once,
+        // make sure they are the same 500 at least
+        assert(this.candles[symbol][0].closeTime === expected_first_candle_closeTime)
+      } else {
+        expected_first_candle_closeTime = this.candles[symbol][0].closeTime
+      }
+      if (this.candles[symbol].length < expected) {
+        delete this.candles[symbol]
+        delete this.edges[symbol]
+        del_syms++
+      }
+    }
+    this.logger.info(`Deleted ${del_syms} short histories`)
   }
 
   async run(): Promise<void> {
@@ -282,7 +293,7 @@ async function main() {
       callbacks: publisher,
     })
     await service.init()
-    await service.init_candles(5)
+    await service.init_candles(symbols_to_run)
     await service.run()
   } catch (err) {
     logger.error({ err })

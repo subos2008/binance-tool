@@ -204,7 +204,7 @@ class Edge70SignalsBacktester {
           `Setup edge for ${symbol} with ${initial_candles.length} initial candles`
         )
         // TODO: get klines via the TAS so we can do rate limiting
-        if (base_assets.length > 1) {
+        if (base_assets.length > 300) {
           this.logger.debug(`Sleeping...`)
           await sleep(400) // 1200 calls allowed per minute per IP address, sleep(200) => 300/minute
           this.logger.warn(`Not sleeping...no rate limiting - add bottleneck`)
@@ -282,7 +282,7 @@ async function main() {
       callbacks: publisher,
     })
     await service.init()
-    await service.init_candles(1)
+    await service.init_candles(5)
     await service.run()
   } catch (err) {
     logger.error({ err })

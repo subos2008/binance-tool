@@ -32,6 +32,8 @@ import { DirectionPersistance } from "./interfaces/direction-persistance"
 /* Instantiated per asset; each exchange symbol has its own instance of this class */
 export class Edge70Signals {
   logger: Logger
+  set_log_time_to_candle_time: boolean
+
   send_message: SendMessageFunc
   health_and_readiness: HealthAndReadinessSubsystem
   base_asset: string
@@ -55,8 +57,10 @@ export class Edge70Signals {
     base_asset,
     edge,
     direction_persistance,
+    set_log_time_to_candle_time, // used when backtesting
   }: {
     logger: Logger
+    set_log_time_to_candle_time: boolean
     send_message: SendMessageFunc
     health_and_readiness: HealthAndReadiness
     initial_candles: CandleChartResult[]
@@ -67,8 +71,9 @@ export class Edge70Signals {
     edge?: "edge70-backtest"
     direction_persistance: DirectionPersistance
   }) {
-    this.market_identifier = market_identifier
     this.logger = logger
+    this.market_identifier = market_identifier
+    this.set_log_time_to_candle_time = set_log_time_to_candle_time
     this.send_message = send_message
     this.callbacks = callbacks
     this.base_asset = base_asset
@@ -169,13 +174,14 @@ export class Edge70Signals {
   async ingest_new_candle({ candle, symbol }: { symbol: string; candle: EdgeCandle }): Promise<void> {
     let { base_asset, edge } = this
     let tags: Tags = { symbol, base_asset, edge }
+    if (this.set_log_time_to_candle_time) tags.time = new Date(candle.closeTime).toISOString()
 
-    this.logger.debug(tags, {
-      // Better to spam this when we have some result, no?
-      object_type: "EdgeSignalCandleIngestion",
-      symbol,
-      msg: `${symbol} ingesting new candle`,
-    })
+    // this.logger.debug(tags, {
+    //   // Better to spam this when we have some result, no?
+    //   object_type: "EdgeSignalCandleIngestion",
+    //   symbol,
+    //   msg: `${symbol} ingesting new candle`,
+    // })
 
     try {
       /* start code with finally block */
@@ -210,18 +216,19 @@ export class Edge70Signals {
       }
 
       let direction: "long" | "short" | undefined = undefined
+      if (signal_long) direction = "long"
+      if (signal_short) direction = "short"
+      if (direction) tags = { ...tags, direction }
+
       if (direction === undefined) {
         this.logger.debug(tags, `${symbol}: No signal: LONG - ${debug_string_long} SHORT - ${debug_string_short}`)
         return
       }
 
-      if (signal_long) direction = "long"
-      if (signal_short) direction = "short"
-      if (direction) tags = { ...tags, direction }
-
       /* Direction change filter */
       let previous_direction = await this.direction_persistance.get_direction(base_asset)
-      this.direction_persistance.set_direction(base_asset, direction)
+      tags.previous_direction = previous_direction || "(null)"
+      await this.direction_persistance.set_direction(base_asset, direction)
       if (previous_direction === null) {
         this.send_message(
           `possible ${direction} signal on ${base_asset} - check manually if this is a trend reversal.`,
@@ -231,7 +238,7 @@ export class Edge70Signals {
       }
       let direction_change = previous_direction !== direction
       if (!direction_change) {
-        this.logger.debug(tags, `${symbol} ${direction} price triggered but not trend reversal`)
+        this.logger.info(tags, `${symbol} ${direction} price triggered but not trend reversal`)
         return
       }
 
@@ -255,7 +262,7 @@ export class Edge70Signals {
         },
       }
 
-      this.logger.info({tags}, `Signalled ${direction}`)
+      this.logger.info({ tags }, `Signalled ${direction}`)
 
       this.callbacks.publish(event)
     } catch (err) {

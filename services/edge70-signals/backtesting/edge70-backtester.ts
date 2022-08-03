@@ -17,7 +17,8 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { Logger } from "../../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false, level: "debug" })
+const logger: Logger = new Logger({ silent: false })
+// const logger: Logger = new Logger({ silent: false, level: "debug" })
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -62,9 +63,18 @@ const edge70_parameters: Edge70Parameters = {
   },
 }
 
+// const backtest_parameters = {
+//   base_asset: "BTC",
+//   candles: 1000,
+//   start_date: new Date("2022-05-04"),
+//   end_date: new Date("2022-07-31"), // Nice test, signals long on 29th
+// }
+
 const backtest_parameters = {
   base_asset: "BTC",
   candles: 1000,
+  start_date: new Date("2020-08-01"),
+  end_date: new Date("2022-07-31"),
 }
 
 const edge: "edge70-backtest" = "edge70-backtest"
@@ -132,17 +142,17 @@ class Edge70SignalsBacktester {
       let candles: CandleChartResult[] = []
       try {
         // Last N closed candles exist between N+1 ago and now (actually and midnight last night)
-        let start_date = new Date()
-        let end_date = new Date(start_date)
-        let candles_preload_start_date = new Date(start_date)
-        candles_preload_start_date.setDate(
-          candles_preload_start_date.getDate() - (backtest_parameters.candles + 1)
-        )
+        // let start_date = new Date()
+        // let end_date = new Date(start_date)
+        // let candles_preload_start_date = new Date(start_date)
+        // candles_preload_start_date.setDate(
+        //   candles_preload_start_date.getDate() - (backtest_parameters.candles + 1)
+        // )
         candles = await this.candles_collector.get_candles_between({
           timeframe: edge70_parameters.candle_timeframe,
           symbol,
-          start_date: candles_preload_start_date,
-          end_date,
+          start_date: backtest_parameters.start_date,
+          end_date: backtest_parameters.end_date,
         })
 
         if (candles.length == 0) {
@@ -170,6 +180,7 @@ class Edge70SignalsBacktester {
 
         let initial_candles: CandleChartResult[] = []
         this.edges[symbol] = new Edge70Signals({
+          set_log_time_to_candle_time: true,
           send_message,
           direction_persistance: this.direction_persistance,
           logger: this.logger,

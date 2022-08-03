@@ -25,8 +25,8 @@ export function create_position_identifier_from_tuple({
 }
 
 // We need unknown for manual orders where we have no information
-export type AuthorisedEdgeType = "edge60" | "undefined" | "edge61" | "edge62" | "edge63"
-const authorised_edges: AuthorisedEdgeType[] = ["edge60", "edge61", "edge62", "edge63"]
+export type AuthorisedEdgeType = "undefined" | "edge60" | "edge62" | "edge70"
+const authorised_edges: AuthorisedEdgeType[] = ["edge60", "edge62", "edge70"]
 
 export function is_authorised_edge(edge: string): boolean {
   let authorised = authorised_edges.includes(edge as AuthorisedEdgeType)

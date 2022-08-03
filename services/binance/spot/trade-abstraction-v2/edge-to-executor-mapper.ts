@@ -159,6 +159,13 @@ export class SpotEdgeToExecutorMapper {
             edge_percentage_stop: new BigNumber(7),
             edge_percentage_buy_limit: new BigNumber(0.5), // when we had this higher it executed with a 4% slippage
           })
+        case "edge70":
+          return this.stop_limit_executor.open_position({
+            ...args,
+            quote_asset,
+            edge_percentage_stop: new BigNumber(7),
+            edge_percentage_buy_limit: new BigNumber(0.5), // when we had this higher it executed with a 4% slippage
+          })
         case "edge61":
           return this.oco_executor.open_position({
             ...args,

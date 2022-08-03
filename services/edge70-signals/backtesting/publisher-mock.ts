@@ -11,6 +11,7 @@ import { Edge70Parameters, Edge70Signal } from "../interfaces/edge70-signal"
 import { Logger } from "../../../lib/faux_logger"
 import { HealthAndReadiness } from "../../../classes/health_and_readiness"
 import { Edge70SignalCallbacks } from "../interfaces/_internal"
+import { DateTime } from "luxon";
 
 export class Edge70AMQPSignalPublisherMock implements Edge70SignalCallbacks {
   logger: Logger
@@ -40,7 +41,7 @@ export class Edge70AMQPSignalPublisherMock implements Edge70SignalCallbacks {
     let { edge } = this
     let tags = { edge, base_asset, direction, symbol }
 
-    let date = new Date(args.signal.signal_timestamp_ms)
-    this.logger.info(tags, `${date} SIGNAL ${direction} `)
+    let date = DateTime.fromMillis(args.signal.signal_timestamp_ms).toFormat('yyyy LLL dd')
+    this.logger.info(tags, `${date}: ${base_asset} ${direction.toUpperCase()}`)
   }
 }

@@ -130,7 +130,7 @@ class Edge70SignalsService {
       signals_quote_asset: quote_symbol,
       tas_quote_asset: tas_quote_asset,
     })
-    this.logger.info(`V2 target markets: ${base_assets.join(", ")}`)
+    this.logger.info(`Target markets: ${base_assets.join(", ")}`)
 
     let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
 

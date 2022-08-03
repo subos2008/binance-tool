@@ -130,7 +130,7 @@ class Edge70SignalsBacktester {
     })
     console.warn(`Chopping to just ${base_assets[0]}`)
     base_assets = [base_assets[0]]
-    this.logger.info(`V2 target markets: ${base_assets.join(", ")}`)
+    this.logger.info(`Target markets: ${base_assets.join(", ")}`)
 
     let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
 

@@ -186,7 +186,8 @@ export class Edge70Signals {
     try {
       /* start code with finally block */
 
-      let signal_timestamp_ms = DateTime.now().toMillis() + 1 // avoid the last millisecond of the day... why?
+      // let signal_timestamp_ms = DateTime.now().toMillis() + 1 // avoid the last millisecond of the day... why?
+      let signal_timestamp_ms = DateTime.fromMillis(candle.closeTime).toMillis() + 1 // avoid the last millisecond of the day... why?
 
       // check for long entry
       let long_result = this.check_for_long_signal({
@@ -239,7 +240,7 @@ export class Edge70Signals {
       }
       let direction_change = previous_direction !== direction
       if (!direction_change) {
-        this.logger.info(tags, `${symbol} ${direction} price triggered but not trend reversal`)
+        this.logger.debug(tags, `${symbol} ${direction} price triggered but not trend reversal`)
         return
       }
 
@@ -262,9 +263,6 @@ export class Edge70Signals {
           signal_timestamp_ms,
         },
       }
-
-      this.logger.info({ tags }, `Signalled ${direction}`)
-
       this.callbacks.publish(event)
     } catch (err) {
       this.logger.error(

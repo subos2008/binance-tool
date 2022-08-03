@@ -31,7 +31,7 @@ export class DirectionPersistanceMock implements DirectionPersistance {
     if (previous_direction === null) {
       this.logger.info(`Initialising direction for ${symbol} to ${direction}`)
     } else if (previous_direction !== direction) {
-      this.logger.info(`Direction change to ${direction} for ${symbol}`)
+      this.logger.debug(`Direction change to ${direction} for ${symbol}`)
     }
     await this.set(this._market_to_key(symbol), direction)
     return previous_direction

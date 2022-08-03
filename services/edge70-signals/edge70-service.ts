@@ -21,7 +21,7 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { Logger } from "../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false, level: 'debug' })
+const logger: Logger = new Logger({ silent: false, level: "debug" })
 
 import { SendMessage } from "../../classes/send_message/publish"
 
@@ -135,6 +135,7 @@ class Edge70SignalsService {
     let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
 
     let required_initial_candles = Edge70Signals.required_initial_candles(edge70_parameters)
+    let symbols_with_direction_uninitialised: string[] = []
     for (let i = 0; i < base_assets.length; i++) {
       let base_asset = base_assets[i]
       let symbol = to_symbol(base_asset)
@@ -158,7 +159,7 @@ class Edge70SignalsService {
           let err = new Error(`No candles loaded for ${symbol}`)
           Sentry.captureException(err) // this is unexpected now, 429?
           throw err
-        }else {
+        } else {
           this.logger.info(`Loaded ${initial_candles.length} candles for ${symbol}`)
         }
 
@@ -191,6 +192,13 @@ class Edge70SignalsService {
           { ...tags, object_type: "EdgeMarketInitialization" },
           `Setup edge for ${symbol} with ${initial_candles.length} initial candles`
         )
+
+        if (this.edges[symbol].full() && this.edges[symbol].current_market_direction() === null) {
+          /* if this is true and there's more history available than we just loaded
+           * we could probably run a background job to add the history */
+          symbols_with_direction_uninitialised.push(symbol)
+        }
+
         // TODO: get klines via the TAS so we can do rate limiting
         await sleep(400) // 1200 calls allowed per minute per IP address, sleep(200) => 300/minute
       } catch (err: any) {
@@ -198,9 +206,15 @@ class Edge70SignalsService {
         this.logger.error({ err })
       }
     }
+    
     let valid_symbols = Object.keys(this.edges)
     this.logger.info(`Edges initialised for ${valid_symbols.length} symbols.`)
     this.send_message(`initialised for ${valid_symbols.length} symbols.`, { edge })
+    this.logger.info(
+      `${
+        symbols_with_direction_uninitialised.length
+      } symbols with uninitialised market direction. (${symbols_with_direction_uninitialised.join(", ")})`
+    )
 
     this.close_1d_candle_ws = this.ee.ws.candles(valid_symbols, edge70_parameters.candle_timeframe, (candle) => {
       let symbol = candle.symbol

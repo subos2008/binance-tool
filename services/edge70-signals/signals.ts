@@ -27,12 +27,12 @@ import { Tags } from "../../observability/loggable-tags"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
 import { SendMessageFunc } from "../../interfaces/send-message"
-import { DirectionPersistance } from "./interfaces/direction-persistance"
+import { Direction, DirectionPersistance } from "./interfaces/direction-persistance"
 
 /* Instantiated per asset; each exchange symbol has its own instance of this class */
 export class Edge70Signals {
   logger: Logger
-  set_log_time_to_candle_time: boolean
+  set_log_time_to_candle_time: boolean = false
 
   send_message: SendMessageFunc
   health_and_readiness: HealthAndReadinessSubsystem
@@ -60,7 +60,7 @@ export class Edge70Signals {
     set_log_time_to_candle_time, // used when backtesting
   }: {
     logger: Logger
-    set_log_time_to_candle_time: boolean
+    set_log_time_to_candle_time?: boolean
     send_message: SendMessageFunc
     health_and_readiness: HealthAndReadiness
     initial_candles: CandleChartResult[]
@@ -73,7 +73,7 @@ export class Edge70Signals {
   }) {
     this.logger = logger
     this.market_identifier = market_identifier
-    this.set_log_time_to_candle_time = set_log_time_to_candle_time
+    if (set_log_time_to_candle_time) this.set_log_time_to_candle_time = set_log_time_to_candle_time
     this.send_message = send_message
     this.callbacks = callbacks
     this.base_asset = base_asset
@@ -107,6 +107,14 @@ export class Edge70Signals {
       edge70_parameters.candles_of_price_history.long,
       edge70_parameters.candles_of_price_history.short
     )
+  }
+
+  async current_market_direction(): Promise<Direction | null> {
+    return this.direction_persistance.get_direction(this.base_asset)
+  }
+
+  full(): boolean {
+    return this.price_history_candles_long.full() && this.price_history_candles_short.full()
   }
 
   private check_for_long_signal({

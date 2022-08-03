@@ -21,7 +21,7 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { Logger } from "../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false })
+const logger: Logger = new Logger({ silent: false, level: 'debug' })
 
 import { SendMessage } from "../../classes/send_message/publish"
 
@@ -158,10 +158,12 @@ class Edge70SignalsService {
           let err = new Error(`No candles loaded for ${symbol}`)
           Sentry.captureException(err) // this is unexpected now, 429?
           throw err
+        }else {
+          this.logger.info(`Loaded ${initial_candles.length} candles for ${symbol}`)
         }
 
         // chop off the most recent candle as the code above gives us a partial candle at the end
-        if (initial_candles[initial_candles.length - 1].closeTime > Date.now()) {
+        if (initial_candles.length > 0 && initial_candles[initial_candles.length - 1].closeTime > Date.now()) {
           let partial_candle = initial_candles.pop()
           if (partial_candle) assert(partial_candle.closeTime > Date.now()) // double check that was actually a partial candle
         }

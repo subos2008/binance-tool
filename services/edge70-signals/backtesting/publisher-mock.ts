@@ -40,22 +40,7 @@ export class Edge70AMQPSignalPublisherMock implements Edge70SignalCallbacks {
     let { edge } = this
     let tags = { edge, base_asset, direction, symbol }
 
-    /* telegram */
-    try {
-      let msg = args.msg
-      this.logger.info(tags, msg)
-    } catch (e) {
-      this.logger.error(tags, `Failed to publish to telegram for ${symbol}`)
-      Sentry.captureException(e)
-    }
-
-    try {
-      let date = new Date(args.signal.signal_timestamp_ms)
-      console.log(`${date} SIGNAL ${direction} `)
-    } catch (e) {
-      this.logger.warn(tags, `Failed to publish to AMQP for ${symbol}`)
-      // This can happen if top 100 changes since boot and we refresh the market_data... eh?
-      Sentry.captureException(e)
-    }
+    let date = new Date(args.signal.signal_timestamp_ms)
+    this.logger.info(tags, `${date} SIGNAL ${direction} `)
   }
 }

@@ -87,6 +87,7 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
         }
       }
     } catch (err) {
+      this.logger.error({ err })
       Sentry.captureException(err)
     }
 
@@ -95,17 +96,18 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
       let msg = args.msg
       this.logger.info(tags, msg)
       this.send_message(msg, tags)
-    } catch (e) {
+    } catch (err) {
       this.logger.error(tags, `Failed to publish to telegram for ${symbol}`)
-      Sentry.captureException(e)
+      this.logger.error({ err })
+      Sentry.captureException(err)
     }
 
     try {
       this.signal_publisher.publish(args)
-    } catch (e) {
-      this.logger.warn(tags, `Failed to publish to AMQP for ${symbol}`)
-      // This can happen if top 100 changes since boot and we refresh the market_data... eh?
-      Sentry.captureException(e)
+    } catch (err) {
+      this.logger.warn(tags, `Failed to publish ${args.object_type} to AMQP for ${symbol}`)
+      this.logger.error({ err })
+      Sentry.captureException(err)
     }
 
     try {
@@ -115,10 +117,10 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
         direction,
         base_asset,
       })
-    } catch (e) {
+    } catch (err) {
       this.logger.warn(tags, `Failed to publish direction to AMQP for ${symbol}`)
-      // This can happen if top 100 changes since boot and we refresh the cap list
-      Sentry.captureException(e)
+      this.logger.error({ err })
+      Sentry.captureException(err)
     }
   }
 

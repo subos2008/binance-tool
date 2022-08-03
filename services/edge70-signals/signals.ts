@@ -92,7 +92,7 @@ export class Edge70Signals {
     })
 
     let last_candle = initial_candles[initial_candles.length - 1]
-    if (last_candle.closeTime > Date.now())
+    if (last_candle && last_candle.closeTime > Date.now())
       throw new Error(`${this.market_identifier.symbol} partial final candle in initial_candles`)
   }
 
@@ -130,7 +130,7 @@ export class Edge70Signals {
     }
 
     tags = { ...tags, signal_long }
-    this.logger.info(tags, debug_string_long)
+    this.logger.debug(tags, debug_string_long)
 
     return { tags, signal_long, debug_string_long }
   }
@@ -161,12 +161,12 @@ export class Edge70Signals {
     }
 
     tags = { ...tags, signal_short }
-    this.logger.info(tags, debug_string_short)
+    this.logger.debug(tags, debug_string_short)
 
     return { tags, signal_short, debug_string_short }
   }
 
-  async ingest_new_candle({ candle, symbol }: { symbol: string; candle: EdgeCandle }) {
+  async ingest_new_candle({ candle, symbol }: { symbol: string; candle: EdgeCandle }): Promise<void> {
     let { base_asset, edge } = this
     let tags: Tags = { symbol, base_asset, edge }
 
@@ -210,9 +210,8 @@ export class Edge70Signals {
       }
 
       let direction: "long" | "short" | undefined = undefined
-
       if (direction === undefined) {
-        this.logger.info(tags, `${symbol}: No signal: LONG - ${debug_string_long} SHORT - ${debug_string_short}`)
+        this.logger.debug(tags, `${symbol}: No signal: LONG - ${debug_string_long} SHORT - ${debug_string_short}`)
         return
       }
 
@@ -232,7 +231,7 @@ export class Edge70Signals {
       }
       let direction_change = previous_direction !== direction
       if (!direction_change) {
-        this.logger.info(tags, `${symbol} ${direction} price triggered but not trend reversal`)
+        this.logger.debug(tags, `${symbol} ${direction} price triggered but not trend reversal`)
         return
       }
 
@@ -256,11 +255,14 @@ export class Edge70Signals {
         },
       }
 
+      this.logger.info({tags}, `Signalled ${direction}`)
+
       this.callbacks.publish(event)
     } catch (err) {
       this.logger.error(
         `Exception ingesting candle: ${err} - not storing candle, history probably incorrect - setting unhealthy`
       )
+      this.logger.error({ err })
       this.health_and_readiness.healthy(false)
       this.health_and_readiness.ready(false)
       this.logger.error({ err })

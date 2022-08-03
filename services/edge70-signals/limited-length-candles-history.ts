@@ -16,11 +16,12 @@ export class LimitedLengthCandlesHistory {
   // Patch an array object with overrided push() function
   private limited_length_candle_array(length: number, initial_candles: StoredCandle[]): StoredCandle[] {
     var array: StoredCandle[] = initial_candles.slice(-length)
-    array.push = function () {
+    array.push = function (...items) {
+      if(items.length != 1) throw new Error(`LimitedLengthCandlesHistory implementation only accespts push of one item`)
       if (this.length >= length) {
         this.shift()
       }
-      return Array.prototype.push.apply(this, arguments as any) // typscript didn't like this
+      return Array.prototype.push.apply(this, items)
     }
     return array
   }
@@ -48,6 +49,7 @@ export class LimitedLengthCandlesHistory {
   }
 
   get_highest_value(): { high: BigNumber; candle: StoredCandle } {
+    if (!this.candles[0]) throw new Error(`Asking for info from an empty LimitedLengthCandlesHistory, stored: ${this.current_number_of_stored_candles()}`)
     function candle_high_value(candle: StoredCandle) {
       return new BigNumber(candle["high"])
     }
@@ -65,6 +67,7 @@ export class LimitedLengthCandlesHistory {
   }
 
   get_lowest_value(): { low: BigNumber; candle: StoredCandle } {
+    if (!this.candles[0]) throw new Error(`Asking for info from an empty LimitedLengthCandlesHistory, stored: ${this.current_number_of_stored_candles()}`)
     function candle_low_value(candle: StoredCandle) {
       return new BigNumber(candle["low"])
     }

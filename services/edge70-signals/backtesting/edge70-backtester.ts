@@ -17,7 +17,7 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { Logger } from "../../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false })
+const logger: Logger = new Logger({ silent: false, level: "debug" })
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -150,6 +150,8 @@ class Edge70SignalsBacktester {
           let err = new Error(`No candles loaded for ${symbol}`)
           Sentry.captureException(err) // this is unexpected now, 429?
           throw err
+        } else {
+          this.logger.info(`Loaded ${candles.length} candles for ${symbol}`)
         }
 
         // chop off the most recent candle as the code above gives us a partial candle at the end
@@ -183,14 +185,23 @@ class Edge70SignalsBacktester {
           `Setup edge for ${symbol} with ${initial_candles.length} initial candles`
         )
         // TODO: get klines via the TAS so we can do rate limiting
-        await sleep(400) // 1200 calls allowed per minute per IP address, sleep(200) => 300/minute
-      } catch (err: any) {
-        Sentry.captureException(err)
+        if (base_assets.length > 1) {
+          this.logger.debug(`Sleeping...`)
+          await sleep(400) // 1200 calls allowed per minute per IP address, sleep(200) => 300/minute
+          this.logger.warn(`Not sleeping...no rate limiting - add bottleneck`)
+        }
+
+        this.logger.warn(`Not checking for STOP out of position on edge70`)
+
+        if (!this.edges[symbol]) throw new Error(`edge not initialised for ${symbol}`)
+        this.logger.info(`Feeding ${candles.length} candles into ${symbol}`)
+        for (const candle of candles) {
+          await this.edges[symbol].ingest_new_candle({ symbol, candle })
+        }
+      } catch (err) {
         this.logger.error({ err })
-      }
-      console.warn(`Not checking for STOP out`)
-      for (const candle of candles) {
-        this.edges[symbol].ingest_new_candle({ symbol, candle })
+        Sentry.captureException(err)
+        throw err
       }
     }
   }
@@ -198,7 +209,8 @@ class Edge70SignalsBacktester {
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = async (msg: string, tags?: ContextTags) => {
-  console.log(msg)
+  if (tags) logger.warn(tags, msg)
+  else logger.warn(msg)
 }
 health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 

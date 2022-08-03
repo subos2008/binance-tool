@@ -41,7 +41,7 @@ export class Edge60ForwarderToEdge60Spot implements Edge60EntrySignalProcessor {
   logger: Logger
   event_name: MyEventNameType
   tas_client: TradeAbstractionServiceClient
-  edge: AuthorisedEdgeType
+  edge: string
   forward_short_signals_as_close_position: boolean
 
   constructor({
@@ -54,7 +54,7 @@ export class Edge60ForwarderToEdge60Spot implements Edge60EntrySignalProcessor {
     send_message: (msg: string) => void
     logger: Logger
     event_name: MyEventNameType
-    edge: AuthorisedEdgeType
+    edge: string
     forward_short_signals_as_close_position: boolean
   }) {
     assert(logger)

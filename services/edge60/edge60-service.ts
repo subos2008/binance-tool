@@ -77,7 +77,7 @@ function sleep(ms: number) {
 const edge60_parameters: Edge60Parameters = {
   // days_of_price_history should be one less than the value we use in the TV high/low indicator
   // because the high/low indicator includes the new candle in it's count
-  days_of_price_history: 21, 
+  days_of_price_history: 21,
 }
 
 let edge = "edge60"
@@ -238,7 +238,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     signal_timestamp_ms: number
     market_identifier: MarketIdentifier_V4
   }) {
-    const edge: AuthorisedEdgeType = "edge60"
+    const edge: "edge60" = "edge60"
     let base_asset = market_identifier.base_asset
     let event: Edge60PositionEntrySignal = {
       object_type: "Edge60EntrySignal",

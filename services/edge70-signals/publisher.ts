@@ -1,0 +1,155 @@
+import Sentry from "../../lib/sentry"
+
+import { BigNumber } from "bignumber.js"
+BigNumber.DEBUG = true // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function () {
+  throw Error("BigNumber .valueOf called!")
+}
+
+import { SendMessageFunc } from "../../classes/send_message/publish"
+import { Edge70Parameters, Edge70Signal } from "./interfaces/edge70-signal"
+import { Logger } from "../../lib/faux_logger"
+import { TypedGenericTopicPublisher } from "../../classes/amqp/typed-generic-publisher"
+import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
+import { HealthAndReadiness } from "../../classes/health_and_readiness"
+import { MarketIdentifier_V5 } from "../../events/shared/market-identifier"
+import { StatsD } from "hot-shots"
+import { MarketData } from "./market-data"
+import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
+import { Edge70SignalCallbacks } from "./interfaces/_internal"
+
+var dogstatsd = new StatsD()
+
+export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
+  logger: Logger
+  send_message: SendMessageFunc
+  edge: "edge70" | "edge70-backtest"
+  signal_publisher: TypedGenericTopicPublisher<Edge70Signal>
+  publisher_for_EdgeDirectionSignal: EdgeDirectionSignalPublisher
+  health_and_readiness: HealthAndReadiness
+  market_data: MarketData | undefined
+
+  constructor({
+    logger,
+    edge,
+    send_message,
+    health_and_readiness,
+    market_data,
+  }: {
+    logger: Logger
+    edge: "edge70" | "edge70-backtest"
+    send_message: SendMessageFunc
+    health_and_readiness: HealthAndReadiness
+    edge70_parameters: Edge70Parameters
+    market_data: MarketData
+  }) {
+    this.logger = logger
+    this.edge = edge
+    this.send_message = send_message
+    this.health_and_readiness = health_and_readiness
+    this.market_data = market_data
+    this.signal_publisher = new TypedGenericTopicPublisher<Edge70Signal>({
+      logger,
+      event_name: "Edge70Signal",
+      health_and_readiness,
+    })
+    this.publisher_for_EdgeDirectionSignal = new EdgeDirectionSignalPublisher({
+      logger,
+      dogstatsd,
+      health_and_readiness,
+    })
+  }
+
+  async init(): Promise<void> {
+    await this.signal_publisher.connect()
+    await this.publisher_for_EdgeDirectionSignal.connect()
+    if (this.market_data) await this.market_data.init()
+  }
+
+  async publish(args: Edge70Signal): Promise<void> {
+    let { direction } = args
+    let { base_asset, symbol } = args.market_identifier
+    let { edge } = this
+    let tags = { edge, base_asset, direction, symbol }
+
+    /* Event decorators - MCAP etc */
+    try {
+      if (this.market_data) {
+        // This can happen - we don't have data for all coins on Binance
+        let CoinGeckoMarketData: CoinGeckoMarketData | undefined = this.market_data.market_data(
+          args.market_identifier
+        )
+        if (CoinGeckoMarketData) {
+          args.extra = { ...args.extra, CoinGeckoMarketData }
+          let market_data_string: string = this.market_data.market_data_string(CoinGeckoMarketData) || ""
+          args.msg = args.msg + ` ${market_data_string}`
+        }
+      }
+    } catch (err) {
+      Sentry.captureException(err)
+    }
+
+    /* telegram */
+    try {
+      let msg = args.msg
+      this.logger.info(tags, msg)
+      this.send_message(msg, tags)
+    } catch (e) {
+      this.logger.error(tags, `Failed to publish to telegram for ${symbol}`)
+      Sentry.captureException(e)
+    }
+
+    try {
+      this.signal_publisher.publish(args)
+    } catch (e) {
+      this.logger.warn(tags, `Failed to publish to AMQP for ${symbol}`)
+      // This can happen if top 100 changes since boot and we refresh the market_data... eh?
+      Sentry.captureException(e)
+    }
+
+    try {
+      this.publish_direction_to_amqp({
+        signal_timestamp_ms: args.signal.signal_timestamp_ms,
+        market_identifier: args.market_identifier,
+        direction,
+        base_asset,
+      })
+    } catch (e) {
+      this.logger.warn(tags, `Failed to publish direction to AMQP for ${symbol}`)
+      // This can happen if top 100 changes since boot and we refresh the cap list
+      Sentry.captureException(e)
+    }
+  }
+
+  private async publish_direction_to_amqp({
+    direction,
+    market_identifier,
+    signal_timestamp_ms,
+  }: {
+    direction: "long" | "short"
+    signal_timestamp_ms: number
+    base_asset: string
+    market_identifier: MarketIdentifier_V5
+  }) {
+    let event: EdgeDirectionSignal = {
+      object_type: "EdgeDirectionSignal",
+      version: 1,
+      edge: "edge60",
+      market_identifier,
+      direction,
+      exchange_type: market_identifier.exchange_identifier.exchange_type,
+      base_asset: market_identifier.base_asset,
+      quote_asset: market_identifier.quote_asset,
+      symbol: market_identifier.symbol,
+      signal_timestamp_ms: signal_timestamp_ms,
+    }
+    this.logger.info(JSON.stringify(event))
+    const options = {
+      // expiration: event_expiration_seconds,
+      persistent: true,
+      timestamp: Date.now(),
+    }
+    this.publisher_for_EdgeDirectionSignal.publish(event, options)
+  }
+}

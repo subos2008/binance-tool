@@ -21,7 +21,8 @@ import { Logger } from "../interfaces/logger"
 const LoggerClass = require("../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
-import { SendMessage, SendMessageFunc } from "../classes/send_message/publish"
+import { SendMessage } from "../classes/send_message/publish"
+import { SendMessageFunc } from "../interfaces/send-message"
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 

@@ -5,17 +5,8 @@ import { URL } from "url"
 import { Logger } from "../interfaces/logger"
 
 import fetch from "node-fetch"
-import { AuthorisedEdgeType } from "../classes/spot/abstractions/position-identifier"
-const Sentry = require("@sentry/node")
-
-export type SendMessageFunc = (msg: string, tags?: ContextTags) => Promise<void>
-
-export interface ContextTags {
-  // object_type: "SendMessage"
-  edge?: string | AuthorisedEdgeType
-  base_asset?: string
-  class?: string // name of the class calling send_message
-}
+import { ContextTags, SendMessageFunc } from "../interfaces/send-message"
+import Sentry from "./sentry"
 
 export class SendMessage {
   service_name: string

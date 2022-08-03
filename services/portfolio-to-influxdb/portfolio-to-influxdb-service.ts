@@ -19,13 +19,15 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { Logger } from "../../lib/faux_logger"
-import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
+import { SendMessage } from "../../classes/send_message/publish"
 import influxdb from "../../lib/influxdb"
 import { MessageProcessor } from "../../classes/amqp/interfaces"
 import { Point } from "@influxdata/influxdb-client"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { Channel } from "amqplib"
+import { SendMessageFunc } from "../../interfaces/send-message"
+import express from "express"
 
 const logger = new Logger({ silent: false })
 
@@ -144,7 +146,6 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-import express from "express"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))

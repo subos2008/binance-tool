@@ -1,9 +1,7 @@
 /**
  * New highs or lows - pure trend following
  *
- * Probably could be defined as 22d bollenger band breakouts
- *
- * Always long or short - no exit condition added yet
+ * Probably could be defined as Donchien channel band breakouts
  *
  * */
 
@@ -20,154 +18,231 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../interfaces/logger"
-import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
-import { Edge60Parameters } from "../../events/shared/edge60-position-entry"
 import { CandleChartResult } from "binance-api-node"
-import { EdgeCandle, LongShortSignalCallbacks } from "./interfaces"
+import { Edge70SignalCallbacks, EdgeCandle } from "./interfaces/_internal"
 import { LimitedLengthCandlesHistory } from "./limited-length-candles-history"
 import { DateTime } from "luxon"
-import { Edge70Parameters } from "../../events/shared/edge70-signal"
+import { Edge70Parameters, Edge70Signal } from "./interfaces/edge70-signal"
+import { Tags } from "../../observability/loggable-tags"
+import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
+import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
 
+/* Instantiated per asset; each exchange symbol has its own instance of this class */
 export class Edge70Signals {
-  symbol: string
-  base_asset: string
   logger: Logger
-  market_data: CoinGeckoMarketData
+  health_and_readiness: HealthAndReadinessSubsystem
+  base_asset: string
+  edge: "edge70" | "edge70-backtest" = "edge70"
+  edge70_parameters: Edge70Parameters
+  market_identifier: MarketIdentifier_V5_with_base_asset
 
-  callbacks: LongShortSignalCallbacks
-  price_history_candles: LimitedLengthCandlesHistory
+  callbacks: Edge70SignalCallbacks
+  price_history_candles_long: LimitedLengthCandlesHistory
+  price_history_candles_short: LimitedLengthCandlesHistory
 
   constructor({
     logger,
+    health_and_readiness,
     initial_candles,
-    symbol,
-    market_data,
+    market_identifier,
     callbacks,
     edge70_parameters,
     base_asset,
+    edge,
   }: {
     logger: Logger
+    health_and_readiness: HealthAndReadiness
     initial_candles: CandleChartResult[]
-    symbol: string
-    market_data: CoinGeckoMarketData
-    callbacks: LongShortSignalCallbacks
+    market_identifier: MarketIdentifier_V5_with_base_asset
+    callbacks: Edge70SignalCallbacks
     edge70_parameters: Edge70Parameters
     base_asset: string
+    edge?: "edge70-backtest"
   }) {
-    this.symbol = symbol
+    this.market_identifier = market_identifier
     this.logger = logger
-    this.market_data = market_data
     this.callbacks = callbacks
     this.base_asset = base_asset
+    this.edge70_parameters = edge70_parameters
+    if (edge) this.edge = edge
+    this.health_and_readiness = health_and_readiness.addSubsystem({
+      name: "Edge70Signals",
+      ready: true,
+      healthy: true,
+    })
 
-    this.price_history_candles = new LimitedLengthCandlesHistory({
-      length: edge70_parameters.days_of_price_history,
+    this.price_history_candles_long = new LimitedLengthCandlesHistory({
+      length: edge70_parameters.candles_of_price_history.long,
+      initial_candles,
+    })
+
+    this.price_history_candles_short = new LimitedLengthCandlesHistory({
+      length: edge70_parameters.candles_of_price_history.short,
       initial_candles,
     })
 
     let last_candle = initial_candles[initial_candles.length - 1]
-    if (last_candle.closeTime > Date.now()) throw new Error(`${symbol} partial final candle in initial_candles`)
+    if (last_candle.closeTime > Date.now())
+      throw new Error(`${this.market_identifier.symbol} partial final candle in initial_candles`)
   }
 
-  static required_initial_candles(edge60_parameters: Edge60Parameters) {
-    return Math.max(edge60_parameters.days_of_price_history)
+  /* number of candles of history we need for the edge to be properly initialised */
+  static required_initial_candles(edge70_parameters: Edge70Parameters) {
+    return Math.max(
+      edge70_parameters.candles_of_price_history.long,
+      edge70_parameters.candles_of_price_history.short
+    )
   }
 
-  async ingest_new_candle({
-    timeframe,
+  private check_for_long_signal({
     candle,
-    symbol,
+    price_history_candles,
+    tags,
   }: {
-    timeframe: string
-    symbol: string
     candle: EdgeCandle
-  }) {
-    let base_asset = this.base_asset
-    let tags: Object = { symbol, base_asset, edge: "edge60" }
-    if (timeframe !== "1d") {
-      let msg = `Short timeframe candle on ${this.symbol} closed at ${candle.close}`
-      this.logger.info(tags, msg)
-      throw new Error(msg)
+    price_history_candles: LimitedLengthCandlesHistory
+    tags: Tags
+  }): { tags: Tags; signal_long: boolean; debug_string_long: string } {
+    let signal_long: boolean | undefined = undefined
+    let debug_string_long: string | undefined
+    const current = price_history_candles.current_number_of_stored_candles()
+    const required = price_history_candles.required_number_of_stored_candles()
+
+    if (!price_history_candles.full()) {
+      signal_long = false
+      debug_string_long = `Insufficient candles of history ${current}/${required}`
+    } else {
+      // check for long entry
+      const high = new BigNumber(candle["high"])
+      let { high: highest_price } = price_history_candles.get_highest_value()
+      signal_long = high.isGreaterThan(highest_price) // note we include wicks
+      debug_string_long = `H: ${high.toFixed()} vs ${highest_price.toFixed()}(${current})`
     }
 
-    // assert.equal(symbol, this.symbol)
+    tags = { ...tags, signal_long }
+    this.logger.info(tags, debug_string_long)
 
-    this.logger.debug(tags, { signal: "new_candle", symbol }, `${symbol} ingesting new candle`)
+    return { tags, signal_long, debug_string_long }
+  }
+
+  private check_for_short_signal({
+    candle,
+    price_history_candles,
+    tags,
+  }: {
+    candle: EdgeCandle
+    price_history_candles: LimitedLengthCandlesHistory
+    tags: Tags
+  }): { tags: Tags; signal_short: boolean; debug_string_short: string } {
+    let signal_short: boolean | undefined = undefined
+    let debug_string_short: string | undefined
+    const current = price_history_candles.current_number_of_stored_candles()
+    const required = price_history_candles.required_number_of_stored_candles()
+
+    if (!price_history_candles.full()) {
+      signal_short = false
+      debug_string_short = `Insufficient candles of history ${current}/${required}`
+    } else {
+      // check for short entry
+      let low = new BigNumber(candle["low"])
+      let { low: lowest_price } = price_history_candles.get_lowest_value()
+      signal_short = low.isLessThan(lowest_price) // note we include wicks
+      debug_string_short = `L: ${low.toFixed()} vs ${lowest_price.toFixed()}(${current})`
+    }
+
+    tags = { ...tags, signal_short }
+    this.logger.info(tags, debug_string_short)
+
+    return { tags, signal_short, debug_string_short }
+  }
+
+  async ingest_new_candle({ candle, symbol }: { symbol: string; candle: EdgeCandle }) {
+    let { base_asset, edge } = this
+    let tags: Tags = { symbol, base_asset, edge }
+
+    this.logger.debug(tags, {
+      // Better to spam this when we have some result, no?
+      object_type: "EdgeSignalCandleIngestion",
+      symbol,
+      msg: `${symbol} ingesting new candle`,
+    })
 
     try {
-      let potential_entry_price = new BigNumber(candle["close"])
-      let high = new BigNumber(candle["high"])
-      let low = new BigNumber(candle["low"])
-      let { high: highest_price } = this.price_history_candles.get_highest_value()
-      let { low: lowest_price } = this.price_history_candles.get_lowest_value()
-
-      // Debug info
-      let debug_string = `${symbol}: H: ${high.toFixed()} vs ${highest_price.toFixed()} L: ${low.toFixed()} vs ${lowest_price.toFixed()}`
-      // let high_candles
-
-      let direction: "long" | "short" | undefined = undefined
-
-      if (!this.price_history_candles.full()) {
-        this.logger.info(
-          tags,
-          `${symbol}: insufficient candles of history, currently ${this.price_history_candles.current_number_of_stored_candles()}`
-        )
-        return // should execute finally block
-      }
-
-      // Check for entry signal in both directions and ignore
-      if (high.isGreaterThan(highest_price) && low.isLessThan(lowest_price)) {
-        let msg = `${symbol} Price entry signal both long and short, skipping...`
-        this.logger.warn(tags, msg)
-        throw new Error(msg)
-      }
+      /* start code with finally block */
 
       let signal_timestamp_ms = DateTime.now().toMillis() + 1 // avoid the last millisecond of the day... why?
 
       // check for long entry
-      if (high.isGreaterThan(highest_price)) {
-        direction = "long"
-        tags = { ...tags, direction }
-        this.logger.info(
-          tags,
-          `Price entry signal on ${symbol} ${direction} at ${potential_entry_price.toFixed()}: ${high.toFixed()} greater than ${highest_price.toFixed()}: ${debug_string}`
-        )
-        this.callbacks.process_long_short_signal({
-          symbol: this.symbol,
-          signal_price: potential_entry_price,
-          trigger_price: potential_entry_price,
-          direction,
-          signal_timestamp_ms,
-        })
-      }
+      let long_result = this.check_for_long_signal({
+        candle,
+        price_history_candles: this.price_history_candles_long,
+        tags,
+      })
+      let { signal_long, debug_string_long } = long_result
+      tags = long_result.tags
 
       // check for short entry
-      if (low.isLessThan(lowest_price)) {
-        direction = "short"
-        tags = { ...tags, direction }
-        this.logger.info(
-          tags,
-          `Price entry signal ${direction} at ${potential_entry_price.toFixed()}: ${low.toFixed()} less than ${lowest_price.toFixed()}: ${debug_string}`
-        )
-        this.callbacks.process_long_short_signal({
-          symbol: this.symbol,
-          signal_price: potential_entry_price,
-          trigger_price: potential_entry_price,
-          direction,
-          signal_timestamp_ms,
-        })
+      let short_result = this.check_for_short_signal({
+        candle,
+        price_history_candles: this.price_history_candles_short,
+        tags,
+      })
+      let { signal_short, debug_string_short } = short_result
+      tags = short_result.tags
+
+      // Check for entry signal in both directions and ignore
+      // NB: this means the stored market direction isn't changed
+      if (signal_long && signal_short) {
+        let msg = `${symbol} Price entry signal both long and short, skipping...`
+        this.logger.warn(tags, msg)
+        this.logger.warn(tags, `Warning: signalled both directions - persistent market direction not updated`)
+        return
       }
 
+      let direction: "long" | "short" | undefined = undefined
+
       if (direction === undefined) {
-        this.logger.info(tags, `${symbol}: No signal ${debug_string}`)
+        this.logger.info(tags, `${symbol}: No signal: LONG - ${debug_string_long} SHORT - ${debug_string_short}`)
+        return
       }
+
+      if (signal_long) direction = "long"
+      if (signal_short) direction = "short"
+      if (direction) tags = { ...tags, direction }
+
+      let signal_price = candle["close"]
+      let { market_identifier } = this
+
+      let event: Edge70Signal = {
+        object_type: "Edge70Signal",
+        version: 1,
+        // msg: `trend reversal ${direction_string} entry signal on ${base_asset} at ${days}d price ${signal_price.toFixed()}. ${market_data_string}`,
+        msg: `${edge} ${direction} signal on ${base_asset} (${symbol})`,
+        base_asset,
+        direction,
+        edge,
+        market_identifier,
+        edge70_parameters: this.edge70_parameters,
+        signal: {
+          direction,
+          signal_price,
+          signal_timestamp_ms,
+        },
+      }
+
+      this.callbacks.publish(event)
     } catch (err) {
-      this.logger.error(`Exception checking or entering position: ${err}`)
+      this.logger.error(
+        `Exception ingesting candle: ${err} - not storing candle, history probably incorrect - setting unhealthy`
+      )
+      this.health_and_readiness.healthy(false)
+      this.health_and_readiness.ready(false)
       this.logger.error({ err })
       Sentry.captureException(err)
     } finally {
       // important not to miss this - lest we corrupt the history
-      this.price_history_candles.push(candle)
+      this.price_history_candles_long.push(candle)
+      this.price_history_candles_short.push(candle)
     }
   }
 }

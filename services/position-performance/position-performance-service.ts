@@ -26,13 +26,15 @@ BigNumber.prototype.valueOf = function () {
 import Sentry from "../../lib/sentry"
 import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
 import { Prices } from "../../interfaces/portfolio"
-import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
+import { SendMessage } from "../../classes/send_message/publish"
 import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
 import { CurrentAllPricesGetter } from "../../interfaces/exchanges/generic/price-getter"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
+import { SendMessageFunc } from "../../interfaces/send-message"
+import express from "express"
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
@@ -201,7 +203,6 @@ function soft_exit(exit_code: number | null, reason: string) {
   if (exit_code) process.exitCode = exit_code
 }
 
-import express from "express"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))

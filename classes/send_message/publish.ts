@@ -6,15 +6,7 @@ import { Logger } from "../../interfaces/logger"
 import { GenericTopicPublisher } from "../amqp/generic-publishers"
 import { MyEventNameType } from "../amqp/message-routing"
 import { HealthAndReadiness } from "../health_and_readiness"
-
-export type SendMessageFunc = (msg: string, tags?: ContextTags) => Promise<void>
-
-export interface ContextTags {
-  edge?: string
-  base_asset?: string
-  class?: string // name of the class calling send_message
-  exchange_type?: "spot" | "futures"
-}
+import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
 
 export interface SendMessageEvent {
   object_type: "SendMessage"

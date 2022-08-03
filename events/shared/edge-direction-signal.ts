@@ -1,6 +1,6 @@
 import Sentry from "../../lib/sentry"
 
-import { MarketIdentifier_V4 } from "./market-identifier"
+import { MarketIdentifier_V4, MarketIdentifier_V5 } from "./market-identifier"
 
 /** For edges that signal flip-flop long/short */
 export interface EdgeDirectionSignal {
@@ -13,7 +13,7 @@ export interface EdgeDirectionSignal {
   symbol: string
   exchange_type: ExchangeType
   signal_timestamp_ms: number
-  market_identifier: MarketIdentifier_V4
+  market_identifier: MarketIdentifier_V4 | MarketIdentifier_V5
 }
 
 import { Options } from "amqplib"

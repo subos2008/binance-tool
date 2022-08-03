@@ -1,13 +1,14 @@
-
 import BigNumber from "bignumber.js"
+import { Edge70Signal } from "./edge70-signal"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-export interface LongShortSignalCallbacks {
-  process_long_short_signal(args: LongShortSignal): void
+export interface Edge70SignalCallbacks {
+  publish(args: Edge70Signal): Promise<void>
+  init(): Promise<void> // call before use
 }
 
 export interface EdgeCandle {

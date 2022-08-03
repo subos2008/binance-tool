@@ -1,4 +1,9 @@
-import { ExchangeIdentifier, ExchangeIdentifier_V2, ExchangeIdentifier_V3 } from "./exchange-identifier"
+import {
+  ExchangeIdentifier,
+  ExchangeIdentifier_V2,
+  ExchangeIdentifier_V3,
+  ExchangeIdentifier_V4,
+} from "./exchange-identifier"
 
 export interface MarketIdentifier {
   exchange_identifier: ExchangeIdentifier
@@ -26,6 +31,24 @@ export interface MarketIdentifier_V4 {
   version: 4
   exchange_identifier: ExchangeIdentifier_V3
   base_asset?: string
+  quote_asset?: string
+  symbol: string
+}
+
+export interface MarketIdentifier_V5 {
+  object_type: "MarketIdentifier"
+  version: 5
+  exchange_identifier: ExchangeIdentifier_V4
+  base_asset?: string
+  quote_asset?: string
+  symbol: string
+}
+
+export interface MarketIdentifier_V5_with_base_asset {
+  object_type: "MarketIdentifier"
+  version: 5
+  exchange_identifier: ExchangeIdentifier_V4
+  base_asset: string
   quote_asset?: string
   symbol: string
 }

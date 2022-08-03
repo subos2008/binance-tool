@@ -7,7 +7,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { strict as assert } from "assert"
 
-import { StoredCandle } from "./interfaces"
+import { StoredCandle } from "./interfaces/_internal"
 
 export class LimitedLengthCandlesHistory {
   private candles: StoredCandle[]
@@ -31,11 +31,15 @@ export class LimitedLengthCandlesHistory {
   }
 
   full(): boolean {
-    return this.candles.length >= this.length
+    return this.current_number_of_stored_candles() >= this.required_number_of_stored_candles()
   }
 
   current_number_of_stored_candles(): number {
     return this.candles.length
+  }
+
+  required_number_of_stored_candles(): number {
+    return this.length
   }
 
   push(candle: StoredCandle) {

@@ -13,6 +13,7 @@ COPY classes /app/classes
 # COPY service.ts /app/
 COPY services /app/services
 COPY interfaces /app/interfaces
+COPY observability /app/observability
 COPY types /app/types
 COPY test /app/test
 COPY events /app/events

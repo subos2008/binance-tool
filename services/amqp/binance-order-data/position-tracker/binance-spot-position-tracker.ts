@@ -26,7 +26,7 @@ import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-p
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { AMQP_BinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-binance-order-data-listener"
 import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+import { SendMessage } from "../../../../classes/send_message/publish"
 
 const logger: Logger = new Logger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
@@ -46,6 +46,7 @@ process.on("unhandledRejection", (err) => {
 })
 
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
 set_redis_logger(logger)
 const redis = get_redis_client()
 

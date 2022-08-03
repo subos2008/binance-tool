@@ -12,11 +12,22 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { Logger } from "../interfaces/logger"
+import { SendMessage } from "../classes/send_message/publish"
+import { SpotPositionsQuery } from "../classes/spot/abstractions/spot-positions-query"
+import { SpotPositionsPersistance } from "../classes/spot/persistence/interface/spot-positions-persistance"
+import { SpotPositionIdentifier_V3, SpotPositionsQuery_V3 } from "../classes/spot/abstractions/position-identifier"
+import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
+import { BinancePriceGetter } from "../interfaces/exchanges/binance/binance-price-getter"
+import { CurrentPriceGetter } from "../interfaces/exchanges/generic/price-getter"
+import { RedisSpotPositionsPersistance } from "../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
+import { HealthAndReadiness } from "../classes/health_and_readiness"
+import { SendMessageFunc } from "../interfaces/send-message"
+
+
 const LoggerClass = require("../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
 let service_name = "cli"
-import { SendMessage, SendMessageFunc } from "../classes/send_message/publish"
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
@@ -36,16 +47,6 @@ BigNumber.prototype.valueOf = function () {
 
 const yargs = require("yargs")
 const c = require("ansi-colors")
-
-import { SpotPositionsQuery } from "../classes/spot/abstractions/spot-positions-query"
-import { SpotPositionsPersistance } from "../classes/spot/persistence/interface/spot-positions-persistance"
-// import { Position } from "../classes/position"
-import { SpotPositionIdentifier_V3, SpotPositionsQuery_V3 } from "../classes/spot/abstractions/position-identifier"
-import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
-import { BinancePriceGetter } from "../interfaces/exchanges/binance/binance-price-getter"
-import { CurrentPriceGetter } from "../interfaces/exchanges/generic/price-getter"
-import { RedisSpotPositionsPersistance } from "../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
-import { HealthAndReadiness } from "../classes/health_and_readiness"
 
 require("dotenv").config()
 

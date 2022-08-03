@@ -168,6 +168,8 @@ class Edge70SignalsBacktester {
 
         let initial_candles: CandleChartResult[] = []
         this.edges[symbol] = new Edge70Signals({
+          send_message,
+          direction_persistance: this.direction_persistance,
           logger: this.logger,
           health_and_readiness,
           initial_candles,
@@ -186,6 +188,7 @@ class Edge70SignalsBacktester {
         Sentry.captureException(err)
         this.logger.error({ err })
       }
+      console.warn(`Not checking for STOP out`)
       for (const candle of candles) {
         this.edges[symbol].ingest_new_candle({ symbol, candle })
       }
@@ -200,11 +203,11 @@ const send_message: SendMessageFunc = async (msg: string, tags?: ContextTags) =>
 health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 async function main() {
-  assert(process.env.BINANCE_RO_API_KEY)
-  assert(process.env.BINANCE_RO_API_SECRET)
+  // assert(process.env.BINANCE_RO_API_KEY)
+  // assert(process.env.BINANCE_RO_API_SECRET)
   var ee: Binance = binance({
-    apiKey: process.env.BINANCE_RO_API_KEY || "foo",
-    apiSecret: process.env.BINANCE_RO_API_SECRET || "foo",
+    // apiKey: process.env.BINANCE_RO_API_KEY || "foo",
+    // apiSecret: process.env.BINANCE_RO_API_SECRET || "foo",
   })
 
   try {

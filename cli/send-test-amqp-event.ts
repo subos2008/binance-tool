@@ -16,7 +16,7 @@ const LoggerClass = require("../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
 import { GenericTopicPublisher } from "../classes/amqp/generic-publishers"
-import { SendMessage, SendMessageFunc } from "../classes/send_message/publish"
+import { SendMessage } from "../classes/send_message/publish"
 import { HealthAndReadiness } from "../classes/health_and_readiness"
 
 const yargs = require("yargs")

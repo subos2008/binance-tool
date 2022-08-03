@@ -19,8 +19,10 @@ import { OrderExecutionTracker } from "../../classes/exchanges/binance/spot-orde
 import { BinanceOrderData } from "../../interfaces/exchanges/binance/order_callbacks"
 import { RedisOrderContextPersistance } from "../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
-import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
+import { SendMessage } from "../../classes/send_message/publish"
 import { Logger } from "./../../lib/faux_logger"
+import { SendMessageFunc } from "../../interfaces/send-message"
+import express from "express"
 
 // redis + events + binance
 
@@ -164,7 +166,6 @@ function soft_exit(exit_code: number | null = null) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-import express from "express"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))

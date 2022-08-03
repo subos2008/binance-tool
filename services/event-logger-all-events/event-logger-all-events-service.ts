@@ -22,7 +22,11 @@ Sentry.configureScope(function (scope: any) {
 import { Logger } from "./../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
 
-import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
+import { SendMessage } from "../../classes/send_message/publish"
+import { Channel } from "amqplib"
+import { SendMessageFunc } from "../../interfaces/send-message"
+import express from "express"
+
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
@@ -121,8 +125,6 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-import { Channel } from "amqplib"
-import express from "express"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 const port = "80"

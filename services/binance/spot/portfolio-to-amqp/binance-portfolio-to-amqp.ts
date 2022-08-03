@@ -34,7 +34,15 @@ const exchange_identifier: ExchangeIdentifier_V3 = {
   account: "default",
 }
 
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+
+import { BigNumber } from "bignumber.js"
+BigNumber.DEBUG = true // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function () {
+  throw Error("BigNumber .valueOf called!")
+}
+
+import { SendMessage } from "../../../../classes/send_message/publish"
 import { Logger } from "../../../../lib/faux_logger"
 import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/spot-order-execution-tracker"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
@@ -49,14 +57,10 @@ import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 import { PortfolioPublisher } from "./portfolio-publisher"
 import { PortfolioTracker } from "./portfolio-tracker"
 import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import express from "express"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
 
 
-import { BigNumber } from "bignumber.js"
-BigNumber.DEBUG = true // Prevent NaN
-// Prevent type coercion
-BigNumber.prototype.valueOf = function () {
-  throw Error("BigNumber .valueOf called!")
-}
 
 const logger = new Logger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
@@ -234,7 +238,6 @@ main().catch((err) => {
   logger.error(`Error in main loop: ${err.stack}`)
 })
 
-import express from "express"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))

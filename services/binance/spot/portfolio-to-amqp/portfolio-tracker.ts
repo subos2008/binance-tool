@@ -16,10 +16,10 @@ import { HealthAndReadinessSubsystem } from "../../../../classes/health_and_read
 import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
 import { Logger } from "../../../../interfaces/logger"
 import { Portfolio } from "../../../../interfaces/portfolio"
-import { SendMessageFunc } from "../../../../classes/send_message/publish"
 import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 import { PortfolioPublisher } from "./portfolio-publisher"
 import { ExchangeIdentifier } from "../../../../events/shared/exchange-identifier"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
 
 // This class is a bit strange because it was originally intended to conglomerate multiple
 // portfolio accounts into one view for publishing.

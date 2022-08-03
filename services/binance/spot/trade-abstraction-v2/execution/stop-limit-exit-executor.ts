@@ -12,7 +12,6 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../../../../interfaces/logger"
 import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identifier"
 import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { SendMessageFunc } from "../../../../../classes/send_message/publish"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import {
   AuthorisedEdgeType,
@@ -26,6 +25,7 @@ import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/
 import { SpotPositionsExecution_BuyLimit } from "./buy-limit-executor"
 import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
 import { BinanceSpotExecutionEngine } from "./execution_engines/binance-spot-execution-engine"
+import { SendMessageFunc } from "../../../../../interfaces/send-message"
 
 /* Edge specific code */
 /* END Edge specific code */

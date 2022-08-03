@@ -13,10 +13,12 @@ Sentry.configureScope(function (scope: any) {
 const service_name = "amqp-binance-order-data-tracker"
 
 import { Logger } from "../../../../lib/faux_logger"
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+import { SendMessage } from "../../../../classes/send_message/publish"
 import { AMQP_BinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-binance-order-data-listener"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
+import express from "express"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
 
 const logger: Logger = new Logger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
@@ -135,7 +137,7 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-import express from "express"
+
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))

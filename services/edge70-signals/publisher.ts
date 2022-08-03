@@ -7,7 +7,6 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { SendMessageFunc } from "../../classes/send_message/publish"
 import { Edge70Parameters, Edge70Signal } from "./interfaces/edge70-signal"
 import { Logger } from "../../lib/faux_logger"
 import { TypedGenericTopicPublisher } from "../../classes/amqp/typed-generic-publisher"
@@ -18,6 +17,7 @@ import { StatsD } from "hot-shots"
 import { MarketData } from "./market-data"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { Edge70SignalCallbacks } from "./interfaces/_internal"
+import { SendMessageFunc } from "../../interfaces/send-message"
 
 var dogstatsd = new StatsD()
 

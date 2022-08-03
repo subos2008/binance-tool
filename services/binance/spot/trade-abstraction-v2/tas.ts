@@ -30,9 +30,17 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+import { SendMessage } from "../../../../classes/send_message/publish"
 import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
+import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
+import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { RedisClient } from "redis"
+import { TradeAbstractionService } from "./trade-abstraction-service"
+import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
+import { SendDatadogMetrics } from "./send-datadog-metrics"
+import { QueryParamsToCmdMapper } from "./query-params-to-cmd-mapper"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
 
 import express, { NextFunction, Request, Response } from "express"
 const winston = require("winston")
@@ -77,15 +85,7 @@ app.use(
   })
 ) // for parsing application/x-www-form-urlencoded
 
-import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
-import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 
-import { RedisClient } from "redis"
-
-import { TradeAbstractionService } from "./trade-abstraction-service"
-import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
-import { SendDatadogMetrics } from "./send-datadog-metrics"
-import { QueryParamsToCmdMapper } from "./query-params-to-cmd-mapper"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()

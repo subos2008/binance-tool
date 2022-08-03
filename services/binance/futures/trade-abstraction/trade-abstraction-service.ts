@@ -6,7 +6,6 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { disallowed_base_assets_for_entry } from "../../../../lib/stable-coins"
-import { SendMessageFunc } from "../../../../classes/send_message/publish"
 import Sentry from "../../../../lib/sentry"
 import { Logger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
@@ -23,7 +22,7 @@ import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identi
 import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
 import { BinanceFuturesPriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
-// import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
 
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands

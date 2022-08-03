@@ -12,13 +12,10 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../../../../interfaces/logger"
 import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identifier"
 import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { SendMessageFunc } from "../../../../../classes/send_message/publish"
-import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import {
   TradeAbstractionOpenLongCommand_OCO_Exit,
   TradeAbstractionOpenLongCommand_StopLimitExit,
   TradeAbstractionOpenLongResult,
-  TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS,
 } from "../interfaces/long"
 import { SendDatadogMetrics } from "./send-datadog-metrics"
 
@@ -26,13 +23,13 @@ import { SendDatadogMetrics } from "./send-datadog-metrics"
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import {
   SpotExecutionEngineBuyResult,
-  // SpotExecutionEngineBuyResult,
   SpotLimitBuyCommand,
   TradeContext,
 } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
 import { BinanceSpotExecutionEngine } from "./execution_engines/binance-spot-execution-engine"
+import { SendMessageFunc } from "../../../../../interfaces/send-message"
 
 /* END Edge specific code */
 

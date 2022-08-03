@@ -19,7 +19,7 @@ import { Channel } from "amqplib"
 import express from "express"
 import { Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 // import { Logger } from "../../interfaces/logger"
-import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
+import { SendMessage } from "../../classes/send_message/publish"
 import { Edge60EntrySignalProcessor } from "./interfaces"
 import { Edge60EntrySignalFanout } from "./fanout"
 
@@ -29,6 +29,7 @@ Sentry.configureScope(function (scope: any) {
 })
 
 import { Logger } from "./../../lib/faux_logger"
+import { SendMessageFunc } from "../../interfaces/send-message"
 const logger: Logger = new Logger({ silent: false })
 
 const health_and_readiness = new HealthAndReadiness({ logger })

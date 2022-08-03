@@ -11,7 +11,6 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger } from "../../../../interfaces/logger"
-import { SendMessageFunc } from "../../../../classes/send_message/publish"
 import { PositionSizer } from "../../../../edges/position-sizer/fixed-position-sizer"
 import {
   TradeAbstractionOpenShortCommand as IncommingTradeAbstractionOpenShortCommand,
@@ -33,6 +32,7 @@ import { CurrentPriceGetter } from "../../../../interfaces/exchanges/generic/pri
 import { map_tas_to_ee_cmd_short } from "../../../../edges/edge62/edge62-tas-to-ee-mapper"
 import { OrderContext_V1, OrderContext_V2 } from "../../../../interfaces/orders/order-context"
 import { Tags } from "hot-shots"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
 
 export interface FuturesPositionExecutionCloseResult {
   base_asset: string

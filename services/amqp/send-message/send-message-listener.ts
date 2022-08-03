@@ -12,7 +12,6 @@ Sentry.init({})
 import { Logger } from "../../../lib/faux_logger"
 import { Channel, Message } from "amqplib"
 
-import { SendMessageFunc } from "../../../classes/send_message/publish"
 import { SendMessageEvent } from "../../../classes/send_message/publish"
 import { MyEventNameType } from "../../../classes/amqp/message-routing"
 import { ListenerFactory } from "../../../classes/amqp/listener-factory"

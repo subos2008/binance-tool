@@ -36,7 +36,9 @@ import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { SendMessage } from "./send-message"
 import { SendMessageToTelegramForwarder } from "./forwarder"
 
-import { SendMessage as RawSendMessage, SendMessageFunc } from "../../../../lib/telegram-v2"
+import express from "express"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
+import { SendMessage as RawSendMessage } from "../../../../lib/telegram-v2"
 const raw_send_message: SendMessageFunc = new RawSendMessage({ service_name, logger }).build()
 const health_and_readiness = new HealthAndReadiness({ logger })
 
@@ -76,7 +78,6 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-import express from "express"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))

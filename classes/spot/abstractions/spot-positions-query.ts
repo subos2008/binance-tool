@@ -4,10 +4,10 @@ import Sentry from "../../../lib/sentry"
 
 import { Logger } from "../../../interfaces/logger"
 import { SpotPositionsPersistance } from "../persistence/interface/spot-positions-persistance"
-import { SendMessageFunc } from "../../send_message/publish"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { AuthorisedEdgeType, SpotPositionIdentifier_V3, SpotPositionsQuery_V3 } from "./position-identifier"
 import { SpotPosition } from "./spot-position"
+import { SendMessageFunc } from "../../../interfaces/send-message"
 
 /**
  * High level abstraction for querying positions - queries the persistent state

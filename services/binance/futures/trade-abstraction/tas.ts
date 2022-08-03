@@ -26,9 +26,18 @@ BigNumber.prototype.valueOf = function () {
 
 import { Logger } from "../../../../interfaces/logger"
 import { Logger as LoggerClass } from "../../../../lib/faux_logger"
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+import { SendMessage } from "../../../../classes/send_message/publish"
 import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "./interfaces/short"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
+import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
+import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { RedisClient } from "redis"
+import { FuturesTradeAbstractionService } from "./trade-abstraction-service"
+import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
+import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
+import { SendDatadogMetrics } from "./send-datadog-metrics"
+import { QueryParamsToCmdMapper } from "./query-params-to-cmd-mapper"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
 
 const logger: Logger = new LoggerClass({ silent: false })
 logger.info({ hello: "world" }, "Service starting")
@@ -73,16 +82,6 @@ app.use(
   })
 ) // for parsing application/x-www-form-urlencoded
 
-import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
-import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
-
-import { RedisClient } from "redis"
-
-import { FuturesTradeAbstractionService } from "./trade-abstraction-service"
-import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
-import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
-import { SendDatadogMetrics } from "./send-datadog-metrics"
-import { QueryParamsToCmdMapper } from "./query-params-to-cmd-mapper"
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()

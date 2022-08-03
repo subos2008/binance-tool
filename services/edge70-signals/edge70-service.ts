@@ -38,7 +38,6 @@ import { config } from "../../config"
 const tas_quote_asset = config.binance.spot.tas_quote_asset
 
 import { CandlesCollector } from "../../classes/utils/candle_utils"
-import { DirectionPersistance } from "./direction-persistance"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { get_redis_client } from "../../lib/redis-v4"
 import { RedisClientType } from "redis-v4"
@@ -51,6 +50,9 @@ import { ExchangeIdentifier_V4 } from "../../events/shared/exchange-identifier"
 import { MarketData } from "./market-data"
 import { Edge70AMQPSignalPublisher } from "./publisher"
 import { SendMessageFunc } from "../../interfaces/send-message"
+import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
+import { DirectionPersistance } from "./interfaces/direction-persistance"
+import { DirectionPersistanceRedis } from "./direction-persistance"
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -164,12 +166,22 @@ class Edge70SignalsService {
           if (partial_candle) assert(partial_candle.closeTime > Date.now()) // double check that was actually a partial candle
         }
 
+        let market_identifier: MarketIdentifier_V5_with_base_asset = {
+          object_type: "MarketIdentifier",
+          version: 5,
+          exchange_identifier: this.exchange_info_getter.get_exchange_identifier(),
+          base_asset,
+          symbol,
+        }
+
         this.edges[symbol] = new Edge70Signals({
           logger: this.logger,
+          send_message: this.send_message,
           health_and_readiness,
           initial_candles,
           market_identifier,
           callbacks: this.callbacks,
+          direction_persistance: this.direction_persistance,
           edge70_parameters,
           base_asset,
         })
@@ -234,7 +246,7 @@ async function main() {
       logger,
       send_message,
       health_and_readiness,
-      direction_persistance: new DirectionPersistance({
+      direction_persistance: new DirectionPersistanceRedis({
         logger,
         prefix: `${service_name}:spot:binance:usd_quote`,
         send_message,

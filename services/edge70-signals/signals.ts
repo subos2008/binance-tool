@@ -26,15 +26,19 @@ import { Edge70Parameters, Edge70Signal } from "./interfaces/edge70-signal"
 import { Tags } from "../../observability/loggable-tags"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
+import { SendMessageFunc } from "../../interfaces/send-message"
+import { DirectionPersistance } from "./interfaces/direction-persistance"
 
 /* Instantiated per asset; each exchange symbol has its own instance of this class */
 export class Edge70Signals {
   logger: Logger
+  send_message: SendMessageFunc
   health_and_readiness: HealthAndReadinessSubsystem
   base_asset: string
   edge: "edge70" | "edge70-backtest" = "edge70"
   edge70_parameters: Edge70Parameters
   market_identifier: MarketIdentifier_V5_with_base_asset
+  direction_persistance: DirectionPersistance
 
   callbacks: Edge70SignalCallbacks
   price_history_candles_long: LimitedLengthCandlesHistory
@@ -42,6 +46,7 @@ export class Edge70Signals {
 
   constructor({
     logger,
+    send_message,
     health_and_readiness,
     initial_candles,
     market_identifier,
@@ -49,8 +54,10 @@ export class Edge70Signals {
     edge70_parameters,
     base_asset,
     edge,
+    direction_persistance,
   }: {
     logger: Logger
+    send_message: SendMessageFunc
     health_and_readiness: HealthAndReadiness
     initial_candles: CandleChartResult[]
     market_identifier: MarketIdentifier_V5_with_base_asset
@@ -58,12 +65,15 @@ export class Edge70Signals {
     edge70_parameters: Edge70Parameters
     base_asset: string
     edge?: "edge70-backtest"
+    direction_persistance: DirectionPersistance
   }) {
     this.market_identifier = market_identifier
     this.logger = logger
+    this.send_message = send_message
     this.callbacks = callbacks
     this.base_asset = base_asset
     this.edge70_parameters = edge70_parameters
+    this.direction_persistance = direction_persistance
     if (edge) this.edge = edge
     this.health_and_readiness = health_and_readiness.addSubsystem({
       name: "Edge70Signals",
@@ -209,6 +219,22 @@ export class Edge70Signals {
       if (signal_long) direction = "long"
       if (signal_short) direction = "short"
       if (direction) tags = { ...tags, direction }
+
+      /* Direction change filter */
+      let previous_direction = await this.direction_persistance.get_direction(base_asset)
+      this.direction_persistance.set_direction(base_asset, direction)
+      if (previous_direction === null) {
+        this.send_message(
+          `possible ${direction} signal on ${base_asset} - check manually if this is a trend reversal.`,
+          tags
+        )
+        return
+      }
+      let direction_change = previous_direction !== direction
+      if (!direction_change) {
+        this.logger.info(tags, `${symbol} ${direction} price triggered but not trend reversal`)
+        return
+      }
 
       let signal_price = candle["close"]
       let { market_identifier } = this

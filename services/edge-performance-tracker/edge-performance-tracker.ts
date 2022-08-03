@@ -38,7 +38,8 @@ const logger = new Logger({ silent: false })
 
 logger.info(`Service starting.`)
 
-import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
+import { SendMessage } from "../../classes/send_message/publish"
+import { SendMessageFunc } from "../../interfaces/send-message"
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 

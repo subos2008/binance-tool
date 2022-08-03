@@ -64,7 +64,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+import { SendMessage } from "../../../../classes/send_message/publish"
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
@@ -81,6 +81,8 @@ import { FuturesPortfolio } from "../../../../interfaces/portfolio"
 import { BinancePortfolioTracker } from "./binance-futures-portfolio-tracker"
 import { ExchangeIdentifier } from "../../../../events/shared/exchange-identifier"
 import { PortfolioUtils } from "./futures-portfolio-utils"
+import express from "express"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
 
 const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger, sentry: Sentry })
 class PortfolioTracker implements MasterPortfolioClass {
@@ -318,7 +320,6 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-import express from "express"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))

@@ -31,7 +31,13 @@ Sentry.configureScope(function (scope: any) {
 import { Logger } from "../../../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
 
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+import { SendMessage } from "../../../../classes/send_message/publish"
+import express from "express"
+import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
+import { BinanceFuturesOrdersToAMQP } from "./binance-futures-orders-to-amqp"
+import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
+
 const health_and_readiness = new HealthAndReadiness({ logger })
 
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger,health_and_readiness }).build()
@@ -56,9 +62,7 @@ const exchange_identifier: ExchangeIdentifier_V3 = {
   type: "futures",
 }
 
-import { BinanceFuturesOrdersToAMQP } from "./binance-futures-orders-to-amqp"
 
-import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
@@ -95,8 +99,6 @@ main().catch((err) => {
   logger.error(`Error in main loop: ${err.stack}`)
 })
 
-import express from "express"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 const port = "80"

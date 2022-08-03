@@ -42,12 +42,14 @@ Sentry.configureScope(function (scope: any) {
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { Logger } from "../../../../lib/faux_logger"
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+import { SendMessage } from "../../../../classes/send_message/publish"
 import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
 import { Portfolio, Balance } from "../../../../interfaces/portfolio"
 import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
 import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { SendDatadogMetrics } from "./send-datadog-metrics"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
+import express from "express"
 
 const logger = new Logger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
@@ -260,7 +262,6 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 
-import express from "express"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))

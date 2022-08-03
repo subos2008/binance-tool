@@ -19,8 +19,10 @@
 const service_name = "binance-orders-to-amqp"
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-import { SendMessage, SendMessageFunc } from "../../../../classes/send_message/publish"
+import { SendMessage } from "../../../../classes/send_message/publish"
 
+import express from "express"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
 require("dotenv").config()
 
 import Sentry from "../../../../lib/sentry"
@@ -80,7 +82,6 @@ main().catch((err) => {
   logger.error(`Error in main loop: ${err.stack}`)
 })
 
-import express from "express"
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 const port = "80"

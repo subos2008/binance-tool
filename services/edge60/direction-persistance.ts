@@ -1,6 +1,6 @@
 import { RedisClientType } from "redis-v4"
 import { Logger } from "../../interfaces/logger"
-import { SendMessageFunc } from "../../classes/send_message/publish"
+import { SendMessageFunc } from "../../interfaces/send-message"
 
 export type Direction = "short" | "long" // Redis returns null for unset
 

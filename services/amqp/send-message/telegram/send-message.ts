@@ -1,9 +1,8 @@
 import { URL } from "url"
 import fetch from "node-fetch"
-import { ContextTags, SendMessageFunc } from "../../../../classes/send_message/publish"
 import { Logger } from "../../../../interfaces/logger"
 import Sentry from "../../../../lib/sentry"
-import { Channel } from "amqplib"
+import { ContextTags } from "../../../../interfaces/send-message"
 
 export class SendMessage {
   private logger: Logger

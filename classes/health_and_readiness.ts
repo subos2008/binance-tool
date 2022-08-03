@@ -1,8 +1,8 @@
 import { Logger } from "../interfaces/logger"
-import { ContextTags, SendMessageFunc } from "./send_message/publish"
 import { Request, Response } from "express"
 import Sentry from "../lib/sentry"
 import { randomUUID } from "crypto"
+import { ContextTags, SendMessageFunc } from "../interfaces/send-message"
 
 type Summary = { [subsystem: string]: boolean | string }
 type HealthAndReadinessChange = {

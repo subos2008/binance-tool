@@ -28,7 +28,7 @@ import humanNumber from "human-number"
 import { Logger } from "./../../lib/faux_logger"
 const logger: Logger = new Logger({ silent: false })
 
-import { SendMessage, SendMessageFunc } from "../../classes/send_message/publish"
+import { SendMessage } from "../../classes/send_message/publish"
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -59,6 +59,7 @@ import { disallowed_base_assets_for_entry } from "../../lib/stable-coins"
 import { BaseAssetsList } from "./base-assets-list"
 import { Edge60EntrySignals } from "./edge60-entry-signals"
 import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
+import { SendMessageFunc } from "../../interfaces/send-message"
 
 var dogstatsd = new StatsD()
 

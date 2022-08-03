@@ -1,20 +1,15 @@
 import { Logger } from "../../../interfaces/logger"
+import { DirectionPersistance } from "../interfaces/direction-persistance"
 
 export type Direction = "short" | "long" // Redis returns null for unset
 
-export class DirectionPersistanceMock {
+export class DirectionPersistanceMock implements DirectionPersistance {
   private logger: Logger
   private prefix: string
-  
-  private keys :any = {}
 
-  constructor({
-    logger,
-    prefix,
-  }: {
-    logger: Logger
-    prefix: string
-  }) {
+  private keys: any = {}
+
+  constructor({ logger, prefix }: { logger: Logger; prefix: string }) {
     this.logger = logger
     this.prefix = prefix
   }
@@ -23,11 +18,11 @@ export class DirectionPersistanceMock {
     return `${this.prefix}:signal_direction:${symbol.toUpperCase()}`
   }
 
-  private set(key:string, value: any) {
+  private set(key: string, value: any) {
     this.keys[key] = value
   }
 
-  private get(key:string) {
+  private get(key: string) {
     return this.keys[key]
   }
 

@@ -193,7 +193,7 @@ class Edge70SignalsService {
           `Setup edge for ${symbol} with ${initial_candles.length} initial candles`
         )
 
-        if (this.edges[symbol].full() && this.edges[symbol].current_market_direction() === null) {
+        if (this.edges[symbol].full() && await this.edges[symbol].current_market_direction() === null) {
           /* if this is true and there's more history available than we just loaded
            * we could probably run a background job to add the history */
           symbols_with_direction_uninitialised.push(symbol)

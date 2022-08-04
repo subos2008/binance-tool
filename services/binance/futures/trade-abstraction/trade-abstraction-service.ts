@@ -17,12 +17,13 @@ import {
   is_authorised_edge,
 } from "../../../../classes/spot/abstractions/position-identifier"
 import { FuturesEdgeToExecutorMapper } from "./edge-to-executor-mapper"
-import { FixedPositionSizer, PositionSizer } from "../../../../edges/position-sizer/fixed-position-sizer"
+import { FixedPositionSizer } from "../../../../edges/position-sizer/fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
 import { BinanceFuturesPriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
+import { PositionSizer } from "../../../../interfaces/position-sizer"
 
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands

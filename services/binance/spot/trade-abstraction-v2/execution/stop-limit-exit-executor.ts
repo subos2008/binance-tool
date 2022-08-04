@@ -23,9 +23,9 @@ import { SpotStopMarketSellCommand, TradeContext } from "../../../../../interfac
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import { SpotPositionsExecution_BuyLimit } from "./buy-limit-executor"
-import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
 import { BinanceSpotExecutionEngine } from "./execution_engines/binance-spot-execution-engine"
 import { SendMessageFunc } from "../../../../../interfaces/send-message"
+import { PositionSizer } from "../../../../../interfaces/position-sizer"
 
 /* Edge specific code */
 /* END Edge specific code */

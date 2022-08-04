@@ -27,9 +27,9 @@ import {
   TradeContext,
 } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
-import { PositionSizer } from "../../../../../edges/position-sizer/fixed-position-sizer"
 import { BinanceSpotExecutionEngine } from "./execution_engines/binance-spot-execution-engine"
 import { SendMessageFunc } from "../../../../../interfaces/send-message"
+import { PositionSizer } from "../../../../../interfaces/position-sizer"
 
 /* END Edge specific code */
 

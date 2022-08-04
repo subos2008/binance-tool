@@ -45,6 +45,9 @@ export class FixedPositionSizer implements PositionSizer {
     if (edge === "edge60") {
       return new BigNumber(30)
     }
+    if (edge === "edge70") {
+      return new BigNumber(50)
+    }
     this.logger.warn(`Using default position size`)
     return new BigNumber(20)
   }

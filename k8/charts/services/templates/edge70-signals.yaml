@@ -36,6 +36,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "./out/./services/edge70-signals/edge70-service", "--live"]
+          resources:
+            requests:
+              memory: 250M
           ports:
           - name: http
             containerPort: 80

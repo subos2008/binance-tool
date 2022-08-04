@@ -53,6 +53,7 @@ import { SendMessageFunc } from "../../interfaces/send-message"
 import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
 import { DirectionPersistance } from "./interfaces/direction-persistance"
 import { DirectionPersistanceRedis } from "./direction-persistance"
+import { MarketDirectionInitialiser } from "./market-direction-initialiser"
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -196,10 +197,20 @@ class Edge70SignalsService {
           /* if this is true and there's more history available than we just loaded
            * we could probably run a background job to add the history */
           symbols_with_direction_uninitialised.push(symbol)
+
+          let mi = new MarketDirectionInitialiser({
+            logger,
+            direction_persistance: this.direction_persistance,
+            candles_collector: this.candles_collector,
+            market_identifier,
+            edge70_parameters,
+          })
+          /* probably don't want to await for this */
+          mi.run().catch((e) => this.logger.error(`MarketDirectionInitialiser threw exception: ${e}`))
         }
 
         // TODO: get klines via the TAS so we can do rate limiting
-        await sleep(400) // 1200 calls allowed per minute per IP address, sleep(200) => 300/minute
+        await sleep(400) // 1200 calls allowed per minute per IP address, sleep(200) => 300/minute or 600/m if market initialising
       } catch (err: any) {
         Sentry.captureException(err)
         this.logger.error({ err })

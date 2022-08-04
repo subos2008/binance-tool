@@ -4,7 +4,7 @@
 
 console.log(`--- Service starting ---`)
 
-import "./tracer" // must come before importing any instrumented module.
+// import "./tracer" // must come before importing any instrumented module.
 
 /** Config: */
 const quote_symbol = "USDT".toUpperCase()

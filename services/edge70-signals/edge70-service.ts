@@ -193,7 +193,7 @@ class Edge70SignalsService {
           `Setup edge for ${symbol} with ${initial_candles.length} initial candles`
         )
 
-        if (this.edges[symbol].full() && await this.edges[symbol].current_market_direction() === null) {
+        if (this.edges[symbol].full() && (await this.edges[symbol].current_market_direction()) === null) {
           /* if this is true and there's more history available than we just loaded
            * we could probably run a background job to add the history */
           symbols_with_direction_uninitialised.push(symbol)
@@ -225,7 +225,10 @@ class Edge70SignalsService {
         symbols_with_direction_uninitialised.length
       } symbols with uninitialised market direction. (${symbols_with_direction_uninitialised.join(", ")})`
     )
-    this.send_message(`Started MarketDirectionInitialiser for ${symbols_with_direction_uninitialised.length} symbols.`)
+    this.send_message(
+      `Started MarketDirectionInitialiser for ${symbols_with_direction_uninitialised.length} symbols.`,
+      { edge }
+    )
 
     this.close_1d_candle_ws = this.ee.ws.candles(valid_symbols, edge70_parameters.candle_timeframe, (candle) => {
       let symbol = candle.symbol

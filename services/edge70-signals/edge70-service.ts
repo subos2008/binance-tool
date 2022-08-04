@@ -206,7 +206,7 @@ class Edge70SignalsService {
             edge70_parameters,
           })
           /* probably don't want to await for this */
-          mi.run().catch((e) => this.logger.error(`MarketDirectionInitialiser threw exception: ${e}`))
+          mi.run().catch((e) => this.logger.error(`MarketDirectionInitialiser threw exception: ${e}`)).then(()=> this.logger.info(`MarketDirectionInitialiser completed`)
         }
 
         // TODO: get klines via the TAS so we can do rate limiting

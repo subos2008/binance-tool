@@ -29,7 +29,7 @@ import {
 import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 
-type check_func = ({
+export type check_func = ({
   volume,
   price,
   market_symbol,

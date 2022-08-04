@@ -200,7 +200,6 @@ class Edge70SignalsBacktester {
           market_identifier,
           callbacks: this.callbacks,
           edge70_parameters,
-          base_asset,
         })
         this.logger.info(
           { ...tags, object_type: "EdgeMarketInitialization" },

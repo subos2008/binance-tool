@@ -41,6 +41,8 @@ import { DirectionPersistanceMock } from "./direction-persistance-mock"
 import { MarketIdentifier_V5_with_base_asset } from "../../../events/shared/market-identifier"
 import { Edge70AMQPSignalPublisherMock } from "./publisher-mock"
 import { ContextTags, SendMessageFunc } from "../../../interfaces/send-message"
+import { FixedPositionSizer } from "../../../edges/position-sizer/fixed-position-sizer"
+import { PositionSizer } from "../../../interfaces/position-sizer"
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -103,6 +105,7 @@ class Edge70SignalsBacktester {
     direction_persistance: DirectionPersistanceMock
     health_and_readiness: HealthAndReadiness
     callbacks: Edge70SignalCallbacks
+    position_sizer: PositionSizer
   }) {
     this.candles_collector = new CandlesCollector({ ee })
     this.ee = ee
@@ -189,7 +192,6 @@ class Edge70SignalsBacktester {
           market_identifier,
           callbacks: this.callbacks,
           edge70_parameters,
-          base_asset,
         })
         this.logger.info(
           { ...tags, object_type: "EdgeMarketInitialization" },
@@ -251,6 +253,7 @@ async function main() {
         prefix: `${service_name}:spot:binance:usd_quote`,
       }),
       callbacks: publisher,
+      position_sizer: new FixedPositionSizer({ logger }),
     })
     await service.init()
     await service.run()

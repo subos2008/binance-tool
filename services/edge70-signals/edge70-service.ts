@@ -186,7 +186,6 @@ class Edge70SignalsService {
           callbacks: this.callbacks,
           direction_persistance: this.direction_persistance,
           edge70_parameters,
-          base_asset,
         })
         this.logger.info(
           { ...tags, object_type: "EdgeMarketInitialization" },
@@ -206,7 +205,7 @@ class Edge70SignalsService {
         this.logger.error({ err })
       }
     }
-    
+
     let valid_symbols = Object.keys(this.edges)
     this.logger.info(`Edges initialised for ${valid_symbols.length} symbols.`)
     this.send_message(`initialised for ${valid_symbols.length} symbols.`, { edge })
@@ -256,6 +255,7 @@ async function main() {
       market_data: new MarketData(),
     })
 
+    let { exchange, exchange_type } = exchange_identifier
     let service = new Edge70SignalsService({
       ee,
       exchange_identifier,
@@ -264,8 +264,7 @@ async function main() {
       health_and_readiness,
       direction_persistance: new DirectionPersistanceRedis({
         logger,
-        prefix: `${service_name}:spot:binance:usd_quote`,
-        send_message,
+        prefix: `${service_name}:${exchange_type}:${exchange}:${quote_symbol.toLowerCase()}_quote`,
         redis,
       }),
       callbacks: publisher,

@@ -11,12 +11,10 @@ export class DirectionPersistanceRedis implements DirectionPersistance {
   constructor({
     logger,
     prefix,
-    send_message,
     redis,
   }: {
     logger: Logger
     prefix: string
-    send_message: SendMessageFunc
     redis: RedisClientType
   }) {
     this.logger = logger

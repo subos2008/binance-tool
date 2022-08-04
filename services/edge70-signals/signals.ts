@@ -36,7 +36,6 @@ export class Edge70Signals {
 
   send_message: SendMessageFunc
   health_and_readiness: HealthAndReadinessSubsystem
-  base_asset: string
   edge: "edge70" | "edge70-backtest" = "edge70"
   edge70_parameters: Edge70Parameters
   market_identifier: MarketIdentifier_V5_with_base_asset
@@ -54,7 +53,6 @@ export class Edge70Signals {
     market_identifier,
     callbacks,
     edge70_parameters,
-    base_asset,
     edge,
     direction_persistance,
     set_log_time_to_candle_time, // used when backtesting
@@ -67,7 +65,6 @@ export class Edge70Signals {
     market_identifier: MarketIdentifier_V5_with_base_asset
     callbacks: Edge70SignalCallbacks
     edge70_parameters: Edge70Parameters
-    base_asset: string
     edge?: "edge70-backtest"
     direction_persistance: DirectionPersistance
   }) {
@@ -76,7 +73,6 @@ export class Edge70Signals {
     if (set_log_time_to_candle_time) this.set_log_time_to_candle_time = set_log_time_to_candle_time
     this.send_message = send_message
     this.callbacks = callbacks
-    this.base_asset = base_asset
     this.edge70_parameters = edge70_parameters
     this.direction_persistance = direction_persistance
     if (edge) this.edge = edge
@@ -110,7 +106,7 @@ export class Edge70Signals {
   }
 
   async current_market_direction(): Promise<Direction | null> {
-    return this.direction_persistance.get_direction(this.base_asset)
+    return this.direction_persistance.get_direction(this.market_identifier.base_asset)
   }
 
   full(): boolean {
@@ -180,7 +176,8 @@ export class Edge70Signals {
   }
 
   async ingest_new_candle({ candle, symbol }: { symbol: string; candle: EdgeCandle }): Promise<void> {
-    let { base_asset, edge } = this
+    let { edge } = this
+    let { base_asset } = this.market_identifier
     let tags: Tags = { symbol, base_asset, edge }
     if (this.set_log_time_to_candle_time) tags.time = new Date(candle.closeTime).toISOString()
 

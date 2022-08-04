@@ -3,6 +3,7 @@ export let fiat: string[] = ["EUR", "USD", "GBP", "JPY", "CHF", "CAD", "AUD", "N
 
 export let non_volatile_coins: string[] = ["EGLD"]
 
+let delisted_coins = ["EZ", "QSP", "BRD", "NXS", "NAV", "MDA", "SPARTA"]
 let mehran = [
   "USDC",
   "UST",
@@ -64,3 +65,4 @@ export let disallowed_base_assets_for_entry: string[] = stable_coins
   .concat(fiat)
   .concat(non_volatile_coins)
   .concat(mehran)
+  .concat(delisted_coins)

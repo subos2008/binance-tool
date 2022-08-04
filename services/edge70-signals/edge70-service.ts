@@ -225,6 +225,7 @@ class Edge70SignalsService {
         symbols_with_direction_uninitialised.length
       } symbols with uninitialised market direction. (${symbols_with_direction_uninitialised.join(", ")})`
     )
+    this.send_message(`Started MarketDirectionInitialiser for ${symbols_with_direction_uninitialised.length} symbols.`)
 
     this.close_1d_candle_ws = this.ee.ws.candles(valid_symbols, edge70_parameters.candle_timeframe, (candle) => {
       let symbol = candle.symbol

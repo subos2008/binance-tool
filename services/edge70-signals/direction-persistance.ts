@@ -22,23 +22,23 @@ export class DirectionPersistanceRedis implements DirectionPersistance {
     this.redis = redis
   }
 
-  private _market_to_key(symbol: string): string {
-    return `${this.prefix}:signal_direction:${symbol.toUpperCase()}`
+  private _market_to_key(base_asset: string): string {
+    return `${this.prefix}:signal_direction:${base_asset.toUpperCase()}`
   }
 
-  async set_direction(symbol: string, direction: Direction) {
-    let previous_direction = await this.get_direction(symbol)
+  async set_direction(base_asset: string, direction: Direction) {
+    let previous_direction = await this.get_direction(base_asset)
     if (previous_direction === null) {
-      this.logger.info(`Initialising direction for ${symbol} to ${direction}`)
+      this.logger.info(`Initialising direction for ${base_asset} to ${direction}`)
     } else if (previous_direction !== direction) {
-      this.logger.info(`Direction change to ${direction} for ${symbol}`)
+      this.logger.info(`Direction change to ${direction} for ${base_asset}`)
     }
-    await this.redis.set(this._market_to_key(symbol), direction)
+    await this.redis.set(this._market_to_key(base_asset), direction)
     return previous_direction
   }
 
-  async get_direction(symbol: string): Promise<Direction | null> {
-    let direction = await this.redis.get(this._market_to_key(symbol))
+  async get_direction(base_asset: string): Promise<Direction | null> {
+    let direction = await this.redis.get(this._market_to_key(base_asset))
     return direction as Direction
   }
 }

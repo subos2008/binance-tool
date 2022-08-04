@@ -118,9 +118,9 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       }
       this.logger.info(tags, `MDI finished candles for ${symbol}`)
 
-      let direction = await isolated_direction_persistance.get_direction(symbol)
+      let direction = await isolated_direction_persistance.get_direction(base_asset)
       if (direction) {
-        await this.direction_persistance.set_direction(symbol, direction)
+        await this.direction_persistance.set_direction(base_asset, direction)
         this.logger.info({
           object_type: "MarketDirectionInitialiserResult",
           success: true,
@@ -129,14 +129,9 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
           base_asset,
           num_candles_history_to_check,
         })
-      }
-
-      if (
-        num_loaded_candles >= num_candles_history_to_check - 2 &&
-        !this.direction_persistance.get_direction(symbol)
-      ) {
+      } else {
         this.logger.error(
-          `Failed to determine market direction for ${symbol} with ${num_candles_history_to_check} candles of history`
+          `Failed to determine market direction for ${base_asset} with ${num_candles_history_to_check} candles of history`
         )
         this.logger.error({
           object_type: "MarketDirectionInitialiserResult",

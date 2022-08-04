@@ -94,11 +94,11 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       // }
 
       let prefix = `market-direction-initialiser:${symbol}:` + randomUUID()
-      let isolated_direction_persistance = new DirectionPersistanceRedis({
-        prefix,
-        logger: faux_logger,
-        redis: mock_redis_client,
-      })
+      // let isolated_direction_persistance = new DirectionPersistanceRedis({
+      //   prefix,
+      //   logger: faux_logger,
+      //   redis: mock_redis_client,
+      // })
 
       let faux_health_and_readiness = new HealthAndReadiness({ logger: faux_logger })
       let edge = new Edge70Signals({
@@ -108,7 +108,8 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
         initial_candles: [],
         market_identifier,
         callbacks: this,
-        direction_persistance: isolated_direction_persistance,
+        direction_persistance:this.direction_persistance,
+        // direction_persistance: isolated_direction_persistance,
         edge70_parameters,
       })
 
@@ -118,9 +119,10 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       }
       this.logger.info(tags, `MDI finished candles for ${symbol}`)
 
-      let direction = await isolated_direction_persistance.get_direction(base_asset)
+      let direction = await this.direction_persistance.get_direction(base_asset)
+      // let direction = await isolated_direction_persistance.get_direction(base_asset)
       if (direction) {
-        await this.direction_persistance.set_direction(base_asset, direction)
+        // await this.direction_persistance.set_direction(base_asset, direction)
         this.logger.info({
           object_type: "MarketDirectionInitialiserResult",
           success: true,

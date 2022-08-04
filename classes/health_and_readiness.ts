@@ -85,6 +85,7 @@ export class HealthAndReadiness {
 
   constructor({ logger }: { logger: Logger }) {
     this.logger = logger
+    /* can't use norma SendMessage because that uses AMQP and need H&R... */
     let foo: SendMessageFunc = async (msg: string, tags?: ContextTags) => {
       if (tags) this.logger.info(tags, msg)
       else this.logger.info(msg)

@@ -3,7 +3,7 @@ import { strict as assert } from "assert"
 
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { CandlesCollector } from "../../classes/utils/candle_utils"
-import { SendMessageFunc } from "../../interfaces/send-message"
+import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
 import { DirectionPersistance } from "./interfaces/direction-persistance"
 import { Edge70Parameters, Edge70Signal } from "./interfaces/edge70-signal"
 import { Logger } from "../../lib/faux_logger"
@@ -56,6 +56,7 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
     try {
       let { market_identifier, num_candles_history_to_check, edge70_parameters } = this
       let { symbol, base_asset } = market_identifier
+      let tags = { symbol, base_asset }
 
       let end_date = DateTime.now()
       let candles_preload_start_date = end_date.minus({ days: num_candles_history_to_check })
@@ -82,10 +83,15 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       }
       let num_loaded_candles = candles.length
 
-      let faux_logger: Logger = new Logger({ silent: true })
-      let faux_send_message: SendMessageFunc = async () => {
-        return
+      let faux_logger = this.logger
+      let faux_send_message: SendMessageFunc = async (msg: string, tags?: ContextTags) => {
+        if (tags) this.logger.info(tags, msg)
+        else this.logger.info(msg)
       }
+      // let faux_logger: Logger = new Logger({ silent: true })
+      // let faux_send_message: SendMessageFunc = async () => {
+      //   return
+      // }
 
       let prefix = `market-direction-initialiser:${symbol}:` + randomUUID()
       let isolated_direction_persistance = new DirectionPersistanceRedis({
@@ -106,9 +112,11 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
         edge70_parameters,
       })
 
+      this.logger.info(tags, `Sending candles for ${symbol}`)
       for (const candle of candles) {
         await edge.ingest_new_candle({ symbol, candle })
       }
+      this.logger.info(tags, `MDI finished candles for ${symbol}`)
 
       let direction = await isolated_direction_persistance.get_direction(symbol)
       if (direction) {

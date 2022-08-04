@@ -77,7 +77,7 @@ export class Edge70Signals {
     this.direction_persistance = direction_persistance
     if (edge) this.edge = edge
     this.health_and_readiness = health_and_readiness.addSubsystem({
-      name: "Edge70Signals",
+      name: `Edge70Signals-${market_identifier.symbol}`,
       ready: true,
       healthy: true,
     })

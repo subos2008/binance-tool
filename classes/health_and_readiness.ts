@@ -83,7 +83,7 @@ export class HealthAndReadiness {
   send_message: SendMessageFunc
   subsystems: { [id: string]: HealthAndReadinessSubsystem } = {}
 
-  constructor({ logger }: { logger: Logger; }) {
+  constructor({ logger }: { logger: Logger }) {
     this.logger = logger
     let foo: SendMessageFunc = async (msg: string, tags?: ContextTags) => {
       if (tags) this.logger.info(tags, msg)
@@ -104,9 +104,7 @@ export class HealthAndReadiness {
     this.logger.info(`Registering new subsystem: ${name}, starting defaults: ready: ${ready}, healthy:${healthy}`)
     if (name in this.subsystems) {
       // check for subsystem already exists)
-      Sentry.captureException(
-        new Error(`Attempting to add already existing subsystem '${name}' to HealthAndReadiness'`)
-      )
+      this.logger.warn(`Attempting to add already existing subsystem '${name}' to HealthAndReadiness'`)
       name = `${name}-${randomUUID()}`
     }
 

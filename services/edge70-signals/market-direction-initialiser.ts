@@ -57,7 +57,7 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       let { market_identifier, num_candles_history_to_check, edge70_parameters } = this
       let { symbol, base_asset } = market_identifier
 
-      let end_date = new DateTime()
+      let end_date = DateTime.now()
       let candles_preload_start_date = end_date.minus({ days: num_candles_history_to_check })
       let candles = await this.candles_collector.get_candles_between({
         timeframe: this.edge70_parameters.candle_timeframe,

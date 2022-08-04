@@ -120,7 +120,7 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
 
       let direction = await isolated_direction_persistance.get_direction(symbol)
       if (direction) {
-        this.direction_persistance.set_direction(symbol, direction)
+        await this.direction_persistance.set_direction(symbol, direction)
         this.logger.info({
           object_type: "MarketDirectionInitialiserResult",
           success: true,

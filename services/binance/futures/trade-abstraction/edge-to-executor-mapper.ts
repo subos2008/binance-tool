@@ -45,7 +45,7 @@ export class FuturesEdgeToExecutorMapper {
   ee: BinanceFuturesExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
-  // positions_persistance: SpotPositionsPersistance
+  // positions_persistance: SpotPositionsPersistence
   price_getter: CurrentPriceGetter
 
   constructor({
@@ -58,7 +58,7 @@ export class FuturesEdgeToExecutorMapper {
   }: {
     logger: Logger
     ee: BinanceFuturesExecutionEngine
-    // positions_persistance: SpotPositionsPersistance
+    // positions_persistance: SpotPositionsPersistence
     send_message: SendMessageFunc
     position_sizer: PositionSizer
     price_getter: CurrentPriceGetter

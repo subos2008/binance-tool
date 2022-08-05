@@ -64,7 +64,7 @@ export function genericOrderDataToSpotPositionInitialisationData(
   }
 }
 
-export interface SpotPositionsPersistance {
+export interface SpotPositionsPersistence {
   list_open_positions(): Promise<SpotPositionIdentifier_V3[]>
   position_size(pi: SpotPositionIdentifier_V3): Promise<BigNumber>
   initial_entry_price(pi: SpotPositionIdentifier_V3): Promise<BigNumber>

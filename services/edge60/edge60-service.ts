@@ -47,7 +47,7 @@ import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_geck
 import { LongShortEntrySignalsCallbacks } from "./interfaces"
 import { Edge60Parameters, Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
 import { GenericTopicPublisher } from "../../classes/amqp/generic-publishers"
-import { DirectionPersistance } from "./direction-persistance"
+import { DirectionPersistence } from "./direction-persistance"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { MarketIdentifier_V4 } from "../../events/shared/market-identifier"
 import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
@@ -91,7 +91,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
   close_1d_candle_ws: (() => void) | undefined
   send_message: SendMessageFunc
   market_data: CoinGeckoMarketData[] | undefined
-  direction_persistance: DirectionPersistance
+  direction_persistance: DirectionPersistence
   exchange_info_getter: BinanceExchangeInfoGetter
   health_and_readiness: HealthAndReadiness
   publisher: GenericTopicPublisher
@@ -106,7 +106,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     ee: Binance
     logger: Logger
     send_message: SendMessageFunc
-    direction_persistance: DirectionPersistance
+    direction_persistance: DirectionPersistence
     health_and_readiness: HealthAndReadiness
   }) {
     this.candles_collector = new CandlesCollector({ ee })
@@ -434,7 +434,7 @@ async function main() {
       logger,
       send_message,
       health_and_readiness,
-      direction_persistance: new DirectionPersistance({
+      direction_persistance: new DirectionPersistence({
         logger,
         prefix: `${service_name}:spot:binance:usd_quote`,
         send_message,

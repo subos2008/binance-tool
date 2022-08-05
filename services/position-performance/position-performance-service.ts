@@ -27,8 +27,8 @@ import Sentry from "../../lib/sentry"
 import { SpotPosition } from "../../classes/spot/abstractions/spot-position"
 import { Prices } from "../../interfaces/portfolio"
 import { SendMessage } from "../../classes/send_message/publish"
-import { SpotPositionsPersistance } from "../../classes/spot/persistence/interface/spot-positions-persistance"
-import { RedisSpotPositionsPersistance } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
+import { SpotPositionsPersistence } from "../../classes/spot/persistence/interface/spot-positions-persistance"
+import { RedisSpotPositionsPersistence } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
 import { CurrentAllPricesGetter } from "../../interfaces/exchanges/generic/price-getter"
@@ -48,7 +48,7 @@ process.on("unhandledRejection", (err) => {
 export class PositionPerformance {
   send_message: SendMessageFunc
   logger: Logger
-  spot_positions_persistance: SpotPositionsPersistance
+  spot_positions_persistance: SpotPositionsPersistence
   spot_positions_query: SpotPositionsQuery
   ee: CurrentAllPricesGetter
   prices: Prices | undefined
@@ -63,7 +63,7 @@ export class PositionPerformance {
   }: {
     send_message: SendMessageFunc
     logger: Logger
-    spot_positions_persistance: SpotPositionsPersistance
+    spot_positions_persistance: SpotPositionsPersistence
     spot_positions_query: SpotPositionsQuery
     ee: CurrentAllPricesGetter
     health_and_readiness: HealthAndReadiness
@@ -161,7 +161,7 @@ const service_is_healthy: HealthAndReadinessSubsystem = health_and_readiness.add
 })
 
 async function main() {
-  const spot_positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
+  const spot_positions_persistance: SpotPositionsPersistence = new RedisSpotPositionsPersistence({ logger, redis })
   const ee = new TradeAbstractionServiceClient({ logger, TAS_URL })
 
   const spot_positions_query = new SpotPositionsQuery({

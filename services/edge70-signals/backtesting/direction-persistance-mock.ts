@@ -1,9 +1,9 @@
 import { Logger } from "../../../interfaces/logger"
-import { DirectionPersistance } from "../interfaces/direction-persistance"
+import { DirectionPersistence } from "../interfaces/direction-persistance"
 
 export type Direction = "short" | "long" // Redis returns null for unset
 
-export class DirectionPersistanceMock implements DirectionPersistance {
+export class DirectionPersistenceMock implements DirectionPersistence {
   private logger: Logger
   private prefix: string
 

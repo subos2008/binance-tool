@@ -38,7 +38,7 @@ import { HealthAndReadiness } from "../../../classes/health_and_readiness"
 import { BaseAssetsList } from "../base-assets-list"
 import { Edge70Signals } from "../signals"
 import { Edge70BacktestParameters, Edge70Parameters } from "../interfaces/edge70-signal"
-import { DirectionPersistanceMock } from "./direction-persistance-mock"
+import { DirectionPersistenceMock } from "./direction-persistance-mock"
 import { MarketIdentifier_V5_with_base_asset } from "../../../events/shared/market-identifier"
 import { ContextTags, SendMessageFunc } from "../../../interfaces/send-message"
 import { DateTime } from "luxon"
@@ -93,7 +93,7 @@ class Edge70SignalsBacktester {
   ee: Binance
   logger: Logger
   send_message: SendMessageFunc
-  direction_persistance: DirectionPersistanceMock
+  direction_persistance: DirectionPersistenceMock
   exchange_info_getter: BinanceExchangeInfoGetter
   health_and_readiness: HealthAndReadiness
   backtest_portfolio_tracker: BacktestPortfolioTracker
@@ -109,7 +109,7 @@ class Edge70SignalsBacktester {
     ee: Binance
     logger: Logger
     send_message: SendMessageFunc
-    direction_persistance: DirectionPersistanceMock
+    direction_persistance: DirectionPersistenceMock
     health_and_readiness: HealthAndReadiness
     backtest_portfolio_tracker: BacktestPortfolioTracker
   }) {
@@ -315,7 +315,7 @@ async function main() {
       logger,
       send_message,
       health_and_readiness,
-      direction_persistance: new DirectionPersistanceMock({
+      direction_persistance: new DirectionPersistenceMock({
         logger,
         prefix: `${service_name}:spot:binance:usd_quote`,
       }),

@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { Logger } from "../../../../../interfaces/logger"
 import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identifier"
-import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SpotPositionsPersistence } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import {
   TradeAbstractionOpenLongCommand_OCO_Exit,
   TradeAbstractionOpenLongCommand_StopLimitExit,
@@ -48,7 +48,7 @@ export class SpotPositionsExecution_BuyLimit {
   ee: BinanceSpotExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
-  positions_persistance: SpotPositionsPersistance
+  positions_persistance: SpotPositionsPersistence
   price_getter: CurrentPriceGetter
   metrics: SendDatadogMetrics
 
@@ -62,7 +62,7 @@ export class SpotPositionsExecution_BuyLimit {
   }: {
     logger: Logger
     ee: BinanceSpotExecutionEngine
-    positions_persistance: SpotPositionsPersistance
+    positions_persistance: SpotPositionsPersistence
     send_message: SendMessageFunc
     position_sizer: PositionSizer
     price_getter: CurrentPriceGetter

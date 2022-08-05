@@ -21,7 +21,7 @@ import { AuthorisedEdgeType, SpotPositionIdentifier_V3 } from "./position-identi
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
 import {
   genericOrderDataToSpotPositionInitialisationData,
-  SpotPositionsPersistance,
+  SpotPositionsPersistence,
 } from "../persistence/interface/spot-positions-persistance"
 import { SpotPositionClosedEvent_V1, SpotPositionOpenedEvent_V1 } from "./spot-position-callbacks"
 
@@ -40,7 +40,7 @@ export type SpotPositionObject = {
 export class SpotPosition {
   logger: Logger
   send_message: Function | undefined
-  spot_positions_persistance: SpotPositionsPersistance
+  spot_positions_persistance: SpotPositionsPersistence
   position_identifier: SpotPositionIdentifier_V3
 
   constructor({
@@ -51,7 +51,7 @@ export class SpotPosition {
   }: {
     logger: Logger
     send_message?: Function
-    spot_positions_persistance: SpotPositionsPersistance
+    spot_positions_persistance: SpotPositionsPersistence
     position_identifier: SpotPositionIdentifier_V3
   }) {
     this.logger = logger

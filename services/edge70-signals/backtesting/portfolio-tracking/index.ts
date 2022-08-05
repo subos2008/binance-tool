@@ -19,7 +19,7 @@ import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-messag
 import { RedisClient } from "redis-mock"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
 import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
-import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
+import { RedisSpotPositionsPersistence } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
 import { MarketIdentifier_V5_with_base_asset } from "../../../../events/shared/market-identifier"
 
@@ -67,7 +67,7 @@ export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
       if (tags) logger.warn(tags, msg)
       else logger.warn(msg)
     }
-    let positions_persistance = new RedisSpotPositionsPersistance({ logger, redis })
+    let positions_persistance = new RedisSpotPositionsPersistence({ logger, redis })
     let spot_positions_query = new SpotPositionsQuery({
       logger,
       positions_persistance,

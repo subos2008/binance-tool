@@ -10,7 +10,7 @@
 // }
 
 // import { Logger } from "../../../../../interfaces/logger"
-// import { SpotPositionsPersistance } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
+// import { SpotPositionsPersistence } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
 // import { SendMessageFunc } from "../../../../../lib/telegram-v2"
 // import { PositionSizer } from "../fixed-position-sizer"
 // import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
@@ -40,7 +40,7 @@
 //   ee: FuturesExecutionEngine
 //   send_message: SendMessageFunc
 //   position_sizer: PositionSizer
-//   // positions_persistance: SpotPositionsPersistance
+//   // positions_persistance: SpotPositionsPersistence
 //   price_getter: CurrentPriceGetter
 
 //   constructor({
@@ -53,7 +53,7 @@
 //   }: {
 //     logger: Logger
 //     ee: FuturesExecutionEngine
-//     // positions_persistance: SpotPositionsPersistance
+//     // positions_persistance: SpotPositionsPersistence
 //     send_message: SendMessageFunc
 //     position_sizer: PositionSizer
 //     price_getter: CurrentPriceGetter

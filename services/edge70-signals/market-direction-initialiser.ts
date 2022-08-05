@@ -4,7 +4,7 @@ import { strict as assert } from "assert"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
-import { DirectionPersistance } from "./interfaces/direction-persistance"
+import { DirectionPersistence } from "./interfaces/direction-persistance"
 import { Edge70Parameters, Edge70Signal } from "./interfaces/edge70-signal"
 import { Logger } from "../../lib/faux_logger"
 import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
@@ -12,14 +12,14 @@ import { DateTime } from "luxon"
 import { Edge70Signals } from "./signals"
 import { Edge70SignalCallbacks } from "./interfaces/_internal"
 
-// import { DirectionPersistanceRedis } from "./direction-persistance"
+// import { DirectionPersistenceRedis } from "./direction-persistance"
 // var mock_redis = require("redis-mock"),
 //   mock_redis_client = mock_redis.createClient()
 
 export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
   candles_collector: CandlesCollector
   logger: Logger
-  direction_persistance: DirectionPersistance
+  direction_persistance: DirectionPersistence
   market_identifier: MarketIdentifier_V5_with_base_asset
   edge70_parameters: Edge70Parameters
   num_candles_history_to_check: number = 100
@@ -32,7 +32,7 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
     market_identifier,
   }: {
     logger: Logger
-    direction_persistance: DirectionPersistance
+    direction_persistance: DirectionPersistence
     candles_collector: CandlesCollector
     market_identifier: MarketIdentifier_V5_with_base_asset
     edge70_parameters: Edge70Parameters
@@ -93,7 +93,7 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       }
 
       // let prefix = `market-direction-initialiser:${symbol}:` + randomUUID()
-      // let isolated_direction_persistance = new DirectionPersistanceRedis({
+      // let isolated_direction_persistance = new DirectionPersistenceRedis({
       //   prefix,
       //   logger: faux_logger,
       //   redis: mock_redis_client,

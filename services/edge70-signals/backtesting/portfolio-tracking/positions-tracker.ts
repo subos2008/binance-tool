@@ -12,7 +12,7 @@ import {
 } from "../../../amqp/binance-order-data/position-tracker/position-tracker"
 import { Logger } from "../../../../lib/faux_logger"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
 import { RedisClient } from "redis"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
@@ -54,7 +54,7 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
     logger: Logger
     redis: RedisClient
     spot_positions_query: SpotPositionsQuery
-    spot_positions_persistance: SpotPositionsPersistance
+    spot_positions_persistance: SpotPositionsPersistence
     health_and_readiness: HealthAndReadiness
   }) {
     this.logger = logger

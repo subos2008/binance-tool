@@ -20,8 +20,8 @@ import { Logger } from "../../../../lib/faux_logger"
 import binance, { Binance, ExchangeInfo } from "binance-api-node"
 import { BinanceOrderData, OrderCallbacks } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { SpotPositionTracker } from "./position-tracker"
-import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
+import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { RedisSpotPositionsPersistence } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { AMQP_BinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-binance-order-data-listener"
@@ -127,7 +127,7 @@ async function main() {
     )
     return result
   }
-  const spot_positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
+  const spot_positions_persistance: SpotPositionsPersistence = new RedisSpotPositionsPersistence({ logger, redis })
   const spot_positions_query = new SpotPositionsQuery({
     logger,
     positions_persistance: spot_positions_persistance,

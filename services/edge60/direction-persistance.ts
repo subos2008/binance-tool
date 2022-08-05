@@ -4,7 +4,7 @@ import { SendMessageFunc } from "../../interfaces/send-message"
 
 export type Direction = "short" | "long" // Redis returns null for unset
 
-export class DirectionPersistance {
+export class DirectionPersistence {
   private logger: Logger
   private redis: RedisClientType
   private prefix: string

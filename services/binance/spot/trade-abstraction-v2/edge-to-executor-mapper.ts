@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { Logger } from "../../../../interfaces/logger"
 import { MarketIdentifier_V4 } from "../../../../events/shared/market-identifier"
-import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import {
   check_edge,
@@ -56,7 +56,7 @@ export class SpotEdgeToExecutorMapper {
   ee: BinanceSpotExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
-  positions_persistance: SpotPositionsPersistance
+  positions_persistance: SpotPositionsPersistence
   price_getter: CurrentPriceGetter
 
   /* executors - really need to refactor this */
@@ -72,7 +72,7 @@ export class SpotEdgeToExecutorMapper {
   }: {
     logger: Logger
     ee: BinanceSpotExecutionEngine
-    positions_persistance: SpotPositionsPersistance
+    positions_persistance: SpotPositionsPersistence
     send_message: SendMessageFunc
     price_getter: CurrentPriceGetter
   }) {

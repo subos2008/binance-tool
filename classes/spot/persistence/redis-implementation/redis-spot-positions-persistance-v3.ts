@@ -14,7 +14,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { SpotPositionsPersistance, SpotPositionInitialisationData } from "../interface/spot-positions-persistance"
+import { SpotPositionsPersistence, SpotPositionInitialisationData } from "../interface/spot-positions-persistance"
 
 import { Logger } from "../../../../interfaces/logger"
 
@@ -25,7 +25,7 @@ import { SpotPositionObject } from "../../abstractions/spot-position"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
 import { OrderId } from "../../../persistent_state/interface/order-context-persistence"
 
-export class RedisSpotPositionsPersistance implements SpotPositionsPersistance {
+export class RedisSpotPositionsPersistence implements SpotPositionsPersistence {
   logger: Logger
   state: RedisSpotPositionsState
 

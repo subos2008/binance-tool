@@ -51,8 +51,8 @@ import { MarketData } from "./market-data"
 import { Edge70AMQPSignalPublisher } from "./publisher"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
-import { DirectionPersistance } from "./interfaces/direction-persistance"
-import { DirectionPersistanceRedis } from "./direction-persistance"
+import { DirectionPersistence } from "./interfaces/direction-persistance"
+import { DirectionPersistenceRedis } from "./direction-persistance"
 import { MarketDirectionInitialiser } from "./market-direction-initialiser"
 
 process.on("unhandledRejection", (err) => {
@@ -86,7 +86,7 @@ class Edge70SignalsService {
   close_short_timeframe_candle_ws: (() => void) | undefined
   close_1d_candle_ws: (() => void) | undefined
   send_message: SendMessageFunc
-  direction_persistance: DirectionPersistance
+  direction_persistance: DirectionPersistence
   exchange_info_getter: BinanceExchangeInfoGetter
   health_and_readiness: HealthAndReadiness
   callbacks: Edge70SignalCallbacks
@@ -102,7 +102,7 @@ class Edge70SignalsService {
     ee: Binance
     logger: Logger
     send_message: SendMessageFunc
-    direction_persistance: DirectionPersistance
+    direction_persistance: DirectionPersistence
     health_and_readiness: HealthAndReadiness
     exchange_identifier: ExchangeIdentifier_V4
     callbacks: Edge70SignalCallbacks
@@ -278,7 +278,7 @@ async function main() {
       logger,
       send_message,
       health_and_readiness,
-      direction_persistance: new DirectionPersistanceRedis({
+      direction_persistance: new DirectionPersistenceRedis({
         logger,
         prefix: `${service_name}:${exchange_type}:${exchange}:${quote_symbol.toLowerCase()}_quote`,
         redis,

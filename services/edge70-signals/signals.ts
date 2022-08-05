@@ -27,7 +27,7 @@ import { Tags } from "../../observability/loggable-tags"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
 import { SendMessageFunc } from "../../interfaces/send-message"
-import { Direction, DirectionPersistance } from "./interfaces/direction-persistance"
+import { Direction, DirectionPersistence } from "./interfaces/direction-persistance"
 
 /* Instantiated per asset; each exchange symbol has its own instance of this class */
 export class Edge70Signals {
@@ -39,7 +39,7 @@ export class Edge70Signals {
   edge: "edge70" | "edge70-backtest" = "edge70"
   edge70_parameters: Edge70Parameters
   market_identifier: MarketIdentifier_V5_with_base_asset
-  direction_persistance: DirectionPersistance
+  direction_persistance: DirectionPersistence
 
   callbacks: Edge70SignalCallbacks
   price_history_candles_long: LimitedLengthCandlesHistory
@@ -66,7 +66,7 @@ export class Edge70Signals {
     callbacks: Edge70SignalCallbacks
     edge70_parameters: Edge70Parameters
     edge?: "edge70-backtest"
-    direction_persistance: DirectionPersistance
+    direction_persistance: DirectionPersistence
   }) {
     this.logger = logger
     this.market_identifier = market_identifier

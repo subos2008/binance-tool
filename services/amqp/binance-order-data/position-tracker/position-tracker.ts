@@ -18,7 +18,7 @@ import {
 } from "../../../../classes/spot/abstractions/position-identifier"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
 import { SpotPosition } from "../../../../classes/spot/abstractions/spot-position"
-import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { OrderContextPersistence } from "../../../../classes/persistent_state/interface/order-context-persistence"
 import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import {
@@ -45,7 +45,7 @@ export class SpotPositionTracker {
   close_position_check_func: check_func
   order_context_persistence: OrderContextPersistence
   spot_positions_query: SpotPositionsQuery
-  spot_positions_persistance: SpotPositionsPersistance
+  spot_positions_persistance: SpotPositionsPersistence
   callbacks: SpotPositionCallbacks
   health_and_readiness: HealthAndReadiness
 
@@ -64,7 +64,7 @@ export class SpotPositionTracker {
     redis: RedisClient
     close_position_check_func: check_func
     spot_positions_query: SpotPositionsQuery
-    spot_positions_persistance: SpotPositionsPersistance
+    spot_positions_persistance: SpotPositionsPersistence
     health_and_readiness: HealthAndReadiness
     callbacks: SpotPositionCallbacks
   }) {

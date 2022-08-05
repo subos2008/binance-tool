@@ -72,7 +72,7 @@ export type FuturesPositionInitialisationData = {
 //   }
 // }
 
-export class FuturesPositionsPersistance {
+export class FuturesPositionsPersistence {
   logger: Logger
 
   constructor({ logger }: { logger: Logger }) {
@@ -89,7 +89,7 @@ export class FuturesPositionsPersistance {
 
   /* hacky*/
   async in_position(pi: FuturesPositionIdentifier_V1): Promise<boolean> {
-    this.logger.error(`FuturesPositionsPersistance: always reporting false for in_position`)
+    this.logger.error(`FuturesPositionsPersistence: always reporting false for in_position`)
     return false
   }
   // as_spot_position_object(pi: FuturesPositionIdentifier_V1): Promise<FuturesPositionObject>

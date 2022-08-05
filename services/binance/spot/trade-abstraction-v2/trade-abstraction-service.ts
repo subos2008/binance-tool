@@ -20,8 +20,8 @@ import {
 import { SpotEdgeToExecutorMapper } from "./edge-to-executor-mapper"
 import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { RedisSpotPositionsPersistance } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
+import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { RedisSpotPositionsPersistence } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
 import { RedisClient } from "redis"
@@ -56,7 +56,7 @@ export class TradeAbstractionService {
     this.send_message = send_message
     assert(quote_asset)
     this.quote_asset = quote_asset
-    const positions_persistance: SpotPositionsPersistance = new RedisSpotPositionsPersistance({ logger, redis })
+    const positions_persistance: SpotPositionsPersistence = new RedisSpotPositionsPersistence({ logger, redis })
 
     this.positions = new SpotPositionsQuery({
       logger,

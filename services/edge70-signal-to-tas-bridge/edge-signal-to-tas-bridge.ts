@@ -6,10 +6,13 @@
  * Event/message listener
  */
 
-import { strict as assert } from "assert"
+/* config */
 const service_name = "edge70-signal-to-tas-bridge"
+const event_name: MyEventNameType = "Edge70Signal"
+
 require("dotenv").config()
 
+import { strict as assert } from "assert"
 import express from "express"
 import { ListenerFactory } from "../../classes/amqp/listener-factory"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
@@ -113,7 +116,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  new Edge60MessageProcessor({ health_and_readiness, logger, send_message, event_name: "Edge60EntrySignal" })
+  new Edge60MessageProcessor({ health_and_readiness, logger, send_message, event_name })
 }
 
 main().catch((err) => {

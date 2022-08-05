@@ -20,11 +20,11 @@ import { OrderId } from "../../../../persistent_state/interface/order-context-pe
 
 // We store as integers in redis because it uses hardware for floating point calculations
 function to_sats(input: string | BigNumber): string {
-  return new BigNumber(input).times("1e8").toFixed()
+  return new BigNumber(input).times("1e8").toFixed(0)
 }
 
 function from_sats(input: string | BigNumber) {
-  return new BigNumber(input).dividedBy("1e8").toFixed()
+  return new BigNumber(input).dividedBy("1e8").toFixed(8)
 }
 
 const key_base = "positions-v3"

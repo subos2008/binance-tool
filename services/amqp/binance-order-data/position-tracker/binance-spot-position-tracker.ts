@@ -47,6 +47,7 @@ process.on("unhandledRejection", (err) => {
 
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
+import { SpotPositionPublisher } from "./spot-position-publisher"
 set_redis_logger(logger)
 const redis = get_redis_client()
 
@@ -139,6 +140,10 @@ async function main() {
     },
   })
 
+  let spot_position_publisher = new SpotPositionPublisher({
+    logger,
+    health_and_readiness: health_and_readiness,
+  })
   position_tracker = new SpotPositionTracker({
     logger,
     send_message,
@@ -146,6 +151,7 @@ async function main() {
     close_position_check_func,
     spot_positions_query,
     spot_positions_persistance,
+    callbacks: spot_position_publisher,
     health_and_readiness,
   })
 

@@ -22,10 +22,10 @@ import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/i
 import { OrderContextPersistence } from "../../../../classes/persistent_state/interface/order-context-persistence"
 import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import {
+  SpotPositionCallbacks,
   SpotPositionClosedEvent_V1,
   SpotPositionOpenedEvent_V1,
-  SpotPositionPublisher,
-} from "../../../../classes/spot/abstractions/spot-position-publisher"
+} from "../../../../classes/spot/abstractions/spot-position-callbacks"
 import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 
@@ -46,7 +46,7 @@ export class SpotPositionTracker {
   order_context_persistence: OrderContextPersistence
   spot_positions_query: SpotPositionsQuery
   spot_positions_persistance: SpotPositionsPersistance
-  spot_position_publisher: SpotPositionPublisher
+  callbacks: SpotPositionCallbacks
   health_and_readiness: HealthAndReadiness
 
   constructor({
@@ -57,6 +57,7 @@ export class SpotPositionTracker {
     spot_positions_query,
     spot_positions_persistance,
     health_and_readiness,
+    callbacks,
   }: {
     send_message: SendMessageFunc
     logger: Logger
@@ -65,6 +66,7 @@ export class SpotPositionTracker {
     spot_positions_query: SpotPositionsQuery
     spot_positions_persistance: SpotPositionsPersistance
     health_and_readiness: HealthAndReadiness
+    callbacks: SpotPositionCallbacks
   }) {
     this.logger = logger
     this.send_message = send_message
@@ -74,10 +76,7 @@ export class SpotPositionTracker {
     this.order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
     this.spot_positions_persistance = spot_positions_persistance
     this.health_and_readiness = health_and_readiness
-    this.spot_position_publisher = new SpotPositionPublisher({
-      logger,
-      health_and_readiness: health_and_readiness,
-    })
+    this.callbacks = callbacks
   }
 
   async buy_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
@@ -101,7 +100,7 @@ export class SpotPositionTracker {
     // Publish a new style event declaring the opened position
     try {
       let event = await position.get_SpotPositionOpenedEvent()
-      this.spot_position_publisher.publish_open(event)
+      await this.callbacks.on_position_opened(event)
     } catch (err) {
       console.error(err)
       Sentry.withScope(function (scope) {
@@ -188,7 +187,7 @@ export class SpotPositionTracker {
           exit_position_size: generic_order_data.totalBaseTradeQuantity, // base asset
         })
         this.logger.object(event)
-        await this.spot_position_publisher.publish_closed(event)
+        await this.callbacks.on_position_closed(event)
       } catch (err) {
         let msg = `Failed to create/send SpotPositionClosed for: ${position.baseAsset} to ${quoteAsset}`
         this.send_message(msg, tags)

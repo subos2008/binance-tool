@@ -11,11 +11,10 @@ import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-
 import { DateTime } from "luxon"
 import { Edge70Signals } from "./signals"
 import { Edge70SignalCallbacks } from "./interfaces/_internal"
-import { DirectionPersistanceRedis } from "./direction-persistance"
-import { randomUUID } from "node:crypto"
 
-var mock_redis = require("redis-mock"),
-  mock_redis_client = mock_redis.createClient()
+// import { DirectionPersistanceRedis } from "./direction-persistance"
+// var mock_redis = require("redis-mock"),
+//   mock_redis_client = mock_redis.createClient()
 
 export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
   candles_collector: CandlesCollector

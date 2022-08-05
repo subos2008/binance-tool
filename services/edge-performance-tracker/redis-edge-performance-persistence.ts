@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js"
 import { RedisClientType } from "redis-v4"
-import { SpotPositionClosedEvent_V1 } from "../../classes/spot/abstractions/spot-position-publisher"
+import { SpotPositionClosedEvent_V1 } from "../../classes/spot/abstractions/spot-position-callbacks"
 import { Logger } from "../../interfaces/logger"
 import { DateTime } from "luxon"
 import Sentry from "../../lib/sentry"

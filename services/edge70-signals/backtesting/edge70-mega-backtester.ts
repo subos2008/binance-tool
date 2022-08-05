@@ -4,6 +4,8 @@
 
 /** Config: */
 const quote_symbol = "USDT".toUpperCase()
+let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
+let to_base_asset = (symbol: string) => symbol.toUpperCase().replace(/USDT$/, "") // HACK
 
 import { strict as assert } from "assert"
 const service_name = "edge70-backtester"
@@ -35,13 +37,15 @@ import { BinanceExchangeInfoGetter } from "../../../classes/exchanges/binance/ex
 import { HealthAndReadiness } from "../../../classes/health_and_readiness"
 import { BaseAssetsList } from "../base-assets-list"
 import { Edge70Signals } from "../signals"
-import { Edge70Parameters } from "../interfaces/edge70-signal"
-import { Edge70SignalCallbacks } from "../interfaces/_internal"
+import { Edge70BacktestParameters, Edge70Parameters } from "../interfaces/edge70-signal"
 import { DirectionPersistanceMock } from "./direction-persistance-mock"
 import { MarketIdentifier_V5_with_base_asset } from "../../../events/shared/market-identifier"
-import { Edge70AMQPSignalPublisherMock } from "./publisher-mock"
 import { ContextTags, SendMessageFunc } from "../../../interfaces/send-message"
 import { DateTime } from "luxon"
+import { RedisClient } from "redis"
+import { BacktestPortfolioTracker } from "./portfolio-tracking"
+import { FixedPositionSizer } from "../../../edges/position-sizer/fixed-position-sizer"
+import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -54,7 +58,7 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-const edge70_parameters: Edge70Parameters = {
+const edge70_parameters: Edge70BacktestParameters = {
   // days_of_price_history should be one less than the value we use in the TV high/low indicator
   // because the high/low indicator includes the new candle in it's count
   candle_timeframe: "1d",
@@ -62,6 +66,7 @@ const edge70_parameters: Edge70Parameters = {
     long: 44, // one less than the number we use on the TV high/low indicator
     short: 21, // one less than the number we use on the TV high/low indicator
   },
+  stop_factor: "0.93",
 }
 
 // const backtest_parameters = {
@@ -91,21 +96,22 @@ class Edge70SignalsBacktester {
   direction_persistance: DirectionPersistanceMock
   exchange_info_getter: BinanceExchangeInfoGetter
   health_and_readiness: HealthAndReadiness
-  callbacks: Edge70SignalCallbacks
+  backtest_portfolio_tracker: BacktestPortfolioTracker
+  mock_redis: RedisClient
 
   constructor({
     ee,
     logger,
     send_message,
     direction_persistance,
-    callbacks,
+    backtest_portfolio_tracker,
   }: {
     ee: Binance
     logger: Logger
     send_message: SendMessageFunc
     direction_persistance: DirectionPersistanceMock
     health_and_readiness: HealthAndReadiness
-    callbacks: Edge70SignalCallbacks
+    backtest_portfolio_tracker: BacktestPortfolioTracker
   }) {
     this.candles_collector = new CandlesCollector({ ee })
     this.ee = ee
@@ -115,11 +121,22 @@ class Edge70SignalsBacktester {
     this.direction_persistance = direction_persistance
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
     this.health_and_readiness = health_and_readiness
-    this.callbacks = callbacks
+    this.backtest_portfolio_tracker = backtest_portfolio_tracker
+    var mock_redis = require("redis-mock")
+    this.mock_redis = mock_redis.createClient()
   }
 
   async init(): Promise<void> {
-    await this.callbacks.init()
+    await this.backtest_portfolio_tracker.init()
+  }
+
+  market_identifier(args: { base_asset: string; symbol: string }): MarketIdentifier_V5_with_base_asset {
+    return {
+      object_type: "MarketIdentifier",
+      version: 5,
+      exchange_identifier: this.exchange_info_getter.get_exchange_identifier(),
+      ...args,
+    }
   }
 
   async init_candles(limit: number) {
@@ -141,8 +158,6 @@ class Edge70SignalsBacktester {
     console.warn(`Chopping to just ${base_assets[0]}`)
     base_assets = base_assets.slice(0, limit)
     this.logger.info(`Target markets: ${base_assets.join(", ")}`)
-
-    let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
 
     let largest_number_of_candles = 0
     for (let i = 0; i < base_assets.length; i++) {
@@ -181,13 +196,7 @@ class Edge70SignalsBacktester {
           this.logger.info(`Loaded ${this.candles[symbol].length} candles for ${symbol}`)
         }
 
-        let market_identifier: MarketIdentifier_V5_with_base_asset = {
-          object_type: "MarketIdentifier",
-          version: 5,
-          exchange_identifier: this.exchange_info_getter.get_exchange_identifier(),
-          base_asset,
-          symbol,
-        }
+        let market_identifier: MarketIdentifier_V5_with_base_asset = this.market_identifier({ base_asset, symbol })
 
         let initial_candles: CandleChartResult[] = []
         this.edges[symbol] = new Edge70Signals({
@@ -198,7 +207,7 @@ class Edge70SignalsBacktester {
           health_and_readiness,
           initial_candles,
           market_identifier,
-          callbacks: this.callbacks,
+          callbacks: this.backtest_portfolio_tracker,
           edge70_parameters,
         })
         this.logger.info(
@@ -249,11 +258,16 @@ class Edge70SignalsBacktester {
       for (const symbol in this.candles) {
         let candle = this.candles[symbol].shift()
         if (!candle) break outer
+        let base_asset = to_base_asset(symbol)
+        let market_identifier = this.market_identifier({ base_asset, symbol })
+        /* ingest_new_candle on tracker first so it checks for stops _before_ we open positions */
+        await this.backtest_portfolio_tracker.ingest_new_candle({ market_identifier, candle })
         await this.edges[symbol].ingest_new_candle({ symbol, candle })
       }
       count++
     }
     this.logger.info(`Run complete. Processed ${count} candles`)
+    await this.backtest_portfolio_tracker.summary()
   }
 }
 
@@ -273,10 +287,26 @@ async function main() {
   })
 
   try {
-    let publisher = new Edge70AMQPSignalPublisherMock({
-      logger: logger,
-      health_and_readiness,
+    let mock_redis = require("redis-mock")
+    let redis = mock_redis.createClient()
+
+    let eig = new BinanceExchangeInfoGetter({ ee })
+    let i = eig.get_exchange_identifier()
+    let exchange_identifier: ExchangeIdentifier_V3 = {
+      ...i,
+      type: i.exchange_type,
+      account: "default",
+      version: "v3",
+    }
+    let position_sizer = new FixedPositionSizer({ logger })
+    let backtest_portfolio_tracker = new BacktestPortfolioTracker({
+      logger,
       edge,
+      health_and_readiness,
+      position_sizer,
+      redis,
+      exchange_identifier,
+      quote_asset: quote_symbol,
       edge70_parameters,
     })
 
@@ -289,7 +319,7 @@ async function main() {
         logger,
         prefix: `${service_name}:spot:binance:usd_quote`,
       }),
-      callbacks: publisher,
+      backtest_portfolio_tracker,
     })
     await service.init()
     await service.init_candles(symbols_to_run)

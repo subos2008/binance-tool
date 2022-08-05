@@ -23,7 +23,7 @@ import {
   genericOrderDataToSpotPositionInitialisationData,
   SpotPositionsPersistance,
 } from "../persistence/interface/spot-positions-persistance"
-import { SpotPositionClosedEvent_V1, SpotPositionOpenedEvent_V1 } from "./spot-position-publisher"
+import { SpotPositionClosedEvent_V1, SpotPositionOpenedEvent_V1 } from "./spot-position-callbacks"
 
 export type SpotPositionObject = {
   initial_entry_timestamp: number

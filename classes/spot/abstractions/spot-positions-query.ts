@@ -5,7 +5,7 @@ import Sentry from "../../../lib/sentry"
 import { Logger } from "../../../interfaces/logger"
 import { SpotPositionsPersistance } from "../persistence/interface/spot-positions-persistance"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
-import { AuthorisedEdgeType, SpotPositionIdentifier_V3, SpotPositionsQuery_V3 } from "./position-identifier"
+import { SpotPositionIdentifier_V3, SpotPositionsQuery_V3 } from "./position-identifier"
 import { SpotPosition } from "./spot-position"
 import { SendMessageFunc } from "../../../interfaces/send-message"
 
@@ -41,7 +41,7 @@ export class SpotPositionsQuery {
     this.exchange_identifier = exchange_identifier
   }
 
-  in_position({ base_asset, edge }: { base_asset: string; edge: AuthorisedEdgeType }) {
+  in_position({ base_asset, edge }: { base_asset: string; edge: string }) {
     return this.positions_persistance.in_position({
       base_asset,
       exchange_identifier: this.exchange_identifier,
@@ -49,7 +49,7 @@ export class SpotPositionsQuery {
     })
   }
 
-  exisiting_position_size({ base_asset, edge }: { base_asset: string; edge: AuthorisedEdgeType }) {
+  exisiting_position_size({ base_asset, edge }: { base_asset: string; edge: string }) {
     return this.positions_persistance.position_size({
       base_asset,
       exchange_identifier: this.exchange_identifier,

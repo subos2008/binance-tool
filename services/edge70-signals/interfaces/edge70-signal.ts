@@ -13,6 +13,16 @@ export type Edge70Parameters = {
   }
 }
 
+export type Edge70BacktestParameters = {
+  // days_of_price_history should be one less than the number we use on the TV high/low indicator
+  candle_timeframe: "1d"
+  candles_of_price_history: {
+    long: 44 // one less than the number we use on the TV high/low indicator
+    short: 21 // one less than the number we use on the TV high/low indicator
+  }
+  stop_factor: string
+}
+
 // For storage of event data the configuration and mcap data is included
 export interface Edge70Signal {
   version: 1

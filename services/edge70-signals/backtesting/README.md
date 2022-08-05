@@ -11,3 +11,14 @@ We could convert edge events to Orders
 But! We would still need to write daily portfolio value trackers
 Convert stops into orders
 
+## Interesting Metrics
+
+1. Duration
+1. total net loss / profit
+1. total number of trades 
+1. balance draw down 
+1. number of winning trade 
+1. number of lossing trade 
+1. consecutive win 
+1. consecutive loss
+

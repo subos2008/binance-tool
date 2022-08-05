@@ -103,6 +103,7 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
     }
 
     try {
+      this.logger.info(args)
       this.signal_publisher.publish(args)
     } catch (err) {
       this.logger.warn(tags, `Failed to publish ${args.object_type} to AMQP for ${symbol}`)
@@ -115,7 +116,6 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
         signal_timestamp_ms: args.signal.signal_timestamp_ms,
         market_identifier: args.market_identifier,
         direction,
-        base_asset,
       })
     } catch (err) {
       this.logger.warn(tags, `Failed to publish direction to AMQP for ${symbol}`)
@@ -131,14 +131,15 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
   }: {
     direction: "long" | "short"
     signal_timestamp_ms: number
-    base_asset: string
     market_identifier: MarketIdentifier_V5
   }) {
     let { edge } = this
+    let {base_asset}=market_identifier
     let event: EdgeDirectionSignal = {
       object_type: "EdgeDirectionSignal",
       version: 1,
       edge,
+      msg: `${base_asset} ${direction} signal`,
       market_identifier,
       direction,
       exchange_type: market_identifier.exchange_identifier.exchange_type,

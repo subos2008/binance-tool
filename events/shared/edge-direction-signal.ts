@@ -7,6 +7,7 @@ export interface EdgeDirectionSignal {
   object_type: "EdgeDirectionSignal"
   version: 1
   edge: string
+  msg?: string
   direction: "long" | "short"
   base_asset?: string
   quote_asset?: string

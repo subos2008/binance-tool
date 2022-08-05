@@ -55,7 +55,7 @@ import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/spo
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { Balance, Portfolio } from "../../../../interfaces/portfolio"
-import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 
 export class BinancePortfolioTracker implements PortfolioBitchClass {
   send_message: Function
@@ -88,7 +88,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
-    let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+    let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
     this.order_execution_tracker = new OrderExecutionTracker({
       ee: this.ee,
       send_message,

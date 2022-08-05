@@ -25,7 +25,7 @@ import {
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../../../classes/health_and_readiness"
 import { RedisClient } from "redis"
-import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { FuturesOrderExecutionTracker } from "../../../../classes/exchanges/binance/futures-order-execution-tracker"
 import { BinanceFuturesOrderDataPublisher } from "../../lib/binance-futures-order-data-publisher"
 
@@ -59,7 +59,7 @@ export class BinanceFuturesOrdersToAMQP implements FuturesOrderCallbacks {
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
-    let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+    let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
 
     this.order_execution_tracker = new FuturesOrderExecutionTracker({
       ee: this.ee,

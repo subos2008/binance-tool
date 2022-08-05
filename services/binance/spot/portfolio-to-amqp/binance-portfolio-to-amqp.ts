@@ -56,7 +56,7 @@ import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order
 import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 import { PortfolioPublisher } from "./portfolio-publisher"
 import { PortfolioTracker } from "./portfolio-tracker"
-import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import express from "express"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 
@@ -143,7 +143,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
       apiSecret: process.env.BINANCE_API_SECRET,
     })
 
-    let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+    let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
     this.order_execution_tracker = new OrderExecutionTracker({
       ee: this.ee,
       send_message,

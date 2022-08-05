@@ -61,7 +61,7 @@ import {
 } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { FuturesPortfolio } from "../../../../interfaces/portfolio"
-import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { FuturesOrderExecutionTracker } from "../../../../classes/exchanges/binance/futures-order-execution-tracker"
 
 export class BinancePortfolioTracker implements FuturesPortfolioBitchClass, FuturesOrderCallbacks {
@@ -95,7 +95,7 @@ export class BinancePortfolioTracker implements FuturesPortfolioBitchClass, Futu
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
-    let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+    let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
     this.order_execution_tracker = new FuturesOrderExecutionTracker({
       ee: this.ee,
       send_message,

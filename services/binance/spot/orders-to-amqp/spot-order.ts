@@ -27,7 +27,7 @@ import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { RedisClient } from "redis"
-import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { BinanceOrderPublisher } from "../../lib/binance-order-publisher"
 
 const exchange_identifier: ExchangeIdentifier_V3 = {
@@ -67,7 +67,7 @@ export class BinanceSpotOrdersToAMQP {
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
-    let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+    let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
 
     this.order_execution_tracker = new OrderExecutionTracker({
       ee: this.ee,

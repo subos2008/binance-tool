@@ -17,7 +17,7 @@ const BinanceFoo = require("binance-api-node").default
 import { Binance } from "binance-api-node"
 import { OrderExecutionTracker } from "../../classes/exchanges/binance/spot-order-execution-tracker"
 import { BinanceOrderData } from "../../interfaces/exchanges/binance/order_callbacks"
-import { RedisOrderContextPersistance } from "../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistence } from "../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { SendMessage } from "../../classes/send_message/publish"
 import { Logger } from "./../../lib/faux_logger"
@@ -129,7 +129,7 @@ async function main() {
   let redis = get_redis_client()
 
   let order_callbacks = new MyOrderCallbacks({ logger, send_message })
-  let order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+  let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
 
   let spot_order_execution_tracker = new OrderExecutionTracker({
     ee,

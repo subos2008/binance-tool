@@ -11,7 +11,7 @@ import { OrderContext_V1, OrderContext_V2 } from "../../../interfaces/orders/ord
 
 type OrderId = string
 
-export class RedisOrderContextPersistance implements OrderContextPersistence, OrderContextPersistence_V2 {
+export class RedisOrderContextPersistence implements OrderContextPersistence, OrderContextPersistence_V2 {
   logger: Logger
   redis: RedisClient
   getAsync: any

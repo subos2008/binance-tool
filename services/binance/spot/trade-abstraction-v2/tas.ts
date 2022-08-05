@@ -34,7 +34,7 @@ import { SendMessage } from "../../../../classes/send_message/publish"
 import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
-import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { RedisClient } from "redis"
 import { TradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
@@ -90,7 +90,7 @@ app.use(
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
 
-const order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+const order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
 const ee = new ExecutionEngine({ logger, order_context_persistence })
 const exchange_identifier = ee.get_exchange_identifier()
 

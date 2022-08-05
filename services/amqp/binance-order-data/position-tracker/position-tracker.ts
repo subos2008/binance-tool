@@ -20,7 +20,7 @@ import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-p
 import { SpotPosition } from "../../../../classes/spot/abstractions/spot-position"
 import { SpotPositionsPersistance } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { OrderContextPersistence } from "../../../../classes/persistent_state/interface/order-context-persistence"
-import { RedisOrderContextPersistance } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import {
   SpotPositionClosedEvent_V1,
   SpotPositionOpenedEvent_V1,
@@ -71,7 +71,7 @@ export class SpotPositionTracker {
     this.spot_positions_query = spot_positions_query
     assert(close_position_check_func, "close_position_check_func not set")
     this.close_position_check_func = close_position_check_func
-    this.order_context_persistence = new RedisOrderContextPersistance({ logger, redis })
+    this.order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
     this.spot_positions_persistance = spot_positions_persistance
     this.health_and_readiness = health_and_readiness
     this.spot_position_publisher = new SpotPositionPublisher({

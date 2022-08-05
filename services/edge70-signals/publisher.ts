@@ -134,10 +134,11 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
     base_asset: string
     market_identifier: MarketIdentifier_V5
   }) {
+    let { edge } = this
     let event: EdgeDirectionSignal = {
       object_type: "EdgeDirectionSignal",
       version: 1,
-      edge: "edge60",
+      edge,
       market_identifier,
       direction,
       exchange_type: market_identifier.exchange_identifier.exchange_type,

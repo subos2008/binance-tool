@@ -93,7 +93,7 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
         return
       }
 
-      let prefix = `market-direction-initialiser:${symbol}:` + randomUUID()
+      // let prefix = `market-direction-initialiser:${symbol}:` + randomUUID()
       // let isolated_direction_persistance = new DirectionPersistanceRedis({
       //   prefix,
       //   logger: faux_logger,

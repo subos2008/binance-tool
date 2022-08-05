@@ -83,15 +83,15 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       }
       let num_loaded_candles = candles.length
 
-      let faux_logger = this.logger
-      let faux_send_message: SendMessageFunc = async (msg: string, tags?: ContextTags) => {
-        if (tags) this.logger.info(tags, msg)
-        else this.logger.info(msg)
-      }
-      // let faux_logger: Logger = new Logger({ silent: true })
-      // let faux_send_message: SendMessageFunc = async () => {
-      //   return
+      // let faux_logger = this.logger
+      // let faux_send_message: SendMessageFunc = async (msg: string, tags?: ContextTags) => {
+      //   if (tags) this.logger.info(tags, msg)
+      //   else this.logger.info(msg)
       // }
+      let faux_logger: Logger = new Logger({ silent: true })
+      let faux_send_message: SendMessageFunc = async () => {
+        return
+      }
 
       let prefix = `market-direction-initialiser:${symbol}:` + randomUUID()
       // let isolated_direction_persistance = new DirectionPersistanceRedis({
@@ -108,7 +108,7 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
         initial_candles: [],
         market_identifier,
         callbacks: this,
-        direction_persistance:this.direction_persistance,
+        direction_persistance: this.direction_persistance,
         // direction_persistance: isolated_direction_persistance,
         edge70_parameters,
       })

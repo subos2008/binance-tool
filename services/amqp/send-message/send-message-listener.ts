@@ -69,27 +69,29 @@ export class AMQP_SendMessageListener implements MessageProcessor {
       message_processor: this,
       health_and_readiness,
       service_name: this.service_name,
-      prefetch_one: true
+      prefetch_one: true,
     })
   }
 
   async process_message(amqp_message: Message, channel: Channel): Promise<void> {
     // Warning: the isolated listener has similar code
     try {
-      this.logger.info(amqp_message.content.toString())
+      let tags = amqp_message.fields
+      this.logger.info(tags, amqp_message.content.toString())
       let i: SendMessageEvent | undefined
       try {
         i = JSON.parse(amqp_message.content.toString()) as SendMessageEvent
-        this.logger.info(i)
+        this.logger.info(tags, i)
         i.msg = `B ${i.msg}`
       } catch (err) {
         // Couldn't parse message as JSON - eat it
         // Actually, the MessageIsolator will do this probably before we get here
         this.logger.error({ err })
         this.logger.error(
+          tags,
           `Unable to parse incomming AMQP message content as JSON: ${amqp_message.content.toString()}`
         )
-        this.logger.error(amqp_message)
+        this.logger.error(tags, amqp_message)
         channel.nack(amqp_message) // nack
         return
       }

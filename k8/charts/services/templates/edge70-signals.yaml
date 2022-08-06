@@ -1,3 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: edge70-signals
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app.kubernetes.io/name: edge70-signals
+---   
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -9,12 +21,12 @@ spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/name: edge70-signals
       app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/name: edge70-signals
         app.kubernetes.io/instance: {{ .Release.Name }}
         binance-tool/service: "edge70-signals"
         tags.datadoghq.com/service: "edge70-signals"
@@ -26,6 +38,7 @@ spec:
             "service": "edge70-signals"
           }]   
     spec:
+      priorityClassName: binance-edge-signals
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}

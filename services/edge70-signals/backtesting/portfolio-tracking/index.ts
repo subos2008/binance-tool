@@ -145,7 +145,7 @@ export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
         direction: "long",
       })
     ).toFixed()
-    let totalBaseTradeQuantity = new BigNumber(totalQuoteTradeQuantity).dividedBy(signal_price).toFixed()
+    let totalBaseTradeQuantity = new BigNumber(totalQuoteTradeQuantity).dividedBy(signal_price).toFixed(8)
     let generic_order_data: GenericOrderData = {
       exchange_identifier,
       market_symbol: symbol,
@@ -173,7 +173,7 @@ export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
     let { symbol, base_asset } = market_identifier
 
     let totalBaseTradeQuantity = args.base_amount.toFixed()
-    let totalQuoteTradeQuantity = args.base_amount.times(signal_price).toFixed()
+    let totalQuoteTradeQuantity = args.base_amount.times(signal_price).toFixed(8)
     let order_id = `${symbol}-SELL-${signal_timestamp_ms}`
     let trade_id = order_id
     let order_context: OrderContext_V2 = { object_type: "OrderContext", version: 1, edge, trade_id }
@@ -207,7 +207,7 @@ export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
     signal_price: string
   }) {
     let { base_asset } = market_identifier
-    this.stops[base_asset] = new BigNumber(signal_price).times(this.stop_factor)
+    this.stops[base_asset] = new BigNumber(signal_price).times(this.stop_factor).dp(8)
     this.logger.info(`${base_asset} Set stop of ${this.stops[base_asset].toFixed()}`)
   }
 

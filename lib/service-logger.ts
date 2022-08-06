@@ -22,6 +22,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   silent: boolean
   bunyan: bunyan
   events_as_msg: boolean = false
+  full_trace: boolean = false
 
   /**
    * @param {boolean} events_as_msg - Suppress printing of entire events and just print .msg. Used in the backtester where we want readable logs
@@ -32,12 +33,14 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
       template,
       level,
       events_as_msg,
-    }: { silent: boolean; template?: object; level?: bunyan.LogLevel; events_as_msg?: boolean } = {
+      full_trace
+    }: { silent: boolean; template?: object; level?: bunyan.LogLevel; events_as_msg?: boolean, full_trace?:boolean } = {
       silent: false,
       template: {},
     }
   ) {
     if (events_as_msg) events_as_msg = events_as_msg
+    if (full_trace) full_trace = full_trace
     if (!template) template = {}
     this.silent = silent
     let params = {
@@ -69,6 +72,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   }
 
   object(obj: any) {
+    if (this.full_trace) console.trace(`BunyanServiceLogger.object`)
     if (obj.object_type) {
       console.trace(`logger.object used for an object_type event, consider porting to use logger.event`)
     }
@@ -83,6 +87,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   }
 
   info(obj: Object, ...params: any[]) {
+    if (this.full_trace && this.bunyan.info()) console.trace(`BunyanServiceLogger.info`)
     if ((obj as any).object_type) {
       console.trace(`logger.info used for an object_type event, consider porting to use logger.event`)
     }
@@ -97,12 +102,14 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   }
 
   notice(obj: Object, ...params: any[]) {
+    if (this.full_trace) console.trace(`BunyanServiceLogger.notice`)
     if (!this.silent) {
       this.bunyan.info(obj, ...params)
     }
   }
 
   error(obj: Object, ...params: any[]) {
+    if (this.full_trace) console.trace(`BunyanServiceLogger.error`)
     if (!this.silent) {
       try {
         this.bunyan.error(obj, ...params)
@@ -113,6 +120,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   }
 
   fatal(obj: Object, ...params: any[]) {
+    if (this.full_trace) console.trace(`BunyanServiceLogger.fatal`)
     if (!this.silent) {
       try {
         this.bunyan.fatal(obj, ...params)
@@ -123,6 +131,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   }
 
   warn(obj: Object, ...params: any[]) {
+    if (this.full_trace) console.trace(`BunyanServiceLogger.warn`)
     if (!this.silent) {
       try {
         this.bunyan.warn(obj, ...params)
@@ -133,6 +142,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   }
 
   debug(obj: Object, ...params: any[]) {
+    if (this.full_trace && this.bunyan.debug()) console.trace(`BunyanServiceLogger.debug`)
     if (!this.silent) {
       try {
         this.bunyan.debug(obj, ...params)
@@ -143,6 +153,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   }
 
   silly(obj: Object, ...params: any[]) {
+    if (this.full_trace) console.trace(`BunyanServiceLogger.silly`)
     if (!this.silent) {
       try {
         this.bunyan.debug(obj, ...params)
@@ -157,6 +168,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
    * Will allow us to search for and eliminate simple `msg:string` logs
    */
   exception(tags: ContextTags, err: unknown, msg?: string) {
+    if (this.full_trace) console.trace(`BunyanServiceLogger.exception`)
     try {
       let _err = err as any
       this.bunyan.error({ ...tags, msg, ..._err })
@@ -169,6 +181,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   }
 
   event(tags: ContextTags, event: LoggableEvent) {
+    if (this.full_trace) console.trace(`BunyanServiceLogger.event`)
     if (!this.silent) {
       try {
         if (this.events_as_msg) {

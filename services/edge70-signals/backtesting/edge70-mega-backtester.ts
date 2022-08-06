@@ -252,22 +252,27 @@ class Edge70SignalsBacktester {
   }
 
   async run(): Promise<void> {
-    this.logger.warn(`Not checking for STOP out of position on edge70`)
-    let count = 0
-    outer: while (true) {
-      for (const symbol in this.candles) {
-        let candle = this.candles[symbol].shift()
-        if (!candle) break outer
-        let base_asset = to_base_asset(symbol)
-        let market_identifier = this.market_identifier({ base_asset, symbol })
-        /* ingest_new_candle on tracker first so it checks for stops _before_ we open positions */
-        await this.backtest_portfolio_tracker.ingest_new_candle({ market_identifier, candle })
-        await this.edges[symbol].ingest_new_candle({ symbol, candle })
+    try {
+      let count = 0
+      outer: while (true) {
+        for (const symbol in this.candles) {
+          let candle = this.candles[symbol].shift()
+          if (!candle) break outer
+          let base_asset = to_base_asset(symbol)
+          let market_identifier = this.market_identifier({ base_asset, symbol })
+          /* ingest_new_candle on tracker first so it checks for stops _before_ we open positions */
+          await this.backtest_portfolio_tracker.ingest_new_candle({ market_identifier, candle })
+          await this.edges[symbol].ingest_new_candle({ symbol, candle })
+        }
+        count++
       }
-      count++
+      this.logger.info(`Run complete. Processed ${count} candles`)
+      await this.backtest_portfolio_tracker.summary()
+    } catch (err: any) {
+      this.logger.error({ err })
+      this.logger.error(err)
+      throw err
     }
-    this.logger.info(`Run complete. Processed ${count} candles`)
-    await this.backtest_portfolio_tracker.summary()
   }
 }
 
@@ -327,6 +332,7 @@ async function main() {
   } catch (err) {
     logger.error({ err })
     Sentry.captureException(err)
+    throw err
   }
 }
 

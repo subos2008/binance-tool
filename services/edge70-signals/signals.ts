@@ -278,6 +278,7 @@ export class Edge70Signals {
       this.health_and_readiness.ready(false)
       this.logger.error({ err })
       Sentry.captureException(err)
+      throw err
     } finally {
       // important not to miss this - lest we corrupt the history
       this.price_history_candles_long.push(candle)

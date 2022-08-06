@@ -148,6 +148,7 @@ export class RedisSpotPositionsState {
   }
 
   async get_initial_entry_position_size(pi: SpotPositionIdentifier_V3): Promise<BigNumber> {
+    // The exception here ust means we called in_position on a position that doesn't exist
     return this.get_sats_key(pi, { key_name: "initial_entry_position_size" })
   }
 

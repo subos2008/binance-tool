@@ -22,6 +22,10 @@ import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events
 import { RedisSpotPositionsPersistence } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
 import { MarketIdentifier_V5_with_base_asset } from "../../../../events/shared/market-identifier"
+import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { OrderContextPersistence_V2 } from "../../../../classes/persistent_state/interface/order-context-persistence"
+import { OrderContext_V2 } from "../../../../interfaces/orders/order-context"
+import { assert } from "console"
 
 /* convert Edge70Signals to Orders and throw them to PositionsTracker - with mock_redis */
 
@@ -35,6 +39,7 @@ export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
   quote_asset: string
   stops: { [base_asset: string]: BigNumber }
   stop_factor: BigNumber
+  order_context_persistence: OrderContextPersistence_V2
 
   constructor({
     logger,
@@ -68,6 +73,7 @@ export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
       else logger.warn(msg)
     }
     let positions_persistance = new RedisSpotPositionsPersistence({ logger, redis })
+    this.order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
     let spot_positions_query = new SpotPositionsQuery({
       logger,
       positions_persistance,
@@ -124,6 +130,13 @@ export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
     let { symbol, base_asset } = market_identifier
 
     let order_id = `${symbol}-BUY-${signal_timestamp_ms}`
+    let trade_id = order_id
+    let order_context: OrderContext_V2 = { object_type: "OrderContext", version: 1, edge, trade_id }
+    await this.order_context_persistence.set_order_context_for_order({
+      exchange_identifier,
+      order_id,
+      order_context,
+    })
     let totalQuoteTradeQuantity = (
       await this.position_sizer.position_size_in_quote_asset({
         base_asset,
@@ -155,13 +168,20 @@ export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
     market_identifier: MarketIdentifier_V5_with_base_asset
     base_amount: BigNumber
   }) {
-    let { exchange_identifier, quote_asset } = this
+    let { edge, exchange_identifier, quote_asset } = this
     let { market_identifier, signal_timestamp_ms, signal_price } = args
     let { symbol, base_asset } = market_identifier
 
     let totalBaseTradeQuantity = args.base_amount.toFixed()
     let totalQuoteTradeQuantity = args.base_amount.times(signal_price).toFixed()
     let order_id = `${symbol}-SELL-${signal_timestamp_ms}`
+    let trade_id = order_id
+    let order_context: OrderContext_V2 = { object_type: "OrderContext", version: 1, edge, trade_id }
+    await this.order_context_persistence.set_order_context_for_order({
+      exchange_identifier,
+      order_id,
+      order_context,
+    })
     let generic_order_data: GenericOrderData = {
       exchange_identifier,
       market_symbol: symbol,
@@ -188,6 +208,7 @@ export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
   }) {
     let { base_asset } = market_identifier
     this.stops[base_asset] = new BigNumber(signal_price).times(this.stop_factor)
+    this.logger.info(`${base_asset} Set stop of ${this.stops[base_asset].toFixed()}`)
   }
 
   /* check for stops */
@@ -202,13 +223,15 @@ export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
     let { base_asset } = market_identifier
     if (await this.positions_tracker.in_position({ edge, base_asset })) {
       let stop_price = this.stops[base_asset]
+      this.logger.info(`${base_asset} Get stop of ${this.stops[base_asset].toFixed()}`)
       if (new BigNumber(candle.low).isLessThanOrEqualTo(stop_price)) {
         let signal_timestamp_ms = candle.closeTime
         let signal_price = stop_price.toFixed()
-        this.logger.info(`HIT STOP ${base_asset} at price ${stop_price.toFixed()}`)
         let base_amount = await this.positions_tracker.position_size({ edge, base_asset })
+        this.logger.info(`HIT STOP ${base_asset} at price ${stop_price.toFixed()} - amount: ${base_amount.toFixed()}`)
         await this.execute_sell({ signal_timestamp_ms, signal_price, market_identifier, base_amount })
         delete this.stops[base_asset]
+        assert(!await this.positions_tracker.in_position({ edge, base_asset }), `Still in ${base_asset} position after execute_sell`)
       }
     }
   }

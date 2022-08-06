@@ -88,11 +88,17 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
   }
 
   async on_position_opened(event: SpotPositionOpenedEvent_V1): Promise<void> {
-    /* nop */
+    this.logger.error(
+      `oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo`
+    )
+    let { base_asset } = event
+    this.logger.info(`${base_asset}: Opened position ${event.initial_entry_position_size}}%`)
   }
 
   async on_position_closed(event: SpotPositionClosedEvent_V1): Promise<void> {
-    this.logger.error(`FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF`)
+    this.logger.error(
+      `FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF`
+    )
     let { base_asset } = event
     this.logger.info(`${base_asset}: Closed position ${event.percentage_quote_change}%`)
     if (!this.position_closed_events[base_asset]) this.position_closed_events[base_asset] = []
@@ -127,6 +133,7 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
     } catch (err) {
       this.logger.error({ err })
       this.logger.error(err as any)
+      throw err
     }
   }
 }

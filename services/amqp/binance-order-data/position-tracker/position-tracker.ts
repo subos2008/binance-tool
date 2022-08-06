@@ -140,7 +140,7 @@ export class SpotPositionTracker {
     let { baseAsset, quoteAsset, market_symbol, averageExecutionPrice } = generic_order_data
 
     let position: SpotPosition = await this.load_position_for_order(generic_order_data)
-    this.logger.info(position)
+    // this.logger.info(await position.describe_position(), `Sell order filled on position`)
     let edge = await position.edge()
 
     let tags = { edge, base_asset: baseAsset, quote_asset: quoteAsset }

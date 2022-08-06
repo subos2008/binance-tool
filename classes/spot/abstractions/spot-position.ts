@@ -38,9 +38,9 @@ export type SpotPositionObject = {
 }
 
 export class SpotPosition {
-  logger: Logger
-  send_message: Function | undefined
-  spot_positions_persistance: SpotPositionsPersistence
+  private logger: Logger
+  private send_message: Function | undefined
+  private spot_positions_persistance: SpotPositionsPersistence
   position_identifier: SpotPositionIdentifier_V3
 
   constructor({

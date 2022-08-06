@@ -18,9 +18,6 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
-// const logger: ServiceLogger = new ServiceLogger({ silent: false, level: "debug" })
-
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -47,6 +44,9 @@ import { FixedPositionSizer } from "../../../edges/position-sizer/fixed-position
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { BunyanServiceLogger } from "../../../lib/service-logger"
 import { ServiceLogger } from "../../../interfaces/logger"
+
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+// const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })

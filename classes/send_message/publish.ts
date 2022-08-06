@@ -38,9 +38,9 @@ export class SendMessage {
     return this.send_message.bind(this)
   }
 
-  async send_message(message: string, _tags?: ContextTags) {
+  send_message(message: string, _tags?: ContextTags) {
+    let tags = _tags || {}
     try {
-      let tags = _tags || {}
       let event: SendMessageEvent = {
         object_type: "SendMessage",
         msg: message,
@@ -48,9 +48,12 @@ export class SendMessage {
         tags,
       }
       this.logger.info({ ...tags, ...event })
-      await this.publisher.publish(event)
+      this.publisher.publish(event).catch((err) => {
+        this.logger.error({ ...tags, err }, `Failed to send message: ${message}`)
+        Sentry.captureException(err)
+      })
     } catch (err) {
-      this.logger.error({ err, msg: `Failed to send message: ${message}` })
+      this.logger.error({ ...tags, err }, `Failed to send message: ${message}`)
       Sentry.captureException(err)
     }
   }

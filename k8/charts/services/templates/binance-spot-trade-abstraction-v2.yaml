@@ -22,16 +22,16 @@ spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
+      app: binance-spot-trade-abstraction-v2
       app.kubernetes.io/name: {{ include "mychart.name" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
-      app: binance-spot-trade-abstraction-v2
   template:
     metadata:
       labels:
+        app: binance-spot-trade-abstraction-v2
         app.kubernetes.io/name: {{ include "mychart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
         binance-tool/service: "binance-spot-trade-abstraction-v2"
-        app: binance-spot-trade-abstraction-v2
         tags.datadoghq.com/service: "binance-spot-trade-abstraction-v2"
       annotations:
         ad.datadoghq.com/tags: '{"service": "binance-spot-trade-abstraction-v2"}'

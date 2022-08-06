@@ -1,7 +1,7 @@
 import { Binance, ExchangeInfo } from "binance-api-node"
 import { ExchangeIdentifier_V4 } from "../../../events/shared/exchange-identifier"
 
-import { Logger } from "../../../lib/service_logger"
+import { Logger } from "../../../lib/service-logger"
 const logger = new Logger({ silent: false })
 
 export class BinanceExchangeInfoGetter {

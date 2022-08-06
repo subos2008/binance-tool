@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 import { strict as assert } from "assert"
 const service_name = "binance-position-tracker"
 import { fromCompletedBinanceOrderData } from "../../../../interfaces/exchanges/binance/spot-orders"
@@ -16,7 +15,13 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "../../../../lib/faux_logger"
+import { BigNumber } from "bignumber.js"
+BigNumber.DEBUG = true // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function () {
+  throw Error("BigNumber .valueOf called!")
+}
+
 import binance, { Binance, ExchangeInfo } from "binance-api-node"
 import { BinanceOrderData, OrderCallbacks } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { SpotPositionTracker } from "./position-tracker"
@@ -27,17 +32,15 @@ import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { AMQP_BinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-binance-order-data-listener"
 import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
 import { SendMessage } from "../../../../classes/send_message/publish"
+import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
+import { SendMessageFunc } from "../../../../interfaces/send-message"
+import { SpotPositionPublisher } from "./spot-position-publisher"
+import { ServiceLogger } from "../../../../interfaces/logger"
+import { BunyanServiceLogger } from "../../../../lib/service-logger"
 
-const logger: Logger = new Logger({ silent: false })
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-
-import { BigNumber } from "bignumber.js"
-BigNumber.DEBUG = true // Prevent NaN
-// Prevent type coercion
-BigNumber.prototype.valueOf = function () {
-  throw Error("BigNumber .valueOf called!")
-}
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -45,9 +48,6 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
-import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
-import { SendMessageFunc } from "../../../../interfaces/send-message"
-import { SpotPositionPublisher } from "./spot-position-publisher"
 set_redis_logger(logger)
 const redis = get_redis_client()
 
@@ -55,7 +55,7 @@ let order_execution_tracker: AMQP_BinanceOrderDataListener | null = null
 
 class MyOrderCallbacks implements OrderCallbacks {
   send_message: SendMessageFunc
-  logger: Logger
+  logger: ServiceLogger
   position_tracker: SpotPositionTracker
   exchange_info: ExchangeInfo
 
@@ -66,7 +66,7 @@ class MyOrderCallbacks implements OrderCallbacks {
     exchange_info,
   }: {
     send_message: SendMessageFunc
-    logger: Logger
+    logger: ServiceLogger
     position_tracker: SpotPositionTracker
     exchange_info: ExchangeInfo
   }) {

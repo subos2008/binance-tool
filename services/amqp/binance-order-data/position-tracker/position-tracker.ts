@@ -83,8 +83,7 @@ export class SpotPositionTracker {
     let { exchange_identifier, baseAsset, averageExecutionPrice } = generic_order_data
 
     let position = await this.load_position_for_order(generic_order_data)
-    // this.logger.info(await position.describe_position(), `Sell order filled on position`)
-    this.logger.info(position.describe_position(), `Loaded open position for ${baseAsset}`)
+    // this.logger.info(position.describe_position(), `Loaded open position for ${baseAsset}`)
     await position.add_order_to_position({ generic_order_data }) // this would have created it if it didn't exist - from the order data
 
     if (!averageExecutionPrice) {
@@ -180,7 +179,7 @@ export class SpotPositionTracker {
           exit_quote_returned: generic_order_data.totalQuoteTradeQuantity, // how much quote did we get when liquidating the position
           exit_position_size: generic_order_data.totalBaseTradeQuantity, // base asset
         })
-        this.logger.object(event)
+        this.logger.event(tags, event)
         await this.callbacks.on_position_closed(event)
       } catch (err) {
         let msg = `Failed to create/send SpotPositionClosed for: ${position.baseAsset} to ${quoteAsset}`

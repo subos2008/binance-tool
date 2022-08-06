@@ -6,5 +6,5 @@ export interface ContextTags {
   base_asset?: string // depricate in favour of some kind of context object?
   class?: string // name of the class calling send_message
   exchange_type?: "spot" | "futures"
-  symbol: string
+  symbol?: string
 }

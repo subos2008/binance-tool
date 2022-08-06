@@ -18,5 +18,5 @@ export interface ServiceLogger {
   debug(tags: Object, ...message: any[]): void
   silly(tags: Object, ...message: any[]): void
   object(tags: Object, ...message: any[]): void // dump object as single line to console info
-  exception(err: unknown, tags: Object, msg: string): void
+  exception(err: unknown, tags: Object, msg?: string): void
 }

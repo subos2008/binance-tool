@@ -29,5 +29,5 @@ rules:
     comma-dangle: off,
     prefer-template: off,
     "@typescript-eslint/no-var-requires": off,
-    no-var: off
+    no-var: off,
   }

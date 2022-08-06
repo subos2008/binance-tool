@@ -1,4 +1,4 @@
-export type SendMessageFunc = (msg: string, tags?: ContextTags) => Promise<void>
+export type SendMessageFunc = (msg: string, tags?: ContextTags) => void
 
 // TODO: idea, make a top level observability/ dir and put global tags styles (facets) in there
 export interface ContextTags {

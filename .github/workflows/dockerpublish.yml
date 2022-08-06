@@ -45,6 +45,15 @@ jobs:
       - name: Compile
         run: ./node_modules/.bin/tsc
 
+  eslint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Yarn install
+        run: yarn install
+      - name: Compile
+        run: ./node_modules/.bin/eslint .
+
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
   push:

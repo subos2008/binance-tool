@@ -48,7 +48,7 @@ export class Edge70ForwarderToEdge60SpotClose implements Edge70SignalProcessor {
   async process_signal(signal: Edge70Signal) {
     assert.equal(signal.object_type, "Edge70Signal")
     assert.equal(signal.edge, "edge70")
-    let edge = "edge60"
+    let edge = "edge60" // target edge, so edge60 in this case
 
     let { base_asset } = signal.market_identifier
     if (!base_asset) {

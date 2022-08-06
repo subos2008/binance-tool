@@ -44,7 +44,7 @@ process.on("unhandledRejection", (err) => {
 
 let listener_factory = new ListenerFactory({ logger })
 
-class Edge60MessageProcessor implements MessageProcessor {
+class Edge70MessageProcessor implements MessageProcessor {
   send_message: Function
   logger: Logger
   event_name: MyEventNameType
@@ -116,7 +116,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  new Edge60MessageProcessor({ health_and_readiness, logger, send_message, event_name })
+  new Edge70MessageProcessor({ health_and_readiness, logger, send_message, event_name })
 }
 
 main().catch((err) => {

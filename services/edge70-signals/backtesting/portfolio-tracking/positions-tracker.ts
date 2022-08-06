@@ -72,11 +72,11 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
   }
 
   async buy_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
-    this.positions_tracker.buy_order_filled({ generic_order_data })
+    await this.positions_tracker.buy_order_filled({ generic_order_data })
   }
 
   async sell_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
-    this.positions_tracker.sell_order_filled({ generic_order_data })
+    await this.positions_tracker.sell_order_filled({ generic_order_data })
   }
 
   async in_position(args: { base_asset: string; edge: string }): Promise<boolean> {

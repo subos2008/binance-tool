@@ -80,18 +80,12 @@ export class SpotPositionTracker {
   }
 
   async buy_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
-    let {
-      exchange_identifier,
-      baseAsset,
-      quoteAsset,
-      averageExecutionPrice,
-      totalBaseTradeQuantity,
-      totalQuoteTradeQuantity,
-      orderTime,
-    } = generic_order_data
+    let { exchange_identifier, baseAsset, averageExecutionPrice } = generic_order_data
 
     let position = await this.load_position_for_order(generic_order_data)
-    position.add_order_to_position({ generic_order_data }) // this would have created it if it didn't exist - from the order data
+    // this.logger.info(await position.describe_position(), `Sell order filled on position`)
+    this.logger.info(position.describe_position(), `Loaded open position for ${baseAsset}`)
+    await position.add_order_to_position({ generic_order_data }) // this would have created it if it didn't exist - from the order data
 
     if (!averageExecutionPrice) {
       throw new Error(`averageExecutionPrice not defined, unable to publish NewPositionEvent`)

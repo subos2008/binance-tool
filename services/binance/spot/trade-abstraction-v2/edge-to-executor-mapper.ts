@@ -255,7 +255,7 @@ export class SpotEdgeToExecutorMapper {
       )
 
       if (stop_order_id) {
-        this.send_message(`${prefix} cancelling stop order ${stop_order_id} on ${symbol}`, { edge })
+        this.logger.info({ edge }, `${prefix} cancelling stop order ${stop_order_id} on ${symbol}`)
         await this.ee.cancel_order({
           order_id: stop_order_id,
           symbol,
@@ -279,7 +279,7 @@ export class SpotEdgeToExecutorMapper {
       oco_order_id = await this.positions_persistance.get_oco_order(spot_position_identifier)
 
       if (oco_order_id) {
-        this.send_message(`${prefix} cancelling oco order ${oco_order_id} on ${symbol}`, { edge })
+        this.logger.info({ edge }, `${prefix} cancelling oco order ${oco_order_id} on ${symbol}`)
         await this.ee.cancel_oco_order({
           order_id: oco_order_id,
           symbol,

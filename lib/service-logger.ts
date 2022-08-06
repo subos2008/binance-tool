@@ -15,8 +15,8 @@ import * as bunyan from "bunyan"
 
 import Sentry from "./sentry"
 
-import { Logger as LoggerInterface, ServiceLogger } from "../interfaces/logger"
-export class Logger implements ServiceLogger {
+import { Logger, ServiceLogger } from "../interfaces/logger"
+export class BunyanServiceLogger implements ServiceLogger {
   silent: boolean
   bunyan: bunyan
   constructor(
@@ -142,6 +142,3 @@ export class Logger implements ServiceLogger {
     }
   }
 }
-
-module.exports = Logger
-module.exports.Logger = Logger

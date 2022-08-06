@@ -254,6 +254,11 @@ const global_health = health_and_readiness.addSubsystem({ name: "global", ready:
 const init_health = health_and_readiness.addSubsystem({ name: "init-boot", ready: false, healthy: false })
 
 var app = express()
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
+app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
+const port = "80"
+app.listen(port)
+logger.info(`Server on port ${port}`)
 
 async function main() {
   assert(process.env.BINANCE_API_KEY)
@@ -350,9 +355,4 @@ main().catch((err) => {
   logger.error(`Error in main loop: ${err.stack}`)
 })
 
-app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
-app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 
-const port = "80"
-app.listen(port)
-logger.info(`Server on port ${port}`)

@@ -44,7 +44,7 @@ import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifie
 import { BunyanServiceLogger } from "../../../lib/service-logger"
 import { ServiceLogger } from "../../../interfaces/logger"
 
-const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, events_as_msg: true })
 // const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
 
 process.on("unhandledRejection", (err) => {

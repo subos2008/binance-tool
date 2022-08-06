@@ -65,15 +65,17 @@ export class Commands_Futures {
     try {
       let signal_timestamp_ms = Date.now()
       let base_asset = args.shift()?.toUpperCase()
-      if (!base_asset) {
-        ctx.reply(`base_asset not defined.`)
-        return
-      }
       let edge = args.shift()
       if (!edge) {
         ctx.reply(`edge not defined.`)
         return
       }
+
+      if (!base_asset) {
+        ctx.reply(`base_asset not defined.`)
+        return
+      }
+
       let cmd: TradeAbstractionOpenShortCommand = {
         object_type: "TradeAbstractionOpenShortCommand",
         base_asset,
@@ -99,13 +101,13 @@ export class Commands_Futures {
     try {
       let signal_timestamp_ms = Date.now()
       let base_asset = args.shift()?.toUpperCase()
-      if (!base_asset) {
-        ctx.reply(`base_asset not defined.`)
-        return
-      }
       let edge = args.shift()
       if (!edge) {
         ctx.reply(`edge not defined.`)
+        return
+      }
+      if (!base_asset) {
+        ctx.reply(`base_asset not defined.`)
         return
       }
       let cmd: TradeAbstractionCloseCommand = {

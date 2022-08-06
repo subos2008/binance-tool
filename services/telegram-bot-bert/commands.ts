@@ -20,17 +20,17 @@ All trades are vs USD, the backend decides which USD evivalent asset to use, cou
 
 To enter a long spot position:
 
-  /spot long LINK [edgeNN] [STOP_PRICE]
+  /spot long [edgeNN] LINK [STOP_PRICE]
 
 To close an open long spot position:
 
-  /spot close LINK [edgeNN]
+  /spot close [edgeNN] LINK 
 
 Futures positions:
 
-  /futures short LINK [edgeNN]
-  /futures short LINK [edgeNN]
-  /futures close LINK [edgeNN] (Not implemented?)
+  /futures short [edgeNN] LINK
+  /futures short [edgeNN] LINK
+  /futures close [edgeNN] LINK (Not implemented?)
 
 To view open spot positions:
 
@@ -110,7 +110,7 @@ export class Commands {
 
   async spot(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
     try {
-      let [command, base_asset, edge_unchecked] = args
+      let [command, edge_unchecked, base_asset] = args
       base_asset = base_asset.toUpperCase()
       let valid_commands = ["long", "close"]
       if (!valid_commands.includes(command)) {

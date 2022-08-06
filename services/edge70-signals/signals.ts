@@ -258,7 +258,7 @@ export class Edge70Signals {
           signal_timestamp_ms,
         },
       }
-      this.callbacks.publish(event)
+      await this.callbacks.publish(event)
     } catch (err) {
       this.logger.error(
         { tags },

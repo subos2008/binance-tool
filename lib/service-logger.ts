@@ -69,6 +69,9 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   }
 
   object(obj: any) {
+    if (obj.object_type) {
+      console.trace(`logger.object used for an object_type event, consider porting to use logger.event`)
+    }
     if (!this.silent) {
       // wouldn't this just have a string msg? Yes... it does seem to work in DataDog though
       try {
@@ -80,6 +83,10 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   }
 
   info(obj: Object, ...params: any[]) {
+    if ((obj as any).object_type) {
+      console.trace(`logger.info used for an object_type event, consider porting to use logger.event`)
+    }
+
     if (!this.silent) {
       try {
         this.bunyan.info(obj, ...params)

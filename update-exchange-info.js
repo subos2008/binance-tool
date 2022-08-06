@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
-/* eslint func-names: ["warn", "as-needed"] */
+
 
 /* 
  * Utility to update the static copy of Binance's exchangeInfo object used by the tests.

@@ -1,6 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
-/* eslint func-names: ["warn", "as-needed"] */
+
 
 // portfolio-tracker service: maintains the current portfolio by
 // getting the portfolio on startup and then monitoring the streams

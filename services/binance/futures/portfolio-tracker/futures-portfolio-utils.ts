@@ -1,6 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
-/* eslint func-names: ["warn", "as-needed"] */
+
 
 import { strict as assert } from "assert"
 

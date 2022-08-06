@@ -1,6 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
-/* eslint func-names: ["warn", "as-needed"] */
+
 
 const connect_options = require("../../lib/amqp/connect_options").default
 

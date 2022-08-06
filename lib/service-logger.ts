@@ -39,8 +39,8 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
       template: {},
     }
   ) {
-    if (events_as_msg) events_as_msg = events_as_msg
-    if (full_trace) full_trace = full_trace
+    if (events_as_msg) this.events_as_msg = events_as_msg
+    if (full_trace) this.full_trace = full_trace
     if (!template) template = {}
     this.silent = silent
     let params = {
@@ -186,7 +186,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
       try {
         if (this.events_as_msg) {
           if (event.msg) {
-            this.bunyan.info(tags, `[${event.object_type}] event.msg`)
+            this.bunyan.info(tags, `[${event.object_type}] ${event.msg}`)
           } else {
             console.trace(`[${event.object_type}] missing @msg attribute`)
             this.bunyan.info({ ...tags, ...event })

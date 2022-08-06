@@ -16,7 +16,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../../interfaces/logger"
+import { Logger, ServiceLogger } from "../../../interfaces/logger"
 import { AuthorisedEdgeType, SpotPositionIdentifier_V3 } from "./position-identifier"
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
 import {
@@ -49,7 +49,7 @@ export class SpotPosition {
     spot_positions_persistance,
     position_identifier,
   }: {
-    logger: Logger
+    logger: Logger | ServiceLogger
     send_message?: Function
     spot_positions_persistance: SpotPositionsPersistence
     position_identifier: SpotPositionIdentifier_V3
@@ -131,10 +131,14 @@ export class SpotPosition {
 
   async get_SpotPositionOpenedEvent(): Promise<SpotPositionOpenedEvent_V1> {
     let o: SpotPositionObject = await this.describe_position()
+    let { edge } = o
+    let { base_asset } = this
     let obj: SpotPositionOpenedEvent_V1 = {
       object_type: "SpotPositionOpened",
       object_subtype: "SingleEntryExit", // simple trades with one entry order and one exit order
       version: 1,
+
+      msg: `${base_asset} postion opened`,
 
       edge: o.edge,
       exchange_identifier: this.position_identifier.exchange_identifier,
@@ -157,6 +161,7 @@ export class SpotPosition {
       /** Presumably just the entry order */
       orders: o.orders,
     }
+    this.logger.event({ edge, base_asset }, obj)
 
     return obj
   }
@@ -178,6 +183,8 @@ export class SpotPosition {
     exit_position_size: string
   }): Promise<SpotPositionClosedEvent_V1> {
     let o: SpotPositionObject = await this.describe_position()
+    let { base_asset } = this
+    let { edge } = o
 
     let percentage_quote_change, abs_quote_change
     if (o.initial_quote_invested) {
@@ -185,14 +192,20 @@ export class SpotPosition {
       percentage_quote_change = abs_quote_change.dividedBy(o.initial_quote_invested).times(100).dp(3).toNumber()
     }
 
-    let r: SpotPositionClosedEvent_V1 = {
+    let pct_changed: string =
+      percentage_quote_change && percentage_quote_change > 0
+        ? `+${percentage_quote_change}%`
+        : `${percentage_quote_change}%` || `(undefined)`
+    let obj: SpotPositionClosedEvent_V1 = {
       object_type: "SpotPositionClosed",
       object_subtype, //: "SingleEntryExit", // simple trades with one entry order and one exit order
       version: 1,
 
       edge: o.edge,
       exchange_identifier: this.position_identifier.exchange_identifier,
-      base_asset: this.base_asset,
+      base_asset,
+
+      msg: `${base_asset} postion closed ${pct_changed}`,
 
       /** When the entry signal fired */
       // entry_signal_source: string, // bert, service name etc
@@ -231,7 +244,8 @@ export class SpotPosition {
       abs_quote_change: abs_quote_change?.toFixed(),
       percentage_quote_change, // use a float for this, it's not for real accounting
     }
+    this.logger.event({ edge, base_asset }, obj)
 
-    return r
+    return obj
   }
 }

@@ -27,6 +27,8 @@ type _shared_v1 = {
   object_subtype: "SingleEntryExit" // simple trades with one entry order and one exit order
   version: 1
 
+  msg?: string
+
   edge: AuthorisedEdgeType
 
   exchange_identifier: ExchangeIdentifier_V3
@@ -84,4 +86,3 @@ export interface SpotPositionCallbacks {
   on_position_opened(event: SpotPositionOpenedEvent_V1): Promise<void>
   on_position_closed(event: SpotPositionClosedEvent_V1): Promise<void>
 }
-

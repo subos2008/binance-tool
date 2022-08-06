@@ -15,7 +15,8 @@ import * as bunyan from "bunyan"
 
 import Sentry from "./sentry"
 
-import { Logger as LoggerInterface } from "../interfaces/logger"
+import { LoggableEvent, Logger as LoggerInterface } from "../interfaces/logger"
+import { ContextTags } from "../interfaces/send-message"
 export class Logger implements LoggerInterface {
   silent: boolean
   bunyan: bunyan
@@ -126,6 +127,16 @@ export class Logger implements LoggerInterface {
     if (!this.silent) {
       try {
         this.bunyan.debug(obj, ...params)
+      } catch (err) {
+        Sentry.captureException(err)
+      }
+    }
+  }
+
+  event(tags: ContextTags, event: LoggableEvent): void {
+    if (!this.silent) {
+      try {
+        this.bunyan.info({ ...tags, ...event })
       } catch (err) {
         Sentry.captureException(err)
       }

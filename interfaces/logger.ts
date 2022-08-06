@@ -11,6 +11,7 @@ export interface Logger {
   debug(tags: Object, ...message: any[]): void
   silly(tags: Object, ...message: any[]): void
   object(tags: Object, ...message: any[]): void // dump object as single line to console info
+  event(tags: ContextTags, event: LoggableEvent): void
 }
 
 export interface LoggableEvent {

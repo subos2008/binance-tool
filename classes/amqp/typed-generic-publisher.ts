@@ -44,7 +44,7 @@ export class TypedGenericTopicPublisher<T> {
     this.exchange_name = exchange_name
     this.durable = durable
     this.prefix = `AMQP Publisher ${exchange_name}-${routing_key}-${event_name}`
-    this.logger.info(`${this.prefix}: creatong...`)
+    this.logger.info(`${this.prefix}: creating...`)
     this.health_and_readiness = health_and_readiness.addSubsystem({
       name: `AMQP-Publisher-${exchange_name}-${routing_key}-${event_name}`,
       ready: false, // wait till the publishers are healthy before the service accepts traffic

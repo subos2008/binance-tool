@@ -313,7 +313,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     this.logger.info(`Cancelling clientOrderId ${order_id} on symbol ${symbol}`)
     let result = await ee.cancelOrder({ symbol, origClientOrderId: order_id })
     if (result.status === "CANCELED") {
-      this.logger.info(`Sucesfully cancelled order ${order_id}`)
+      this.logger.info(`Successfully cancelled order ${order_id}`)
       return
     }
     let msg = `Failed to cancel order ${order_id} on ${symbol}, status ${result.status}`
@@ -327,7 +327,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     this.logger.info(`Cancelling clientOrderId ${order_id} oco order on symbol ${symbol}`)
     let result = await ee.cancelOrderOco({ symbol, listClientOrderId: order_id })
     if (result.listOrderStatus === "ALL_DONE") {
-      this.logger.info(`Sucesfully cancelled order ${order_id}`)
+      this.logger.info(`Successfully cancelled order ${order_id}`)
       return
     }
     let msg = `Failed to cancel oco order ${order_id} on ${symbol}, status ${result.listOrderStatus}`

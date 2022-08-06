@@ -131,7 +131,7 @@ class Edge70SignalsService {
       signals_quote_asset: quote_symbol,
       tas_quote_asset: tas_quote_asset,
     })
-    this.logger.info(`Target markets: ${base_assets.join(", ")}`)
+    this.logger.info({ object_type: `EdgeInitialization` }, `Target markets: ${base_assets.join(", ")}`)
 
     let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
 
@@ -156,12 +156,15 @@ class Edge70SignalsService {
         })
 
         if (initial_candles.length == 0) {
-          this.logger.error(`No candles loaded for ${symbol}`)
+          this.logger.error({ object_type: `EdgeInitialization`, ...tags }, `No candles loaded for ${symbol}`)
           let err = new Error(`No candles loaded for ${symbol}`)
           Sentry.captureException(err) // this is unexpected now, 429?
           throw err
         } else {
-          this.logger.info(`Loaded ${initial_candles.length} candles for ${symbol}`)
+          this.logger.info(
+            { object_type: `EdgeInitialization`, ...tags },
+            `Loaded ${initial_candles.length} candles for ${symbol}`
+          )
         }
 
         // chop off the most recent candle as the code above gives us a partial candle at the end
@@ -189,7 +192,7 @@ class Edge70SignalsService {
           edge70_parameters,
         })
         this.logger.info(
-          { ...tags, object_type: "EdgeMarketInitialization" },
+          { ...tags, object_type: "EdgeInitialization" },
           `Setup edge for ${symbol} with ${initial_candles.length} initial candles`
         )
 
@@ -206,7 +209,10 @@ class Edge70SignalsService {
             edge70_parameters,
           })
           /* probably don't want to await for this */
-          this.logger.warn({ tags }, `Starting MarketDirectionInitialiser for ${market_identifier.symbol}`)
+          this.logger.warn(
+            { ...tags, object_type: "EdgeInitialization" },
+            `Starting MarketDirectionInitialiser for ${market_identifier.symbol}`
+          )
           await mi.run() //.catch((e) => this.logger.error(`MarketDirectionInitialiser threw exception: ${e}`)).then(()=> this.logger.info(`MarketDirectionInitialiser completed`)
         }
 
@@ -219,17 +225,22 @@ class Edge70SignalsService {
     }
 
     let valid_symbols = Object.keys(this.edges)
-    this.logger.info(`Edges initialised for ${valid_symbols.length} symbols.`)
+    this.logger.info(
+      { object_type: "EdgeInitialization" },
+      `Edges initialised for ${valid_symbols.length} symbols.`
+    )
     this.send_message(`initialised for ${valid_symbols.length} symbols.`, { edge })
     this.logger.info(
+      { object_type: "MarketDirectionInitialiser" },
       `${
         symbols_with_direction_uninitialised.length
-      } symbols with uninitialised market direction. (${symbols_with_direction_uninitialised.join(", ")})`
+      } symbols with uninitialised market direction: ${symbols_with_direction_uninitialised.join(", ")})`
     )
-    this.send_message(
-      `Started MarketDirectionInitialiser for ${symbols_with_direction_uninitialised.length} symbols.`,
-      { edge }
-    )
+    if (symbols_with_direction_uninitialised.length)
+      this.send_message(
+        `Started MarketDirectionInitialiser for ${symbols_with_direction_uninitialised.length} symbols.`,
+        { edge }
+      )
 
     this.close_1d_candle_ws = this.ee.ws.candles(valid_symbols, edge70_parameters.candle_timeframe, (candle) => {
       let symbol = candle.symbol

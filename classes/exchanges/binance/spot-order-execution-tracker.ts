@@ -26,6 +26,7 @@ import { AuthorisedEdgeType } from "../../spot/abstractions/position-identifier"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { OrderContextPersistence } from "../../persistent_state/interface/order-context-persistence"
 import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
+import { ContextTags } from "../../../interfaces/send-message"
 
 export class OrderExecutionTracker {
   send_message: Function
@@ -138,7 +139,11 @@ export class OrderExecutionTracker {
         exchange_identifier: this.exchange_identifier,
         order_id: data.order_id,
       })
-      if (!order_context) throw new Error(`No OrderContext found for order ${data.order_id}`)
+      if (!order_context) {
+        let msg = `No OrderContext found for order ${data.order_id}`
+        this.logger.error(data, msg)
+        throw new Error(msg)
+      }
       let { edge } = order_context
       this.logger.info(
         data,

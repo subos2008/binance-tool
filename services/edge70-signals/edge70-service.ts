@@ -1,9 +1,6 @@
 #!./node_modules/.bin/ts-node
 
 import Sentry from "../../lib/sentry"
-Sentry.configureScope(function (scope: any) {
-  scope.setTag("service", service_name)
-})
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN

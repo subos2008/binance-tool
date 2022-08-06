@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 /** Config: */
 const quote_symbol = "USDT".toUpperCase()
 let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
@@ -49,7 +48,7 @@ const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 // const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
 
 process.on("unhandledRejection", (err) => {
-  logger.exception(err, {}, `UnhandledPromiseRejection: ${err}`)
+  logger.exception({}, err, `UnhandledPromiseRejection: ${err}`)
   process.exit(1)
 })
 
@@ -268,7 +267,7 @@ class Edge70SignalsBacktester {
       this.logger.info(`Run complete. Processed ${count} candles`)
       await this.backtest_portfolio_tracker.summary()
     } catch (err: any) {
-      this.logger.exception(err, { edge }, `Run terminated due to exception: ${err})`)
+      this.logger.exception({ edge }, err, `Run terminated due to exception: ${err})`)
       throw err
     }
   }

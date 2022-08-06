@@ -1,7 +1,11 @@
 import { GenericTopicPublisher } from "../../../../classes/amqp/generic-publishers"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-import { SpotPositionCallbacks, SpotPositionClosedEvent_V1, SpotPositionOpenedEvent_V1 } from "../../../../classes/spot/abstractions/spot-position-callbacks"
-import { Logger } from "../../../../lib/faux_logger"
+import {
+  SpotPositionCallbacks,
+  SpotPositionClosedEvent_V1,
+  SpotPositionOpenedEvent_V1,
+} from "../../../../classes/spot/abstractions/spot-position-callbacks"
+import { Logger } from "../../../../interfaces/logger"
 
 export class SpotPositionPublisher implements SpotPositionCallbacks {
   logger: Logger

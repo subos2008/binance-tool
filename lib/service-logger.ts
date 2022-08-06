@@ -101,6 +101,7 @@ export class BunyanServiceLogger implements ServiceLogger {
       }
     }
   }
+
   warn(obj: Object, ...params: any[]) {
     if (!this.silent) {
       try {
@@ -131,14 +132,38 @@ export class BunyanServiceLogger implements ServiceLogger {
     }
   }
 
-  exception(err: unknown, tags?: Object, msg?: string) {
+  /**
+   * Interface V2 - tags are native, more context about what we are logging.
+   * Will allow us to search for and eliminate simple `msg:string` logs
+   */
+  exception(tags: ContextTags, err: unknown, msg?: string) {
     try {
-      this.bunyan.error({ err })
+      let _err = err as any
+      this.bunyan.error({ ...tags, msg, ..._err })
       Sentry.captureException(err)
     } catch (err) {
       console.error(`Failed to log exception:`)
       console.error(err)
       Sentry.captureException(err)
+    }
+  }
+
+  event(tags: ContextTags, event: LoggableEvent) {
+    if (!this.silent) {
+      try {
+        if (this.events_as_msg) {
+          if (event.msg) {
+            this.bunyan.info(tags, `[${event.object_type}] event.msg`)
+          } else {
+            console.trace(`[${event.object_type}] missing @msg attribute`)
+            this.bunyan.info({ ...tags, ...event })
+          }
+        } else {
+          this.bunyan.info({ ...tags, ...event })
+        }
+      } catch (err) {
+        Sentry.captureException(err)
+      }
     }
   }
 }

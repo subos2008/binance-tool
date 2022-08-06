@@ -9,7 +9,7 @@ import Sentry from "../../../../lib/sentry"
 import { strict as assert } from "assert"
 
 import { RedisClient } from "redis"
-import { Logger } from "../../../../interfaces/logger"
+import { ServiceLogger } from "../../../../interfaces/logger"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
 import {
@@ -41,7 +41,7 @@ export type check_func = ({
 
 export class SpotPositionTracker {
   send_message: SendMessageFunc
-  logger: Logger
+  logger: ServiceLogger
   close_position_check_func: check_func
   order_context_persistence: OrderContextPersistence
   spot_positions_query: SpotPositionsQuery
@@ -60,7 +60,7 @@ export class SpotPositionTracker {
     callbacks,
   }: {
     send_message: SendMessageFunc
-    logger: Logger
+    logger: ServiceLogger
     redis: RedisClient
     close_position_check_func: check_func
     spot_positions_query: SpotPositionsQuery
@@ -185,8 +185,7 @@ export class SpotPositionTracker {
       } catch (err) {
         let msg = `Failed to create/send SpotPositionClosed for: ${position.baseAsset} to ${quoteAsset}`
         this.send_message(msg, tags)
-        this.logger.error(tags, err, msg)
-        Sentry.captureException(err)
+        this.logger.exception(tags, err, msg)
       }
       await this.spot_positions_persistance.delete_position(position.position_identifier)
       // removed as it was becomming a duplicate; edge performance messages are more useful

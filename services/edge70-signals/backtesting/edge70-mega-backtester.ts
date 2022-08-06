@@ -18,9 +18,9 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "../../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false })
-// const logger: Logger = new Logger({ silent: false, level: "debug" })
+import { ServiceLogger } from "../../../lib/service-logger"
+const logger: ServiceLogger = new ServiceLogger({ silent: false })
+// const logger: ServiceLogger = new ServiceLogger({ silent: false, level: "debug" })
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -91,7 +91,7 @@ class Edge70SignalsBacktester {
   candles: { [Key: string]: CandleChartResult[] } = {}
   candles_collector: CandlesCollector
   ee: Binance
-  logger: Logger
+  logger: ServiceLogger
   send_message: SendMessageFunc
   direction_persistance: DirectionPersistenceMock
   exchange_info_getter: BinanceExchangeInfoGetter
@@ -107,7 +107,7 @@ class Edge70SignalsBacktester {
     backtest_portfolio_tracker,
   }: {
     ee: Binance
-    logger: Logger
+    logger: ServiceLogger
     send_message: SendMessageFunc
     direction_persistance: DirectionPersistenceMock
     health_and_readiness: HealthAndReadiness

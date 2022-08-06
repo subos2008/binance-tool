@@ -1,29 +1,9 @@
 #!./node_modules/.bin/ts-node
-/* eslint-disable no-console */
-/* eslint func-names: ["warn", "as-needed"] */
-
-console.log(`--- Service starting ---`)
-
-// import "./tracer" // must come before importing any instrumented module.
-
-/** Config: */
-const quote_symbol = "USDT".toUpperCase()
-
-import { strict as assert } from "assert"
-const service_name = "edge70-signals"
-
-import binance from "binance-api-node"
-import { Binance } from "binance-api-node"
 
 import Sentry from "../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
-
-import { Logger } from "../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false, level: "debug" })
-
-import { SendMessage } from "../../classes/send_message/publish"
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -32,11 +12,12 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+console.log(`--- Service starting ---`)
+
+import "./tracer" // must come before importing any instrumented module.
+
+import { strict as assert } from "assert"
 import express from "express"
-
-import { config } from "../../config"
-const tas_quote_asset = config.binance.spot.tas_quote_asset
-
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { get_redis_client } from "../../lib/redis-v4"
@@ -54,6 +35,23 @@ import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-
 import { DirectionPersistence } from "./interfaces/direction-persistance"
 import { DirectionPersistenceRedis } from "./direction-persistance"
 import { MarketDirectionInitialiser } from "./market-direction-initialiser"
+import { BunyanServiceLogger } from "../../lib/service-logger"
+import { ServiceLogger } from "../../interfaces/logger"
+import { SendMessage } from "../../classes/send_message/publish"
+import binance from "binance-api-node"
+import { Binance } from "binance-api-node"
+
+/** Config: */
+const quote_symbol = "USDT".toUpperCase()
+const service_name = "edge70-signals"
+
+import { config } from "../../config"
+const tas_quote_asset = config.binance.spot.tas_quote_asset
+
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
+
+
+
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -82,7 +80,7 @@ class Edge70SignalsService {
   edges: { [Key: string]: Edge70Signals } = {}
   candles_collector: CandlesCollector
   ee: Binance
-  logger: Logger
+  logger: ServiceLogger
   close_short_timeframe_candle_ws: (() => void) | undefined
   close_1d_candle_ws: (() => void) | undefined
   send_message: SendMessageFunc
@@ -100,7 +98,7 @@ class Edge70SignalsService {
     callbacks,
   }: {
     ee: Binance
-    logger: Logger
+    logger: ServiceLogger
     send_message: SendMessageFunc
     direction_persistance: DirectionPersistence
     health_and_readiness: HealthAndReadiness

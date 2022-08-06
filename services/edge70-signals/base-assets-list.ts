@@ -1,13 +1,13 @@
 import { ExchangeInfo } from "binance-api-node"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
-import { Logger } from "../../interfaces/logger"
+import { ServiceLogger } from "../../interfaces/logger"
 import { disallowed_base_assets_for_entry } from "../../lib/stable-coins"
 
 export class BaseAssetsList {
-  logger: Logger
+  logger: ServiceLogger
   exchange_info_getter: BinanceExchangeInfoGetter
 
-  constructor(args: { logger: Logger; exchange_info_getter: BinanceExchangeInfoGetter }) {
+  constructor(args: { logger: ServiceLogger; exchange_info_getter: BinanceExchangeInfoGetter }) {
     this.logger = args.logger
     this.exchange_info_getter = args.exchange_info_getter
   }

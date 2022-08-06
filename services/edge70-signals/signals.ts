@@ -17,7 +17,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../interfaces/logger"
+import { ServiceLogger } from "../../interfaces/logger"
 import { CandleChartResult } from "binance-api-node"
 import { Edge70SignalCallbacks, EdgeCandle } from "./interfaces/_internal"
 import { LimitedLengthCandlesHistory } from "./limited-length-candles-history"
@@ -31,7 +31,7 @@ import { Direction, DirectionPersistence } from "./interfaces/direction-persista
 
 /* Instantiated per asset; each exchange symbol has its own instance of this class */
 export class Edge70Signals {
-  logger: Logger
+  logger: ServiceLogger
   set_log_time_to_candle_time: boolean = false
 
   send_message: SendMessageFunc
@@ -57,7 +57,7 @@ export class Edge70Signals {
     direction_persistance,
     set_log_time_to_candle_time, // used when backtesting
   }: {
-    logger: Logger
+    logger: ServiceLogger
     set_log_time_to_candle_time?: boolean
     send_message: SendMessageFunc
     health_and_readiness: HealthAndReadiness
@@ -139,8 +139,6 @@ export class Edge70Signals {
     }
 
     tags = { ...tags, signal_long }
-    this.logger.debug(tags, debug_string_long)
-
     return { tags, signal_long, debug_string_long }
   }
 
@@ -170,8 +168,6 @@ export class Edge70Signals {
     }
 
     tags = { ...tags, signal_short }
-    this.logger.debug(tags, debug_string_short)
-
     return { tags, signal_short, debug_string_short }
   }
 
@@ -180,13 +176,6 @@ export class Edge70Signals {
     let { base_asset } = this.market_identifier
     let tags: Tags = { symbol, base_asset, edge }
     if (this.set_log_time_to_candle_time) tags.time = new Date(candle.closeTime).toISOString()
-
-    // this.logger.debug(tags, {
-    //   // Better to spam this when we have some result, no?
-    //   object_type: "EdgeSignalCandleIngestion",
-    //   symbol,
-    //   msg: `${symbol} ingesting new candle`,
-    // })
 
     try {
       /* start code with finally block */
@@ -271,6 +260,7 @@ export class Edge70Signals {
       this.callbacks.publish(event)
     } catch (err) {
       this.logger.error(
+        { tags },
         `Exception ingesting candle: ${err} - not storing candle, history probably incorrect - setting unhealthy`
       )
       this.logger.error({ err })

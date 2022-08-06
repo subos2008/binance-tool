@@ -10,7 +10,7 @@ import {
   check_func,
   SpotPositionTracker,
 } from "../../../amqp/binance-order-data/position-tracker/position-tracker"
-import { Logger } from "../../../../lib/faux_logger"
+import { ServiceLogger } from "../../../../lib/service-logger"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
@@ -37,7 +37,7 @@ let close_position_check_func: check_func = function ({
 }
 
 export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
-  logger: Logger
+  logger: ServiceLogger
   positions_tracker: SpotPositionTracker
   spot_positions_query: SpotPositionsQuery
   position_closed_events: { [base_asset: string]: SpotPositionClosedEvent_V1[] } = {}
@@ -51,7 +51,7 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
     health_and_readiness,
   }: {
     send_message: SendMessageFunc
-    logger: Logger
+    logger: ServiceLogger
     redis: RedisClient
     spot_positions_query: SpotPositionsQuery
     spot_positions_persistance: SpotPositionsPersistence

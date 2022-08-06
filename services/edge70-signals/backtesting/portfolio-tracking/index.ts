@@ -12,7 +12,7 @@ import { Edge70SignalCallbacks, EdgeCandle } from "../../interfaces/_internal"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { Edge70BacktestParameters, Edge70Parameters, Edge70Signal } from "../../interfaces/edge70-signal"
 import { DateTime } from "luxon"
-import { Logger } from "../../../../lib/faux_logger"
+import { ServiceLogger } from "../../../../lib/service-logger"
 import { PositionSizer } from "../../../../interfaces/position-sizer"
 import { BacktesterSpotPostionsTracker } from "./positions-tracker"
 import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-message"
@@ -30,7 +30,7 @@ import { assert } from "console"
 /* convert Edge70Signals to Orders and throw them to PositionsTracker - with mock_redis */
 
 export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
-  logger: Logger
+  logger: ServiceLogger
   edge: "edge70" | "edge70-backtest"
   health_and_readiness: HealthAndReadiness
   position_sizer: PositionSizer
@@ -51,7 +51,7 @@ export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
     quote_asset,
     edge70_parameters,
   }: {
-    logger: Logger
+    logger: ServiceLogger
     edge: "edge70" | "edge70-backtest"
     health_and_readiness: HealthAndReadiness
     edge70_parameters: Edge70BacktestParameters

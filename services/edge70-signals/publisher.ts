@@ -8,7 +8,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Edge70Parameters, Edge70Signal } from "./interfaces/edge70-signal"
-import { Logger } from "../../lib/faux_logger"
+import { ServiceLogger } from "../../lib/service-logger"
 import { TypedGenericTopicPublisher } from "../../classes/amqp/typed-generic-publisher"
 import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
@@ -22,7 +22,7 @@ import { SendMessageFunc } from "../../interfaces/send-message"
 var dogstatsd = new StatsD()
 
 export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
-  logger: Logger
+  logger: ServiceLogger
   send_message: SendMessageFunc
   edge: "edge70" | "edge70-backtest"
   signal_publisher: TypedGenericTopicPublisher<Edge70Signal>
@@ -37,7 +37,7 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
     health_and_readiness,
     market_data,
   }: {
-    logger: Logger
+    logger: ServiceLogger
     edge: "edge70" | "edge70-backtest"
     send_message: SendMessageFunc
     health_and_readiness: HealthAndReadiness

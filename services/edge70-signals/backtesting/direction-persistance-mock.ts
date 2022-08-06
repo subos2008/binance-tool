@@ -1,15 +1,15 @@
-import { Logger } from "../../../interfaces/logger"
+import { ServiceLogger } from "../../../interfaces/logger"
 import { DirectionPersistence } from "../interfaces/direction-persistance"
 
 export type Direction = "short" | "long" // Redis returns null for unset
 
 export class DirectionPersistenceMock implements DirectionPersistence {
-  private logger: Logger
+  private logger: ServiceLogger
   private prefix: string
 
   private keys: any = {}
 
-  constructor({ logger, prefix }: { logger: Logger; prefix: string }) {
+  constructor({ logger, prefix }: { logger: ServiceLogger; prefix: string }) {
     this.logger = logger
     this.prefix = prefix
   }

@@ -6,11 +6,12 @@ import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
 import { DirectionPersistence } from "./interfaces/direction-persistance"
 import { Edge70Parameters, Edge70Signal } from "./interfaces/edge70-signal"
-import { Logger } from "../../lib/faux_logger"
+import { BunyanServiceLogger } from "../../lib/service-logger"
 import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
 import { DateTime } from "luxon"
 import { Edge70Signals } from "./signals"
 import { Edge70SignalCallbacks } from "./interfaces/_internal"
+import { ServiceLogger } from "../../interfaces/logger"
 
 // import { DirectionPersistenceRedis } from "./direction-persistance"
 // var mock_redis = require("redis-mock"),
@@ -18,7 +19,7 @@ import { Edge70SignalCallbacks } from "./interfaces/_internal"
 
 export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
   candles_collector: CandlesCollector
-  logger: Logger
+  logger: ServiceLogger
   direction_persistance: DirectionPersistence
   market_identifier: MarketIdentifier_V5_with_base_asset
   edge70_parameters: Edge70Parameters
@@ -31,7 +32,7 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
     edge70_parameters,
     market_identifier,
   }: {
-    logger: Logger
+    logger: ServiceLogger
     direction_persistance: DirectionPersistence
     candles_collector: CandlesCollector
     market_identifier: MarketIdentifier_V5_with_base_asset
@@ -82,12 +83,12 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       }
       let num_loaded_candles = candles.length
 
-      // let faux_logger = this.logger
+      // let service-logger = this.logger
       // let faux_send_message: SendMessageFunc = async (msg: string, tags?: ContextTags) => {
       //   if (tags) this.logger.info(tags, msg)
       //   else this.logger.info(msg)
       // }
-      let faux_logger: Logger = new Logger({ silent: true })
+      let faux_logger: ServiceLogger = new BunyanServiceLogger({ silent: true })
       let faux_send_message: SendMessageFunc = async () => {
         return
       }
@@ -95,7 +96,7 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       // let prefix = `market-direction-initialiser:${symbol}:` + randomUUID()
       // let isolated_direction_persistance = new DirectionPersistenceRedis({
       //   prefix,
-      //   logger: faux_logger,
+      //   logger: service-logger,
       //   redis: mock_redis_client,
       // })
 

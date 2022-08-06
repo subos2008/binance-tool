@@ -1,10 +1,10 @@
 import { RedisClientType } from "redis-v4"
-import { Logger } from "../../interfaces/logger"
+import { ServiceLogger } from "../../interfaces/logger"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import { Direction, DirectionPersistence } from "./interfaces/direction-persistance"
 
 export class DirectionPersistenceRedis implements DirectionPersistence {
-  private logger: Logger
+  private logger: ServiceLogger
   private redis: RedisClientType
   private prefix: string
 
@@ -13,7 +13,7 @@ export class DirectionPersistenceRedis implements DirectionPersistence {
     prefix,
     redis,
   }: {
-    logger: Logger
+    logger: ServiceLogger
     prefix: string
     redis: RedisClientType
   }) {

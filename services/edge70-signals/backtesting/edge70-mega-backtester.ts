@@ -49,9 +49,7 @@ const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 // const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
 
 process.on("unhandledRejection", (err) => {
-  logger.error({ err })
-  Sentry.captureException(err)
-  console.error(`UnhandledPromiseRejection: ${err}`)
+  logger.exception(err, {}, `UnhandledPromiseRejection: ${err}`)
   process.exit(1)
 })
 
@@ -270,7 +268,7 @@ class Edge70SignalsBacktester {
       this.logger.info(`Run complete. Processed ${count} candles`)
       await this.backtest_portfolio_tracker.summary()
     } catch (err: any) {
-      this.logger.exception(err,{edge},`Run terminated due to exception: ${err})`)
+      this.logger.exception(err, { edge }, `Run terminated due to exception: ${err})`)
       throw err
     }
   }

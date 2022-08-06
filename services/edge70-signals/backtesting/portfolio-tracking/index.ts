@@ -223,7 +223,6 @@ export class BacktestPortfolioTracker implements Edge70SignalCallbacks {
     let { base_asset } = market_identifier
     if (await this.positions_tracker.in_position({ edge, base_asset })) {
       let stop_price = this.stops[base_asset]
-      this.logger.info(`${base_asset} Get stop of ${this.stops[base_asset].toFixed()}`)
       if (new BigNumber(candle.low).isLessThanOrEqualTo(stop_price)) {
         let signal_timestamp_ms = candle.closeTime
         let signal_price = stop_price.toFixed()

@@ -92,7 +92,7 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
       `oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo`
     )
     let { base_asset } = event
-    this.logger.info(`${base_asset}: Opened position ${event.initial_entry_position_size}}%`)
+    this.logger.info(`${base_asset}: Opened position ${event.initial_entry_position_size} base amount`)
   }
 
   async on_position_closed(event: SpotPositionClosedEvent_V1): Promise<void> {

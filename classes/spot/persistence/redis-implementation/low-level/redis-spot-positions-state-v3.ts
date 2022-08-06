@@ -243,7 +243,7 @@ export class RedisSpotPositionsState {
       stop_order_id,
     }
 
-    this.logger.info(JSON.stringify(res))
+    // this.logger.info(JSON.stringify(res))
 
     return res
   }
@@ -326,9 +326,9 @@ export class RedisSpotPositionsState {
     { base_change }: { base_change: BigNumber }
   ): Promise<void> {
     try {
-      console.log(`adjust_position_size_by start: ${await this.get_position_size(pi)}`)
+      let before = await this.get_position_size(pi)
       await this.incrbyAsync(this.name_to_key(pi, { name: "position_size" }), to_sats(base_change.toFixed()))
-      console.log(`adjust_position_size_by after: ${await this.get_position_size(pi)}`)
+      this.logger.debug(`adjust_position_size_by before: ${before} after: ${await this.get_position_size(pi)}`)
     } catch (err) {
       console.error(err)
       Sentry.withScope(function (scope) {

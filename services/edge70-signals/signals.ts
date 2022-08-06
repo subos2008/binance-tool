@@ -264,11 +264,9 @@ export class Edge70Signals {
         { tags },
         `Exception ingesting candle: ${err} - not storing candle, history probably incorrect - setting unhealthy`
       )
-      this.logger.error({ err })
+      this.logger.exception(err, tags, `Candle ingestion failed with err: ${err}`)
       this.health_and_readiness.healthy(false)
       this.health_and_readiness.ready(false)
-      this.logger.error({ err })
-      Sentry.captureException(err)
       throw err
     } finally {
       // important not to miss this - lest we corrupt the history

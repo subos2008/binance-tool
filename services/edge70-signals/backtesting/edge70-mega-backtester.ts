@@ -270,8 +270,7 @@ class Edge70SignalsBacktester {
       this.logger.info(`Run complete. Processed ${count} candles`)
       await this.backtest_portfolio_tracker.summary()
     } catch (err: any) {
-      this.logger.error({ err })
-      this.logger.error(err)
+      this.logger.exception(err,{edge},`Run terminated due to exception: ${err})`)
       throw err
     }
   }

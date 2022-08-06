@@ -19,6 +19,8 @@ import { Logger as LoggerInterface } from "../interfaces/logger"
 export class Logger implements LoggerInterface {
   silent: boolean
   bunyan: bunyan
+  trace_usage: boolean = true
+
   constructor(
     { silent, template, level }: { silent: boolean; template?: object; level?: bunyan.LogLevel } = {
       silent: false,
@@ -54,6 +56,8 @@ export class Logger implements LoggerInterface {
 
   object(obj: any) {
     if (!this.silent) {
+      if (this.trace_usage) console.trace(`logger.object used`)
+
       // wouldn't this just have a string msg? Yes... it does seem to work in DataDog though
       try {
         this.bunyan.info(JSON.stringify(obj))

@@ -15,16 +15,29 @@ import * as bunyan from "bunyan"
 
 import Sentry from "./sentry"
 
-import { Logger, ServiceLogger } from "../interfaces/logger"
-export class BunyanServiceLogger implements ServiceLogger {
+import { LoggableEvent, Logger, ServiceLogger } from "../interfaces/logger"
+import { ContextTags } from "../interfaces/send-message"
+
+export class BunyanServiceLogger implements ServiceLogger, Logger {
   silent: boolean
   bunyan: bunyan
+  events_as_msg: boolean = false
+
+  /**
+   * @param {boolean} events_as_msg - Suppress printing of entire events and just print .msg. Used in the backtester where we want readable logs
+   */
   constructor(
-    { silent, template, level }: { silent: boolean; template?: object; level?: bunyan.LogLevel } = {
+    {
+      silent,
+      template,
+      level,
+      events_as_msg,
+    }: { silent: boolean; template?: object; level?: bunyan.LogLevel; events_as_msg?: boolean } = {
       silent: false,
       template: {},
     }
   ) {
+    if (events_as_msg) events_as_msg = events_as_msg
     if (!template) template = {}
     this.silent = silent
     let params = {

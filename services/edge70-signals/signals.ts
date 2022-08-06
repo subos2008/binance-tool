@@ -246,6 +246,7 @@ export class Edge70Signals {
         version: 1,
         // msg: `trend reversal ${direction_string} entry signal on ${base_asset} at ${days}d price ${signal_price.toFixed()}. ${market_data_string}`,
         msg: `${edge} ${direction} signal on ${base_asset} (${symbol})`,
+        test_signal: false,
         base_asset,
         direction,
         edge,

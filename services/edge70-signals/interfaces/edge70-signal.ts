@@ -31,6 +31,7 @@ export interface Edge70Signal {
   base_asset?: string
   direction: "long" | "short"
   msg: string
+  test_signal: boolean // set when signal is a system test instead of a real signal
   market_identifier: MarketIdentifier_V5_with_base_asset
   edge70_parameters: Edge70Parameters
   signal: {

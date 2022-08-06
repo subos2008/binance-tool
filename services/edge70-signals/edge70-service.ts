@@ -17,7 +17,7 @@ console.log(`--- Service starting ---`)
 import "./tracer" // must come before importing any instrumented module.
 
 import { strict as assert } from "assert"
-import express from "express"
+import express, { Request, Response } from "express"
 import { CandlesCollector } from "../../classes/utils/candle_utils"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { get_redis_client } from "../../lib/redis-v4"
@@ -25,7 +25,7 @@ import { RedisClientType } from "redis-v4"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { BaseAssetsList } from "./base-assets-list"
 import { Edge70Signals } from "./signals"
-import { Edge70Parameters } from "./interfaces/edge70-signal"
+import { Edge70Parameters, Edge70Signal } from "./interfaces/edge70-signal"
 import { Edge70SignalCallbacks } from "./interfaces/_internal"
 import { ExchangeIdentifier_V4 } from "../../events/shared/exchange-identifier"
 import { MarketData } from "./market-data"
@@ -44,14 +44,13 @@ import { Binance } from "binance-api-node"
 /** Config: */
 const quote_symbol = "USDT".toUpperCase()
 const service_name = "edge70-signals"
+let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
 
 import { config } from "../../config"
+import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-price-getter"
 const tas_quote_asset = config.binance.spot.tas_quote_asset
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
-
-
-
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -131,8 +130,6 @@ class Edge70SignalsService {
     })
     this.logger.info({ object_type: `EdgeInitialization` }, `Target markets: ${base_assets.join(", ")}`)
 
-    let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
-
     let required_initial_candles = Edge70Signals.required_initial_candles(edge70_parameters)
     let symbols_with_direction_uninitialised: string[] = []
     for (let i = 0; i < base_assets.length; i++) {
@@ -206,11 +203,11 @@ class Edge70SignalsService {
             market_identifier,
             edge70_parameters,
           })
-          /* probably don't want to await for this */
           this.logger.warn(
             { ...tags, object_type: "EdgeInitialization" },
             `Starting MarketDirectionInitialiser for ${market_identifier.symbol}`
           )
+          /* probably don't want to await for this */
           await mi.run() //.catch((e) => this.logger.error(`MarketDirectionInitialiser threw exception: ${e}`)).then(()=> this.logger.info(`MarketDirectionInitialiser completed`)
         }
 
@@ -257,6 +254,9 @@ class Edge70SignalsService {
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 const global_health = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+const init_health = health_and_readiness.addSubsystem({ name: "init-boot", ready: false, healthy: false })
+
+var app = express()
 
 async function main() {
   assert(process.env.BINANCE_API_KEY)
@@ -280,6 +280,46 @@ async function main() {
       market_data: new MarketData(),
     })
 
+    async function send_test_signal(req: Request, res: Response) {
+      try {
+        let base_asset = "ETH"
+        let symbol = to_symbol(base_asset)
+        let market_identifier: MarketIdentifier_V5_with_base_asset = {
+          object_type: "MarketIdentifier",
+          version: 5,
+          exchange_identifier,
+          symbol,
+          base_asset,
+        }
+        let direction: "long" | "short" = "long"
+        let price_getter = new BinancePriceGetter({ logger, ee })
+        let signal_price = (await price_getter.get_current_price({ market_symbol: symbol })).toFixed()
+
+        let event: Edge70Signal = {
+          object_type: "Edge70Signal",
+          version: 1,
+          // msg: `trend reversal ${direction_string} entry signal on ${base_asset} at ${days}d price ${signal_price.toFixed()}. ${market_data_string}`,
+          msg: `Test Signal`,
+          test_signal: true,
+          base_asset,
+          direction,
+          edge,
+          market_identifier,
+          edge70_parameters: edge70_parameters,
+          signal: {
+            direction,
+            signal_price,
+            signal_timestamp_ms: Date.now(),
+          },
+        }
+        publisher.publish(event)
+        res.send({ status: "OK", event })
+      } catch (err) {
+        logger.exception(err, {})
+      }
+    }
+    app.get("/send-test-signal", send_test_signal)
+
     let { exchange, exchange_type } = exchange_identifier
     let service = new Edge70SignalsService({
       ee,
@@ -294,7 +334,11 @@ async function main() {
       }),
       callbacks: publisher,
     })
+
     await service.init()
+    init_health.healthy(true)
+    init_health.ready(true)
+
     await service.run()
   } catch (err) {
     logger.error({ err })
@@ -309,9 +353,9 @@ main().catch((err) => {
   logger.error(`Error in main loop: ${err.stack}`)
 })
 
-var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
+
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

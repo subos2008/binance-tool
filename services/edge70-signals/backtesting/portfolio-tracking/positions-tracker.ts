@@ -122,7 +122,7 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
 
         let reducer = (prev: BigNumber, e: E) => {
           if (!e.percentage_quote_change) throw new Error(`percentage_quote_change missing`)
-          let to_factor = (n: number) => 1 + n / 100
+          let to_factor = (n: number) => (1 + n / 100).toString()
           return prev.times(to_factor(e.percentage_quote_change))
         }
 

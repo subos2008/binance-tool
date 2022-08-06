@@ -18,8 +18,7 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { ServiceLogger } from "../../../lib/service-logger"
-const logger: ServiceLogger = new ServiceLogger({ silent: false })
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 // const logger: ServiceLogger = new ServiceLogger({ silent: false, level: "debug" })
 
 import { BigNumber } from "bignumber.js"
@@ -46,6 +45,8 @@ import { RedisClient } from "redis"
 import { BacktestPortfolioTracker } from "./portfolio-tracking"
 import { FixedPositionSizer } from "../../../edges/position-sizer/fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
+import { BunyanServiceLogger } from "../../../lib/service-logger"
+import { ServiceLogger } from "../../../interfaces/logger"
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })

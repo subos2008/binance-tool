@@ -1,8 +1,8 @@
 import { Binance, ExchangeInfo } from "binance-api-node"
 import { ExchangeIdentifier_V4 } from "../../../events/shared/exchange-identifier"
+import { BunyanServiceLogger } from "../../../lib/service-logger"
 
-import { Logger } from "../../../lib/service-logger"
-const logger = new Logger({ silent: false })
+const logger = new BunyanServiceLogger({ silent: false })
 
 export class BinanceExchangeInfoGetter {
   private ee: Binance

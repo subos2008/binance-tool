@@ -10,7 +10,6 @@ import {
   check_func,
   SpotPositionTracker,
 } from "../../../amqp/binance-order-data/position-tracker/position-tracker"
-import { ServiceLogger } from "../../../../lib/service-logger"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
@@ -21,6 +20,7 @@ import {
   SpotPositionClosedEvent_V1,
   SpotPositionOpenedEvent_V1,
 } from "../../../../classes/spot/abstractions/spot-position-callbacks"
+import { ServiceLogger } from "../../../../interfaces/logger"
 
 // return true if the position size passed it would be considered an untradeably small balance on the exchange
 let close_position_check_func: check_func = function ({

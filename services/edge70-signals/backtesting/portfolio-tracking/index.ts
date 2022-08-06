@@ -12,7 +12,6 @@ import { Edge70SignalCallbacks, EdgeCandle } from "../../interfaces/_internal"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { Edge70BacktestParameters, Edge70Parameters, Edge70Signal } from "../../interfaces/edge70-signal"
 import { DateTime } from "luxon"
-import { ServiceLogger } from "../../../../lib/service-logger"
 import { PositionSizer } from "../../../../interfaces/position-sizer"
 import { BacktesterSpotPostionsTracker } from "./positions-tracker"
 import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-message"
@@ -26,6 +25,7 @@ import { RedisOrderContextPersistence } from "../../../../classes/persistent_sta
 import { OrderContextPersistence_V2 } from "../../../../classes/persistent_state/interface/order-context-persistence"
 import { OrderContext_V2 } from "../../../../interfaces/orders/order-context"
 import { assert } from "console"
+import { ServiceLogger } from "../../../../interfaces/logger"
 
 /* convert Edge70Signals to Orders and throw them to PositionsTracker - with mock_redis */
 

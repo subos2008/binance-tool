@@ -8,7 +8,6 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Edge70Parameters, Edge70Signal } from "./interfaces/edge70-signal"
-import { ServiceLogger } from "../../lib/service-logger"
 import { TypedGenericTopicPublisher } from "../../classes/amqp/typed-generic-publisher"
 import { EdgeDirectionSignal, EdgeDirectionSignalPublisher } from "../../events/shared/edge-direction-signal"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
@@ -18,6 +17,7 @@ import { MarketData } from "./market-data"
 import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { Edge70SignalCallbacks } from "./interfaces/_internal"
 import { SendMessageFunc } from "../../interfaces/send-message"
+import { ServiceLogger } from "../../interfaces/logger"
 
 var dogstatsd = new StatsD()
 

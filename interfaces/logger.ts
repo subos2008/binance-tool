@@ -9,3 +9,14 @@ export interface Logger {
   silly(tags: Object, ...message: any[]): void
   object(tags: Object, ...message: any[]): void // dump object as single line to console info
 }
+
+export interface ServiceLogger {
+  info(tags: Object, ...message: any[]): void
+  error(tags: Object, ...message: any[]): void
+  fatal(tags: Object, ...message: any[]): void
+  warn(tags: Object, ...message: any[]): void
+  debug(tags: Object, ...message: any[]): void
+  silly(tags: Object, ...message: any[]): void
+  object(tags: Object, ...message: any[]): void // dump object as single line to console info
+  exception(err: unknown, tags: Object, msg: string): void
+}

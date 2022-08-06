@@ -13,10 +13,7 @@ import { Logger } from "../../../../interfaces/logger"
 import { MarketIdentifier_V4 } from "../../../../events/shared/market-identifier"
 import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import {
-  check_edge,
-  SpotPositionIdentifier_V3,
-} from "../../../../classes/spot/abstractions/position-identifier"
+import { check_edge, SpotPositionIdentifier_V3 } from "../../../../classes/spot/abstractions/position-identifier"
 import { OrderId } from "../../../../classes/persistent_state/interface/order-context-persistence"
 import { SpotPositionsExecution_StopLimitExit } from "./execution/stop-limit-exit-executor"
 import { SpotPositionsExecution_OCOExit } from "./execution/oco-exit-executor"
@@ -276,9 +273,10 @@ export class SpotEdgeToExecutorMapper {
       this.send_message(msg, { edge })
     }
 
+    let oco_order_id: OrderId | null = null
     try {
       /** Cancel oco order if there is one */
-      let oco_order_id: OrderId | null = await this.positions_persistance.get_oco_order(spot_position_identifier)
+      oco_order_id = await this.positions_persistance.get_oco_order(spot_position_identifier)
 
       if (oco_order_id) {
         this.send_message(`${prefix} cancelling oco order ${oco_order_id} on ${symbol}`, { edge })
@@ -292,7 +290,7 @@ export class SpotEdgeToExecutorMapper {
         this.send_message(msg, { edge })
       }
     } catch (err) {
-      let msg = `Failed to cancel oco order on ${symbol} - was it cancelled manually?`
+      let msg = `Failed to cancel oco order ${oco_order_id} on ${symbol} - was it cancelled manually?`
       this.logger.warn(msg)
       this.logger.warn({ err })
       Sentry.captureException(err)

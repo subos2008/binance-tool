@@ -1,3 +1,3 @@
 #!/bin/bash
 
-kubectl port-forward --namespace persistent-state svc/bitnami-redis-master 6379:6379
+kubectl port-forward --namespace binance-tool svc/edge70-signals 6070:80

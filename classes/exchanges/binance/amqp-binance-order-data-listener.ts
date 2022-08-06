@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 /**
  * Event/message listener
  */
@@ -9,13 +8,13 @@
 import Sentry from "../../../lib/sentry"
 
 import { ListenerFactory } from "../../amqp/listener-factory"
-import { Logger } from "../../../lib/faux_logger"
 import { MessageProcessor } from "../../amqp/interfaces"
 import { HealthAndReadiness } from "../../health_and_readiness"
 import { MyEventNameType } from "../../amqp/message-routing"
 import { Channel } from "amqplib"
 import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/exchanges/binance/order_callbacks"
 import { SendMessageFunc } from "../../../interfaces/send-message"
+import { Logger } from "../../../interfaces/logger"
 
 export class AMQP_BinanceOrderDataListener implements MessageProcessor {
   send_message: Function
@@ -70,7 +69,7 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
       message_processor: this,
       health_and_readiness,
       service_name: this.service_name,
-      prefetch_one: false
+      prefetch_one: false,
     })
   }
 

@@ -1,4 +1,7 @@
 // NB: made it mandatory to supply a tags object as the first arg,
+
+import { ContextTags } from "./send-message"
+
 //  err is a special tag for passing exceptions
 export interface Logger {
   info(tags: Object, ...message: any[]): void
@@ -10,6 +13,10 @@ export interface Logger {
   object(tags: Object, ...message: any[]): void // dump object as single line to console info
 }
 
+export interface LoggableEvent {
+  object_type: string
+  msg?: string
+}
 export interface ServiceLogger {
   info(tags: Object, ...message: any[]): void
   error(tags: Object, ...message: any[]): void
@@ -18,5 +25,6 @@ export interface ServiceLogger {
   debug(tags: Object, ...message: any[]): void
   silly(tags: Object, ...message: any[]): void
   object(tags: Object, ...message: any[]): void // dump object as single line to console info
-  exception(err: unknown, tags: Object, msg?: string): void
+  exception(tags: ContextTags, err: unknown, msg?: string): void
+  event(tags: ContextTags, event: LoggableEvent): void
 }

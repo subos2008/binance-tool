@@ -40,7 +40,7 @@ export class BinanceExchangeInfoGetter {
 
       return this.exchange_info_promise
     } catch (err) {
-      logger.exception(err)
+      logger.exception({}, err)
       // shit, exception, return cached if we can
       if (this.emergency_cache) {
         logger.warn(`Failed getting exchangeInfo from Binance, using emergency cache`)
@@ -85,7 +85,7 @@ export class BinanceFuturesExchangeInfoGetter {
 
       return this.exchange_info_promise
     } catch (err) {
-      logger.exception(err)
+      logger.exception({}, err)
       // shit, exception, return cached if we can
       if (this.emergency_cache) {
         logger.warn(`Failed getting exchangeInfo from Binance, using emergency cache`)

@@ -326,7 +326,7 @@ async function main() {
         void publisher.publish(event)
         res.send({ status: "OK", event })
       } catch (err) {
-        logger.exception(err, {})
+        logger.exception({}, err)
       }
     }
     app.get("/send-test-signal", send_test_signal)

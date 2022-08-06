@@ -72,6 +72,16 @@ const edge70_parameters: Edge70Parameters = {
 
 const edge: "edge70" = "edge70"
 
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
+const global_health = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+const init_health = health_and_readiness.addSubsystem({ name: "init-boot", ready: false, healthy: false })
+const candle_ingestion_health = health_and_readiness.addSubsystem({
+  name: "candle-ingestion",
+  ready: false,
+  healthy: true,
+})
+
 class Edge70SignalsService {
   edges: { [Key: string]: Edge70Signals } = {}
   candles_collector: CandlesCollector
@@ -237,9 +247,13 @@ class Edge70SignalsService {
     this.close_1d_candle_ws = this.ee.ws.candles(valid_symbols, edge70_parameters.candle_timeframe, (candle) => {
       let symbol = candle.symbol
       if (candle.isFinal && this.edges[symbol]) {
-        this.edges[symbol].ingest_new_candle({ symbol, candle })
+        this.edges[symbol].ingest_new_candle({ symbol, candle }).catch(() => {
+          this.logger.error(`Candle ingestion failed: $`)
+          candle_ingestion_health.healthy(false)
+        })
       }
     })
+    candle_ingestion_health.ready(true)
   }
 
   shutdown_streams() {
@@ -247,11 +261,6 @@ class Edge70SignalsService {
     if (this.close_short_timeframe_candle_ws) this.close_short_timeframe_candle_ws()
   }
 }
-
-const health_and_readiness = new HealthAndReadiness({ logger })
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-const global_health = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
-const init_health = health_and_readiness.addSubsystem({ name: "init-boot", ready: false, healthy: false })
 
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
@@ -314,7 +323,7 @@ async function main() {
             signal_timestamp_ms: Date.now(),
           },
         }
-        publisher.publish(event)
+        void publisher.publish(event)
         res.send({ status: "OK", event })
       } catch (err) {
         logger.exception(err, {})
@@ -354,5 +363,3 @@ main().catch((err) => {
   logger.error({ err })
   logger.error(`Error in main loop: ${err.stack}`)
 })
-
-

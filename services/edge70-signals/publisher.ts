@@ -92,19 +92,13 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
     }
 
     /* telegram */
-    try {
-      let msg = args.msg
-      this.logger.info(tags, msg)
-      this.send_message(msg, tags)
-    } catch (err) {
-      this.logger.error(tags, `Failed to publish to telegram for ${symbol}`)
-      this.logger.error({ err })
-      Sentry.captureException(err)
-    }
+    let msg = args.msg
+    this.logger.info(tags, msg)
+    this.send_message(msg, tags)
 
     try {
       this.logger.info(args)
-      this.signal_publisher.publish(args)
+      await this.signal_publisher.publish(args)
     } catch (err) {
       this.logger.warn(tags, `Failed to publish ${args.object_type} to AMQP for ${symbol}`)
       this.logger.error({ err })
@@ -112,7 +106,7 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
     }
 
     try {
-      this.publish_direction_to_amqp({
+      await this.publish_direction_to_amqp({
         signal_timestamp_ms: args.signal.signal_timestamp_ms,
         market_identifier: args.market_identifier,
         direction,
@@ -134,7 +128,7 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
     market_identifier: MarketIdentifier_V5
   }) {
     let { edge } = this
-    let {base_asset}=market_identifier
+    let { base_asset } = market_identifier
     let event: EdgeDirectionSignal = {
       object_type: "EdgeDirectionSignal",
       version: 1,
@@ -154,6 +148,6 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
       persistent: true,
       timestamp: Date.now(),
     }
-    this.publisher_for_EdgeDirectionSignal.publish(event, options)
+    await this.publisher_for_EdgeDirectionSignal.publish(event, options)
   }
 }

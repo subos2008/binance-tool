@@ -44,7 +44,8 @@ import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifie
 import { BunyanServiceLogger } from "../../../lib/service-logger"
 import { ServiceLogger } from "../../../interfaces/logger"
 
-const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, events_as_msg: true })
+let full_trace = false
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, events_as_msg: true, full_trace })
 // const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
 
 process.on("unhandledRejection", (err) => {
@@ -208,10 +209,10 @@ class Edge70SignalsBacktester {
           callbacks: this.backtest_portfolio_tracker,
           edge70_parameters,
         })
-        this.logger.info(
-          { ...tags, object_type: "EdgeMarketInitialization" },
-          `Setup edge for ${symbol} with ${initial_candles.length} initial candles`
-        )
+        this.logger.event(tags, {
+          object_type: "EdgeMarketInitialization",
+          msg: `Setup edge for ${symbol} with ${initial_candles.length} initial candles`,
+        })
         // TODO: get klines via the TAS so we can do rate limiting
         if (base_assets.length > 300) {
           this.logger.debug(`Sleeping...`)

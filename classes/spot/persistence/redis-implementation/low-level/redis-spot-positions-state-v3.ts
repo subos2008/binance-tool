@@ -111,10 +111,13 @@ export class RedisSpotPositionsState {
     return new BigNumber(from_sats(sats_or_null))
   }
 
-  async get_string_key(pi: SpotPositionIdentifier_V3, { key_name }: { key_name: string }): Promise<string> {
+  async get_string_key(
+    pi: SpotPositionIdentifier_V3,
+    { key_name, null_allowed }: { key_name: string; null_allowed: boolean }
+  ): Promise<string> {
     const key = this.name_to_key(pi, { name: key_name })
     const value = await this.getAsync(key)
-    if (!value) throw new Error(`${key} missing from position`)
+    if (!value && !null_allowed) throw new Error(`${key} missing from position`)
     return value
   }
 
@@ -153,7 +156,7 @@ export class RedisSpotPositionsState {
   }
 
   async get_initial_entry_quote_asset(pi: SpotPositionIdentifier_V3): Promise<string> {
-    return this.get_string_key(pi, { key_name: "initial_entry_quote_asset" })
+    return this.get_string_key(pi, { key_name: "initial_entry_quote_asset", null_allowed: false })
   }
 
   // ms
@@ -166,7 +169,7 @@ export class RedisSpotPositionsState {
   }
 
   async get_edge(pi: SpotPositionIdentifier_V3): Promise<string> {
-    return this.get_string_key(pi, { key_name: "edge" })
+    return this.get_string_key(pi, { key_name: "edge", null_allowed: false })
   }
 
   private async get_object_set_key(pi: SpotPositionIdentifier_V3, { key_name }: { key_name: string }) {
@@ -345,7 +348,7 @@ export class RedisSpotPositionsState {
 
   async get_stop_order(pi: SpotPositionIdentifier_V3): Promise<OrderId | undefined> {
     try {
-      return this.get_string_key(pi, { key_name: "stop_order_id" })
+      return this.get_string_key(pi, { key_name: "stop_order_id", null_allowed: true })
     } catch (err) {
       return
     }
@@ -356,7 +359,7 @@ export class RedisSpotPositionsState {
   }
 
   async get_oco_order(pi: SpotPositionIdentifier_V3): Promise<OrderId> {
-    return this.get_string_key(pi, { key_name: "oco_order_id" })
+    return this.get_string_key(pi, { key_name: "oco_order_id", null_allowed: true })
   }
 
   async delete_position(pi: SpotPositionIdentifier_V3) {

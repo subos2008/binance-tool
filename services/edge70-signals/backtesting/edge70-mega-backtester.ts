@@ -2,10 +2,8 @@
 /* eslint-disable no-console */
 
 /** Config: */
-const quote_symbol = "USDT".toUpperCase()
-let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
+const quote_asset = "USDT".toUpperCase()
 let to_base_asset = (symbol: string) => symbol.toUpperCase().replace(/USDT$/, "") // HACK
-const starting_cash = new BigNumber("2500")
 
 import { strict as assert } from "assert"
 const service_name = "edge70-backtester"
@@ -48,7 +46,6 @@ import { MockPricesGetter } from "./mock-prices-getter"
 import { CandlesMap } from "./portfolio-tracking/interfaces"
 import { CaptainHooksBacktesterStats } from "./portfolio-tracking/captain-hooks-backtester-stats"
 import { BacktesterCashManagement } from "./cash-management"
-import { MockExchangeInfoGetter } from "./mock-exchange-info-getter"
 
 let full_trace = false
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, events_as_msg: true, full_trace })
@@ -161,7 +158,7 @@ class Edge70MegaBacktester {
       exchange_info_getter: this.exchange_info_getter,
     })
     let base_assets: string[] = await base_assets_generator.get_base_assets_list({
-      signals_quote_asset: quote_symbol,
+      signals_quote_asset: quote_asset,
       tas_quote_asset: tas_quote_asset,
     })
     console.warn(`Chopping to just ${base_assets[0]}`)
@@ -171,7 +168,8 @@ class Edge70MegaBacktester {
     let largest_number_of_candles = 0
     for (let i = 0; i < base_assets.length; i++) {
       let base_asset = base_assets[i]
-      let symbol = to_symbol(base_asset)
+      let symbol = await this.exchange_info_getter.to_symbol({ base_asset, quote_asset })
+      if (!symbol) throw new Error(`Symbol not found`)
       let tags = { base_asset, symbol, edge }
       try {
         // Last N closed candles exist between N+1 ago and now (actually and midnight last night)
@@ -313,7 +311,7 @@ async function main() {
     let mock_redis = require("redis-mock")
     let redis = mock_redis.createClient()
 
-    let exchange_info_getter = new MockExchangeInfoGetter()
+    let exchange_info_getter = new BinanceExchangeInfoGetter({ee})
     let i = exchange_info_getter.get_exchange_identifier()
     let exchange_identifier: ExchangeIdentifier_V3 = {
       ...i,
@@ -334,7 +332,7 @@ async function main() {
       position_sizer,
       redis,
       exchange_identifier,
-      quote_asset: quote_symbol,
+      quote_asset: quote_asset,
       edge70_parameters,
       prices_getter,
       bank,

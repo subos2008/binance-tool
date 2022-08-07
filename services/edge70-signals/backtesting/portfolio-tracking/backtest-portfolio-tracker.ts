@@ -174,7 +174,7 @@ export class BacktestPortfolioTracker {
       quote_asset: this.quote_asset,
     })
     for (const hooks of this.captain_hooks_backtester_stats) {
-      hooks.portfolio_summary_at_candle_close(portfolio_summary)
+      await hooks.portfolio_summary_at_candle_close(portfolio_summary)
     }
   }
 

@@ -324,7 +324,8 @@ async function main() {
     let starting_cash = new BigNumber(edge70_parameters.starting_cash)
     let bank = new BacktesterCashManagement({ logger, starting_cash })
 
-    let position_sizer = new BacktesterAllInPositionSizer({ logger, bank })
+    // let position_sizer = new BacktesterAllInPositionSizer({ logger, bank })
+    let position_sizer = new BacktesterFixedPositionSizer({ logger })
     let prices_getter = new MockPricesGetter()
     let backtest_portfolio_tracker = new BacktestPortfolioTracker({
       logger,

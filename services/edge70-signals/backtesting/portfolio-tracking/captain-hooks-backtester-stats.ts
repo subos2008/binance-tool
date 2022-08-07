@@ -39,7 +39,7 @@ class strings {
   static delta_as_pct(delta: Delta): string {
     let pct = calc.delta_as_pct(delta)
     let factor = new BigNumber(pct).dividedBy(100).dp(1)
-    return `${this.add_sign(pct)}% (${factor}x)`
+    return `${pct}% (${factor}x)`
   }
 
   static sub_amount_as_pct(total: BigNumber, sub_amount: BigNumber): string {

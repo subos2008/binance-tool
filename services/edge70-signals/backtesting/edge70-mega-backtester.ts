@@ -46,6 +46,7 @@ import { CandlesMap } from "./portfolio-tracking/interfaces"
 import { CaptainHooksBacktesterStats } from "./portfolio-tracking/captain-hooks-backtester-stats"
 import { BacktesterCashManagement } from "./cash-management"
 import { BacktesterFixedPositionSizer } from "./position_sizers/fixed"
+import { BacktesterAllInPositionSizer } from "./position_sizers/all-in"
 
 let full_trace = false
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, events_as_msg: true, full_trace })
@@ -323,7 +324,7 @@ async function main() {
     let starting_cash = new BigNumber(edge70_parameters.starting_cash)
     let bank = new BacktesterCashManagement({ logger, starting_cash })
 
-    let position_sizer = new BacktesterFixedPositionSizer({ logger })
+    let position_sizer = new BacktesterAllInPositionSizer({ logger, bank })
     let prices_getter = new MockPricesGetter()
     let backtest_portfolio_tracker = new BacktestPortfolioTracker({
       logger,

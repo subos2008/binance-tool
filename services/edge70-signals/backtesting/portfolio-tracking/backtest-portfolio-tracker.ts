@@ -114,7 +114,7 @@ export class BacktestPortfolioTracker {
       order_context_persistence,
       positions_tracker,
       bank,
-      spot_positions_query
+      spot_positions_query,
     })
     let { trade_execution } = this
 
@@ -123,7 +123,7 @@ export class BacktestPortfolioTracker {
       logger,
       edge,
       trade_execution,
-      spot_positions_query
+      spot_positions_query,
     })
   }
 
@@ -133,6 +133,8 @@ export class BacktestPortfolioTracker {
 
   async init(): Promise<void> {
     await this.edge_signals_to_trade_execution.init()
+    // initialise the stats engines before any candles are ingested
+    await this.all_new_candles_ingested()
   }
 
   add_captain_hooks_backtester_stats(hooks: CaptainHooksBacktesterStats) {

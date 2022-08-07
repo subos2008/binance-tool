@@ -69,9 +69,9 @@ const edge70_parameters: Edge70BacktestParameters = {
     long: 44, // one less than the number we use on the TV high/low indicator
     short: 21, // one less than the number we use on the TV high/low indicator
   },
-  stop_factor: "0.93",
-  starting_cash: "2500",
-  symbols_to_run: 1,
+  stop_factor: "0.90",
+  starting_cash: "6000",
+  symbols_to_run: 100,
 }
 
 // const backtest_parameters = {
@@ -243,18 +243,18 @@ class Edge70MegaBacktester {
     let del_syms = 0
     let expected_first_candle_closeTime
     for (const symbol in this.candles) {
-      if (expected_first_candle_closeTime) {
-        // make sure all the candles start at the same time. API limit is 500 kilnes at once,
-        // make sure they are the same 500 at least
-        assert(this.candles[symbol][0].closeTime === expected_first_candle_closeTime)
-      } else {
-        expected_first_candle_closeTime = this.candles[symbol][0].closeTime
-      }
       if (this.candles[symbol].length < expected) {
         delete this.candles[symbol]
         delete this.edges[symbol]
         del_syms++
+        continue
       }
+      if (!expected_first_candle_closeTime) {
+        expected_first_candle_closeTime = this.candles[symbol][0].closeTime
+      }
+      // make sure all the candles start at the same time. API limit is 500 kilnes at once,
+      // make sure they are the same 500 at least
+      assert(this.candles[symbol][0].closeTime === expected_first_candle_closeTime)
     }
     this.logger.info(`Deleted ${del_syms} short histories`)
   }

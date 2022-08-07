@@ -71,6 +71,7 @@ const edge70_parameters: Edge70BacktestParameters = {
   },
   stop_factor: "0.93",
   starting_cash: "2500",
+  symbols_to_run: 1,
 }
 
 // const backtest_parameters = {
@@ -80,7 +81,6 @@ const edge70_parameters: Edge70BacktestParameters = {
 //   end_date: new Date("2022-07-31"), // Nice test, signals long on 29th
 // }
 
-let symbols_to_run = 1
 let start_date = new Date("2020-08-01")
 const backtest_parameters = {
   start_date,
@@ -354,7 +354,7 @@ async function main() {
       prices_getter,
     })
     await service.init()
-    await service.init_candles(symbols_to_run)
+    await service.init_candles(edge70_parameters.symbols_to_run)
     await service.run()
   } catch (err) {
     logger.error({ err })

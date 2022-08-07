@@ -22,6 +22,7 @@ export type Edge70BacktestParameters = {
   }
   stop_factor: string
   starting_cash: string
+  symbols_to_run: number
 }
 
 // For storage of event data the configuration and mcap data is included

@@ -37,6 +37,10 @@ export type SpotPositionObject = {
   stop_order_id?: string
 }
 
+export interface SpotPositionObject_V2 extends SpotPositionObject {
+  base_asset: string
+}
+
 export class SpotPosition {
   private logger: Logger
   private send_message: Function | undefined
@@ -84,12 +88,15 @@ export class SpotPosition {
     return this.spot_positions_persistance.position_size(this.position_identifier)
   }
 
-  async describe_position(): Promise<SpotPositionObject> {
-    return this.spot_positions_persistance.as_spot_position_object(this.position_identifier)
+  async describe_position(): Promise<SpotPositionObject_V2> {
+    let po: SpotPositionObject = await this.spot_positions_persistance.as_spot_position_object(
+      this.position_identifier
+    )
+    return { ...po, base_asset: this.base_asset }
   }
 
-  async edge(): Promise<AuthorisedEdgeType> {
-    return (await this.spot_positions_persistance.edge(this.position_identifier)) as AuthorisedEdgeType
+  async edge(): Promise<string> {
+    return await this.spot_positions_persistance.edge(this.position_identifier)
   }
 
   async orders(): Promise<GenericOrderData[]> {

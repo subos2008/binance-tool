@@ -21,6 +21,7 @@ export type Edge70BacktestParameters = {
     short: 21 // one less than the number we use on the TV high/low indicator
   }
   stop_factor: string
+  starting_cash: string
 }
 
 // For storage of event data the configuration and mcap data is included

@@ -1,10 +1,11 @@
 import { Binance, ExchangeInfo } from "binance-api-node"
 import { ExchangeIdentifier_V4 } from "../../../events/shared/exchange-identifier"
+import { ExchangeInfoGetter } from "../../../interfaces/exchanges/binance/exchange-info-getter"
 import { BunyanServiceLogger } from "../../../lib/service-logger"
 
 const logger = new BunyanServiceLogger({ silent: false })
 
-export class BinanceExchangeInfoGetter {
+export class BinanceExchangeInfoGetter implements ExchangeInfoGetter {
   private ee: Binance
   private exchange_info_promise: Promise<ExchangeInfo> | null | undefined
   private minutes_to_cache_expiry: number = 24 * 60
@@ -17,6 +18,14 @@ export class BinanceExchangeInfoGetter {
 
   get_exchange_identifier(): ExchangeIdentifier_V4 {
     return { version: 4, exchange: "binance", exchange_type: "spot" }
+  }
+
+  async to_symbol(args: { base_asset: string; quote_asset: string }): Promise<string | undefined> {
+    let exchange_info: ExchangeInfo = await this.get_exchange_info()
+    let symbol = exchange_info.symbols.find(
+      (s) => s.baseAsset === args.base_asset && s.quoteAsset == args.quote_asset
+    )
+    return symbol?.symbol
   }
 
   async get_exchange_info(): Promise<ExchangeInfo> {

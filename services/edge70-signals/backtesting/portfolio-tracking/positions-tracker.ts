@@ -41,6 +41,7 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
   positions_tracker: SpotPositionTracker
   spot_positions_query: SpotPositionsQuery
   position_closed_events: { [base_asset: string]: SpotPositionClosedEvent_V1[] } = {}
+  position_opened_events: { [base_asset: string]: SpotPositionOpenedEvent_V1[] } = {}
 
   constructor({
     send_message,
@@ -88,19 +89,13 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
   }
 
   async on_position_opened(event: SpotPositionOpenedEvent_V1): Promise<void> {
-    this.logger.error(
-      `oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo`
-    )
     let { base_asset } = event
-    this.logger.info(`${base_asset}: Opened position ${event.initial_entry_position_size} base amount`)
+    if (!this.position_opened_events[base_asset]) this.position_opened_events[base_asset] = []
+    this.position_opened_events[base_asset].push(event)
   }
 
   async on_position_closed(event: SpotPositionClosedEvent_V1): Promise<void> {
-    this.logger.error(
-      `FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF`
-    )
     let { base_asset } = event
-    this.logger.info(`${base_asset}: Closed position ${event.percentage_quote_change}%`)
     if (!this.position_closed_events[base_asset]) this.position_closed_events[base_asset] = []
     this.position_closed_events[base_asset].push(event)
   }
@@ -112,12 +107,17 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
       for (const base_asset in this.position_closed_events) {
         let events = this.position_closed_events[base_asset]
 
-        let prefix = (n: number) => (n < 0 ? `LOSS ` : `WIN +`)
+        let prefix = (n: number) => (n < 0 ? `LOSS ` : `WIN `)
+        let sign = (n: number) => (n < 0 ? `${n}` : `+${n}`)
+        let pct = (n: number | string) => new BigNumber(n.toString()).dp(1).toNumber()
 
         let to_string = (e: E) => {
           if (!e.abs_quote_change) throw new Error(`abs_quote_change missing`)
           if (!e.percentage_quote_change) throw new Error(`percentage_quote_change missing`)
-          return prefix(e.percentage_quote_change) + `[A:${e.abs_quote_change} P]`
+          return (
+            prefix(e.percentage_quote_change) +
+            `[${sign(pct(e.percentage_quote_change))}%]`
+          )
         }
 
         let reducer = (prev: BigNumber, e: E) => {
@@ -127,7 +127,7 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
         }
 
         let strings = this.position_closed_events[base_asset].map(to_string)
-        let final: string = events.reduce(reducer, new BigNumber(1)).dp(1).toFixed()
+        let final: string = events.reduce(reducer, new BigNumber(1)).dp(1).toFixed() + `final calc is almost certainly incorrect`
         this.logger.info(`${base_asset}: ` + strings.join(", ") + ` FINAL: x${final}`)
       }
     } catch (err) {

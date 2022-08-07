@@ -80,11 +80,17 @@ export class SpotPositionTracker {
   }
 
   async buy_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
-    let { exchange_identifier, baseAsset, averageExecutionPrice } = generic_order_data
+    let { exchange_identifier, baseAsset, averageExecutionPrice, side, orderType, edge, quoteAsset } =
+      generic_order_data
+    let tags = { edge, base_asset: baseAsset, quote_asset: quoteAsset }
 
     let position = await this.load_position_for_order(generic_order_data)
-    // this.logger.info(position.describe_position(), `Loaded open position for ${baseAsset}`)
     await position.add_order_to_position({ generic_order_data }) // this would have created it if it didn't exist - from the order data
+
+    this.logger.event(tags, {
+      object_type: "OrderAddedToPosition",
+      msg: `Added ${orderType} ${side} order to position for ${baseAsset}`,
+    })
 
     if (!averageExecutionPrice) {
       throw new Error(`averageExecutionPrice not defined, unable to publish NewPositionEvent`)
@@ -130,7 +136,7 @@ export class SpotPositionTracker {
   }
 
   async sell_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
-    let { baseAsset, quoteAsset, market_symbol, averageExecutionPrice } = generic_order_data
+    let { baseAsset, quoteAsset, market_symbol, averageExecutionPrice, side, orderType } = generic_order_data
 
     let position: SpotPosition = await this.load_position_for_order(generic_order_data)
     // this.logger.info(await position.describe_position(), `Sell order filled on position`)
@@ -150,7 +156,10 @@ export class SpotPositionTracker {
     // to have one call to move the stops on all orders up at once. Position.move_all_stops_to(stop_price)
     await position.add_order_to_position({ generic_order_data })
 
-    this.logger.info(`Added order to position for ${baseAsset}`)
+    this.logger.event(tags, {
+      object_type: "OrderAddedToPosition",
+      msg: `Added ${orderType} ${side} order to position for ${baseAsset}`,
+    })
 
     if (!averageExecutionPrice) {
       // TODO: set sentry context after unpacking the order (withScope)

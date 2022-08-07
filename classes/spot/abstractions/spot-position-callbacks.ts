@@ -82,6 +82,11 @@ export interface SpotPositionClosedEvent_V1 extends _shared_v1 {
   abs_quote_change?: string
 }
 
+export interface SpotPositionClosedEvent_V1_with_percentage_quote_change extends SpotPositionClosedEvent_V1 {
+  percentage_quote_change: number // use a float for this, it's not for real accounting
+  abs_quote_change: string
+}
+
 export interface SpotPositionCallbacks {
   on_position_opened(event: SpotPositionOpenedEvent_V1): Promise<void>
   on_position_closed(event: SpotPositionClosedEvent_V1): Promise<void>

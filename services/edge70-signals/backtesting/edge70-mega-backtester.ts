@@ -5,6 +5,7 @@
 const quote_symbol = "USDT".toUpperCase()
 let to_symbol = (base_asset: string) => base_asset.toUpperCase() + quote_symbol
 let to_base_asset = (symbol: string) => symbol.toUpperCase().replace(/USDT$/, "") // HACK
+const starting_cash = new BigNumber("2500")
 
 import { strict as assert } from "assert"
 const service_name = "edge70-backtester"
@@ -38,11 +39,16 @@ import { MarketIdentifier_V5_with_base_asset } from "../../../events/shared/mark
 import { ContextTags, SendMessageFunc } from "../../../interfaces/send-message"
 import { DateTime } from "luxon"
 import { RedisClient } from "redis"
-import { BacktestPortfolioTracker } from "./portfolio-tracking"
+import { BacktestPortfolioTracker } from "./portfolio-tracking/backtest-portfolio-tracker"
 import { FixedPositionSizer } from "../../../edges/position-sizer/fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { BunyanServiceLogger } from "../../../lib/service-logger"
 import { ServiceLogger } from "../../../interfaces/logger"
+import { MockPricesGetter } from "./mock-prices-getter"
+import { CandlesMap } from "./portfolio-tracking/interfaces"
+import { CaptainHooksBacktesterStats } from "./portfolio-tracking/captain-hooks-backtester-stats"
+import { BacktesterCashManagement } from "./cash-management"
+import { MockExchangeInfoGetter } from "./mock-exchange-info-getter"
 
 let full_trace = false
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, events_as_msg: true, full_trace })
@@ -66,6 +72,7 @@ const edge70_parameters: Edge70BacktestParameters = {
     short: 21, // one less than the number we use on the TV high/low indicator
   },
   stop_factor: "0.93",
+  starting_cash: "2500",
 }
 
 // const backtest_parameters = {
@@ -85,7 +92,7 @@ const backtest_parameters = {
 
 const edge: "edge70-backtest" = "edge70-backtest"
 
-class Edge70SignalsBacktester {
+class Edge70MegaBacktester {
   edges: { [Key: string]: Edge70Signals } = {}
   candles: { [Key: string]: CandleChartResult[] } = {}
   candles_collector: CandlesCollector
@@ -97,6 +104,7 @@ class Edge70SignalsBacktester {
   health_and_readiness: HealthAndReadiness
   backtest_portfolio_tracker: BacktestPortfolioTracker
   mock_redis: RedisClient
+  prices_getter: MockPricesGetter
 
   constructor({
     ee,
@@ -104,6 +112,7 @@ class Edge70SignalsBacktester {
     send_message,
     direction_persistance,
     backtest_portfolio_tracker,
+    prices_getter,
   }: {
     ee: Binance
     logger: ServiceLogger
@@ -111,12 +120,13 @@ class Edge70SignalsBacktester {
     direction_persistance: DirectionPersistenceMock
     health_and_readiness: HealthAndReadiness
     backtest_portfolio_tracker: BacktestPortfolioTracker
+    prices_getter: MockPricesGetter
   }) {
     this.candles_collector = new CandlesCollector({ ee })
     this.ee = ee
     this.logger = logger
     this.send_message = send_message
-    this.send_message("service re-starting", { edge })
+    this.prices_getter = prices_getter
     this.direction_persistance = direction_persistance
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
     this.health_and_readiness = health_and_readiness
@@ -206,7 +216,7 @@ class Edge70SignalsBacktester {
           health_and_readiness,
           initial_candles,
           market_identifier,
-          callbacks: this.backtest_portfolio_tracker,
+          callbacks: this.backtest_portfolio_tracker.edge70_signals_callbacks,
           edge70_parameters,
         })
         this.logger.event(tags, {
@@ -251,18 +261,28 @@ class Edge70SignalsBacktester {
   }
 
   async run(): Promise<void> {
+    let global_hooks_backtester_stats = new CaptainHooksBacktesterStats({ logger })
+    this.backtest_portfolio_tracker.add_captain_hooks_backtester_stats(global_hooks_backtester_stats)
     try {
       let count = 0
       outer: while (true) {
+        let candles_map: CandlesMap = {}
+        /* Do prices first and make a CandlesMap */
         for (const symbol in this.candles) {
           let candle = this.candles[symbol].shift()
           if (!candle) break outer
+          candles_map[symbol] = candle
+        }
+        this.prices_getter.set_prices_from_candles(candles_map)
+        for (const symbol in candles_map) {
+          let candle = candles_map[symbol]
           let base_asset = to_base_asset(symbol)
           let market_identifier = this.market_identifier({ base_asset, symbol })
           /* ingest_new_candle on tracker first so it checks for stops _before_ we open positions */
           await this.backtest_portfolio_tracker.ingest_new_candle({ market_identifier, candle })
           await this.edges[symbol].ingest_new_candle({ symbol, candle })
         }
+        await this.backtest_portfolio_tracker.all_new_candles_ingested()
         count++
       }
       this.logger.info(`Run complete. Processed ${count} candles`)
@@ -293,15 +313,20 @@ async function main() {
     let mock_redis = require("redis-mock")
     let redis = mock_redis.createClient()
 
-    let eig = new BinanceExchangeInfoGetter({ ee })
-    let i = eig.get_exchange_identifier()
+    let exchange_info_getter = new MockExchangeInfoGetter()
+    let i = exchange_info_getter.get_exchange_identifier()
     let exchange_identifier: ExchangeIdentifier_V3 = {
       ...i,
       type: i.exchange_type,
       account: "default",
       version: "v3",
     }
+
+    let starting_cash = new BigNumber(edge70_parameters.starting_cash)
+    let bank = new BacktesterCashManagement({ logger, starting_cash })
+
     let position_sizer = new FixedPositionSizer({ logger })
+    let prices_getter = new MockPricesGetter()
     let backtest_portfolio_tracker = new BacktestPortfolioTracker({
       logger,
       edge,
@@ -311,9 +336,12 @@ async function main() {
       exchange_identifier,
       quote_asset: quote_symbol,
       edge70_parameters,
+      prices_getter,
+      bank,
+      exchange_info_getter,
     })
 
-    let service = new Edge70SignalsBacktester({
+    let service = new Edge70MegaBacktester({
       ee,
       logger,
       send_message,
@@ -323,6 +351,7 @@ async function main() {
         prefix: `${service_name}:spot:binance:usd_quote`,
       }),
       backtest_portfolio_tracker,
+      prices_getter,
     })
     await service.init()
     await service.init_candles(symbols_to_run)

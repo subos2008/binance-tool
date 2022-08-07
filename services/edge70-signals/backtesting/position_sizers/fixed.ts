@@ -27,17 +27,6 @@ export class BacktesterFixedPositionSizer implements PositionSizer {
     edge: string
     direction: "short" | "long"
   }): Promise<BigNumber> {
-    if (edge === "edge62") {
-      if (direction === "short") return new BigNumber(600) // make this $1k if we can
-      if (direction === "long") return new BigNumber(50)
-    }
-    if (edge === "edge60") {
-      return new BigNumber(30)
-    }
-    if (edge === "edge70") {
-      return new BigNumber(100)
-    }
-    this.logger.warn(`Using default position size`)
-    return new BigNumber(20)
+    return new BigNumber(100)
   }
 }

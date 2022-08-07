@@ -36,4 +36,10 @@ export class PortfolioSummary {
   async total_assets_inc_cash(): Promise<BigNumber> {
     return this.cash.plus(await this.total_investments_value())
   }
+
+  async pct_portfolio_invested(): Promise<BigNumber> {
+    let investments = await this.total_investments_value()
+    let total = await this.total_assets_inc_cash()
+    return investments.dividedBy(total).times(100)
+  }
 }

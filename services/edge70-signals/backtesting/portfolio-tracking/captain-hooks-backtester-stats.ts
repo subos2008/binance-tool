@@ -32,6 +32,10 @@ class strings {
     return n < 0 ? `${n}` : `+${n}`
   }
 
+  static pct(pct: BigNumber) {
+    return `${pct.toFixed(1)}%`
+  }
+
   static human_usd(value: BigNumber): string {
     return "$" + humanNumber(value.dp(0).toNumber())
   }
@@ -54,6 +58,7 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
   position_closed_events: SpotPositionClosedEvent_V1_with_percentage_quote_change[] = []
   cash_percent_positions: BigNumber[] = []
   total_assets: BigNumber[] = []
+  pct_portfolio_invested: BigNumber[] = []
 
   at_start: PortfolioSummary | undefined
   current: PortfolioSummary | undefined
@@ -84,6 +89,7 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     this.current = portfolio_sumary
 
     this.total_assets.push(await portfolio_sumary.total_assets_inc_cash())
+    this.pct_portfolio_invested.push(await portfolio_sumary.pct_portfolio_invested())
   }
 
   private summary_positions_opened_closed() {
@@ -125,6 +131,16 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     let msg = `${strings.human_usd(start_cash)} -> ${strings.human_usd(max)} ${cash_delta_pct}`
     return {
       object_type: `MaxTotalAssets`,
+      msg,
+    }
+  }
+
+  private async pct_portfolio_invested_summary() {
+    if (!this.at_start) throw new Error(`no data for starting values`)
+    let avg_pct = BigNumber.sum(...this.pct_portfolio_invested).dividedBy(this.pct_portfolio_invested.length)
+    let msg = `${strings.pct(avg_pct)}`
+    return {
+      object_type: `AveragePercentOfPortfolioInvested`,
       msg,
     }
   }
@@ -177,6 +193,8 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
 
     let max_total_assets_summary_event = await this.max_total_assets_summary()
     this.logger.event({}, max_total_assets_summary_event)
+
+    this.logger.event({}, await this.pct_portfolio_invested_summary())
 
     // let msg: string[] = [
     //   `Net Worth \$${strings.total_assets_value(portfolio)} X% cash y% invested`,

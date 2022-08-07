@@ -183,8 +183,12 @@ export class BacktestTradeExecution {
         )
         await this.execute_sell({ signal_timestamp_ms, signal_price, market_identifier, base_amount })
         delete this.stops[base_asset]
-        if (!(await this.positions_tracker.in_position({ edge, base_asset })))
-          throw new Error(`Still in ${base_asset} position after execute_sell`)
+        if (await this.spot_positions_query.in_position({ edge, base_asset })) {
+          let remaining: BigNumber = await this.spot_positions_query.exisiting_position_size({ edge, base_asset })
+          throw new Error(
+            `Still in ${base_asset} position after execute_sell. Sold ${base_amount.toFixed()}, remaining ${remaining.toFixed()}`
+          )
+        }
       }
     }
   }

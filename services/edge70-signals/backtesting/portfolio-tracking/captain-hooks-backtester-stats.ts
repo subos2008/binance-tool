@@ -52,6 +52,8 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
 
   position_opened_events: SpotPositionOpenedEvent_V1[] = []
   position_closed_events: SpotPositionClosedEvent_V1_with_percentage_quote_change[] = []
+  cash_percent_positions: BigNumber[] = []
+  total_assets: BigNumber[] = []
 
   at_start: PortfolioSummary | undefined
   current: PortfolioSummary | undefined
@@ -80,6 +82,8 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
   async portfolio_summary_at_candle_close(portfolio_sumary: PortfolioSummary) {
     if (!this.at_start) this.at_start = portfolio_sumary
     this.current = portfolio_sumary
+
+    this.total_assets.push(await portfolio_sumary.total_assets_inc_cash())
   }
 
   private summary_positions_opened_closed() {
@@ -94,12 +98,12 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
   private async net_worth_summary() {
     if (!this.current) throw new Error(`no data`)
     let { quote_asset } = this.current
-    let cash: BigNumber = this.current.cash
-    let total_assets_value: BigNumber = await this.current.total_assets_inc_cash()
-    let investments: BigNumber = await this.current.total_investments_value()
+    let total_assets_value = strings.human_usd(await this.current.total_assets_inc_cash())
+    let cash = strings.human_usd(this.current.cash)
+    let investments = strings.human_usd(await this.current.total_investments_value())
     return {
       object_type: `HooksNetWorthSummary`,
-      msg: `${quote_asset}: ${total_assets_value} total as ${cash.toFixed(0)} cash and ${investments} investments`,
+      msg: `${quote_asset}: ${total_assets_value} total as ${cash} cash and ${investments} investments`,
     }
   }
 
@@ -110,6 +114,18 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     return {
       object_type: `HooksLoanSummary`,
       msg: `${quote_asset}: ${loan}`,
+    }
+  }
+
+  private async max_total_assets_summary() {
+    if (!this.at_start) throw new Error(`no data for starting values`)
+    let max = BigNumber.max(...this.total_assets)
+    let start_cash: BigNumber = this.at_start.cash
+    let cash_delta_pct = strings.delta_as_pct({ start: start_cash, end: max })
+    let msg = `${strings.human_usd(start_cash)} -> ${strings.human_usd(max)} ${cash_delta_pct}`
+    return {
+      object_type: `MaxTotalAssets`,
+      msg,
     }
   }
 
@@ -159,6 +175,9 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     let net_worth_delta_summary_event = await this.net_worth_delta_summary()
     this.logger.event({}, net_worth_delta_summary_event)
 
+    let max_total_assets_summary_event = await this.max_total_assets_summary()
+    this.logger.event({}, max_total_assets_summary_event)
+
     // let msg: string[] = [
     //   `Net Worth \$${strings.total_assets_value(portfolio)} X% cash y% invested`,
     //   `Invested $200k -> 700k`,
@@ -169,6 +188,8 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
      * Add:
      * - max percentage of portfolio invested
      * - portfolio is 100% cash (like are we in positions at the end)
+     * - average % portfolio allocated
+     * - mac total_assets value
      */
   }
 }

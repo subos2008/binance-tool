@@ -103,6 +103,16 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     }
   }
 
+  private async loan_summary() {
+    if (!this.current) throw new Error(`no data`)
+    let { quote_asset } = this.current
+    let loan: BigNumber = this.current.loan
+    return {
+      object_type: `HooksLoanSummary`,
+      msg: `${quote_asset}: ${loan}`,
+    }
+  }
+
   private async net_worth_delta_summary() {
     if (!this.current) throw new Error(`no data: this.current`)
     if (!this.at_start) throw new Error(`no data for starting values`)
@@ -139,6 +149,9 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
 
     let positions_summary_event = this.summary_positions_opened_closed()
     this.logger.event({}, positions_summary_event)
+
+    let loan_summary_event = await this.loan_summary()
+    this.logger.event({}, loan_summary_event)
 
     let net_worth_summary_event = await this.net_worth_summary()
     this.logger.event({}, net_worth_summary_event)

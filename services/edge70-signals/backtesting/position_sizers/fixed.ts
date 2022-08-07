@@ -27,6 +27,15 @@ export class BacktesterFixedPositionSizer implements PositionSizer {
     edge: string
     direction: "short" | "long"
   }): Promise<BigNumber> {
-    return new BigNumber(100)
+    let tags = { base_asset, quote_asset, edge, direction }
+
+    let amount = new BigNumber(100)
+
+    this.logger.event(tags, {
+      object_type: `FixedPositionSizer`,
+      msg: `position fixed at ${amount} ${quote_asset}`,
+    })
+
+    return amount
   }
 }

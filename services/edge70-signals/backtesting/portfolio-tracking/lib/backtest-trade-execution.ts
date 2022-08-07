@@ -1,5 +1,6 @@
 // Prevent type coercion
 import { BigNumber } from "bignumber.js"
+import { assert } from "console"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -68,7 +69,19 @@ export class BacktestTradeExecution {
     this.stop_factor = new BigNumber(edge70_parameters.stop_factor)
   }
 
-  async execute_buy(args: {
+  add_stop({
+    market_identifier,
+    signal_price,
+  }: {
+    market_identifier: MarketIdentifier_V5_with_base_asset
+    signal_price: string
+  }) {
+    let { base_asset } = market_identifier
+    this.stops[base_asset] = new BigNumber(signal_price).times(this.stop_factor).dp(8)
+    this.logger.info(`${base_asset} Set stop of ${this.stops[base_asset].toFixed()}`)
+  }
+
+  async execute_buy_with_stop(args: {
     signal_timestamp_ms: number
     signal_price: string
     market_identifier: MarketIdentifier_V5_with_base_asset
@@ -76,6 +89,8 @@ export class BacktestTradeExecution {
     let { edge, exchange_identifier, quote_asset } = this
     let { market_identifier, signal_timestamp_ms, signal_price } = args
     let { symbol, base_asset } = market_identifier
+
+    assert(!this.stops[symbol], `Stop already exists in BUY`)
 
     let order_id = `${symbol}-BUY-${signal_timestamp_ms}`
     let trade_id = order_id
@@ -109,6 +124,7 @@ export class BacktestTradeExecution {
       totalBaseTradeQuantity,
       totalQuoteTradeQuantity,
     }
+    this.add_stop({ market_identifier, signal_price })
     await this.positions_tracker.buy_order_filled({ generic_order_data })
   }
 
@@ -147,19 +163,6 @@ export class BacktestTradeExecution {
     }
     this.bank.pay_in_cash(new BigNumber(totalQuoteTradeQuantity))
     await this.positions_tracker.sell_order_filled({ generic_order_data })
-    this.add_stop({ market_identifier, signal_price })
-  }
-
-  add_stop({
-    market_identifier,
-    signal_price,
-  }: {
-    market_identifier: MarketIdentifier_V5_with_base_asset
-    signal_price: string
-  }) {
-    let { base_asset } = market_identifier
-    this.stops[base_asset] = new BigNumber(signal_price).times(this.stop_factor).dp(8)
-    this.logger.info(`${base_asset} Set stop of ${this.stops[base_asset].toFixed()}`)
   }
 
   /* check for stops */

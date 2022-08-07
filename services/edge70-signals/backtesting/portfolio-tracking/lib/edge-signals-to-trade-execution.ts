@@ -48,7 +48,11 @@ export class EdgeSignalsToTradeExecution implements Edge70SignalCallbacks {
     switch (direction) {
       case "long":
         if (!(await this.spot_positions_query.in_position({ edge, base_asset }))) {
-          await this.trade_execution.execute_buy({ signal_timestamp_ms, signal_price, market_identifier })
+          await this.trade_execution.execute_buy_with_stop({
+            signal_timestamp_ms,
+            signal_price,
+            market_identifier,
+          })
           this.trade_execution.add_stop({ market_identifier, signal_price })
         }
         break

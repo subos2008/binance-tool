@@ -117,5 +117,11 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     //   `Invested $200k -> 700k`,
     //   `Loan used $500`,
     // ]
+  
+    /**
+     * Add:
+     * - max percentage of portfolio invested
+     */
+
   }
 }

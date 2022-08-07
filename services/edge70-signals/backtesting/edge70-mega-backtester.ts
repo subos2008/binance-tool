@@ -38,7 +38,6 @@ import { ContextTags, SendMessageFunc } from "../../../interfaces/send-message"
 import { DateTime } from "luxon"
 import { RedisClient } from "redis"
 import { BacktestPortfolioTracker } from "./portfolio-tracking/backtest-portfolio-tracker"
-import { FixedPositionSizer } from "../../../edges/position-sizer/fixed-position-sizer"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { BunyanServiceLogger } from "../../../lib/service-logger"
 import { ServiceLogger } from "../../../interfaces/logger"
@@ -46,6 +45,7 @@ import { MockPricesGetter } from "./mock-prices-getter"
 import { CandlesMap } from "./portfolio-tracking/interfaces"
 import { CaptainHooksBacktesterStats } from "./portfolio-tracking/captain-hooks-backtester-stats"
 import { BacktesterCashManagement } from "./cash-management"
+import { BacktesterFixedPositionSizer } from "./position_sizers/fixed"
 
 let full_trace = false
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, events_as_msg: true, full_trace })
@@ -311,7 +311,7 @@ async function main() {
     let mock_redis = require("redis-mock")
     let redis = mock_redis.createClient()
 
-    let exchange_info_getter = new BinanceExchangeInfoGetter({ee})
+    let exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
     let i = exchange_info_getter.get_exchange_identifier()
     let exchange_identifier: ExchangeIdentifier_V3 = {
       ...i,
@@ -323,7 +323,7 @@ async function main() {
     let starting_cash = new BigNumber(edge70_parameters.starting_cash)
     let bank = new BacktesterCashManagement({ logger, starting_cash })
 
-    let position_sizer = new FixedPositionSizer({ logger })
+    let position_sizer = new BacktesterFixedPositionSizer({ logger })
     let prices_getter = new MockPricesGetter()
     let backtest_portfolio_tracker = new BacktestPortfolioTracker({
       logger,

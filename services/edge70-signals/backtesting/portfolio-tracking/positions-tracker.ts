@@ -80,14 +80,6 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
     await this.positions_tracker.sell_order_filled({ generic_order_data })
   }
 
-  async in_position(args: { base_asset: string; edge: string }): Promise<boolean> {
-    return this.spot_positions_query.in_position(args)
-  }
-
-  async position_size(args: { base_asset: string; edge: string }): Promise<BigNumber> {
-    return this.spot_positions_query.exisiting_position_size(args)
-  }
-
   async on_position_opened(event: SpotPositionOpenedEvent_V1): Promise<void> {
     let { base_asset } = event
     if (!this.position_opened_events[base_asset]) this.position_opened_events[base_asset] = []

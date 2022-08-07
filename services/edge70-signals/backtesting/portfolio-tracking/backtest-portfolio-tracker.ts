@@ -39,7 +39,6 @@ export class BacktestPortfolioTracker {
   position_sizer: PositionSizer
   exchange_identifier: ExchangeIdentifier_V3
   quote_asset: string
-  stops: { [base_asset: string]: BigNumber }
   stop_factor: BigNumber
   prices_getter: CurrentAllPricesGetter
   spot_positions_query: SpotPositionsQuery
@@ -83,7 +82,6 @@ export class BacktestPortfolioTracker {
     this.prices_getter = prices_getter
     this.exchange_info_getter = exchange_info_getter
     this.bank = bank
-    this.stops = {}
     this.stop_factor = new BigNumber(edge70_parameters.stop_factor)
     const send_message: SendMessageFunc = async (msg: string, tags?: ContextTags) => {
       if (tags) logger.warn(tags, msg)
@@ -116,6 +114,7 @@ export class BacktestPortfolioTracker {
       order_context_persistence,
       positions_tracker,
       bank,
+      spot_positions_query
     })
     let { trade_execution } = this
 
@@ -124,6 +123,7 @@ export class BacktestPortfolioTracker {
       logger,
       edge,
       trade_execution,
+      spot_positions_query
     })
   }
 

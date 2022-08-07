@@ -7,6 +7,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { OrderContextPersistence_V2 } from "../../../../../classes/persistent_state/interface/order-context-persistence"
+import { SpotPositionsQuery } from "../../../../../classes/spot/abstractions/spot-positions-query"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import { MarketIdentifier_V5_with_base_asset } from "../../../../../events/shared/market-identifier"
 import { ServiceLogger } from "../../../../../interfaces/logger"
@@ -28,7 +29,7 @@ export class BacktestTradeExecution {
   quote_asset: string
   stops: { [base_asset: string]: BigNumber }
   stop_factor: BigNumber
-  // spot_positions_query: SpotPositionsQuery
+  spot_positions_query: SpotPositionsQuery
   bank: BankOfBacktesting
 
   constructor({
@@ -39,6 +40,7 @@ export class BacktestTradeExecution {
     quote_asset,
     edge70_parameters,
     order_context_persistence,
+    spot_positions_query,
     positions_tracker,
     bank,
   }: {
@@ -48,6 +50,7 @@ export class BacktestTradeExecution {
     position_sizer: PositionSizer
     exchange_identifier: ExchangeIdentifier_V3
     quote_asset: string
+    spot_positions_query: SpotPositionsQuery
     order_context_persistence: OrderContextPersistence_V2
     positions_tracker: BacktesterSpotPostionsTracker
     bank: BankOfBacktesting
@@ -59,6 +62,7 @@ export class BacktestTradeExecution {
     this.exchange_identifier = exchange_identifier
     this.quote_asset = quote_asset
     this.order_context_persistence = order_context_persistence
+    this.spot_positions_query = spot_positions_query
     this.bank = bank
     this.stops = {}
     this.stop_factor = new BigNumber(edge70_parameters.stop_factor)
@@ -168,12 +172,12 @@ export class BacktestTradeExecution {
   }): Promise<void> {
     let { edge } = this
     let { base_asset } = market_identifier
-    if (await this.positions_tracker.in_position({ edge, base_asset })) {
+    if (await this.spot_positions_query.in_position({ edge, base_asset })) {
       let stop_price = this.stops[base_asset]
       if (new BigNumber(candle.low).isLessThanOrEqualTo(stop_price)) {
         let signal_timestamp_ms = candle.closeTime
         let signal_price = stop_price.toFixed()
-        let base_amount = await this.positions_tracker.position_size({ edge, base_asset })
+        let base_amount: BigNumber = await this.spot_positions_query.exisiting_position_size({ edge, base_asset })
         this.logger.info(
           `HIT STOP ${base_asset} at price ${stop_price.toFixed()} - amount: ${base_amount.toFixed()}`
         )

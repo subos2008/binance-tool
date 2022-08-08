@@ -18,7 +18,8 @@ assert(bucket)
 import { InfluxDB, HttpError, Point } from "@influxdata/influxdb-client"
 // You can generate a Token from the "Tokens Tab" in the UI
 // https://stackoverflow.com/questions/72180677/warn-write-to-influxdb-failed-requesttimedouterror
-const writeApi = new InfluxDB({ url, token, transportOptions: { timeout: 1e4 } }).getWriteApi(orgid, bucket, "s")
+// const writeApi = new InfluxDB({ url, token, transportOptions: { timeout: 1e4 } }).getWriteApi(orgid, bucket, "s")
+const writeApi = new InfluxDB({ url, token }).getWriteApi(orgid, bucket, "s")
 
 async function write(line: string, flush: boolean = true) {
   writeApi.writeRecord(line)

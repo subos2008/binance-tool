@@ -7,7 +7,7 @@ export class DirectionPersistenceMock implements DirectionPersistence {
   private logger: ServiceLogger
   private prefix: string
 
-  private keys: any = {}
+  private keys: { [key: string]: string } = {}
 
   constructor({ logger, prefix }: { logger: ServiceLogger; prefix: string }) {
     this.logger = logger
@@ -33,12 +33,25 @@ export class DirectionPersistenceMock implements DirectionPersistence {
     } else if (previous_direction !== direction) {
       this.logger.debug(`Direction change to ${direction} for ${symbol}`)
     }
-    await this.set(this._market_to_key(symbol), direction)
+    this.set(this._market_to_key(symbol), direction)
     return previous_direction
   }
 
   async get_direction(symbol: string): Promise<Direction | null> {
     let direction = await this.get(this._market_to_key(symbol))
     return direction as Direction
+  }
+
+  async get_all_market_stats(symbols: string[]) {
+    let long = 0,
+      short = 0,
+      unknown = 0
+    for (const symbol of symbols) {
+      let dir: Direction | null = await this.get_direction(symbol)
+      if (!dir) unknown++
+      if (dir === "long") long++
+      if (dir === "short") short++
+    }
+    return { long, short, unknown }
   }
 }

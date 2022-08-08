@@ -90,12 +90,14 @@ export class HooksPortfolioSummaryMetrics {
 
   private async upload_points(points: Point[]) {
     try {
-      for (const point of points) {
-        await influxdb.writePoint(point)
-      }
+      await influxdb.writePoints(points)
     } catch (err) {
       this.logger.exception({}, err, `Error "${err}" generating metrics for influxdb.`)
       throw err
     }
+  }
+
+  async shutdown( ) {
+    await influxdb.flush_and_close()
   }
 }

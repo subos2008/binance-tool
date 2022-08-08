@@ -8,7 +8,7 @@ const token = process.env.INFLUXDB_TOKEN
 const orgid = process.env.INFLUXDB_ORG_ID
 const bucket = process.env.INFLUXDB_BUCKET || "binance-tool"
 
-import { strict as assert } from 'assert';
+import { strict as assert } from "assert"
 
 assert(url)
 assert(token)
@@ -17,19 +17,28 @@ assert(bucket)
 
 import { InfluxDB, HttpError, Point } from "@influxdata/influxdb-client"
 // You can generate a Token from the "Tokens Tab" in the UI
-const writeApi = new InfluxDB({ url, token }).getWriteApi(orgid, bucket, "s")
+// https://stackoverflow.com/questions/72180677/warn-write-to-influxdb-failed-requesttimedouterror
+const writeApi = new InfluxDB({ url, token, transportOptions: { timeout: 1e4 } }).getWriteApi(orgid, bucket, "s")
 
-async function write(line: string) {
+async function write(line: string, flush: boolean = true) {
   writeApi.writeRecord(line)
-  writeApi.flush()
+  if (flush) await writeApi.flush()
 }
 
-async function writePoint(point: Point) {
+async function writePoint(point: Point, flush: boolean = true) {
   writeApi.writePoint(point)
+  if (flush) await writeApi.flush()
+}
+
+async function writePoints(points: ArrayLike<Point>) {
+  writeApi.writePoints(points)
+}
+
+async function flush() {
   writeApi.flush()
 }
 
-export default { write, flush_and_close, writePoint }
+export default { write, flush_and_close, writePoint, flush, writePoints }
 
 async function flush_and_close() {
   // flush pending writes and close writeApi

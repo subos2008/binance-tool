@@ -76,6 +76,10 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     this.metrics = new HooksPortfolioSummaryMetrics({ logger: args.logger, backtest_run_id, quote_asset })
   }
 
+  async shutdown() {
+    await this.metrics.shutdown()
+  }
+
   async on_position_opened(event: SpotPositionOpenedEvent_V1) {
     this.position_opened_events.push(event)
   }

@@ -293,6 +293,9 @@ class Edge70MegaBacktester {
       this.logger.exception({ edge }, err, `Run terminated due to exception: ${err})`)
       throw err
     }
+
+    /* flush all the generate metrics to the server */
+    await global_hooks_backtester_stats.shutdown()
   }
 }
 

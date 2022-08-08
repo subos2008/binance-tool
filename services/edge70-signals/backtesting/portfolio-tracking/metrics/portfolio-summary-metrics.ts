@@ -78,6 +78,7 @@ export class HooksPortfolioSummaryMetrics {
           (await portfolio_summary.positions_snapshot.get_total_value_in_quote_asset({ quote_asset })).toNumber()
         )
         .floatField("total", await portfolio_summary.total_assets_inc_cash())
+        .floatField("net", await portfolio_summary.net_worth())
     )
     await this.upload_points(points)
   }

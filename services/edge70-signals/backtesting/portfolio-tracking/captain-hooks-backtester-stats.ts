@@ -63,7 +63,7 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
   cash_percent_positions: BigNumber[] = []
   total_assets: BigNumber[] = []
   pct_portfolio_invested: BigNumber[] = []
-  open_positions_count: BigNumber[] = []
+  open_positions_count: number[] = []
 
   at_start: PortfolioSummary | undefined
   current: PortfolioSummary | undefined

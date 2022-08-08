@@ -13,7 +13,7 @@ export class PortfolioSummary {
   loan: BigNumber
   positions_snapshot: PositionsSnapshot
   quote_asset: string
-  portfolio_value: BigNumber | undefined
+  private portfolio_value: BigNumber | undefined
 
   constructor(args: {
     timestamp: Date
@@ -59,9 +59,7 @@ export class PortfolioSummary {
     }
   }
 
-  async open_positions_count(): Promise<BigNumber> {
-    let investments = await this.total_investments_value()
-    let total = await this.total_assets_inc_cash()
-    return investments.dividedBy(total).times(100)
+  async open_positions_count(): Promise<number> {
+    return this.positions_snapshot.positions.length
   }
 }

@@ -70,12 +70,14 @@ export class HooksPortfolioSummaryMetrics {
       new Point(`portfolio`)
         .timestamp(portfolio_summary.timestamp)
         .tag("backtest_run_id", this.backtest_run_id)
+        .floatField("open_positions_count", await portfolio_summary.open_positions_count())
         .floatField("cash", portfolio_summary.cash.toNumber())
         .floatField("loan", portfolio_summary.loan.toNumber())
         .floatField(
           "investments",
           (await portfolio_summary.positions_snapshot.get_total_value_in_quote_asset({ quote_asset })).toNumber()
         )
+        .floatField("total", await portfolio_summary.total_assets_inc_cash())
     )
     await this.upload_points(points)
   }

@@ -71,7 +71,7 @@ const edge70_parameters: Edge70BacktestParameters = {
   },
   stop_factor: "0.85", // .85 outperforms .90 and .93 but check again
   starting_cash: "6000",
-  symbols_to_run: 100,
+  symbols_to_run: 5,
 }
 
 // const backtest_parameters = {
@@ -133,8 +133,8 @@ class Edge70MegaBacktester {
     this.mock_redis = mock_redis.createClient()
   }
 
-  async init(): Promise<void> {
-    await this.backtest_portfolio_tracker.init()
+  async init(timestamp: Date): Promise<void> {
+    await this.backtest_portfolio_tracker.init(timestamp)
   }
 
   market_identifier(args: { base_asset: string; symbol: string }): MarketIdentifier_V5_with_base_asset {
@@ -260,17 +260,19 @@ class Edge70MegaBacktester {
   }
 
   async run(): Promise<void> {
-    let global_hooks_backtester_stats = new CaptainHooksBacktesterStats({ logger })
+    let global_hooks_backtester_stats = new CaptainHooksBacktesterStats({ logger, quote_asset })
     this.backtest_portfolio_tracker.add_captain_hooks_backtester_stats(global_hooks_backtester_stats)
     try {
       let count = 0
       outer: while (true) {
+        let timestamp: number | undefined
         let candles_map: CandlesMap = {}
         /* Do prices first and make a CandlesMap */
         for (const symbol in this.candles) {
           let candle = this.candles[symbol].shift()
           if (!candle) break outer
           candles_map[symbol] = candle
+          timestamp = candle.closeTime
         }
         this.prices_getter.set_prices_from_candles(candles_map)
         for (const symbol in candles_map) {
@@ -281,7 +283,8 @@ class Edge70MegaBacktester {
           await this.backtest_portfolio_tracker.ingest_new_candle({ market_identifier, candle })
           await this.edges[symbol].ingest_new_candle({ symbol, candle })
         }
-        await this.backtest_portfolio_tracker.all_new_candles_ingested()
+        if (!timestamp) throw new Error(`timestamp not set`)
+        await this.backtest_portfolio_tracker.all_new_candles_ingested(new Date(timestamp))
         count++
       }
       this.logger.info(`Run complete. Processed ${count} candles`)
@@ -353,7 +356,7 @@ async function main() {
       backtest_portfolio_tracker,
       prices_getter,
     })
-    await service.init()
+    await service.init(backtest_parameters.start_date)
     await service.init_candles(edge70_parameters.symbols_to_run)
     await service.run()
   } catch (err) {

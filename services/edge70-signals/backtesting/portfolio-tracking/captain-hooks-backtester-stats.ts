@@ -13,7 +13,8 @@ import { ServiceLogger } from "../../../../interfaces/logger"
 import { BacktesterStatsHooks } from "./interfaces"
 import humanNumber from "human-number"
 import { PortfolioSummary } from "./portfolio-summary"
-import { SpotPositionObject_V2 } from "../../../../classes/spot/abstractions/spot-position"
+import { HooksPortfolioSummaryMetrics } from "./metrics/portfolio-summary-metrics"
+import { randomUUID } from "crypto"
 
 type Delta = { start: BigNumber; end: BigNumber }
 
@@ -54,6 +55,8 @@ class strings {
 
 export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
   logger: ServiceLogger
+  metrics: HooksPortfolioSummaryMetrics
+  backtest_run_id: string
 
   position_opened_events: SpotPositionOpenedEvent_V1[] = []
   position_closed_events: SpotPositionClosedEvent_V1_with_percentage_quote_change[] = []
@@ -65,17 +68,12 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
   at_start: PortfolioSummary | undefined
   current: PortfolioSummary | undefined
 
-  // highest_net_worth: BigNumber
-
-  // total_assets_value : {
-  //   at_start: BigNumber
-  //   highest: BigNumber
-  //   lowest: BigNumber
-  //   current: BigNumber
-  // }
-
-  constructor(args: { logger: ServiceLogger }) {
+  constructor(args: { logger: ServiceLogger; quote_asset: string }) {
     this.logger = args.logger
+    let { quote_asset } = args
+    let backtest_run_id = randomUUID()
+    this.backtest_run_id = backtest_run_id
+    this.metrics = new HooksPortfolioSummaryMetrics({ logger: args.logger, backtest_run_id, quote_asset })
   }
 
   async on_position_opened(event: SpotPositionOpenedEvent_V1) {
@@ -90,9 +88,11 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     if (!this.at_start) this.at_start = portfolio_sumary
     this.current = portfolio_sumary
 
+    await this.metrics.upload_metrics(portfolio_sumary)
+
     this.total_assets.push(await portfolio_sumary.total_assets_inc_cash())
     this.pct_portfolio_invested.push(await portfolio_sumary.pct_portfolio_invested())
-    this.open_positions_count.push(new BigNumber(portfolio_sumary.positions_snapshot.positions.length))
+    this.open_positions_count.push(await portfolio_sumary.open_positions_count())
   }
 
   private summary_positions_opened_closed() {
@@ -200,6 +200,8 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     this.logger.event({}, await this.pct_portfolio_invested_summary())
     this.logger.event({}, await this.open_positions_count_summary())
 
+    this.logger.event({}, { object_type: `BacktestID`, msg: this.backtest_run_id })
+
     // let msg: string[] = [
     //   `Net Worth \$${strings.total_assets_value(portfolio)} X% cash y% invested`,
     //   `Invested $200k -> 700k`,
@@ -212,6 +214,13 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
      * - portfolio is 100% cash (like are we in positions at the end)
      * - average % portfolio allocated
      * - mac total_assets value
+     */
+
+    /**
+     * Metrics:
+     * - % portfolio invested
+     * - num positions open
+     * - loan, cash, investments value
      */
   }
 }

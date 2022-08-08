@@ -29,6 +29,7 @@ import { BankOfBacktesting } from "./interfaces"
 import { CaptainHooksBacktesterStats } from "./captain-hooks-backtester-stats"
 import { PortfolioSummary } from "./portfolio-summary"
 import { ExchangeInfoGetter } from "../../../../interfaces/exchanges/binance/exchange-info-getter"
+import { timeStamp } from "console"
 
 /* convert Edge70Signals to Orders and throw them to PositionsTracker - with mock_redis */
 
@@ -131,10 +132,10 @@ export class BacktestPortfolioTracker {
     return this.edge_signals_to_trade_execution
   }
 
-  async init(): Promise<void> {
+  async init(timeStamp: Date): Promise<void> {
     await this.edge_signals_to_trade_execution.init()
     // initialise the stats engines before any candles are ingested
-    await this.all_new_candles_ingested()
+    await this.all_new_candles_ingested(timeStamp)
   }
 
   add_captain_hooks_backtester_stats(hooks: CaptainHooksBacktesterStats) {
@@ -158,7 +159,7 @@ export class BacktestPortfolioTracker {
   /* Called after ingest_new_candle has been called on all the new candles
    * Kinda means to run the end of day report
    */
-  async all_new_candles_ingested() {
+  async all_new_candles_ingested(timestamp: Date) {
     let { logger, spot_positions_query, prices_getter, exchange_info_getter } = this
     let positions_snapshot = new PositionsSnapshot({
       logger,
@@ -174,6 +175,7 @@ export class BacktestPortfolioTracker {
       loan,
       positions_snapshot,
       quote_asset: this.quote_asset,
+      timestamp,
     })
     for (const hooks of this.captain_hooks_backtester_stats) {
       await hooks.portfolio_summary_at_candle_close(portfolio_summary)

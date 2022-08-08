@@ -6,7 +6,7 @@ dotenv.config({ path: "../.env" })
 const url = process.env.INFLUXDB_HOST
 const token = process.env.INFLUXDB_TOKEN
 const orgid = process.env.INFLUXDB_ORG_ID
-const bucket = "binance-tool" // process.env.INFLUXDB_BUCKET
+const bucket = process.env.INFLUXDB_BUCKET || "binance-tool"
 
 import { strict as assert } from 'assert';
 

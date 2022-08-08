@@ -14,6 +14,13 @@ import { CurrentAllPricesGetter } from "../../../../interfaces/exchanges/generic
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { Prices } from "../../../../interfaces/portfolio"
 
+export interface PositionWithQuoteValue {
+  symbol: string
+  base_asset: string
+  quote_asset: string
+  quote_value: BigNumber
+}
+
 export class PositionsSnapshot {
   private logger: ServiceLogger
   private spot_positions_query: SpotPositionsQuery
@@ -57,6 +64,21 @@ export class PositionsSnapshot {
       let p = await position.describe_position()
       this.positions.push(p)
     }
+  }
+
+  async get_positions_quote_values(args: { quote_asset: string }): Promise<PositionWithQuoteValue[]> {
+    let { quote_asset } = args
+    if (!this.prices) throw new Error(`this.prices not initialised, did you call .init()?`)
+    let positions: PositionWithQuoteValue[] = []
+    for (const p of this.positions) {
+      let base_asset = p.base_asset
+      let symbol = await this.exchange_info_getter.to_symbol({ base_asset, quote_asset })
+      if (!symbol) throw new Error(`No symbol for ${base_asset}:${quote_asset}`)
+      let current_price = this.prices[symbol]
+      let quote_value = new BigNumber(current_price).times(p.position_size)
+      positions.push({ quote_value, symbol, base_asset, quote_asset })
+    }
+    return positions
   }
 
   async get_total_value_in_quote_asset(args: { quote_asset: string }): Promise<BigNumber> {

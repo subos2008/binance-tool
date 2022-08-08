@@ -8,6 +8,7 @@ BigNumber.prototype.valueOf = function () {
 import { PositionsSnapshot } from "./positions-snapshot"
 
 export class PortfolioSummary {
+  timestamp: Date
   cash: BigNumber
   loan: BigNumber
   positions_snapshot: PositionsSnapshot
@@ -15,16 +16,22 @@ export class PortfolioSummary {
   portfolio_value: BigNumber | undefined
 
   constructor(args: {
+    timestamp: Date
+    quote_asset: string
     cash: BigNumber
     loan: BigNumber
     positions_snapshot: PositionsSnapshot
-    quote_asset: string
   }) {
+    this.timestamp = args.timestamp
+    this.quote_asset = args.quote_asset
     this.cash = args.cash
     this.loan = args.loan
     this.positions_snapshot = args.positions_snapshot
-    this.quote_asset = args.quote_asset
   }
+
+  /************************************************************
+   * Metrics
+   */
 
   async total_investments_value(): Promise<BigNumber> {
     let { quote_asset } = this
@@ -38,6 +45,21 @@ export class PortfolioSummary {
   }
 
   async pct_portfolio_invested(): Promise<BigNumber> {
+    let investments = await this.total_investments_value()
+    let total = await this.total_assets_inc_cash()
+    return investments.dividedBy(total).times(100)
+  }
+
+  async portfolio_percentages() {
+    let investments = await this.total_investments_value()
+    let total = await this.total_assets_inc_cash()
+    return {
+      investments: investments.dividedBy(total).times(100),
+      cash: this.cash.dividedBy(total).times(100),
+    }
+  }
+
+  async open_positions_count(): Promise<BigNumber> {
     let investments = await this.total_investments_value()
     let total = await this.total_assets_inc_cash()
     return investments.dividedBy(total).times(100)

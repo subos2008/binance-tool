@@ -38,7 +38,7 @@ export class HooksMarketDirectionMetrics {
     this.direction_persistence = direction_persistence
   }
 
-  private async upload_market_direction(args: { long: number; short: number; unknown: number; timestamp: Date }) {
+   async upload_market_direction(args: { long: number; short: number; unknown: number; timestamp: Date }) {
     let points: Point[] = []
     points.push(
       new Point(`market.direction`)

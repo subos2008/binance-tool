@@ -14,7 +14,7 @@ const moment = require("moment")
 
 import { Logger } from "../../../interfaces/logger"
 import { Edge58EntrySignal, Edge58Parameters_V1 } from "./events"
-import { CandleInfo_OC } from "../../utils/candle_utils"
+import { CandleInfo_OC } from "../../candles/candle_utils"
 import { MarketIdentifier_V2 } from "../../../events/shared/market-identifier"
 import { ADX_Indicator } from "../../indicators/adx"
 import { LimitedLengthCandlesHistory } from "./limited_length_candles_history"

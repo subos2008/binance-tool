@@ -26,7 +26,7 @@ BigNumber.prototype.valueOf = function () {
 import { config } from "../../../config"
 const tas_quote_asset = config.binance.spot.tas_quote_asset
 
-import { CandlesCollector } from "../../../classes/utils/candle_utils"
+import { CandlesCollector } from "../../../classes/candles/candle_utils"
 import { BinanceExchangeInfoGetter } from "../../../classes/exchanges/binance/exchange-info-getter"
 import { HealthAndReadiness } from "../../../classes/health_and_readiness"
 import { BaseAssetsList } from "../base-assets-list"

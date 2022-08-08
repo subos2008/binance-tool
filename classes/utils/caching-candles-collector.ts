@@ -1,5 +1,5 @@
 import { CandleChartResult } from "binance-api-node"
-import { CandlesCollector } from "./candle_utils"
+import { CandlesCollector } from "../candles/candle_utils"
 import * as fs from "fs"
 
 export class CachingCandlesCollector {

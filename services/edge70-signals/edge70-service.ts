@@ -15,7 +15,7 @@ import "./tracer" // must come before importing any instrumented module.
 
 import { strict as assert } from "assert"
 import express, { Request, Response } from "express"
-import { CandlesCollector } from "../../classes/utils/candle_utils"
+import { CandlesCollector } from "../../classes/candles/candle_utils"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { get_redis_client } from "../../lib/redis-v4"
 import { RedisClientType } from "redis-v4"

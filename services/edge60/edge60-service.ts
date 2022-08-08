@@ -42,7 +42,7 @@ import express from "express"
 import { config } from "../../config"
 const tas_quote_asset = config.binance.spot.tas_quote_asset
 
-import { CandlesCollector } from "../../classes/utils/candle_utils"
+import { CandlesCollector } from "../../classes/candles/candle_utils"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { LongShortEntrySignalsCallbacks } from "./interfaces"
 import { Edge60Parameters, Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"

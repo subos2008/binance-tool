@@ -39,7 +39,7 @@ const moment = require("moment")
 import { Edge58EntrySignals } from "../../classes/edges/edge58/edge58"
 import { Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58/interfaces"
 
-import { CandlesCollector } from "../../classes/utils/candle_utils"
+import { CandlesCollector } from "../../classes/candles/candle_utils"
 import BigNumber from "bignumber.js"
 import {
   Edge58Events,

@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function() {
 	throw Error('BigNumber .valueOf called!');
 };
 
-import { CandleInfo_OC } from "../classes/utils/candle_utils"
+import { CandleInfo_OC } from "../classes/candles/candle_utils"
 
 import { Logger } from "../interfaces/logger"
 const LoggerClass = require("../lib/faux_logger")

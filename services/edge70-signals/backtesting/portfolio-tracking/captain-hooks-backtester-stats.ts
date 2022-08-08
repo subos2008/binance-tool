@@ -193,21 +193,11 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
       return
     }
 
-    let positions_summary_event = this.summary_positions_opened_closed()
-    this.logger.event({}, positions_summary_event)
-
-    let loan_summary_event = await this.loan_summary()
-    this.logger.event({}, loan_summary_event)
-
-    let net_worth_summary_event = await this.net_worth_summary()
-    this.logger.event({}, net_worth_summary_event)
-
-    let net_worth_delta_summary_event = await this.net_worth_delta_summary()
-    this.logger.event({}, net_worth_delta_summary_event)
-
-    let max_total_assets_summary_event = await this.max_total_assets_summary()
-    this.logger.event({}, max_total_assets_summary_event)
-
+    this.logger.event({}, this.summary_positions_opened_closed())
+    this.logger.event({}, await this.loan_summary())
+    this.logger.event({}, await this.net_worth_summary())
+    this.logger.event({}, await this.net_worth_delta_summary())
+    this.logger.event({}, await this.max_total_assets_summary())
     this.logger.event({}, await this.pct_portfolio_invested_summary())
     this.logger.event({}, await this.open_positions_count_summary())
 

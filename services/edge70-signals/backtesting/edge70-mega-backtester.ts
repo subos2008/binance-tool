@@ -72,8 +72,8 @@ const edge70_parameters: Edge70BacktestParameters = {
     long: 44, // one less than the number we use on the TV high/low indicator
     short: 21, // one less than the number we use on the TV high/low indicator
   },
-  stop_factor: "0.93", // .85 outperforms .90 and .93 but check again
-  starting_cash: 15e3,
+  stop_factor: "0.85", // .85 outperforms .90 and .93 but check again
+  starting_cash: 700,
   symbols_to_run: 300,
 }
 
@@ -91,13 +91,46 @@ const edge70_parameters: Edge70BacktestParameters = {
 //   // end_date: new Date("2022-07-31"), // too many candle for API
 // }
 
-/* since we started tracking on Datadog - 44 days */
-let start_date = new Date("2022-04-29")
-const backtest_parameters = {
-  start_date,
-  end_date: DateTime.now().toJSDate(),
-  // end_date: new Date("2022-07-31"), // too many candle for API
+type BacktestParameters = {
+  start_date: Date
+  end_date: Date
 }
+
+let period: "market_top" | "bear_accumulation" |"bear_just_losses"| "edge6x" | undefined
+
+period = "bear_just_losses"
+
+let backtest_parameters: BacktestParameters
+switch (period as string) {
+  case `edge6x`: // recent times since we started to have DD results for edge6x
+    let start_date = new Date("2022-04-29")
+    backtest_parameters = {
+      start_date,
+      end_date: DateTime.now().toJSDate(),
+      // end_date: new Date("2022-07-31"), // too many candle for API
+    }
+    break
+  case `market_top`: // Top of bull leading into choppy period
+    backtest_parameters = {
+      start_date: new Date("2017-10-01"),
+      end_date: new Date("2020-05-01"),
+    }
+    break
+  case `bear_accumulation`: // starts after the top of the top, no wins at the start
+    backtest_parameters = {
+      start_date: new Date("2018-01-14"), // literal top of the market
+      end_date: new Date("2020-05-01"),
+    }
+    break
+  case `bear_just_losses`: // starts after the top of the top, no wins at the start
+    backtest_parameters = {
+      start_date: new Date("2018-01-14"), // literal top of the market
+      end_date: new Date("2019-01-31"),
+    }
+    break
+}
+
+/* since we started tracking on Datadog - 44 days */
 
 const edge: "edge70-backtest" = "edge70-backtest"
 

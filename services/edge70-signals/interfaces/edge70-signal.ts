@@ -21,7 +21,7 @@ export type Edge70BacktestParameters = {
     short: 21 // one less than the number we use on the TV high/low indicator
   }
   stop_factor: string
-  starting_cash: string
+  starting_cash: string | number
   symbols_to_run: number
 }
 

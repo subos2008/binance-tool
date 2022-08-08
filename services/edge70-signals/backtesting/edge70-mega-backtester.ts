@@ -70,7 +70,7 @@ const edge70_parameters: Edge70BacktestParameters = {
     short: 21, // one less than the number we use on the TV high/low indicator
   },
   stop_factor: "0.93", // .85 outperforms .90 and .93 but check again
-  starting_cash: "6000",
+  starting_cash: 15e3,
   symbols_to_run: 300,
 }
 

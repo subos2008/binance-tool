@@ -13,6 +13,7 @@ import { ServiceLogger } from "../../../../interfaces/logger"
 import { BacktesterStatsHooks } from "./interfaces"
 import humanNumber from "human-number"
 import { PortfolioSummary } from "./portfolio-summary"
+import { SpotPositionObject_V2 } from "../../../../classes/spot/abstractions/spot-position"
 
 type Delta = { start: BigNumber; end: BigNumber }
 
@@ -59,6 +60,7 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
   cash_percent_positions: BigNumber[] = []
   total_assets: BigNumber[] = []
   pct_portfolio_invested: BigNumber[] = []
+  open_positions_count: BigNumber[] = []
 
   at_start: PortfolioSummary | undefined
   current: PortfolioSummary | undefined
@@ -90,6 +92,8 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
 
     this.total_assets.push(await portfolio_sumary.total_assets_inc_cash())
     this.pct_portfolio_invested.push(await portfolio_sumary.pct_portfolio_invested())
+    this.pct_portfolio_invested.push(await portfolio_sumary.pct_portfolio_invested())
+    this.open_positions_count.push(new BigNumber(portfolio_sumary.positions_snapshot.positions.length))
   }
 
   private summary_positions_opened_closed() {
@@ -136,11 +140,21 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
   }
 
   private async pct_portfolio_invested_summary() {
-    if (!this.at_start) throw new Error(`no data for starting values`)
     let avg_pct = BigNumber.sum(...this.pct_portfolio_invested).dividedBy(this.pct_portfolio_invested.length)
     let msg = `${strings.pct(avg_pct)}`
     return {
       object_type: `AveragePercentOfPortfolioInvested`,
+      msg,
+    }
+  }
+
+  private async open_positions_count_summary() {
+    let avg_count = BigNumber.sum(...this.open_positions_count).dividedBy(this.open_positions_count.length)
+    let max = BigNumber.max(...this.open_positions_count)
+    // pct = max.dividedBy ... ahhh - #symbols tracked
+    let msg = `Avg: ${avg_count.dp(0)} Highest: ${max}`
+    return {
+      object_type: `OpenPositionsCounts`,
       msg,
     }
   }
@@ -195,6 +209,7 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     this.logger.event({}, max_total_assets_summary_event)
 
     this.logger.event({}, await this.pct_portfolio_invested_summary())
+    this.logger.event({}, await this.open_positions_count_summary())
 
     // let msg: string[] = [
     //   `Net Worth \$${strings.total_assets_value(portfolio)} X% cash y% invested`,

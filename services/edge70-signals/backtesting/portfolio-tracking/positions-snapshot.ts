@@ -7,10 +7,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import {
-  SpotPosition,
-  SpotPositionObject_V2,
-} from "../../../../classes/spot/abstractions/spot-position"
+import { SpotPosition, SpotPositionObject_V2 } from "../../../../classes/spot/abstractions/spot-position"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
 import { ExchangeInfoGetter } from "../../../../interfaces/exchanges/binance/exchange-info-getter"
 import { CurrentAllPricesGetter } from "../../../../interfaces/exchanges/generic/price-getter"
@@ -22,7 +19,7 @@ export class PositionsSnapshot {
   private spot_positions_query: SpotPositionsQuery
   private prices_getter: CurrentAllPricesGetter
   private prices: Prices | undefined
-  private positions: SpotPositionObject_V2[] = []
+  positions: SpotPositionObject_V2[] = []
   private exchange_info_getter: ExchangeInfoGetter
 
   constructor({

@@ -191,8 +191,8 @@ class Edge70MegaBacktester {
         if (_candles.length == 0) {
           this.logger.error(`No candles loaded for ${symbol}`)
           let err = new Error(`No candles loaded for ${symbol}`)
-          Sentry.captureException(err) // this is unexpected now, 429?
-          throw err
+          // Sentry.captureException(err) // this is unexpected now, 429?
+          continue // just skip
         } else {
           // chop off the most recent candle as the code above gives us a partial candle at the end
           if (_candles[_candles.length - 1].closeTime > Date.now()) {

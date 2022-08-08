@@ -47,6 +47,7 @@ import { CaptainHooksBacktesterStats } from "./portfolio-tracking/captain-hooks-
 import { BacktesterCashManagement } from "./cash-management"
 import { BacktesterFixedPositionSizer } from "./position_sizers/fixed"
 import { BacktesterAllInPositionSizer } from "./position_sizers/all-in"
+import { CachingCandlesCollector } from "../../../classes/utils/caching-candles-collector"
 
 let full_trace = false
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, events_as_msg: true, full_trace })
@@ -101,7 +102,7 @@ const edge: "edge70-backtest" = "edge70-backtest"
 class Edge70MegaBacktester {
   edges: { [Key: string]: Edge70Signals } = {}
   candles: { [Key: string]: CandleChartResult[] } = {}
-  candles_collector: CandlesCollector
+  candles_collector: CachingCandlesCollector
   ee: Binance
   logger: ServiceLogger
   send_message: SendMessageFunc
@@ -128,7 +129,8 @@ class Edge70MegaBacktester {
     backtest_portfolio_tracker: BacktestPortfolioTracker
     prices_getter: MockPricesGetter
   }) {
-    this.candles_collector = new CandlesCollector({ ee })
+    let candles_collector = new CandlesCollector({ ee })
+    this.candles_collector = new CachingCandlesCollector({ candles_collector })
     this.ee = ee
     this.logger = logger
     this.send_message = send_message

@@ -69,9 +69,9 @@ const edge70_parameters: Edge70BacktestParameters = {
     long: 44, // one less than the number we use on the TV high/low indicator
     short: 21, // one less than the number we use on the TV high/low indicator
   },
-  stop_factor: "0.85", // .85 outperforms .90 and .93 but check again
+  stop_factor: "0.93", // .85 outperforms .90 and .93 but check again
   starting_cash: "6000",
-  symbols_to_run: 5,
+  symbols_to_run: 300,
 }
 
 // const backtest_parameters = {
@@ -81,10 +81,18 @@ const edge70_parameters: Edge70BacktestParameters = {
 //   end_date: new Date("2022-07-31"), // Nice test, signals long on 29th
 // }
 
-let start_date = new Date("2020-08-01")
+// let start_date = new Date("2020-08-01")
+// const backtest_parameters = {
+//   start_date,
+//   end_date: DateTime.fromJSDate(start_date).plus({ days: 490 }).toJSDate(),
+//   // end_date: new Date("2022-07-31"), // too many candle for API
+// }
+
+/* since we started tracking on Datadog - 44 days */
+let start_date = new Date("2022-04-29")
 const backtest_parameters = {
   start_date,
-  end_date: DateTime.fromJSDate(start_date).plus({ days: 490 }).toJSDate(),
+  end_date: DateTime.now().toJSDate(),
   // end_date: new Date("2022-07-31"), // too many candle for API
 }
 

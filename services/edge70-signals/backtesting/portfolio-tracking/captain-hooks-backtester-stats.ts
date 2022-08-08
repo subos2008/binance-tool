@@ -168,21 +168,19 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     let { quote_asset } = this.current
 
     let start_cash: BigNumber = this.at_start.cash
-    let start_total_assets: BigNumber = await this.at_start.total_assets_inc_cash()
+    let start_net_worth: BigNumber = await this.at_start.net_worth()
 
     let end_cash: BigNumber = this.current.cash
-    let end_total_assets: BigNumber = await this.current.total_assets_inc_cash()
+    let end_net_worth: BigNumber = await this.current.net_worth()
 
-    let cash_delta_pct = strings.delta_as_pct({ start: start_cash, end: end_cash })
-    let total_assets_delta_pct = strings.delta_as_pct({ start: start_total_assets, end: end_total_assets })
+    let net_worth_delta_pct = strings.delta_as_pct({ start: start_net_worth, end: end_net_worth })
 
     // let msg = `${quote_asset}: Cash: ${cash_delta_pct} Total: ${total_assets_delta_pct}`
 
-    let cash_str = `${strings.human_usd(start_cash)} -> ${strings.human_usd(end_cash)} ${cash_delta_pct}`
-    let total_assets_str = `${strings.human_usd(start_total_assets)} -> ${strings.human_usd(
-      end_total_assets
-    )} ${total_assets_delta_pct}`
-    let msg = `${quote_asset}: Cash: ${cash_str} Total: ${total_assets_str}`
+    let total_assets_str = `${strings.human_usd(start_net_worth)} -> ${strings.human_usd(
+      end_net_worth
+    )} ${net_worth_delta_pct}`
+    let msg = `${quote_asset}: ${total_assets_str}`
 
     return {
       object_type: `HooksNetWorthDeltaSummary`,

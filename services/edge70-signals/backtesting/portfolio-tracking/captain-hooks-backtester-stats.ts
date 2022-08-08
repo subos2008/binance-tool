@@ -111,12 +111,13 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
   private async net_worth_summary() {
     if (!this.current) throw new Error(`no data`)
     let { quote_asset } = this.current
-    let total_assets_value = strings.human_usd(await this.current.total_assets_inc_cash())
+    let net_worth = strings.human_usd(await this.current.net_worth())
     let cash = strings.human_usd(this.current.cash)
     let investments = strings.human_usd(await this.current.total_investments_value())
+    let loan = strings.human_usd(this.current.loan)
     return {
       object_type: `HooksNetWorthSummary`,
-      msg: `${quote_asset}: ${total_assets_value} total as ${cash} cash and ${investments} investments`,
+      msg: `${quote_asset}: ${net_worth} Net Worth as Cash: ${cash}, Investments: ${investments}, Loan: ${loan} `,
     }
   }
 
@@ -167,15 +168,10 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     if (!this.at_start) throw new Error(`no data for starting values`)
     let { quote_asset } = this.current
 
-    let start_cash: BigNumber = this.at_start.cash
     let start_net_worth: BigNumber = await this.at_start.net_worth()
-
-    let end_cash: BigNumber = this.current.cash
     let end_net_worth: BigNumber = await this.current.net_worth()
 
     let net_worth_delta_pct = strings.delta_as_pct({ start: start_net_worth, end: end_net_worth })
-
-    // let msg = `${quote_asset}: Cash: ${cash_delta_pct} Total: ${total_assets_delta_pct}`
 
     let total_assets_str = `${strings.human_usd(start_net_worth)} -> ${strings.human_usd(
       end_net_worth

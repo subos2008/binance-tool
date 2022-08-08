@@ -92,7 +92,6 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
 
     this.total_assets.push(await portfolio_sumary.total_assets_inc_cash())
     this.pct_portfolio_invested.push(await portfolio_sumary.pct_portfolio_invested())
-    this.pct_portfolio_invested.push(await portfolio_sumary.pct_portfolio_invested())
     this.open_positions_count.push(new BigNumber(portfolio_sumary.positions_snapshot.positions.length))
   }
 

@@ -2,7 +2,7 @@ import Sentry from "../../lib/sentry"
 import { strict as assert } from "assert"
 
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
-import { CandlesCollector } from "../../classes/candles/candle_utils"
+import { BinanceCandlesCollector } from "../../classes/candles/candle_utils"
 import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
 import { DirectionPersistence } from "./interfaces/direction-persistance"
 import { Edge70Parameters, Edge70Signal } from "./interfaces/edge70-signal"
@@ -18,7 +18,7 @@ import { ServiceLogger } from "../../interfaces/logger"
 //   mock_redis_client = mock_redis.createClient()
 
 export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
-  candles_collector: CandlesCollector
+  candles_collector: BinanceCandlesCollector
   logger: ServiceLogger
   direction_persistance: DirectionPersistence
   market_identifier: MarketIdentifier_V5_with_base_asset
@@ -34,7 +34,7 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
   }: {
     logger: ServiceLogger
     direction_persistance: DirectionPersistence
-    candles_collector: CandlesCollector
+    candles_collector: BinanceCandlesCollector
     market_identifier: MarketIdentifier_V5_with_base_asset
     edge70_parameters: Edge70Parameters
   }) {

@@ -28,7 +28,7 @@
 
 // import binance, { CancelOrderResult } from "binance-api-node"
 // import { Binance, CandleChartInterval, CandleChartResult } from "binance-api-node"
-// import { CandlesCollector, CandleUtils } from "../../classes/utils/candle_utils"
+// import { BinanceCandlesCollector, CandleUtils } from "../../classes/utils/candle_utils"
 
 // import { assert } from "console"
 
@@ -53,7 +53,7 @@
 // })
 
 // class Backtester implements EntrySignalsCallbacks {
-//   candles_collector: CandlesCollector
+//   candles_collector: BinanceCandlesCollector
 //   logger: Logger
 //   ee: any
 //   symbol: string
@@ -79,7 +79,7 @@
 //     this.logger = logger
 //     this.ee = ee
 //     this.symbol = symbol
-//     this.candles_collector = new CandlesCollector({ ee })
+//     this.candles_collector = new BinanceCandlesCollector({ ee })
 //     this.start_date = start_date
 //     this.start_of_algo_date = start_of_algo_date
 //     this.end_date = end_date

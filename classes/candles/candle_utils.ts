@@ -2,6 +2,7 @@ import { Binance, CandleChartInterval, CandleChartResult, Candle } from "binance
 
 import { BigNumber } from "bignumber.js"
 import { assert } from "console"
+import { CandlesCollector } from "./interfaces"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -25,7 +26,7 @@ export type Candle_OC = {
   close: string
 }
 
-export class CandlesCollector {
+export class BinanceCandlesCollector implements CandlesCollector {
   ee: Binance
 
   constructor({ ee }: { ee: any }) {

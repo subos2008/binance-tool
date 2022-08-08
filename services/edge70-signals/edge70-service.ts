@@ -15,7 +15,7 @@ import "./tracer" // must come before importing any instrumented module.
 
 import { strict as assert } from "assert"
 import express, { Request, Response } from "express"
-import { CandlesCollector } from "../../classes/candles/candle_utils"
+import { BinanceCandlesCollector } from "../../classes/candles/candle_utils"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { get_redis_client } from "../../lib/redis-v4"
 import { RedisClientType } from "redis-v4"
@@ -84,7 +84,7 @@ const candle_ingestion_health = health_and_readiness.addSubsystem({
 
 class Edge70SignalsService {
   edges: { [Key: string]: Edge70Signals } = {}
-  candles_collector: CandlesCollector
+  candles_collector: BinanceCandlesCollector
   ee: Binance
   logger: ServiceLogger
   close_short_timeframe_candle_ws: (() => void) | undefined
@@ -111,7 +111,7 @@ class Edge70SignalsService {
     exchange_identifier: ExchangeIdentifier_V4
     callbacks: Edge70SignalCallbacks
   }) {
-    this.candles_collector = new CandlesCollector({ ee })
+    this.candles_collector = new BinanceCandlesCollector({ ee })
     this.ee = ee
     this.logger = logger
     this.send_message = send_message

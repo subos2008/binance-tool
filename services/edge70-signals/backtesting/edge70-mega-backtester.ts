@@ -26,7 +26,7 @@ BigNumber.prototype.valueOf = function () {
 import { config } from "../../../config"
 const tas_quote_asset = config.binance.spot.tas_quote_asset
 
-import { CandlesCollector } from "../../../classes/candles/candle_utils"
+import { BinanceCandlesCollector } from "../../../classes/candles/candle_utils"
 import { BinanceExchangeInfoGetter } from "../../../classes/exchanges/binance/exchange-info-getter"
 import { HealthAndReadiness } from "../../../classes/health_and_readiness"
 import { BaseAssetsList } from "../base-assets-list"
@@ -47,7 +47,9 @@ import { CaptainHooksBacktesterStats } from "./portfolio-tracking/captain-hooks-
 import { BacktesterCashManagement } from "./cash-management"
 import { BacktesterFixedPositionSizer } from "./position_sizers/fixed"
 import { BacktesterAllInPositionSizer } from "./position_sizers/all-in"
-import { CachingCandlesCollector } from "../../../classes/utils/caching-candles-collector"
+import { CachingCandlesCollector } from "../../../classes/candles/caching-candles-collector"
+import { ChunkingCandlesCollector } from "../../../classes/candles/chunking-candles-collector"
+import { CandlesCollector } from "../../../classes/candles/interfaces"
 
 let full_trace = false
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, events_as_msg: true, full_trace })
@@ -102,7 +104,7 @@ const edge: "edge70-backtest" = "edge70-backtest"
 class Edge70MegaBacktester {
   edges: { [Key: string]: Edge70Signals } = {}
   candles: { [Key: string]: CandleChartResult[] } = {}
-  candles_collector: CachingCandlesCollector
+  candles_collector: CandlesCollector
   ee: Binance
   logger: ServiceLogger
   send_message: SendMessageFunc
@@ -129,8 +131,11 @@ class Edge70MegaBacktester {
     backtest_portfolio_tracker: BacktestPortfolioTracker
     prices_getter: MockPricesGetter
   }) {
-    let candles_collector = new CandlesCollector({ ee })
-    this.candles_collector = new CachingCandlesCollector({ candles_collector })
+    this.candles_collector = new ChunkingCandlesCollector({
+      candles_collector: new CachingCandlesCollector({
+        candles_collector: new BinanceCandlesCollector({ ee }),
+      }),
+    })
     this.ee = ee
     this.logger = logger
     this.send_message = send_message

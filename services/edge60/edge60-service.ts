@@ -42,7 +42,7 @@ import express from "express"
 import { config } from "../../config"
 const tas_quote_asset = config.binance.spot.tas_quote_asset
 
-import { CandlesCollector } from "../../classes/candles/candle_utils"
+import { BinanceCandlesCollector } from "../../classes/candles/candle_utils"
 import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { LongShortEntrySignalsCallbacks } from "./interfaces"
 import { Edge60Parameters, Edge60PositionEntrySignal } from "../../events/shared/edge60-position-entry"
@@ -84,7 +84,7 @@ let edge = "edge60"
 
 class Edge60Service implements LongShortEntrySignalsCallbacks {
   edges: { [Key: string]: Edge60EntrySignals } = {}
-  candles_collector: CandlesCollector
+  candles_collector: BinanceCandlesCollector
   ee: Binance
   logger: Logger
   close_short_timeframe_candle_ws: (() => void) | undefined
@@ -109,7 +109,7 @@ class Edge60Service implements LongShortEntrySignalsCallbacks {
     direction_persistance: DirectionPersistence
     health_and_readiness: HealthAndReadiness
   }) {
-    this.candles_collector = new CandlesCollector({ ee })
+    this.candles_collector = new BinanceCandlesCollector({ ee })
     this.ee = ee
     this.logger = logger
     this.send_message = send_message

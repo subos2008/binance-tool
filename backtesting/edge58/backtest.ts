@@ -39,7 +39,7 @@ const moment = require("moment")
 import { Edge58EntrySignals } from "../../classes/edges/edge58/edge58"
 import { Edge58EntrySignalsCallbacks } from "../../classes/edges/edge58/interfaces"
 
-import { CandlesCollector } from "../../classes/candles/candle_utils"
+import { BinanceCandlesCollector } from "../../classes/candles/candle_utils"
 import BigNumber from "bignumber.js"
 import {
   Edge58Events,
@@ -369,13 +369,13 @@ class PositionTracker implements Edge58EntrySignalsCallbacks {
 }
 
 export class Edge58Backtester {
-  candles_collector: CandlesCollector
+  candles_collector: BinanceCandlesCollector
   ee: Binance
   logger: Logger
   tracker: PositionTracker
 
   constructor({ ee, logger }: { ee: Binance; logger: Logger }) {
-    this.candles_collector = new CandlesCollector({ ee })
+    this.candles_collector = new BinanceCandlesCollector({ ee })
     this.ee = ee
     this.logger = logger
     this.tracker = new PositionTracker({ logger })

@@ -1,12 +1,13 @@
 import { CandleChartResult } from "binance-api-node"
-import { CandlesCollector } from "../candles/candle_utils"
+import { BinanceCandlesCollector } from "./candle_utils"
 import * as fs from "fs"
+import { CandlesCollector } from "./interfaces"
 
-export class CachingCandlesCollector {
-  candles_collector: CandlesCollector
+export class CachingCandlesCollector implements CandlesCollector {
+  candles_collector: BinanceCandlesCollector
   cache_path: string = `./candles-cache` // no slash
 
-  constructor({ candles_collector }: { candles_collector: CandlesCollector }) {
+  constructor({ candles_collector }: { candles_collector: BinanceCandlesCollector }) {
     this.candles_collector = candles_collector
   }
 

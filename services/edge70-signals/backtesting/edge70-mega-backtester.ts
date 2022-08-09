@@ -83,10 +83,13 @@ export type BacktestParameters = {
     starting_cash: number
     loan_available: number
   }
+  base_assets?: {
+    whitelist: string[]
+  }
 }
 
 let backtest_parameters: BacktestParameters = {
-  symbols_to_run: 1,
+  symbols_to_run: 300,
   stop_factor: "0.85", // .85 outperforms .90 and .93 but check again
   timeframe: { start_date: new Date(), end_date: new Date() },
   bank: {
@@ -102,8 +105,9 @@ let period:
   | "bear_just_losses"
   | "edge6x"
   | "from_first_short_signal_at_end_of_last_bull"
+  | "start_of_2017_to_now"
 
-period = "from_first_short_signal_at_end_of_last_bull"
+period = "start_of_2017_to_now"
 switch (period as string) {
   case `edge6x`: // recent times since we started to have DD results for edge6x
     /* since we started tracking on Datadog - 44 days */
@@ -136,6 +140,36 @@ switch (period as string) {
     backtest_parameters.timeframe = {
       start_date: new Date("2021-03-05"), // ~44 days before first short of bull
       end_date: new Date("2022-06-15"),
+    }
+    break
+  case `start_of_2017_to_now`:
+    // Approx coins list
+    backtest_parameters.base_assets = {
+      whitelist: [
+        "ADA",
+        "BNB",
+        "BTC",
+        "EOS",
+        "ETC",
+        "ETH",
+        "ICX",
+        "IOTA",
+        "LINK",
+        "LTC",
+        "NEO",
+        "NULS",
+        "ONT",
+        "QTUM",
+        "TRX",
+        "VET",
+        "WAVES",
+        "XLM",
+        "XRP",
+      ],
+    }
+    backtest_parameters.timeframe = {
+      start_date: new Date("2017-01-01"),
+      end_date: new Date(),
     }
     break
   default:
@@ -239,7 +273,12 @@ class Edge70MegaBacktester {
       signals_quote_asset: quote_asset,
       tas_quote_asset: tas_quote_asset,
     })
-    console.warn(`Chopping to just ${base_assets[0]}`)
+
+    /* whitelist */
+    if (backtest_parameters.base_assets?.whitelist) {
+      base_assets = base_assets.filter((n) => backtest_parameters.base_assets?.whitelist.includes(n))
+    }
+
     base_assets = base_assets.slice(0, limit)
     this.logger.info(`Target markets: ${base_assets.join(", ")}`)
 

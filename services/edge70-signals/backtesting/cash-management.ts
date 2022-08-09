@@ -29,11 +29,13 @@ export class BacktesterCashManagement implements BankOfBacktesting {
   }
 
   private get_loan(desired_amount: BigNumber) {
-    let loan_amount = BigNumber.max(desired_amount, this.loan_available)
+    let loan_amount = BigNumber.min(desired_amount, this.loan_available)
 
     this.loan_available = this.loan_available.minus(loan_amount)
     this.loan = this.loan.plus(loan_amount)
     this.cash = this.cash.plus(loan_amount)
+
+    if (this.loan_available.isLessThan(0)) throw new Error(`bug in loans code`)
 
     this.logger.event(
       {},

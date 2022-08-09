@@ -437,6 +437,8 @@ async function main() {
     await service.init(backtest_parameters.timeframe.start_date)
     await service.init_candles(backtest_parameters.symbols_to_run)
     await service.run()
+    let url = `https://${process.env.GRAFANA_HOST}/d/zWQG8kiVk/backtest-overview?orgId=1&from=1614542400000&to=now&var-backtest_run_id=${backtest_run_id}`
+    logger.info(`Results URL: ${url}`)
   } catch (err) {
     logger.error({ err })
     Sentry.captureException(err)

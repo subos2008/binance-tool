@@ -90,10 +90,10 @@ export type BacktestParameters = {
 
 let backtest_parameters: BacktestParameters = {
   symbols_to_run: 300,
-  stop_factor: "0.85", // .85 outperforms .90 and .93 but check again
+  stop_factor: "0.93", // .85 outperforms .90 and .93 but check again
   timeframe: { start_date: new Date(), end_date: new Date() },
   bank: {
-    starting_cash: 700,
+    starting_cash: 10000,
     loan_available: 0,
   },
 }
@@ -106,8 +106,10 @@ let period:
   | "edge6x"
   | "from_first_short_signal_at_end_of_last_bull"
   | "start_of_2017_to_now"
+  | "start_of_2017_to_now_BTC_only"
+  | "from_start_of_latest_bear_market"
 
-period = "start_of_2017_to_now"
+period = "from_start_of_latest_bear_market"
 switch (period as string) {
   case `edge6x`: // recent times since we started to have DD results for edge6x
     /* since we started tracking on Datadog - 44 days */
@@ -172,30 +174,29 @@ switch (period as string) {
       end_date: new Date(),
     }
     break
+  case `start_of_2017_to_now_BTC_only`:
+    // Approx coins list
+    backtest_parameters.base_assets = {
+      whitelist: [
+        "BTC",
+      ],
+    }
+    backtest_parameters.timeframe = {
+      start_date: new Date("2017-01-01"),
+      end_date: new Date(),
+    }
+    break
+  case `from_start_of_latest_bear_market`:
+    backtest_parameters.timeframe = {
+      start_date: new Date("2021-11-10"),
+      end_date: new Date(),
+    }
+    break
   default:
     throw new Error(`bananas`)
 }
 
 const edge: "edge70-backtest" = "edge70-backtest"
-// let position_sizer = new BacktesterAllInPositionSizer({ logger, bank })
-let position_sizer = new BacktesterFixedPositionSizer({ logger })
-
-function get_backtest_slug(edge: string) {
-  let start = DateTime.fromJSDate(backtest_parameters.timeframe.start_date).toFormat("yyyy-LLL-dd")
-  let days = DateTime.fromJSDate(backtest_parameters.timeframe.end_date)
-    .diff(DateTime.fromJSDate(backtest_parameters.timeframe.start_date), "days")
-    .toObject().days
-  if (!days) throw new Error(`days not defined in candles math`)
-
-  const stop_factor = backtest_parameters.stop_factor
-  const x = edge70_parameters.candles_of_price_history
-  const params = `${x.long + 1}l${x.short + 1}s${stop_factor}f`
-  const edge_slug = `edge70-${params}`
-  const psn = position_sizer.id_slug()
-  return `${start}-${days}d-${edge_slug}-${psn}-${randomUUID().slice(-4)}`
-}
-
-const backtest_run_id = get_backtest_slug("edge70")
 
 class Edge70MegaBacktester {
   edges: { [Key: string]: Edge70Signals } = {}
@@ -209,6 +210,7 @@ class Edge70MegaBacktester {
   health_and_readiness: HealthAndReadiness
   backtest_portfolio_tracker: BacktestPortfolioTracker
   mock_redis: RedisClient
+  backtest_run_id: string
   prices_getter: MockPricesGetter
 
   constructor({
@@ -218,6 +220,7 @@ class Edge70MegaBacktester {
     direction_persistance,
     backtest_portfolio_tracker,
     prices_getter,
+    backtest_run_id,
   }: {
     ee: Binance
     logger: ServiceLogger
@@ -226,6 +229,7 @@ class Edge70MegaBacktester {
     health_and_readiness: HealthAndReadiness
     backtest_portfolio_tracker: BacktestPortfolioTracker
     prices_getter: MockPricesGetter
+    backtest_run_id: string
   }) {
     this.candles_collector = new ChunkingCandlesCollector({
       candles_collector: new CachingCandlesCollector({
@@ -233,6 +237,7 @@ class Edge70MegaBacktester {
       }),
     })
     this.ee = ee
+    this.backtest_run_id = backtest_run_id
     this.logger = logger
     this.send_message = send_message
     this.prices_getter = prices_getter
@@ -379,7 +384,11 @@ class Edge70MegaBacktester {
   }
 
   async run(): Promise<void> {
-    let global_hooks_backtester_stats = new CaptainHooksBacktesterStats({ logger, quote_asset, backtest_run_id })
+    let global_hooks_backtester_stats = new CaptainHooksBacktesterStats({
+      logger,
+      quote_asset,
+      backtest_run_id: this.backtest_run_id,
+    })
     this.backtest_portfolio_tracker.add_captain_hooks_backtester_stats(global_hooks_backtester_stats)
     try {
       let count = 0
@@ -455,6 +464,26 @@ async function main() {
       prefix: `${service_name}:spot:binance:usd_quote`,
     })
 
+    // let position_sizer = new BacktesterAllInPositionSizer({ logger, bank })
+    let position_sizer = new BacktesterFixedPositionSizer({ logger })
+
+    function get_backtest_slug(edge: string) {
+      let start = DateTime.fromJSDate(backtest_parameters.timeframe.start_date).toFormat("yyyy-LLL-dd")
+      let days = DateTime.fromJSDate(backtest_parameters.timeframe.end_date)
+        .diff(DateTime.fromJSDate(backtest_parameters.timeframe.start_date), "days")
+        .toObject().days
+      if (!days) throw new Error(`days not defined in candles math`)
+
+      const stop_factor = backtest_parameters.stop_factor
+      const x = edge70_parameters.candles_of_price_history
+      const params = `${x.long + 1}l${x.short + 1}s${stop_factor}f`
+      const edge_slug = `edge70-${params}`
+      const psn = position_sizer.id_slug()
+      return `${start}-${days}d-${edge_slug}-${psn}-${randomUUID().slice(-4)}`
+    }
+
+    const backtest_run_id = get_backtest_slug("edge70")
+
     let backtest_portfolio_tracker = new BacktestPortfolioTracker({
       logger,
       edge,
@@ -479,12 +508,15 @@ async function main() {
       direction_persistance,
       backtest_portfolio_tracker,
       prices_getter,
+      backtest_run_id,
     })
     await service.init(backtest_parameters.timeframe.start_date)
     let symbols = await service.init_candles(backtest_parameters.symbols_to_run)
     direction_persistance.set_symbols(symbols)
     await service.run()
-    let url = `https://${process.env.GRAFANA_HOST}/d/zWQG8kiVk/backtest-overview?orgId=1&from=1614542400000&to=now&var-backtest_run_id=${backtest_run_id}`
+    let start = backtest_parameters.timeframe.start_date.getTime()
+    let end = backtest_parameters.timeframe.end_date.getTime()
+    let url = `https://${process.env.GRAFANA_HOST}/d/zWQG8kiVk/backtest-overview?orgId=1&from=${start}&to=${end}&var-backtest_run_id=${backtest_run_id}`
     logger.info(`Results URL: ${url}`)
   } catch (err) {
     logger.error({ err })

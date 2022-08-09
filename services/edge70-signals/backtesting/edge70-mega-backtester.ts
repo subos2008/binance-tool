@@ -223,7 +223,7 @@ class Edge70MegaBacktester {
     }
   }
 
-  async init_candles(limit: number) {
+  async init_candles(limit: number): Promise<string[]> {
     let start = DateTime.fromJSDate(backtest_parameters.timeframe.start_date)
     let end = DateTime.fromJSDate(backtest_parameters.timeframe.end_date)
     let days = end.diff(start, "days").toObject().days

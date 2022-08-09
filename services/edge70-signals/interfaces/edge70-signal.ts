@@ -8,7 +8,7 @@ export type Edge70Parameters = {
   // days_of_price_history should be one less than the number we use on the TV high/low indicator
   candle_timeframe: "1d"
   candles_of_price_history: {
-    long: 44 // one less than the number we use on the TV high/low indicator
+    long: 44 | 29 | 59 // one less than the number we use on the TV high/low indicator
     short: 21 // one less than the number we use on the TV high/low indicator
   }
 }

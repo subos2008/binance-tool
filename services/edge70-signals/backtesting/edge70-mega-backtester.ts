@@ -70,7 +70,7 @@ const edge70_parameters: Edge70Parameters = {
   // because the high/low indicator includes the new candle in it's count
   candle_timeframe: "1d",
   candles_of_price_history: {
-    long: 44, // one less than the number we use on the TV high/low indicator
+    long: 59, // one less than the number we use on the TV high/low indicator
     short: 21, // one less than the number we use on the TV high/low indicator
   },
 }
@@ -90,7 +90,7 @@ export type BacktestParameters = {
 
 let backtest_parameters: BacktestParameters = {
   symbols_to_run: 300,
-  stop_factor: "0.93", // .85 outperforms .90 and .93 but check again
+  stop_factor: "0.85", // .85 outperforms .90 and .93 but check again
   timeframe: { start_date: new Date(), end_date: new Date() },
   bank: {
     starting_cash: 10000,
@@ -108,8 +108,10 @@ let period:
   | "start_of_2017_to_now"
   | "start_of_2017_to_now_BTC_only"
   | "from_start_of_latest_bear_market"
+  | "from_start_of_latest_bull_market"
+  | "from_start_of_second_previous_bull_market"
 
-period = "from_start_of_latest_bear_market"
+period = "from_start_of_second_previous_bull_market"
 switch (period as string) {
   case `edge6x`: // recent times since we started to have DD results for edge6x
     /* since we started tracking on Datadog - 44 days */
@@ -188,6 +190,20 @@ switch (period as string) {
     backtest_parameters.timeframe = {
       start_date: new Date("2021-11-10"),
       end_date: new Date("2022-08-08"),
+    }
+    break
+  case `from_start_of_latest_bull_market`:
+    backtest_parameters.timeframe = {
+      /* includes 60 days run up - and includes the final dump before the bull */
+      start_date: new Date("2021-04-23"),
+      end_date: new Date("2021-12-04"), // Just after the first massive dump
+    }
+    break
+  case `from_start_of_second_previous_bull_market`:
+    backtest_parameters.timeframe = {
+      /* includes 60 days run up - and includes the final dump before the bull */
+      start_date: new Date("2020-05-21"),
+      end_date: new Date("2021-05-19"), // Just after the first massive dump
     }
     break
   default:

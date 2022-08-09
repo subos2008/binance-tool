@@ -161,7 +161,7 @@ export class SpotEdgeToExecutorMapper {
           return this.stop_limit_executor.open_position({
             ...args,
             quote_asset,
-            edge_percentage_stop: new BigNumber(7),
+            edge_percentage_stop: new BigNumber(15), // We see significantly better bull performance with this and not much difference in a bear
             edge_percentage_buy_limit: new BigNumber(0.5), // when we had this higher it executed with a 4% slippage
           })
         case "edge61":

@@ -96,13 +96,20 @@ type BacktestParameters = {
   end_date: Date
 }
 
-let period: "market_top" | "bear_accumulation" |"bear_just_losses"| "edge6x" | undefined
+let period:
+  | "market_top"
+  | "bear_accumulation"
+  | "bear_just_losses"
+  | "edge6x"
+  | undefined
+  | "from_first_short_signal_at_end_of_last_bull"
 
-period = "bear_just_losses"
+period = "from_first_short_signal_at_end_of_last_bull"
 
 let backtest_parameters: BacktestParameters
 switch (period as string) {
   case `edge6x`: // recent times since we started to have DD results for edge6x
+    /* since we started tracking on Datadog - 44 days */
     let start_date = new Date("2022-04-29")
     backtest_parameters = {
       start_date,
@@ -128,9 +135,15 @@ switch (period as string) {
       end_date: new Date("2019-01-31"),
     }
     break
+  case `from_first_short_signal_at_end_of_last_bull`:
+    backtest_parameters = {
+      start_date: new Date("2021-03-05"), // ~44 days before first short of bull
+      end_date: new Date("2022-06-15"),
+    }
+    break
+  default:
+    throw new Error(`bananas`)
 }
-
-/* since we started tracking on Datadog - 44 days */
 
 const edge: "edge70-backtest" = "edge70-backtest"
 

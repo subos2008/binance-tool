@@ -39,27 +39,27 @@ export class TradeAbstractionServiceClient {
   async get_exchange_identifier(): Promise<ExchangeIdentifier_V3> {
     let response = await this.get(new URL("/exchange_identifier", this.TAS_URL).toString())
     this.logger.info(`Returned exchange_identifier:`)
-    this.logger.object(response.data)
+    this.logger.info({ res: response })
     return response.data
   }
 
   async prices(): Promise<BinanceStyleSpotPrices> {
     let response = await this.get(new URL("/prices", this.TAS_URL).toString())
     this.logger.info(`Returned prices:`)
-    this.logger.object(response.data)
+    this.logger.info({ res: response })
     return response.data
   }
 
   async positions(): Promise<SpotPositionIdentifier_V3[]> {
     let response = await this.get(new URL("/positions", this.TAS_URL).toString())
     this.logger.info(`Returned positions:`)
-    this.logger.object(response.data)
+    this.logger.info({ res: response })
     return response.data
   }
 
   async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {
     let response = await this.get(new URL("/close", this.TAS_URL).toString(), cmd)
-    this.logger.info(response)
+    this.logger.info({ res: response })
     let tas_response = response.data as TradeAbstractionCloseResult
     if (tas_response?.object_type !== "TradeAbstractionCloseResult") {
       let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionCloseResult`)
@@ -71,7 +71,7 @@ export class TradeAbstractionServiceClient {
 
   async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
     let response = await this.get(new URL("/long", this.TAS_URL).toString(), cmd)
-    this.logger.info(response)
+    this.logger.info({ res: response })
     let tas_response = response.data as TradeAbstractionOpenLongResult
     if (tas_response?.object_type !== "TradeAbstractionOpenLongResult") {
       let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenLongResult`)
@@ -83,7 +83,7 @@ export class TradeAbstractionServiceClient {
 
   async short(cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
     let response = await this.get(new URL("/short", this.TAS_URL).toString(), cmd)
-    this.logger.info(response)
+    this.logger.info({ res: response })
     let tas_response = response.data as TradeAbstractionOpenShortResult
     if (tas_response?.object_type !== "TradeAbstractionOpenShortResult") {
       let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenShortResult`)

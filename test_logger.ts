@@ -12,4 +12,6 @@ logger.info({ err: new Error("an error sans message") })
 
 logger.info({ err: new Error("an error with a message") }, "do you see this?")
 
-logger.object({ this: "is", an: "object" })
+logger.event({}, { object_type: "object_type", msg: "This is a msg" })
+let event = { object_type: "object_type", message: "This is a message" }
+logger.event({}, event)

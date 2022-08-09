@@ -1,7 +1,7 @@
 /**
  * Usage patterns:
  *
- * logger.object(obj) // don't pass separate tags when logging an object
+ * logger.event(tags,obj) // don't pass separate tags when logging an object
  * logger.info({err}) // { err => err } invokes special internal handlers
  * logger.info({err}, msg)
  * logger.info(tags, msg) // Add tags to a string msg

@@ -23,7 +23,7 @@ export class BinancePriceGetter implements CurrentPriceGetter {
 
   async get_current_price({ market_symbol }: { market_symbol: string }): Promise<BigNumber> {
     if (!this.prices) {
-      this.logger.object({ object_type: "BinanceCurrentPriceGetterCacheMiss" })
+      this.logger.event({}, { object_type: "BinanceCurrentPriceGetterCacheMiss" })
       this.prices = await this.ee.prices()
       let timer: NodeJS.Timeout = setTimeout(() => {
         this.prices = null
@@ -48,7 +48,7 @@ export class BinanceFuturesPriceGetter implements CurrentPriceGetter {
 
   async get_current_price({ market_symbol }: { market_symbol: string }): Promise<BigNumber> {
     if (!this.prices) {
-      this.logger.object({ object_type: "BinanceCurrentPriceGetterCacheMiss" })
+      this.logger.event({}, { object_type: "BinanceCurrentPriceGetterCacheMiss" })
       this.prices = await this.ee.futuresPrices()
       let timer: NodeJS.Timeout = setTimeout(() => {
         this.prices = null

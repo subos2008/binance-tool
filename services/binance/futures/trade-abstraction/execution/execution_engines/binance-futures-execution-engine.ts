@@ -204,11 +204,11 @@ export class BinanceFuturesExecutionEngine {
     //     newClientOrderId: clientOrderId,
     //     reduceOnly: "true",
     //   }
-    //   this.logger.object({ object_type: "BinanceNewFuturesOrder", ...buy_order_cmd })
+    //   this.logger.event(tags,{ object_type: "BinanceNewFuturesOrder", ...buy_order_cmd })
 
     //   this.logger.info(`Creating ${symbol} ${type} ${side} ORDER for quoteOrderQty ${cmd.quote_amount}`)
     //   let buy_order: FuturesOrder = await ee.futuresOrder(buy_order_cmd)
-    //   this.logger.object({ object_type: "BinanceFuturesOrder", ...buy_order })
+    //   this.logger.event(tags,{ object_type: "BinanceFuturesOrder", ...buy_order })
 
     //   let execution_timestamp_ms: number = buy_order.updateTime
 
@@ -306,14 +306,14 @@ export class BinanceFuturesExecutionEngine {
       timeInForce: "IOC",
       newOrderRespType: "RESULT",
     }
-    this.logger.object({ object_type: "BinanceNewFuturesOrder", ...order_cmd })
+    this.logger.event(tags, { object_type: "BinanceNewFuturesOrder", ...order_cmd })
 
     try {
       // TODO: munge limitPrice and quantity
 
       this.logger.info(`Creating ${symbol} ${type} ${side} ORDER for quoteOrderQty ${cmd.quote_amount}`)
       let buy_order: FuturesOrder = await ee.futuresOrder(order_cmd)
-      this.logger.object({ object_type: "BinanceFuturesOrder", ...buy_order })
+      this.logger.event(tags, { object_type: "BinanceFuturesOrder", ...buy_order })
 
       let execution_timestamp_ms: number = buy_order.updateTime
 
@@ -506,12 +506,12 @@ export class BinanceFuturesExecutionEngine {
           closePosition: "true",
           newOrderRespType: "RESULT",
         }
-        this.logger.object({ object_type: "BinanceNewFuturesOrder", ...stop_order_cmd })
+        this.logger.event(tags, { object_type: "BinanceNewFuturesOrder", ...stop_order_cmd })
         this.logger.info(`Creating ${symbol} ${type} ${side} ORDER (closePosition)}`)
         // https://binance-docs.github.io/apidocs/futures/en/#new-order-trade
         let call = ee.futuresOrder.bind(ee, stop_order_cmd)
         let stop_order: FuturesOrder = await this.execute_with_429_retries(call)
-        this.logger.object({ object_type: "BinanceFuturesOrder", ...stop_order })
+        this.logger.event(tags,{ object_type: "BinanceFuturesOrder", ...stop_order })
         created_stop_order = true
       }
 
@@ -537,12 +537,12 @@ export class BinanceFuturesExecutionEngine {
           closePosition: "true",
           newOrderRespType: "RESULT",
         }
-        this.logger.object({ object_type: "BinanceNewFuturesOrder", ...take_profit_order_cmd })
+        this.logger.event(tags,{ object_type: "BinanceNewFuturesOrder", ...take_profit_order_cmd })
         this.logger.info(`Creating ${symbol} ${type} ${side} ORDER (closePosition)}`)
         // https://binance-docs.github.io/apidocs/futures/en/#new-order-trade
         let call = ee.futuresOrder.bind(ee, take_profit_order_cmd)
         let take_profit_order: FuturesOrder = await this.execute_with_429_retries(call)
-        this.logger.object({ object_type: "BinanceFuturesOrder", ...take_profit_order })
+        this.logger.event(tags,{ object_type: "BinanceFuturesOrder", ...take_profit_order })
         created_take_profit_order = true
       }
 
@@ -564,7 +564,7 @@ export class BinanceFuturesExecutionEngine {
         created_take_profit_order,
       }
 
-      this.logger.object(result)
+      this.logger.event(tags,result)
       return result
     } catch (err) {
       let msg = `TODO: close position and return ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`

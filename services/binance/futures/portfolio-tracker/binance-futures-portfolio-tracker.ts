@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 // portfolio-tracker service: maintains the current portfolio by
 // getting the portfolio on startup and then monitoring the streams
 // and tracking deltas.
@@ -150,7 +149,7 @@ export class BinancePortfolioTracker implements FuturesPortfolioBitchClass, Futu
   async print_accout_balance(): Promise<void> {
     let balances: FuturesBalanceResult[] = await this.ee.futuresAccountBalance()
     for (const balance of balances) {
-      this.logger.object(balance)
+      this.logger.event({ symbol: balance.asset }, { ...balance, object_type: "FuturesBalanceResult" })
     }
   }
 }

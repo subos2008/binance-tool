@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 import { strict as assert } from "assert"
 
 import { BigNumber } from "bignumber.js"
@@ -136,11 +135,12 @@ export class PortfolioUtils {
     let filtered = all.filter((p) => p.quote_amount && p.quote_amount.isGreaterThanOrEqualTo(quote_amount))
 
     try {
-      this.logger.object({
+      let event = {
         object_type: "FreeBalancesReport",
         all: all.map((p) => `${p.asset}: ${p.quote_amount?.toFixed()}`).join(", "),
         filtered: filtered.map((p) => `${p.asset}: ${p.quote_amount?.toFixed()}`).join(", "),
-      })
+      }
+      this.logger.event({}, event)
     } catch (err) {
       this.logger.error(`Failed to log FreeBalancesReport`)
       this.logger.error({ err })

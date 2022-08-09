@@ -213,7 +213,7 @@
 //         msg: `${prefix}: SUCCESS`,
 //         execution_timestamp_ms,
 //       }
-//       this.logger.object(res)
+//       this.logger.event(tags,res)
 //       return res
 //     } catch (err) {
 //       Sentry.captureException(err)

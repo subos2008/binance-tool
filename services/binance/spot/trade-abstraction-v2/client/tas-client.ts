@@ -39,21 +39,21 @@ export class TradeAbstractionServiceClient {
   async get_exchange_identifier(): Promise<ExchangeIdentifier_V3> {
     let response = await this.get(new URL("/exchange_identifier", this.TAS_URL).toString())
     this.logger.info(`Returned exchange_identifier:`)
-    this.logger.object(response.data)
+    this.logger.event({}, response.data)
     return response.data
   }
 
   async prices(): Promise<BinanceStyleSpotPrices> {
     let response = await this.get(new URL("/prices", this.TAS_URL).toString())
     this.logger.info(`Returned prices:`)
-    this.logger.object(response.data)
+    this.logger.event({}, response.data)
     return response.data
   }
 
   async positions(): Promise<SpotPositionIdentifier_V3[]> {
     let response = await this.get(new URL("/positions", this.TAS_URL).toString())
     this.logger.info(`Returned positions:`)
-    this.logger.object(response.data)
+    this.logger.event({}, response.data)
     return response.data
   }
 

@@ -170,7 +170,9 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
 
   // TODO: copy 429 code from here
   async limit_buy(cmd: SpotLimitBuyCommand, trade_context: TradeContext): Promise<SpotExecutionEngineBuyResult> {
-    this.logger.object(cmd)
+    let { base_asset, symbol } = cmd.market_identifier
+    let tags = { base_asset, symbol }
+    this.logger.event(tags, cmd)
     let { market_identifier, order_context } = cmd
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let prefix = `${cmd.market_identifier.symbol} SpotExecutionEngineBuyResult`
@@ -184,7 +186,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
         clientOrderId,
         timeInForce: "IOC",
       })
-      this.logger.object({ object_type: "BinanceOrder", ...result })
+      this.logger.event(tags, { object_type: "BinanceOrder", ...result })
       let spot_long_result: SpotExecutionEngineBuyResult
       let executed_base_quantity = new BigNumber(result.executedQty)
       if (executed_base_quantity.isZero()) {
@@ -359,7 +361,10 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   // TODO: add 429 try/catch logic
   // TODO: port to return SpotExecutionEngineBuyResult
   async oco_sell_order(cmd: SpotOCOSellCommand): Promise<void> {
-    this.logger.object(cmd)
+    let { base_asset, symbol } = cmd.market_identifier
+    let tags = { base_asset, symbol }
+
+    this.logger.event(tags, cmd)
     let { stop_ClientOrderId, take_profit_ClientOrderId, oco_list_ClientOrderId } = cmd
 
     let args = {
@@ -380,7 +385,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     // TODO: add a try/catch around this function making loud complaints about FAILED_TO_CREATE_EXIT_ORDERS
     let order: OcoOrder | undefined = await this.execute_with_429_retries(call)
 
-    this.logger.object({ object_type: "BinanceOrder", ...order })
+    this.logger.event(tags, { object_type: "BinanceOrder", ...order })
     if (order && order.listClientOrderId) {
       // looks like success
       return

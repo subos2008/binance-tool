@@ -155,10 +155,10 @@ function get_backtest_slug(edge: string) {
 
   const stop_factor = backtest_parameters.stop_factor
   const x = edge70_parameters.candles_of_price_history
-  const params = `${x.long + 1}/${x.short + 1}/${stop_factor}`
+  const params = `${x.long + 1}l${x.short + 1}s${stop_factor}f`
   const edge_slug = `edge70-${params}`
   const psn = position_sizer.id_slug()
-  return `${start}+${days}-${edge_slug}-${psn}-${randomUUID().slice(-4)}`
+  return `${start}-${days}d-${edge_slug}-${psn}-${randomUUID().slice(-4)}`
 }
 
 const backtest_run_id = get_backtest_slug("edge70")

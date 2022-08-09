@@ -50,6 +50,7 @@ import { BacktesterAllInPositionSizer } from "./position_sizers/all-in"
 import { CachingCandlesCollector } from "../../../classes/candles/caching-candles-collector"
 import { ChunkingCandlesCollector } from "../../../classes/candles/chunking-candles-collector"
 import { CandlesCollector } from "../../../classes/candles/interfaces"
+import { randomUUID } from "crypto"
 
 let full_trace = false
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, events_as_msg: true, full_trace })
@@ -146,6 +147,25 @@ switch (period as string) {
 }
 
 const edge: "edge70-backtest" = "edge70-backtest"
+// let position_sizer = new BacktesterAllInPositionSizer({ logger, bank })
+let position_sizer = new BacktesterFixedPositionSizer({ logger })
+
+function get_backtest_slug(edge: string) {
+  let start = DateTime.fromJSDate(backtest_parameters.start_date).toFormat("yyyy-LLL-dd")
+  let days = DateTime.fromJSDate(backtest_parameters.end_date)
+    .diff(DateTime.fromJSDate(backtest_parameters.start_date), "days")
+    .toObject().days
+  if (!days) throw new Error(`days not defined in candles math`)
+
+  const stop_factor = edge70_parameters.stop_factor
+  const x = edge70_parameters.candles_of_price_history
+  const params = `${x.long + 1}/${x.short + 1}/${stop_factor}`
+  const edge_slug = `edge70-${params}`
+  const psn = position_sizer.id_slug()
+  return `${start}+${days}-${edge_slug}-${psn}-${randomUUID().slice(-4)}`
+}
+
+const backtest_run_id = get_backtest_slug("edge70")
 
 class Edge70MegaBacktester {
   edges: { [Key: string]: Edge70Signals } = {}
@@ -321,7 +341,7 @@ class Edge70MegaBacktester {
   }
 
   async run(): Promise<void> {
-    let global_hooks_backtester_stats = new CaptainHooksBacktesterStats({ logger, quote_asset })
+    let global_hooks_backtester_stats = new CaptainHooksBacktesterStats({ logger, quote_asset, backtest_run_id })
     this.backtest_portfolio_tracker.add_captain_hooks_backtester_stats(global_hooks_backtester_stats)
     try {
       let count = 0
@@ -391,8 +411,6 @@ async function main() {
     let starting_cash = new BigNumber(edge70_parameters.starting_cash)
     let bank = new BacktesterCashManagement({ logger, starting_cash })
 
-    // let position_sizer = new BacktesterAllInPositionSizer({ logger, bank })
-    let position_sizer = new BacktesterFixedPositionSizer({ logger })
     let prices_getter = new MockPricesGetter()
     let backtest_portfolio_tracker = new BacktestPortfolioTracker({
       logger,

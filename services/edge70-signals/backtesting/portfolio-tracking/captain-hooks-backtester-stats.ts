@@ -14,7 +14,6 @@ import { BacktesterStatsHooks } from "./interfaces"
 import humanNumber from "human-number"
 import { PortfolioSummary } from "./portfolio-summary"
 import { HooksPortfolioSummaryMetrics } from "./metrics/portfolio-summary-metrics"
-import { randomUUID } from "crypto"
 
 type Delta = { start: BigNumber; end: BigNumber }
 
@@ -68,12 +67,11 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
   at_start: PortfolioSummary | undefined
   current: PortfolioSummary | undefined
 
-  constructor(args: { logger: ServiceLogger; quote_asset: string }) {
+  constructor(args: { logger: ServiceLogger; quote_asset: string ,backtest_run_id:string}) {
     this.logger = args.logger
     let { quote_asset } = args
-    let backtest_run_id = randomUUID()
-    this.backtest_run_id = backtest_run_id
-    this.metrics = new HooksPortfolioSummaryMetrics({ logger: args.logger, backtest_run_id, quote_asset })
+    this.backtest_run_id = args.backtest_run_id
+    this.metrics = new HooksPortfolioSummaryMetrics({ logger: args.logger, backtest_run_id:args.backtest_run_id, quote_asset })
   }
 
   async shutdown() {

@@ -31,6 +31,7 @@ import { ExchangeInfoGetter } from "../../../../interfaces/exchanges/binance/exc
 import { timeStamp } from "console"
 import { Edge70Parameters } from "../../interfaces/edge70-signal"
 import { BacktestParameters } from "../edge70-mega-backtester"
+import { DirectionPersistenceMock } from "../direction-persistance-mock"
 
 /* convert Edge70Signals to Orders and throw them to PositionsTracker - with mock_redis */
 
@@ -49,6 +50,7 @@ export class BacktestPortfolioTracker {
   captain_hooks_backtester_stats: CaptainHooksBacktesterStats[] = []
   exchange_info_getter: ExchangeInfoGetter
   bank: BankOfBacktesting
+  direction_persistance: DirectionPersistenceMock
 
   constructor({
     logger,
@@ -62,7 +64,8 @@ export class BacktestPortfolioTracker {
     prices_getter,
     bank,
     exchange_info_getter,
-    backtest_parameters
+    backtest_parameters,
+    direction_persistance,
   }: {
     logger: ServiceLogger
     edge: "edge70" | "edge70-backtest"
@@ -76,6 +79,7 @@ export class BacktestPortfolioTracker {
     prices_getter: CurrentAllPricesGetter
     bank: BankOfBacktesting
     exchange_info_getter: ExchangeInfoGetter
+    direction_persistance: DirectionPersistenceMock
   }) {
     this.logger = logger
     this.edge = edge
@@ -86,6 +90,7 @@ export class BacktestPortfolioTracker {
     this.prices_getter = prices_getter
     this.exchange_info_getter = exchange_info_getter
     this.bank = bank
+    this.direction_persistance = direction_persistance
     this.stop_factor = new BigNumber(backtest_parameters.stop_factor)
     const send_message: SendMessageFunc = async (msg: string, tags?: ContextTags) => {
       if (tags) logger.warn(tags, msg)
@@ -182,6 +187,10 @@ export class BacktestPortfolioTracker {
     })
     for (const hooks of this.captain_hooks_backtester_stats) {
       await hooks.portfolio_summary_at_candle_close(portfolio_summary)
+      await hooks.market_direction_at_candle_close({
+        timestamp,
+        direction_persistance: this.direction_persistance,
+      })
     }
   }
 

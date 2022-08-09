@@ -20,22 +20,18 @@ export class HooksMarketDirectionMetrics {
   private logger: ServiceLogger
   private backtest_run_id: string
 
-  direction_persistence: DirectionPersistenceMock
 
   constructor({
     logger,
     backtest_run_id,
     quote_asset,
-    direction_persistence,
   }: {
     logger: ServiceLogger
     backtest_run_id: string
     quote_asset: string
-    direction_persistence: DirectionPersistenceMock
   }) {
     this.logger = logger
     this.backtest_run_id = backtest_run_id
-    this.direction_persistence = direction_persistence
   }
 
    async upload_market_direction(args: { long: number; short: number; unknown: number; timestamp: Date }) {

@@ -14,6 +14,8 @@ import { BacktesterStatsHooks } from "./interfaces"
 import humanNumber from "human-number"
 import { PortfolioSummary } from "./portfolio-summary"
 import { HooksPortfolioSummaryMetrics } from "./metrics/portfolio-summary-metrics"
+import { DirectionPersistenceMock } from "../direction-persistance-mock"
+import { HooksMarketDirectionMetrics } from "./metrics/market-direction-metrics"
 
 type Delta = { start: BigNumber; end: BigNumber }
 
@@ -55,6 +57,7 @@ class strings {
 export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
   logger: ServiceLogger
   metrics: HooksPortfolioSummaryMetrics
+  direction_metrics: HooksMarketDirectionMetrics
   backtest_run_id: string
 
   position_opened_events: SpotPositionOpenedEvent_V1[] = []
@@ -67,11 +70,20 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
   at_start: PortfolioSummary | undefined
   current: PortfolioSummary | undefined
 
-  constructor(args: { logger: ServiceLogger; quote_asset: string ,backtest_run_id:string}) {
+  constructor(args: { logger: ServiceLogger; quote_asset: string; backtest_run_id: string }) {
     this.logger = args.logger
-    let { quote_asset } = args
+    let { quote_asset, logger, backtest_run_id } = args
     this.backtest_run_id = args.backtest_run_id
-    this.metrics = new HooksPortfolioSummaryMetrics({ logger: args.logger, backtest_run_id:args.backtest_run_id, quote_asset })
+    this.metrics = new HooksPortfolioSummaryMetrics({
+      logger,
+      backtest_run_id: args.backtest_run_id,
+      quote_asset,
+    })
+    this.direction_metrics = new HooksMarketDirectionMetrics({
+      logger,
+      backtest_run_id,
+      quote_asset,
+    })
   }
 
   async shutdown() {
@@ -95,6 +107,14 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
     this.total_assets.push(await portfolio_sumary.total_assets_inc_cash())
     this.pct_portfolio_invested.push(await portfolio_sumary.pct_portfolio_invested())
     this.open_positions_count.push(await portfolio_sumary.open_positions_count())
+  }
+
+  async market_direction_at_candle_close(args: {
+    direction_persistance: DirectionPersistenceMock
+    timestamp: Date
+  }) {
+    let stats = await args.direction_persistance.get_all_market_stats()
+    let timeStamp = await this.direction_metrics.upload_market_direction({ timestamp: args.timestamp, ...stats })
   }
 
   private summary_positions_opened_closed() {

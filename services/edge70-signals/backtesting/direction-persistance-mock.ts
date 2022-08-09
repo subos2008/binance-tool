@@ -6,7 +6,7 @@ export type Direction = "short" | "long" // Redis returns null for unset
 export class DirectionPersistenceMock implements DirectionPersistence {
   private logger: ServiceLogger
   private prefix: string
-
+  symbols: string[] | undefined
   private keys: { [key: string]: string } = {}
 
   constructor({ logger, prefix }: { logger: ServiceLogger; prefix: string }) {
@@ -26,6 +26,10 @@ export class DirectionPersistenceMock implements DirectionPersistence {
     return this.keys[key]
   }
 
+  set_symbols(symbols: string[]) {
+    this.symbols = symbols
+  }
+
   async set_direction(symbol: string, direction: Direction) {
     let previous_direction = await this.get_direction(symbol)
     if (previous_direction === null) {
@@ -42,11 +46,12 @@ export class DirectionPersistenceMock implements DirectionPersistence {
     return direction as Direction
   }
 
-  async get_all_market_stats(symbols: string[]) {
+  async get_all_market_stats() {
+    if (!this.symbols) throw new Error(`Symbols not initialised`)
     let long = 0,
       short = 0,
       unknown = 0
-    for (const symbol of symbols) {
+    for (const symbol of this.symbols) {
       let dir: Direction | null = await this.get_direction(symbol)
       if (!dir) unknown++
       if (dir === "long") long++

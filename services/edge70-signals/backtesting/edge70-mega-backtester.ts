@@ -334,6 +334,9 @@ class Edge70MegaBacktester {
       assert(this.candles[symbol][0].closeTime === expected_first_candle_closeTime)
     }
     this.logger.info(`Deleted ${del_syms} short histories`)
+    let symbols = Object.keys(this.edges)
+    this.logger.info(`Backtesting ${symbols.length} symbols.`)
+    return symbols
   }
 
   async run(): Promise<void> {
@@ -407,6 +410,12 @@ async function main() {
     let bank = new BacktesterCashManagement({ logger, ...backtest_parameters.bank })
 
     let prices_getter = new MockPricesGetter()
+
+    let direction_persistance = new DirectionPersistenceMock({
+      logger,
+      prefix: `${service_name}:spot:binance:usd_quote`,
+    })
+
     let backtest_portfolio_tracker = new BacktestPortfolioTracker({
       logger,
       edge,
@@ -420,6 +429,7 @@ async function main() {
       prices_getter,
       bank,
       exchange_info_getter,
+      direction_persistance,
     })
 
     let service = new Edge70MegaBacktester({
@@ -427,15 +437,13 @@ async function main() {
       logger,
       send_message,
       health_and_readiness,
-      direction_persistance: new DirectionPersistenceMock({
-        logger,
-        prefix: `${service_name}:spot:binance:usd_quote`,
-      }),
+      direction_persistance,
       backtest_portfolio_tracker,
       prices_getter,
     })
     await service.init(backtest_parameters.timeframe.start_date)
-    await service.init_candles(backtest_parameters.symbols_to_run)
+    let symbols = await service.init_candles(backtest_parameters.symbols_to_run)
+    direction_persistance.set_symbols(symbols)
     await service.run()
     let url = `https://${process.env.GRAFANA_HOST}/d/zWQG8kiVk/backtest-overview?orgId=1&from=1614542400000&to=now&var-backtest_run_id=${backtest_run_id}`
     logger.info(`Results URL: ${url}`)

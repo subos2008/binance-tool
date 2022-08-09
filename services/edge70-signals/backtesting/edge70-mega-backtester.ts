@@ -189,7 +189,7 @@ switch (period as string) {
   case `from_start_of_latest_bear_market`:
     backtest_parameters.timeframe = {
       start_date: new Date("2021-11-10"),
-      end_date: new Date(),
+      end_date: new Date("2022-08-08"),
     }
     break
   default:

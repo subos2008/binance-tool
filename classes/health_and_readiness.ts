@@ -105,7 +105,7 @@ export class HealthAndReadiness {
     this.logger.info(`Registering new subsystem: ${name}, starting defaults: ready: ${ready}, healthy:${healthy}`)
     if (name in this.subsystems) {
       // check for subsystem already exists)
-      this.logger.warn(`Attempting to add already existing subsystem '${name}' to HealthAndReadiness'`)
+      this.logger.warn(`Attempting to add already existing subsystem '${name}' to HealthAndReadiness'; appending UUID.`)
       name = `${name}-${randomUUID()}`
     }
 

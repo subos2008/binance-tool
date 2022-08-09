@@ -47,7 +47,7 @@ export class SendMessage {
         service_name: this.service_name,
         tags,
       }
-      this.logger.info({ ...tags, ...event })
+      this.logger.event(tags, event)
       this.publisher.publish(event).catch((err) => {
         this.logger.error({ ...tags, err }, `Failed to send message: ${message}`)
         Sentry.captureException(err)

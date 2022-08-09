@@ -177,9 +177,7 @@ switch (period as string) {
   case `start_of_2017_to_now_BTC_only`:
     // Approx coins list
     backtest_parameters.base_assets = {
-      whitelist: [
-        "BTC",
-      ],
+      whitelist: ["BTC"],
     }
     backtest_parameters.timeframe = {
       start_date: new Date("2017-01-01"),

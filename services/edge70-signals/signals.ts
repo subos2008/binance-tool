@@ -60,7 +60,7 @@ export class Edge70Signals {
     logger: ServiceLogger
     set_log_time_to_candle_time?: boolean
     send_message: SendMessageFunc
-    health_and_readiness: HealthAndReadiness
+    health_and_readiness: HealthAndReadinessSubsystem
     initial_candles: CandleChartResult[]
     market_identifier: MarketIdentifier_V5_with_base_asset
     callbacks: Edge70SignalCallbacks
@@ -76,11 +76,7 @@ export class Edge70Signals {
     this.edge70_parameters = edge70_parameters
     this.direction_persistance = direction_persistance
     if (edge) this.edge = edge
-    this.health_and_readiness = health_and_readiness.addSubsystem({
-      name: `Edge70Signals-${market_identifier.symbol}`,
-      ready: true,
-      healthy: true,
-    })
+    this.health_and_readiness = health_and_readiness
 
     this.price_history_candles_long = new LimitedLengthCandlesHistory({
       length: edge70_parameters.candles_of_price_history.long,

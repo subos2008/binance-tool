@@ -145,6 +145,11 @@ class Edge70SignalsService {
 
     let required_initial_candles = Edge70Signals.required_initial_candles(edge70_parameters)
     let symbols_with_direction_uninitialised: string[] = []
+    const health_and_readiness_subsystem = health_and_readiness.addSubsystem({
+      name: `Edge70Signals`,
+      ready: true,
+      healthy: true,
+    })
     for (let i = 0; i < base_assets.length; i++) {
       let base_asset = base_assets[i]
       let symbol = to_symbol(base_asset)
@@ -192,7 +197,7 @@ class Edge70SignalsService {
         this.edges[symbol] = new Edge70Signals({
           logger: this.logger,
           send_message: this.send_message,
-          health_and_readiness,
+          health_and_readiness: health_and_readiness_subsystem,
           initial_candles,
           market_identifier,
           callbacks: this.callbacks,

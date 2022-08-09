@@ -52,7 +52,7 @@ export class BacktesterCashManagement implements BankOfBacktesting {
       this.get_loan(desired_amount)
     }
 
-    let withdrawal_amount = BigNumber.max(amount, this.cash)
+    let withdrawal_amount = BigNumber.min(amount, this.cash)
     this.cash = this.cash.minus(withdrawal_amount)
 
     return withdrawal_amount

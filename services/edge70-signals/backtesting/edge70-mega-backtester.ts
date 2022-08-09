@@ -476,7 +476,7 @@ async function main() {
 
       const stop_factor = backtest_parameters.stop_factor
       const x = edge70_parameters.candles_of_price_history
-      const params = `${x.long + 1}l${x.short + 1}s${stop_factor}f`
+      const params = `${x.long + 1}L${x.short + 1}S${stop_factor}f`
       const edge_slug = `edge70-${params}`
       const psn = position_sizer.id_slug()
       return `${start}-${days}d-${edge_slug}-${psn}-${randomUUID().slice(-4)}`

@@ -53,7 +53,7 @@ export class HealthAndReadinessSubsystem {
         transition: "ready",
         value,
       }
-      this.logger.object(event)
+      this.logger.event({}, event)
       if (!value) this.send_message(`subsystem ${this.name} became not ready`, { class: "HealthAndReadiness" })
     }
     this._ready = value
@@ -70,7 +70,7 @@ export class HealthAndReadinessSubsystem {
         transition: "healthy",
         value,
       }
-      this.logger.object(event)
+      this.logger.event({}, event)
       if (!value) this.send_message(`subsystem ${this.name} became unhealthy`, { class: "HealthAndReadiness" })
     }
     this._healthy = value
@@ -102,10 +102,22 @@ export class HealthAndReadiness {
     ready: boolean
     healthy: boolean
   }): HealthAndReadinessSubsystem {
-    this.logger.info(`Registering new subsystem: ${name}, starting defaults: ready: ${ready}, healthy:${healthy}`)
+    this.logger.event(
+      {},
+      {
+        object_type: `HealthAndReadinessNewSubsystem`,
+        msg: `Registering new subsystem: ${name}, starting defaults: ready: ${ready}, healthy:${healthy}`,
+      }
+    )
     if (name in this.subsystems) {
       // check for subsystem already exists)
-      this.logger.warn(`Attempting to add already existing subsystem '${name}' to HealthAndReadiness'; appending UUID.`)
+      this.logger.event(
+        {},
+        {
+          object_type: `HealthAndReadinessNewSubsystem`,
+          msg: `Attempting to add already existing subsystem '${name}' to HealthAndReadiness'; appending UUID.`,
+        }
+      )
       name = `${name}-${randomUUID()}`
     }
 

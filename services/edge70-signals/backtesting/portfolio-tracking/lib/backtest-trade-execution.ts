@@ -15,8 +15,9 @@ import { ServiceLogger } from "../../../../../interfaces/logger"
 import { OrderContext_V2 } from "../../../../../interfaces/orders/order-context"
 import { PositionSizer } from "../../../../../interfaces/position-sizer"
 import { GenericOrderData } from "../../../../../types/exchange_neutral/generic_order_data"
-import { Edge70BacktestParameters } from "../../../interfaces/edge70-signal"
+import { Edge70Parameters } from "../../../interfaces/edge70-signal"
 import { EdgeCandle } from "../../../interfaces/_internal"
+import { BacktestParameters } from "../../edge70-mega-backtester"
 import { BankOfBacktesting } from "../interfaces"
 import { BacktesterSpotPostionsTracker } from "../positions-tracker"
 
@@ -39,15 +40,15 @@ export class BacktestTradeExecution {
     position_sizer,
     exchange_identifier,
     quote_asset,
-    edge70_parameters,
     order_context_persistence,
     spot_positions_query,
     positions_tracker,
     bank,
+    backtest_parameters,
   }: {
     logger: ServiceLogger
     edge: "edge70" | "edge70-backtest"
-    edge70_parameters: Edge70BacktestParameters
+    backtest_parameters: BacktestParameters
     position_sizer: PositionSizer
     exchange_identifier: ExchangeIdentifier_V3
     quote_asset: string
@@ -66,7 +67,7 @@ export class BacktestTradeExecution {
     this.spot_positions_query = spot_positions_query
     this.bank = bank
     this.stops = {}
-    this.stop_factor = new BigNumber(edge70_parameters.stop_factor)
+    this.stop_factor = new BigNumber(backtest_parameters.stop_factor)
   }
 
   add_stop({
@@ -89,6 +90,7 @@ export class BacktestTradeExecution {
     let { edge, exchange_identifier, quote_asset } = this
     let { market_identifier, signal_timestamp_ms, signal_price } = args
     let { symbol, base_asset } = market_identifier
+    let tags = { base_asset }
 
     assert(!this.stops[symbol], `Stop already exists in BUY`)
 
@@ -108,6 +110,9 @@ export class BacktestTradeExecution {
     })
 
     position_size = this.bank.withdraw_cash(position_size)
+    if (position_size.isZero()) {
+      this.logger.event(tags, { object_type: "InsufficientFunds", msg: `No cash available to take position` })
+    }
 
     let totalQuoteTradeQuantity = position_size.toFixed()
     let totalBaseTradeQuantity = new BigNumber(totalQuoteTradeQuantity).dividedBy(signal_price).toFixed(8)

@@ -10,7 +10,6 @@ BigNumber.prototype.valueOf = function () {
 
 import { EdgeCandle } from "../../interfaces/_internal"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-import { Edge70BacktestParameters } from "../../interfaces/edge70-signal"
 import { PositionSizer } from "../../../../interfaces/position-sizer"
 import { BacktesterSpotPostionsTracker } from "./positions-tracker"
 import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-message"
@@ -30,6 +29,8 @@ import { CaptainHooksBacktesterStats } from "./captain-hooks-backtester-stats"
 import { PortfolioSummary } from "./portfolio-summary"
 import { ExchangeInfoGetter } from "../../../../interfaces/exchanges/binance/exchange-info-getter"
 import { timeStamp } from "console"
+import { Edge70Parameters } from "../../interfaces/edge70-signal"
+import { BacktestParameters } from "../edge70-mega-backtester"
 
 /* convert Edge70Signals to Orders and throw them to PositionsTracker - with mock_redis */
 
@@ -61,11 +62,13 @@ export class BacktestPortfolioTracker {
     prices_getter,
     bank,
     exchange_info_getter,
+    backtest_parameters
   }: {
     logger: ServiceLogger
     edge: "edge70" | "edge70-backtest"
     health_and_readiness: HealthAndReadiness
-    edge70_parameters: Edge70BacktestParameters
+    edge70_parameters: Edge70Parameters
+    backtest_parameters: BacktestParameters
     position_sizer: PositionSizer
     redis: RedisClient
     exchange_identifier: ExchangeIdentifier_V3
@@ -83,7 +86,7 @@ export class BacktestPortfolioTracker {
     this.prices_getter = prices_getter
     this.exchange_info_getter = exchange_info_getter
     this.bank = bank
-    this.stop_factor = new BigNumber(edge70_parameters.stop_factor)
+    this.stop_factor = new BigNumber(backtest_parameters.stop_factor)
     const send_message: SendMessageFunc = async (msg: string, tags?: ContextTags) => {
       if (tags) logger.warn(tags, msg)
       else logger.warn(msg)
@@ -108,7 +111,7 @@ export class BacktestPortfolioTracker {
     this.trade_execution = new BacktestTradeExecution({
       logger,
       edge,
-      edge70_parameters,
+      backtest_parameters,
       position_sizer,
       exchange_identifier,
       quote_asset,

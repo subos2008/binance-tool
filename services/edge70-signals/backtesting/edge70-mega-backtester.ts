@@ -31,7 +31,6 @@ import { BinanceExchangeInfoGetter } from "../../../classes/exchanges/binance/ex
 import { HealthAndReadiness } from "../../../classes/health_and_readiness"
 import { BaseAssetsList } from "../base-assets-list"
 import { Edge70Signals } from "../signals"
-import { Edge70BacktestParameters, Edge70Parameters } from "../interfaces/edge70-signal"
 import { DirectionPersistenceMock } from "./direction-persistance-mock"
 import { MarketIdentifier_V5_with_base_asset } from "../../../events/shared/market-identifier"
 import { ContextTags, SendMessageFunc } from "../../../interfaces/send-message"
@@ -51,6 +50,7 @@ import { CachingCandlesCollector } from "../../../classes/candles/caching-candle
 import { ChunkingCandlesCollector } from "../../../classes/candles/chunking-candles-collector"
 import { CandlesCollector } from "../../../classes/candles/interfaces"
 import { randomUUID } from "crypto"
+import { Edge70Parameters } from "../interfaces/edge70-signal"
 
 let full_trace = false
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, events_as_msg: true, full_trace })
@@ -65,7 +65,7 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-const edge70_parameters: Edge70BacktestParameters = {
+const edge70_parameters: Edge70Parameters = {
   // days_of_price_history should be one less than the value we use in the TV high/low indicator
   // because the high/low indicator includes the new candle in it's count
   candle_timeframe: "1d",
@@ -73,71 +73,67 @@ const edge70_parameters: Edge70BacktestParameters = {
     long: 44, // one less than the number we use on the TV high/low indicator
     short: 21, // one less than the number we use on the TV high/low indicator
   },
-  stop_factor: "0.85", // .85 outperforms .90 and .93 but check again
-  starting_cash: 700,
-  symbols_to_run: 300,
 }
 
-// const backtest_parameters = {
-//   base_asset: "BTC",
-//   candles: 1000,
-//   start_date: new Date("2022-05-04"),
-//   end_date: new Date("2022-07-31"), // Nice test, signals long on 29th
-// }
+export type BacktestParameters = {
+  symbols_to_run: number
+  stop_factor: "0.85" | "0.90" | "0.93" // .85 outperforms .90 and .93 but check again
+  timeframe: { start_date: Date; end_date: Date }
+  bank: {
+    starting_cash: number
+    loan_available: number
+  }
+}
 
-// let start_date = new Date("2020-08-01")
-// const backtest_parameters = {
-//   start_date,
-//   end_date: DateTime.fromJSDate(start_date).plus({ days: 490 }).toJSDate(),
-//   // end_date: new Date("2022-07-31"), // too many candle for API
-// }
-
-type BacktestParameters = {
-  start_date: Date
-  end_date: Date
+let backtest_parameters: BacktestParameters = {
+  symbols_to_run: 1,
+  stop_factor: "0.85", // .85 outperforms .90 and .93 but check again
+  timeframe: { start_date: new Date(), end_date: new Date() },
+  bank: {
+    starting_cash: 700,
+    loan_available: 0,
+  },
 }
 
 let period:
+  | undefined
   | "market_top"
   | "bear_accumulation"
   | "bear_just_losses"
   | "edge6x"
-  | undefined
   | "from_first_short_signal_at_end_of_last_bull"
 
 period = "from_first_short_signal_at_end_of_last_bull"
-
-let backtest_parameters: BacktestParameters
 switch (period as string) {
   case `edge6x`: // recent times since we started to have DD results for edge6x
     /* since we started tracking on Datadog - 44 days */
     let start_date = new Date("2022-04-29")
-    backtest_parameters = {
+    backtest_parameters.timeframe = {
       start_date,
       end_date: DateTime.now().toJSDate(),
       // end_date: new Date("2022-07-31"), // too many candle for API
     }
     break
   case `market_top`: // Top of bull leading into choppy period
-    backtest_parameters = {
+    backtest_parameters.timeframe = {
       start_date: new Date("2017-10-01"),
       end_date: new Date("2020-05-01"),
     }
     break
   case `bear_accumulation`: // starts after the top of the top, no wins at the start
-    backtest_parameters = {
+    backtest_parameters.timeframe = {
       start_date: new Date("2018-01-14"), // literal top of the market
       end_date: new Date("2020-05-01"),
     }
     break
   case `bear_just_losses`: // starts after the top of the top, no wins at the start
-    backtest_parameters = {
+    backtest_parameters.timeframe = {
       start_date: new Date("2018-01-14"), // literal top of the market
       end_date: new Date("2019-01-31"),
     }
     break
   case `from_first_short_signal_at_end_of_last_bull`:
-    backtest_parameters = {
+    backtest_parameters.timeframe = {
       start_date: new Date("2021-03-05"), // ~44 days before first short of bull
       end_date: new Date("2022-06-15"),
     }
@@ -151,13 +147,13 @@ const edge: "edge70-backtest" = "edge70-backtest"
 let position_sizer = new BacktesterFixedPositionSizer({ logger })
 
 function get_backtest_slug(edge: string) {
-  let start = DateTime.fromJSDate(backtest_parameters.start_date).toFormat("yyyy-LLL-dd")
-  let days = DateTime.fromJSDate(backtest_parameters.end_date)
-    .diff(DateTime.fromJSDate(backtest_parameters.start_date), "days")
+  let start = DateTime.fromJSDate(backtest_parameters.timeframe.start_date).toFormat("yyyy-LLL-dd")
+  let days = DateTime.fromJSDate(backtest_parameters.timeframe.end_date)
+    .diff(DateTime.fromJSDate(backtest_parameters.timeframe.start_date), "days")
     .toObject().days
   if (!days) throw new Error(`days not defined in candles math`)
 
-  const stop_factor = edge70_parameters.stop_factor
+  const stop_factor = backtest_parameters.stop_factor
   const x = edge70_parameters.candles_of_price_history
   const params = `${x.long + 1}/${x.short + 1}/${stop_factor}`
   const edge_slug = `edge70-${params}`
@@ -228,8 +224,8 @@ class Edge70MegaBacktester {
   }
 
   async init_candles(limit: number) {
-    let start = DateTime.fromJSDate(backtest_parameters.start_date)
-    let end = DateTime.fromJSDate(backtest_parameters.end_date)
+    let start = DateTime.fromJSDate(backtest_parameters.timeframe.start_date)
+    let end = DateTime.fromJSDate(backtest_parameters.timeframe.end_date)
     let days = end.diff(start, "days").toObject().days
     this.logger.info(
       `Running backtest from ${start.toFormat("yyyy LLL dd")} till ${end.toFormat("yyyy LLL dd")} (${days} days)`
@@ -264,8 +260,8 @@ class Edge70MegaBacktester {
         let _candles = await this.candles_collector.get_candles_between({
           timeframe: edge70_parameters.candle_timeframe,
           symbol,
-          start_date: backtest_parameters.start_date,
-          end_date: backtest_parameters.end_date,
+          start_date: backtest_parameters.timeframe.start_date,
+          end_date: backtest_parameters.timeframe.end_date,
         })
         largest_number_of_candles = Math.max(largest_number_of_candles, _candles.length)
 
@@ -408,8 +404,7 @@ async function main() {
       version: "v3",
     }
 
-    let starting_cash = new BigNumber(edge70_parameters.starting_cash)
-    let bank = new BacktesterCashManagement({ logger, starting_cash })
+    let bank = new BacktesterCashManagement({ logger, ...backtest_parameters.bank })
 
     let prices_getter = new MockPricesGetter()
     let backtest_portfolio_tracker = new BacktestPortfolioTracker({
@@ -421,6 +416,7 @@ async function main() {
       exchange_identifier,
       quote_asset: quote_asset,
       edge70_parameters,
+      backtest_parameters,
       prices_getter,
       bank,
       exchange_info_getter,
@@ -438,8 +434,8 @@ async function main() {
       backtest_portfolio_tracker,
       prices_getter,
     })
-    await service.init(backtest_parameters.start_date)
-    await service.init_candles(edge70_parameters.symbols_to_run)
+    await service.init(backtest_parameters.timeframe.start_date)
+    await service.init_candles(backtest_parameters.symbols_to_run)
     await service.run()
   } catch (err) {
     logger.error({ err })

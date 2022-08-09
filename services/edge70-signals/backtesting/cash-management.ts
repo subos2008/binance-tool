@@ -11,29 +11,51 @@ import { BankOfBacktesting } from "./portfolio-tracking/interfaces"
 export class BacktesterCashManagement implements BankOfBacktesting {
   private logger: ServiceLogger
   private cash: BigNumber
+  private loan_available: BigNumber
   private loan: BigNumber = new BigNumber(0)
 
-  constructor({ starting_cash, logger }: { starting_cash: BigNumber; logger: ServiceLogger }) {
-    this.cash = starting_cash
+  constructor({
+    starting_cash,
+    logger,
+    loan_available,
+  }: {
+    loan_available: string | BigNumber | number
+    starting_cash: string | BigNumber | number
+    logger: ServiceLogger
+  }) {
+    this.cash = new BigNumber(starting_cash)
+    this.loan_available = new BigNumber(loan_available)
     this.logger = logger
   }
 
-  withdraw_cash(amount: BigNumber): BigNumber {
-    this.cash = this.cash.minus(amount)
-    if (this.cash.isLessThan(0)) {
-      let loan_amount = this.cash.abs()
-      this.loan = this.loan.plus(loan_amount)
-      this.cash = this.cash.plus(loan_amount) // 0
+  private get_loan(desired_amount: BigNumber) {
+    let loan_amount = BigNumber.max(desired_amount, this.loan_available)
 
-      this.logger.event(
-        {},
-        {
-          object_type: "TookOutLoan",
-          msg: `Took loan of ${loan_amount.toFixed(1)}, total loan now ${this.loan.toFixed(1)}`,
-        }
-      )
+    this.loan_available = this.loan_available.minus(loan_amount)
+    this.loan = this.loan.plus(loan_amount)
+    this.cash = this.cash.plus(loan_amount)
+
+    this.logger.event(
+      {},
+      {
+        object_type: "BankLoanRequest",
+        msg: `Took loan of ${loan_amount.toFixed(1)}, total loan now ${this.loan.toFixed(
+          1
+        )}, remaining ${this.loan_available.toFixed(1)}`,
+      }
+    )
+  }
+
+  withdraw_cash(amount: BigNumber): BigNumber {
+    if (this.cash.isLessThan(amount)) {
+      let desired_amount = amount.minus(this.cash)
+      this.get_loan(desired_amount)
     }
-    return amount
+
+    let withdrawal_amount = BigNumber.max(amount, this.cash)
+    this.cash = this.cash.minus(withdrawal_amount)
+
+    return withdrawal_amount
   }
 
   pay_in_cash(amount: BigNumber): void {

@@ -301,6 +301,12 @@ class Edge70MegaBacktester {
     base_assets = base_assets.slice(0, limit)
     this.logger.info(`Target markets: ${base_assets.join(", ")}`)
 
+    let health_and_readiness_subsystem = health_and_readiness.addSubsystem({
+      name: `Edge70Signals`,
+      healthy: true,
+      ready: true,
+    })
+
     let largest_number_of_candles = 0
     for (let i = 0; i < base_assets.length; i++) {
       let base_asset = base_assets[i]
@@ -347,7 +353,7 @@ class Edge70MegaBacktester {
           send_message,
           direction_persistance: this.direction_persistance,
           logger: this.logger,
-          health_and_readiness,
+          health_and_readiness: health_and_readiness_subsystem,
           initial_candles,
           market_identifier,
           callbacks: this.backtest_portfolio_tracker.edge70_signals_callbacks,

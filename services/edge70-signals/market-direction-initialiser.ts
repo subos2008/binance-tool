@@ -100,7 +100,8 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       //   redis: mock_redis_client,
       // })
 
-      let faux_health_and_readiness = new HealthAndReadiness({ logger: faux_logger })
+      // We don't want this failing to kill the service
+      let faux_health_and_readiness = new HealthAndReadiness({ logger: faux_logger }).addSubsystem({name:`FauxMarketDirectionH&R`, ready:true, healthy:true})
       let edge = new Edge70Signals({
         logger: faux_logger,
         send_message: faux_send_message,

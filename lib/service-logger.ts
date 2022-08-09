@@ -71,21 +71,6 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
     this.bunyan = bunyan.createLogger({ ...params, ...template })
   }
 
-  object(obj: any) {
-    if (this.full_trace) console.trace(`BunyanServiceLogger.object`)
-    if (obj.object_type) {
-      console.trace(`logger.object used for an object_type event, consider porting to use logger.event`)
-    }
-    if (!this.silent) {
-      // wouldn't this just have a string msg? Yes... it does seem to work in DataDog though
-      try {
-        this.bunyan.info(JSON.stringify(obj))
-      } catch (err) {
-        Sentry.captureException(err)
-      }
-    }
-  }
-
   info(obj: Object, ...params: any[]) {
     if (this.full_trace && this.bunyan.info()) console.trace(`BunyanServiceLogger.info`)
     if ((obj as any).object_type) {

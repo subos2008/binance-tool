@@ -10,7 +10,6 @@ export interface Logger {
   warn(tags: Object, ...message: any[]): void
   debug(tags: Object, ...message: any[]): void
   silly(tags: Object, ...message: any[]): void
-  object(tags: Object, ...message: any[]): void // dump object as single line to console info
   event(tags: ContextTags, event: LoggableEvent): void
 }
 
@@ -25,7 +24,6 @@ export interface ServiceLogger {
   warn(tags: Object, ...message: any[]): void
   debug(tags: Object, ...message: any[]): void
   silly(tags: Object, ...message: any[]): void
-  object(tags: Object, ...message: any[]): void // dump object as single line to console info
   exception(tags: ContextTags, err: unknown, msg?: string): void
   event(tags: ContextTags, event: LoggableEvent): void
 }

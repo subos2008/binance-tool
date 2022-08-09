@@ -55,19 +55,6 @@ export class Logger implements LoggerInterface {
     this.bunyan = bunyan.createLogger({ ...params, ...template })
   }
 
-  object(obj: any) {
-    if (!this.silent) {
-      if (this.trace_usage) console.trace(`logger.object used`)
-
-      // wouldn't this just have a string msg? Yes... it does seem to work in DataDog though
-      try {
-        this.bunyan.info(JSON.stringify(obj))
-      } catch (err) {
-        Sentry.captureException(err)
-      }
-    }
-  }
-
   info(obj: Object, ...params: any[]) {
     if (!this.silent) {
       try {

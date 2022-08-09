@@ -76,3 +76,4 @@ terraform.tfstate
 terraform.tfstate.backup
 Icon
 .DS_Store
+foo/

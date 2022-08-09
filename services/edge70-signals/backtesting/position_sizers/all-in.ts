@@ -19,6 +19,10 @@ export class BacktesterAllInPositionSizer implements PositionSizer {
     this.bank = bank
   }
 
+  id_slug(): string {
+    return `b.ai`
+  }
+
   async position_size_in_quote_asset({
     base_asset,
     quote_asset,

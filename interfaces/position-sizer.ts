@@ -12,4 +12,10 @@ export interface PositionSizer {
     edge: string // check if authorised edge inside PositionSizer
     direction: "long" | "short"
   }): Promise<BigNumber>
+
+  /**
+   * id_slug - a short character sequence identifying the position_sizer used
+   * for example; in a backtest
+   **/
+  id_slug(): string
 }

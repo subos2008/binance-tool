@@ -15,6 +15,11 @@ export class FixedPositionSizer implements PositionSizer {
   constructor({ logger }: { logger: Logger }) {
     assert(logger)
     this.logger = logger
+    this.logger.event({}, { object_type: `[PositionSizer]`, msg: `Using ${this.id_slug}` })
+  }
+
+  id_slug(): string {
+    return `bf.dpe` // fixed, dynamic per edge
   }
 
   async position_size_in_quote_asset({

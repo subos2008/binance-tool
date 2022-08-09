@@ -10,10 +10,16 @@ BigNumber.prototype.valueOf = function () {
 
 export class BacktesterFixedPositionSizer implements PositionSizer {
   logger: ServiceLogger
+  amount = new BigNumber(100)
 
   constructor({ logger }: { logger: ServiceLogger }) {
     assert(logger)
     this.logger = logger
+    this.logger.event({}, { object_type: `[PositionSizer]`, msg: `Using ${this.id_slug}` })
+  }
+
+  id_slug(): string {
+    return `bf.${this.amount.toFixed()}`
   }
 
   async position_size_in_quote_asset({
@@ -29,7 +35,7 @@ export class BacktesterFixedPositionSizer implements PositionSizer {
   }): Promise<BigNumber> {
     let tags = { base_asset, quote_asset, edge, direction }
 
-    let amount = new BigNumber(100)
+    let { amount } = this
 
     this.logger.event(tags, {
       object_type: `FixedPositionSizer`,

@@ -27,7 +27,6 @@
 // }
 
 import { ExecutionReport, OrderRejectReason, OrderStatus_LT, OrderType_LT } from "binance-api-node"
-import { AuthorisedEdgeType } from "../../../classes/spot/abstractions/position-identifier"
 import { ExchangeIdentifier_V3, ExchangeType } from "../../../events/shared/exchange-identifier"
 import { OrderContext_V1 } from "../../orders/order-context"
 
@@ -35,6 +34,8 @@ import { OrderContext_V1 } from "../../orders/order-context"
 export interface BinanceOrderData /* extends ExecutionReport */ {
   object_type: "BinanceOrderData"
   version: 1
+  msg?: string
+
   exchange_identifier: ExchangeIdentifier_V3
   exchange_type: ExchangeType
   order_id: string

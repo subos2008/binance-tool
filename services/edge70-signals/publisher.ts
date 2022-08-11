@@ -97,7 +97,7 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
     this.send_message(msg, tags)
 
     try {
-      this.logger.info(args)
+      this.logger.event(tags, args)
       await this.signal_publisher.publish(args)
     } catch (err) {
       this.logger.warn(tags, `Failed to publish ${args.object_type} to AMQP for ${symbol}`)
@@ -142,7 +142,8 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
       symbol: market_identifier.symbol,
       signal_timestamp_ms: signal_timestamp_ms,
     }
-    this.logger.info(JSON.stringify(event))
+    let tags = { base_asset, edge }
+    this.logger.event(tags, event)
     const options = {
       // expiration: event_expiration_seconds,
       persistent: true,

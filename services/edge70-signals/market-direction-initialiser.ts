@@ -101,7 +101,11 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       // })
 
       // We don't want this failing to kill the service
-      let faux_health_and_readiness = new HealthAndReadiness({ logger: faux_logger }).addSubsystem({name:`FauxMarketDirectionH&R`, ready:true, healthy:true})
+      let faux_health_and_readiness = new HealthAndReadiness({ logger: faux_logger }).addSubsystem({
+        name: `FauxMarketDirectionH&R`,
+        ready: true,
+        healthy: true,
+      })
       let edge = new Edge70Signals({
         logger: faux_logger,
         send_message: faux_send_message,
@@ -124,14 +128,15 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       // let direction = await isolated_direction_persistance.get_direction(base_asset)
       if (direction) {
         // await this.direction_persistance.set_direction(base_asset, direction)
-        this.logger.info({
+        let event = {
           object_type: "MarketDirectionInitialiserResult",
           success: true,
           direction,
           symbol,
           base_asset,
           num_candles_history_to_check,
-        })
+        }
+        this.logger.event(tags, event)
       } else {
         this.logger.error(
           `Failed to determine market direction for ${base_asset} with ${num_candles_history_to_check} candles of history`

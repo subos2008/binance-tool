@@ -225,7 +225,7 @@ class Edge70SignalsService {
           direction_persistance: this.direction_persistance,
           edge70_parameters,
         })
-        this.logger.info(tags, {
+        this.logger.event(tags, {
           object_type: "EdgeInitialization",
           msg: `Setup edge for ${symbol} with ${initial_candles.length} initial candles`,
         })

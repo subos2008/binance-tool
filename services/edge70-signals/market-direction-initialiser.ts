@@ -23,7 +23,7 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
   direction_persistance: DirectionPersistence
   market_identifier: MarketIdentifier_V5_with_base_asset
   edge70_parameters: Edge70Parameters
-  num_candles_history_to_check: number = 100
+  num_candles_history_to_check: number = 200 // something on a massive trend might not hit in 100
 
   constructor({
     logger,

@@ -60,15 +60,36 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
-const edge70_parameters: Edge70Parameters = {
-  // days_of_price_history should be one less than the value we use in the TV high/low indicator
-  // because the high/low indicator includes the new candle in it's count
-  candle_timeframe: "1d",
-  candles_of_price_history: {
-    long: 44, // one less than the number we use on the TV high/low indicator
-    short: 21, // one less than the number we use on the TV high/low indicator
+const multi_configuration: { [config_name: string]: Edge70Parameters } = {
+  "edge70-45": {
+    // days_of_price_history should be one less than the value we use in the TV high/low indicator
+    // because the high/low indicator includes the new candle in it's count
+    candle_timeframe: "1d",
+    candles_of_price_history: {
+      long: 44, // one less than the number we use on the TV high/low indicator
+      short: 21, // one less than the number we use on the TV high/low indicator
+    },
+  },
+  "edge70-60": {
+    // days_of_price_history should be one less than the value we use in the TV high/low indicator
+    // because the high/low indicator includes the new candle in it's count
+    candle_timeframe: "1d",
+    candles_of_price_history: {
+      long: 59, // one less than the number we use on the TV high/low indicator
+      short: 21, // one less than the number we use on the TV high/low indicator
+    },
   },
 }
+
+const config_name: string | undefined = process.env.EDGE_CONFIGURATION_NAME
+if (!config_name) throw new Error(`Need to set EDGE_CONFIGURATION_NAME in env`)
+if (!(config_name in multi_configuration))
+  throw new Error(
+    `Configuration name ${config_name} not known/defined. Valid values are: ${Object.keys(
+      multi_configuration
+    ).join(", ")}`
+  )
+const edge70_parameters: Edge70Parameters = multi_configuration[config_name]
 
 const edge: "edge70" = "edge70"
 

@@ -11,13 +11,15 @@ export class DirectionPersistenceRedis implements DirectionPersistence {
     logger,
     prefix,
     redis,
+    edge_parameters_slug, // make this need explicit, if we change the num candles that's a new namespace
   }: {
     logger: ServiceLogger
     prefix: string
     redis: RedisClientType
+    edge_parameters_slug: string
   }) {
     this.logger = logger
-    this.prefix = prefix
+    this.prefix = `${prefix}:${edge_parameters_slug}`
     this.redis = redis
   }
 

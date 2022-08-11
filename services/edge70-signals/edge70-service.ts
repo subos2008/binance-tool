@@ -30,7 +30,7 @@ import { Edge70AMQPSignalPublisher } from "./publisher"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
 import { DirectionPersistence } from "./interfaces/direction-persistance"
-import { DirectionPersistenceRedis } from "./direction-persistance"
+import { DirectionPersistenceRedis } from "./market-direction-persistance"
 import { MarketDirectionInitialiser } from "./market-direction-initialiser"
 import { BunyanServiceLogger } from "../../lib/service-logger"
 import { ServiceLogger } from "../../interfaces/logger"
@@ -345,6 +345,7 @@ async function main() {
     app.get("/send-test-signal", send_test_signal)
 
     let { exchange, exchange_type } = exchange_identifier
+    let market_direction_slug = `${edge70_parameters.candles_of_price_history.long}L${edge70_parameters.candles_of_price_history.short}S`
     let service = new Edge70SignalsService({
       ee,
       exchange_identifier,
@@ -355,6 +356,7 @@ async function main() {
         logger,
         prefix: `${service_name}:${exchange_type}:${exchange}:${quote_symbol.toLowerCase()}_quote`,
         redis,
+        edge_parameters_slug: market_direction_slug,
       }),
       callbacks: publisher,
     })

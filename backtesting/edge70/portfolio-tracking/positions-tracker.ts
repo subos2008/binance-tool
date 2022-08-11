@@ -5,22 +5,22 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-message"
+import { ContextTags, SendMessageFunc } from "../../../interfaces/send-message"
 import {
   check_func,
   SpotPositionTracker,
 } from "../../../amqp/binance-order-data/position-tracker/position-tracker"
-import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
+import { HealthAndReadiness } from "../../../classes/health_and_readiness"
+import { SpotPositionsPersistence } from "../../../classes/spot/persistence/interface/spot-positions-persistance"
+import { SpotPositionsQuery } from "../../../classes/spot/abstractions/spot-positions-query"
 import { RedisClient } from "redis"
-import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
+import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
 import {
   SpotPositionCallbacks,
   SpotPositionClosedEvent_V1,
   SpotPositionOpenedEvent_V1,
-} from "../../../../classes/spot/abstractions/spot-position-callbacks"
-import { ServiceLogger } from "../../../../interfaces/logger"
+} from "../../../classes/spot/abstractions/spot-position-callbacks"
+import { ServiceLogger } from "../../../interfaces/logger"
 
 // return true if the position size passed it would be considered an untradeably small balance on the exchange
 let close_position_check_func: check_func = function ({

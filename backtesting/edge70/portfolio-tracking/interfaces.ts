@@ -3,7 +3,7 @@ import {
   SpotPositionCallbacks,
   SpotPositionClosedEvent_V1,
   SpotPositionOpenedEvent_V1,
-} from "../../../../classes/spot/abstractions/spot-position-callbacks"
+} from "../../../classes/spot/abstractions/spot-position-callbacks"
 import { EdgeCandle } from "../../interfaces/_internal"
 import { PortfolioSummary } from "./portfolio-summary"
 

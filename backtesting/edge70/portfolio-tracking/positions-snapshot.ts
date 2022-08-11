@@ -1,18 +1,18 @@
 #!./node_modules/.bin/ts-node
 
 import BigNumber from "bignumber.js"
-import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
+import { BinanceExchangeInfoGetter } from "../../../classes/exchanges/binance/exchange-info-getter"
 BigNumber.DEBUG = true // Prevent NaN
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { SpotPosition, SpotPositionObject_V2 } from "../../../../classes/spot/abstractions/spot-position"
-import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
-import { ExchangeInfoGetter } from "../../../../interfaces/exchanges/binance/exchange-info-getter"
-import { CurrentAllPricesGetter } from "../../../../interfaces/exchanges/generic/price-getter"
-import { ServiceLogger } from "../../../../interfaces/logger"
-import { Prices } from "../../../../interfaces/portfolio"
+import { SpotPosition, SpotPositionObject_V2 } from "../../../classes/spot/abstractions/spot-position"
+import { SpotPositionsQuery } from "../../../classes/spot/abstractions/spot-positions-query"
+import { ExchangeInfoGetter } from "../../../interfaces/exchanges/binance/exchange-info-getter"
+import { CurrentAllPricesGetter } from "../../../interfaces/exchanges/generic/price-getter"
+import { ServiceLogger } from "../../../interfaces/logger"
+import { Prices } from "../../../interfaces/portfolio"
 
 export interface PositionWithQuoteValue {
   symbol: string

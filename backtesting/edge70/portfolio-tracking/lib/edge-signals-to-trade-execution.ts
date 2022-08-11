@@ -1,6 +1,6 @@
 import { DateTime } from "luxon"
-import { SpotPositionsQuery } from "../../../../../classes/spot/abstractions/spot-positions-query"
-import { ServiceLogger } from "../../../../../interfaces/logger"
+import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
+import { ServiceLogger } from "../../../../interfaces/logger"
 import { Edge70Signal } from "../../../interfaces/edge70-signal"
 import { Edge70SignalCallbacks } from "../../../interfaces/_internal"
 import { BacktesterSpotPostionsTracker } from "../positions-tracker"

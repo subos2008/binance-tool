@@ -13,19 +13,23 @@ export class BacktesterCashManagement implements BankOfBacktesting {
   private cash: BigNumber
   private loan_available: BigNumber
   private loan: BigNumber = new BigNumber(0)
+  dollar_loans: boolean
 
   constructor({
     starting_cash,
     logger,
     loan_available,
+    dollar_loans,
   }: {
     loan_available: string | BigNumber | number
     starting_cash: string | BigNumber | number
     logger: ServiceLogger
+    dollar_loans: boolean
   }) {
     this.cash = new BigNumber(starting_cash)
     this.loan_available = new BigNumber(loan_available)
     this.logger = logger
+    this.dollar_loans = dollar_loans
   }
 
   private get_loan(desired_amount: BigNumber) {
@@ -36,6 +40,12 @@ export class BacktesterCashManagement implements BankOfBacktesting {
     this.cash = this.cash.plus(loan_amount)
 
     if (this.loan_available.isLessThan(0)) throw new Error(`bug in loans code`)
+
+    if (loan_amount.isZero() && this.dollar_loans) {
+      /* no financial value but allows positions tracking + indicates running out of capital */
+      this.loan_available = new BigNumber(1)
+      this.get_loan(desired_amount)
+    }
 
     this.logger.event(
       {},

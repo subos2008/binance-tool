@@ -112,6 +112,7 @@ export class BacktestTradeExecution {
     position_size = this.bank.withdraw_cash(position_size)
     if (position_size.isZero()) {
       this.logger.event(tags, { object_type: "InsufficientFunds", msg: `No cash available to take position` })
+      return
     }
 
     let totalQuoteTradeQuantity = position_size.toFixed()

@@ -475,7 +475,7 @@ async function main() {
       version: "v3",
     }
 
-    let bank = new BacktesterCashManagement({ logger, ...backtest_parameters.bank })
+    let bank = new BacktesterCashManagement({ logger, ...backtest_parameters.bank, dollar_loans: true })
 
     let prices_getter = new MockPricesGetter()
 
@@ -499,7 +499,7 @@ async function main() {
       const params = `${x.long + 1}L${x.short + 1}S${stop_factor}f`
       const edge_slug = `edge70-${params}`
       const psn = position_sizer.id_slug()
-      return `${start}-${days}d-${edge_slug}-${psn}-${randomUUID().slice(-4)}`
+      return `${start}-${days}d-${edge_slug}-${psn}-${period}-${randomUUID().slice(-4)}`
     }
 
     const backtest_run_id = get_backtest_slug("edge70")

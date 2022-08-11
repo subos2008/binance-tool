@@ -63,7 +63,13 @@ export class PositionsSnapshot {
     for (const position of open_positions) {
       let p = await position.describe_position()
       this.positions.push(p)
+      if (p.position_size.isZero()) {
+        throw new Error(`Positions with size 0 in PositionsSnapshot`)
+      }
     }
+
+    let msg = this.positions.map((p) => `${p.base_asset}: ${p.position_size}`).join(", ")
+    this.logger.event({}, { object_type: `PositionsSnapshot`, msg: `[${msg}]` })
   }
 
   async get_positions_quote_values(args: { quote_asset: string }): Promise<PositionWithQuoteValue[]> {

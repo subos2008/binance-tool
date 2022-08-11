@@ -98,9 +98,10 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
 
     try {
       if (this.print_all_trades) {
-        this.logger.info(data, `${symbol} ${side} ${orderType} ORDER #${order_id} (${orderStatus})`)
+        data.msg = `${symbol} ${side} ${orderType} ORDER #${order_id} (${orderStatus})`
+        this.logger.event(tags, data )
         this.logger.info(
-          data,
+          tags,
           `..price: ${price}, quantity: ${quantity}, averageExecutionPrice: ${data.averageExecutionPrice}`
         )
       }

@@ -29,8 +29,8 @@ const tas_quote_asset = config.binance.spot.tas_quote_asset
 import { BinanceCandlesCollector } from "../../classes/candles/candle_utils"
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
-import { BaseAssetsList } from "../base-assets-list"
-import { Edge70Signals } from "../signals"
+import { BaseAssetsList } from "../../services/edge70-signals/base-assets-list"
+import { Edge70Signals } from "../../services/edge70-signals/signals"
 import { DirectionPersistenceMock } from "./direction-persistance-mock"
 import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
 import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
@@ -50,7 +50,7 @@ import { CachingCandlesCollector } from "../../classes/candles/caching-candles-c
 import { ChunkingCandlesCollector } from "../../classes/candles/chunking-candles-collector"
 import { CandlesCollector } from "../../classes/candles/interfaces"
 import { randomUUID } from "crypto"
-import { Edge70Parameters } from "../interfaces/edge70-signal"
+import { Edge70Parameters } from "../../services/edge70-signals/interfaces/edge70-signal"
 
 let full_trace = false
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, events_as_msg: true, full_trace })

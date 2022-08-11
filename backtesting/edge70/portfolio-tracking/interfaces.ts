@@ -3,8 +3,8 @@ import {
   SpotPositionCallbacks,
   SpotPositionClosedEvent_V1,
   SpotPositionOpenedEvent_V1,
-} from "../../classes/spot/abstractions/spot-position-callbacks"
-import { EdgeCandle } from "../../interfaces/_internal"
+} from "../../../classes/spot/abstractions/spot-position-callbacks"
+import { EdgeCandle } from "../../../services/edge70-signals/interfaces/_internal"
 import { PortfolioSummary } from "./portfolio-summary"
 
 export interface BacktesterStatsHooks extends SpotPositionCallbacks {

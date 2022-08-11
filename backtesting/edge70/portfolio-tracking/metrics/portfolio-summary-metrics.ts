@@ -4,10 +4,10 @@
 // - name: INFLUXDB_HOST
 // - name: INFLUXDB_TOKEN
 // - name: INFLUXDB_ORG_ID
+import Sentry from "../../../../lib/sentry"
 
-import influxdb from "../../../lib/influxdb"
-import { ServiceLogger } from "../../../interfaces/logger"
-import Sentry from "../../../lib/sentry"
+import influxdb from "../../../../lib/influxdb"
+import { ServiceLogger } from "../../../../interfaces/logger"
 import { PortfolioSummary } from "../portfolio-summary"
 import { Point } from "@influxdata/influxdb-client"
 

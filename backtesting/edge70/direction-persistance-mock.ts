@@ -1,5 +1,5 @@
 import { ServiceLogger } from "../../interfaces/logger"
-import { DirectionPersistence } from "../interfaces/direction-persistance"
+import { DirectionPersistence } from "../../services/edge70-signals/interfaces/direction-persistance"
 
 export type Direction = "short" | "long" // Redis returns null for unset
 

@@ -53,7 +53,7 @@ process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
   const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-  send_message(`UnhandledPromiseRejection: ${err}`)
+  send_message(`UnhandledPromiseRejection: ${err} - not setting global_health to false`)
 })
 
 function sleep(ms: number) {

@@ -5,9 +5,9 @@
 // - name: INFLUXDB_TOKEN
 // - name: INFLUXDB_ORG_ID
 
-import influxdb from "../../../../lib/influxdb"
-import { ServiceLogger } from "../../../../interfaces/logger"
-import Sentry from "../../../../lib/sentry"
+import influxdb from "../../../lib/influxdb"
+import { ServiceLogger } from "../../../interfaces/logger"
+import Sentry from "../../../lib/sentry"
 import { PortfolioSummary } from "../portfolio-summary"
 import { Point } from "@influxdata/influxdb-client"
 import { DirectionPersistenceMock } from "../../direction-persistance-mock"

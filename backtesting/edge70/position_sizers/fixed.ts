@@ -1,7 +1,7 @@
 import { BigNumber } from "bignumber.js"
 import assert from "node:assert"
-import { ServiceLogger } from "../../../../interfaces/logger"
-import { PositionSizer } from "../../../../interfaces/position-sizer"
+import { ServiceLogger } from "../../../interfaces/logger"
+import { PositionSizer } from "../../../interfaces/position-sizer"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {

@@ -1,5 +1,5 @@
 import { BigNumber } from "bignumber.js"
-import { ServiceLogger } from "../../../interfaces/logger"
+import { ServiceLogger } from "../../interfaces/logger"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {

@@ -8,8 +8,8 @@ BigNumber.prototype.valueOf = function () {
 import {
   SpotPositionClosedEvent_V1_with_percentage_quote_change,
   SpotPositionOpenedEvent_V1,
-} from "../../../classes/spot/abstractions/spot-position-callbacks"
-import { ServiceLogger } from "../../../interfaces/logger"
+} from "../../classes/spot/abstractions/spot-position-callbacks"
+import { ServiceLogger } from "../../interfaces/logger"
 import { BacktesterStatsHooks } from "./interfaces"
 import humanNumber from "human-number"
 import { PortfolioSummary } from "./portfolio-summary"

@@ -1,4 +1,4 @@
-import { ServiceLogger } from "../../../interfaces/logger"
+import { ServiceLogger } from "../../interfaces/logger"
 import { DirectionPersistence } from "../interfaces/direction-persistance"
 
 export type Direction = "short" | "long" // Redis returns null for unset

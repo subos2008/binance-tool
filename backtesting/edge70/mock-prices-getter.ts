@@ -1,5 +1,5 @@
-import { BinanceStyleSpotPrices } from "../../../classes/spot/abstractions/position-identifier"
-import { CurrentAllPricesGetter } from "../../../interfaces/exchanges/generic/price-getter"
+import { BinanceStyleSpotPrices } from "../../classes/spot/abstractions/position-identifier"
+import { CurrentAllPricesGetter } from "../../interfaces/exchanges/generic/price-getter"
 import { CandlesMap } from "./portfolio-tracking/interfaces"
 
 export class MockPricesGetter implements CurrentAllPricesGetter {

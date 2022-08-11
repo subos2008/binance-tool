@@ -1,6 +1,6 @@
 import { ExchangeInfo } from "binance-api-node"
-import { ExchangeIdentifier_V4 } from "../../../events/shared/exchange-identifier"
-import { ExchangeInfoGetter } from "../../../interfaces/exchanges/binance/exchange-info-getter"
+import { ExchangeIdentifier_V4 } from "../../events/shared/exchange-identifier"
+import { ExchangeInfoGetter } from "../../interfaces/exchanges/binance/exchange-info-getter"
 
 export class MockExchangeInfoGetter implements ExchangeInfoGetter {
   get_exchange_identifier(): ExchangeIdentifier_V4 {

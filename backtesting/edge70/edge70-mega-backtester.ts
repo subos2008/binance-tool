@@ -11,7 +11,7 @@ const service_name = "edge70-backtester"
 import binance, { CandleChartResult } from "binance-api-node"
 import { Binance } from "binance-api-node"
 
-import Sentry from "../../../lib/sentry"
+import Sentry from "../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
@@ -23,32 +23,32 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { config } from "../../../config"
+import { config } from "../../config"
 const tas_quote_asset = config.binance.spot.tas_quote_asset
 
-import { BinanceCandlesCollector } from "../../../classes/candles/candle_utils"
-import { BinanceExchangeInfoGetter } from "../../../classes/exchanges/binance/exchange-info-getter"
-import { HealthAndReadiness } from "../../../classes/health_and_readiness"
+import { BinanceCandlesCollector } from "../../classes/candles/candle_utils"
+import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
+import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { BaseAssetsList } from "../base-assets-list"
 import { Edge70Signals } from "../signals"
 import { DirectionPersistenceMock } from "./direction-persistance-mock"
-import { MarketIdentifier_V5_with_base_asset } from "../../../events/shared/market-identifier"
-import { ContextTags, SendMessageFunc } from "../../../interfaces/send-message"
+import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
+import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
 import { DateTime } from "luxon"
 import { RedisClient } from "redis"
 import { BacktestPortfolioTracker } from "./portfolio-tracking/backtest-portfolio-tracker"
-import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
-import { BunyanServiceLogger } from "../../../lib/service-logger"
-import { ServiceLogger } from "../../../interfaces/logger"
+import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
+import { BunyanServiceLogger } from "../../lib/service-logger"
+import { ServiceLogger } from "../../interfaces/logger"
 import { MockPricesGetter } from "./mock-prices-getter"
 import { CandlesMap } from "./portfolio-tracking/interfaces"
 import { CaptainHooksBacktesterStats } from "./portfolio-tracking/captain-hooks-backtester-stats"
 import { BacktesterCashManagement } from "./cash-management"
 import { BacktesterFixedPositionSizer } from "./position_sizers/fixed"
 import { BacktesterAllInPositionSizer } from "./position_sizers/all-in"
-import { CachingCandlesCollector } from "../../../classes/candles/caching-candles-collector"
-import { ChunkingCandlesCollector } from "../../../classes/candles/chunking-candles-collector"
-import { CandlesCollector } from "../../../classes/candles/interfaces"
+import { CachingCandlesCollector } from "../../classes/candles/caching-candles-collector"
+import { ChunkingCandlesCollector } from "../../classes/candles/chunking-candles-collector"
+import { CandlesCollector } from "../../classes/candles/interfaces"
 import { randomUUID } from "crypto"
 import { Edge70Parameters } from "../interfaces/edge70-signal"
 

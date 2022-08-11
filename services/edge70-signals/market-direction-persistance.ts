@@ -1,6 +1,5 @@
 import { RedisClientType } from "redis-v4"
 import { ServiceLogger } from "../../interfaces/logger"
-import { SendMessageFunc } from "../../interfaces/send-message"
 import { Direction, DirectionPersistence } from "./interfaces/direction-persistance"
 
 export class DirectionPersistenceRedis implements DirectionPersistence {

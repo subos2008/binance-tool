@@ -77,7 +77,6 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
     try {
       channel.ack(amqp_event)
       let i: BinanceOrderData = JSON.parse(amqp_event.content.toString())
-      this.logger.info(i)
       await this.processBinanceOrderDataMessage(i)
     } catch (err: any) {
       this.logger.error({ err })
@@ -99,7 +98,7 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
     try {
       if (this.print_all_trades) {
         data.msg = `${symbol} ${side} ${orderType} ORDER #${order_id} (${orderStatus})`
-        this.logger.event(tags, data )
+        this.logger.event(tags, data)
         this.logger.info(
           tags,
           `..price: ${price}, quantity: ${quantity}, averageExecutionPrice: ${data.averageExecutionPrice}`

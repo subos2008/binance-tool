@@ -80,15 +80,19 @@ class MyOrderCallbacks implements OrderCallbacks {
   }
 
   async order_filled(data: BinanceOrderData): Promise<void> {
+    let { edge, side, symbol } = data
+    let tags = { edge, side, symbol }
     let exchange_info = this.exchange_info
     if (data.side == "BUY") {
-      this.logger.info(data, `BUY order on ${data.symbol} filled (edge: ${data.edge}).`)
+      data.msg = `BUY order on ${data.symbol} filled (edge: ${data.edge}).`
+      this.logger.event({}, data)
       this.position_tracker.buy_order_filled({
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
       })
     }
     if (data.side == "SELL") {
-      this.logger.info(data, `SELL order on ${data.symbol} filled (edge: ${data.edge}).`)
+      data.msg = `SELL order on ${data.symbol} filled (edge: ${data.edge}).`
+      this.logger.event({}, data)
       this.position_tracker.sell_order_filled({
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
       })

@@ -110,8 +110,9 @@ let period:
   | "from_start_of_latest_bear_market"
   | "from_start_of_latest_bull_market"
   | "from_start_of_second_previous_bull_market"
+  | "year_to_date"
 
-period = "from_start_of_second_previous_bull_market"
+period = "year_to_date"
 switch (period as string) {
   case `edge6x`: // recent times since we started to have DD results for edge6x
     /* since we started tracking on Datadog - 44 days */
@@ -204,6 +205,12 @@ switch (period as string) {
       /* includes 60 days run up - and includes the final dump before the bull */
       start_date: new Date("2020-05-21"),
       end_date: new Date("2021-05-19"), // Just after the first massive dump
+    }
+    break
+  case `year_to_date`:
+    backtest_parameters.timeframe = {
+      start_date: new Date("2022-01-01"),
+      end_date: new Date(),
     }
     break
   default:

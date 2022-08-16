@@ -36,10 +36,11 @@ export class SendMessage {
       }
       if (response.status != 200) {
         this.logger.error({ res: response })
+        this.logger.error(JSON.stringify(response))
         throw new Error(`Response status code from telegram api: ${response.status} ${response.statusText}`)
       }
       // Success, let's ACK the event
-      // TODO: actually this isn't a great model as the events go to different channels and so
+      // TODO: actually this isn't a great model as the messages go to different channels and so
       // are rate limited separately - this code will prevent one channels messages getting delivered if
       // any channel is getting rate limited
       // What if we had multiple consumers on a queue? How does AMQP handle multiple consumers?

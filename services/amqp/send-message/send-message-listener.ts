@@ -58,9 +58,9 @@ export class AMQP_SendMessageListener implements MessageProcessor {
     let health_and_readiness = this.health_and_readiness.addSubsystem({
       name: event_name,
       ready: false,
-      healthy: false,
+      healthy: true,
     })
-    listener_factory.build_isolated_listener({
+    listener_factory.build_nonisolated_listener({
       event_name,
       message_processor: this,
       health_and_readiness,

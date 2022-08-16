@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 // const amqp_exchange_name = "positions"
 
 const connect_options = require("../../lib/amqp/connect_options").default
@@ -10,7 +9,7 @@ import Sentry from "../../lib/sentry"
 
 import { Channel, connect, Connection } from "amqplib"
 import { assert } from "console"
-import { Logger } from "../../interfaces/logger"
+import { Logger, ServiceLogger } from "../../interfaces/logger"
 import { HealthAndReadinessSubsystem } from "../health_and_readiness"
 import { MessageProcessor } from "./interfaces"
 import { MessageRouting, MyEventNameType } from "./message-routing"
@@ -96,6 +95,67 @@ class MessageProcessorIsolator implements MessageProcessor {
     }
   }
 }
+// Prevents unhandled exceptions from MessageProcessor's
+class MessageProcessorNonIsolator implements MessageProcessor {
+  event_name: string
+  message_processor: MessageProcessor
+  logger: Logger | ServiceLogger
+  health_and_readiness: HealthAndReadinessSubsystem
+
+  constructor({
+    event_name,
+    message_processor,
+    logger,
+    health_and_readiness,
+  }: {
+    message_processor: MessageProcessor
+    event_name: string
+    logger: Logger | ServiceLogger
+    health_and_readiness: HealthAndReadinessSubsystem
+  }) {
+    assert(event_name && message_processor && logger)
+    this.event_name = event_name
+    this.message_processor = message_processor
+    this.logger = logger
+    this.health_and_readiness = health_and_readiness
+  }
+  async process_message(event: any, channel: Channel): Promise<void> {
+    // TODO: sentry scope
+    let raw_body = event.content.toString()
+    let Body
+    try {
+      try {
+        Body = JSON.parse(raw_body)
+      } catch (err) {
+        // Eat and log any messages that are badly formed JSON
+        let event_name = this.event_name
+        Sentry.captureException(err, { extra: { raw_body }, tags: { event_name } })
+        this.logger.error({ err })
+        channel.nack(event) // stop re-delivery of badly formed messages NACK
+        throw err
+      }
+      if (Body.object_type === this.event_name) {
+        return this.message_processor.process_message(event, channel)
+      } else {
+        if (Body.object_type) {
+          this.logger.info(`Skipping ${Body.object_type}, filtering for ${this.event_name}`)
+          channel.ack(event) // If we don't ack here the channel will be closed by the server
+        } else {
+          channel.ack(event) // If we don't ack here the channel will be closed by the server
+          let msg = `Event does not specify an object_type, it will never be processed`
+          this.logger.error(msg)
+          this.logger.error(Body)
+          throw new Error(msg)
+        }
+      }
+    } catch (err) {
+      let event_name = this.event_name
+      Sentry.captureException(err, { extra: { raw_body, Body }, tags: { event_name } })
+      this.logger.error({ err })
+      throw err
+    }
+  }
+}
 
 export class ListenerFactory {
   logger: Logger
@@ -147,6 +207,49 @@ export class ListenerFactory {
     })
   }
 
+  // isolated means it's wrapped in an exception catcher/eater
+  // You might not want to await on this in case it hangs?
+  async build_nonisolated_listener({
+    event_name,
+    message_processor,
+    health_and_readiness,
+    service_name,
+    prefetch_one,
+  }: {
+    message_processor: MessageProcessor
+    event_name: MyEventNameType
+    health_and_readiness: HealthAndReadinessSubsystem
+    service_name?: string
+    prefetch_one: boolean
+  }) {
+    Sentry.withScope(async (scope) => {
+      scope.setTag("event_name", event_name)
+      try {
+        assert(message_processor && event_name)
+        await this.connect({
+          event_name,
+          queue_name: event_name + "-" + service_name,
+          health_and_readiness,
+          message_processor: new MessageProcessorNonIsolator({
+            event_name,
+            message_processor,
+            logger: this.logger,
+            health_and_readiness,
+          }),
+          prefetch_one,
+        })
+      } catch (err) {
+        health_and_readiness.healthy(false)
+        this.logger.error(
+          { err },
+          `Error connecting MessageProcessor for event_name '${event_name}' to amqp server`
+        )
+        Sentry.captureException(err)
+        throw err
+      }
+    })
+  }
+
   private async connect({
     event_name,
     message_processor,
@@ -172,7 +275,7 @@ export class ListenerFactory {
       logger.error(`AMQP Channel closed!`)
       health_and_readiness.healthy(false)
     })
-    health_and_readiness.healthy(true)
+    health_and_readiness.healthy(true) // TODO: this should be initialised to true to prevent race conditions setting it
     health_and_readiness.ready(true)
     // TODO: do we not look at the return code here?
     await channel.assertExchange(exchange_name, exchange_type, { durable })

@@ -1,23 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-import { strict as assert } from "assert"
-
-require("dotenv").config()
-
-const service_name = "amqp-send-message-telegram"
-
-import * as Sentry from "@sentry/node"
-Sentry.init({})
-Sentry.configureScope(function (scope: any) {
-  scope.setTag("service", service_name)
-})
-
-import { Logger } from "../../../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false })
-
-logger.info(`Service starting`)
-
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -25,22 +8,26 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-process.on("unhandledRejection", (err) => {
-  logger.error({ err })
-  Sentry.captureException(err)
-  console.error(`UnhandledPromiseRejection: ${err}`)
-})
+require("dotenv").config()
 
+const service_name = "amqp-send-message-telegram"
+
+import express from "express"
 import { AMQP_SendMessageListener } from "../send-message-listener"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { SendMessage } from "./send-message"
 import { SendMessageToTelegramForwarder } from "./forwarder"
+import { ServiceLogger } from "../../../../interfaces/logger"
+import { BunyanServiceLogger } from "../../../../lib/service-logger"
 
-import express from "express"
-import { SendMessageFunc } from "../../../../interfaces/send-message"
-import { SendMessage as RawSendMessage } from "../../../../lib/telegram-v2"
-const raw_send_message: SendMessageFunc = new RawSendMessage({ service_name, logger }).build()
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
+
+logger.info(`Service starting`)
+
+process.on("unhandledRejection", (err) => {
+  logger.exception({}, err)
+})
 
 async function main() {
   const execSync = require("child_process").execSync
@@ -59,10 +46,7 @@ async function main() {
 }
 
 main().catch((err) => {
-  Sentry.captureException(err)
-  logger.error(`Error in main loop: ${err}`)
-  logger.error({ err })
-  logger.error(`Error in main loop: ${err.stack}`)
+  logger.exception({}, err)
   soft_exit(1, `Error in main loop: ${err}`)
 })
 

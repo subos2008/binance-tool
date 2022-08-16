@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 /**
  * Event/message listener
  */
@@ -9,7 +8,6 @@
 import * as Sentry from "@sentry/node"
 Sentry.init({})
 
-import { Logger } from "../../../lib/faux_logger"
 import { Channel, Message } from "amqplib"
 
 import { SendMessageEvent } from "../../../classes/send_message/publish"
@@ -17,6 +15,7 @@ import { MyEventNameType } from "../../../classes/amqp/message-routing"
 import { ListenerFactory } from "../../../classes/amqp/listener-factory"
 import { HealthAndReadiness } from "../../../classes/health_and_readiness"
 import { MessageProcessor } from "../../../classes/amqp/interfaces"
+import { Logger } from "../../../interfaces/logger"
 
 export interface SendMessageCallback {
   processSendMessageEvent(event: SendMessageEvent, ack_func: () => void): Promise<void>

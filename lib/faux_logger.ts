@@ -45,7 +45,7 @@ export class Logger implements LoggerInterface {
       //   },
       // ],
       // src: true, // slow, not for production
-      // serializers: bunyan.stdSerializers,
+      serializers: bunyan.stdSerializers,
       // serializers: <serializers mapping>, // Optional, see "Serializers" section
       // src: <boolean>,                     // Optional, see "src" section
 

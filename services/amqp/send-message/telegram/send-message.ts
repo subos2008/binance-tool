@@ -1,13 +1,13 @@
 import { URL } from "url"
 import fetch from "node-fetch"
-import { Logger } from "../../../../interfaces/logger"
+import { ServiceLogger } from "../../../../interfaces/logger"
 import Sentry from "../../../../lib/sentry"
 import { ContextTags } from "../../../../interfaces/send-message"
 
 export class SendMessage {
-  private logger: Logger
+  private logger: ServiceLogger
 
-  constructor({ logger }: { logger: Logger }) {
+  constructor({ logger }: { logger: ServiceLogger }) {
     this.logger = logger
   }
 
@@ -48,8 +48,7 @@ export class SendMessage {
       ack_func()
     } catch (err) {
       // few things throw
-      Sentry.captureException(err)
-      this.logger.error({ err })
+      this.logger.exception(tags, err)
     }
   }
 }

@@ -27,6 +27,7 @@ const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", r
 logger.info(`Service starting`)
 
 process.on("unhandledRejection", (err) => {
+  logger.error({}, `Unhandled Exception: ${err}`)
   logger.exception({}, err)
   service_is_healthy.healthy(false)
 })

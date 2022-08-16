@@ -1,14 +1,13 @@
 import { SendMessageEvent } from "../../../../classes/send_message/publish"
 import { SendMessageCallback } from "../send-message-listener"
 import { SendMessage } from "./send-message"
-import { Logger } from "../../../../interfaces/logger"
-import { Channel } from "amqplib"
+import { ServiceLogger } from "../../../../interfaces/logger"
 
 export class SendMessageToTelegramForwarder implements SendMessageCallback {
   send_message: SendMessage
-  logger: Logger
+  logger: ServiceLogger
 
-  constructor({ send_message, logger }: { send_message: SendMessage; logger: Logger }) {
+  constructor({ send_message, logger }: { send_message: SendMessage; logger: ServiceLogger }) {
     this.logger = logger
     this.send_message = send_message
   }

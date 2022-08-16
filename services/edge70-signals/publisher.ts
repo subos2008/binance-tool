@@ -92,7 +92,8 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
     }
 
     /* telegram */
-    let msg = args.msg
+    let direction_string = direction === "long" ? "LONG ⬆" : "SHORT ⬇"
+    let msg = `signal ${edge.toUpperCase()} ${direction_string} ${base_asset} (${symbol})`
     this.logger.info(tags, msg)
     this.send_message(msg, tags)
 

@@ -55,10 +55,8 @@ import { get_redis_client } from "../../lib/redis-v4"
 import { RedisClientType } from "redis-v4"
 import { StatsD } from "hot-shots"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
-import { disallowed_base_assets_for_entry } from "../../lib/stable-coins"
 import { BaseAssetsList } from "./base-assets-list"
 import { Edge60EntrySignals } from "./edge60-entry-signals"
-import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
 import { SendMessageFunc } from "../../interfaces/send-message"
 
 var dogstatsd = new StatsD()

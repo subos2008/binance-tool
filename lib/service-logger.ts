@@ -33,8 +33,14 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
       template,
       level,
       events_as_msg,
-      full_trace
-    }: { silent: boolean; template?: object; level?: bunyan.LogLevel; events_as_msg?: boolean, full_trace?:boolean } = {
+      full_trace,
+    }: {
+      silent: boolean
+      template?: object
+      level?: bunyan.LogLevel
+      events_as_msg?: boolean
+      full_trace?: boolean
+    } = {
       silent: false,
       template: {},
     }
@@ -74,7 +80,11 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   info(obj: Object, ...params: any[]) {
     if (this.full_trace && this.bunyan.info()) console.trace(`BunyanServiceLogger.info`)
     if ((obj as any).object_type) {
-      console.trace(`logger.info used for an object_type event, consider porting to use logger.event`)
+      console.trace(
+        `logger.info used for an object_type event (${
+          (obj as any).object_type
+        }), consider porting to use logger.event`
+      )
     }
 
     if (!this.silent) {

@@ -18,10 +18,8 @@ export class SendMessage {
     return process.env.TELEGRAM_CHAT_ID as string
   }
 
-  async send_message(ack_func: () => void, service_name: string, message: string, _tags?: ContextTags) {
-    let tags: any = _tags || {}
-    tags.object_type = "SendMessage"
-    this.logger.info(tags, message)
+  async send_message(ack_func: () => void, service_name: string, message: string, tags: ContextTags = {}) {
+    this.logger.event(tags, { object_type: "SendMessage", msg: message })
     try {
       const url = new URL(`https://api.telegram.org/bot${process.env.TELEGRAM_KEY}/sendMessage`)
       url.searchParams.append("chat_id", this.get_chat_id(tags))
@@ -31,7 +29,7 @@ export class SendMessage {
         // https://core.telegram.org/bots/faq#my-bot-is-hitting-limits-how-do-i-avoid-this
         Sentry.captureException(new Error(`Hit rate limit on telegram API (429)`))
         this.logger.warn(`Hit rate limit on telegram API (429)`)
-        setTimeout(this.send_message.bind(this, ack_func, message, tags), 1000 * 61)
+        setTimeout(this.send_message.bind(this, ack_func, service_name, message, tags), 1000 * 61)
         return
       }
       if (response.status != 200) {

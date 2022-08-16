@@ -6,8 +6,8 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { SpotPosition, SpotPositionObject_V2 } from "../../../classes/spot/abstractions/spot-position"
-import { SpotPositionsQuery } from "../../../classes/spot/abstractions/spot-positions-query"
+import { SpotPosition, SpotPositionObject_V2 } from "./spot-position"
+import { SpotPositionsQuery } from "./spot-positions-query"
 import { ExchangeInfoGetter } from "../../../interfaces/exchanges/binance/exchange-info-getter"
 import { CurrentAllPricesGetter } from "../../../interfaces/exchanges/generic/price-getter"
 import { ServiceLogger } from "../../../interfaces/logger"

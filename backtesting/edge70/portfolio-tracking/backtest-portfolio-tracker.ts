@@ -20,7 +20,7 @@ import { RedisSpotPositionsPersistence } from "../../../classes/spot/persistence
 import { MarketIdentifier_V5_with_base_asset } from "../../../events/shared/market-identifier"
 import { RedisOrderContextPersistence } from "../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { ServiceLogger } from "../../../interfaces/logger"
-import { PositionsSnapshot } from "./positions-snapshot"
+import { PositionsSnapshot } from "../../../classes/spot/abstractions/positions-snapshot"
 import { CurrentAllPricesGetter } from "../../../interfaces/exchanges/generic/price-getter"
 import { BacktestTradeExecution } from "./lib/backtest-trade-execution"
 import { EdgeSignalsToTradeExecution } from "./lib/edge-signals-to-trade-execution"

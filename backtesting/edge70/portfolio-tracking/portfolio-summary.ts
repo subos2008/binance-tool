@@ -5,7 +5,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { PositionsSnapshot } from "./positions-snapshot"
+import { PositionsSnapshot } from "../../../classes/spot/abstractions/positions-snapshot"
 
 export class PortfolioSummary {
   timestamp: Date

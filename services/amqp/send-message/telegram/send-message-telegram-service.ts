@@ -22,11 +22,13 @@ import { BunyanServiceLogger } from "../../../../lib/service-logger"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 logger.info(`Service starting`)
 
 process.on("unhandledRejection", (err) => {
   logger.exception({}, err)
+  service_is_healthy.healthy(false)
 })
 
 async function main() {
@@ -49,8 +51,6 @@ main().catch((err) => {
   logger.exception({}, err)
   soft_exit(1, `Error in main loop: ${err}`)
 })
-
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 // Note this method returns!
 function soft_exit(exit_code: number | null = null, reason: string) {

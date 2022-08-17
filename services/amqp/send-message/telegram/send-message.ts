@@ -30,16 +30,20 @@ export class SendMessage {
     }
 
     /* check for messages that are too long and break them up */
-    if (message.length >= 4000) {
+    let split_index = 4000
+    if (message.length > split_index) {
       // 4096
-      let split_index = 4000
       let m1 = message.slice(0, split_index)
       let remainder = message.slice(split_index)
+      this.logger.event(tags, {
+        object_type: "SplitSendMessage",
+        msg: `Split messge, M1 size ${m1.length}, remainder ${remainder.length}`,
+      })
       let fake_ack = () => {
         return
       }
-      await this.send_message(fake_ack, service_name, m1)
-      await this.send_message(ack_func, service_name, remainder)
+      await this.send_message(fake_ack, service_name, m1, tags)
+      await this.send_message(ack_func, service_name, remainder, tags)
       return
     }
 

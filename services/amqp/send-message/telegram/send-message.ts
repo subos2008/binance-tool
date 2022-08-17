@@ -19,7 +19,15 @@ export class SendMessage {
   }
 
   async send_message(ack_func: () => void, service_name: string, message: string, tags: ContextTags = {}) {
-    this.logger.event(tags, { object_type: "SendMessage", msg: message })
+    this.logger.event(tags, { object_type: "SendMessage", msg: message || "(null)" })
+    if (!message) {
+      this.logger.event(tags, {
+        object_type: "BlankSendMessage",
+        msg: `Just got a blank SendMessage! ..skipping..`,
+      })
+      ack_func()
+      return
+    }
     try {
       const url = new URL(`https://api.telegram.org/bot${process.env.TELEGRAM_KEY}/sendMessage`)
       url.searchParams.append("chat_id", this.get_chat_id(tags))

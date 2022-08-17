@@ -13,12 +13,13 @@ require("dotenv").config()
 const service_name = "amqp-send-message-telegram"
 
 import express from "express"
-import { AMQP_SendMessageListener } from "../send-message-listener"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { SendMessage } from "./send-message"
 import { SendMessageToTelegramForwarder } from "./forwarder"
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { BunyanServiceLogger } from "../../../../lib/service-logger"
+import { TypedListenerFactory } from "../../../../classes/amqp/listener-factory-v2"
+import { MyEventNameType } from "../../../../classes/amqp/message-routing"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
@@ -37,15 +38,23 @@ async function main() {
   execSync("date -u")
 
   let send_message = new SendMessage({ logger })
+  let message_processor = new SendMessageToTelegramForwarder({ send_message: send_message, logger })
 
-  let listener = new AMQP_SendMessageListener({
-    logger,
-    health_and_readiness,
-    callback: new SendMessageToTelegramForwarder({ send_message: send_message, logger }),
-    service_name,
+  let listener_factory = new TypedListenerFactory({ logger })
+  let event_name: MyEventNameType = "SendMessage"
+  let listener_health = health_and_readiness.addSubsystem({
+    name: event_name,
+    ready: false,
+    healthy: true,
   })
-
-  await listener.start()
+  await listener_factory.build_listener({
+    event_name,
+    message_processor,
+    health_and_readiness: listener_health,
+    service_name,
+    prefetch_one: true,
+    eat_exceptions: false,
+  })
 }
 
 main().catch((err) => {

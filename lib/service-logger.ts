@@ -161,12 +161,15 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   /**
    * Interface V2 - tags are native, more context about what we are logging.
    * Will allow us to search for and eliminate simple `msg:string` logs
+   *
+   * Supplied msg will be used if msg is not present in exception. msg is also
+   * backed up and passed through as msg2.
    */
   exception(tags: ContextTags, err: unknown, msg?: string) {
     if (this.full_trace) console.trace(`BunyanServiceLogger.exception`)
     try {
       let _err = err as any
-      this.bunyan.error({ ...tags, msg, ..._err })
+      this.bunyan.error({ ...tags, msg, msg2: msg, err: _err })
       Sentry.captureException(err)
     } catch (err) {
       console.error(`Failed to log exception:`)

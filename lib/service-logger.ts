@@ -190,7 +190,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
             this.bunyan.info({ ...tags, ...event })
           }
         } else {
-          this.bunyan.info(tags, event)
+          this.bunyan.info({ ...tags, ...event }, event.msg)
         }
       } catch (err) {
         Sentry.captureException(err)

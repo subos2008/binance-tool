@@ -41,6 +41,7 @@ export class SendMessage {
       if (response.status != 200) {
         this.logger.error({ res: response })
         this.logger.error(JSON.stringify(response))
+        this.logger.error(await response.json())
         throw new Error(`Response status code from telegram api: ${response.status} ${response.statusText}`)
       }
       // Success, let's ACK the event

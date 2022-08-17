@@ -19,12 +19,10 @@ export class SendMessage {
   }
 
   async send_message(ack_func: () => void, service_name: string, message: string, tags: ContextTags = {}) {
-    this.logger.event(tags, { object_type: "SendMessage", msg: message || "(null)" })
+    let event = { object_type: "SendMessage", msg: message || "(null)", service_name }
+    this.logger.event(tags, event)
     if (!message) {
-      this.logger.event(tags, {
-        object_type: "BlankSendMessage",
-        msg: `Just got a blank SendMessage! ..skipping..`,
-      })
+      this.logger.event(tags, { ...event, object_type: "BlankSendMessage" })
       ack_func()
       return
     }

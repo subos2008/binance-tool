@@ -1,4 +1,4 @@
-import { ExchangeType } from "../events/shared/exchange-identifier";
+import { ExchangeType } from "../events/shared/exchange-identifier"
 
 export type SendMessageFunc = (msg: string, tags?: ContextTags) => void
 
@@ -9,4 +9,5 @@ export interface ContextTags {
   class?: string // name of the class calling send_message
   exchange_type?: ExchangeType
   symbol?: string
+  unhandledRejection?: boolean // set on exceptions
 }

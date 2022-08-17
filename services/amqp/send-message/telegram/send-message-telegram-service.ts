@@ -28,7 +28,7 @@ logger.info(`Service starting`)
 
 process.on("unhandledRejection", (err) => {
   logger.error({}, `Unhandled Exception: ${err}`)
-  logger.exception({}, err)
+  logger.exception({ unhandledRejection: true }, err)
   service_is_healthy.healthy(false)
 })
 

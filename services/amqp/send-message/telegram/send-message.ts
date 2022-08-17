@@ -21,11 +21,28 @@ export class SendMessage {
   async send_message(ack_func: () => void, service_name: string, message: string, tags: ContextTags = {}) {
     let event = { object_type: "SendMessage", msg: message || "(null)", service_name }
     this.logger.event(tags, event)
+
+    /* Check for blank message */
     if (!message) {
       this.logger.event(tags, { ...event, object_type: "BlankSendMessage" })
       ack_func()
       return
     }
+
+    /* check for messages that are too long and break them up */
+    if (message.length >= 4000) {
+      // 4096
+      let split_index = 4000
+      let m1 = message.slice(0, split_index)
+      let remainder = message.slice(split_index)
+      let fake_ack = () => {
+        return
+      }
+      await this.send_message(fake_ack, service_name, m1)
+      await this.send_message(ack_func, service_name, remainder)
+      return
+    }
+
     try {
       const url = new URL(`https://api.telegram.org/bot${process.env.TELEGRAM_KEY}/sendMessage`)
       url.searchParams.append("chat_id", this.get_chat_id(tags))

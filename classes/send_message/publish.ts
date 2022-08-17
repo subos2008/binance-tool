@@ -41,6 +41,10 @@ export class SendMessage {
   send_message(message: string, _tags?: ContextTags) {
     let tags = _tags || {}
     try {
+      if (!message) {
+        this.logger.error(`Empty message in send_message!`)
+        console.trace(`Empty message in send_message!`)
+      }
       let event: SendMessageEvent = {
         object_type: "SendMessage",
         msg: message,

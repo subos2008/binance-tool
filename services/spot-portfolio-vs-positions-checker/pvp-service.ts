@@ -8,12 +8,11 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { strict as assert } from "assert"
-import express, { Request, Response } from "express"
-import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
-import { get_redis_client } from "../../lib/redis-v4"
-import { RedisClientType } from "redis-v4"
+import express from "express"
+import { get_redis_client } from "../../lib/redis"
+import { RedisClient } from "redis"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
-import { ExchangeIdentifier_V4 } from "../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V4, ei_v4_to_v3 } from "../../events/shared/exchange-identifier"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import { BunyanServiceLogger } from "../../lib/service-logger"
 import { ServiceLogger } from "../../interfaces/logger"
@@ -21,9 +20,12 @@ import { SendMessage } from "../../classes/send_message/publish"
 import binance from "binance-api-node"
 import { Binance } from "binance-api-node"
 import { PortfolioVsPositions } from "./portfolio-vs-positions"
+import { RedisSpotPositionsPersistence } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
+import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 
 /** Config: */
 const service_name = "portfolo-vs-positions"
+require("dotenv").config()
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
 
@@ -55,15 +57,22 @@ async function main() {
 
   try {
     const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
-    let redis: RedisClientType = await get_redis_client(logger, redis_health)
-
-    // let service = new PortfolioVsPositions({
-    //   ee,
-    //   exchange_identifier,
-    //   logger,
-    //   send_message,
-    //   health_and_readiness,
-    // })
+    let redis: RedisClient = await get_redis_client()
+    let positions_persistance = new RedisSpotPositionsPersistence({ logger, redis })
+    let spot_positions_query = new SpotPositionsQuery({
+      logger,
+      positions_persistance,
+      send_message,
+      exchange_identifier: ei_v4_to_v3(exchange_identifier),
+    })
+    let service = new PortfolioVsPositions({
+      ee,
+      logger,
+      send_message,
+      health_and_readiness,
+      spot_positions_query,
+      redis,
+    })
     // await service.init()
     global_health.ready(true)
     // await service.run()

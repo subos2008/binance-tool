@@ -28,3 +28,7 @@ export type ExchangeIdentifier_V4 = {
 export function exchange_identifier_to_redis_key_snippet(exchange_identifier: ExchangeIdentifier_V3) {
   return `${exchange_identifier.type}:${exchange_identifier.exchange}:${exchange_identifier.account}`
 }
+
+export function ei_v4_to_v3(ei: ExchangeIdentifier_V4): ExchangeIdentifier_V3 {
+  return { version: "v3", exchange: ei.exchange, type: ei.exchange_type, account: "default" }
+}

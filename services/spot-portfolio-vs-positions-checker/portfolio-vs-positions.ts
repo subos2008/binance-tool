@@ -92,9 +92,26 @@ export class PortfolioVsPositions {
     let net_expected: { [base_asset: string]: { base_amount: BigNumber } } = {}
     for (const base_asset of combined_base_assets) {
       /* check each direction and produce results... could be net amount +/- vs expected? */
+      if (!expected_total_holdings[base_asset]) expected_total_holdings[base_asset] = new BigNumber(0)
+      if (!actual_holdings[base_asset]) actual_holdings[base_asset] = new BigNumber(0)
+
       net_expected[base_asset] = {
         base_amount: expected_total_holdings[base_asset].minus(actual_holdings[base_asset]),
       }
     }
+    
+    let sort_func = (a: string, b: string) => {
+      return net_expected[a].base_amount.isGreaterThan(net_expected[b].base_amount) ? 1 : -1
+    }
+
+    let sorted_base_assets: string[] = Object.keys(combined_base_assets).sort(sort_func)
+    for (const base_asset of sorted_base_assets)
+      if (!net_expected[base_asset].base_amount.isZero()) {
+        this.logger.warn(
+          `Mismatch on ${base_asset}: expected ${expected_total_holdings[base_asset].toFixed()}, actual ${
+            actual_holdings[base_asset]
+          }`
+        )
+      }
   }
 }

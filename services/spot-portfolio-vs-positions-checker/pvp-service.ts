@@ -9,14 +9,14 @@ BigNumber.prototype.valueOf = function () {
 
 import { strict as assert } from "assert"
 import express from "express"
-import { get_redis_client } from "../../lib/redis"
+import { get_redis_client, set_redis_logger } from "../../lib/redis"
 import { RedisClient } from "redis"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { ExchangeIdentifier_V4, ei_v4_to_v3 } from "../../events/shared/exchange-identifier"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import { BunyanServiceLogger } from "../../lib/service-logger"
 import { ServiceLogger } from "../../interfaces/logger"
-import { SendMessage } from "../../classes/send_message/publish"
+// import { SendMessage } from "../../classes/send_message/publish"
 import binance from "binance-api-node"
 import { Binance } from "binance-api-node"
 import { PortfolioVsPositions } from "./portfolio-vs-positions"
@@ -31,12 +31,12 @@ const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "d
 
 process.on("unhandledRejection", (err) => {
   logger.exception({}, err)
-  const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-  send_message(`UnhandledPromiseRejection: ${err} - not setting global_health to false`)
+  // const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
+  // send_message(`UnhandledPromiseRejection: ${err} - not setting global_health to false`)
 })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
+const send_message: SendMessageFunc = (s) => console.log(s) //new SendMessage({ service_name, logger, health_and_readiness }).build()
 const global_health = health_and_readiness.addSubsystem({ name: "global", ready: false, healthy: true })
 
 var app = express()
@@ -57,7 +57,8 @@ async function main() {
 
   try {
     const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
-    let redis: RedisClient = await get_redis_client()
+    let redis: RedisClient = get_redis_client()
+    set_redis_logger(logger)
     let positions_persistance = new RedisSpotPositionsPersistence({ logger, redis })
     let spot_positions_query = new SpotPositionsQuery({
       logger,
@@ -75,7 +76,7 @@ async function main() {
     })
     // await service.init()
     global_health.ready(true)
-    // await service.run()
+    await service.run_once()
   } catch (err) {
     logger.exception({}, err)
   }

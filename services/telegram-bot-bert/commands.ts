@@ -118,17 +118,16 @@ export class Commands {
         return
       }
 
-      let edge: AuthorisedEdgeType
-      try {
-        edge = check_edge(edge_unchecked)
-      } catch (err) {
-        this.logger.error({ err })
-        Sentry.captureException(err)
-        ctx.replyWithHTML(`Invalid format for edge '${edge_unchecked}', expected something like edgeNN`)
-        return
-      }
-
       if (command == "long") {
+        let edge: AuthorisedEdgeType
+        try {
+          edge = check_edge(edge_unchecked)
+        } catch (err) {
+          this.logger.error({ err })
+          Sentry.captureException(err)
+          ctx.replyWithHTML(`Invalid format for edge '${edge_unchecked}', expected something like edgeNN`)
+          return
+        }
         let signal_timestamp_ms = Date.now()
         let result: TradeAbstractionOpenLongResult = await this.spot_tas_client.long({
           object_type: "TradeAbstractionOpenLongCommand",
@@ -142,6 +141,7 @@ export class Commands {
       }
 
       if (command == "close") {
+        let edge = edge_unchecked
         let result = await this.close_spot_long(ctx, { asset: base_asset, edge })
         ctx.reply(`Spot long close on ${edge}:${base_asset}: ${result.status}`)
       }

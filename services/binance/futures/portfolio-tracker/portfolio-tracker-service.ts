@@ -124,7 +124,7 @@ class PortfolioTracker implements MasterPortfolioClass {
       for (const balance of portfolio.balances) {
         let base_asset = balance.asset
         if (balance.quote_equivalents) {
-          this.logger.info(
+          this.logger.debug(
             `Submitting metrics for ${base_asset}: ${Object.keys(balance.quote_equivalents).join(", ")}`
           )
         } else this.logger.info(`No balance.quote_equivalents for ${base_asset}: `)

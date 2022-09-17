@@ -3,6 +3,7 @@ import { CurrentPriceGetter } from "../generic/price-getter"
 
 import { BigNumber } from "bignumber.js"
 import { Logger } from "../../logger"
+import { Prices } from "../../portfolio"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -10,10 +11,10 @@ BigNumber.prototype.valueOf = function () {
 }
 
 export class BinancePriceGetter implements CurrentPriceGetter {
-  ee: Binance
-  prices: { [symbol: string]: string } | null = null
-  cache_timeout_ms: number
-  logger: Logger
+  private ee: Binance
+  private prices: Prices | null = null
+  private cache_timeout_ms: number
+  private logger: Logger
 
   constructor({ logger, ee, cache_timeout_ms }: { logger: Logger; ee: Binance; cache_timeout_ms?: number }) {
     this.ee = ee
@@ -21,7 +22,7 @@ export class BinancePriceGetter implements CurrentPriceGetter {
     this.logger = logger
   }
 
-  async get_current_price({ market_symbol }: { market_symbol: string }): Promise<BigNumber> {
+  async get_current_prices(): Promise<Prices> {
     if (!this.prices) {
       this.logger.event({}, { object_type: "BinanceCurrentPriceGetterCacheMiss" })
       this.prices = await this.ee.prices()
@@ -30,7 +31,12 @@ export class BinancePriceGetter implements CurrentPriceGetter {
       }, this.cache_timeout_ms)
       timer.unref()
     }
-    return new BigNumber(this.prices[market_symbol])
+    return this.prices
+  }
+
+  async get_current_price({ market_symbol }: { market_symbol: string }): Promise<BigNumber> {
+    let prices = await this.get_current_prices()
+    return new BigNumber(prices[market_symbol])
   }
 }
 

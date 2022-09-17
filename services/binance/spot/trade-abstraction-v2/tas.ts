@@ -60,6 +60,7 @@ process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
+  service_is_healthy.healthy(false)
 })
 
 app.use(

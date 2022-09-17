@@ -40,16 +40,19 @@ logger.info(`Service starting.`)
 
 import { SendMessage } from "../../classes/send_message/publish"
 import { SendMessageFunc } from "../../interfaces/send-message"
+
 const health_and_readiness = new HealthAndReadiness({ logger })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
+  service_is_healthy.healthy(false)
 })
 
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 class EventLogger implements MessageProcessor {
   send_message: Function

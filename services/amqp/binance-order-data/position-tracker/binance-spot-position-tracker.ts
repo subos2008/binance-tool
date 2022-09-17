@@ -39,13 +39,17 @@ import { ServiceLogger } from "../../../../interfaces/logger"
 import { BunyanServiceLogger } from "../../../../lib/service-logger"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+
 const health_and_readiness = new HealthAndReadiness({ logger })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
+  service_is_healthy.healthy(false)
 })
 
 set_redis_logger(logger)

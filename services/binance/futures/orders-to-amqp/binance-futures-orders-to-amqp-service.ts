@@ -39,6 +39,7 @@ import { BinanceFuturesOrdersToAMQP } from "./binance-futures-orders-to-amqp"
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 
 const health_and_readiness = new HealthAndReadiness({ logger })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger,health_and_readiness }).build()
 
@@ -53,6 +54,7 @@ process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
+  service_is_healthy.healthy(false)
 })
 
 const exchange_identifier: ExchangeIdentifier_V3 = {
@@ -64,7 +66,6 @@ const exchange_identifier: ExchangeIdentifier_V3 = {
 
 
 
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 async function main() {
   const execSync = require("child_process").execSync

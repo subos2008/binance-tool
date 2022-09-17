@@ -78,7 +78,7 @@ process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
-  // TODO: set unhealthy?
+  service_is_healthy.healthy(false)
 })
 
 class PortfolioTracker implements MasterPortfolioClass {

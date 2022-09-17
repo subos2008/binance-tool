@@ -49,6 +49,7 @@ process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
+  service_is_healthy.healthy(false)
 })
 
 import express, { NextFunction, Request, Response } from "express"

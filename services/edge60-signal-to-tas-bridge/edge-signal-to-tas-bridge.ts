@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 /**
  * Event/message listener
  */
@@ -33,12 +32,15 @@ import { SendMessageFunc } from "../../interfaces/send-message"
 const logger: Logger = new Logger({ silent: false })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
+  service_is_healthy.healthy(false)
 })
 
 const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
@@ -111,12 +113,6 @@ class Edge60MessageProcessor implements MessageProcessor {
     }
   }
 }
-
-const service_is_healthy: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
-  name: "global",
-  ready: true,
-  healthy: true,
-})
 
 async function main() {
   const execSync = require("child_process").execSync

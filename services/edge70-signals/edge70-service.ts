@@ -49,13 +49,6 @@ const tas_quote_asset = config.binance.spot.tas_quote_asset
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
 
-process.on("unhandledRejection", (err) => {
-  logger.error({ err })
-  Sentry.captureException(err)
-  const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-  send_message(`UnhandledPromiseRejection: ${err} - not setting global_health to false`)
-})
-
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -95,12 +88,20 @@ const edge: "edge70" = "edge70"
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-const global_health = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 const init_health = health_and_readiness.addSubsystem({ name: "init-boot", ready: false, healthy: false })
 const candle_ingestion_health = health_and_readiness.addSubsystem({
   name: "candle-ingestion",
   ready: false,
   healthy: true,
+})
+
+process.on("unhandledRejection", (err) => {
+  logger.error({ err })
+  Sentry.captureException(err)
+  const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
+  send_message(`UnhandledPromiseRejection: ${err} - not setting global_health to false`)
+  service_is_healthy.healthy(false)
 })
 
 class Edge70SignalsService {

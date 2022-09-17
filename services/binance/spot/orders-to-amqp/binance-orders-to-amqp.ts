@@ -34,6 +34,8 @@ import { Logger } from "../../../../lib/faux_logger"
 const logger = new Logger({ silent: false })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 import { BigNumber } from "bignumber.js"
@@ -47,13 +49,13 @@ process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
+  service_is_healthy.healthy(false)
 })
 
 import { BinanceSpotOrdersToAMQP } from "./spot-order"
 
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 async function main() {
   const execSync = require("child_process").execSync

@@ -14,15 +14,25 @@ import { AssetBalance, Binance as BinanceType } from "binance-api-node"
 import Binance from "binance-api-node"
 import { RedisClient } from "redis"
 import { ServiceLogger } from "../../../interfaces/logger"
+import { BinanceExchangeInfoGetter } from "../../../classes/exchanges/binance/exchange-info-getter"
 
 export class PortfolioSnapshot {
   logger: ServiceLogger
   ee: BinanceType
   balances: AssetBalance[] | undefined
+  exchange_info_getter: BinanceExchangeInfoGetter
 
-  constructor({ logger }: { logger: ServiceLogger; redis: RedisClient }) {
+  constructor({
+    logger,
+    exchange_info_getter,
+  }: {
+    logger: ServiceLogger
+    redis: RedisClient
+    exchange_info_getter: BinanceExchangeInfoGetter
+  }) {
     assert(logger)
     this.logger = logger
+    this.exchange_info_getter = exchange_info_getter
 
     logger.info("Live monitoring mode")
     if (!process.env.BINANCE_API_KEY) throw new Error(`Missing BINANCE_API_KEY in ENV`)
@@ -51,7 +61,12 @@ export class PortfolioSnapshot {
       if (!symbol) throw new Error(`No symbol for ${base_asset}:${quote_asset}`)
       let current_price = args.prices[symbol]
       let quote_value = new BigNumber(current_price).times(position_size)
-      positions.push({ ...p, quote_value, base_asset, quote_asset })
+      balances_with_quote_value.push({
+        ...p,
+        total_quote_asset_value: quote_value,
+        asset: base_asset,
+        quote_asset,
+      })
     }
 
     return balances_with_quote_value

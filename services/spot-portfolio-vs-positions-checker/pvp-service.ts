@@ -35,7 +35,7 @@ let run_interval_seconds = 60 * 60 * 4
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = (s) => console.log(s) //new SendMessage({ service_name, logger, health_and_readiness }).build()
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: false, healthy: true })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })

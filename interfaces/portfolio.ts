@@ -1,3 +1,4 @@
+import BigNumber from "bignumber.js"
 import { SpotPosition } from "../classes/spot/abstractions/spot-position"
 import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
 // import { ExchangeIdentifier } from "../events/shared/exchange-identifier";
@@ -8,6 +9,11 @@ export interface Balance {
   free: string
   locked: string
   quote_equivalents?: { [name: string]: string }
+}
+
+export interface Balance_with_quote_value extends Balance {
+  quote_asset: string
+  total_quote_asset_value: BigNumber
 }
 
 export interface FuturesBalance {

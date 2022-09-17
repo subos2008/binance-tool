@@ -40,6 +40,11 @@ export type SpotPositionObject = {
 export interface SpotPositionObject_V2 extends SpotPositionObject {
   base_asset: string
 }
+export interface SpotPositionObject_V2_with_quote_value extends SpotPositionObject_V2 {
+  base_asset: string
+  quote_asset: string
+  quote_value: BigNumber
+}
 
 export class SpotPosition {
   private logger: Logger

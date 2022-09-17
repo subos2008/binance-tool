@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 import { strict as assert } from "assert"
 
 require("dotenv").config()
@@ -37,12 +36,19 @@ import { SendMessageFunc } from "../../interfaces/send-message"
 import express from "express"
 
 const health_and_readiness = new HealthAndReadiness({ logger })
+const service_is_healthy: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
+  name: "global",
+  ready: true,
+  healthy: true,
+})
+
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
+  service_is_healthy.healthy(false)
 })
 
 export class PositionPerformance {
@@ -153,12 +159,6 @@ const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
 if (TAS_URL === undefined) {
   throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
 }
-
-const service_is_healthy: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
-  name: "global",
-  ready: true,
-  healthy: true,
-})
 
 async function main() {
   const spot_positions_persistance: SpotPositionsPersistence = new RedisSpotPositionsPersistence({ logger, redis })

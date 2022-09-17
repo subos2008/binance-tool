@@ -63,7 +63,11 @@ export class PortfolioVsPositions {
     this.health_and_readiness = health_and_readiness
     this.spot_positions_query = spot_positions_query
     this.prices_getter = prices_getter
-    this.portfolio_snapshot = new PortfolioSnapshot({ logger, redis })
+    this.portfolio_snapshot = new PortfolioSnapshot({
+      logger,
+      redis,
+      exchange_info_getter: this.exchange_info_getter,
+    })
     this.positions_snapshot = new PositionsSnapshot({
       logger,
       spot_positions_query,

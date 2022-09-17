@@ -1,13 +1,17 @@
 #!./node_modules/.bin/ts-node
 
 import BigNumber from "bignumber.js"
-import { PositionWithQuoteValue } from "../../../classes/spot/abstractions/positions-snapshot"
+import { BinanceExchangeInfoGetter } from "../../../classes/exchanges/binance/exchange-info-getter"
 BigNumber.DEBUG = true // Prevent NaN
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { SpotPosition, SpotPositionObject_V2 } from "../../../classes/spot/abstractions/spot-position"
+import {
+  SpotPosition,
+  SpotPositionObject_V2,
+  SpotPositionObject_V2_with_quote_value,
+} from "../../../classes/spot/abstractions/spot-position"
 import { SpotPositionsQuery } from "../../../classes/spot/abstractions/spot-positions-query"
 import { ServiceLogger } from "../../../interfaces/logger"
 import { Prices } from "../../../interfaces/portfolio"
@@ -16,16 +20,20 @@ export class PositionsSnapshot {
   private logger: ServiceLogger
   private spot_positions_query: SpotPositionsQuery
   positions: SpotPositionObject_V2[] = []
+  exchange_info_getter: BinanceExchangeInfoGetter
 
   constructor({
     logger,
     spot_positions_query,
+    exchange_info_getter,
   }: {
     logger: ServiceLogger
     spot_positions_query: SpotPositionsQuery
+    exchange_info_getter: BinanceExchangeInfoGetter
   }) {
     this.logger = logger
     this.spot_positions_query = spot_positions_query
+    this.exchange_info_getter = exchange_info_getter
   }
 
   /* aka init() */
@@ -53,19 +61,22 @@ export class PositionsSnapshot {
     return this.positions
   }
 
-  // async get_positions_quote_values(args: { quote_asset: string,prices:Prices }): Promise<PositionWithQuoteValue[]> {
-  //   let { quote_asset } = args
-  //   let positions: PositionWithQuoteValue[] = []
-  //   for (const p of this.positions) {
-  //     let base_asset = p.base_asset
-  //     let symbol = await this.exchange_info_getter.to_symbol({ base_asset, quote_asset })
-  //     if (!symbol) throw new Error(`No symbol for ${base_asset}:${quote_asset}`)
-  //     let current_price = args.prices[symbol]
-  //     let quote_value = new BigNumber(current_price).times(p.position_size)
-  //     positions.push({ quote_value, symbol, base_asset, quote_asset })
-  //   }
-  //   return positions
-  // }
+  async get_positions_quote_values(args: {
+    quote_asset: string
+    prices: Prices
+  }): Promise<SpotPositionObject_V2_with_quote_value[]> {
+    let { quote_asset } = args
+    let positions: SpotPositionObject_V2_with_quote_value[] = []
+    for (const p of this.positions) {
+      let base_asset = p.base_asset
+      let symbol = await this.exchange_info_getter.to_symbol({ base_asset, quote_asset })
+      if (!symbol) throw new Error(`No symbol for ${base_asset}:${quote_asset}`)
+      let current_price = args.prices[symbol]
+      let quote_value = new BigNumber(current_price).times(p.position_size)
+      positions.push({ ...p, quote_value, base_asset, quote_asset })
+    }
+    return positions
+  }
 
   // async get_total_value_in_quote_asset(args: { quote_asset: string }): Promise<BigNumber> {
   //   let { quote_asset } = args

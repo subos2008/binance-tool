@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spot-portfolio-vs-positions-checker
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "spot-portfolio-vs-positions-checker"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "spot-portfolio-vs-positions-checker"
+        tags.datadoghq.com/service: "spot-portfolio-vs-positions-checker"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "spot-portfolio-vs-positions-checker"}'
+        ad.datadoghq.com/spot-portfolio-vs-positions-checker.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "spot-portfolio-vs-positions-checker"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: spot-portfolio-vs-positions-checker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "./out/./services/spot-portfolio-vs-positions-checker/pvp-service"]
+          ports:
+          - name: http
+            containerPort: 80
+            protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+          env:
+            - name: SENTRY_DSN
+              value: "https://87d887bd3fa64cc8b33d8a206b92db88@o369902.ingest.sentry.io/6755099"
+{{- include "datadog.vars" . | nindent 12 }}
+{{- include "telegram.vars" . | nindent 12 }}
+{{- include "redis.vars" . | nindent 12 }}
+{{- include "binance-spot-tas.vars" . | nindent 12 }}
+{{- include "amqp.vars" . | nindent 12 }}

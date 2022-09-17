@@ -13,9 +13,13 @@ import { Binance } from "binance-api-node"
 import { RedisClient } from "redis"
 import { PositionsSnapshot } from "./lib/positions-snapshot"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
-import { SpotPositionObject_V2 } from "../../classes/spot/abstractions/spot-position"
-import { Balance, SpotPortfolio } from "../../interfaces/portfolio"
+import {
+  SpotPositionObject_V2,
+  SpotPositionObject_V2_with_quote_value,
+} from "../../classes/spot/abstractions/spot-position"
+import { Balance, Balance_with_quote_value, Prices, SpotPortfolio } from "../../interfaces/portfolio"
 import { PortfolioSnapshot } from "./lib/portfolio-snapshot"
+import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-price-getter"
 
 export class PortfolioVsPositions {
   ee: Binance
@@ -28,6 +32,8 @@ export class PortfolioVsPositions {
   spot_positions_query: SpotPositionsQuery
   portfolio_snapshot: PortfolioSnapshot
   positions_snapshot: PositionsSnapshot
+  quote_asset: string
+  prices_getter: BinancePriceGetter
 
   constructor({
     ee,
@@ -36,6 +42,8 @@ export class PortfolioVsPositions {
     health_and_readiness,
     spot_positions_query,
     redis,
+    quote_asset,
+    prices_getter,
   }: {
     ee: Binance
     logger: ServiceLogger
@@ -43,18 +51,23 @@ export class PortfolioVsPositions {
     health_and_readiness: HealthAndReadiness
     spot_positions_query: SpotPositionsQuery
     redis: RedisClient
+    quote_asset: string
+    prices_getter: BinancePriceGetter
   }) {
     this.ee = ee
     this.logger = logger
     this.send_message = send_message
+    this.quote_asset = quote_asset
     this.send_message("service re-starting")
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
     this.health_and_readiness = health_and_readiness
     this.spot_positions_query = spot_positions_query
+    this.prices_getter = prices_getter
     this.portfolio_snapshot = new PortfolioSnapshot({ logger, redis })
     this.positions_snapshot = new PositionsSnapshot({
       logger,
       spot_positions_query,
+      exchange_info_getter: this.exchange_info_getter,
     })
   }
 
@@ -62,56 +75,68 @@ export class PortfolioVsPositions {
     return await this.positions_snapshot.take_snapshot()
   }
 
+  async positions_with_quote_value(quote_asset: string): Promise<SpotPositionObject_V2_with_quote_value[]> {
+    await this.positions_snapshot.take_snapshot()
+    let prices: Prices = await this.prices_getter.get_current_prices()
+    return this.positions_snapshot.get_positions_quote_values({ quote_asset, prices })
+  }
+
   async portfolio(): Promise<Balance[]> {
     return await this.portfolio_snapshot.take_snapshot()
   }
 
-  async run_once() {
-    let positions: SpotPositionObject_V2[] = await this.positions()
+  async portfolio_with_quote_value(quote_asset: string): Promise<Balance_with_quote_value[]> {
+    await this.portfolio_snapshot.take_snapshot()
+    let prices: Prices = await this.prices_getter.get_current_prices()
+    return await this.portfolio_snapshot.with_quote_value({ quote_asset, prices })
+  }
 
-    /* Convert to expected amount of each base_asset */
+  async run_once(args: { quote_asset: string }) {
+    let positions: SpotPositionObject_V2_with_quote_value[] = await this.positions_with_quote_value(
+      args.quote_asset
+    )
+
+    /* Convert to expected amount of each base_asset (sum all open positions in that asset) */
     let base_assets_in_positions = new Set(positions.map((p) => p.base_asset))
     let expected_total_holdings: { [base_asset: string]: BigNumber } = {}
     for (const base_asset of base_assets_in_positions) {
-      let p_list_for_base_asset: SpotPositionObject_V2[] = positions.filter((p) => p.base_asset === base_asset)
+      let p_list_for_base_asset: SpotPositionObject_V2_with_quote_value[] = positions.filter(
+        (p) => p.base_asset === base_asset
+      )
       expected_total_holdings[base_asset] = BigNumber.sum.apply(
         null,
         p_list_for_base_asset.map((p) => p.position_size)
       )
     }
 
-    let balances: Balance[] = await this.portfolio()
+    let balances: Balance_with_quote_value[] = await this.portfolio_with_quote_value(this.quote_asset)
     let portfolio_base_assets = new Set(balances.map((p) => p.asset))
     let actual_holdings: { [base_asset: string]: BigNumber } = {}
     for (const balance of balances) {
       actual_holdings[balance.asset] = new BigNumber(balance.free).plus(balance.locked)
     }
 
+    /* Either we hold them or we expect to */
     let combined_base_assets = new Set([...portfolio_base_assets, ...base_assets_in_positions])
 
-    let net_expected: { [base_asset: string]: { base_amount: BigNumber } } = {}
+    let assets_where_we_hold_less_than_expected: string[] = []
+    let assets_where_we_hold_more_than_expected: string[] = []
     for (const base_asset of combined_base_assets) {
-      /* check each direction and produce results... could be net amount +/- vs expected? */
-      if (!expected_total_holdings[base_asset]) expected_total_holdings[base_asset] = new BigNumber(0)
-      if (!actual_holdings[base_asset]) actual_holdings[base_asset] = new BigNumber(0)
+      if (actual_holdings[base_asset].isGreaterThan(expected_total_holdings[base_asset])) {
+        assets_where_we_hold_more_than_expected.push(base_asset)
+      }
 
-      net_expected[base_asset] = {
-        base_amount: expected_total_holdings[base_asset].minus(actual_holdings[base_asset]),
+      if (expected_total_holdings[base_asset].isGreaterThan(actual_holdings[base_asset])) {
+        assets_where_we_hold_less_than_expected.push(base_asset)
       }
     }
-    
-    let sort_func = (a: string, b: string) => {
-      return net_expected[a].base_amount.isGreaterThan(net_expected[b].base_amount) ? 1 : -1
+
+    for (const base_asset of combined_base_assets) {
+      this.send_message(`Problema: ${base_asset} balance higher than expected.`)
     }
 
-    let sorted_base_assets: string[] = Object.keys(combined_base_assets).sort(sort_func)
-    for (const base_asset of sorted_base_assets)
-      if (!net_expected[base_asset].base_amount.isZero()) {
-        this.logger.warn(
-          `Mismatch on ${base_asset}: expected ${expected_total_holdings[base_asset].toFixed()}, actual ${
-            actual_holdings[base_asset]
-          }`
-        )
-      }
+    for (const base_asset of combined_base_assets) {
+      this.send_message(`Problema: ${base_asset} balance lower than expected.`)
+    }
   }
 }

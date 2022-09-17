@@ -7,6 +7,8 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+import Sentry from "../../lib/sentry"
+
 import { strict as assert } from "assert"
 import express from "express"
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
@@ -22,22 +24,25 @@ import { Binance } from "binance-api-node"
 import { PortfolioVsPositions } from "./portfolio-vs-positions"
 import { RedisSpotPositionsPersistence } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
+import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-price-getter"
 
 /** Config: */
-const service_name = "portfolo-vs-positions"
+const service_name = "portfolio-vs-positions"
 require("dotenv").config()
+const quote_asset = "BUSD"
+let run_interval_seconds = 60 * 60 * 4
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
-
-process.on("unhandledRejection", (err) => {
-  logger.exception({}, err)
-  // const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-  // send_message(`UnhandledPromiseRejection: ${err} - not setting global_health to false`)
-})
-
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = (s) => console.log(s) //new SendMessage({ service_name, logger, health_and_readiness }).build()
-const global_health = health_and_readiness.addSubsystem({ name: "global", ready: false, healthy: true })
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: false, healthy: true })
+
+process.on("unhandledRejection", (err) => {
+  logger.error({ err })
+  Sentry.captureException(err)
+  send_message(`UnhandledPromiseRejection: ${err}`)
+  service_is_healthy.healthy(false)
+})
 
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
@@ -56,7 +61,7 @@ async function main() {
   let exchange_identifier: ExchangeIdentifier_V4 = { version: 4, exchange: "binance", exchange_type: "spot" }
 
   try {
-    const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
+    // const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
     let redis: RedisClient = get_redis_client()
     set_redis_logger(logger)
     let positions_persistance = new RedisSpotPositionsPersistence({ logger, redis })
@@ -66,6 +71,7 @@ async function main() {
       send_message,
       exchange_identifier: ei_v4_to_v3(exchange_identifier),
     })
+    let prices_getter = new BinancePriceGetter({ logger, ee })
     let service = new PortfolioVsPositions({
       ee,
       logger,
@@ -73,10 +79,14 @@ async function main() {
       health_and_readiness,
       spot_positions_query,
       redis,
+      quote_asset,
+      prices_getter,
     })
     // await service.init()
-    global_health.ready(true)
-    await service.run_once()
+    service_is_healthy.ready(true)
+    let run: () => void = () => service.run_once({ quote_asset }).catch((err) => logger.exception({}, err))
+    run()
+    setInterval(run, run_interval_seconds * 1000)
   } catch (err) {
     logger.exception({}, err)
   }

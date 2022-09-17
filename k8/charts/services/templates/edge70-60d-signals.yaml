@@ -1,41 +1,41 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: edge70-60-signals
+  name: edge70-60d-signals
 spec:
   type: ClusterIP
   ports:
   - port: 80
     targetPort: 80
   selector:
-    app.kubernetes.io/name: edge70-60-signals
+    app.kubernetes.io/name: edge70-60d-signals
 ---   
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: edge70-60-signals
+  name: edge70-60d-signals
   labels:
 {{ include "mychart.labels" . | indent 4 }}
-    binance-tool/service: "edge70-60-signals"
+    binance-tool/service: "edge70-60d-signals"
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: edge70-60-signals
+      app.kubernetes.io/name: edge70-60d-signals
       app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: edge70-60-signals
+        app.kubernetes.io/name: edge70-60d-signals
         app.kubernetes.io/instance: {{ .Release.Name }}
-        binance-tool/service: "edge70-60-signals"
-        tags.datadoghq.com/service: "edge70-60-signals"
+        binance-tool/service: "edge70-60d-signals"
+        tags.datadoghq.com/service: "edge70-60d-signals"
       annotations:
-        ad.datadoghq.com/tags: '{"service": "edge70-60-signals"}'
-        ad.datadoghq.com/edge70-60-signals.logs: >-
+        ad.datadoghq.com/tags: '{"service": "edge70-60d-signals"}'
+        ad.datadoghq.com/edge70-60d-signals.logs: >-
           [{
             "source": "nodejs",
-            "service": "edge70-60-signals"
+            "service": "edge70-60d-signals"
           }]   
     spec:
       priorityClassName: binance-edge-signals
@@ -45,7 +45,7 @@ spec:
     {{- end }}
       volumes:
       containers:
-        - name: edge70-60-signals
+        - name: edge70-60d-signals
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "./out/./services/edge70-signals/edge70-service", "--live"]

@@ -157,9 +157,16 @@ export class HealthAndReadiness {
     }
     this.logger.warn(JSON.stringify(event))
     for (const key in this.subsystems) {
-      this.logger.warn(
-        `${key}: healthy: ${this.subsystems[key].healthy()}, ready: ${this.subsystems[key].ready()}`
-      )
+      let msg = `${key}: healthy: ${this.subsystems[key].healthy()}, ready: ${this.subsystems[key].ready()}`
+      if (!this.subsystems[key].healthy()) {
+        this.logger.error(msg)
+        return
+      }
+      if (!this.subsystems[key].ready()) {
+        this.logger.warn(msg)
+        return
+      }
+      this.logger.info(msg)
     }
   }
 

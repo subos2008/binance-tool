@@ -5,7 +5,6 @@ import { Logger } from "../../interfaces/logger"
 import Sentry from "../../lib/sentry"
 import { Edge70SignalProcessor } from "./interfaces"
 import { Edge70ForwarderToEdge70Spot } from "./forwarder-to-edge70-spot"
-import { Edge70ForwarderToEdge60SpotClose } from "./forwarder-to-edge60-spot-close"
 import { Edge70Signal } from "../edge70-signals/interfaces/edge70-signal"
 
 const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
@@ -19,7 +18,6 @@ export class Edge70SignalFanout implements Edge70SignalProcessor {
   event_name: MyEventNameType
   tas_client: TradeAbstractionServiceClient
   edge70_spot: Edge70SignalProcessor
-  edge70_to_close_edge60_spot: Edge70SignalProcessor
 
   constructor({
     send_message,
@@ -43,13 +41,6 @@ export class Edge70SignalFanout implements Edge70SignalProcessor {
       event_name,
       forward_short_signals_as_close_position: true,
     })
-
-    this.edge70_to_close_edge60_spot = new Edge70ForwarderToEdge60SpotClose({
-      send_message,
-      logger,
-      event_name,
-      forward_short_signals_as_close_position: true,
-    })
   }
 
   async process_signal(signal: Edge70Signal) {
@@ -60,13 +51,6 @@ export class Edge70SignalFanout implements Edge70SignalProcessor {
 
     try {
       await this.edge70_spot.process_signal(signal)
-    } catch (err) {
-      this.logger.error({ err })
-      Sentry.captureException(err)
-    }
-
-    try {
-      await this.edge70_to_close_edge60_spot.process_signal(signal)
     } catch (err) {
       this.logger.error({ err })
       Sentry.captureException(err)

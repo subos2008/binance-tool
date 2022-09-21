@@ -82,8 +82,12 @@ async function main() {
       quote_asset,
       prices_getter,
     })
-    // await service.init()
-    let run: () => void = () => service.run_once({ quote_asset }).catch((err) => logger.exception({}, err))
+    let run: () => void = () => {
+      service.run_once({ quote_asset }).catch((err) => {
+        logger.exception({}, err)
+        service_is_healthy.healthy(false)
+      })
+    }
     run()
     setInterval(run, run_interval_seconds * 1000)
     service_is_healthy.ready(true)
@@ -95,5 +99,6 @@ async function main() {
 main().catch((err) => {
   logger.error(`Error in main loop: ${err}`)
   logger.exception({}, err)
+  service_is_healthy.healthy(false)
   throw err
 })

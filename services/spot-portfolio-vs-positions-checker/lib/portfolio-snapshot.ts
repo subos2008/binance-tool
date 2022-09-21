@@ -56,11 +56,22 @@ export class PortfolioSnapshot {
     let balances_with_quote_value: Balance_with_quote_value[] = []
     for (const p of this.balances) {
       let base_asset = p.asset
+      let tags = { base_asset, quote_asset }
       let position_size = new BigNumber(p.free).plus(p.locked)
-      let symbol = await this.exchange_info_getter.to_symbol({ base_asset, quote_asset })
-      if (!symbol) throw new Error(`No symbol for ${base_asset}:${quote_asset}`)
-      let current_price = args.prices[symbol]
-      let quote_value = new BigNumber(current_price).times(position_size)
+      let quote_value: BigNumber | undefined
+      if (position_size.isZero()) {
+        quote_value = new BigNumber(0)
+      } else {
+        try {
+          let symbol = await this.exchange_info_getter.to_symbol({ base_asset, quote_asset })
+          if (!symbol) throw new Error(`No symbol for ${base_asset}:${quote_asset}`)
+          let current_price = args.prices[symbol]
+          quote_value = new BigNumber(current_price).times(position_size)
+        } catch (err) {
+          this.logger.exception(tags, err)
+          this.logger.error(tags, `Unable to determine quote amount in ${quote_asset} for ${base_asset}`)
+        }
+      }
       balances_with_quote_value.push({
         ...p,
         total_quote_asset_value: quote_value,

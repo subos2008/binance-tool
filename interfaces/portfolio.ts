@@ -13,7 +13,7 @@ export interface Balance {
 
 export interface Balance_with_quote_value extends Balance {
   quote_asset: string
-  total_quote_asset_value: BigNumber
+  total_quote_asset_value: BigNumber | undefined
 }
 
 export interface FuturesBalance {

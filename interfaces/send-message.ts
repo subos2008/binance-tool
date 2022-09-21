@@ -6,6 +6,7 @@ export type SendMessageFunc = (msg: string, tags?: ContextTags) => void
 export interface ContextTags {
   edge?: string
   base_asset?: string // depricate in favour of some kind of context object?
+  quote_asset?: string // depricate in favour of some kind of context object?
   class?: string // name of the class calling send_message
   exchange_type?: ExchangeType
   symbol?: string

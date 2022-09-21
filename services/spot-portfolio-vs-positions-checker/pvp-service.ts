@@ -83,10 +83,10 @@ async function main() {
       prices_getter,
     })
     // await service.init()
-    service_is_healthy.ready(true)
     let run: () => void = () => service.run_once({ quote_asset }).catch((err) => logger.exception({}, err))
     run()
     setInterval(run, run_interval_seconds * 1000)
+    service_is_healthy.ready(true)
   } catch (err) {
     logger.exception({}, err)
   }
@@ -95,4 +95,5 @@ async function main() {
 main().catch((err) => {
   logger.error(`Error in main loop: ${err}`)
   logger.exception({}, err)
+  throw err
 })

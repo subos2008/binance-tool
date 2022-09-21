@@ -102,12 +102,12 @@ export class PortfolioVsPositions {
 
     /* Convert to expected amount of each base_asset (sum all open positions in that asset) */
     let base_assets_in_positions = new Set(positions.map((p) => p.base_asset))
-    let expected_total_holdings: { [base_asset: string]: BigNumber } = {}
+    let expected_total_holdings_map: { [base_asset: string]: BigNumber } = {}
     for (const base_asset of base_assets_in_positions) {
       let p_list_for_base_asset: SpotPositionObject_V2_with_quote_value[] = positions.filter(
         (p) => p.base_asset === base_asset
       )
-      expected_total_holdings[base_asset] = BigNumber.sum.apply(
+      expected_total_holdings_map[base_asset] = BigNumber.sum.apply(
         null,
         p_list_for_base_asset.map((p) => p.position_size)
       )
@@ -115,9 +115,9 @@ export class PortfolioVsPositions {
 
     let balances: Balance_with_quote_value[] = await this.portfolio_with_quote_value(this.quote_asset)
     let portfolio_base_assets = new Set(balances.map((p) => p.asset))
-    let actual_holdings: { [base_asset: string]: BigNumber } = {}
+    let actual_holdings_map: { [base_asset: string]: BigNumber } = {}
     for (const balance of balances) {
-      actual_holdings[balance.asset] = new BigNumber(balance.free).plus(balance.locked)
+      actual_holdings_map[balance.asset] = new BigNumber(balance.free).plus(balance.locked)
     }
 
     /* Either we hold them or we expect to */
@@ -126,11 +126,13 @@ export class PortfolioVsPositions {
     let assets_where_we_hold_less_than_expected: string[] = []
     let assets_where_we_hold_more_than_expected: string[] = []
     for (const base_asset of combined_base_assets) {
-      if (actual_holdings[base_asset].isGreaterThan(expected_total_holdings[base_asset])) {
+      const actual_holdings = actual_holdings_map[base_asset] || new BigNumber(0)
+      const expected_total_holdings = expected_total_holdings_map[base_asset] || new BigNumber(0)
+      if (actual_holdings.isGreaterThan(expected_total_holdings)) {
         assets_where_we_hold_more_than_expected.push(base_asset)
       }
 
-      if (expected_total_holdings[base_asset].isGreaterThan(actual_holdings[base_asset])) {
+      if (expected_total_holdings.isGreaterThan(actual_holdings)) {
         assets_where_we_hold_less_than_expected.push(base_asset)
       }
     }

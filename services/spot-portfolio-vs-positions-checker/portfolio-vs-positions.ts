@@ -138,16 +138,16 @@ export class PortfolioVsPositions {
     }
 
     for (const base_asset of assets_where_we_hold_more_than_expected) {
-      let expected = expected_total_holdings_map[base_asset]
-      let actual = actual_holdings_map[base_asset]
+      let expected = expected_total_holdings_map[base_asset] || new BigNumber(0)
+      let actual = actual_holdings_map[base_asset] || new BigNumber(0)
       this.send_message(
         `Problema: ${base_asset} balance higher than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
       )
     }
 
     for (const base_asset of assets_where_we_hold_less_than_expected) {
-      let expected = expected_total_holdings_map[base_asset]
-      let actual = actual_holdings_map[base_asset]
+      let expected = expected_total_holdings_map[base_asset] || new BigNumber(0)
+      let actual = actual_holdings_map[base_asset] || new BigNumber(0)
       this.send_message(
         `Problema: ${base_asset} balance lower than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
       )

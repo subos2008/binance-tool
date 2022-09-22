@@ -148,9 +148,19 @@ export class PortfolioVsPositions {
     for (const base_asset of assets_where_we_hold_less_than_expected) {
       let expected = expected_total_holdings_map[base_asset] || new BigNumber(0)
       let actual = actual_holdings_map[base_asset] || new BigNumber(0)
-      this.send_message(
-        `Problema: ${base_asset} balance lower than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
-      )
+
+      if (actual.isZero()) {
+        /* We can authoratively say a particular position doesn't exist if we hold zero */
+        let missing_positions = positions.filter((p) => p.base_asset == base_asset)
+        let msg =
+          `Problema: Zero ${base_asset} held; the following positions have zero corresponding balance: ` +
+          missing_positions.map((p) => `${p.edge}:${p.base_asset}`).join(", ")
+        this.send_message(msg)
+      } else {
+        this.send_message(
+          `Problema: ${base_asset} balance lower than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
+        )
+      }
     }
   }
 }

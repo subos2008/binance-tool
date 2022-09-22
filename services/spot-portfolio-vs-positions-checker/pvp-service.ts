@@ -25,6 +25,7 @@ import { PortfolioVsPositions } from "./portfolio-vs-positions"
 import { RedisSpotPositionsPersistence } from "../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-price-getter"
+import { SendMessage } from "../../classes/send_message/publish"
 
 /** Config: */
 const service_name = "portfolio-vs-positions"
@@ -34,7 +35,8 @@ let run_interval_seconds = 60 * 60 * 4
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
 const health_and_readiness = new HealthAndReadiness({ logger })
-const send_message: SendMessageFunc = (s) => console.log(s) //new SendMessage({ service_name, logger, health_and_readiness }).build()
+// const send_message: SendMessageFunc = (s) => console.log(s) //new SendMessage({ service_name, logger, health_and_readiness }).build()
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: false, healthy: true })
 
 process.on("unhandledRejection", (err) => {

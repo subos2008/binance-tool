@@ -151,14 +151,14 @@ export class PortfolioVsPositions {
         if (diff_quote_amount.isGreaterThanOrEqualTo(this.max_quote_amount_drift_allowed)) {
           problema = true
           this.send_message(
-            `Problema: ${base_asset} balance higher than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset} (${diff_quote_amount} ${this.quote_asset})`
+            `⚠️ ${base_asset} balance higher than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset} (${diff_quote_amount} ${this.quote_asset})`
           )
         }
       } catch (err) {
         this.logger.exception({ base_asset, quote_asset: args.quote_asset }, err)
         problema = true
         this.send_message(
-          `Problema: ${base_asset} balance higher than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
+          `⚠️ ${base_asset} balance higher than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
         )
       }
     }
@@ -173,18 +173,18 @@ export class PortfolioVsPositions {
         /* We can authoratively say a particular position doesn't exist if we hold zero */
         let missing_positions = positions.filter((p) => p.base_asset == base_asset)
         let msg =
-          `Problema: Zero ${base_asset} held; the following positions have zero corresponding balance: ` +
+          `⚠️ Zero ${base_asset} held; the following positions have zero corresponding balance: ` +
           missing_positions.map((p) => `${p.edge}:${p.base_asset}`).join(", ")
         this.send_message(msg)
       } else {
         this.send_message(
-          `Problema: ${base_asset} balance lower than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
+          `⚠️ ${base_asset} balance lower than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
         )
       }
     }
 
     if (!problema) {
-      this.send_message(`All checks passed`)
+      this.send_message(`✅ All checks passed`)
     }
   }
 }

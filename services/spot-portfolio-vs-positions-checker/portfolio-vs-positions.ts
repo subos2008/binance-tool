@@ -17,6 +17,7 @@ import { Balance, Prices, SpotPortfolio } from "../../interfaces/portfolio"
 import { PortfolioSnapshot } from "./lib/portfolio-snapshot"
 import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-price-getter"
 import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
+import Sentry from "../../lib/sentry"
 
 export class PortfolioVsPositions {
   ee: Binance
@@ -131,13 +132,21 @@ export class PortfolioVsPositions {
       let actual = actual_holdings_map[base_asset] || new BigNumber(0)
 
       let diff_base_amount = expected.minus(actual).absoluteValue()
-      let diff_quote_amount = this.portfolio_utils.convert_base_to_quote_currency({
-        base_quantity: diff_base_amount,
-        base_currency: base_asset,
-        quote_currency: args.quote_asset,
-        prices,
-      })
-      if (diff_quote_amount.isGreaterThanOrEqualTo(this.max_quote_amount_drift_allowed)) {
+
+      try {
+        let diff_quote_amount = this.portfolio_utils.convert_base_to_quote_currency({
+          base_quantity: diff_base_amount,
+          base_currency: base_asset,
+          quote_currency: args.quote_asset,
+          prices,
+        })
+        if (diff_quote_amount.isGreaterThanOrEqualTo(this.max_quote_amount_drift_allowed)) {
+          this.send_message(
+            `Problema: ${base_asset} balance higher than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset} (${diff_quote_amount} ${this.quote_asset})`
+          )
+        }
+      } catch (err) {
+        this.logger.exception({ base_asset, quote_asset: args.quote_asset }, err)
         this.send_message(
           `Problema: ${base_asset} balance higher than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
         )

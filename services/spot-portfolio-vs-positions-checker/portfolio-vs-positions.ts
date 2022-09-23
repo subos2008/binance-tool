@@ -12,11 +12,8 @@ import { Binance } from "binance-api-node"
 import { RedisClient } from "redis"
 import { PositionsSnapshot } from "./lib/positions-snapshot"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
-import {
-  SpotPositionObject_V2,
-  SpotPositionObject_V2_with_quote_value,
-} from "../../classes/spot/abstractions/spot-position"
-import { Balance, Balance_with_quote_value, Prices, SpotPortfolio } from "../../interfaces/portfolio"
+import { SpotPositionObject_V2 } from "../../classes/spot/abstractions/spot-position"
+import { Balance, Prices, SpotPortfolio } from "../../interfaces/portfolio"
 import { PortfolioSnapshot } from "./lib/portfolio-snapshot"
 import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-price-getter"
 import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
@@ -85,26 +82,12 @@ export class PortfolioVsPositions {
     return await this.positions_snapshot.take_snapshot()
   }
 
-  async positions_with_quote_value(quote_asset: string): Promise<SpotPositionObject_V2_with_quote_value[]> {
-    await this.positions_snapshot.take_snapshot()
-    let prices: Prices = await this.prices_getter.get_current_prices()
-    return this.positions_snapshot.get_positions_quote_values({ quote_asset, prices })
-  }
-
   async portfolio(): Promise<Balance[]> {
     return await this.portfolio_snapshot.take_snapshot()
   }
 
-  async portfolio_with_quote_value(quote_asset: string): Promise<Balance_with_quote_value[]> {
-    await this.portfolio_snapshot.take_snapshot()
-    let prices: Prices = await this.prices_getter.get_current_prices()
-    return await this.portfolio_snapshot.with_quote_value({ quote_asset, prices })
-  }
-
   async run_once(args: { quote_asset: string }) {
-    let positions: SpotPositionObject_V2_with_quote_value[] = await this.positions_with_quote_value(
-      args.quote_asset
-    )
+    let positions: SpotPositionObject_V2[] = await this.positions()
 
     let prices: Prices = await this.prices_getter.get_current_prices()
 
@@ -112,16 +95,14 @@ export class PortfolioVsPositions {
     let base_assets_in_positions = new Set(positions.map((p) => p.base_asset))
     let expected_total_holdings_map: { [base_asset: string]: BigNumber } = {}
     for (const base_asset of base_assets_in_positions) {
-      let p_list_for_base_asset: SpotPositionObject_V2_with_quote_value[] = positions.filter(
-        (p) => p.base_asset === base_asset
-      )
+      let p_list_for_base_asset: SpotPositionObject_V2[] = positions.filter((p) => p.base_asset === base_asset)
       expected_total_holdings_map[base_asset] = BigNumber.sum.apply(
         null,
         p_list_for_base_asset.map((p) => p.position_size)
       )
     }
 
-    let balances: Balance_with_quote_value[] = await this.portfolio_with_quote_value(this.quote_asset)
+    let balances: Balance[] = await this.portfolio()
     let portfolio_base_assets = new Set(balances.map((p) => p.asset))
     let actual_holdings_map: { [base_asset: string]: BigNumber } = {}
     for (const balance of balances) {

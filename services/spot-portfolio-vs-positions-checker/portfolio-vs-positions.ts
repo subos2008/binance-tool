@@ -128,6 +128,7 @@ export class PortfolioVsPositions {
     }
 
     for (const base_asset of assets_where_we_hold_more_than_expected) {
+      if (base_asset === this.quote_asset) continue
       let expected = expected_total_holdings_map[base_asset] || new BigNumber(0)
       let actual = actual_holdings_map[base_asset] || new BigNumber(0)
 

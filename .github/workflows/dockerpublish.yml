@@ -120,6 +120,9 @@ jobs:
       - name: Save values.yaml
         run: echo ${{ secrets.values_yaml }} | base64 --decode > $GITHUB_WORKSPACE/values.yaml
 
+      - name: Show values.yaml
+        run: cat $GITHUB_WORKSPACE/values.yaml
+
       - name: Set up Helm
         uses: azure/setup-helm@v1
         with:

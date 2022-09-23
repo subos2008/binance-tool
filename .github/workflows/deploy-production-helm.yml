@@ -2,16 +2,8 @@ name: Build, Push and Deploy
 
 on:
   push:
-    # Publish `master` as Docker `latest` image.
     branches:
       - production
-
-    # Publish `v1.2.3` tags as releases.
-    tags:
-      - v*
-
-  # Run tests for any PRs.
-  pull_request:
 
 # c.f. https://stackoverflow.com/questions/66335225/how-to-cancel-previous-runs-in-the-pr-when-you-push-new-commitsupdate-the-curre
 concurrency:
@@ -66,7 +58,6 @@ jobs:
 
     # !!!!
     # needs: test
-    needs: [test]
 
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
@@ -102,7 +93,7 @@ jobs:
           docker push $IMAGE_ID:$(echo $GITHUB_SHA | head -c7)
 
   deploy:
-    needs: [compile, push]
+    needs: [compile, test, push]
 
     runs-on: ubuntu-latest
 

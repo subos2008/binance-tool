@@ -120,7 +120,7 @@ jobs:
           version: v3.6.3
 
       - name: Deploy to Kubernetes
-        run: helm upgrade --install "services" --namespace "binance-tool" --create-namespace --values $GITHUB_WORKSPACE/values.yaml ./k8/charts/services --set "image.tag=$(echo $GITHUB_SHA | head -c7)"
+        run: helm upgrade --wait --install "services" --namespace "binance-tool" --create-namespace --values $GITHUB_WORKSPACE/values.yaml ./k8/charts/services --set "image.tag=$(echo $GITHUB_SHA | head -c7)"
 
       # - name: Verify deployment
       #   run: kubectl rollout status deployment/static-example
@@ -150,7 +150,7 @@ jobs:
           version: v3.6.3
 
       - name: Deploy to Kubernetes
-        run: helm upgrade --install "services" --namespace "binance-futures" --create-namespace --values $GITHUB_WORKSPACE/values.yaml ./k8/charts/binance-futures --set "image.tag=$(echo $GITHUB_SHA | head -c7)"
+        run: helm upgrade --wait --install "services" --namespace "binance-futures" --create-namespace --values $GITHUB_WORKSPACE/values.yaml ./k8/charts/binance-futures --set "image.tag=$(echo $GITHUB_SHA | head -c7)"
 
       # - name: Verify deployment
       #   run: kubectl rollout status deployment/static-example

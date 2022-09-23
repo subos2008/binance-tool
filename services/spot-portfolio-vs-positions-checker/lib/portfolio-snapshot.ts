@@ -10,7 +10,7 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../../lib/faux_logger"
 import { OrderExecutionTracker } from "../../../classes/exchanges/binance/spot-order-execution-tracker"
 import { Balance, Balance_with_quote_value, Portfolio, Prices } from "../../../interfaces/portfolio"
-import { AssetBalance, Binance as BinanceType } from "binance-api-node"
+import { AssetBalance, Binance as BinanceType, ExchangeInfo } from "binance-api-node"
 import Binance from "binance-api-node"
 import { RedisClient } from "redis"
 import { ServiceLogger } from "../../../interfaces/logger"
@@ -45,7 +45,12 @@ export class PortfolioSnapshot {
 
   async take_snapshot(): Promise<Balance[]> {
     let response = await this.ee.accountInfo()
-    this.balances = response.balances
+    let exchange_info: ExchangeInfo = await this.exchange_info_getter.get_exchange_info()
+    let asset_exists_in_exchange_info = (base_asset: string): boolean => {
+      return exchange_info.symbols.find((s) => s.baseAsset == base_asset) ? true : false
+    }
+    let balances = response.balances.filter((b) => asset_exists_in_exchange_info(b.asset))
+    this.balances = balances
     return this.balances
   }
 

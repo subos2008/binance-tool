@@ -31,6 +31,7 @@ import { SendMessage } from "../../classes/send_message/publish"
 const service_name = "portfolio-vs-positions"
 require("dotenv").config()
 const quote_asset = "BUSD"
+const max_quote_amount_drift_allowed = new BigNumber("1")
 let run_interval_seconds = 60 * 60 * 4
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
@@ -83,6 +84,7 @@ async function main() {
       redis,
       quote_asset,
       prices_getter,
+      max_quote_amount_drift_allowed,
     })
     let run: () => void = () => {
       service.run_once({ quote_asset }).catch((err) => {

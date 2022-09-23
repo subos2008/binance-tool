@@ -6,7 +6,6 @@ BigNumber.prototype.valueOf = function () {
 
 import { BinanceExchangeInfoGetter } from "../../classes/exchanges/binance/exchange-info-getter"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
-import { ExchangeIdentifier_V4 } from "../../events/shared/exchange-identifier"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import { ServiceLogger } from "../../interfaces/logger"
 import { Binance } from "binance-api-node"
@@ -20,6 +19,7 @@ import {
 import { Balance, Balance_with_quote_value, Prices, SpotPortfolio } from "../../interfaces/portfolio"
 import { PortfolioSnapshot } from "./lib/portfolio-snapshot"
 import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-price-getter"
+import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
 
 export class PortfolioVsPositions {
   ee: Binance
@@ -34,6 +34,8 @@ export class PortfolioVsPositions {
   positions_snapshot: PositionsSnapshot
   quote_asset: string
   prices_getter: BinancePriceGetter
+  portfolio_utils: PortfolioUtils
+  max_quote_amount_drift_allowed: BigNumber
 
   constructor({
     ee,
@@ -44,6 +46,7 @@ export class PortfolioVsPositions {
     redis,
     quote_asset,
     prices_getter,
+    max_quote_amount_drift_allowed,
   }: {
     ee: Binance
     logger: ServiceLogger
@@ -53,6 +56,7 @@ export class PortfolioVsPositions {
     redis: RedisClient
     quote_asset: string
     prices_getter: BinancePriceGetter
+    max_quote_amount_drift_allowed: BigNumber
   }) {
     this.ee = ee
     this.logger = logger
@@ -63,6 +67,8 @@ export class PortfolioVsPositions {
     this.health_and_readiness = health_and_readiness
     this.spot_positions_query = spot_positions_query
     this.prices_getter = prices_getter
+    this.max_quote_amount_drift_allowed = max_quote_amount_drift_allowed
+    this.portfolio_utils = new PortfolioUtils({ logger })
     this.portfolio_snapshot = new PortfolioSnapshot({
       logger,
       redis,
@@ -99,6 +105,8 @@ export class PortfolioVsPositions {
     let positions: SpotPositionObject_V2_with_quote_value[] = await this.positions_with_quote_value(
       args.quote_asset
     )
+
+    let prices: Prices = await this.prices_getter.get_current_prices()
 
     /* Convert to expected amount of each base_asset (sum all open positions in that asset) */
     let base_assets_in_positions = new Set(positions.map((p) => p.base_asset))
@@ -140,9 +148,19 @@ export class PortfolioVsPositions {
     for (const base_asset of assets_where_we_hold_more_than_expected) {
       let expected = expected_total_holdings_map[base_asset] || new BigNumber(0)
       let actual = actual_holdings_map[base_asset] || new BigNumber(0)
-      this.send_message(
-        `Problema: ${base_asset} balance higher than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
-      )
+
+      let diff_base_amount = expected.minus(actual).absoluteValue()
+      let diff_quote_amount = this.portfolio_utils.convert_base_to_quote_currency({
+        base_quantity: diff_base_amount,
+        base_currency: base_asset,
+        quote_currency: args.quote_asset,
+        prices,
+      })
+      if (diff_quote_amount.isGreaterThanOrEqualTo(this.max_quote_amount_drift_allowed)) {
+        this.send_message(
+          `Problema: ${base_asset} balance higher than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
+        )
+      }
     }
 
     for (const base_asset of assets_where_we_hold_less_than_expected) {

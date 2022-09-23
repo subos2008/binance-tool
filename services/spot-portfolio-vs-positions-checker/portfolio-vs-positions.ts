@@ -34,6 +34,7 @@ export class PortfolioVsPositions {
   prices_getter: BinancePriceGetter
   portfolio_utils: PortfolioUtils
   max_quote_amount_drift_allowed: BigNumber
+  base_asset_ignore_list: string[]
 
   constructor({
     ee,
@@ -45,6 +46,7 @@ export class PortfolioVsPositions {
     quote_asset,
     prices_getter,
     max_quote_amount_drift_allowed,
+    base_asset_ignore_list,
   }: {
     ee: Binance
     logger: ServiceLogger
@@ -55,6 +57,7 @@ export class PortfolioVsPositions {
     quote_asset: string
     prices_getter: BinancePriceGetter
     max_quote_amount_drift_allowed: BigNumber
+    base_asset_ignore_list: string[]
   }) {
     this.ee = ee
     this.logger = logger
@@ -66,6 +69,7 @@ export class PortfolioVsPositions {
     this.spot_positions_query = spot_positions_query
     this.prices_getter = prices_getter
     this.max_quote_amount_drift_allowed = max_quote_amount_drift_allowed
+    this.base_asset_ignore_list = base_asset_ignore_list
     this.portfolio_utils = new PortfolioUtils({ logger })
     this.portfolio_snapshot = new PortfolioSnapshot({
       logger,
@@ -129,6 +133,7 @@ export class PortfolioVsPositions {
 
     for (const base_asset of assets_where_we_hold_more_than_expected) {
       if (base_asset === this.quote_asset) continue
+      if (this.base_asset_ignore_list.includes(base_asset)) continue
       let expected = expected_total_holdings_map[base_asset] || new BigNumber(0)
       let actual = actual_holdings_map[base_asset] || new BigNumber(0)
 

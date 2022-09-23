@@ -33,6 +33,7 @@ require("dotenv").config()
 const quote_asset = "BUSD"
 const max_quote_amount_drift_allowed = new BigNumber("1")
 let run_interval_seconds = 60 * 60 * 4
+const base_asset_ignore_list = ["BNB", "AGI"] // Assets we expect mismatches on
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
 const health_and_readiness = new HealthAndReadiness({ logger })
@@ -85,6 +86,7 @@ async function main() {
       quote_asset,
       prices_getter,
       max_quote_amount_drift_allowed,
+      base_asset_ignore_list,
     })
     let run: () => void = () => {
       service.run_once({ quote_asset }).catch((err) => {

@@ -48,6 +48,7 @@ export class PositionsSnapshot {
     }
 
     /** convert positions's to immutable SpotPositionObject's */
+    this.positions = []
     for (const position of open_positions) {
       let p = await position.describe_position()
       this.positions.push(p)

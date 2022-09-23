@@ -46,8 +46,9 @@ export class PortfolioSnapshot {
   async take_snapshot(): Promise<Balance[]> {
     let response = await this.ee.accountInfo()
     let exchange_info: ExchangeInfo = await this.exchange_info_getter.get_exchange_info()
+    let symbols = exchange_info.symbols.filter((s) => s.isSpotTradingAllowed)
     let asset_exists_in_exchange_info = (base_asset: string): boolean => {
-      return exchange_info.symbols.find((s) => s.baseAsset == base_asset) ? true : false
+      return symbols.find((s) => s.baseAsset == base_asset) ? true : false
     }
     let balances = response.balances.filter((b) => asset_exists_in_exchange_info(b.asset))
     this.balances = balances

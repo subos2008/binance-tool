@@ -126,7 +126,7 @@ jobs:
       #   run: kubectl rollout status deployment/static-example
 
   deploy-binance-futures:
-    needs: [compile, push]
+    needs: [compile, test, push]
 
     runs-on: ubuntu-latest
 

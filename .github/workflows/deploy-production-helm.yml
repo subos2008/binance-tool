@@ -8,7 +8,7 @@ on:
 # c.f. https://stackoverflow.com/questions/66335225/how-to-cancel-previous-runs-in-the-pr-when-you-push-new-commitsupdate-the-curre
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # cancel-in-progress: true # too dangerous, can leave half installed charts that need manual intervention to rollback
 
 env:
   # TODO: Change variable to your image's name.

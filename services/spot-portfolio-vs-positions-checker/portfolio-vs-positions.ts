@@ -136,8 +136,6 @@ export class PortfolioVsPositions {
       if (base_asset === this.quote_asset) continue
       if (this.base_asset_ignore_list.includes(base_asset)) continue
 
-      problema = true
-
       let expected = expected_total_holdings_map[base_asset] || new BigNumber(0)
       let actual = actual_holdings_map[base_asset] || new BigNumber(0)
 
@@ -151,12 +149,14 @@ export class PortfolioVsPositions {
           prices,
         })
         if (diff_quote_amount.isGreaterThanOrEqualTo(this.max_quote_amount_drift_allowed)) {
+          problema = true
           this.send_message(
             `Problema: ${base_asset} balance higher than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset} (${diff_quote_amount} ${this.quote_asset})`
           )
         }
       } catch (err) {
         this.logger.exception({ base_asset, quote_asset: args.quote_asset }, err)
+        problema = true
         this.send_message(
           `Problema: ${base_asset} balance higher than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
         )

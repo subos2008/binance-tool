@@ -49,7 +49,7 @@ export class PortfolioTracker implements MasterPortfolioClass {
     assert(send_message)
     this.send_message = send_message
     this.publisher = publisher
-    this.portfolio_utils = new PortfolioUtils({ logger, sentry: Sentry })
+    this.portfolio_utils = new PortfolioUtils({ logger })
     this.health_and_readiness = health_and_readiness
     health_and_readiness.healthy(true)
     health_and_readiness.ready(true)

@@ -13,16 +13,14 @@ BigNumber.prototype.valueOf = function () {
 import { Logger } from "../../interfaces/logger"
 import { Portfolio, Balance, Prices } from "../../interfaces/portfolio"
 
-let Sentry: any
+import Sentry from "../../lib/sentry"
 
 export class PortfolioUtils {
   logger: Logger
 
-  constructor({ logger, sentry }: { logger: Logger; sentry: any }) {
+  constructor({ logger }: { logger: Logger }) {
     assert(logger)
     this.logger = logger
-    assert(sentry)
-    Sentry = sentry
   }
 
   // Get value of one asset in terms of another ()

@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 // portfolio-tracker service: maintains the current portfolio by
 // getting the portfolio on startup and then monitoring the streams
 // and tracking deltas.
@@ -229,7 +228,7 @@ class PortfolioTracker implements MasterPortfolioClass {
   }
 }
 
-const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger, sentry: Sentry })
+const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger })
 
 async function main() {
   const execSync = require("child_process").execSync

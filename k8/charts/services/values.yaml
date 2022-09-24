@@ -4,12 +4,8 @@
 
 
 #
-# This is OLD almost none of the values here are used
-#
 # The default values yaml may be being used for production so beware
 # 
-
-
 replicaCount: 1
 
 image:
@@ -17,59 +13,7 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
-redis:
-  # if create_local is true we install a redis subchart
-  create_local: false
-  # used if create_local is true
-  usePassword: false
-  cluster:
-    enabled: false
-#   # used if create_local is false
-#   external_host: redis
-#   # redis config
-#   password: ""
-#   database_number: "0"
-#   # insecure: 0 or 1, use 1 for NODE_TLS_REJECT_UNAUTHORIZED (bad certs allowed)
-#   insecure: "0"
-
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-service:
-  type: ClusterIP
-  port: 80
-
-ingress:
-  enabled: false
-  annotations:
-    {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths: []
-
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
-
-resources:
-  {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
-
-nodeSelector: {}
-
-tolerations: []
-
-affinity: {}

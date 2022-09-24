@@ -184,7 +184,7 @@ export class PortfolioVsPositions {
     }
 
     if (!problema) {
-      this.send_message(`✅ All checks passed`)
+      this.send_message(`✅ All checks passed: spot holdings on exchange match expected positions.`)
     }
   }
 }

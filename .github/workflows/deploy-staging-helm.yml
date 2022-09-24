@@ -1,0 +1,160 @@
+name: Build, Push and Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+# c.f. https://stackoverflow.com/questions/66335225/how-to-cancel-previous-runs-in-the-pr-when-you-push-new-commitsupdate-the-curre
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # cancel-in-progress: true # too dangerous, can leave half installed charts that need manual intervention to rollback
+
+env:
+  # TODO: Change variable to your image's name.
+  IMAGE_NAME: binance-tool
+
+jobs:
+  # Run tests.
+  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run tests
+        run: |
+          if [ -f docker-compose.test.yml ]; then
+            docker-compose --version
+            docker-compose --file docker-compose.test.yml build
+            docker-compose --file docker-compose.test.yml run sut
+          else
+            docker build . --file Dockerfile
+          fi
+
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Yarn install
+        run: yarn install
+      - name: Compile
+        run: ./node_modules/.bin/tsc
+
+  # eslint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v1
+  #     - name: Yarn install
+  #       run: yarn install
+  #     - name: Compile
+  #       run: ./node_modules/.bin/eslint .
+
+  # Push image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
+  push:
+    # Ensure test job passes before pushing image.
+
+    # !!!!
+    # needs: test
+
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build image
+        run: docker build . --file Dockerfile --tag image
+
+      - name: Log into registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push image
+        run: |
+          IMAGE_ID=ghcr.io/${{ github.repository }}/$IMAGE_NAME
+
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
+
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+
+          docker tag image $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
+          docker tag image $IMAGE_ID:$(echo $GITHUB_SHA | head -c7)
+          docker push $IMAGE_ID:$(echo $GITHUB_SHA | head -c7)
+
+  deploy-production:
+    needs: [compile, test, push]
+    if: ${{ github.ref == 'refs/heads/master' }}
+    environment: te-staging
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.DIGITALOCEAN_CLUSTER_NAME }}
+
+      # - name: Save values.yaml
+      #   run: echo ${{ secrets.values_yaml }} | base64 --decode > $GITHUB_WORKSPACE/values.yaml
+
+      # - name: Show values.yaml
+      #   run: cat $GITHUB_WORKSPACE/values.yaml
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.6.3
+
+      - name: Deploy to Kubernetes
+        run: helm upgrade --wait --timeout 10m --install "services" --namespace "binance-tool" --create-namespace ./k8/charts/services --set "image.tag=$(echo $GITHUB_SHA | head -c7)" # --values $GITHUB_WORKSPACE/values.yaml
+
+      # - name: Verify deployment
+      #   run: kubectl rollout status deployment/static-example
+
+  deploy-binance-futures-production:
+    needs: [compile, test, push]
+    if: ${{ github.ref == 'refs/heads/master' }}
+    environment: te-staging
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.DIGITALOCEAN_CLUSTER_NAME }}
+
+      # - name: Save values.yaml
+      #   run: echo ${{ secrets.values_yaml }} | base64 --decode > $GITHUB_WORKSPACE/values.yaml
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.6.3
+
+      - name: Deploy to Kubernetes
+        run: helm upgrade --wait --timeout 10m --install "services" --namespace "binance-futures" --create-namespace ./k8/charts/binance-futures --set "image.tag=$(echo $GITHUB_SHA | head -c7)" #  --values $GITHUB_WORKSPACE/values.yaml
+
+      # - name: Verify deployment
+      #   run: kubectl rollout status deployment/static-example

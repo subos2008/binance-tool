@@ -2,6 +2,14 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+
+#
+# This is OLD almost none of the values here are used
+#
+# The default values yaml may be being used for production so beware
+# 
+
+
 replicaCount: 1
 
 image:
@@ -11,7 +19,7 @@ image:
 
 redis:
   # if create_local is true we install a redis subchart
-  create_local: true
+  create_local: false
   # used if create_local is true
   usePassword: false
   cluster:

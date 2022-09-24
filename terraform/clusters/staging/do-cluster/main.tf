@@ -9,18 +9,20 @@ data "digitalocean_kubernetes_versions" "example" {
 }
 
 resource "digitalocean_kubernetes_cluster" "default" {
-  name   = var.cluster_name
-  region = var.do_region
+  depends_on = [digitalocean_vpc.default]
+
+  name     = var.DIGITALOCEAN_CLUSTER_NAME
+  region   = var.do_region
   vpc_uuid = digitalocean_vpc.default.id
 
-  auto_upgrade = true
+  auto_upgrade  = true
   surge_upgrade = true
-  version      = data.digitalocean_kubernetes_versions.example.latest_version
+  version       = data.digitalocean_kubernetes_versions.example.latest_version
 
 
   maintenance_policy {
-    start_time  = "13:00"
-    day         = "sunday"
+    start_time = "13:00"
+    day        = "sunday"
   }
 
   node_pool {

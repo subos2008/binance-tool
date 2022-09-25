@@ -44,7 +44,7 @@ jobs:
   k8-rabbitmq-cluster-operator:
     runs-on: alpine/terragrunt:1.3.0
     environment: te-staging
-    depends_on: [do-cluster]
+    needs: [do-cluster]
 
     defaults:
       run:

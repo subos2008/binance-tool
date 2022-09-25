@@ -21,7 +21,6 @@ env:
 jobs:
   do-cluster:
     runs-on: ubuntu-latest
-    runs-on: alpine/terragrunt:1.3.0
     environment: te-staging
 
     defaults:

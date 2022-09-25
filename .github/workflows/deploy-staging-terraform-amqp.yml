@@ -1,4 +1,4 @@
-name: Terraform Cluster Infrastructure
+name: Staging Terraform RabbitMQ Operator
 
 on:
   push:
@@ -19,32 +19,9 @@ env:
   TF_VAR_DIGITALOCEAN_CLUSTER_NAME: ${{ secrets.DIGITALOCEAN_CLUSTER_NAME }}
 
 jobs:
-  # Run tests.
-  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
-  do-cluster:
-    runs-on: alpine/terragrunt:1.3.0
-    environment: te-staging
-
-    defaults:
-      run:
-        shell: bash
-        working-directory: terraform/clusters/staging/do-cluster
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-      - name: Terraform Plan
-        run: terragrunt plan
-
   k8-rabbitmq-cluster-operator:
     runs-on: alpine/terragrunt:1.3.0
     environment: te-staging
-    needs: [do-cluster]
 
     defaults:
       run:
@@ -64,12 +41,3 @@ jobs:
 
       - name: Terraform Plan
         run: terragrunt apply -auto-approve
-
-  # eslint:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v1
-  #     - name: Yarn install
-  #       run: yarn install
-  #     - name: Compile
-  #       run: ./node_modules/.bin/eslint .

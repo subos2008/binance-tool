@@ -40,16 +40,14 @@ jobs:
       - name: Save DigitalOcean kubeconfig with short-lived credentials
         run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.DIGITALOCEAN_CLUSTER_NAME }}
 
-      # - name: Save values.yaml
-      #   run: echo ${{ secrets.values_yaml }} | base64 --decode > $GITHUB_WORKSPACE/values.yaml
-
-      # - name: Show values.yaml
-      #   run: cat $GITHUB_WORKSPACE/values.yaml
-
       - name: Set up Helm
         uses: azure/setup-helm@v1
         with:
           version: v3.6.3
 
       - name: Deploy to Kubernetes
-        run: helm upgrade --wait --timeout 10m --install "services" --namespace "binance-tool" --create-namespace ./k8/charts/services --set "image.tag=$(echo $GITHUB_SHA | head -c7)" # --values $GITHUB_WORKSPACE/values.yaml
+        run: |
+          helm repo add bitnami "https://charts.bitnami.com/bitnami"
+          helm install --wait --timeout 10m "rabbitmq-operator" --namespace "rabbitmq-system" --create-namespace bitnami/rabbitmq-cluster-operator
+          # Disable upgrade - probably a bad idea as operator version needs to match k8 version
+          # helm upgrade --wait --timeout 10m --install "rabbitmq-operator" --namespace "rabbitmq-system" --create-namespace bitnami/rabbitmq-cluster-operator

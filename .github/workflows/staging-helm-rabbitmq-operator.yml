@@ -20,13 +20,8 @@ env:
 
 jobs:
   k8-rabbitmq-cluster-operator:
-    runs-on: alpine/terragrunt:1.3.0
-    # environment: te-staging
-
-    defaults:
-      run:
-        shell: bash
-        working-directory: terraform/clusters/staging/0200-k8-rabbitmq-cluster-operator
+    runs-on: ubuntu-latest
+    environment: te-staging
 
     steps:
       - uses: actions/checkout@v3

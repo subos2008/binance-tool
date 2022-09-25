@@ -5,7 +5,7 @@ resource "digitalocean_vpc" "default" {
 }
 
 data "digitalocean_kubernetes_versions" "example" {
-  version_prefix = "1.22."
+  version_prefix = var.kubernetes_version_prefix
 }
 
 resource "digitalocean_kubernetes_cluster" "default" {

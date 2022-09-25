@@ -21,7 +21,7 @@ env:
 jobs:
   # Run tests.
   # See also https://docs.docker.com/docker-hub/builds/automated-testing/
-  plan-do-cluster:
+  do-cluster:
     runs-on: alpine/terragrunt:1.3.0
     environment: te-staging
 
@@ -38,11 +38,32 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-      # - name: Save DigitalOcean kubeconfig with short-lived credentials
-      #   run: doctl kubernetes cluster kubeconfig save --expiry-seconds 1000 ${{ secrets.DIGITALOCEAN_CLUSTER_NAME }}
+      - name: Terraform Plan
+        run: terragrunt plan
+
+  k8-rabbitmq-cluster-operator:
+    runs-on: alpine/terragrunt:1.3.0
+    environment: te-staging
+    depends_on: [do-cluster]
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: terraform/clusters/staging/k8-rabbitmq-cluster-operator
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Terraform Plan
-        run: terraform plan
+        run: terragrunt plan
+
+      - name: Terraform Plan
+        run: terragrunt apply -auto-approve
 
   # eslint:
   #   runs-on: ubuntu-latest

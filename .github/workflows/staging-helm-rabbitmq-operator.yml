@@ -29,7 +29,6 @@ jobs:
         working-directory: terraform/clusters/staging/0200-k8-rabbitmq-cluster-operator
 
     steps:
-    steps:
       - uses: actions/checkout@v3
 
       - name: Install doctl

@@ -1,4 +1,4 @@
-name: Staging Terraform Create Cluster
+name: Staging Terraform - Check Cluster
 
 on:
   push:

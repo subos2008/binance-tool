@@ -13,9 +13,9 @@ concurrency:
   # cancel-in-progress: true # too dangerous, can leave half installed charts that need manual intervention to rollback
 
 env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.TF_STATE_BUCKET_ACCESS_KEY }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_STATE_BUCKET_SECRET }}
   TF_VAR_DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-  TF_VAR_AWS_ACCESS_KEY_ID: ${{ secrets.TF_STATE_BUCKET_ACCESS_KEY }}
-  TF_VAR_AWS_SECRET_ACCESS_KEY: ${{ secrets.TF_STATE_BUCKET_SECRET }}
   TF_VAR_DIGITALOCEAN_CLUSTER_NAME: ${{ secrets.DIGITALOCEAN_CLUSTER_NAME }}
 
 jobs:

@@ -29,13 +29,27 @@ jobs:
         working-directory: terraform/clusters/staging/0200-k8-rabbitmq-cluster-operator
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.3.0
-      - uses: autero1/action-terragrunt@v1.1.1
-        with:
-          terragrunt_version: 0.38.12 # latest at the time of writing
+    steps:
+      - uses: actions/checkout@v3
 
-      - name: Terragrunt Plan
-        run: terragrunt plan
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.DIGITALOCEAN_CLUSTER_NAME }}
+
+      # - name: Save values.yaml
+      #   run: echo ${{ secrets.values_yaml }} | base64 --decode > $GITHUB_WORKSPACE/values.yaml
+
+      # - name: Show values.yaml
+      #   run: cat $GITHUB_WORKSPACE/values.yaml
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.6.3
+
+      - name: Deploy to Kubernetes
+        run: helm upgrade --wait --timeout 10m --install "services" --namespace "binance-tool" --create-namespace ./k8/charts/services --set "image.tag=$(echo $GITHUB_SHA | head -c7)" # --values $GITHUB_WORKSPACE/values.yaml

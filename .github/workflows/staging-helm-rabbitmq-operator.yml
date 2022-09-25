@@ -1,4 +1,4 @@
-name: Staging Terraform RabbitMQ Operator
+name: RabbitMQ Operator (Staging Helm)
 
 on:
   push:

@@ -175,13 +175,16 @@ class PortfolioTracker implements MasterPortfolioClass {
             quote_currency,
             quote_amount,
             prices: portfolio.prices,
+            base_assets_to_ignore: [quote_currency, 'BNB']
           })
           if (free_balances.length > 0) {
             let string =
-              `Assets with free balances gt ${quote_amount.toFixed()} ${quote_currency}: [` +
+              `⚠️ Unexpected assets with free balances gt ${quote_amount.toFixed()} ${quote_currency}: [` +
               free_balances.map((b) => `${b.asset}: ${b.quote_amount?.dp(0).toFixed()}`).join(", ") +
               "]"
             this.send_message(string)
+          } else {
+            this.send_message(`✅ no unexpected free balance.`)
           }
         }
       } catch (err) {

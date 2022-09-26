@@ -109,11 +109,13 @@ export class PortfolioUtils {
     quote_currency,
     quote_amount,
     prices,
+    base_assets_to_ignore,
   }: {
     portfolio: Portfolio
     quote_currency: string
     quote_amount: BigNumber
     prices: Prices
+    base_assets_to_ignore: string[]
   }) {
     type Mapped = { asset: string; quote_amount: BigNumber | undefined }
     let mapper = (b: Balance): Mapped => {
@@ -129,7 +131,7 @@ export class PortfolioUtils {
         return { asset: b.asset, quote_amount: undefined }
       }
     }
-    let all = portfolio.balances.map(mapper)
+    let all = portfolio.balances.filter((b) => !base_assets_to_ignore.includes(b.asset)).map(mapper)
 
     let filtered = all.filter((p) => p.quote_amount && p.quote_amount.isGreaterThanOrEqualTo(quote_amount))
 

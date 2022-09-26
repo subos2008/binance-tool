@@ -17,3 +17,7 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+# Used by the post deploy test
+service:
+  type: ClusterIP
+  port: 80

@@ -21,3 +21,6 @@ fullnameOverride: ""
 service:
   type: ClusterIP
   port: 80
+
+redis:
+  database_number: "0" # production - not overriden during deploy so do not change

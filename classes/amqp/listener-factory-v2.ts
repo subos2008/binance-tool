@@ -116,6 +116,7 @@ export class TypedListenerFactory {
 
   // isolated means it's wrapped in an exception catcher/eater
   // You might not want to await on this in case it hangs?
+  // .... wait - it hangs? When does it hang??
   async build_listener<EventT>({
     event_name,
     message_processor,
@@ -201,7 +202,7 @@ export class TypedListenerFactory {
       exclusive = true
       queue_name = ""
     }
-    const q = await channel.assertQueue(queue_name, { exclusive, ...headers })
+    const q = await channel.assertQueue(queue_name, { exclusive, arguments: headers })
     if (prefetch_one) channel.prefetch(1) // things rate limiting by witholding ACKs will need this
     await channel.bindQueue(q.queue, exchange_name, routing_key)
     let wrapper_func = function (event: any) {

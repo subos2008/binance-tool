@@ -7,26 +7,19 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../../interfaces/logger"
-import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/exchanges/binance/order_callbacks"
+import { Logger } from "../../../../interfaces/logger"
+import { OrderCallbacks, BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 
-import Sentry from "../../../lib/sentry"
+import Sentry from "../../../../lib/sentry"
 import {
-  AccountConfigUpdate,
-  AccountUpdate,
   BalanceUpdate,
   Binance,
   ExecutionReport,
   MarginCall,
   OutboundAccountInfo,
   OutboundAccountPosition,
-  UserDataStreamEvent,
 } from "binance-api-node"
-import { AuthorisedEdgeType } from "../../spot/abstractions/position-identifier"
-import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
-import { OrderContextPersistence } from "../../persistent_state/interface/order-context-persistence"
-import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
-import { ContextTags } from "../../../interfaces/send-message"
+import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 
 export class OrderExecutionTracker {
   send_message: Function
@@ -35,7 +28,6 @@ export class OrderExecutionTracker {
   closeUserWebsocket: Function | undefined
   order_callbacks: OrderCallbacks | undefined
   print_all_trades: boolean = false
-  order_context_persistence: OrderContextPersistence
   exchange_identifier: ExchangeIdentifier_V3
 
   // All numbers are expected to be passed in as strings
@@ -45,7 +37,6 @@ export class OrderExecutionTracker {
     logger,
     order_callbacks,
     print_all_trades,
-    order_context_persistence,
     exchange_identifier,
   }: {
     ee: Binance
@@ -53,7 +44,6 @@ export class OrderExecutionTracker {
     logger: Logger
     order_callbacks?: OrderCallbacks
     print_all_trades?: boolean
-    order_context_persistence: OrderContextPersistence
     exchange_identifier: ExchangeIdentifier_V3
   }) {
     assert(logger)
@@ -64,7 +54,6 @@ export class OrderExecutionTracker {
     assert(ee)
     this.ee = ee
     if (print_all_trades) this.print_all_trades = true
-    this.order_context_persistence = order_context_persistence
     this.exchange_identifier = exchange_identifier
 
     process.on("exit", () => {
@@ -95,7 +84,7 @@ export class OrderExecutionTracker {
 
     const process_execution_report: processor_func = async (data: ExecutionReport) => {
       try {
-        this.processExecutionReport(data)
+        await this.processExecutionReport(data)
       } catch (err) {
         Sentry.withScope(function (scope) {
           scope.setTag("operation", "processExecutionReport")
@@ -129,32 +118,6 @@ export class OrderExecutionTracker {
         break
       default:
         throw new Error(`Unknown exchange type: ${this.exchange_identifier.type}`)
-    }
-  }
-
-  async get_order_context_for_order(data: BinanceOrderData): Promise<OrderContext_V1> {
-    let order_context: OrderContext_V1 | undefined = undefined
-    try {
-      order_context = await this.order_context_persistence.get_order_context_for_order({
-        exchange_identifier: this.exchange_identifier,
-        order_id: data.order_id,
-      })
-      if (!order_context) {
-        let msg = `No OrderContext found for order ${data.order_id}`
-        this.logger.error(data, msg)
-        throw new Error(msg)
-      }
-      let { edge } = order_context
-      this.logger.info(
-        data,
-        `Loaded edge for order ${data.order_id}: ${edge}:${data.symbol} (undefined can be valid here for manually created orders)`
-      )
-      return order_context
-    } catch (err) {
-      // Non fatal there are valid times for this like manually created orders
-      this.logger.warn(data, err)
-      // Sentry.captureException(err)
-      throw err
     }
   }
 
@@ -221,24 +184,6 @@ export class OrderExecutionTracker {
         })
       }
 
-      // This bit of code is horrible
-      let edge: AuthorisedEdgeType | undefined
-      try {
-        /** Add edge and order_context if known */
-        let order_context: OrderContext_V1 = await this.get_order_context_for_order(bod)
-        bod.order_context = order_context
-        bod.edge = order_context.edge
-      } catch (err) {
-        this.logger.error(_data, err)
-        Sentry.withScope(function (scope) {
-          scope.setTag("operation", "processExecutionReport")
-          scope.setTag("pair", symbol)
-          scope.setTag("order_id", order_id || "undefined")
-          Sentry.captureException(err)
-        })
-        edge = "undefined"
-      }
-
       try {
         if (this.print_all_trades) {
           this.logger.info(_data, `${symbol} ${side} ${orderType} ORDER #${order_id} (${orderStatus})`)
@@ -289,7 +234,6 @@ export class OrderExecutionTracker {
         Sentry.withScope(function (scope) {
           scope.setTag("operation", "processExecutionReport")
           scope.setTag("pair", symbol)
-          if (edge) scope.setTag("edge", edge)
           if (order_id) scope.setTag("order_id", order_id)
           Sentry.captureException(err)
         })

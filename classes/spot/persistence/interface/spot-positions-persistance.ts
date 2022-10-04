@@ -47,11 +47,12 @@ export type SpotPositionInitialisationData = {
   initial_entry_quote_asset: string
   initial_entry_price: BigNumber
   orders: GenericOrderData[]
-  edge: AuthorisedEdgeType // added this
+  edge: string // added this
 }
 
 export function genericOrderDataToSpotPositionInitialisationData(
-  o: GenericOrderData
+  o: GenericOrderData,
+  edge: string
 ): SpotPositionInitialisationData {
   return {
     initial_entry_timestamp: o.orderTime,
@@ -60,7 +61,7 @@ export function genericOrderDataToSpotPositionInitialisationData(
     initial_entry_quote_asset: o.quoteAsset,
     initial_entry_price: new BigNumber(o.averageExecutionPrice),
     orders: [o],
-    edge: o.edge as AuthorisedEdgeType,
+    edge,
   }
 }
 

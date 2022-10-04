@@ -9,17 +9,19 @@ import Sentry from "../../../lib/sentry"
 
 import { ListenerFactory } from "../../amqp/listener-factory"
 import { MessageProcessor } from "../../amqp/interfaces"
-import { HealthAndReadiness } from "../../health_and_readiness"
+import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../health_and_readiness"
 import { MyEventNameType } from "../../amqp/message-routing"
 import { Channel } from "amqplib"
 import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/exchanges/binance/order_callbacks"
 import { SendMessageFunc } from "../../../interfaces/send-message"
-import { Logger } from "../../../interfaces/logger"
+import { ServiceLogger } from "../../../interfaces/logger"
 
 export class AMQP_BinanceOrderDataListener implements MessageProcessor {
+  event_name: MyEventNameType = "BinanceOrderData"
   send_message: Function
-  logger: Logger
+  logger: ServiceLogger
   health_and_readiness: HealthAndReadiness
+  callbacks_health: HealthAndReadinessSubsystem
   order_callbacks: OrderCallbacks
   print_all_trades: boolean = false
   service_name: string | undefined
@@ -33,7 +35,7 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
     service_name,
   }: {
     send_message: SendMessageFunc
-    logger: Logger
+    logger: ServiceLogger
     health_and_readiness: HealthAndReadiness
     order_callbacks: OrderCallbacks
     print_all_trades?: boolean
@@ -45,6 +47,14 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
     this.order_callbacks = order_callbacks
     if (print_all_trades) this.print_all_trades = true
     this.service_name = service_name
+    // Added this so we can set unhealthy if the message callbacks throw
+    // This will mean we don't ACK the message anyway so going unhealthy
+    // here just brings down the message ACK timeout kill
+    this.callbacks_health = this.health_and_readiness.addSubsystem({
+      name: `${this.event_name}_Callbacks`,
+      ready: true,
+      healthy: true, // Go unhealthy if we get exceptions from the callbacks
+    })
   }
 
   async start() {
@@ -58,37 +68,36 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
 
   async register_message_processors() {
     let listener_factory = new ListenerFactory({ logger: this.logger })
-    let event_name: MyEventNameType = "BinanceOrderData"
     let health_and_readiness = this.health_and_readiness.addSubsystem({
-      name: event_name,
+      name: this.event_name,
       ready: false,
       healthy: false,
     })
-    listener_factory.build_isolated_listener({
-      event_name,
+    listener_factory.build_nonisolated_listener({
+      event_name: this.event_name,
       message_processor: this,
       health_and_readiness,
       service_name: this.service_name,
-      prefetch_one: false,
+      prefetch_one: true,
     })
   }
 
   async process_message(amqp_event: any, channel: Channel): Promise<void> {
     try {
-      channel.ack(amqp_event)
       let i: BinanceOrderData = JSON.parse(amqp_event.content.toString())
       await this.processBinanceOrderDataMessage(i)
+      channel.ack(amqp_event)
     } catch (err: any) {
-      this.logger.error({ err })
+      this.logger.exception({}, { err })
       Sentry.captureException(err)
+      this.callbacks_health.healthy(false)
     }
   }
 
   async processBinanceOrderDataMessage(data: BinanceOrderData) {
-    const { symbol, price, quantity, side, orderType, orderStatus, order_id, edge, exchange_identifier } = data
+    const { symbol, price, quantity, side, orderType, orderStatus, order_id, exchange_identifier } = data
 
     let tags = {
-      edge,
       symbol,
       order_id,
       exchange: exchange_identifier.exchange,
@@ -159,7 +168,6 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
         scope.setTag("class", "AMQP_BinanceOrderDataListener")
         scope.setTag("operation", "processBinanceOrderDataMessage")
         scope.setTag("pair", symbol)
-        if (edge) scope.setTag("edge", edge)
         if (order_id) scope.setTag("order_id", order_id)
         Sentry.captureException(err)
       })

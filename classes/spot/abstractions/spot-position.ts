@@ -101,7 +101,7 @@ export class SpotPosition {
   }
 
   async edge(): Promise<string> {
-    return await this.spot_positions_persistance.edge(this.position_identifier)
+    return this.position_identifier.edge
   }
 
   async orders(): Promise<GenericOrderData[]> {
@@ -117,7 +117,7 @@ export class SpotPosition {
       )
     }
     if ((await this.position_size()).isZero()) {
-      let i = genericOrderDataToSpotPositionInitialisationData(generic_order_data)
+      let i = genericOrderDataToSpotPositionInitialisationData(generic_order_data, await this.edge())
       await this.spot_positions_persistance.initialise_position(this.position_identifier, i) // interestingly this would create long and short positions automatically
     } else {
       // TODO: when we add this to redis we could use a hash keyed by order number to prevent duplicate entries?

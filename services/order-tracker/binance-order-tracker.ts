@@ -15,12 +15,11 @@ const service_name = "order-tracker"
 import { get_redis_client, set_redis_logger } from "../../lib/redis"
 const BinanceFoo = require("binance-api-node").default
 import { Binance } from "binance-api-node"
-import { OrderExecutionTracker } from "../../classes/exchanges/binance/spot-order-execution-tracker"
+import { OrderExecutionTracker } from "../binance/spot/orders-to-amqp/spot-order-execution-tracker"
 import { BinanceOrderData } from "../../interfaces/exchanges/binance/order_callbacks"
 import { RedisOrderContextPersistence } from "../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { SendMessage } from "../../classes/send_message/publish"
-import { Logger } from "./../../lib/faux_logger"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import express from "express"
 
@@ -31,17 +30,22 @@ import express from "express"
 // TODO: add watchdog on trades stream - it can stop responding without realising
 // TODO: - in the original implementations (iirc lib around binance has been replaced)
 
-const logger: Logger = new Logger({ silent: false })
-const health_and_readiness = new HealthAndReadiness({ logger })
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
-
 import { BigNumber } from "bignumber.js"
+import { OrderContextPersistence } from "../../classes/persistent_state/interface/order-context-persistence"
+import { OrderContext_V1 } from "../../interfaces/orders/order-context"
+import { ServiceLogger } from "../../interfaces/logger"
+import { BunyanServiceLogger } from "../../lib/service-logger"
+
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
+
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
+const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -52,17 +56,42 @@ process.on("unhandledRejection", (err) => {
 
 class MyOrderCallbacks {
   send_message: SendMessageFunc
-  logger: Logger
+  logger: ServiceLogger
+  order_context_persistence: OrderContextPersistence
 
-  constructor({ send_message, logger }: { send_message: SendMessageFunc; logger: Logger }) {
+  constructor({
+    send_message,
+    logger,
+    order_context_persistence,
+  }: {
+    send_message: SendMessageFunc
+    logger: ServiceLogger
+    order_context_persistence: OrderContextPersistence
+  }) {
     assert(logger)
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
+    this.order_context_persistence = order_context_persistence
+  }
+
+  async get_order_context_for_order(data: BinanceOrderData): Promise<OrderContext_V1 | { edge: undefined }> {
+    let order_context: OrderContext_V1 | undefined = undefined
+    try {
+      order_context = await this.order_context_persistence.get_order_context_for_order({
+        exchange_identifier: data.exchange_identifier,
+        order_id: data.order_id,
+      })
+    } catch (err) {
+      // Non fatal there are valid times for this like manually created orders
+      this.logger.exception(data, err)
+    }
+    return order_context || { edge: undefined }
   }
 
   async order_created(data: BinanceOrderData): Promise<void> {
-    this.logger.info(data)
+    this.logger.event({}, data)
+    let { edge } = await this.get_order_context_for_order(data)
     let price: string = data.price ? new BigNumber(data.price).toFixed() : "(null)"
     let stopPrice: string = data.stopPrice ? new BigNumber(data.stopPrice).toFixed() : "(null)"
 
@@ -70,16 +99,16 @@ class MyOrderCallbacks {
       switch (data.orderType) {
         case "STOP_LOSS_LIMIT":
           if (data.isOrderWorking) {
-            this.send_message(`Triggered ${data.symbol} ${data.orderType} (edge: ${data.edge}).`)
+            this.send_message(`Triggered ${data.symbol} ${data.orderType} (edge: ${edge}).`)
           } else {
             this.send_message(
-              `Created ${data.symbol} ${data.orderType} at ${stopPrice} to ${price} (edge: ${data.edge}).`
+              `Created ${data.symbol} ${data.orderType} at ${stopPrice} to ${price} (edge: ${edge}).`
             )
           }
           break
         default:
           this.send_message(
-            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${price} (edge: ${data.edge}).`
+            `Created ${data.orderType} ${data.side} order on ${data.symbol} at ${price} (edge: ${edge}).`
           )
       }
     }
@@ -87,7 +116,8 @@ class MyOrderCallbacks {
 
   async order_cancelled(data: BinanceOrderData): Promise<void> {
     let price: string = data.price ? new BigNumber(data.price).toFixed() : "(null)"
-    this.send_message(`${data.symbol} ${data.orderType} ${data.side} at ${price} cancelled  (edge: ${data.edge})`)
+    let { edge } = await this.get_order_context_for_order(data)
+    this.send_message(`${data.symbol} ${data.orderType} ${data.side} at ${price} cancelled  (edge: ${edge})`)
   }
 
   async order_filled(data: BinanceOrderData): Promise<void> {
@@ -95,8 +125,9 @@ class MyOrderCallbacks {
     let averageExecutionPrice: string = data.averageExecutionPrice
       ? new BigNumber(data.averageExecutionPrice).toFixed()
       : "(null)"
+    let { edge } = await this.get_order_context_for_order(data)
     this.send_message(
-      `${data.symbol} ${data.orderType} ${data.side} filled at ${price}/${averageExecutionPrice}  (edge: ${data.edge})`
+      `${data.symbol} ${data.orderType} ${data.side} filled at ${price}/${averageExecutionPrice}  (edge: ${edge})`
     )
   }
 
@@ -106,8 +137,9 @@ class MyOrderCallbacks {
       ? new BigNumber(data.averageExecutionPrice).toFixed()
       : "(null)"
     let executedAmount = new BigNumber(data.totalTradeQuantity).isZero() ? 0 : data.totalTradeQuantity
+    let { edge } = await this.get_order_context_for_order(data)
     this.send_message(
-      `${data.symbol} ${data.orderType} ${data.side} EXPIRED at ${price}/${averageExecutionPrice}, executed amount ${executedAmount} (edge: ${data.edge})`
+      `${data.symbol} ${data.orderType} ${data.side} EXPIRED at ${price}/${averageExecutionPrice}, executed amount ${executedAmount} (edge: ${edge})`
     )
   }
 }
@@ -129,15 +161,14 @@ async function main() {
   set_redis_logger(logger)
   let redis = get_redis_client()
 
-  let order_callbacks = new MyOrderCallbacks({ logger, send_message })
   let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
+  let order_callbacks = new MyOrderCallbacks({ logger, send_message, order_context_persistence })
 
   let spot_order_execution_tracker = new OrderExecutionTracker({
     ee,
     send_message,
     logger,
     order_callbacks,
-    order_context_persistence,
     exchange_identifier: { type: "spot", version: "v3", exchange: "binance", account: "default" },
   })
 

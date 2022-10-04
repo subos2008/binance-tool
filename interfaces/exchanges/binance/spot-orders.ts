@@ -32,7 +32,7 @@ export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info
     totalQuoteTradeQuantity: i.totalQuoteTradeQuantity,
     averageExecutionPrice: i.averageExecutionPrice,
     orderTime: i.orderTime,
-    edge: i.edge,
+    // edge: i.edge,
   }
   if (i.orderStatus)
     generic.orderStatus = map_binance_order_status_to_generic_order_status(i.orderStatus as OrderStatus)

@@ -37,6 +37,9 @@ import { SendMessageFunc } from "../../../../interfaces/send-message"
 import { SpotPositionPublisher } from "./spot-position-publisher"
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { BunyanServiceLogger } from "../../../../lib/service-logger"
+import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
+import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
+import { OrderContextPersistence } from "../../../../classes/persistent_state/interface/order-context-persistence"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 
@@ -62,17 +65,20 @@ class MyOrderCallbacks implements OrderCallbacks {
   logger: ServiceLogger
   position_tracker: SpotPositionTracker
   exchange_info: ExchangeInfo
+  order_context_persistence: OrderContextPersistence
 
   constructor({
     send_message,
     logger,
     position_tracker,
     exchange_info,
+    order_context_persistence,
   }: {
     send_message: SendMessageFunc
     logger: ServiceLogger
     position_tracker: SpotPositionTracker
     exchange_info: ExchangeInfo
+    order_context_persistence: OrderContextPersistence
   }) {
     assert(logger)
     this.logger = logger
@@ -81,21 +87,38 @@ class MyOrderCallbacks implements OrderCallbacks {
     assert(position_tracker)
     this.position_tracker = position_tracker
     this.exchange_info = exchange_info
+    this.order_context_persistence = order_context_persistence
+  }
+
+  async get_order_context_for_order(data: BinanceOrderData): Promise<OrderContext_V1 | { edge: undefined }> {
+    let order_context: OrderContext_V1 | undefined = undefined
+    try {
+      order_context = await this.order_context_persistence.get_order_context_for_order({
+        exchange_identifier: data.exchange_identifier,
+        order_id: data.order_id,
+      })
+    } catch (err) {
+      // Non fatal there are valid times for this like manually created orders
+      this.logger.exception(data, err)
+    }
+    return order_context || { edge: undefined }
   }
 
   async order_filled(data: BinanceOrderData): Promise<void> {
-    let { edge, side, symbol } = data
+    let { side, symbol } = data
+    let { edge } = await this.get_order_context_for_order(data)
     let tags = { edge, side, symbol }
+
     let exchange_info = this.exchange_info
     if (data.side == "BUY") {
-      data.msg = `BUY order on ${data.symbol} filled (edge: ${data.edge}).`
+      data.msg = `BUY order on ${data.symbol} filled (edge: ${edge}).`
       this.logger.event({}, data)
       this.position_tracker.buy_order_filled({
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
       })
     }
     if (data.side == "SELL") {
-      data.msg = `SELL order on ${data.symbol} filled (edge: ${data.edge}).`
+      data.msg = `SELL order on ${data.symbol} filled (edge: ${edge}).`
       this.logger.event({}, data)
       this.position_tracker.sell_order_filled({
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
@@ -165,8 +188,16 @@ async function main() {
 
   // await publisher.connect()
 
+  let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
+
   // Update when any order completes
-  let order_callbacks = new MyOrderCallbacks({ logger, send_message, position_tracker, exchange_info })
+  let order_callbacks = new MyOrderCallbacks({
+    logger,
+    send_message,
+    position_tracker,
+    exchange_info,
+    order_context_persistence,
+  })
   order_execution_tracker = new AMQP_BinanceOrderDataListener({
     send_message,
     logger,

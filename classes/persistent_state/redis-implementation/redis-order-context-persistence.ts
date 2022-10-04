@@ -8,6 +8,7 @@ import {
 } from "../../../events/shared/exchange-identifier"
 import { OrderContextPersistence, OrderContextPersistence_V2 } from "../interface/order-context-persistence"
 import { OrderContext_V1, OrderContext_V2 } from "../../../interfaces/orders/order-context"
+import { ContextTags } from "../../../interfaces/send-message"
 
 type OrderId = string
 
@@ -49,13 +50,20 @@ export class RedisOrderContextPersistence implements OrderContextPersistence, Or
     order_id: OrderId
   }): Promise<OrderContext_V1 | OrderContext_V2> {
     let { order_id, exchange_identifier } = args
-    if (!order_id) throw new Error(`null order_id in get_order_context_for_order: ${order_id}`)
+    try {
+      // I think there was a bug where this would happen a while ago
+      if (!order_id) throw new Error(`null order_id in get_order_context_for_order: ${order_id}`)
 
-    let json = await this.getAsync(this._key(exchange_identifier, order_id))
-    if (!json) throw new Error(`No OrderContext found for order ${order_id}`)
+      let json = await this.getAsync(this._key(exchange_identifier, order_id))
+      if (!json) throw new Error(`No OrderContext found for order ${order_id}`)
 
-    let order_context: OrderContext_V1 | OrderContext_V2 = JSON.parse(json)
-
-    return order_context
+      let order_context: OrderContext_V1 | OrderContext_V2 = JSON.parse(json)
+      return order_context
+    } catch (err) {
+      let tags: ContextTags = { order_id }
+      let obj = { object_type: "OrderContextNotFound", order_id }
+      this.logger.event(tags, obj)
+      throw err
+    }
   }
 }

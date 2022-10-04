@@ -22,12 +22,10 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/spot-order-execution-tracker"
+import { OrderExecutionTracker } from "./spot-order-execution-tracker"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-import { RedisClient } from "redis"
-import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { BinanceOrderPublisher } from "../../lib/binance-order-publisher"
 
 const exchange_identifier: ExchangeIdentifier_V3 = {
@@ -49,12 +47,10 @@ export class BinanceSpotOrdersToAMQP {
     send_message,
     logger,
     health_and_readiness,
-    redis,
   }: {
     send_message: (msg: string) => void
     logger: Logger
     health_and_readiness: HealthAndReadiness
-    redis: RedisClient
   }) {
     assert(logger)
     this.logger = logger
@@ -67,14 +63,12 @@ export class BinanceSpotOrdersToAMQP {
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
-    let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
 
     this.order_execution_tracker = new OrderExecutionTracker({
       ee: this.ee,
       send_message,
       logger,
       order_callbacks: this,
-      order_context_persistence,
       exchange_identifier,
     })
 

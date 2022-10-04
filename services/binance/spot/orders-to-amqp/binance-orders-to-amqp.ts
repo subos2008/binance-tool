@@ -54,18 +54,12 @@ process.on("unhandledRejection", (err) => {
 
 import { BinanceSpotOrdersToAMQP } from "./spot-order"
 
-import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
-
-
 async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  set_redis_logger(logger)
-  let redis = get_redis_client()
-
   try {
-    let portfolio_to_amqp = new BinanceSpotOrdersToAMQP({ send_message, logger, health_and_readiness, redis })
+    let portfolio_to_amqp = new BinanceSpotOrdersToAMQP({ send_message, logger, health_and_readiness })
     await portfolio_to_amqp.start()
   } catch (err: any) {
     Sentry.captureException(err)

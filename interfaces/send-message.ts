@@ -11,4 +11,5 @@ export interface ContextTags {
   exchange_type?: ExchangeType
   symbol?: string
   unhandledRejection?: boolean // set on exceptions
+  order_id?: string
 }

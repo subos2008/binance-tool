@@ -27,7 +27,7 @@ import {
   SpotPositionOpenedEvent_V1,
 } from "../../../../classes/spot/abstractions/spot-position-callbacks"
 import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
-import { SendMessageFunc } from "../../../../interfaces/send-message"
+import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-message"
 
 export type check_func = ({
   volume,
@@ -79,10 +79,29 @@ export class SpotPositionTracker {
     this.callbacks = callbacks
   }
 
+  async get_order_context_for_order(data: GenericOrderData): Promise<OrderContext_V1 | { edge: undefined }> {
+    let order_context: OrderContext_V1 | undefined = undefined
+    try {
+      order_context = await this.order_context_persistence.get_order_context_for_order({
+        exchange_identifier: data.exchange_identifier,
+        order_id: data.order_id,
+      })
+    } catch (err) {
+      // Non fatal there are valid times for this like manually created orders
+      this.logger.exception(data, err)
+    }
+    return order_context || { edge: undefined }
+  }
+
   async buy_order_filled({ generic_order_data }: { generic_order_data: GenericOrderData }) {
-    let { exchange_identifier, baseAsset, averageExecutionPrice, side, orderType, edge, quoteAsset } =
-      generic_order_data
-    let tags = { edge, base_asset: baseAsset, quote_asset: quoteAsset }
+    let { exchange_identifier, baseAsset, averageExecutionPrice, side, orderType, quoteAsset } = generic_order_data
+    let { edge } = await this.get_order_context_for_order(generic_order_data)
+
+    let tags: ContextTags = { base_asset: baseAsset, quote_asset: quoteAsset }
+    if (edge) tags.edge = edge
+
+    /* TODO: What do we want to do here if edge is undefined? */
+    if (!edge) this.logger.warn(`Edge is undefined for order... what whould we do?`)
 
     let position = await this.load_position_for_order(generic_order_data)
     await position.add_order_to_position({ generic_order_data }) // this would have created it if it didn't exist - from the order data

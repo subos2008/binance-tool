@@ -1,7 +1,6 @@
 import { BigNumber } from "bignumber.js"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { OrderContext_V1, OrderContext_V2 } from "../../../interfaces/orders/order-context"
-import { AuthorisedEdgeType } from "../../spot/abstractions/position-identifier"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {

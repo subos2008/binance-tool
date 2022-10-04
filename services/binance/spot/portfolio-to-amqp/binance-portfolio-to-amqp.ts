@@ -12,7 +12,6 @@
 //  1. Publishes to AMQP: portfolio with current price information
 //
 // Thoughts/TODO:
-//  1. Could also check redis-trades matches position sizes
 //  1. Doesn't currently re-publish on deposits/withdrawals
 
 // Config
@@ -44,19 +43,16 @@ BigNumber.prototype.valueOf = function () {
 
 import { SendMessage } from "../../../../classes/send_message/publish"
 import { Logger } from "../../../../lib/faux_logger"
-import { OrderExecutionTracker } from "../../../../classes/exchanges/binance/spot-order-execution-tracker"
+import { OrderExecutionTracker } from "../orders-to-amqp/spot-order-execution-tracker"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { Balance, Portfolio } from "../../../../interfaces/portfolio"
 import { Binance as BinanceType } from "binance-api-node"
 import Binance from "binance-api-node"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-import { RedisClient } from "redis"
-import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 import { PortfolioPublisher } from "./portfolio-publisher"
 import { PortfolioTracker } from "./portfolio-tracker"
-import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import express from "express"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 
@@ -75,8 +71,6 @@ process.on("unhandledRejection", (err) => {
   service_is_healthy.healthy(false)
 })
 
-
-
 export class BinancePortfolioToAMQP implements PortfolioBitchClass {
   send_message: SendMessageFunc
   logger: Logger
@@ -93,12 +87,10 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
     send_message,
     logger,
     health_and_readiness,
-    redis,
   }: {
     send_message: SendMessageFunc
     logger: Logger
     health_and_readiness: HealthAndReadiness
-    redis: RedisClient
   }) {
     assert(logger)
     this.logger = logger
@@ -144,13 +136,11 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
       apiSecret: process.env.BINANCE_API_SECRET,
     })
 
-    let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
     this.order_execution_tracker = new OrderExecutionTracker({
       ee: this.ee,
       send_message,
       logger,
       order_callbacks: this,
-      order_context_persistence,
       exchange_identifier,
     })
   }
@@ -212,15 +202,12 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
   }
 }
 
-set_redis_logger(logger)
-let redis: RedisClient = get_redis_client()
-
 async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
   
   try {
-    let portfolio_to_amqp = new BinancePortfolioToAMQP({ send_message, logger, health_and_readiness, redis })
+    let portfolio_to_amqp = new BinancePortfolioToAMQP({ send_message, logger, health_and_readiness })
     await portfolio_to_amqp.start()
   } catch (err: any) {
     Sentry.captureException(err)

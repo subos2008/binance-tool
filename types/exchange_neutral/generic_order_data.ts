@@ -37,7 +37,7 @@ export type GenericOrderData = {
 
   usd_equivalent_value?: string
 
-  edge?: string
+  // edge?: string // Not currently added anywhere We might want to use OrderContext instead
 
   // orderRejectReason?: string // we probably don't want rejected orders in generic streams
   // price?: string

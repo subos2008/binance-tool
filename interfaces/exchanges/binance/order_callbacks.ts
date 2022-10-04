@@ -53,8 +53,8 @@ export interface BinanceOrderData /* extends ExecutionReport */ {
   orderStatus: OrderStatus_LT
   totalQuoteTradeQuantity: string
   averageExecutionPrice?: string // Added by us
-  edge?: string // Added by us
-  order_context?: OrderContext_V1 // Added by us
+  // edge?: string // Added by us // 2022 - removed again, we want to queue these raw events without any dependency on redis
+  // order_context?: OrderContext_V1 // Added by us // 2022 - removed again, we want to queue these raw events without any dependency on redis
 }
 export interface FuturesBinanceOrderData /* extends OrderUpdate */ {
   object_type: "FuturesBinanceOrderData"

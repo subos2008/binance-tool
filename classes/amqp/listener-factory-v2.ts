@@ -114,7 +114,7 @@ export class TypedListenerFactory {
     this.logger = logger
   }
 
-  // isolated means it's wrapped in an exception catcher/eater
+  // eat_exceptions means it's wrapped in an exception catcher/eater
   // You might not want to await on this in case it hangs?
   // .... wait - it hangs? When does it hang??
   async build_listener<EventT>({

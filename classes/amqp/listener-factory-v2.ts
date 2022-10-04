@@ -68,6 +68,7 @@ class TypedMessageProcessorWrapper<EventT> implements RawAMQPMessageProcessor {
   /* Called by amqplib to deliver a new event */
   async process_message(raw_amqp_message: Message, channel: Channel): Promise<void> {
     // TODO: sentry scope
+    // If content is null it can mean the queue got deleted on the server
     let raw_body = raw_amqp_message.content.toString()
     let Body
     let tags = raw_amqp_message.fields as ContextTags

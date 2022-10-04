@@ -82,7 +82,7 @@ export class MessageRouting {
           routing_key: "spot-binance-orders",
           exchange_name: "binance-tool",
           exchange_type: "topic",
-          durable: true,
+          durable: false, // This is about the exchange - needs to be re-created
         }
       case "FuturesBinanceOrderData":
         return {

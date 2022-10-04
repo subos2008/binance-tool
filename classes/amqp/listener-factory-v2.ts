@@ -190,7 +190,6 @@ export class TypedListenerFactory {
       logger.error(`AMQP Channel closed!`)
       health_and_readiness.healthy(false)
     })
-    health_and_readiness.ready(true)
     // TODO: do we not look at the return code here?
     // TODO: I think maybe asserting the channel, queue, exchange shound be on every message
     await channel.assertExchange(exchange_name, exchange_type, { durable })
@@ -213,5 +212,6 @@ export class TypedListenerFactory {
         headers
       )}"`
     )
+    health_and_readiness.ready(true)
   }
 }

@@ -58,6 +58,12 @@ spec:
             httpGet:
               path: /health
               port: http
+          startupProbe: # First time this goes healthy livenessProbe is activated
+            httpGet:
+              path: /ready
+              port: http
+            failureThreshold: 30 # 30 * 10 = 5 minutes
+            periodSeconds: 10
           readinessProbe:
             initialDelaySeconds: 60 # Just some default breathing room
             httpGet:

@@ -207,7 +207,7 @@ export class TypedListenerFactory {
     }
     channel.consume(q.queue, wrapper_func, { noAck: false })
     this.logger.info(
-      `ListenerFactory: Waiting for new '${event_name}' events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}, service_name "${queue_name}"`
+      `ListenerFactory: Waiting for new '${event_name}' events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}, queue_name: "${queue_name}"`
     )
   }
 }

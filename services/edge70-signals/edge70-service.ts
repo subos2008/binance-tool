@@ -89,7 +89,7 @@ const edge: "edge70" = "edge70"
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
-const init_health = health_and_readiness.addSubsystem({ name: "init-boot", ready: false, healthy: false })
+const init_health = health_and_readiness.addSubsystem({ name: "init-boot", ready: false, healthy: true })
 const candle_ingestion_health = health_and_readiness.addSubsystem({
   name: "candle-ingestion",
   ready: false,
@@ -384,7 +384,6 @@ async function main() {
     })
 
     await service.init()
-    init_health.healthy(true)
     init_health.ready(true)
 
     await service.run()

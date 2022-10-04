@@ -61,6 +61,7 @@ spec:
               path: /health
               port: http
           readinessProbe:
+            initialDelaySeconds: 180 # Needs to ingest all the candle history on boot
             httpGet:
               path: /ready
               port: http

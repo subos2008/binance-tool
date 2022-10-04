@@ -71,7 +71,7 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
     let health_and_readiness = this.health_and_readiness.addSubsystem({
       name: this.event_name,
       ready: false,
-      healthy: false,
+      healthy: true,
     })
     listener_factory.build_listener({
       event_name: this.event_name,

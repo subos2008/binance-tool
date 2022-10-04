@@ -77,7 +77,7 @@ export class MessageRouting {
           durable: false,
         }
 
-      case "BinanceOrderData": // BinanceOrderPublisher
+      case "BinanceOrderData": // BinanceOrderDataPublisher
         return {
           routing_key: "spot-binance-orders",
           exchange_name: "binance-tool",

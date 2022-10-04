@@ -26,7 +26,7 @@ import { OrderExecutionTracker } from "./spot-order-execution-tracker"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-import { BinanceOrderPublisher } from "../../lib/binance-order-publisher"
+import { BinanceOrderDataPublisher } from "../../lib/binance-order-data-publisher"
 
 const exchange_identifier: ExchangeIdentifier_V3 = {
   exchange: "binance",
@@ -41,7 +41,7 @@ export class BinanceSpotOrdersToAMQP {
   order_execution_tracker: OrderExecutionTracker
   exchange_identifier: ExchangeIdentifier_V3
   health_and_readiness: HealthAndReadiness
-  publisher: BinanceOrderPublisher
+  publisher: BinanceOrderDataPublisher
 
   constructor({
     send_message,
@@ -72,7 +72,7 @@ export class BinanceSpotOrdersToAMQP {
       exchange_identifier,
     })
 
-    this.publisher = new BinanceOrderPublisher({
+    this.publisher = new BinanceOrderDataPublisher({
       logger,
       health_and_readiness,
     })

@@ -28,7 +28,7 @@ import { HealthAndReadiness } from "../../../classes/health_and_readiness"
 import { MyEventNameType } from "../../../classes/amqp/message-routing"
 import { Connection } from "amqplib"
 
-export class BinanceOrderPublisher {
+export class BinanceOrderDataPublisher {
   logger: Logger
   closeTradesWebSocket: (() => void) | undefined
   connection: Connection | undefined

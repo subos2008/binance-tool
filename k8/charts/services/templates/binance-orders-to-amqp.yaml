@@ -44,11 +44,11 @@ spec:
             httpGet:
               path: /health
               port: http
-          # readinessProbe:
-            # initialDelaySeconds: 60 # Just some default breathing room
-          #   httpGet:
-          #     path: /health
-          #     port: http
+          readinessProbe:
+            initialDelaySeconds: 60 # Just some default breathing room
+            httpGet:
+              path: /ready
+              port: http
           env:
             - name: SENTRY_DSN
               value: "https://39c6f58d63334b43bf0986cf24d863a5@o369902.ingest.sentry.io/6114372"

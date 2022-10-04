@@ -7,7 +7,6 @@
 
 import Sentry from "../../../lib/sentry"
 
-import { ListenerFactory } from "../../amqp/listener-factory"
 import { MessageProcessor } from "../../amqp/interfaces"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../health_and_readiness"
 import { MyEventNameType } from "../../amqp/message-routing"
@@ -15,6 +14,7 @@ import { Channel } from "amqplib"
 import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/exchanges/binance/order_callbacks"
 import { SendMessageFunc } from "../../../interfaces/send-message"
 import { ServiceLogger } from "../../../interfaces/logger"
+import { TypedListenerFactory } from "../../amqp/listener-factory-v2"
 
 export class AMQP_BinanceOrderDataListener implements MessageProcessor {
   event_name: MyEventNameType = "BinanceOrderData"
@@ -67,18 +67,19 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
   }
 
   async register_message_processors() {
-    let listener_factory = new ListenerFactory({ logger: this.logger })
+    let listener_factory = new TypedListenerFactory({ logger: this.logger })
     let health_and_readiness = this.health_and_readiness.addSubsystem({
       name: this.event_name,
       ready: false,
       healthy: false,
     })
-    listener_factory.build_nonisolated_listener({
+    listener_factory.build_listener({
       event_name: this.event_name,
       message_processor: this,
       health_and_readiness,
       service_name: this.service_name,
       prefetch_one: true,
+      eat_exceptions: false,
     })
   }
 

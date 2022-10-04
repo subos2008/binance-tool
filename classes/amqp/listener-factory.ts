@@ -265,7 +265,12 @@ export class ListenerFactory {
     prefetch_one: boolean
   }) {
     // TODO: durable, exclusive, noAck, ... lots of configurable shit here...
-    let { routing_key, exchange_name, exchange_type, durable } = MessageRouting.amqp_routing({ event_name })
+    let { routing_key, exchange_name, exchange_type, durable, headers } = MessageRouting.amqp_routing({
+      event_name,
+    })
+    if (Object.keys(headers).length > 0) {
+      throw new Error(`Listener Factory v1 does not support headers arguments`) // would be easy to implement
+    }
     let connection: Connection = await connect(connect_options)
     process.once("SIGINT", connection.close.bind(connection))
     this.logger.info(`ListenerFactory: Connection with AMQP server established.`)

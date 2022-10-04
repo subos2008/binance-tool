@@ -178,7 +178,7 @@ export class TypedListenerFactory {
       throw new Error(`Likely bug - initialise healthy to true`)
     }
     // TODO: durable, exclusive, noAck, ... lots of configurable shit here...
-    let { routing_key, exchange_name, exchange_type, durable } = MessageRouting.amqp_routing({ event_name })
+    let { routing_key, exchange_name, exchange_type, durable, headers } = MessageRouting.amqp_routing({ event_name })
     let connection: Connection = await connect(connect_options)
     process.once("SIGINT", connection.close.bind(connection))
     this.logger.info(`ListenerFactory: Connection with AMQP server established.`)
@@ -199,7 +199,7 @@ export class TypedListenerFactory {
       exclusive = true
       queue_name = ""
     }
-    const q = await channel.assertQueue(queue_name, { exclusive })
+    const q = await channel.assertQueue(queue_name, { exclusive, ...headers })
     if (prefetch_one) channel.prefetch(1) // things rate limiting by witholding ACKs will need this
     await channel.bindQueue(q.queue, exchange_name, routing_key)
     let wrapper_func = function (event: any) {

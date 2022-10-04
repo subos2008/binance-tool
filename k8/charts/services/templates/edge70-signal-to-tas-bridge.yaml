@@ -44,11 +44,12 @@ spec:
             httpGet:
               path: /health
               port: http
-          readinessProbe:
-            initialDelaySeconds: 60 # Just some default breathing room
+          startupProbe: # First time this goes healthy livenessProbe is activated
             httpGet:
               path: /ready
               port: http
+            failureThreshold: 30 # 30 * 10 = 5 minutes
+            periodSeconds: 10
           env:
             - name: SENTRY_DSN
               value: "https://d58e2a72040a48689a2e1933aa2e45da@o369902.ingest.sentry.io/6171400"

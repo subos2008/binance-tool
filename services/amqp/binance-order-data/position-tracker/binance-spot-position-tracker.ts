@@ -22,6 +22,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
+import express from "express"
 import binance, { Binance, ExchangeInfo } from "binance-api-node"
 import { BinanceOrderData, OrderCallbacks } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { SpotPositionTracker } from "./position-tracker"
@@ -226,3 +227,10 @@ function soft_exit(exit_code: number | null = null) {
   // if (publisher) publisher.shutdown_streams()
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
+
+var app = express()
+app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
+app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
+const port = "80"
+app.listen(port)
+logger.info(`Server on port ${port}`)

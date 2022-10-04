@@ -5,15 +5,12 @@
 import { strict as assert } from "assert"
 const service_name = "binance-orders-to-amqp"
 
-import { Binance as BinanceType } from "binance-api-node"
-import Binance from "binance-api-node"
-
-import Sentry from "../../../lib/sentry"
+import Sentry from "../../../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "../../../interfaces/logger"
+import { Logger } from "../../../../interfaces/logger"
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -22,10 +19,10 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { BinanceOrderData } from "../../../interfaces/exchanges/binance/order_callbacks"
-import { GenericTopicPublisher } from "../../../classes/amqp/generic-publishers"
-import { HealthAndReadiness } from "../../../classes/health_and_readiness"
-import { MyEventNameType } from "../../../classes/amqp/message-routing"
+import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
+import { GenericTopicPublisher } from "../../../../classes/amqp/generic-publishers"
+import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
+import { MyEventNameType } from "../../../../classes/amqp/message-routing"
 import { Connection } from "amqplib"
 
 export class BinanceOrderDataPublisher {

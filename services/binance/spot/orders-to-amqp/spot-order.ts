@@ -26,7 +26,7 @@ import { OrderExecutionTracker } from "./spot-order-execution-tracker"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-import { BinanceOrderDataPublisher } from "../../lib/binance-order-data-publisher"
+import { BinanceOrderDataPublisher } from "./binance-order-data-publisher"
 
 const exchange_identifier: ExchangeIdentifier_V3 = {
   exchange: "binance",

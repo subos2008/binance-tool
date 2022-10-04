@@ -1,0 +1,73 @@
+name: Build, Push and Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+# c.f. https://stackoverflow.com/questions/66335225/how-to-cancel-previous-runs-in-the-pr-when-you-push-new-commitsupdate-the-curre
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # cancel-in-progress: true # too dangerous, can leave half installed charts that need manual intervention to rollback
+
+jobs:
+  deploy:
+    environment: te-staging
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.DIGITALOCEAN_CLUSTER_NAME }}
+
+      # - name: Save values.yaml
+      #   run: echo ${{ secrets.values_yaml }} | base64 --decode > $GITHUB_WORKSPACE/values.yaml
+
+      # - name: Show values.yaml
+      #   run: cat $GITHUB_WORKSPACE/values.yaml
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.6.3
+
+      - name: Deploy to Kubernetes
+        run: helm upgrade --wait --timeout 10m --install "rabbitmq" --namespace "storage" --create-namespace ./k8/charts/rabbitmq-cluster # --values $GITHUB_WORKSPACE/values.yaml
+
+      # - name: Verify deployment
+      #   run: kubectl rollout status deployment/static-example
+
+  # deploy-binance-futures-production:
+  #   needs: [compile, test, push]
+  #   if: ${{ github.ref == 'refs/heads/production' }}
+  #   environment: te-production
+
+  #   runs-on: ubuntu-latest
+
+  #   steps:
+  #     - uses: actions/checkout@v2
+
+  #     - name: Install doctl
+  #       uses: digitalocean/action-doctl@v2
+  #       with:
+  #         token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+  #     - name: Save DigitalOcean kubeconfig with short-lived credentials
+  #       run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 ${{ secrets.DIGITALOCEAN_CLUSTER_NAME }}
+
+  #     # - name: Save values.yaml
+  #     #   run: echo ${{ secrets.values_yaml }} | base64 --decode > $GITHUB_WORKSPACE/values.yaml
+
+  #     - name: Set up Helm
+  #       uses: azure/setup-helm@v1
+  #       with:
+  #         version: v3.6.3
+
+  #     - name: Deploy to Kubernetes
+  #       run: helm upgrade --wait --timeout 10m --install "services" --namespace "binance-futures" --create-namespace ./k8/charts/binance-futures --set "image.tag=$(echo $GITHUB_SHA | head -c7)" #  --values $GITHUB_WORKSPACE/values.yaml

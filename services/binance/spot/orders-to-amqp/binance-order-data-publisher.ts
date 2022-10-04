@@ -24,13 +24,14 @@ import { GenericTopicPublisher } from "../../../../classes/amqp/generic-publishe
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { MyEventNameType } from "../../../../classes/amqp/message-routing"
 import { Connection } from "amqplib"
+import { TypedGenericTopicPublisher } from "../../../../classes/amqp/typed-generic-publisher"
 
 export class BinanceOrderDataPublisher {
   logger: Logger
   closeTradesWebSocket: (() => void) | undefined
   connection: Connection | undefined
   channel: any
-  pub: GenericTopicPublisher
+  pub: TypedGenericTopicPublisher<BinanceOrderData>
   event_name: MyEventNameType = "BinanceOrderData"
   health_and_readiness: HealthAndReadiness
 

@@ -178,7 +178,9 @@ export class TypedListenerFactory {
       throw new Error(`Likely bug - initialise healthy to true`)
     }
     // TODO: durable, exclusive, noAck, ... lots of configurable shit here...
-    let { routing_key, exchange_name, exchange_type, durable, headers } = MessageRouting.amqp_routing({ event_name })
+    let { routing_key, exchange_name, exchange_type, durable, headers } = MessageRouting.amqp_routing({
+      event_name,
+    })
     let connection: Connection = await connect(connect_options)
     process.once("SIGINT", connection.close.bind(connection))
     this.logger.info(`ListenerFactory: Connection with AMQP server established.`)
@@ -207,7 +209,9 @@ export class TypedListenerFactory {
     }
     channel.consume(q.queue, wrapper_func, { noAck: false })
     this.logger.info(
-      `ListenerFactory: Waiting for new '${event_name}' events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}, queue_name: "${queue_name}"`
+      `ListenerFactory: Waiting for new '${event_name}' events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}, queue_name: "${queue_name}, headers: ${JSON.stringify(
+        headers
+      )}"`
     )
   }
 }

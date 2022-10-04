@@ -10,6 +10,7 @@ type HealthAndReadinessChange = {
   subsystem: string
   value: boolean
   transition: "healthy" | "ready"
+  msg: string
 }
 
 export class HealthAndReadinessSubsystem {
@@ -52,6 +53,7 @@ export class HealthAndReadinessSubsystem {
         subsystem: this.name,
         transition: "ready",
         value,
+        msg: `ready became ${value}`,
       }
       this.logger.event({}, event)
       if (!value) this.send_message(`subsystem ${this.name} became not ready`, { class: "HealthAndReadiness" })
@@ -69,6 +71,7 @@ export class HealthAndReadinessSubsystem {
         subsystem: this.name,
         transition: "healthy",
         value,
+        msg: `healthy became ${value}`,
       }
       this.logger.event({}, event)
       if (!value) this.send_message(`subsystem ${this.name} became unhealthy`, { class: "HealthAndReadiness" })

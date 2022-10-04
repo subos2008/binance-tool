@@ -44,6 +44,7 @@ spec:
               path: /health
               port: http
           readinessProbe:
+            initialDelaySeconds: 60 # Just some default breathing room
             httpGet:
               path: /ready
               port: http

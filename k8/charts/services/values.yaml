@@ -10,7 +10,7 @@ replicaCount: 1
 
 image:
   repository: "ghcr.io/subos2008/binance-tool/binance-tool"
-  tag: latest
+  tag: fail-if-not-explicit
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []

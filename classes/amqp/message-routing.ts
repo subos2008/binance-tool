@@ -18,7 +18,7 @@ export class MessageRouting {
     routing_key: string
     exchange_name: string
     exchange_type: "topic"
-    durable: false
+    durable: boolean
   } {
     switch (event_name) {
       case "InternalConnectivityTestEvent":
@@ -82,7 +82,7 @@ export class MessageRouting {
           routing_key: "spot-binance-orders",
           exchange_name: "binance-tool",
           exchange_type: "topic",
-          durable: false,
+          durable: true,
         }
       case "FuturesBinanceOrderData":
         return {

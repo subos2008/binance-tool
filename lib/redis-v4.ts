@@ -40,10 +40,10 @@ export async function get_redis_client(
 
   redis.on("error", function (err: any) {
     logger.error({ msg: `Redis.on error: ${err.toString()}`, err })
-    let obj = { object_type: "RedisConnectionStatus", ready: false, REDIS_HOST: process.env.REDIS_HOST }
+    let obj = { object_type: "RedisError", REDIS_HOST: process.env.REDIS_HOST, err }
     logger.event({}, obj)
     logger.warn(`Not setting redis-v4 as unhealthy on.error event`)
-    // health_and_readiness.healthy(false)
+    health_and_readiness.healthy(false)
     Sentry.withScope(function (scope: any) {
       scope.setTag("location", "redis-global-error-handler")
       Sentry.captureException(err)

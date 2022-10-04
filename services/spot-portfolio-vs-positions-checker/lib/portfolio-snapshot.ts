@@ -7,8 +7,6 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../../lib/faux_logger"
-import { OrderExecutionTracker } from "../../../classes/exchanges/binance/spot-order-execution-tracker"
 import { Balance, Balance_with_quote_value, Portfolio, Prices } from "../../../interfaces/portfolio"
 import { AssetBalance, Binance as BinanceType, ExchangeInfo } from "binance-api-node"
 import Binance from "binance-api-node"

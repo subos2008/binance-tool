@@ -53,7 +53,7 @@ export class HealthAndReadinessSubsystem {
         subsystem: this.name,
         transition: "ready",
         value,
-        msg: `ready became ${value}`,
+        msg: `ready became ${value} for ${this.name}`,
       }
       this.logger.event({}, event)
       if (!value) this.send_message(`subsystem ${this.name} became not ready`, { class: "HealthAndReadiness" })
@@ -71,7 +71,7 @@ export class HealthAndReadinessSubsystem {
         subsystem: this.name,
         transition: "healthy",
         value,
-        msg: `healthy became ${value}`,
+        msg: `healthy became ${value} for ${this.name}`,
       }
       this.logger.event({}, event)
       if (!value) this.send_message(`subsystem ${this.name} became unhealthy`, { class: "HealthAndReadiness" })

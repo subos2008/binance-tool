@@ -42,15 +42,10 @@ async function main() {
 
   let listener_factory = new TypedListenerFactory({ logger })
   let event_name: MyEventNameType = "SendMessage"
-  let listener_health = health_and_readiness.addSubsystem({
-    name: event_name,
-    ready: false,
-    healthy: true,
-  })
   await listener_factory.build_listener({
     event_name,
     message_processor,
-    health_and_readiness: listener_health,
+    health_and_readiness,
     service_name,
     prefetch_one: true,
     eat_exceptions: false,

@@ -68,15 +68,10 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
 
   async register_message_processors() {
     let listener_factory = new TypedListenerFactory({ logger: this.logger })
-    let health_and_readiness = this.health_and_readiness.addSubsystem({
-      name: this.event_name,
-      ready: false,
-      healthy: true,
-    })
     listener_factory.build_listener({
       event_name: this.event_name,
       message_processor: this,
-      health_and_readiness,
+      health_and_readiness: this.health_and_readiness,
       service_name: this.service_name,
       prefetch_one: true,
       eat_exceptions: false,

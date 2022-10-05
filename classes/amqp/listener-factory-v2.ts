@@ -10,7 +10,7 @@ import Sentry from "../../lib/sentry"
 import { Channel, connect, Connection, Message } from "amqplib"
 import { assert } from "console"
 import { ServiceLogger } from "../../interfaces/logger"
-import { HealthAndReadinessSubsystem } from "../health_and_readiness"
+import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../health_and_readiness"
 import { RawAMQPMessageProcessor, TypedMessageProcessor } from "./interfaces"
 import { MessageRouting, MyEventNameType } from "./message-routing"
 import { ContextTags } from "../../interfaces/send-message"
@@ -116,7 +116,7 @@ export class TypedListenerFactory {
 
   // eat_exceptions means it's wrapped in an exception catcher/eater
   // You might not want to await on this in case it hangs?
-  // .... wait - it hangs? When does it hang??
+  // .... wait - it hangs? When does it hang?? .. connection.createChannel() can hang (below)
   async build_listener<EventT>({
     event_name,
     message_processor,
@@ -127,93 +127,78 @@ export class TypedListenerFactory {
   }: {
     message_processor: TypedMessageProcessor<EventT>
     event_name: MyEventNameType
-    health_and_readiness: HealthAndReadinessSubsystem
+    health_and_readiness: HealthAndReadiness
     service_name?: string
     prefetch_one: boolean
     eat_exceptions: boolean
   }) {
     Sentry.withScope(async (scope) => {
       scope.setTag("event_name", event_name)
+      assert(message_processor && event_name)
+      let { routing_key, exchange_name, exchange_type, durable, headers } = MessageRouting.amqp_routing({
+        event_name,
+      })
+      let listener_health = health_and_readiness.addSubsystem({
+        name: `AMQP-Listener-${exchange_name}-${routing_key}-${event_name}`,
+        ready: false,
+        healthy: true,
+      })
       try {
-        assert(message_processor && event_name)
-        await this.connect({
+        let wrapped_message_processor = new TypedMessageProcessorWrapper<EventT>({
           event_name,
-          queue_name: event_name + "-" + service_name,
-          health_and_readiness,
-          message_processor: new TypedMessageProcessorWrapper<EventT>({
-            event_name,
-            message_processor,
-            logger: this.logger,
-            health_and_readiness,
-            eat_exceptions,
-          }),
-          prefetch_one,
+          message_processor,
+          logger: this.logger,
+          health_and_readiness: listener_health,
+          eat_exceptions,
         })
+        if (!health_and_readiness.healthy()) {
+          throw new Error(`Likely bug - initialise healthy to true`)
+        }
+        let queue_name = event_name + "-" + service_name
+        let connection: Connection = await connect(connect_options)
+        process.once("SIGINT", connection.close.bind(connection))
+        this.logger.info(`ListenerFactory: Connection with AMQP server established.`)
+        let channel: Channel = await connection.createChannel() // hangs
+        let logger = this.logger
+        channel.on("close", function () {
+          logger.error(`AMQP Channel closed!`)
+          listener_health.healthy(false)
+        })
+
+        await channel.assertExchange(exchange_name, exchange_type, { durable })
+
+        let exclusive: boolean
+        if (queue_name) {
+          exclusive = false
+        } else {
+          exclusive = true
+          queue_name = ""
+        }
+        const q = await channel.assertQueue(queue_name, { exclusive, arguments: headers })
+        if (prefetch_one) channel.prefetch(1) // things rate limiting by witholding ACKs will need this
+
+        await channel.bindQueue(q.queue, exchange_name, routing_key)
+        let wrapper_func = function (event: any) {
+          wrapped_message_processor.process_message(event, channel)
+        }
+        channel.consume(q.queue, wrapper_func, { noAck: false })
+        listener_health.ready(true)
+
+        this.logger.info(
+          `ListenerFactory: Waiting for new '${event_name}' events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}, queue_name: "${queue_name}, headers: ${JSON.stringify(
+            headers
+          )}"`
+        )
       } catch (err) {
-        health_and_readiness.healthy(false)
+        listener_health.healthy(false)
         this.logger.exception(
           {},
           err,
-          `Error connecting MessageProcessor for event_name '${event_name}' to amqp server`
+          `Error connecting MessageProcessor (listener) for event_name '${event_name}' to amqp server`
         )
         Sentry.captureException(err)
-        // throw err // don't throw when setting up isolated infrastructure
+        if (!eat_exceptions) throw err
       }
     })
-  }
-
-  private async connect<EventT>({
-    event_name,
-    message_processor,
-    health_and_readiness,
-    // does message routing have queue_name_prefix?
-    queue_name,
-    prefetch_one,
-  }: {
-    message_processor: RawAMQPMessageProcessor
-    event_name: MyEventNameType
-    health_and_readiness: HealthAndReadinessSubsystem
-    queue_name?: string
-    prefetch_one: boolean
-  }) {
-    if (!health_and_readiness.healthy()) {
-      throw new Error(`Likely bug - initialise healthy to true`)
-    }
-    // TODO: durable, exclusive, noAck, ... lots of configurable shit here...
-    let { routing_key, exchange_name, exchange_type, durable, headers } = MessageRouting.amqp_routing({
-      event_name,
-    })
-    let connection: Connection = await connect(connect_options)
-    process.once("SIGINT", connection.close.bind(connection))
-    this.logger.info(`ListenerFactory: Connection with AMQP server established.`)
-    let channel: Channel = await connection.createChannel() // hangs
-    let logger = this.logger
-    channel.on("close", function () {
-      logger.error(`AMQP Channel closed!`)
-      health_and_readiness.healthy(false)
-    })
-    // TODO: do we not look at the return code here?
-    // TODO: I think maybe asserting the channel, queue, exchange shound be on every message
-    await channel.assertExchange(exchange_name, exchange_type, { durable })
-    let exclusive: boolean
-    if (queue_name) {
-      exclusive = false
-    } else {
-      exclusive = true
-      queue_name = ""
-    }
-    const q = await channel.assertQueue(queue_name, { exclusive, arguments: headers })
-    if (prefetch_one) channel.prefetch(1) // things rate limiting by witholding ACKs will need this
-    await channel.bindQueue(q.queue, exchange_name, routing_key)
-    let wrapper_func = function (event: any) {
-      message_processor.process_message(event, channel)
-    }
-    channel.consume(q.queue, wrapper_func, { noAck: false })
-    this.logger.info(
-      `ListenerFactory: Waiting for new '${event_name}' events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}, queue_name: "${queue_name}, headers: ${JSON.stringify(
-        headers
-      )}"`
-    )
-    health_and_readiness.ready(true)
   }
 }

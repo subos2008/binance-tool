@@ -65,7 +65,7 @@ spec:
             httpGet:
               path: /ready
               port: http
-            failureThreshold: 50 # 30 * 10 = 5 minutes (seen 37 on deploy)
+            failureThreshold: 60 # 60 * 10 = 10 minutes (seen 6-7 minutes on deploy)
             periodSeconds: 10
           env:
             - name: SENTRY_DSN

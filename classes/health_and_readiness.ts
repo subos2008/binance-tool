@@ -4,7 +4,7 @@ import Sentry from "../lib/sentry"
 import { randomUUID } from "crypto"
 import { ContextTags, SendMessageFunc } from "../interfaces/send-message"
 
-type Summary = { [subsystem: string]: boolean | string }
+type Summary = { [subsystem: string]: boolean }
 
 export class HealthAndReadinessSubsystem {
   logger: Logger
@@ -59,11 +59,20 @@ export class HealthAndReadinessSubsystem {
   ready(value?: boolean | undefined): boolean {
     if (typeof value === "undefined") return this._ready
     if (value != this._ready) {
+      this._ready = value
       if (value) {
         let obj = {
           object_type: "SubsystemBecameReady",
           subsystem: this.name,
-          msg: `Subsystem ${this.name} became ready`,
+          msg: `Subsystem ${this.name} became ready.`,
+          global_state: this.parent.ready(),
+        }
+        if (obj.global_state) {
+          obj.msg += ` All subsystems are now reporting ready.`
+        } else {
+          let summary: Summary = this.parent.surmise_readiness_state()
+          let bad: string[] = Object.keys(summary).filter((k) => summary[k] === false)
+          obj.msg += ` Remaining not ready subsystems: ${bad.join(", ")}`
         }
         this.logger.event({}, obj)
       }
@@ -77,7 +86,6 @@ export class HealthAndReadinessSubsystem {
         this.send_message(`subsystem ${this.name} became not ready`, { class: "HealthAndReadiness" })
       }
     }
-    this._ready = value
     return this._ready
   }
 
@@ -85,11 +93,20 @@ export class HealthAndReadinessSubsystem {
   healthy(value?: boolean | undefined): boolean {
     if (typeof value === "undefined") return this._healthy
     if (value != this._healthy) {
+      this._healthy = value
       if (value) {
         let obj = {
           object_type: "SubsystemBecameHealthy",
           subsystem: this.name,
           msg: `Subsystem ${this.name} became healthy`,
+          global_state: this.parent.healthy(),
+        }
+        if (obj.global_state) {
+          obj.msg += ` All subsystems are now reporting healthy.`
+        } else {
+          let summary: Summary = this.parent.surmise_health_state()
+          let bad: string[] = Object.keys(summary).filter((k) => summary[k] === false)
+          obj.msg += ` Remaining unhealthy subsystems: ${bad.join(", ")}`
         }
         this.logger.event({}, obj)
       }
@@ -103,7 +120,6 @@ export class HealthAndReadinessSubsystem {
         this.send_message(`subsystem ${this.name} became unhealthy`, { class: "HealthAndReadiness" })
       }
     }
-    this._healthy = value
     return this._healthy
   }
 }
@@ -168,7 +184,7 @@ export class HealthAndReadiness {
     for (const subsystem in this.subsystems) {
       result[subsystem] = this.subsystems[subsystem].healthy()
     }
-    return { object_type: "ReadinessSummary", ...result }
+    return result
   }
 
   surmise_readiness_state(): Summary {
@@ -176,7 +192,7 @@ export class HealthAndReadiness {
     for (const subsystem in this.subsystems) {
       result[subsystem] = this.subsystems[subsystem].ready()
     }
-    return { object_type: "HealthSummary", ...result }
+    return result
   }
 
   surmise_state_to_logger() {

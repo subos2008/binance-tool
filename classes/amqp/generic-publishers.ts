@@ -70,7 +70,7 @@ export class GenericTopicPublisher {
         await this.channel.assertExchange(this.exchange_name, "topic", {
           durable: this.durable,
         })
-        this.logger.info(`Connection with AMQP server established.`)
+        this.logger.info(`${this.prefix} Connection with AMQP server established.`)
         this.health_and_readiness.ready(true)
       }
     } catch (err: any) {

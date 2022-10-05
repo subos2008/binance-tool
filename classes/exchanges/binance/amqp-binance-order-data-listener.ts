@@ -84,8 +84,8 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
       await this.processBinanceOrderDataMessage(i)
       channel.ack(amqp_event)
     } catch (err: any) {
-      this.logger.exception({}, err)
-      Sentry.captureException(err)
+      this.logger.exception({}, { ...err, amqp_event })
+      Sentry.captureException(err, { extra: amqp_event })
       this.callbacks_health.healthy(false)
     }
   }

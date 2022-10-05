@@ -184,11 +184,17 @@ export class TypedListenerFactory {
         channel.consume(q.queue, wrapper_func, { noAck: false })
         listener_health.ready(true)
 
-        this.logger.info(
-          `ListenerFactory: Waiting for new '${event_name}' events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}, queue_name: "${queue_name}, headers: ${JSON.stringify(
-            headers
-          )}"`
-        )
+        let obj = {
+          object_type: "AMQPListenerStarted",
+          exchange_type,
+          exchange_name,
+          event_name,
+          routing_key,
+          queue_name,
+          headers,
+          msg: `TypedListenerFactory: Waiting for '${event_name}' events`,
+        }
+        this.logger.event({}, obj)
       } catch (err) {
         listener_health.healthy(false)
         this.logger.exception(

@@ -7,16 +7,16 @@
 
 import Sentry from "../../../lib/sentry"
 
-import { MessageProcessor } from "../../amqp/interfaces"
+import { MessageProcessor, TypedMessageProcessor } from "../../amqp/interfaces"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../health_and_readiness"
 import { MyEventNameType } from "../../amqp/message-routing"
-import { Channel } from "amqplib"
+import { Channel, Message } from "amqplib"
 import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/exchanges/binance/order_callbacks"
 import { SendMessageFunc } from "../../../interfaces/send-message"
 import { ServiceLogger } from "../../../interfaces/logger"
 import { TypedListenerFactory } from "../../amqp/listener-factory-v2"
 
-export class AMQP_BinanceOrderDataListener implements MessageProcessor {
+export class AMQP_BinanceOrderDataListener implements TypedMessageProcessor<BinanceOrderData> {
   event_name: MyEventNameType = "BinanceOrderData"
   send_message: Function
   logger: ServiceLogger
@@ -78,18 +78,12 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
     })
   }
 
-  async process_message(amqp_event: any, channel: Channel): Promise<void> {
+  async process_message(event: BinanceOrderData, channel: Channel, raw_amqp_message: Message): Promise<void> {
     try {
-      let i: BinanceOrderData = JSON.parse(amqp_event.content.toString())
-      await this.processBinanceOrderDataMessage(i)
-      channel.ack(amqp_event)
+      await this.processBinanceOrderDataMessage(event)
+      channel.ack(raw_amqp_message)
     } catch (err: any) {
-      err.amqp_event = amqp_event
       this.logger.exception({}, err)
-      Sentry.withScope((scope) => {
-        scope.setExtra("amqp_event", amqp_event)
-        Sentry.captureException(err)
-      })
       this.callbacks_health.healthy(false)
     }
   }

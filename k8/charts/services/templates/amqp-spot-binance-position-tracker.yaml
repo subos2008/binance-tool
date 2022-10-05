@@ -35,7 +35,7 @@ spec:
         - name: amqp-spot-binance-position-tracker
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["./services/amqp/binance-order-data/position-tracker/binance-spot-position-tracker.ts"]
+          command: ["node", "./out/./services/amqp/binance-order-data/position-tracker/binance-spot-position-tracker"]
           ports:
           - name: http
             containerPort: 80

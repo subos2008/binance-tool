@@ -55,6 +55,7 @@ spec:
             containerPort: 3000
             protocol: TCP
           livenessProbe:
+            failureThreshold: 1
             httpGet:
               path: /health
               port: http

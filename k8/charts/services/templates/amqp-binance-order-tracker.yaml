@@ -41,12 +41,13 @@ spec:
             containerPort: 80
             protocol: TCP
           livenessProbe:
+            failureThreshold: 1
             httpGet:
               path: /health
               port: http
           startupProbe: # First time this goes healthy livenessProbe is activated
             httpGet:
-              path: /ready
+              path: /health
               port: http
             failureThreshold: 30 # 30 * 10 = 5 minutes
             periodSeconds: 10

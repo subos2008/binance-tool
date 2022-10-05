@@ -41,6 +41,7 @@ spec:
               containerPort: 80
               protocol: TCP
           livenessProbe:
+            failureThreshold: 1
             httpGet:
               path: /health
               port: http

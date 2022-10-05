@@ -311,7 +311,7 @@ class Edge70MegaBacktester {
     let health_and_readiness_subsystem = health_and_readiness.addSubsystem({
       name: `Edge70Signals`,
       healthy: true,
-      ready: true,
+      initialised: true,
     })
 
     let largest_number_of_candles = 0
@@ -459,7 +459,7 @@ const send_message: SendMessageFunc = async (msg: string, tags?: ContextTags) =>
   if (tags) logger.warn(tags, msg)
   else logger.warn(msg)
 }
-health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+health_and_readiness.addSubsystem({ name: "global", healthy: true, initialised: true })
 
 async function main() {
   // assert(process.env.BINANCE_RO_API_KEY)

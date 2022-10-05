@@ -26,7 +26,11 @@ import { SendMessageFunc } from "../../../../interfaces/send-message"
 const logger: Logger = new Logger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+const service_is_healthy = health_and_readiness.addSubsystem({
+  name: "global",
+  healthy: true,
+  initialised: true,
+})
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -41,7 +45,6 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
   service_is_healthy.healthy(false)
 })
-
 
 let order_execution_tracker: AMQP_FuturesBinanceOrderDataListener | null = null
 
@@ -144,7 +147,6 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
-app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

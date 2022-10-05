@@ -52,8 +52,8 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
     // here just brings down the message ACK timeout kill
     this.callbacks_health = this.health_and_readiness.addSubsystem({
       name: `${this.event_name}_Callbacks`,
-      ready: true,
       healthy: true, // Go unhealthy if we get exceptions from the callbacks
+      initialised: true
     })
   }
 

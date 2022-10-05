@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 // portfolio-publisher service:
 //  Publishes the portfolio to AMQP:
 //    1. on startup
@@ -33,7 +32,6 @@ const exchange_identifier: ExchangeIdentifier_V3 = {
   account: "default",
 }
 
-
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -56,13 +54,14 @@ import { PortfolioTracker } from "./portfolio-tracker"
 import express from "express"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 
-
-
 const logger = new Logger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
-
+const service_is_healthy = health_and_readiness.addSubsystem({
+  name: "global",
+  healthy: true,
+  initialised: true,
+})
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -100,14 +99,6 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
 
     this.exchange_identifier = { exchange: "binance", account: "default", type: "spot", version: "v3" }
 
-    /*
-      : health_and_readiness.addSubsystem({
-        name: "PortfolioPublisher",
-        ready: false,
-        healthy: false,
-      })
-      */
-
     this.publisher = new PortfolioPublisher({
       logger,
       event_name: "SpotPortfolio",
@@ -121,8 +112,8 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
       publisher: this.publisher,
       health_and_readiness: health_and_readiness.addSubsystem({
         name: "PortfolioTracker",
-        ready: false,
-        healthy: false,
+        healthy: true,
+        initialised: false,
       }),
     })
 
@@ -205,7 +196,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
 async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
-  
+
   try {
     let portfolio_to_amqp = new BinancePortfolioToAMQP({ send_message, logger, health_and_readiness })
     await portfolio_to_amqp.start()
@@ -228,7 +219,6 @@ main().catch((err) => {
 
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
-app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

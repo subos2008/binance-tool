@@ -280,8 +280,7 @@ export class ListenerFactory {
       logger.error(`AMQP Channel closed!`)
       health_and_readiness.healthy(false)
     })
-    health_and_readiness.healthy(true) // TODO: this should be initialised to true to prevent race conditions setting it
-    health_and_readiness.ready(true)
+    health_and_readiness.initialised(true)
     // TODO: do we not look at the return code here?
     await channel.assertExchange(exchange_name, exchange_type, { durable })
     let exclusive: boolean

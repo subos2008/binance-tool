@@ -46,8 +46,8 @@ export class TypedGenericTopicPublisher<T> {
     this.prefix = `AMQP Publisher ${exchange_name}-${routing_key}-${event_name}`
     this.health_and_readiness = health_and_readiness.addSubsystem({
       name: `AMQP-Publisher-${exchange_name}-${routing_key}-${event_name}`,
-      ready: false, // wait till the publishers are healthy before the service accepts traffic
       healthy: true, // set false if we have any server connection problems
+      initialised: false, // wait till the publishers are healthy before the service accepts traffic
     })
   }
 
@@ -62,7 +62,6 @@ export class TypedGenericTopicPublisher<T> {
         // TODO: why are we not calling channel.connect()
         let connection_closed = (err: any) => {
           this.logger.error(`${this.prefix}: connection problems, setting unhealthy: ${err}`)
-          this.health_and_readiness.ready(false)
           this.health_and_readiness.healthy(false)
         }
         this.channel.on("close", connection_closed)
@@ -72,13 +71,12 @@ export class TypedGenericTopicPublisher<T> {
           durable: this.durable,
         })
         this.logger.info(`Connection with AMQP server established.`)
-        this.health_and_readiness.ready(true)
+        this.health_and_readiness.initialised(true)
       }
     } catch (err: any) {
       this.logger.error(`${this.prefix} error connecting to amqp server: ${err.message}`)
       this.logger.error({ err })
       Sentry.captureException(err)
-      this.health_and_readiness.ready(false)
       this.health_and_readiness.healthy(false)
       throw err
     }
@@ -100,7 +98,6 @@ export class TypedGenericTopicPublisher<T> {
       return server_full
     } catch (err) {
       Sentry.captureException(err)
-      this.health_and_readiness.ready(false)
       this.health_and_readiness.healthy(false)
       throw err
     }
@@ -117,7 +114,6 @@ export class TypedGenericTopicPublisher<T> {
       await this.connection.close()
       this.connection = undefined
     }
-    this.health_and_readiness.ready(false)
     this.health_and_readiness.healthy(false)
   }
 }

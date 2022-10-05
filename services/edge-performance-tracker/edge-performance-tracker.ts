@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 /**
  * Event/message listener
  */
@@ -42,7 +41,11 @@ import { SendMessage } from "../../classes/send_message/publish"
 import { SendMessageFunc } from "../../interfaces/send-message"
 
 const health_and_readiness = new HealthAndReadiness({ logger })
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+const service_is_healthy = health_and_readiness.addSubsystem({
+  name: "global",
+  healthy: true,
+  initialised: true,
+})
 
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
@@ -52,7 +55,6 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
   service_is_healthy.healthy(false)
 })
-
 
 class EventLogger implements MessageProcessor {
   send_message: Function
@@ -91,8 +93,8 @@ class EventLogger implements MessageProcessor {
     let event_name: MyEventNameType = "SpotPositionClosed"
     let health_and_readiness = this.health_and_readiness.addSubsystem({
       name: event_name,
-      ready: false,
-      healthy: false,
+      healthy: true,
+      initialised: false,
     })
     listener_factory.build_isolated_listener({
       event_name,
@@ -176,13 +178,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  const redis_health_and_readiness = health_and_readiness.addSubsystem({
-    name: "redis",
-    ready: false,
-    healthy: false,
-  })
-
-  let redis: RedisClientType = await get_redis_client(logger, redis_health_and_readiness)
+  let redis: RedisClientType = await get_redis_client(logger, health_and_readiness)
 
   let persistence = new RedisEdgePerformancePersistence({
     logger,
@@ -214,7 +210,6 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
-app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

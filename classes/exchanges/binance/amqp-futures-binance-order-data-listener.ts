@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 /**
  * Event/message listener
  */
@@ -65,15 +64,15 @@ export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
     let event_name: MyEventNameType = "FuturesBinanceOrderData"
     let health_and_readiness = this.health_and_readiness.addSubsystem({
       name: event_name,
-      ready: false,
-      healthy: false,
+      healthy: true,
+      initialised: false,
     })
     listener_factory.build_isolated_listener({
       event_name,
       message_processor: this,
       health_and_readiness,
       service_name: this.service_name,
-      prefetch_one: false
+      prefetch_one: false,
     })
   }
 

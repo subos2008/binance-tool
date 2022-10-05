@@ -41,7 +41,11 @@ logger.event({}, { object_type: "ServiceStarting" })
 const health_and_readiness = new HealthAndReadiness({ logger })
 // const send_message: SendMessageFunc = (s) => console.log(s) //new SendMessage({ service_name, logger, health_and_readiness }).build()
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: false, healthy: true })
+const service_is_healthy = health_and_readiness.addSubsystem({
+  name: "global",
+  healthy: true,
+  initialised: false,
+})
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -52,7 +56,6 @@ process.on("unhandledRejection", (err) => {
 
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
-app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)
@@ -67,7 +70,6 @@ async function main() {
   let exchange_identifier: ExchangeIdentifier_V4 = { version: 4, exchange: "binance", exchange_type: "spot" }
 
   try {
-    // const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
     let redis: RedisClient = get_redis_client()
     set_redis_logger(logger)
     let positions_persistance = new RedisSpotPositionsPersistence({ logger, redis })
@@ -98,7 +100,7 @@ async function main() {
     }
     run()
     setInterval(run, run_interval_seconds * 1000)
-    service_is_healthy.ready(true)
+    service_is_healthy.initialised(true)
   } catch (err) {
     logger.exception({}, err)
   }

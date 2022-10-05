@@ -53,7 +53,11 @@ import express from "express"
 const logger = new Logger({ silent: false })
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message = new SendMessage({ service_name, logger, health_and_readiness }).build()
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+const service_is_healthy = health_and_readiness.addSubsystem({
+  name: "global",
+  healthy: true,
+  initialised: true,
+})
 
 // redis + events publishing + binance
 
@@ -175,7 +179,7 @@ class PortfolioTracker implements MasterPortfolioClass {
             quote_currency,
             quote_amount,
             prices: portfolio.prices,
-            base_assets_to_ignore: [quote_currency, 'BNB']
+            base_assets_to_ignore: [quote_currency, "BNB"],
           })
           if (free_balances.length > 0) {
             let string =
@@ -266,7 +270,6 @@ function soft_exit(exit_code: number | null = null, reason: string) {
 
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
-app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)

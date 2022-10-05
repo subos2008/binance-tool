@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 // portfolio-publisher service:
 //  Publishes the portfolio to AMQP:
 //    1. on startup
@@ -39,9 +38,13 @@ import { BinanceFuturesOrdersToAMQP } from "./binance-futures-orders-to-amqp"
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 
 const health_and_readiness = new HealthAndReadiness({ logger })
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
+const service_is_healthy = health_and_readiness.addSubsystem({
+  name: "global",
+  healthy: true,
+  initialised: true,
+})
 
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger,health_and_readiness }).build()
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -63,9 +66,6 @@ const exchange_identifier: ExchangeIdentifier_V3 = {
   account: "default",
   type: "futures",
 }
-
-
-
 
 async function main() {
   const execSync = require("child_process").execSync

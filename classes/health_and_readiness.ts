@@ -9,8 +9,8 @@ type Summary = { [subsystem: string]: boolean }
 export class HealthAndReadinessSubsystem {
   logger: Logger
   send_message: SendMessageFunc
-  private _ready: boolean
   private _healthy: boolean
+  private _initialised: boolean
   parent: HealthAndReadiness
   name: string
 
@@ -20,21 +20,21 @@ export class HealthAndReadinessSubsystem {
     send_message,
     name,
     healthy,
-    ready,
+    initialised,
   }: {
     parent: HealthAndReadiness
     logger: Logger
     send_message: SendMessageFunc
     name: string
     healthy: boolean
-    ready: boolean
+    initialised: boolean
   }) {
     this.parent = parent
     this.logger = logger
     this.name = name
     this.send_message = send_message
     this._healthy = healthy
-    this._ready = ready
+    this._initialised = initialised
 
     if (!healthy) {
       let obj = {
@@ -45,55 +45,55 @@ export class HealthAndReadinessSubsystem {
       this.logger.event({}, obj)
     }
 
-    if (!ready) {
+    if (!initialised) {
       let obj = {
-        object_type: "SubsystemInitialisedNotReady",
+        object_type: "SubsystemInitialisedNotInitialised",
         subsystem: name,
-        msg: `Subsystem ${name} initialised as not ready`,
+        msg: `Subsystem ${name} initialised as not initialised`,
       }
       this.logger.event({}, obj)
     }
   }
 
   // if argument is undefined this is a read, if non-null sets and returns
-  ready(value?: boolean | undefined): boolean {
-    if (typeof value === "undefined") return this._ready
-    if (value != this._ready) {
-      this._ready = value
+  initialised(value?: boolean | undefined): boolean {
+    if (typeof value === "undefined") return this._initialised
+    if (value != this._initialised) {
+      this._initialised = value
       if (value) {
         let obj = {
-          object_type: "SubsystemBecameReady",
+          object_type: "SubsystemBecameInitialised",
           subsystem: this.name,
-          msg: `Subsystem ${this.name} became ready.`,
-          global_state: this.parent.ready(),
+          msg: `Subsystem ${this.name} became initialised.`,
+          global_state: this.parent.initialised(),
         }
         if (obj.global_state) {
-          obj.msg += ` All subsystems are now reporting ready.`
+          obj.msg += ` All subsystems are now reporting initialised.`
           this.logger.event(
             {},
             {
-              object_type: "ServiceBecameReady",
-              msg: `Service is now fully reporting ready`,
+              object_type: "ServiceBecameInitialised",
+              msg: `Service is now fully reporting initialised`,
             }
           )
         } else {
-          let summary: Summary = this.parent.surmise_readiness_state()
+          let summary: Summary = this.parent.surmise_initialised_state()
           let bad: string[] = Object.keys(summary).filter((k) => summary[k] === false)
-          obj.msg += ` Remaining not ready subsystems: ${bad.join(", ")}`
+          obj.msg += ` Remaining not initialised subsystems: ${bad.join(", ")}`
         }
         this.logger.event({}, obj)
       }
       if (!value) {
         let obj = {
-          object_type: "SubsystemReadinessDeteriorated",
+          object_type: "SubsystemInitialisationDeteriorated",
           subsystem: this.name,
-          msg: `Subsystem ${this.name} became not ready`,
+          msg: `Subsystem ${this.name} became not initialised`,
         }
         this.logger.event({}, obj)
-        this.send_message(`subsystem ${this.name} became not ready`, { class: "HealthAndReadiness" })
+        this.send_message(`subsystem ${this.name} became not initialised`, { class: "HealthAndReadiness" })
       }
     }
-    return this._ready
+    return this._initialised
   }
 
   // if argument is undefined this is a read, if non-null sets and returns
@@ -155,20 +155,20 @@ export class HealthAndReadiness {
 
   addSubsystem({
     name,
-    ready,
     healthy,
+    initialised,
   }: {
     name: string
-    ready: boolean
     healthy: boolean
+    initialised: boolean
   }): HealthAndReadinessSubsystem {
-    this.logger.event(
-      {},
-      {
-        object_type: `HealthAndReadinessNewSubsystem`,
-        msg: `Registering new subsystem: ${name}, initialised as ready: ${ready}, healthy: ${healthy}`,
-      }
-    )
+    let obj = {
+      object_type: `HealthAndReadinessNewSubsystem`,
+      msg: `Registering new subsystem: ${name}, initialised as healthy: ${healthy}, initialised: ${initialised}`,
+      healthy,
+      initialised,
+    }
+    this.logger.event({}, obj)
     if (name in this.subsystems) {
       // check for subsystem already exists)
       this.logger.event(
@@ -187,7 +187,7 @@ export class HealthAndReadiness {
       send_message: this.send_message,
       name,
       healthy,
-      ready,
+      initialised,
     })
 
     return this.subsystems[name]
@@ -201,68 +201,48 @@ export class HealthAndReadiness {
     return result
   }
 
-  surmise_readiness_state(): Summary {
+  surmise_initialised_state(): Summary {
     let result: { [subsystem: string]: boolean } = {}
     for (const subsystem in this.subsystems) {
-      result[subsystem] = this.subsystems[subsystem].ready()
+      result[subsystem] = this.subsystems[subsystem].initialised()
     }
     return result
   }
 
-  surmise_state_to_logger() {
-    let event = {
-      object_type: "HealthAndReadinessFailed",
-      health_summary: this.surmise_health_state(),
-      readiness_summary: this.surmise_readiness_state(),
-    }
-    this.logger.warn(JSON.stringify(event))
-    for (const key in this.subsystems) {
-      let msg = `${key}: healthy: ${this.subsystems[key].healthy()}, ready: ${this.subsystems[key].ready()}`
-      if (!this.subsystems[key].healthy()) {
-        this.logger.error(msg)
-        return
-      }
-      if (!this.subsystems[key].ready()) {
-        this.logger.warn(msg)
-        return
-      }
-      this.logger.info(msg)
-    }
-  }
-
+  /**
+   * Returns OK when nothing is marked as unhealthy and everything is marked as initialised
+   */
   health_handler(req: Request, res: Response) {
-    let summary: Summary = this.surmise_health_state()
-    if (this.healthy()) {
+    let initialised_summary: Summary = this.surmise_initialised_state()
+    let health_summary: Summary = this.surmise_health_state()
+    let summary = { initialised_summary, health_summary }
+    if (this.healthy() && this.initialised()) {
       res.send({ status: "OK", summary })
     } else {
-      // this.logger.warn(summary) // spammy
       res.status(503).json({ status: "UNHEALTHY", summary })
     }
   }
 
-  readiness_handler(req: Request, res: Response) {
-    let summary: Summary = this.surmise_readiness_state()
-    if (this.ready()) {
+  initialised_handler(req: Request, res: Response) {
+    let summary: Summary = this.surmise_initialised_state()
+    if (this.initialised()) {
       res.send({ status: "OK", summary })
     } else {
-      // this.logger.warn(summary) // spammy
-      res.status(503).json({ status: "NOT_READY", summary })
+      res.status(503).json({ status: "NOT_INITIALISED", summary })
     }
   }
 
   healthy(): boolean {
     let subsystems = Object.values(this.subsystems)
-    if (subsystems.length === 0) this.logger.warn(`/healthy on service with no registered subsystems`)
+    if (subsystems.length === 0) this.logger.warn(`.healthy() on service with no registered subsystems`)
     let healthy = !subsystems.map((x) => x.healthy()).includes(false)
-    // if (!healthy) this.surmise_state_to_logger() // spammy
     return healthy
   }
 
-  ready(): boolean {
+  initialised(): boolean {
     let subsystems = Object.values(this.subsystems)
-    if (subsystems.length === 0) this.logger.warn(`/ready on service with no registered subsystems`)
-    let ready = !subsystems.map((x) => x.ready()).includes(false)
-    // if (!ready) this.surmise_state_to_logger() // spammy
-    return ready
+    if (subsystems.length === 0) this.logger.warn(`.initialised() on service with no registered subsystems`)
+    let initialised = !subsystems.map((x) => x.initialised()).includes(false)
+    return initialised
   }
 }

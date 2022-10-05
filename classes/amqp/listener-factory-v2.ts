@@ -140,8 +140,8 @@ export class TypedListenerFactory {
       })
       let listener_health = health_and_readiness.addSubsystem({
         name: `AMQP-Listener-${exchange_name}-${routing_key}-${event_name}`,
-        ready: false,
         healthy: true,
+        initialised: false
       })
       try {
         let wrapped_message_processor = new TypedMessageProcessorWrapper<EventT>({
@@ -182,7 +182,7 @@ export class TypedListenerFactory {
           wrapped_message_processor.process_message(event, channel)
         }
         channel.consume(q.queue, wrapper_func, { noAck: false })
-        listener_health.ready(true)
+        listener_health.initialised(true)
 
         let obj = {
           object_type: "AMQPListenerStarted",

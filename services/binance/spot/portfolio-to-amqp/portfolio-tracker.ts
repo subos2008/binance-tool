@@ -51,8 +51,7 @@ export class PortfolioTracker implements MasterPortfolioClass {
     this.publisher = publisher
     this.portfolio_utils = new PortfolioUtils({ logger })
     this.health_and_readiness = health_and_readiness
-    health_and_readiness.healthy(true)
-    health_and_readiness.ready(true)
+    health_and_readiness.initialised(true)
   }
 
   async set_portfolio_for_exchange({

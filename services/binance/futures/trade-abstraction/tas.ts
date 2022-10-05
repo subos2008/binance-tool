@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 import "./tracer" // must come before importing any instrumented module.
 
 /** Config: */
@@ -43,7 +42,11 @@ const logger: Logger = new LoggerClass({ silent: false })
 logger.info({ hello: "world" }, "Service starting")
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: false, healthy: true })
+const service_is_healthy = health_and_readiness.addSubsystem({
+  name: "global",
+  healthy: true,
+  initialised: false,
+})
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -58,7 +61,6 @@ const expressWinston = require("express-winston")
 
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
-app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 
 app.use(
   expressWinston.logger({
@@ -82,7 +84,6 @@ app.use(
     extended: true,
   })
 ) // for parsing application/x-www-form-urlencoded
-
 
 set_redis_logger(logger)
 let redis: RedisClient = get_redis_client()
@@ -240,5 +241,5 @@ app.get("/short", async function (req: Request, res: Response, next: NextFunctio
 let PORT = 3000
 app.listen(PORT, function () {
   logger.debug(`listening on port ${PORT}!`)
-  service_is_healthy.ready(true)
+  service_is_healthy.initialised(true)
 })

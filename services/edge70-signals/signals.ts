@@ -262,7 +262,6 @@ export class Edge70Signals {
       )
       this.logger.exception(tags, err, `Candle ingestion failed with err: ${err}`)
       this.health_and_readiness.healthy(false)
-      this.health_and_readiness.ready(false)
       throw err
     } finally {
       // important not to miss this - lest we corrupt the history

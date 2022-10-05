@@ -87,12 +87,20 @@ const edge: "edge70" = "edge70"
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
-const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
-const init_health = health_and_readiness.addSubsystem({ name: "init-boot", ready: false, healthy: true })
+const service_is_healthy = health_and_readiness.addSubsystem({
+  name: "global",
+  healthy: true,
+  initialised: true,
+})
+const init_health = health_and_readiness.addSubsystem({
+  name: "init-boot",
+  healthy: true,
+  initialised: false,
+})
 const candle_ingestion_health = health_and_readiness.addSubsystem({
   name: "candle-ingestion",
-  ready: false,
   healthy: true,
+  initialised: false,
 })
 
 process.on("unhandledRejection", (err) => {
@@ -168,8 +176,8 @@ class Edge70SignalsService {
     let symbols_with_direction_uninitialised: string[] = []
     const health_and_readiness_subsystem = health_and_readiness.addSubsystem({
       name: `Edge70Signals`,
-      ready: true,
       healthy: true,
+      initialised: true,
     })
     for (let i = 0; i < base_assets.length; i++) {
       let base_asset = base_assets[i]
@@ -287,7 +295,7 @@ class Edge70SignalsService {
         })
       }
     })
-    candle_ingestion_health.ready(true)
+    candle_ingestion_health.initialised(true)
   }
 
   shutdown_streams() {
@@ -298,7 +306,6 @@ class Edge70SignalsService {
 
 var app = express()
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
-app.get("/ready", health_and_readiness.readiness_handler.bind(health_and_readiness))
 const port = "80"
 app.listen(port)
 logger.info(`Server on port ${port}`)
@@ -313,8 +320,7 @@ async function main() {
   let exchange_identifier: ExchangeIdentifier_V4 = { version: 4, exchange: "binance", exchange_type: "spot" }
 
   try {
-    const redis_health = health_and_readiness.addSubsystem({ name: "redis", ready: false, healthy: false })
-    let redis: RedisClientType = await get_redis_client(logger, redis_health)
+    let redis: RedisClientType = await get_redis_client(logger, health_and_readiness)
 
     let publisher = new Edge70AMQPSignalPublisher({
       logger,
@@ -383,7 +389,7 @@ async function main() {
     })
 
     await service.init()
-    init_health.ready(true)
+    init_health.initialised(true)
 
     await service.run()
   } catch (err) {

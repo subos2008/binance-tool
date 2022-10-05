@@ -103,8 +103,8 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       // We don't want this failing to kill the service
       let faux_health_and_readiness = new HealthAndReadiness({ logger: faux_logger }).addSubsystem({
         name: `FauxMarketDirectionH&R`,
-        ready: true,
         healthy: true,
+        initialised: true,
       })
       let edge = new Edge70Signals({
         logger: faux_logger,

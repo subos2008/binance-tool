@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 const connect_options = require("../../lib/amqp/connect_options").default
 
 import Sentry from "../../lib/sentry"
@@ -17,7 +16,6 @@ import { MessageProcessor } from "./interfaces"
 
 // This class could also have a buddy class that
 // set up and check for all the expected queues and maybe even have an admin access to RabbitMQ?
-
 
 // Prevents unhandled exceptions from MessageProcessor's
 class MessageProcessorIsolator implements MessageProcessor {
@@ -70,6 +68,8 @@ export class ListenerFactory {
     message_processor: MessageProcessor
     health_and_readiness: HealthAndReadinessSubsystem
   }) {
+    if (!health_and_readiness.healthy())
+      this.logger.error({}, `health_and_readiness.healthy is false on initialisation, probably a bug`)
     Sentry.withScope(async (scope) => {
       try {
         assert(message_processor)
@@ -111,7 +111,7 @@ export class ListenerFactory {
       health_and_readiness.healthy(false)
     })
     health_and_readiness.healthy(true)
-    health_and_readiness.ready(true)
+    health_and_readiness.initialised(true)
     // TODO: do we not look at the return code here?
     await channel.assertExchange(exchange_name, exchange_type, { durable })
     const q = await channel.assertQueue("", { exclusive: true })

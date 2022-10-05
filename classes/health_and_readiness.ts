@@ -5,13 +5,6 @@ import { randomUUID } from "crypto"
 import { ContextTags, SendMessageFunc } from "../interfaces/send-message"
 
 type Summary = { [subsystem: string]: boolean | string }
-type HealthAndReadinessChange = {
-  object_type: "HealthAndReadinessChange"
-  subsystem: string
-  value: boolean
-  transition: "healthy" | "ready"
-  msg: string
-}
 
 export class HealthAndReadinessSubsystem {
   logger: Logger
@@ -42,21 +35,47 @@ export class HealthAndReadinessSubsystem {
     this.send_message = send_message
     this._healthy = healthy
     this._ready = ready
+
+    if (!healthy) {
+      let obj = {
+        object_type: "SubsystemInitialisedNotHealthy",
+        subsystem: name,
+        msg: `Subsystem ${name} initialised as unhealthy`,
+      }
+      this.logger.event({}, obj)
+    }
+
+    if (!ready) {
+      let obj = {
+        object_type: "SubsystemInitialisedNotReady",
+        subsystem: name,
+        msg: `Subsystem ${name} initialised as not ready`,
+      }
+      this.logger.event({}, obj)
+    }
   }
 
   // if argument is undefined this is a read, if non-null sets and returns
   ready(value?: boolean | undefined): boolean {
     if (typeof value === "undefined") return this._ready
     if (value != this._ready) {
-      let event: HealthAndReadinessChange = {
-        object_type: "HealthAndReadinessChange",
-        subsystem: this.name,
-        transition: "ready",
-        value,
-        msg: `ready became ${value} for ${this.name}`,
+      if (value) {
+        let obj = {
+          object_type: "SubsystemBecameReady",
+          subsystem: this.name,
+          msg: `Subsystem ${this.name} became ready`,
+        }
+        this.logger.event({}, obj)
       }
-      this.logger.event({}, event)
-      if (!value) this.send_message(`subsystem ${this.name} became not ready`, { class: "HealthAndReadiness" })
+      if (!value) {
+        let obj = {
+          object_type: "SubsystemReadinessDeteriorated",
+          subsystem: this.name,
+          msg: `Subsystem ${this.name} became not ready`,
+        }
+        this.logger.event({}, obj)
+        this.send_message(`subsystem ${this.name} became not ready`, { class: "HealthAndReadiness" })
+      }
     }
     this._ready = value
     return this._ready
@@ -66,15 +85,23 @@ export class HealthAndReadinessSubsystem {
   healthy(value?: boolean | undefined): boolean {
     if (typeof value === "undefined") return this._healthy
     if (value != this._healthy) {
-      let event: HealthAndReadinessChange = {
-        object_type: "HealthAndReadinessChange",
-        subsystem: this.name,
-        transition: "healthy",
-        value,
-        msg: `healthy became ${value} for ${this.name}`,
+      if (value) {
+        let obj = {
+          object_type: "SubsystemBecameHealthy",
+          subsystem: this.name,
+          msg: `Subsystem ${this.name} became healthy`,
+        }
+        this.logger.event({}, obj)
       }
-      this.logger.event({}, event)
-      if (!value) this.send_message(`subsystem ${this.name} became unhealthy`, { class: "HealthAndReadiness" })
+      if (!value) {
+        let obj = {
+          object_type: "SubsystemHealthDeteriorated",
+          subsystem: this.name,
+          msg: `Subsystem ${this.name} became not healthy`,
+        }
+        this.logger.event({}, obj)
+        this.send_message(`subsystem ${this.name} became unhealthy`, { class: "HealthAndReadiness" })
+      }
     }
     this._healthy = value
     return this._healthy
@@ -109,7 +136,7 @@ export class HealthAndReadiness {
       {},
       {
         object_type: `HealthAndReadinessNewSubsystem`,
-        msg: `Registering new subsystem: ${name}, starting defaults: ready: ${ready}, healthy:${healthy}`,
+        msg: `Registering new subsystem: ${name}, initialised as ready: ${ready}, healthy: ${healthy}`,
       }
     )
     if (name in this.subsystems) {
@@ -178,7 +205,7 @@ export class HealthAndReadiness {
     if (this.healthy()) {
       res.send({ status: "OK", summary })
     } else {
-      // this.logger.warn(summary)
+      // this.logger.warn(summary) // spammy
       res.status(503).json({ status: "UNHEALTHY", summary })
     }
   }
@@ -188,7 +215,7 @@ export class HealthAndReadiness {
     if (this.ready()) {
       res.send({ status: "OK", summary })
     } else {
-      // this.logger.warn(summary)
+      // this.logger.warn(summary) // spammy
       res.status(503).json({ status: "NOT_READY", summary })
     }
   }
@@ -197,7 +224,7 @@ export class HealthAndReadiness {
     let subsystems = Object.values(this.subsystems)
     if (subsystems.length === 0) this.logger.warn(`/healthy on service with no registered subsystems`)
     let healthy = !subsystems.map((x) => x.healthy()).includes(false)
-    if (!healthy) this.surmise_state_to_logger()
+    // if (!healthy) this.surmise_state_to_logger() // spammy
     return healthy
   }
 
@@ -205,7 +232,7 @@ export class HealthAndReadiness {
     let subsystems = Object.values(this.subsystems)
     if (subsystems.length === 0) this.logger.warn(`/ready on service with no registered subsystems`)
     let ready = !subsystems.map((x) => x.ready()).includes(false)
-    if (!ready) this.surmise_state_to_logger()
+    // if (!ready) this.surmise_state_to_logger() // spammy
     return ready
   }
 }

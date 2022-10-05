@@ -9,8 +9,6 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-console.log(`--- Service starting ---`)
-
 import "./tracer" // must come before importing any instrumented module.
 
 import { strict as assert } from "assert"
@@ -48,6 +46,7 @@ import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-p
 const tas_quote_asset = config.binance.spot.tas_quote_asset
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
+logger.event({}, { object_type: "ServiceStarting" })
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))

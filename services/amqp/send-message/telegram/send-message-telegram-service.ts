@@ -22,10 +22,10 @@ import { TypedListenerFactory } from "../../../../classes/amqp/listener-factory-
 import { MyEventNameType } from "../../../../classes/amqp/message-routing"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting" })
+
 const health_and_readiness = new HealthAndReadiness({ logger })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })
-
-logger.info(`Service starting`)
 
 process.on("unhandledRejection", (err) => {
   logger.error({}, `Unhandled Exception: ${err}`)

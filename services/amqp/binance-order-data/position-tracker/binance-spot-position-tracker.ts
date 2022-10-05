@@ -43,6 +43,7 @@ import { RedisOrderContextPersistence } from "../../../../classes/persistent_sta
 import { OrderContextPersistence } from "../../../../classes/persistent_state/interface/order-context-persistence"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting" })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const service_is_healthy = health_and_readiness.addSubsystem({ name: "global", ready: true, healthy: true })

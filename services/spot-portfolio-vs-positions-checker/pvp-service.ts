@@ -36,6 +36,8 @@ let run_interval_seconds = 60 * 60 * 4
 const base_asset_ignore_list = ["BNB", "AGI"] // Assets we expect mismatches on
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
+logger.event({}, { object_type: "ServiceStarting" })
+
 const health_and_readiness = new HealthAndReadiness({ logger })
 // const send_message: SendMessageFunc = (s) => console.log(s) //new SendMessage({ service_name, logger, health_and_readiness }).build()
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()

@@ -178,8 +178,8 @@ export class HealthAndReadiness {
     if (this.healthy()) {
       res.send({ status: "OK", summary })
     } else {
-      this.logger.warn(summary)
-      res.status(500).json({ status: "UNHEALTHY", summary })
+      // this.logger.warn(summary)
+      res.status(503).json({ status: "UNHEALTHY", summary })
     }
   }
 
@@ -188,8 +188,8 @@ export class HealthAndReadiness {
     if (this.ready()) {
       res.send({ status: "OK", summary })
     } else {
-      this.logger.warn(summary)
-      res.status(500).json({ status: "UNHEALTHY", summary })
+      // this.logger.warn(summary)
+      res.status(503).json({ status: "NOT_READY", summary })
     }
   }
 

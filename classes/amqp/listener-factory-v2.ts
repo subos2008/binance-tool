@@ -196,14 +196,14 @@ export class TypedListenerFactory {
         }
         this.logger.event({}, obj)
       } catch (err) {
-        listener_health.healthy(false)
         this.logger.exception(
           {},
           err,
           `Error connecting MessageProcessor (listener) for event_name '${event_name}' to amqp server`
         )
         Sentry.captureException(err)
-        if (!eat_exceptions) throw err
+        listener_health.healthy(false)
+        throw err
       }
     })
   }

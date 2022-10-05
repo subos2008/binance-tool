@@ -169,7 +169,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
     if (this.full_trace) console.trace(`BunyanServiceLogger.exception`)
     try {
       let _err = err as any
-      this.bunyan.error({ ...tags, msg, msg2: msg, err: _err })
+      this.bunyan.error({ object_type: "Exception", ...tags, msg, msg2: msg, err: _err })
       Sentry.captureException(err)
     } catch (err) {
       console.error(`Failed to log exception:`)

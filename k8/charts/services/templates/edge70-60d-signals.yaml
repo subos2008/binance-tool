@@ -63,7 +63,7 @@ spec:
               port: http
           startupProbe: # First time this goes healthy livenessProbe is activated
             httpGet:
-              path: /ready
+              path: /health
               port: http
             failureThreshold: 60 # 60 * 10 = 10 minutes (seen 6-7 minutes on deploy)
             periodSeconds: 10

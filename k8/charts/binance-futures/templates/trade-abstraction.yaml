@@ -53,9 +53,15 @@ spec:
             httpGet:
               path: /health
               port: http
+          startupProbe: # First time this goes healthy livenessProbe is activated
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 30 # 30 * 10 = 5 minutes
+            periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /ready
+              path: /health
               port: http
           env:
             - name: SENTRY_DSN

@@ -43,10 +43,12 @@ spec:
             httpGet:
               path: /health
               port: http
-          # readinessProbe:
-          #   httpGet:
-          #     path: /health
-          #     port: http
+          startupProbe: # First time this goes healthy livenessProbe is activated
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 30 # 30 * 10 = 5 minutes
+            periodSeconds: 10
           env:
             - name: SENTRY_DSN
               value: "https://4b5dfcee82284ea4837bbbd5fcafa160@o369902.ingest.sentry.io/6428057" # biance-futures-orders-to-amqp

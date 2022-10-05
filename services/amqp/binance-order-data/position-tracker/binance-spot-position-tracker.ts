@@ -181,6 +181,8 @@ async function main() {
     logger,
     health_and_readiness: health_and_readiness,
   })
+  await spot_position_publisher.connect()
+
   position_tracker = new SpotPositionTracker({
     logger,
     send_message,
@@ -192,7 +194,6 @@ async function main() {
     health_and_readiness,
   })
 
-  // await publisher.connect()
 
   let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
 

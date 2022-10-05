@@ -167,9 +167,12 @@ class EventLogger implements MessageProcessor {
         this.logger.error(e)
         Sentry.captureException(e)
       }
-    } catch (e: any) {
-      this.logger.error(e)
-      Sentry.captureException(e)
+    } catch (err: any) {
+      this.logger.error(err)
+      Sentry.withScope((scope) => {
+        scope.setExtra("amqp_event", amqp_event)
+        Sentry.captureException(err)
+      })
     }
   }
 }

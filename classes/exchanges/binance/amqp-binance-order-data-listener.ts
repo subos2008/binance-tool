@@ -53,7 +53,7 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
     this.callbacks_health = this.health_and_readiness.addSubsystem({
       name: `${this.event_name}_Callbacks`,
       healthy: true, // Go unhealthy if we get exceptions from the callbacks
-      initialised: true
+      initialised: true,
     })
   }
 
@@ -86,7 +86,10 @@ export class AMQP_BinanceOrderDataListener implements MessageProcessor {
     } catch (err: any) {
       err.amqp_event = amqp_event
       this.logger.exception({}, err)
-      Sentry.captureException(err, { extra: amqp_event })
+      Sentry.withScope((scope) => {
+        scope.setExtra("amqp_event", amqp_event)
+        Sentry.captureException(err)
+      })
       this.callbacks_health.healthy(false)
     }
   }

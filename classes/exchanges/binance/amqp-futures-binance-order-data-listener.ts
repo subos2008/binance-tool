@@ -84,7 +84,10 @@ export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
       await this.processBinanceOrderDataMessage(i)
     } catch (err: any) {
       this.logger.error({ err })
-      Sentry.captureException(err)
+      Sentry.withScope((scope) => {
+        scope.setExtra("amqp_event", amqp_event)
+        Sentry.captureException(err)
+      })
     }
   }
 

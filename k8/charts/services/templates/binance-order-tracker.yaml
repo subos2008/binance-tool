@@ -36,6 +36,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "./out/./services/order-tracker/binance-order-tracker", "--live"]
+          resources:
+            requests:
+              memory: 100M
           ports:
           - name: http
             containerPort: 80

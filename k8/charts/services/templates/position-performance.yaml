@@ -35,6 +35,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "./out/./services/position-performance/position-performance-service", "--live"]
+          resources:
+            requests:
+              memory: 100M
           ports:
           - name: http
             containerPort: 80

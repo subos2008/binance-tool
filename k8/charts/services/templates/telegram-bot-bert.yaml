@@ -48,6 +48,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "./out/./services/telegram-bot-bert/bert"]
+          resources:
+            requests:
+              memory: 100M
           ports:
           - name: http
             containerPort: 80

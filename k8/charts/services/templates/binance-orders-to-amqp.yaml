@@ -36,6 +36,9 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["node", "./out/./services/binance/spot/orders-to-amqp/binance-orders-to-amqp", "--live"]
+          resources:
+            requests:
+              memory: 100M
           ports:
             - name: http
               containerPort: 80

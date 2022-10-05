@@ -69,6 +69,13 @@ export class HealthAndReadinessSubsystem {
         }
         if (obj.global_state) {
           obj.msg += ` All subsystems are now reporting ready.`
+          this.logger.event(
+            {},
+            {
+              object_type: "ServiceBecameReady",
+              msg: `Service is now fully reporting ready`,
+            }
+          )
         } else {
           let summary: Summary = this.parent.surmise_readiness_state()
           let bad: string[] = Object.keys(summary).filter((k) => summary[k] === false)
@@ -103,6 +110,13 @@ export class HealthAndReadinessSubsystem {
         }
         if (obj.global_state) {
           obj.msg += ` All subsystems are now reporting healthy.`
+          this.logger.event(
+            {},
+            {
+              object_type: "ServiceBecameHealthy",
+              msg: `Service is now fully reporting healthy`,
+            }
+          )
         } else {
           let summary: Summary = this.parent.surmise_health_state()
           let bad: string[] = Object.keys(summary).filter((k) => summary[k] === false)

@@ -93,7 +93,14 @@ export class PositionPerformance {
 
   async list_positions() {
     // TODO: go via the TAS - we get prices from the TAS
-    logger.warn(`This implementation uses an initial_entry_price and not an average entry price`)
+    this.logger.event(
+      { level: "warn" },
+      {
+        object_type: "TODO",
+        msg: `This implementation uses an initial_entry_price and not an average entry price`,
+      }
+    )
+
     let positions: SpotPosition[] = []
     let position_strings: string[] = []
     let open_positions = await this.spot_positions_persistance.list_open_positions()

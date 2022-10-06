@@ -173,10 +173,15 @@ export class SpotPositionsExecution_StopLimitExit {
         base_asset: args.base_asset,
         edge: args.edge,
       }
-      this.logger.warn(
-        tags,
-        `e60: can throw instead of returning enum status result. it also won't exit if the stop creation fails`
+
+      this.logger.event(
+        { level: "warn", ...tags },
+        {
+          object_type: "TODO",
+          msg: `e60: can throw instead of returning enum status result. it also won't exit if the stop creation fails`,
+        }
       )
+
       await this.positions_persistance.set_stop_order(spot_position_identifier, stop_order_id.toString())
     } catch (err) {
       Sentry.captureException(err)

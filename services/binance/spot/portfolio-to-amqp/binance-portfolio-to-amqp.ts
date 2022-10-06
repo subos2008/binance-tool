@@ -169,9 +169,11 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
 
   async get_prices_from_exchange() {
     // TODO: refresh prices but maybe cache them? If at daily close we enter lots of positions it would be good not to call this repeatedly
-    this.logger.warn(
-      `Getting prices from exchange, this is not cached and If at daily close we enter lots of positions it would be good not to call this repeatedly.`
+    this.logger.event(
+      { level: "warn" },
+      { object_type: "TODO", msg: `Getting prices from exchange, this is not cached and If at daily close we enter lots of positions it would be good not to call this repeatedly.` }
     )
+    
     try {
       return await this.ee.prices()
     } catch (err) {

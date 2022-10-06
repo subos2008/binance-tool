@@ -169,7 +169,6 @@ class PortfolioTracker implements MasterPortfolioClass {
       }
 
       try {
-        this.logger.warn(`delme1`)
         if (portfolio.prices) {
           this.logger.warn(`delme2`)
           let quote_amount = new BigNumber(10)

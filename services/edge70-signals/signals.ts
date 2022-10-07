@@ -214,7 +214,13 @@ export class Edge70Signals {
       if (direction) tags = { ...tags, direction }
 
       if (direction === undefined) {
-        this.logger.debug(tags, `${symbol}: No signal: LONG - ${debug_string_long} SHORT - ${debug_string_short}`)
+        this.logger.event(
+          { ...tags, level: "debug" },
+          {
+            object_type: "EdgeResultNoSignal",
+            msg: `${symbol}: No signal: LONG - ${debug_string_long} SHORT - ${debug_string_short}`,
+          }
+        )
         return
       }
 

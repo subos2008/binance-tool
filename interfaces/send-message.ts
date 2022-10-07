@@ -12,5 +12,5 @@ export interface ContextTags {
   symbol?: string
   unhandledRejection?: boolean // set on exceptions
   order_id?: string
-  level?: "warn"
+  level?: "warn" | "error" | "debug" | "info" | "fatal"
 }

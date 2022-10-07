@@ -8,7 +8,40 @@
  * logger.info({...tags, ...obj}) // log an object with tags by merging them
  *
  * Do not:
- * Pass both tags and an object, merge them into an object
+ * Pass both tags and an object, merge them into an object - or call .event(tags, obj)
+ *
+ */
+
+/**
+ * Bunyan supported call interface:
+ *
+ * log.info();     // Returns a boolean: is the "info" level enabled?
+ *                 // This is equivalent to `log.isInfoEnabled()` or
+ *                 // `log.isEnabledFor(INFO)` in log4j.
+ *
+ * log.info('hi');                     // Log a simple string message (or number).
+ * log.info('hi %s', bob, anotherVar); // Uses `util.format` for msg formatting.
+ *
+ * log.info({foo: 'bar'}, 'hi');
+ *                 // The first field can optionally be a "fields" object, which
+ *                 // is merged into the log record.
+ *
+ * log.info(err);  // Special case to log an `Error` instance to the record.
+ *                 // This adds an "err" field with exception details
+ *                 // (including the stack) and sets "msg" to the exception
+ *                 // message.
+ * log.info(err, 'more on this: %s', more);
+ *                 // ... or you can specify the "msg".
+ *
+ * log.info({foo: 'bar', err: err}, 'some msg about this error');
+ *                 // To pass in an Error *and* other fields, use the `err`
+ *                 // field name for the Error instance **and ensure your logger
+ *                 // has a `err` serializer.** One way to ensure the latter is:
+ *                 //      var log = bunyan.createLogger({
+ *                 //          ...,
+ *                 //          serializers: bunyan.stdSerializers
+ *                 //      });
+ *                 // See the "Serializers" section below for details.
  */
 
 import * as bunyan from "bunyan"
@@ -179,9 +212,10 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
   }
 
   event(tags: ContextTags, event: LoggableEvent) {
-    if (this.full_trace) console.trace(`BunyanServiceLogger.event`)
+    if (this.full_trace) console.trace(`BunyanServiceLogger.event call stack trace`)
     if (!this.silent) {
       try {
+        // Used in the backtester where we want readable logs
         if (this.events_as_msg) {
           if (event.msg) {
             this.bunyan.info(tags, `[${event.object_type}] ${event.msg}`)
@@ -189,12 +223,26 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
             console.trace(`[${event.object_type}] missing @msg attribute`)
             this.bunyan.info({ ...tags, ...event })
           }
-        } else {
-          this.bunyan.info({ ...tags, ...event }, event.msg)
+          return
         }
+
+        // Default case handling
+        this.call_bunyan_by_level_name(tags.level || "info", { ...tags, ...event }, event.msg)
       } catch (err) {
+        console.error(err)
         Sentry.captureException(err)
       }
+    }
+  }
+
+  private call_bunyan_by_level_name(level: bunyan.LogLevelString, obj: Object, ...params: any[]) {
+    try {
+      this.bunyan[level](obj, ...params)
+    } catch (err) {
+      Sentry.captureException(err)
+      this.bunyan.error("Error - exception when calling call_bunyan_by_level_name")
+      this.bunyan.error(err)
+      this.bunyan.error(obj, ...params)
     }
   }
 }

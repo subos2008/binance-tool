@@ -13,11 +13,9 @@ require("dotenv").config()
 
 import { strict as assert } from "assert"
 import express from "express"
-import { ListenerFactory } from "../../classes/amqp/listener-factory"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
-import { MessageProcessor } from "../../classes/amqp/interfaces"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
-import { Channel } from "amqplib"
+import { Channel, Message } from "amqplib"
 import { SendMessage } from "../../classes/send_message/publish"
 import { Edge70SignalProcessor } from "./interfaces"
 
@@ -26,11 +24,16 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "./../../lib/faux_logger"
-import { SendMessageFunc } from "../../interfaces/send-message"
+import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
 import { Edge70Signal } from "../edge70-signals/interfaces/edge70-signal"
 import { Edge70SignalFanout } from "./fanout"
-const logger: Logger = new Logger({ silent: false })
+import { TypedListenerFactory } from "../../classes/amqp/listener-factory-v2"
+import { ServiceLogger } from "../../interfaces/logger"
+import { BunyanServiceLogger } from "../../lib/service-logger"
+import { TypedMessageProcessor } from "../../classes/amqp/interfaces"
+
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting" })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const service_is_healthy = health_and_readiness.addSubsystem({
@@ -48,11 +51,11 @@ process.on("unhandledRejection", (err) => {
   service_is_healthy.healthy(false)
 })
 
-let listener_factory = new ListenerFactory({ logger })
+let listener_factory = new TypedListenerFactory({ logger })
 
-class Edge70MessageProcessor implements MessageProcessor {
+class Edge70MessageProcessor implements TypedMessageProcessor<Edge70Signal> {
   send_message: Function
-  logger: Logger
+  logger: ServiceLogger
   event_name: MyEventNameType
   fanout: Edge70SignalProcessor
 
@@ -63,7 +66,7 @@ class Edge70MessageProcessor implements MessageProcessor {
     health_and_readiness,
   }: {
     send_message: (msg: string) => void
-    logger: Logger
+    logger: ServiceLogger
     event_name: MyEventNameType
     health_and_readiness: HealthAndReadiness
   }) {
@@ -73,28 +76,23 @@ class Edge70MessageProcessor implements MessageProcessor {
     this.send_message = send_message
     this.event_name = event_name
     this.fanout = new Edge70SignalFanout({ logger, event_name, send_message })
-    const amqp_health: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
-      name: `amqp-listener-${event_name}`,
-      healthy: true,
-      initialised: false,
-    })
-    listener_factory.build_isolated_listener({
+    listener_factory.build_listener<Edge70Signal>({
       event_name,
       message_processor: this,
-      health_and_readiness: amqp_health,
+      health_and_readiness,
       prefetch_one: false,
-    }) // Add arbitrary data argument
+      eat_exceptions: false,
+    })
   }
 
-  async process_message(_event: any, channel: Channel) {
+  async process_message(signal: Edge70Signal, channel: Channel, amqp_message: Message) {
+    let tags: ContextTags = signal
     try {
-      this.logger.info(_event)
-      channel.ack(_event)
+      this.logger.event(tags, signal)
 
-      let Body = _event.content.toString()
-      this.logger.info(Body)
-      let signal: Edge70Signal = JSON.parse(Body)
-      assert.equal(signal.object_type, "Edge70Signal")
+      // TODO: move this lower when the TAS is just refactored
+      channel.ack(amqp_message)
+
       let { base_asset } = signal.market_identifier
       let { edge } = signal
       assert.equal(edge, "edge70")
@@ -107,7 +105,7 @@ class Edge70MessageProcessor implements MessageProcessor {
       this.fanout.process_signal(signal)
     } catch (err) {
       Sentry.captureException(err)
-      this.logger.error({ err })
+      this.logger.exception(tags, err)
     }
   }
 }

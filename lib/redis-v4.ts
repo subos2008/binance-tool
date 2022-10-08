@@ -45,7 +45,7 @@ export async function get_redis_client(
   redis.on("error", function (err: any) {
     logger.error({ msg: `Redis.on error: ${err.toString()}`, err })
     let obj = { object_type: "RedisError", REDIS_HOST: process.env.REDIS_HOST, err }
-    logger.event({}, obj)
+    logger.event({ level: "error" }, obj)
     logger.warn(`Setting redis-v4 as unhealthy in on.error event`)
     redis_health.healthy(false)
     Sentry.withScope(function (scope: any) {
@@ -57,7 +57,7 @@ export async function get_redis_client(
   redis.on("end", function () {
     let obj = { object_type: "RedisConnectionStatus", ready: false, REDIS_HOST: process.env.REDIS_HOST }
     logger.error(`Redis disconnected co-operatively`)
-    logger.event({}, obj)
+    logger.event({ level: "error" }, obj)
     redis_health.healthy(false)
   })
 

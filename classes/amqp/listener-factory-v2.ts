@@ -92,7 +92,7 @@ class TypedMessageProcessorWrapper<EventT> implements RawAMQPMessageProcessor {
           channel.nack(raw_amqp_message) // If we don't ack here the channel will be closed by the server
           let msg = `Event does not specify an object_type, it will never be processed`
           let error_event = { object_type: "InvalidSendMessage", msg, Body }
-          this.logger.event(tags, error_event)
+          this.logger.event({ ...tags, level: "error" }, error_event)
           this.logger.error(tags, msg)
         }
       }
@@ -141,7 +141,7 @@ export class TypedListenerFactory {
       let listener_health = health_and_readiness.addSubsystem({
         name: `AMQP-Listener-${exchange_name}-${routing_key}-${event_name}`,
         healthy: true,
-        initialised: false
+        initialised: false,
       })
       try {
         let wrapped_message_processor = new TypedMessageProcessorWrapper<EventT>({

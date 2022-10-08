@@ -62,7 +62,7 @@ export class RedisOrderContextPersistence implements OrderContextPersistence, Or
     } catch (err) {
       let tags: ContextTags = { order_id }
       let obj = { object_type: "OrderContextNotFound", order_id }
-      this.logger.event(tags, obj)
+      this.logger.event({ ...tags, level: "warn" }, obj)
       throw err
     }
   }

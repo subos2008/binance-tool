@@ -42,7 +42,8 @@ export class HealthAndReadinessSubsystem {
         subsystem: name,
         msg: `Subsystem ${name} initialised as unhealthy`,
       }
-      this.logger.event({}, obj)
+      // This is an antipattern
+      this.logger.event({ level: "warn" }, obj)
     }
 
     if (!initialised) {
@@ -84,12 +85,13 @@ export class HealthAndReadinessSubsystem {
         this.logger.event({}, obj)
       }
       if (!value) {
+        // This would be a strange thing to do...
         let obj = {
           object_type: "SubsystemInitialisationDeteriorated",
           subsystem: this.name,
           msg: `Subsystem ${this.name} became not initialised`,
         }
-        this.logger.event({}, obj)
+        this.logger.event({ level: "error" }, obj)
         this.send_message(`subsystem ${this.name} became not initialised`, { class: "HealthAndReadiness" })
       }
     }
@@ -130,7 +132,7 @@ export class HealthAndReadinessSubsystem {
           subsystem: this.name,
           msg: `Subsystem ${this.name} became not healthy`,
         }
-        this.logger.event({}, obj)
+        this.logger.event({ level: "fatal" }, obj)
         this.send_message(`subsystem ${this.name} became unhealthy`, { class: "HealthAndReadiness" })
       }
     }

@@ -24,7 +24,7 @@ export class SendMessage {
 
     /* Check for blank message */
     if (!message) {
-      this.logger.event(tags, { ...event, object_type: "BlankSendMessage" })
+      this.logger.event({ ...tags, level: "error" }, { ...event, object_type: "BlankSendMessage" })
       ack_func()
       return
     }

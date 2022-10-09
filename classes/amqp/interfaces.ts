@@ -2,13 +2,8 @@
 
 import { Channel, Message } from "amqplib"
 
-// TODO: <T> type this for the type of message body recieved?
-export interface MessageProcessor {
-  process_message: (event: any, channel: Channel) => Promise<void>
-}
-
 export interface RawAMQPMessageProcessor {
-  process_message: (event: Message, channel: Channel) => Promise<void>
+  process_message: (raw_amqp_message: Message, channel: Channel) => Promise<void>
 }
 
 export interface TypedMessageProcessor<EventT> {

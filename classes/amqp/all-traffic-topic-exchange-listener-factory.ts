@@ -5,10 +5,10 @@ const connect_options = require("../../lib/amqp/connect_options").default
 
 import Sentry from "../../lib/sentry"
 
-import { Channel, connect, Connection } from "amqplib"
+import { Channel, connect, Connection, Message } from "amqplib"
 import { assert } from "console"
 import { ServiceLogger } from "../../interfaces/logger"
-import { HealthAndReadinessSubsystem } from "../health_and_readiness"
+import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../health_and_readiness"
 import { RawAMQPMessageProcessor } from "./interfaces"
 
 // Prevents unhandled exceptions from RawAMQPMessageProcessor's
@@ -31,7 +31,7 @@ class MessageProcessorIsolator implements RawAMQPMessageProcessor {
     this.logger = logger
     this.health_and_readiness = health_and_readiness
   }
-  async process_message(raw_amqp_message: any, channel: Channel): Promise<void> {
+  async process_message(raw_amqp_message: Message, channel: Channel): Promise<void> {
     // TODO: sentry scope
     let Body
     try {
@@ -61,63 +61,83 @@ export class AllTrafficTopicExchangeListenerFactory {
     service_name,
   }: {
     message_processor: RawAMQPMessageProcessor
-    health_and_readiness: HealthAndReadinessSubsystem
+    health_and_readiness: HealthAndReadiness
     service_name: string
   }) {
     if (!health_and_readiness.healthy())
       this.logger.error({}, `health_and_readiness.healthy is false on initialisation, probably a bug`)
     Sentry.withScope(async (scope) => {
+      let exchange_name = "binance-tool"
+      let exchange_type = "topic"
+      let headers = { "x-queue-type": "quorum" },
+        durable = false,
+        routing_key = "#", // '#' gets all messages
+        prefetch_one = true
+
+      let listener_health = health_and_readiness.addSubsystem({
+        name: `AMQP-Listener-${exchange_name}-all-events`,
+        healthy: true,
+        initialised: false,
+      })
+
       try {
-        assert(message_processor)
-        await this.connect({
-          health_and_readiness,
-          message_processor: new MessageProcessorIsolator({
-            message_processor,
-            logger: this.logger,
-            health_and_readiness,
-          }),
+        let wrapped_message_processor = new MessageProcessorIsolator({
+          message_processor,
+          logger: this.logger,
+          health_and_readiness: listener_health,
         })
+
+        let connection: Connection = await connect(connect_options)
+        process.once("SIGINT", connection.close.bind(connection))
+        this.logger.info(`AllTrafficTopicExchangeListener: Connection with AMQP server established.`)
+        let channel: Channel = await connection.createChannel() // hangs
+        let logger = this.logger
+        channel.on("close", function () {
+          logger.error(`AMQP Channel closed!`)
+          listener_health.healthy(false)
+        })
+
+        await channel.assertExchange(exchange_name, exchange_type, { durable })
+
+        let queue_name = `All-Events-${service_name}`
+        const q = await channel.assertQueue(queue_name, { exclusive: false, arguments: headers })
+        if (prefetch_one) channel.prefetch(1) // things rate limiting by witholding ACKs will need this
+
+        await channel.bindQueue(q.queue, exchange_name, routing_key)
+        let wrapper_func = function (event: Message | null) {
+          if (event === null) {
+            // null means server closed the channel
+            listener_health.healthy(false)
+            throw new Error(`AMQP server closed the connection`) // actually this might be just a RabbitMQ thing
+          }
+          wrapped_message_processor.process_message(event, channel)
+        }
+        channel.consume(q.queue, wrapper_func, { noAck: false })
+        this.logger.info(
+          `AllTrafficTopicExchangeListener: waiting for events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}.`
+        )
+        listener_health.initialised(true)
+
+        let obj = {
+          object_type: "AMQPListenerStarted",
+          exchange_type,
+          exchange_name,
+          routing_key,
+          queue_name,
+          headers,
+          msg: `AllTrafficTopicExchangeListenerFactory: Waiting for all events`,
+        }
+        this.logger.event({}, obj)
       } catch (err) {
-        health_and_readiness.healthy(false)
-        this.logger.error({ err }, `Error connecting RawAMQPMessageProcessor to amqp server`)
+        this.logger.exception(
+          {},
+          err,
+          `Error connecting AllTrafficTopicExchangeListenerFactory (listener) to amqp server`
+        )
         Sentry.captureException(err)
-        // throw err // don't throw when setting up isolated infrastructure
+        listener_health.healthy(false)
+        throw err
       }
     })
-  }
-
-  private async connect({
-    message_processor,
-    health_and_readiness,
-  }: {
-    message_processor: RawAMQPMessageProcessor
-    health_and_readiness: HealthAndReadinessSubsystem
-  }) {
-    let exchange_name = "binance-tool"
-    let exchange_type = "topic"
-    // TODO: durable, exclusive, noAck, ... lots of configurable shit here...
-    let { routing_key, durable } = { durable: false, routing_key: "#" } // '#' gets all messages
-    let connection: Connection = await connect(connect_options)
-    process.once("SIGINT", connection.close.bind(connection))
-    this.logger.info(`AllTrafficTopicExchangeListener: Connection with AMQP server established.`)
-    let channel: Channel = await connection.createChannel() // hangs
-    let logger = this.logger
-    channel.on("close", function () {
-      logger.error(`AMQP Channel closed!`)
-      health_and_readiness.healthy(false)
-    })
-    health_and_readiness.healthy(true)
-    health_and_readiness.initialised(true)
-    // TODO: do we not look at the return code here?
-    await channel.assertExchange(exchange_name, exchange_type, { durable })
-    const q = await channel.assertQueue("", { exclusive: true })
-    await channel.bindQueue(q.queue, exchange_name, routing_key)
-    let wrapper_func = function (event: any) {
-      message_processor.process_message(event, channel)
-    }
-    channel.consume(q.queue, wrapper_func, { noAck: false })
-    this.logger.info(
-      `AllTrafficTopicExchangeListener: waiting for events on AMQP: exchange: ${exchange_type}:${exchange_name}, routing_key: ${routing_key}.`
-    )
   }
 }

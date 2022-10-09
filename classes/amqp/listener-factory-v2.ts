@@ -161,7 +161,12 @@ export class TypedListenerFactory {
         if (prefetch_one) channel.prefetch(1) // things rate limiting by witholding ACKs will need this
 
         await channel.bindQueue(q.queue, exchange_name, routing_key)
-        let wrapper_func = function (event: any) {
+        let wrapper_func = function (event: Message | null) {
+          if (event === null) {
+            // null means server closed the channel
+            listener_health.healthy(false)
+            throw new Error(`AMQP server closed the connection`) // actually this might be just a RabbitMQ thing
+          }
           wrapped_message_processor.process_message(event, channel)
         }
         channel.consume(q.queue, wrapper_func, { noAck: false })

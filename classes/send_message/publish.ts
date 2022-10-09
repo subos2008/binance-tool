@@ -3,10 +3,10 @@
 import Sentry from "../../lib/sentry"
 
 import { Logger } from "../../interfaces/logger"
-import { GenericTopicPublisher } from "../amqp/generic-publishers"
 import { MyEventNameType } from "../amqp/message-routing"
 import { HealthAndReadiness } from "../health_and_readiness"
 import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
+import { TypedGenericTopicPublisher } from "../amqp/typed-generic-publisher"
 
 export interface SendMessageEvent {
   object_type: "SendMessageEvent"
@@ -66,7 +66,7 @@ export class SendMessage {
 class SendMessagePublisher {
   logger: Logger
   closeTradesWebSocket: (() => void) | undefined
-  pub: GenericTopicPublisher | undefined
+  pub: TypedGenericTopicPublisher<SendMessageEvent> | undefined
   event_name: MyEventNameType
   health_and_readiness: HealthAndReadiness
 
@@ -78,7 +78,7 @@ class SendMessagePublisher {
 
   async connect(): Promise<void> {
     if (!this.pub) {
-      this.pub = new GenericTopicPublisher({
+      this.pub = new TypedGenericTopicPublisher<SendMessageEvent>({
         logger: this.logger,
         event_name: this.event_name,
         health_and_readiness: this.health_and_readiness,

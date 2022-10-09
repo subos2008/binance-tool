@@ -8,8 +8,6 @@
 import { strict as assert } from "assert"
 const service_name = "event-persistance"
 
-import { ListenerFactory } from "../../classes/amqp/listener-factory"
-
 require("dotenv").config()
 
 import Sentry from "../../lib/sentry"
@@ -17,18 +15,19 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "../../lib/faux_logger"
 import { SendMessage } from "../../classes/send_message/publish"
 import influxdb from "../../lib/influxdb"
-import { MessageProcessor } from "../../classes/amqp/interfaces"
 import { Point } from "@influxdata/influxdb-client"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
-import { Channel } from "amqplib"
-import { SendMessageFunc } from "../../interfaces/send-message"
+import { Channel, Message } from "amqplib"
+import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
 import express from "express"
+import { TypedListenerFactory } from "../../classes/amqp/listener-factory-v2"
+import { TypedMessageProcessor } from "../../classes/amqp/interfaces"
 import { ServiceLogger } from "../../interfaces/logger"
 import { BunyanServiceLogger } from "../../lib/service-logger"
+import { SpotPortfolio } from "../../interfaces/portfolio"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 logger.event({}, { object_type: "ServiceStarting" })
@@ -48,7 +47,7 @@ process.on("unhandledRejection", (err) => {
   service_is_healthy.healthy(false)
 })
 
-class EventLogger implements MessageProcessor {
+class EventLogger implements TypedMessageProcessor<SpotPortfolio> {
   send_message: Function
   logger: ServiceLogger
   health_and_readiness: HealthAndReadiness
@@ -81,31 +80,27 @@ class EventLogger implements MessageProcessor {
 
   async register_message_processors() {
     let event_name: MyEventNameType = "SpotPortfolio"
-    let listener_factory = new ListenerFactory({ logger })
-    let health_and_readiness = this.health_and_readiness.addSubsystem({
-      name: event_name,
-      healthy: true,
-      initialised: false,
-    })
-    listener_factory.build_isolated_listener({
+    let listener_factory = new TypedListenerFactory({ logger })
+
+    listener_factory.build_listener<SpotPortfolio>({
       event_name,
       message_processor: this,
-      health_and_readiness,
+      health_and_readiness: this.health_and_readiness,
       prefetch_one: false,
+      eat_exceptions: false,
     })
   }
 
-  async process_message(event: any, channel: Channel): Promise<void> {
-    this.logger.info(event.content.toString())
-
+  async process_message(msg: SpotPortfolio, channel: Channel, amqp_event: Message): Promise<void> {
     // Upload balances to influxdb
-    let exchange = "binance"
-    let account = "default"
-    let account_type = "spot"
-    let name = `balance`
+    const exchange = "binance"
+    const account = "default"
+    const account_type = "spot"
+    const name = `balance`
+
+    let tags: ContextTags = { exchange, exchange_type: account_type }
+    this.logger.event(tags, msg)
     try {
-      let msg = JSON.parse(event.content.toString())
-      // console.log(msg)
       let usd_value = msg.usd_value
       let btc_value = msg.btc_value
       const point1 = new Point(name)
@@ -115,12 +110,10 @@ class EventLogger implements MessageProcessor {
         .floatField("usd", usd_value)
         .floatField("btc", btc_value)
       await influxdb.writePoint(point1)
-      channel.ack(event)
-      // need to ACK
-    } catch (e) {
-      console.log(`Error "${e}" uploading ${name} to influxdb.`)
-      console.log(e)
-      Sentry.captureException(e)
+      channel.ack(amqp_event)
+    } catch (err) {
+      this.logger.exception(tags, err, `Error "${err}" uploading ${name} to influxdb.`)
+      Sentry.captureException(err)
       this.subsystem_influxdb.healthy(false)
       soft_exit(1, "Exeception submitting to Influxdb")
     }

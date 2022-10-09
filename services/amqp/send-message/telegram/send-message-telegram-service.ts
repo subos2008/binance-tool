@@ -20,6 +20,7 @@ import { ServiceLogger } from "../../../../interfaces/logger"
 import { BunyanServiceLogger } from "../../../../lib/service-logger"
 import { TypedListenerFactory } from "../../../../classes/amqp/listener-factory-v2"
 import { MyEventNameType } from "../../../../classes/amqp/message-routing"
+import { SendMessageEvent } from "../../../../classes/send_message/publish"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 logger.event({}, { object_type: "ServiceStarting" })
@@ -46,7 +47,9 @@ async function main() {
   let event_name: MyEventNameType = "SendMessageEvent"
 
   let listener_factory = new TypedListenerFactory({ logger })
-  await listener_factory.build_listener({
+  
+
+  await listener_factory.build_listener<SendMessageEvent>({
     event_name,
     message_processor,
     health_and_readiness,

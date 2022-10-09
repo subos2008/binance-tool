@@ -7,19 +7,19 @@
 
 import Sentry from "../../../lib/sentry"
 
-import { ListenerFactory } from "../../amqp/listener-factory"
-import { MessageProcessor } from "../../amqp/interfaces"
 import { HealthAndReadiness } from "../../health_and_readiness"
 import { MyEventNameType } from "../../amqp/message-routing"
-import { Channel } from "amqplib"
+import { Channel, Message } from "amqplib"
 import {
   FuturesBinanceOrderData,
   FuturesOrderCallbacks,
 } from "../../../interfaces/exchanges/binance/order_callbacks"
 import { SendMessageFunc } from "../../../interfaces/send-message"
+import { TypedListenerFactory } from "../../amqp/listener-factory-v2"
 import { ServiceLogger } from "../../../interfaces/logger"
+import { TypedMessageProcessor } from "../../amqp/interfaces"
 
-export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
+export class AMQP_FuturesBinanceOrderDataListener implements TypedMessageProcessor<FuturesBinanceOrderData> {
   send_message: Function
   logger: ServiceLogger
   health_and_readiness: HealthAndReadiness
@@ -60,27 +60,24 @@ export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
   }
 
   async register_message_processors() {
-    let listener_factory = new ListenerFactory({ logger: this.logger })
+    let listener_factory = new TypedListenerFactory({ logger: this.logger })
     let event_name: MyEventNameType = "FuturesBinanceOrderData"
-    let health_and_readiness = this.health_and_readiness.addSubsystem({
-      name: event_name,
-      healthy: true,
-      initialised: false,
-    })
-    listener_factory.build_isolated_listener({
+
+    listener_factory.build_listener<FuturesBinanceOrderData>({
       event_name,
       message_processor: this,
-      health_and_readiness,
+      health_and_readiness: this.health_and_readiness,
       service_name: this.service_name,
       prefetch_one: false,
+      eat_exceptions: false,
     })
   }
 
-  async process_message(amqp_event: any, channel: Channel): Promise<void> {
+  async process_message(i: FuturesBinanceOrderData, channel: Channel, amqp_event: Message): Promise<void> {
+    let tags = i
     try {
       channel.ack(amqp_event)
-      let i: FuturesBinanceOrderData = JSON.parse(amqp_event.content.toString())
-      this.logger.info(i)
+      this.logger.event(tags, i)
       await this.processBinanceOrderDataMessage(i)
     } catch (err: any) {
       this.logger.error({ err })

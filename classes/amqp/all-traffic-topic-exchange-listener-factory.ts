@@ -52,7 +52,7 @@ class MessageProcessorIsolator implements MessageProcessor {
   }
 }
 
-export class ListenerFactory {
+export class AllTrafficTopicExchangeListenerFactory {
   logger: Logger
 
   constructor({ logger }: { logger: Logger }) {

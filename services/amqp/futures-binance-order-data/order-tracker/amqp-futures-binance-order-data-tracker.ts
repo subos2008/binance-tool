@@ -12,7 +12,6 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "../../../../lib/faux_logger"
 import { SendMessage } from "../../../../classes/send_message/publish"
 import { AMQP_FuturesBinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-futures-binance-order-data-listener"
 import {
@@ -22,8 +21,12 @@ import {
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import express from "express"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
+import { ServiceLogger } from "../../../../interfaces/logger"
+import { BunyanServiceLogger } from "../../../../lib/service-logger"
 
-const logger: Logger = new Logger({ silent: false })
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting" })
+
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 const service_is_healthy = health_and_readiness.addSubsystem({
@@ -50,9 +53,9 @@ let order_execution_tracker: AMQP_FuturesBinanceOrderDataListener | null = null
 
 class BinanceOrdersToSendMessageForwarder implements FuturesOrderCallbacks {
   send_message: SendMessageFunc
-  logger: Logger
+  logger: ServiceLogger
 
-  constructor({ send_message, logger }: { send_message: SendMessageFunc; logger: Logger }) {
+  constructor({ send_message, logger }: { send_message: SendMessageFunc; logger: ServiceLogger }) {
     assert(logger)
     this.logger = logger
     assert(send_message)

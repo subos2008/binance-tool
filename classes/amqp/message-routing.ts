@@ -37,25 +37,7 @@ export class MessageRouting {
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,
-          headers: {},
-        }
-
-      case "Edge56EntrySignal":
-        return {
-          routing_key: "edge56",
-          exchange_name: "binance-tool",
-          exchange_type: "topic",
-          durable: false,
-          headers: {},
-        }
-
-      case "Edge60EntrySignal":
-        return {
-          routing_key: "edge60",
-          exchange_name: "binance-tool",
-          exchange_type: "topic",
-          durable: false,
-          headers: {},
+          headers: { "x-queue-type": "quorum" },
         }
 
       case "Edge70Signal":
@@ -64,16 +46,7 @@ export class MessageRouting {
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,
-          headers: {},
-        }
-
-      case "Edge61EntrySignal":
-        return {
-          routing_key: "edge61",
-          exchange_name: "binance-tool",
-          exchange_type: "topic",
-          durable: false,
-          headers: {},
+          headers: { "x-queue-type": "quorum" },
         }
 
       case "EdgeDirectionSignal":
@@ -82,7 +55,7 @@ export class MessageRouting {
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,
-          headers: {},
+          headers: { "x-queue-type": "quorum" },
         }
 
       case "BinanceOrderData": // BinanceOrderDataPublisher
@@ -99,7 +72,7 @@ export class MessageRouting {
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,
-          headers: {},
+          headers: { "x-queue-type": "quorum" },
         }
       case "SpotPositionOpened":
         return {
@@ -107,7 +80,7 @@ export class MessageRouting {
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,
-          headers: {},
+          headers: { "x-queue-type": "quorum" },
         }
       case "SpotPositionClosed":
         return {
@@ -115,7 +88,7 @@ export class MessageRouting {
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,
-          headers: {},
+          headers: { "x-queue-type": "quorum" },
         }
 
       case "SendMessageEvent":
@@ -124,7 +97,7 @@ export class MessageRouting {
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,
-          headers: {},
+          headers: { "x-queue-type": "quorum" },
         }
 
       default:

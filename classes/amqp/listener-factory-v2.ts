@@ -22,11 +22,6 @@ import { ContextTags } from "../../interfaces/send-message"
 // set up and check for all the expected queues and maybe even have an admin access to RabbitMQ?
 
 /**
- * PublisherFactory
- * ListenerFactory
- */
-
-/**
  * What do we currently have in our routing?
  * - MyEventNameType
  * - ExchangeIdentifier
@@ -35,7 +30,7 @@ import { ContextTags } from "../../interfaces/send-message"
  *
  * */
 
-// Prevents unhandled exceptions from MessageProcessor's
+// Prevents unhandled exceptions from TypedMessageProcessor's
 class TypedMessageProcessorWrapper<EventT> implements RawAMQPMessageProcessor {
   event_name: string
   message_processor: TypedMessageProcessor<EventT>
@@ -157,7 +152,7 @@ export class TypedListenerFactory {
         let queue_name = event_name + "-" + service_name
         let connection: Connection = await connect(connect_options)
         process.once("SIGINT", connection.close.bind(connection))
-        this.logger.info(`ListenerFactory: Connection with AMQP server established.`)
+        this.logger.info(`TypedListenerFactory: Connection with AMQP server established.`)
         let channel: Channel = await connection.createChannel() // hangs
         let logger = this.logger
         channel.on("close", function () {
@@ -199,7 +194,7 @@ export class TypedListenerFactory {
         this.logger.exception(
           {},
           err,
-          `Error connecting MessageProcessor (listener) for event_name '${event_name}' to amqp server`
+          `Error connecting TypedMessageProcessor (listener) for event_name '${event_name}' to amqp server`
         )
         Sentry.captureException(err)
         listener_health.healthy(false)

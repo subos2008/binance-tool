@@ -31,11 +31,6 @@ import { RedisClientType } from "redis-v4"
 import { UploadToMongoDB } from "./upload-for-tableau-via-mongodb"
 import { SpotEdgePerformanceEvent } from "./interfaces"
 import { SendDatadogMetrics } from "./send-datadog-metrics"
-
-const logger = new Logger({ silent: false })
-
-logger.info(`Service starting.`)
-
 import { SendMessage } from "../../classes/send_message/publish"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import { ServiceLogger } from "../../interfaces/logger"

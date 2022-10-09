@@ -8,7 +8,7 @@
 import { strict as assert } from "assert"
 const service_name = "event-persistance"
 
-import { ListenerFactory } from "../../classes/amqp/all-traffic-topic-exchange-listener-factory"
+import { AllTrafficTopicExchangeListenerFactory } from "../../classes/amqp/all-traffic-topic-exchange-listener-factory"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 
 require("dotenv").config()
@@ -51,7 +51,7 @@ const s3Client = new S3Client({ region })
 let Bucket = "binance-tool-event-storage"
 import { randomUUID } from "crypto"
 
-let listener_factory = new ListenerFactory({ logger })
+let listener_factory = new AllTrafficTopicExchangeListenerFactory({ logger })
 class EventLogger implements MessageProcessor {
   send_message: Function
   logger: Logger

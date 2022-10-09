@@ -27,10 +27,11 @@ import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { Channel } from "amqplib"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import express from "express"
+import { ServiceLogger } from "../../interfaces/logger"
+import { BunyanServiceLogger } from "../../lib/service-logger"
 
-const logger = new Logger({ silent: false })
-
-logger.info(`Service starting.`)
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting" })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
@@ -49,7 +50,7 @@ process.on("unhandledRejection", (err) => {
 
 class EventLogger implements MessageProcessor {
   send_message: Function
-  logger: Logger
+  logger: ServiceLogger
   health_and_readiness: HealthAndReadiness
   subsystem_influxdb: HealthAndReadinessSubsystem
 
@@ -59,7 +60,7 @@ class EventLogger implements MessageProcessor {
     health_and_readiness,
   }: {
     send_message: (msg: string) => void
-    logger: Logger
+    logger: ServiceLogger
     health_and_readiness: HealthAndReadiness
   }) {
     assert(logger)

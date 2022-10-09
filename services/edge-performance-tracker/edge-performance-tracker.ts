@@ -18,7 +18,6 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "../../lib/faux_logger"
 import { MessageProcessor } from "../../classes/amqp/interfaces"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
@@ -39,6 +38,11 @@ logger.info(`Service starting.`)
 
 import { SendMessage } from "../../classes/send_message/publish"
 import { SendMessageFunc } from "../../interfaces/send-message"
+import { ServiceLogger } from "../../interfaces/logger"
+import { BunyanServiceLogger } from "../../lib/service-logger"
+
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting" })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const service_is_healthy = health_and_readiness.addSubsystem({
@@ -58,7 +62,7 @@ process.on("unhandledRejection", (err) => {
 
 class EventLogger implements MessageProcessor {
   send_message: Function
-  logger: Logger
+  logger: ServiceLogger
   health_and_readiness: HealthAndReadiness
   persistence: RedisEdgePerformancePersistence
   mongodb_uploader: UploadToMongoDB
@@ -70,7 +74,7 @@ class EventLogger implements MessageProcessor {
     persistence,
   }: {
     send_message: SendMessageFunc
-    logger: Logger
+    logger: ServiceLogger
     health_and_readiness: HealthAndReadiness
     persistence: RedisEdgePerformancePersistence
   }) {

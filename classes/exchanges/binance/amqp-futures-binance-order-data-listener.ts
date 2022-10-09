@@ -8,7 +8,6 @@
 import Sentry from "../../../lib/sentry"
 
 import { ListenerFactory } from "../../amqp/listener-factory"
-import { Logger } from "../../../lib/faux_logger"
 import { MessageProcessor } from "../../amqp/interfaces"
 import { HealthAndReadiness } from "../../health_and_readiness"
 import { MyEventNameType } from "../../amqp/message-routing"
@@ -18,10 +17,11 @@ import {
   FuturesOrderCallbacks,
 } from "../../../interfaces/exchanges/binance/order_callbacks"
 import { SendMessageFunc } from "../../../interfaces/send-message"
+import { ServiceLogger } from "../../../interfaces/logger"
 
 export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
   send_message: Function
-  logger: Logger
+  logger: ServiceLogger
   health_and_readiness: HealthAndReadiness
   order_callbacks: FuturesOrderCallbacks
   print_all_trades: boolean = false
@@ -36,7 +36,7 @@ export class AMQP_FuturesBinanceOrderDataListener implements MessageProcessor {
     service_name,
   }: {
     send_message: SendMessageFunc
-    logger: Logger
+    logger: ServiceLogger
     health_and_readiness: HealthAndReadiness
     order_callbacks: FuturesOrderCallbacks
     print_all_trades?: boolean

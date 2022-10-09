@@ -43,9 +43,9 @@ async function main() {
 
   let send_message = new SendMessage({ logger })
   let message_processor = new SendMessageToTelegramForwarder({ send_message: send_message, logger })
+  let event_name: MyEventNameType = "SendMessageEvent"
 
   let listener_factory = new TypedListenerFactory({ logger })
-  let event_name: MyEventNameType = "SendMessage"
   await listener_factory.build_listener({
     event_name,
     message_processor,

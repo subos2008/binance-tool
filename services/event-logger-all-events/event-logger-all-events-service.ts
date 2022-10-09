@@ -69,14 +69,9 @@ class EventLogger implements RawAMQPMessageProcessor {
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-    const amqp_health: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
-      name: `amqp-listener`,
-      healthy: true,
-      initialised: false,
-    })
     listener_factory.build_isolated_listener({
       message_processor: this,
-      health_and_readiness: amqp_health,
+      health_and_readiness,
       service_name,
     }) // Add arbitrary data argument
   }

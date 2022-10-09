@@ -87,6 +87,7 @@ class EventLogger implements TypedMessageProcessor<SpotPortfolio> {
       message_processor: this,
       health_and_readiness: this.health_and_readiness,
       prefetch_one: false,
+      service_name,
       eat_exceptions: false,
     })
   }

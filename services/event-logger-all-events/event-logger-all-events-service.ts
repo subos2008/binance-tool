@@ -8,9 +8,6 @@
 import { strict as assert } from "assert"
 const service_name = "event-persistance"
 
-import { AllTrafficTopicExchangeListenerFactory } from "../../classes/amqp/all-traffic-topic-exchange-listener-factory"
-import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
-
 require("dotenv").config()
 
 import Sentry from "../../lib/sentry"
@@ -18,13 +15,20 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "./../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false })
-
+import { AllTrafficTopicExchangeListenerFactory } from "../../classes/amqp/all-traffic-topic-exchange-listener-factory"
+import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { SendMessage } from "../../classes/send_message/publish"
 import { Channel } from "amqplib"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import express from "express"
+import { RawAMQPMessageProcessor } from "../../classes/amqp/interfaces"
+import { randomUUID } from "crypto"
+import { ServiceLogger } from "../../interfaces/logger"
+import { BunyanServiceLogger } from "../../lib/service-logger"
+import { PutObjectCommand, PutObjectRequest, S3Client } from "@aws-sdk/client-s3"
+
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting" })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const service_is_healthy = health_and_readiness.addSubsystem({
@@ -41,20 +45,16 @@ process.on("unhandledRejection", (err) => {
   service_is_healthy.healthy(false)
 })
 
-import { MessageProcessor } from "../../classes/amqp/interfaces"
-
 let region = "ap-southeast-1"
-import { PutObjectCommand, PutObjectRequest, S3Client } from "@aws-sdk/client-s3"
 assert(process.env.AWS_ACCESS_KEY_ID)
 assert(process.env.AWS_SECRET_ACCESS_KEY)
 const s3Client = new S3Client({ region })
 let Bucket = "binance-tool-event-storage"
-import { randomUUID } from "crypto"
 
 let listener_factory = new AllTrafficTopicExchangeListenerFactory({ logger })
-class EventLogger implements MessageProcessor {
+class EventLogger implements RawAMQPMessageProcessor {
   send_message: Function
-  logger: Logger
+  logger: ServiceLogger
 
   constructor({
     send_message,
@@ -62,7 +62,7 @@ class EventLogger implements MessageProcessor {
     health_and_readiness,
   }: {
     send_message: (msg: string) => void
-    logger: Logger
+    logger: ServiceLogger
     health_and_readiness: HealthAndReadiness
   }) {
     assert(logger)
@@ -77,6 +77,7 @@ class EventLogger implements MessageProcessor {
     listener_factory.build_isolated_listener({
       message_processor: this,
       health_and_readiness: amqp_health,
+      service_name,
     }) // Add arbitrary data argument
   }
 

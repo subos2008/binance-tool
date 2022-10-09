@@ -18,18 +18,6 @@ import { ContextTags } from "../../interfaces/send-message"
 // A Factory / router where you give it an event type and some other shit like an exchange identifier
 // and it gives you the amqp connection / queue binding that calls your callback?
 
-// This class could also have a buddy class that
-// set up and check for all the expected queues and maybe even have an admin access to RabbitMQ?
-
-/**
- * What do we currently have in our routing?
- * - MyEventNameType
- * - ExchangeIdentifier
- * - exchange (AMQP exchange name)
- * - routing_keys
- *
- * */
-
 // Prevents unhandled exceptions from TypedMessageProcessor's
 class TypedMessageProcessorWrapper<EventT> implements RawAMQPMessageProcessor {
   event_name: string

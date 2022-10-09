@@ -7,20 +7,14 @@ import Sentry from "../../lib/sentry"
 
 import { Channel, connect, Connection } from "amqplib"
 import { assert } from "console"
-import { Logger } from "../../interfaces/logger"
+import { ServiceLogger } from "../../interfaces/logger"
 import { HealthAndReadinessSubsystem } from "../health_and_readiness"
-import { MessageProcessor } from "./interfaces"
+import { RawAMQPMessageProcessor } from "./interfaces"
 
-// A Factory / router where you give it an event type and some other shit like an exchange identifier
-// and it gives you the amqp connection / queue binding that calls your callback?
-
-// This class could also have a buddy class that
-// set up and check for all the expected queues and maybe even have an admin access to RabbitMQ?
-
-// Prevents unhandled exceptions from MessageProcessor's
-class MessageProcessorIsolator implements MessageProcessor {
-  message_processor: MessageProcessor
-  logger: Logger
+// Prevents unhandled exceptions from RawAMQPMessageProcessor's
+class MessageProcessorIsolator implements RawAMQPMessageProcessor {
+  message_processor: RawAMQPMessageProcessor
+  logger: ServiceLogger
   health_and_readiness: HealthAndReadinessSubsystem
 
   constructor({
@@ -28,8 +22,8 @@ class MessageProcessorIsolator implements MessageProcessor {
     logger,
     health_and_readiness,
   }: {
-    message_processor: MessageProcessor
-    logger: Logger
+    message_processor: RawAMQPMessageProcessor
+    logger: ServiceLogger
     health_and_readiness: HealthAndReadinessSubsystem
   }) {
     assert(message_processor && logger)
@@ -37,12 +31,12 @@ class MessageProcessorIsolator implements MessageProcessor {
     this.logger = logger
     this.health_and_readiness = health_and_readiness
   }
-  async process_message(event: any, channel: Channel): Promise<void> {
+  async process_message(raw_amqp_message: any, channel: Channel): Promise<void> {
     // TODO: sentry scope
     let Body
     try {
-      Body = JSON.parse(event.content.toString())
-      return this.message_processor.process_message(event, channel)
+      Body = JSON.parse(raw_amqp_message.content.toString())
+      return this.message_processor.process_message(raw_amqp_message, channel)
     } catch (err) {
       // Eat any exceptions to prevent this handler from affecting the process
       // Designed for having multiple independent listeners in one process
@@ -53,9 +47,9 @@ class MessageProcessorIsolator implements MessageProcessor {
 }
 
 export class AllTrafficTopicExchangeListenerFactory {
-  logger: Logger
+  logger: ServiceLogger
 
-  constructor({ logger }: { logger: Logger }) {
+  constructor({ logger }: { logger: ServiceLogger }) {
     this.logger = logger
   }
 
@@ -64,9 +58,11 @@ export class AllTrafficTopicExchangeListenerFactory {
   async build_isolated_listener({
     message_processor,
     health_and_readiness,
+    service_name,
   }: {
-    message_processor: MessageProcessor
+    message_processor: RawAMQPMessageProcessor
     health_and_readiness: HealthAndReadinessSubsystem
+    service_name: string
   }) {
     if (!health_and_readiness.healthy())
       this.logger.error({}, `health_and_readiness.healthy is false on initialisation, probably a bug`)
@@ -83,7 +79,7 @@ export class AllTrafficTopicExchangeListenerFactory {
         })
       } catch (err) {
         health_and_readiness.healthy(false)
-        this.logger.error({ err }, `Error connecting MessageProcessor to amqp server`)
+        this.logger.error({ err }, `Error connecting RawAMQPMessageProcessor to amqp server`)
         Sentry.captureException(err)
         // throw err // don't throw when setting up isolated infrastructure
       }
@@ -94,7 +90,7 @@ export class AllTrafficTopicExchangeListenerFactory {
     message_processor,
     health_and_readiness,
   }: {
-    message_processor: MessageProcessor
+    message_processor: RawAMQPMessageProcessor
     health_and_readiness: HealthAndReadinessSubsystem
   }) {
     let exchange_name = "binance-tool"

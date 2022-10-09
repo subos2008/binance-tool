@@ -7,12 +7,12 @@
 
 import Sentry from "../../../lib/sentry"
 
-import { MessageProcessor, TypedMessageProcessor } from "../../amqp/interfaces"
+import { TypedMessageProcessor } from "../../amqp/interfaces"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../health_and_readiness"
 import { MyEventNameType } from "../../amqp/message-routing"
 import { Channel, Message } from "amqplib"
 import { OrderCallbacks, BinanceOrderData } from "../../../interfaces/exchanges/binance/order_callbacks"
-import { SendMessageFunc } from "../../../interfaces/send-message"
+import { ContextTags, SendMessageFunc } from "../../../interfaces/send-message"
 import { ServiceLogger } from "../../../interfaces/logger"
 import { TypedListenerFactory } from "../../amqp/listener-factory-v2"
 
@@ -91,7 +91,7 @@ export class AMQP_BinanceOrderDataListener implements TypedMessageProcessor<Bina
   async processBinanceOrderDataMessage(data: BinanceOrderData) {
     const { symbol, price, quantity, side, orderType, orderStatus, order_id, exchange_identifier } = data
 
-    let tags = {
+    let tags: ContextTags = {
       symbol,
       order_id,
       exchange: exchange_identifier.exchange,

@@ -8,7 +8,6 @@
 import { strict as assert } from "assert"
 const service_name = "edge-performance-tracker"
 
-import { ListenerFactory } from "../../classes/amqp/listener-factory"
 import { Duration } from "luxon"
 
 require("dotenv").config()
@@ -18,10 +17,9 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { MessageProcessor } from "../../classes/amqp/interfaces"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
-import { Channel } from "amqplib"
+import { Channel, Message } from "amqplib"
 import express from "express"
 import { SpotPositionClosed } from "../../classes/spot/abstractions/spot-position-callbacks"
 import { BigNumber } from "bignumber.js"
@@ -32,7 +30,9 @@ import { UploadToMongoDB } from "./upload-for-tableau-via-mongodb"
 import { SpotEdgePerformanceEvent } from "./interfaces"
 import { SendDatadogMetrics } from "./send-datadog-metrics"
 import { SendMessage } from "../../classes/send_message/publish"
-import { SendMessageFunc } from "../../interfaces/send-message"
+import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
+import { TypedMessageProcessor } from "../../classes/amqp/interfaces"
+import { TypedListenerFactory } from "../../classes/amqp/listener-factory-v2"
 import { ServiceLogger } from "../../interfaces/logger"
 import { BunyanServiceLogger } from "../../lib/service-logger"
 
@@ -55,7 +55,8 @@ process.on("unhandledRejection", (err) => {
   service_is_healthy.healthy(false)
 })
 
-class EventLogger implements MessageProcessor {
+class EventLogger implements TypedMessageProcessor<SpotPositionClosed> {
+  event_name: MyEventNameType = "SpotPositionClosed"
   send_message: Function
   logger: ServiceLogger
   health_and_readiness: HealthAndReadiness
@@ -88,29 +89,23 @@ class EventLogger implements MessageProcessor {
   }
 
   async register_message_processors() {
-    let listener_factory = new ListenerFactory({ logger })
-    let event_name: MyEventNameType = "SpotPositionClosed"
-    let health_and_readiness = this.health_and_readiness.addSubsystem({
-      name: event_name,
-      healthy: true,
-      initialised: false,
-    })
-    listener_factory.build_isolated_listener({
-      event_name,
+    let listener_factory = new TypedListenerFactory({ logger })
+    listener_factory.build_listener<SpotPositionClosed>({
+      event_name: this.event_name,
       message_processor: this,
       health_and_readiness,
       prefetch_one: false,
+      eat_exceptions: false,
     })
   }
 
-  async process_message(amqp_event: any, channel: Channel): Promise<void> {
+  async process_message(i: SpotPositionClosed, channel: Channel, amqp_event: Message): Promise<void> {
     try {
-      this.logger.info(amqp_event.content.toString())
+      let tags: ContextTags = i
 
       channel.ack(amqp_event)
 
-      let i: SpotPositionClosedEvent_V1 = JSON.parse(amqp_event.content.toString())
-      this.logger.info(JSON.stringify(i))
+      this.logger.event(tags, i)
 
       let { edge, percentage_quote_change, base_asset, abs_quote_change } = i
       let loss = percentage_quote_change ? percentage_quote_change < 0 : undefined

@@ -12,6 +12,13 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
+import { BigNumber } from "bignumber.js"
+BigNumber.DEBUG = true // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function () {
+  throw Error("BigNumber .valueOf called!")
+}
+
 import { SendMessage } from "../../../../classes/send_message/publish"
 import { AMQP_FuturesBinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-futures-binance-order-data-listener"
 import {
@@ -34,13 +41,6 @@ const service_is_healthy = health_and_readiness.addSubsystem({
   healthy: true,
   initialised: true,
 })
-
-import { BigNumber } from "bignumber.js"
-BigNumber.DEBUG = true // Prevent NaN
-// Prevent type coercion
-BigNumber.prototype.valueOf = function () {
-  throw Error("BigNumber .valueOf called!")
-}
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })

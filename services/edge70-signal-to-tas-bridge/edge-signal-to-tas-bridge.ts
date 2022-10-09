@@ -90,7 +90,7 @@ class Edge70MessageProcessor implements TypedMessageProcessor<Edge70Signal> {
     try {
       this.logger.event(tags, signal)
 
-      // TODO: move this lower when the TAS is just refactored
+      // TODO: move this lower when the TAS is refactored
       channel.ack(amqp_message)
 
       let { base_asset } = signal.market_identifier

@@ -164,6 +164,20 @@ export class HealthAndReadiness {
     healthy: boolean
     initialised: boolean
   }): HealthAndReadinessSubsystem {
+    /**
+     * Add an alert if we revert from initialised to not intiialised. This is very dangerous
+     * as it brings a race condition for immidiate service death. One example is lazy initialisation
+     * of a publisher. k8 startupProbe time has passed, livenessProbe.failureThreshold is set to 1.
+     * If a healthcheck happens while the publisher is initialising the service is killed immediately.
+     *
+     * ... technically we could actually detect this race condition occuring inside this class.
+     */
+    if (this.initialised() && !initialised) {
+      this.logger.error(
+        `Subsystem requiring initialisation added after service has reported initialised! Service death race condition.`
+      )
+    }
+
     let obj = {
       object_type: `HealthAndReadinessNewSubsystem`,
       msg: `Registering new subsystem: ${name}, initialised as healthy: ${healthy}, initialised: ${initialised}`,

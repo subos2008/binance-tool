@@ -11,7 +11,7 @@ export type MyEventNameType =
   | "SpotPositionOpened"
   | "SpotPositionClosed"
   | "EdgeDirectionSignal"
-  | "SendMessage"
+  | "SendMessageEvent"
 
 export class MessageRouting {
   static amqp_routing({ event_name }: { event_name: MyEventNameType }): {
@@ -118,7 +118,7 @@ export class MessageRouting {
           headers: {},
         }
 
-      case "SendMessage":
+      case "SendMessageEvent":
         return {
           routing_key: "send-message",
           exchange_name: "binance-tool",

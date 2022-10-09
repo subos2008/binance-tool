@@ -9,7 +9,7 @@ import { HealthAndReadiness } from "../health_and_readiness"
 import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
 
 export interface SendMessageEvent {
-  object_type: "SendMessage"
+  object_type: "SendMessageEvent"
   service_name: string
   msg: string
   tags: ContextTags
@@ -46,7 +46,7 @@ export class SendMessage {
         console.trace(`Empty message in send_message!`)
       }
       let event: SendMessageEvent = {
-        object_type: "SendMessage",
+        object_type: "SendMessageEvent",
         msg: message,
         service_name: this.service_name,
         tags,
@@ -73,7 +73,7 @@ class SendMessagePublisher {
   constructor({ logger, health_and_readiness }: { logger: Logger; health_and_readiness: HealthAndReadiness }) {
     this.logger = logger
     this.health_and_readiness = health_and_readiness
-    this.event_name = "SendMessage"
+    this.event_name = "SendMessageEvent"
   }
 
   async connect(): Promise<void> {

@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js"
 import { RedisClientType } from "redis-v4"
-import { SpotPositionClosedEvent_V1 } from "../../classes/spot/abstractions/spot-position-callbacks"
+import { SpotPositionClosed } from "../../classes/spot/abstractions/spot-position-callbacks"
 import { Logger } from "../../interfaces/logger"
 import { DateTime } from "luxon"
 import Sentry from "../../lib/sentry"
@@ -77,7 +77,7 @@ export class RedisEdgePerformancePersistence {
     this.redis.HINCRBYFLOAT(key, "abs_quote_change", delta)
   }
 
-  async ingest_event(event: SpotPositionClosedEvent_V1) {
+  async ingest_event(event: SpotPositionClosed) {
     let {
       edge,
       percentage_quote_change: percentage_quote_change_string, // actually bro this is a number...

@@ -17,7 +17,7 @@ import { RedisClient } from "redis"
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
 import {
   SpotPositionCallbacks,
-  SpotPositionClosedEvent_V1,
+  SpotPositionClosed,
   SpotPositionOpenedEvent_V1,
 } from "../../../classes/spot/abstractions/spot-position-callbacks"
 import { ServiceLogger } from "../../../interfaces/logger"
@@ -40,7 +40,7 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
   logger: ServiceLogger
   positions_tracker: SpotPositionTracker
   spot_positions_query: SpotPositionsQuery
-  position_closed_events: { [base_asset: string]: SpotPositionClosedEvent_V1[] } = {}
+  position_closed_events: { [base_asset: string]: SpotPositionClosed[] } = {}
   position_opened_events: { [base_asset: string]: SpotPositionOpenedEvent_V1[] } = {}
 
   constructor({
@@ -86,14 +86,14 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
     this.position_opened_events[base_asset].push(event)
   }
 
-  async on_position_closed(event: SpotPositionClosedEvent_V1): Promise<void> {
+  async on_position_closed(event: SpotPositionClosed): Promise<void> {
     let { base_asset } = event
     if (!this.position_closed_events[base_asset]) this.position_closed_events[base_asset] = []
     this.position_closed_events[base_asset].push(event)
   }
 
   async summary() {
-    type E = SpotPositionClosedEvent_V1
+    type E = SpotPositionClosed
 
     try {
       for (const base_asset in this.position_closed_events) {

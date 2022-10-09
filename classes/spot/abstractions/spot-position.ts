@@ -23,7 +23,7 @@ import {
   genericOrderDataToSpotPositionInitialisationData,
   SpotPositionsPersistence,
 } from "../persistence/interface/spot-positions-persistance"
-import { SpotPositionClosedEvent_V1, SpotPositionOpenedEvent_V1 } from "./spot-position-callbacks"
+import { SpotPositionClosed, SpotPositionOpenedEvent_V1 } from "./spot-position-callbacks"
 
 export type SpotPositionObject = {
   initial_entry_timestamp: number
@@ -193,7 +193,7 @@ export class SpotPosition {
     exit_quote_asset: string
     exit_quote_returned: string
     exit_position_size: string
-  }): Promise<SpotPositionClosedEvent_V1> {
+  }): Promise<SpotPositionClosed> {
     let o: SpotPositionObject = await this.describe_position()
     let { base_asset } = this
     let { edge } = o
@@ -208,7 +208,7 @@ export class SpotPosition {
       percentage_quote_change && percentage_quote_change > 0
         ? `+${percentage_quote_change}%`
         : `${percentage_quote_change}%` || `(undefined)`
-    let obj: SpotPositionClosedEvent_V1 = {
+    let obj: SpotPositionClosed = {
       object_type: "SpotPositionClosed",
       object_subtype, //: "SingleEntryExit", // simple trades with one entry order and one exit order
       version: 1,

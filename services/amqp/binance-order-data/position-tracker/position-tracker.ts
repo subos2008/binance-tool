@@ -23,7 +23,7 @@ import { OrderContextPersistence } from "../../../../classes/persistent_state/in
 import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import {
   SpotPositionCallbacks,
-  SpotPositionClosedEvent_V1,
+  SpotPositionClosed,
   SpotPositionOpenedEvent_V1,
 } from "../../../../classes/spot/abstractions/spot-position-callbacks"
 import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
@@ -199,7 +199,7 @@ export class SpotPositionTracker {
       })
     ) {
       try {
-        let event: SpotPositionClosedEvent_V1 = await position.get_SpotPositionClosedEvent({
+        let event: SpotPositionClosed = await position.get_SpotPositionClosedEvent({
           object_subtype: "SingleEntryExit",
           exit_timestamp_ms: generic_order_data.orderTime,
           exit_executed_price: averageExecutionPrice, // average exit price (actual)

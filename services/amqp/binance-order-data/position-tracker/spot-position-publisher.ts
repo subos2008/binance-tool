@@ -2,7 +2,7 @@ import { GenericTopicPublisher } from "../../../../classes/amqp/generic-publishe
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import {
   SpotPositionCallbacks,
-  SpotPositionClosedEvent_V1,
+  SpotPositionClosed,
   SpotPositionOpenedEvent_V1,
 } from "../../../../classes/spot/abstractions/spot-position-callbacks"
 import { Logger } from "../../../../interfaces/logger"
@@ -42,7 +42,7 @@ export class SpotPositionPublisher implements SpotPositionCallbacks {
     await this.publisher_opened.publish(event, options)
   }
 
-  async on_position_closed(event: SpotPositionClosedEvent_V1): Promise<void> {
+  async on_position_closed(event: SpotPositionClosed): Promise<void> {
     const options = {
       // expiration: event_expiration_seconds,
       persistent: true,

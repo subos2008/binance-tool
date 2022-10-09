@@ -123,7 +123,7 @@ export class TypedListenerFactory {
     message_processor: TypedMessageProcessor<EventT>
     event_name: MyEventNameType
     health_and_readiness: HealthAndReadiness
-    service_name?: string
+    service_name: string
     prefetch_one: boolean
     eat_exceptions: boolean
   }) {

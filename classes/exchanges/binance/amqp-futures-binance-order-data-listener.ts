@@ -25,7 +25,7 @@ export class AMQP_FuturesBinanceOrderDataListener implements TypedMessageProcess
   health_and_readiness: HealthAndReadiness
   order_callbacks: FuturesOrderCallbacks
   print_all_trades: boolean = false
-  service_name: string | undefined
+  service_name: string
 
   constructor({
     send_message,
@@ -40,7 +40,7 @@ export class AMQP_FuturesBinanceOrderDataListener implements TypedMessageProcess
     health_and_readiness: HealthAndReadiness
     order_callbacks: FuturesOrderCallbacks
     print_all_trades?: boolean
-    service_name?: string
+    service_name: string
   }) {
     this.logger = logger
     this.send_message = send_message

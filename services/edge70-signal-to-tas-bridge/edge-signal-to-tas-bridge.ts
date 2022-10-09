@@ -81,6 +81,7 @@ class Edge70MessageProcessor implements TypedMessageProcessor<Edge70Signal> {
       message_processor: this,
       health_and_readiness,
       prefetch_one: false,
+      service_name,
       eat_exceptions: false,
     })
   }

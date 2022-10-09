@@ -24,7 +24,7 @@ export class AMQP_BinanceOrderDataListener implements TypedMessageProcessor<Bina
   callbacks_health: HealthAndReadinessSubsystem
   order_callbacks: OrderCallbacks
   print_all_trades: boolean = false
-  service_name: string | undefined
+  service_name: string
 
   constructor({
     send_message,
@@ -39,7 +39,7 @@ export class AMQP_BinanceOrderDataListener implements TypedMessageProcessor<Bina
     health_and_readiness: HealthAndReadiness
     order_callbacks: OrderCallbacks
     print_all_trades?: boolean
-    service_name?: string
+    service_name: string
   }) {
     this.logger = logger
     this.send_message = send_message

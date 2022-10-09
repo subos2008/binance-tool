@@ -94,6 +94,7 @@ class EventLogger implements TypedMessageProcessor<SpotPositionClosed> {
       event_name: this.event_name,
       message_processor: this,
       health_and_readiness,
+      service_name,
       prefetch_one: false,
       eat_exceptions: false,
     })

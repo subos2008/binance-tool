@@ -32,6 +32,10 @@ export class SendMessage {
     this.service_name = service_name
     this.logger = logger
     this.publisher = new SendMessagePublisher({ logger, health_and_readiness })
+    this.publisher.connect().catch((err) => {
+      console.error(`SendMessagePublisher failed to connect: ${err}`)
+      console.error(err)
+    })
   }
 
   build(): SendMessageFunc {
@@ -78,18 +82,27 @@ class SendMessagePublisher {
 
   async connect(): Promise<void> {
     if (!this.pub) {
-      this.pub = new TypedGenericTopicPublisher<SendMessageEvent>({
-        logger: this.logger,
-        event_name: this.event_name,
-        health_and_readiness: this.health_and_readiness,
-      })
+      try {
+        let pub = new TypedGenericTopicPublisher<SendMessageEvent>({
+          logger: this.logger,
+          event_name: this.event_name,
+          health_and_readiness: this.health_and_readiness,
+        })
+        await pub.connect()
+        this.pub = pub
+      } catch (err) {
+        this.logger.error({}, err)
+        this.logger.error(`Failed to connect SendMessagePublisher in SendMessage`)
+        throw err
+      }
     }
-    await this.pub.connect()
   }
 
   async publish(event: SendMessageEvent): Promise<void> {
-    if (!this.pub) this.logger.warn(`SendMessage using lazy connect`)
-    await this.connect()
+    if (!this.pub) {
+      this.logger.warn(`SendMessage using lazy connect`)
+      await this.connect()
+    }
     if (!this.pub) throw new Error(`Failed to connect SendMessagePublisher in SendMessage`)
     const options = {
       // expiration: event_expiration_seconds,

@@ -36,13 +36,13 @@ import { SendMessageFunc } from "../../interfaces/send-message"
 import express from "express"
 
 const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 const service_is_healthy: HealthAndReadinessSubsystem = health_and_readiness.addSubsystem({
   name: "global",
   healthy: true,
   initialised: true,
 })
 
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })

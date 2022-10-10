@@ -44,7 +44,7 @@ spec:
             containerPort: 80
             protocol: TCP
           livenessProbe:
-            failureThreshold: 1
+            failureThreshold: 2 # Set as two to avoid SendMessage lazy connect killing services
             httpGet:
               path: /health
               port: http

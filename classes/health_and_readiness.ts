@@ -174,7 +174,7 @@ export class HealthAndReadiness {
      */
     if (this.initialised() && !initialised) {
       this.logger.error(
-        `Subsystem requiring initialisation added after service has reported initialised! Service death race condition.`
+        `Subsystem (${name}) requiring initialisation added after service has reported initialised! Service death race condition.`
       )
     }
 

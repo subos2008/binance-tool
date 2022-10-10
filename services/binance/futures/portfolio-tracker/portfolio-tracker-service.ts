@@ -66,13 +66,13 @@ BigNumber.prototype.valueOf = function () {
 import { SendMessage } from "../../../../classes/send_message/publish"
 
 const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message = new SendMessage({ service_name, logger, health_and_readiness }).build()
 const service_is_healthy = health_and_readiness.addSubsystem({
   name: "global",
   healthy: true,
   initialised: true,
 })
 
-const send_message = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })

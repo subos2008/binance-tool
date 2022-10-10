@@ -38,13 +38,13 @@ import { BinanceFuturesOrdersToAMQP } from "./binance-futures-orders-to-amqp"
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 
 const health_and_readiness = new HealthAndReadiness({ logger })
+const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 const service_is_healthy = health_and_readiness.addSubsystem({
   name: "global",
   healthy: true,
   initialised: true,
 })
 
-const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN

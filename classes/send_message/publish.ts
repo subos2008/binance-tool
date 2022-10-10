@@ -32,10 +32,6 @@ export class SendMessage {
     this.service_name = service_name
     this.logger = logger
     this.publisher = new SendMessagePublisher({ logger, health_and_readiness })
-    this.publisher.connect().catch((err) => {
-      console.error(`SendMessagePublisher failed to connect: ${err}`)
-      console.error(err)
-    })
   }
 
   build(): SendMessageFunc {
@@ -70,7 +66,7 @@ export class SendMessage {
 class SendMessagePublisher {
   logger: Logger
   closeTradesWebSocket: (() => void) | undefined
-  pub: TypedGenericTopicPublisher<SendMessageEvent> | undefined
+  pub: TypedGenericTopicPublisher<SendMessageEvent>
   event_name: MyEventNameType
   health_and_readiness: HealthAndReadiness
 
@@ -78,32 +74,28 @@ class SendMessagePublisher {
     this.logger = logger
     this.health_and_readiness = health_and_readiness
     this.event_name = "SendMessageEvent"
+    this.pub = new TypedGenericTopicPublisher<SendMessageEvent>({
+      logger: this.logger,
+      event_name: this.event_name,
+      health_and_readiness: this.health_and_readiness,
+    })
+    this.pub.connect().catch((err) => {
+      console.error(`SendMessagePublisher failed to connect: ${err}`)
+      console.error(err)
+    })
   }
 
   async connect(): Promise<void> {
-    if (!this.pub) {
-      try {
-        let pub = new TypedGenericTopicPublisher<SendMessageEvent>({
-          logger: this.logger,
-          event_name: this.event_name,
-          health_and_readiness: this.health_and_readiness,
-        })
-        await pub.connect()
-        this.pub = pub
-      } catch (err) {
-        this.logger.error({}, err)
-        this.logger.error(`Failed to connect SendMessagePublisher in SendMessage`)
-        throw err
-      }
+    try {
+      await this.pub.connect()
+    } catch (err) {
+      this.logger.error({}, err)
+      this.logger.error(`Failed to connect SendMessagePublisher in SendMessage`)
+      throw err
     }
   }
 
   async publish(event: SendMessageEvent): Promise<void> {
-    if (!this.pub) {
-      this.logger.warn(`SendMessage using lazy connect`)
-      await this.connect()
-    }
-    if (!this.pub) throw new Error(`Failed to connect SendMessagePublisher in SendMessage`)
     const options = {
       // expiration: event_expiration_seconds,
       persistent: false,

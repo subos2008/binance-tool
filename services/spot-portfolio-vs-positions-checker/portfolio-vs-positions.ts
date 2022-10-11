@@ -72,7 +72,6 @@ export class PortfolioVsPositions {
     this.portfolio_utils = new PortfolioUtils({ logger })
     this.portfolio_snapshot = new PortfolioSnapshot({
       logger,
-      redis,
       exchange_info_getter: this.exchange_info_getter,
     })
     this.positions_snapshot = new PositionsSnapshot({

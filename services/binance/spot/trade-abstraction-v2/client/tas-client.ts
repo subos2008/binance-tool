@@ -45,15 +45,11 @@ export class TradeAbstractionServiceClient {
 
   async prices(): Promise<BinanceStyleSpotPrices> {
     let response = await this.get(new URL("/prices", this.TAS_URL).toString())
-    this.logger.info(`Returned prices:`)
-    this.logger.event({}, response.data)
     return response.data
   }
 
   async positions(): Promise<SpotPositionIdentifier_V3[]> {
     let response = await this.get(new URL("/positions", this.TAS_URL).toString())
-    this.logger.info(`Returned positions:`)
-    this.logger.event({}, response.data)
     return response.data
   }
 

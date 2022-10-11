@@ -25,7 +25,6 @@ export class PortfolioSnapshot {
     exchange_info_getter,
   }: {
     logger: ServiceLogger
-    redis: RedisClient
     exchange_info_getter: BinanceExchangeInfoGetter
   }) {
     assert(logger)

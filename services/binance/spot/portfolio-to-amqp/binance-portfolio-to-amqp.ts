@@ -40,7 +40,6 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { SendMessage } from "../../../../classes/send_message/publish"
-import { Logger } from "../../../../lib/faux_logger"
 import { OrderExecutionTracker } from "../orders-to-amqp/spot-order-execution-tracker"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { Balance, Portfolio } from "../../../../interfaces/portfolio"
@@ -53,8 +52,14 @@ import { PortfolioPublisher } from "./portfolio-publisher"
 import { PortfolioTracker } from "./portfolio-tracker"
 import express from "express"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
+import { PortfolioSnapshot } from "../../../../classes/utils/portfolio-snapshot"
+import { ServiceLogger } from "../../../../interfaces/logger"
+import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
+import { BunyanServiceLogger } from "../../../../lib/service-logger"
 
-const logger = new Logger({ silent: false })
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting" })
+
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 const service_is_healthy = health_and_readiness.addSubsystem({
@@ -72,7 +77,7 @@ process.on("unhandledRejection", (err) => {
 
 export class BinancePortfolioToAMQP implements PortfolioBitchClass {
   send_message: SendMessageFunc
-  logger: Logger
+  logger: ServiceLogger
   ee: BinanceType
   master: MasterPortfolioClass // duplicated
   portfolio_tracker: PortfolioTracker // duplicated
@@ -81,6 +86,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
   portfolio: Portfolio = { balances: [], object_type: "SpotPortfolio" }
   publisher: PortfolioPublisher
   health_and_readiness: HealthAndReadiness
+  portfolio_snapshot: PortfolioSnapshot
 
   constructor({
     send_message,
@@ -88,7 +94,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
     health_and_readiness,
   }: {
     send_message: SendMessageFunc
-    logger: Logger
+    logger: ServiceLogger
     health_and_readiness: HealthAndReadiness
   }) {
     assert(logger)
@@ -127,6 +133,12 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
       apiSecret: process.env.BINANCE_API_SECRET,
     })
 
+    let exchange_info_getter = new BinanceExchangeInfoGetter({ ee: this.ee })
+    this.portfolio_snapshot = new PortfolioSnapshot({
+      logger,
+      exchange_info_getter,
+    })
+
     this.order_execution_tracker = new OrderExecutionTracker({
       ee: this.ee,
       send_message,
@@ -155,7 +167,7 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
 
   async update_portfolio_from_exchange() {
     this.portfolio.prices = await this.get_prices_from_exchange()
-    this.portfolio.balances = await this.get_balances_from_exchange()
+    this.portfolio.balances = await this.portfolio_snapshot.take_snapshot()
     this.master.set_portfolio_for_exchange({
       exchange_identifier: this.exchange_identifier,
       portfolio: this.portfolio,
@@ -171,9 +183,12 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
     // TODO: refresh prices but maybe cache them? If at daily close we enter lots of positions it would be good not to call this repeatedly
     this.logger.event(
       { level: "warn" },
-      { object_type: "TODO", msg: `Getting prices from exchange, this is not cached and If at daily close we enter lots of positions it would be good not to call this repeatedly.` }
+      {
+        object_type: "TODO",
+        msg: `Getting prices from exchange, this is not cached and If at daily close we enter lots of positions it would be good not to call this repeatedly.`,
+      }
     )
-    
+
     try {
       return await this.ee.prices()
     } catch (err) {

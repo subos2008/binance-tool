@@ -37,6 +37,7 @@ export class PortfolioUtils {
     prices: Prices
   }) {
     if (base_currency === quote_currency) return base_quantity
+    
     let pair = `${base_currency}${quote_currency}`
     if (pair in prices) {
       return base_quantity.times(prices[pair])

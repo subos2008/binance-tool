@@ -75,7 +75,6 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
     assert(send_message)
     this.master = master
     this.send_message = send_message
-    logger.info("Live monitoring mode")
     this.exchange_identifier = { exchange: "binance", account: "default", type: "spot", version: "v3" }
     if (!process.env.BINANCE_API_KEY) throw new Error(`Missing BINANCE_API_KEY in ENV`)
     if (!process.env.BINANCE_API_SECRET) throw new Error(`Missing BINANCE_API_SECRET in ENV`)

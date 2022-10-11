@@ -42,7 +42,7 @@ BigNumber.prototype.valueOf = function () {
 import { SendMessage } from "../../../../classes/send_message/publish"
 import { OrderExecutionTracker } from "../orders-to-amqp/spot-order-execution-tracker"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { Portfolio } from "../../../../interfaces/portfolio"
+import { Portfolio, SpotPortfolio } from "../../../../interfaces/portfolio"
 import { Binance as BinanceType } from "binance-api-node"
 import Binance from "binance-api-node"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
@@ -83,7 +83,6 @@ export class BinancePortfolioToAMQP {
   portfolio_tracker: PortfolioTracker
   order_execution_tracker: OrderExecutionTracker
   exchange_identifier: ExchangeIdentifier_V3
-  portfolio: Portfolio = { balances: [], object_type: "SpotPortfolio" }
   publisher: PortfolioPublisher
   health_and_readiness: HealthAndReadiness
   portfolio_snapshot: PortfolioSnapshot
@@ -168,11 +167,18 @@ export class BinancePortfolioToAMQP {
   }
 
   async update_portfolio_from_exchange() {
-    this.portfolio.prices = await this.get_prices_from_exchange()
-    this.portfolio.balances = await this.portfolio_snapshot.take_snapshot()
+    let portfolio: SpotPortfolio = {
+      object_type: "SpotPortfolio",
+      version: 1,
+      timestamp_ms: Date.now(),
+      exchange_identifier: this.exchange_identifier,
+      prices: await this.get_prices_from_exchange(),
+      balances: await this.portfolio_snapshot.take_snapshot(),
+    }
+
     this.master.set_portfolio_for_exchange({
       exchange_identifier: this.exchange_identifier,
-      portfolio: this.portfolio,
+      portfolio,
     })
   }
 

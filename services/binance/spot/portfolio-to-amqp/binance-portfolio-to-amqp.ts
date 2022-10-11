@@ -195,18 +195,6 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
       throw err
     }
   }
-
-  async get_balances_from_exchange(): Promise<Balance[]> {
-    try {
-      let response = await this.ee.accountInfo()
-      /* Hardcode remove AGI from balances as it's dud */
-      let balances = response.balances.filter((bal) => bal.asset !== "AGI")
-      return balances
-    } catch (err) {
-      Sentry.captureException(err)
-      throw err
-    }
-  }
 }
 
 async function main() {

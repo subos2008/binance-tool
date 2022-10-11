@@ -1,24 +1,8 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-// portfolio-tracker service: maintains the current portfolio by
-// getting the portfolio on startup and then monitoring the streams
-// and tracking deltas.
-//
-// On changes:
-//  1. Publishes to telegram
-//  2. Publishes to nw
-//  3. Updates UI on any connected web-streams
-//
-// Provides API/Events for:
-//  1. Current portfolio and portfolio value in a given unit (BTC, USDT)
-//     To assist the position-sizer
-//  2. Publishes events when the portfolio changes
-//  3. Webstream maybe for subscribing to changes? Could also be done by
-//     servers watching the AMQP events
-//
-// Thoughts:
-//  1. Could also check redis-trades matches position sizes
+// portfolio-tracker service: periodic messages to the user
+//    says what the current portfolio on exchange is
 
 import { strict as assert } from "assert"
 const service_name = "portfolio-tracker"
@@ -39,8 +23,13 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
+BigNumber.DEBUG = true // Prevent NaN
+// Prevent type coercion
+BigNumber.prototype.valueOf = function () {
+  throw Error("BigNumber .valueOf called!")
+}
+
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
-import { Logger } from "../../../../lib/faux_logger"
 import { SendMessage } from "../../../../classes/send_message/publish"
 import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
 import { Portfolio, Balance } from "../../../../interfaces/portfolio"
@@ -49,8 +38,13 @@ import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/sh
 import { SendDatadogMetrics } from "./send-datadog-metrics"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 import express from "express"
+import { BigNumber } from "bignumber.js"
+import { ServiceLogger } from "../../../../interfaces/logger"
+import { BunyanServiceLogger } from "../../../../lib/service-logger"
 
-const logger = new Logger({ silent: false })
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting" })
+
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message = new SendMessage({ service_name, logger, health_and_readiness }).build()
 const service_is_healthy = health_and_readiness.addSubsystem({
@@ -58,24 +52,6 @@ const service_is_healthy = health_and_readiness.addSubsystem({
   healthy: true,
   initialised: true,
 })
-
-// redis + events publishing + binance
-
-// TODO: periodically verify we have the same local values as the exchange
-//        - report to sentry if we are out of sync
-
-// TODO:
-// 1. Take initial portfolio code from the position sizer
-// 2. Add stream watching code from the order tracker
-// 3. Maintain portfolio state - probably just in-process
-// 4. Publish to telegram when portfolio changes
-
-import { BigNumber } from "bignumber.js"
-BigNumber.DEBUG = true // Prevent NaN
-// Prevent type coercion
-BigNumber.prototype.valueOf = function () {
-  throw Error("BigNumber .valueOf called!")
-}
 
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
@@ -86,13 +62,13 @@ process.on("unhandledRejection", (err) => {
 
 class PortfolioTracker implements MasterPortfolioClass {
   send_message: SendMessageFunc
-  logger: Logger
+  logger: ServiceLogger
   ee: any
   portfolios: { [exchange: string]: Portfolio } = {}
   exchanges: { [exchange: string]: PortfolioBitchClass } = {}
   metrics: SendDatadogMetrics
 
-  constructor({ send_message, logger }: { send_message: SendMessageFunc; logger: Logger }) {
+  constructor({ send_message, logger }: { send_message: SendMessageFunc; logger: ServiceLogger }) {
     assert(logger)
     this.logger = logger
     assert(send_message)

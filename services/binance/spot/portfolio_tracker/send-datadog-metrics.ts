@@ -1,7 +1,7 @@
 import { StatsD, Tags } from "hot-shots"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { Portfolio } from "../../../../interfaces/portfolio"
-import { Logger } from "../../../../lib/faux_logger"
+import { Logger } from "../../../../interfaces/logger"
 
 function dogstatsderrorhandler(err: Error) {
   console.error({ err }, `DogStatsD: Socket errors caught here: ${err}`)

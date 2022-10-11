@@ -23,6 +23,7 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
+import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -38,7 +39,6 @@ import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/sh
 import { SendDatadogMetrics } from "./send-datadog-metrics"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 import express from "express"
-import { BigNumber } from "bignumber.js"
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { BunyanServiceLogger } from "../../../../lib/service-logger"
 

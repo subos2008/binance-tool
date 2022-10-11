@@ -125,7 +125,6 @@ export class BinancePortfolioToAMQP implements PortfolioBitchClass {
 
     this.master = this.portfolio_tracker
     this.send_message = send_message
-    logger.info("Live monitoring mode")
     if (!process.env.BINANCE_API_KEY) throw new Error(`Missing BINANCE_API_KEY in ENV`)
     if (!process.env.BINANCE_API_SECRET) throw new Error(`Missing BINANCE_API_SECRET in ENV`)
     this.ee = Binance({

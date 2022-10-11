@@ -92,7 +92,7 @@ export class PortfolioVsPositions {
   async run_once(args: { quote_asset: string }) {
     let positions: SpotPositionObject_V2[] = await this.positions()
 
-    let prices: Prices = await this.prices_getter.get_current_prices()
+    let prices: Prices = await this.prices_getter.prices()
 
     /* Convert to expected amount of each base_asset (sum all open positions in that asset) */
     let base_assets_in_positions = new Set(positions.map((p) => p.base_asset))

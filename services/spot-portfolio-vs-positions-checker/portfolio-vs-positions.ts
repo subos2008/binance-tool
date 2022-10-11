@@ -13,11 +13,10 @@ import { RedisClient } from "redis"
 import { PositionsSnapshot } from "./lib/positions-snapshot"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { SpotPositionObject_V2 } from "../../classes/spot/abstractions/spot-position"
-import { Balance, Prices, SpotPortfolio } from "../../interfaces/portfolio"
-import { PortfolioSnapshot } from "./lib/portfolio-snapshot"
+import { Balance, Prices } from "../../interfaces/portfolio"
+import { PortfolioSnapshot } from "../../classes/utils/portfolio-snapshot"
 import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-price-getter"
 import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
-import Sentry from "../../lib/sentry"
 
 export class PortfolioVsPositions {
   ee: Binance

@@ -7,12 +7,12 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Balance, Balance_with_quote_value, Portfolio, Prices } from "../../../interfaces/portfolio"
+import { Balance, Balance_with_quote_value, Portfolio, Prices } from "../../interfaces/portfolio"
 import { AssetBalance, Binance as BinanceType, ExchangeInfo } from "binance-api-node"
 import Binance from "binance-api-node"
 import { RedisClient } from "redis"
-import { ServiceLogger } from "../../../interfaces/logger"
-import { BinanceExchangeInfoGetter } from "../../../classes/exchanges/binance/exchange-info-getter"
+import { ServiceLogger } from "../../interfaces/logger"
+import { BinanceExchangeInfoGetter } from "../exchanges/binance/exchange-info-getter"
 
 export class PortfolioSnapshot {
   logger: ServiceLogger

@@ -47,7 +47,6 @@ import { Binance as BinanceType } from "binance-api-node"
 import Binance from "binance-api-node"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
-import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 import { PortfolioPublisher } from "./portfolio-publisher"
 import { PortfolioTracker } from "./portfolio-tracker"
 import express from "express"
@@ -75,12 +74,12 @@ process.on("unhandledRejection", (err) => {
   service_is_healthy.healthy(false)
 })
 
-export class BinancePortfolioToAMQP implements PortfolioBitchClass {
+export class BinancePortfolioToAMQP {
   send_message: SendMessageFunc
   logger: ServiceLogger
   ee: BinanceType
-  master: MasterPortfolioClass // duplicated
-  portfolio_tracker: PortfolioTracker // duplicated
+  master: PortfolioTracker
+  portfolio_tracker: PortfolioTracker
   order_execution_tracker: OrderExecutionTracker
   exchange_identifier: ExchangeIdentifier_V3
   portfolio: Portfolio = { balances: [], object_type: "SpotPortfolio" }

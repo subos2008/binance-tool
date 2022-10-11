@@ -16,19 +16,17 @@ import { HealthAndReadinessSubsystem } from "../../../../classes/health_and_read
 import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
 import { Logger } from "../../../../interfaces/logger"
 import { Portfolio } from "../../../../interfaces/portfolio"
-import { MasterPortfolioClass, PortfolioBitchClass } from "./interfaces"
 import { PortfolioPublisher } from "./portfolio-publisher"
 import { ExchangeIdentifier } from "../../../../events/shared/exchange-identifier"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
+import { BinancePortfolioToAMQP } from "./binance-portfolio-to-amqp"
 
-// This class is a bit strange because it was originally intended to conglomerate multiple
-// portfolio accounts into one view for publishing.
-export class PortfolioTracker implements MasterPortfolioClass {
+export class PortfolioTracker {
   send_message: SendMessageFunc
   logger: Logger
   ee: any
   portfolios: { [exchange: string]: Portfolio } = {}
-  exchanges: { [exchange: string]: PortfolioBitchClass } = {}
+  exchanges: { [exchange: string]: BinancePortfolioToAMQP } = {}
   publisher: PortfolioPublisher
   portfolio_utils: PortfolioUtils
   health_and_readiness: HealthAndReadinessSubsystem

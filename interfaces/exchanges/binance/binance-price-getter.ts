@@ -1,5 +1,5 @@
 import { Binance } from "binance-api-node"
-import { CurrentPriceGetter } from "../generic/price-getter"
+import { CurrentAllPricesGetter, CurrentPriceGetter } from "../generic/price-getter"
 
 import { BigNumber } from "bignumber.js"
 import { Logger } from "../../logger"
@@ -10,9 +10,9 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-export class BinancePriceGetter implements CurrentPriceGetter {
+export class BinancePriceGetter implements CurrentPriceGetter, CurrentAllPricesGetter {
   private ee: Binance
-  private prices: Prices | null = null
+  private _prices: Prices | null = null
   private cache_timeout_ms: number
   private logger: Logger
 
@@ -22,20 +22,20 @@ export class BinancePriceGetter implements CurrentPriceGetter {
     this.logger = logger
   }
 
-  async get_current_prices(): Promise<Prices> {
-    if (!this.prices) {
+  async prices(): Promise<Prices> {
+    if (!this._prices) {
       this.logger.event({}, { object_type: "BinanceCurrentPriceGetterCacheMiss" })
-      this.prices = await this.ee.prices()
+      this._prices = await this.ee.prices()
       let timer: NodeJS.Timeout = setTimeout(() => {
-        this.prices = null
+        this._prices = null
       }, this.cache_timeout_ms)
       timer.unref()
     }
-    return this.prices
+    return this._prices
   }
 
   async get_current_price({ market_symbol }: { market_symbol: string }): Promise<BigNumber> {
-    let prices = await this.get_current_prices()
+    let prices: Prices = await this.prices()
     return new BigNumber(prices[market_symbol])
   }
 }

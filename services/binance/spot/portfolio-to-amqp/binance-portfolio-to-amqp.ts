@@ -42,7 +42,7 @@ BigNumber.prototype.valueOf = function () {
 import { SendMessage } from "../../../../classes/send_message/publish"
 import { OrderExecutionTracker } from "../orders-to-amqp/spot-order-execution-tracker"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { Balance, Portfolio } from "../../../../interfaces/portfolio"
+import { Portfolio } from "../../../../interfaces/portfolio"
 import { Binance as BinanceType } from "binance-api-node"
 import Binance from "binance-api-node"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
@@ -55,6 +55,8 @@ import { PortfolioSnapshot } from "../../../../classes/utils/portfolio-snapshot"
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
 import { BunyanServiceLogger } from "../../../../lib/service-logger"
+import { CurrentAllPricesGetter, CurrentPriceGetter } from "../../../../interfaces/exchanges/generic/price-getter"
+import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 logger.event({}, { object_type: "ServiceStarting" })
@@ -77,7 +79,6 @@ process.on("unhandledRejection", (err) => {
 export class BinancePortfolioToAMQP {
   send_message: SendMessageFunc
   logger: ServiceLogger
-  ee: BinanceType
   master: PortfolioTracker
   portfolio_tracker: PortfolioTracker
   order_execution_tracker: OrderExecutionTracker
@@ -86,6 +87,7 @@ export class BinancePortfolioToAMQP {
   publisher: PortfolioPublisher
   health_and_readiness: HealthAndReadiness
   portfolio_snapshot: PortfolioSnapshot
+  price_getter: CurrentAllPricesGetter
 
   constructor({
     send_message,
@@ -126,19 +128,21 @@ export class BinancePortfolioToAMQP {
     this.send_message = send_message
     if (!process.env.BINANCE_API_KEY) throw new Error(`Missing BINANCE_API_KEY in ENV`)
     if (!process.env.BINANCE_API_SECRET) throw new Error(`Missing BINANCE_API_SECRET in ENV`)
-    this.ee = Binance({
+    let ee: BinanceType = Binance({
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
 
-    let exchange_info_getter = new BinanceExchangeInfoGetter({ ee: this.ee })
+    let exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
     this.portfolio_snapshot = new PortfolioSnapshot({
       logger,
       exchange_info_getter,
     })
 
+    this.price_getter = new BinancePriceGetter({ logger, ee, cache_timeout_ms: 1000 * 60 * 10 })
+
     this.order_execution_tracker = new OrderExecutionTracker({
-      ee: this.ee,
+      ee,
       send_message,
       logger,
       order_callbacks: this,
@@ -178,17 +182,8 @@ export class BinancePortfolioToAMQP {
   }
 
   async get_prices_from_exchange() {
-    // TODO: refresh prices but maybe cache them? If at daily close we enter lots of positions it would be good not to call this repeatedly
-    this.logger.event(
-      { level: "warn" },
-      {
-        object_type: "TODO",
-        msg: `Getting prices from exchange, this is not cached and If at daily close we enter lots of positions it would be good not to call this repeatedly.`,
-      }
-    )
-
     try {
-      return await this.ee.prices()
+      return await this.price_getter.prices()
     } catch (err) {
       Sentry.captureException(err)
       throw err

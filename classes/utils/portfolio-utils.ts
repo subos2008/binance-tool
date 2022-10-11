@@ -37,7 +37,7 @@ export class PortfolioUtils {
     prices: Prices
   }) {
     if (base_currency === quote_currency) return base_quantity
-    
+
     let pair = `${base_currency}${quote_currency}`
     if (pair in prices) {
       return base_quantity.times(prices[pair])
@@ -184,7 +184,9 @@ export class PortfolioUtils {
     })
     if (unprocessed_balances.length)
       this.logger.warn(
-        `Non fatal error: unable to convert ${unprocessed_balances.length} assets to ${quote_currency}, skipping`
+        `Non fatal error: unable to convert ${
+          unprocessed_balances.length
+        } assets to ${quote_currency}, skipping: [${unprocessed_balances.join(", ")}]`
       )
     return { portfolio: Object.assign({}, portfolio, { balances: processed_balances }), unprocessed_balances }
   }

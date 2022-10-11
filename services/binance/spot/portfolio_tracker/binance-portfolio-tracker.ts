@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 // portfolio-tracker service: maintains the current portfolio by
 // getting the portfolio on startup and then monitoring the streams
 // and tracking deltas.
@@ -29,16 +28,11 @@ import { Binance as BinanceType } from "binance-api-node"
 import Binance from "binance-api-node"
 import Sentry from "../../../../lib/sentry"
 
-
 // TODO:
 // 1. Take initial portfolio code from the position sizer
 // 2. Add stream watching code from the order tracker
 // 3. Maintain portfolio state - probably just in-process
 // 4. Publish to telegram when portfolio changes
-
-import { Logger } from "../../../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false })
-
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -50,16 +44,24 @@ BigNumber.prototype.valueOf = function () {
 import { OrderExecutionTracker } from "../orders-to-amqp/spot-order-execution-tracker"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { Balance, Portfolio } from "../../../../interfaces/portfolio"
+import { Portfolio } from "../../../../interfaces/portfolio"
+import { PortfolioSnapshot } from "../../../../classes/utils/portfolio-snapshot"
+import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
+import { ServiceLogger } from "../../../../interfaces/logger"
+import { BunyanServiceLogger } from "../../../../lib/service-logger"
+
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting" })
 
 export class BinancePortfolioTracker implements PortfolioBitchClass {
   send_message: Function
-  logger: Logger
+  logger: ServiceLogger
   ee: BinanceType
   master: MasterPortfolioClass
   order_execution_tracker: OrderExecutionTracker
   exchange_identifier: ExchangeIdentifier_V3
   portfolio: Portfolio = { balances: [], object_type: "Portfolio" }
+  portfolio_snapshot: PortfolioSnapshot
 
   constructor({
     send_message,
@@ -67,7 +69,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
     master,
   }: {
     send_message: (msg: string) => void
-    logger: Logger
+    logger: ServiceLogger
     master: MasterPortfolioClass
   }) {
     assert(logger)
@@ -82,6 +84,13 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
+
+    let exchange_info_getter = new BinanceExchangeInfoGetter({ ee: this.ee })
+    this.portfolio_snapshot = new PortfolioSnapshot({
+      logger,
+      exchange_info_getter,
+    })
+
     this.order_execution_tracker = new OrderExecutionTracker({
       ee: this.ee,
       send_message,
@@ -98,7 +107,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
   async update_portfolio_from_exchange() {
     // TODO: refresh prices but maybe cache them? If at daily close we enter lots of positions it would be good not to call this repeatedly
     this.portfolio.prices = await this.get_prices_from_exchange()
-    this.portfolio.balances = await this.get_balances_from_exchange()
+    this.portfolio.balances = await this.portfolio_snapshot.take_snapshot()
     this.master.set_portfolio_for_exchange({
       exchange_identifier: this.exchange_identifier,
       portfolio: this.portfolio,
@@ -113,18 +122,6 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
   async get_prices_from_exchange() {
     try {
       return await this.ee.prices()
-    } catch (err) {
-      Sentry.captureException(err)
-      throw err
-    }
-  }
-
-  async get_balances_from_exchange(): Promise<Balance[]> {
-    try {
-      let response = await this.ee.accountInfo()
-      /* Hardcode remove AGI from balances as it's dud */
-      let balances = response.balances.filter((bal) => bal.asset !== "AGI")
-      return balances
     } catch (err) {
       Sentry.captureException(err)
       throw err

@@ -13,7 +13,6 @@ export interface MasterPortfolioClass {
 }
 
 export interface FuturesPortfolioBitchClass {
-  get_balances_from_exchange(): Promise<FuturesAsset[]>
   start(): Promise<void> // start listening for order events and submitting updated portfolios
   update_portfolio_from_exchange(): Promise<void> // do it right now
 }

@@ -69,4 +69,7 @@ export interface SpotPortfolio {
   btc_value?: string
   balances: Balance[]
   prices?: Prices
+
+  // quote_values_added: prevent decorating Balances multiple times
+  quote_values_added?: string[]
 }

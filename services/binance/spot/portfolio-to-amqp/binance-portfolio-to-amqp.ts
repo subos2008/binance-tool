@@ -15,6 +15,7 @@
 
 // Config
 const service_name = "binance-portfolio-to-amqp"
+const quote_currency = "BUSD"
 
 import { strict as assert } from "assert"
 
@@ -48,15 +49,15 @@ import Binance from "binance-api-node"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
 import { PortfolioPublisher } from "./portfolio-publisher"
-import { PortfolioTracker } from "./portfolio-tracker"
 import express from "express"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 import { PortfolioSnapshot } from "../../../../classes/utils/portfolio-snapshot"
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
 import { BunyanServiceLogger } from "../../../../lib/service-logger"
-import { CurrentAllPricesGetter, CurrentPriceGetter } from "../../../../interfaces/exchanges/generic/price-getter"
+import { CurrentAllPricesGetter } from "../../../../interfaces/exchanges/generic/price-getter"
 import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
+import { SpotPortfolioUtils } from "../../../../classes/utils/spot-portfolio-utils"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 logger.event({}, { object_type: "ServiceStarting" })
@@ -79,14 +80,13 @@ process.on("unhandledRejection", (err) => {
 export class BinancePortfolioToAMQP {
   send_message: SendMessageFunc
   logger: ServiceLogger
-  master: PortfolioTracker
-  portfolio_tracker: PortfolioTracker
   order_execution_tracker: OrderExecutionTracker
   exchange_identifier: ExchangeIdentifier_V3
   publisher: PortfolioPublisher
   health_and_readiness: HealthAndReadiness
   portfolio_snapshot: PortfolioSnapshot
   price_getter: CurrentAllPricesGetter
+  portfolio_utils: SpotPortfolioUtils
 
   constructor({
     send_message,
@@ -105,6 +105,8 @@ export class BinancePortfolioToAMQP {
 
     this.exchange_identifier = { exchange: "binance", account: "default", type: "spot", version: "v3" }
 
+    this.portfolio_utils = new SpotPortfolioUtils({ logger })
+
     this.publisher = new PortfolioPublisher({
       logger,
       event_name: "SpotPortfolio",
@@ -112,18 +114,6 @@ export class BinancePortfolioToAMQP {
       exchange_identifier: this.exchange_identifier,
     })
 
-    this.portfolio_tracker = new PortfolioTracker({
-      logger,
-      send_message,
-      publisher: this.publisher,
-      health_and_readiness: health_and_readiness.addSubsystem({
-        name: "PortfolioTracker",
-        healthy: true,
-        initialised: false,
-      }),
-    })
-
-    this.master = this.portfolio_tracker
     this.send_message = send_message
     if (!process.env.BINANCE_API_KEY) throw new Error(`Missing BINANCE_API_KEY in ENV`)
     if (!process.env.BINANCE_API_SECRET) throw new Error(`Missing BINANCE_API_SECRET in ENV`)
@@ -157,11 +147,8 @@ export class BinancePortfolioToAMQP {
       return
     }
 
-    setInterval(
-      this.portfolio_tracker.update_and_report_portfolio.bind(this.portfolio_tracker),
-      1000 * 60 * 60 * 6
-    )
-    await this.update_portfolio_from_exchange() // automatically triggers report_current_portfolio
+    setInterval(this.update_portfolio_from_exchange.bind(this), 1000 * 60 * 60 * 6)
+    await this.update_portfolio_from_exchange()
 
     this.order_execution_tracker.main()
   }
@@ -176,10 +163,7 @@ export class BinancePortfolioToAMQP {
       balances: await this.portfolio_snapshot.take_snapshot(),
     }
 
-    this.master.set_portfolio_for_exchange({
-      exchange_identifier: this.exchange_identifier,
-      portfolio,
-    })
+    await this.report_portfolio(portfolio)
   }
 
   async order_filled(data: BinanceOrderData): Promise<void> {
@@ -194,6 +178,66 @@ export class BinancePortfolioToAMQP {
       Sentry.captureException(err)
       throw err
     }
+  }
+
+  async report_portfolio(_portfolio: SpotPortfolio) {
+    try {
+      let portfolio = await this.decorate_portfolio(_portfolio, quote_currency)
+      if (!portfolio) {
+        this.logger.info(`no portfolio, skipping`)
+        return
+      }
+
+      // This is just for the logfiles, we don't use this to send the event
+      try {
+        let msg = `B: ${portfolio.btc_value}, U: ${portfolio.usd_value}`
+        try {
+          msg += " as " + this.portfolio_utils.balances_to_string(portfolio, "BTC")
+        } catch (err) {
+          Sentry.captureException(err)
+          this.logger.error({ err })
+        }
+        if (portfolio.prices) {
+          try {
+            msg += ` BTCUSDT: ${new BigNumber(portfolio.prices["BTCUSDT"]).dp(0).toFixed()}`
+          } catch (e) {
+            /* just ignore */
+          }
+        }
+        this.logger.info(msg)
+      } catch (err) {
+        // Not fatal, we just used it for logging anyway
+        Sentry.captureException(err)
+        this.logger.error({ err })
+      }
+
+      await this.publisher.publish(portfolio)
+    } catch (err) {
+      Sentry.captureException(err)
+      this.logger.error({ err })
+    }
+  }
+
+  async decorate_portfolio(portfolio: SpotPortfolio, quote_currency: string): Promise<SpotPortfolio> {
+    portfolio = this.portfolio_utils.add_quote_value_to_portfolio_balances({
+      // TODO: convert to list
+      portfolio,
+      quote_currency: "BTC",
+    }).portfolio
+    portfolio = this.portfolio_utils.add_quote_value_to_portfolio_balances({
+      portfolio,
+      quote_currency,
+    }).portfolio
+    portfolio.btc_value = this.portfolio_utils
+      .calculate_portfolio_value_in_quote_currency({ quote_currency: "BTC", portfolio })
+      .total // .dp(3)
+      .toFixed()
+    if (!portfolio.prices) throw new Error(`No prices`)
+    portfolio.usd_value = this.portfolio_utils
+      .calculate_portfolio_value_in_quote_currency({ quote_currency, portfolio })
+      .total.dp(0)
+      .toFixed()
+    return portfolio
   }
 }
 

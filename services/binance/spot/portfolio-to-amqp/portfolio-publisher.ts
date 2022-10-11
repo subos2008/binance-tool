@@ -1,7 +1,6 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
-
 const service_name = "binance-portfolio-to-amqp"
 const event_expiration_seconds = "60"
 
@@ -57,7 +56,7 @@ export class PortfolioPublisher {
     return this.pub.connect()
   }
 
-  async publish(event: Portfolio): Promise<void> {
+  async publish(event: SpotPortfolio): Promise<void> {
     // Extract only those fields we want to publish
     let trimmed_event: SpotPortfolio = {
       object_type: "SpotPortfolio",

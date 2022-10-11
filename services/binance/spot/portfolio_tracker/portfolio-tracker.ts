@@ -170,7 +170,6 @@ class PortfolioTracker implements MasterPortfolioClass {
 
       try {
         if (portfolio.prices) {
-          this.logger.warn(`delme2`)
           let quote_amount = new BigNumber(10)
           let quote_currency = "BUSD"
           let free_balances = portfolio_utils.get_balances_with_free_greater_than({

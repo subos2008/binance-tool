@@ -27,7 +27,7 @@ export class DirectionPersistenceRedis implements DirectionPersistence {
     return `${this.prefix}:signal_direction:${base_asset.toUpperCase()}`
   }
 
-  async set_direction(base_asset: string, direction: Direction) {
+  async set_direction(base_asset: string, direction: Direction): Promise<Direction | null> {
     let previous_direction = await this.get_direction(base_asset)
     if (previous_direction === null) {
       this.logger.info(`Initialising direction for ${base_asset} to ${direction}`)
@@ -35,10 +35,7 @@ export class DirectionPersistenceRedis implements DirectionPersistence {
       this.logger.info(`Direction change to ${direction} for ${base_asset}`)
     }
 
-    this.logger.event(
-      { level: "warn" },
-      { object_type: "TODO", msg: `add expiry time for direction keys` }
-    )
+    this.logger.event({ level: "warn" }, { object_type: "TODO", msg: `add expiry time for direction keys` })
 
     await this.redis.set(this._market_to_key(base_asset), direction)
     return previous_direction

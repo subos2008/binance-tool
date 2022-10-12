@@ -49,6 +49,9 @@ export class DirectionPersistenceRedis implements DirectionPersistence {
 
   async get_direction(base_asset: string): Promise<Direction | null> {
     let direction = await this.redis.get(this._market_to_key(base_asset))
-    return direction as Direction
+    if (!["long", "short", null].includes(direction)) {
+      throw new Error(`Direction '${direction}' not recognised`)
+    }
+    return direction as Direction | null
   }
 }

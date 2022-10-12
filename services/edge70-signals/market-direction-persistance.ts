@@ -34,7 +34,12 @@ export class DirectionPersistenceRedis implements DirectionPersistence {
     } else if (previous_direction !== direction) {
       this.logger.info(`Direction change to ${direction} for ${base_asset}`)
     }
-    this.logger.warn(`add expiry time for direction keys`)
+
+    this.logger.event(
+      { level: "warn" },
+      { object_type: "TODO", msg: `add expiry time for direction keys` }
+    )
+
     await this.redis.set(this._market_to_key(base_asset), direction)
     return previous_direction
   }

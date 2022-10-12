@@ -225,9 +225,8 @@ export class Edge70Signals {
       }
 
       /* Direction change filter */
-      let previous_direction = await this.direction_persistance.get_direction(base_asset)
+      let previous_direction = await this.direction_persistance.set_direction(base_asset, direction)
       tags.previous_direction = previous_direction || "(null)"
-      await this.direction_persistance.set_direction(base_asset, direction)
       if (previous_direction === null) {
         let msg = `possible ${direction} signal on ${base_asset} - check manually if this is a trend reversal.`
         this.logger.warn(tags, msg)

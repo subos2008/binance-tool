@@ -125,31 +125,16 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
       this.logger.info(tags, `MDI finished candles for ${symbol}`)
 
       let direction = await this.direction_persistance.get_direction(base_asset)
-      // let direction = await isolated_direction_persistance.get_direction(base_asset)
-      if (direction) {
-        // await this.direction_persistance.set_direction(base_asset, direction)
-        let event = {
-          object_type: "MarketDirectionInitialiserResult",
-          success: true,
-          direction,
-          symbol,
-          base_asset,
-          num_candles_history_to_check,
-        }
-        this.logger.event(tags, event)
-      } else {
-        this.logger.error(
-          `Failed to determine market direction for ${base_asset} with ${num_candles_history_to_check} candles of history`
-        )
-        this.logger.error({
-          object_type: "MarketDirectionInitialiserResult",
-          success: false,
-          direction: direction || "(null)",
-          symbol,
-          base_asset,
-          num_candles_history_to_check,
-        })
+      let success: boolean = direction === "long" || direction === "short"
+      let event = {
+        object_type: "MarketDirectionInitialiserResult",
+        success,
+        direction,
+        symbol,
+        base_asset,
+        num_candles_history_to_check,
       }
+      this.logger.event({ ...tags, level: success ? "info" : "error" }, event)
     } catch (err) {
       this.logger.error(`MarketDirectionInitialiser.run failed for ${this.market_identifier.symbol}`)
       Sentry.captureException(err)

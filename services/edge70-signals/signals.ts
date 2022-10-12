@@ -28,6 +28,7 @@ import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/h
 import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import { Direction, DirectionPersistence } from "./interfaces/direction-persistance"
+import { SendDatadogMetrics } from "./send-datadog-metrics"
 
 /* Instantiated per asset; each exchange symbol has its own instance of this class */
 export class Edge70Signals {
@@ -44,6 +45,8 @@ export class Edge70Signals {
   callbacks: Edge70SignalCallbacks
   price_history_candles_long: LimitedLengthCandlesHistory
   price_history_candles_short: LimitedLengthCandlesHistory
+
+  metrics: SendDatadogMetrics
 
   constructor({
     logger,
@@ -77,6 +80,8 @@ export class Edge70Signals {
     this.direction_persistance = direction_persistance
     if (edge) this.edge = edge
     this.health_and_readiness = health_and_readiness
+
+    this.metrics = new SendDatadogMetrics({ logger })
 
     this.price_history_candles_long = new LimitedLengthCandlesHistory({
       length: edge70_parameters.candles_of_price_history.long,
@@ -227,14 +232,33 @@ export class Edge70Signals {
       /* Direction change filter */
       let previous_direction = await this.direction_persistance.set_direction(base_asset, direction)
       tags.previous_direction = previous_direction || "(null)"
+
+      let changed_direction: boolean = direction !== previous_direction
+      try {
+        this.metrics.ingest_market_direction({
+          edge,
+          direction,
+          previous_direction: previous_direction || "(null)",
+          changed_direction: changed_direction ? "true" : "false",
+          changed_to_long: changed_direction && direction === "long" ? "true" : "false",
+          changed_to_short: changed_direction && direction === "short" ? "true" : "false",
+          base_asset,
+          quote_asset: this.market_identifier.quote_asset || "(null)",
+          exchange: this.market_identifier.exchange_identifier.exchange,
+          exchange_type: this.market_identifier.exchange_identifier.exchange_type,
+        })
+      } catch (err) {
+        this.logger.exception(tags, err)
+      }
+
       if (previous_direction === null) {
         let msg = `possible ${direction} signal on ${base_asset} - check manually if this is a trend reversal.`
         this.logger.warn(tags, msg)
         this.send_message(msg, tags)
         return
       }
-      let direction_change = previous_direction !== direction
-      if (!direction_change) {
+
+      if (!changed_direction) {
         this.logger.debug(tags, `${symbol} ${direction} price triggered but not trend reversal`)
         return
       }

@@ -15,7 +15,7 @@
     "@aws-sdk/signature-v4-crt": "^3.49.0",
     "@eslint/create-config": "^0.3.0",
     "@influxdata/influxdb-client": "^1.20.0",
-    "@sentry/node": "~6.17.9",
+    "@sentry/node": "^7.1",
     "@tsconfig/node14": "^1.0.1",
     "@types/amqplib": "^0.8.0",
     "@types/bignumber.js": "^5.0.0",

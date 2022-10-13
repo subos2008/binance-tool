@@ -202,6 +202,9 @@ export class Edge70Signals {
       let { signal_short, debug_string_short } = short_result
       tags = short_result.tags
 
+      // Initialise with the existing direction, we refresh with the current direction if we signal in both directions
+      let direction: "long" | "short" | null = await this.direction_persistance.get_direction(base_asset)
+
       // Check for entry signal in both directions and ignore
       // NB: this means the stored market direction isn't changed
       if (signal_long && signal_short) {
@@ -214,15 +217,12 @@ export class Edge70Signals {
             msg: `${symbol}: price signalled both directions - persistent market direction not updated`,
           }
         )
-        return
-      }
-
-      let direction: "long" | "short" | undefined = undefined
-      if (signal_long) direction = "long"
-      if (signal_short) direction = "short"
-      if (direction) tags = { ...tags, direction }
-
-      if (direction === undefined) {
+        return // <---- TODO: I need to remove this return so we always refresh market direction.. ahh but what to refresh with here... prior behaviour would be to keep the existing direction
+      } else if (signal_long) {
+        direction = "long"
+      } else if (signal_short) {
+        direction = "short"
+      } else {
         this.logger.event(
           { ...tags, level: "info" },
           {
@@ -230,10 +230,35 @@ export class Edge70Signals {
             msg: `${symbol}: No price signal: LONG - ${debug_string_long} SHORT - ${debug_string_short}`,
           }
         )
+      }
+
+      if (!direction) {
+        // no previous or new direction - probably means waiting for the MarketDirectionInitialiser?
+        // Let's warn so we investigate this case
+        this.logger.event(
+          { ...tags, level: "warn" },
+          {
+            object_type: "EdgeResultNoDirection",
+            msg: `${symbol}: No stored direction and no new direction, edge case while waiting for market to initialise? Warning just so we check this case...skipping`,
+          }
+        )
         return
       }
 
-      /* Direction change filter */
+      tags = { ...tags, direction }
+
+      // Recent behaviour change - we now fall through to this case even if there is no price signal
+      // Should be fine but watch it to test. Why are there no tests for this code!!!
+      if (!direction) {
+        throw new Error(`null direction not expected in Direction change filter`)
+      }
+
+      /** 
+       * Direction change filter (and key refresh) 
+       * 
+       * It is very important that we call set_direction() every time we ingest a candle as direction 
+       * keys have an expiry time; to prevent old keys
+       */
       let previous_direction = await this.direction_persistance.set_direction(base_asset, direction)
       tags.previous_direction = previous_direction || "(null)"
 

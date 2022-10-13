@@ -207,9 +207,13 @@ export class Edge70Signals {
       if (signal_long && signal_short) {
         // We could prefer short here instead but then that sets the market direction to long and we can
         // do more trades in choppy markets
-        let msg = `${symbol} Price entry signal both long and short, skipping...`
-        this.logger.warn(tags, msg)
-        this.logger.warn(tags, `Warning: signalled both directions - persistent market direction not updated`)
+        this.logger.event(
+          { ...tags, level: "warn" },
+          {
+            object_type: "EdgeResultPriceSignalBothDirections",
+            msg: `${symbol}: price signalled both directions - persistent market direction not updated`,
+          }
+        )
         return
       }
 
@@ -220,10 +224,10 @@ export class Edge70Signals {
 
       if (direction === undefined) {
         this.logger.event(
-          { ...tags, level: "debug" },
+          { ...tags, level: "info" },
           {
-            object_type: "EdgeResultNoSignal",
-            msg: `${symbol}: No signal: LONG - ${debug_string_long} SHORT - ${debug_string_short}`,
+            object_type: "EdgeResultNoPriceSignal",
+            msg: `${symbol}: No price signal: LONG - ${debug_string_long} SHORT - ${debug_string_short}`,
           }
         )
         return

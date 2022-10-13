@@ -89,13 +89,11 @@ export class TypedGenericTopicPublisher<T> {
 
       const server_full = !this.channel.publish(this.exchange_name, this.routing_key, Buffer.from(msg), options)
       if (server_full) {
-        let msg = "AMQP reports server full when trying to publish"
-        Sentry.captureMessage(msg, Sentry.Severity.Error)
-        this.logger.error(msg)
-        throw new Error(msg)
+        throw new Error("AMQP reports server full when trying to publish")
       }
       return server_full
     } catch (err) {
+      this.logger.error({ err })
       Sentry.captureException(err)
       this.health_and_readiness.healthy(false)
       throw err

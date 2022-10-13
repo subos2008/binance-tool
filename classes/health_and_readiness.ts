@@ -160,6 +160,10 @@ export class HealthAndReadiness {
     this.send_message = foo
   }
 
+  has_registered_subsystems(): boolean {
+    return Object.keys(this.subsystems).length > 0
+  }
+
   addSubsystem({
     name,
     healthy,
@@ -177,7 +181,7 @@ export class HealthAndReadiness {
      *
      * ... technically we could actually detect this race condition occuring inside this class.
      */
-    if (this.initialised() && !initialised) {
+    if (this.has_registered_subsystems() && this.initialised() && !initialised) {
       let obj = {
         level: "error",
         object_type: "InitRaceConditionDetected",

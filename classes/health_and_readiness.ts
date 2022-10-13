@@ -38,6 +38,7 @@ export class HealthAndReadinessSubsystem {
 
     if (!healthy) {
       let obj = {
+        level: "warn",
         object_type: "SubsystemInitialisedNotHealthy",
         subsystem: name,
         msg: `Subsystem ${name} initialised as unhealthy`,
@@ -69,6 +70,7 @@ export class HealthAndReadinessSubsystem {
           msg: `Subsystem ${this.name} became initialised.`,
           global_state: this.parent.initialised(),
         }
+
         if (obj.global_state) {
           obj.msg += ` All subsystems are now reporting initialised.`
           this.logger.event(
@@ -89,9 +91,10 @@ export class HealthAndReadinessSubsystem {
         // This would be a strange thing to do... would expect it to go unhealthy instead
         // otherwise we have potential race conditions setting initialised to true/false
         let obj = {
+          level: "fatal",
           object_type: "SubsystemInitialisationDeteriorated",
           subsystem: this.name,
-          msg: `Subsystem ${this.name} became not initialised`,
+          msg: `Subsystem ${this.name} became not initialised... this is a bit unusual... should go unhealthy instead`,
         }
         this.logger.event({ level: "error" }, obj)
         this.send_message(`subsystem ${this.name} became not initialised`, { class: "HealthAndReadiness" })
@@ -130,6 +133,7 @@ export class HealthAndReadinessSubsystem {
       }
       if (!value) {
         let obj = {
+          level: "fatal",
           object_type: "SubsystemHealthDeteriorated",
           subsystem: this.name,
           msg: `Subsystem ${this.name} became not healthy`,

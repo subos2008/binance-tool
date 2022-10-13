@@ -1,6 +1,5 @@
 import { Logger } from "../interfaces/logger"
 import { Request, Response } from "express"
-import Sentry from "../lib/sentry"
 import { randomUUID } from "crypto"
 import { ContextTags, SendMessageFunc } from "../interfaces/send-message"
 
@@ -179,9 +178,13 @@ export class HealthAndReadiness {
      * ... technically we could actually detect this race condition occuring inside this class.
      */
     if (this.initialised() && !initialised) {
-      this.logger.error(
-        `Subsystem (${name}) requiring initialisation added after service has reported initialised! Service death race condition.`
-      )
+      let obj = {
+        level: "error",
+        object_type: "InitRaceConditionDetected",
+        subsystem: name,
+        msg: `Subsystem (${name}) requiring initialisation added after service has reported initialised! Service death race condition.`,
+      }
+      this.logger.event({}, obj)
     }
 
     let obj = {

@@ -38,7 +38,6 @@ export class TypedGenericTopicPublisher<T> {
     health_and_readiness: HealthAndReadiness
   }) {
     this.logger = logger
-    this.logger.warn(`TypedGenericTopicPublisher currently a copy pasta of GenericTopicPublisher`)
     let { routing_key, exchange_name, durable } = MessageRouting.amqp_routing({ event_name })
     this.routing_key = routing_key
     this.exchange_name = exchange_name

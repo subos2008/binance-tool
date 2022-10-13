@@ -112,7 +112,7 @@ export class SpotPositionTracker {
     })
 
     if (!averageExecutionPrice) {
-      throw new Error(`averageExecutionPrice not defined, unable to publish NewPositionEvent`)
+      throw new Error(`averageExecutionPrice not defined, unable to publish SpotPositionOpenedEvent`)
     }
 
     // Publish a new style event declaring the opened position

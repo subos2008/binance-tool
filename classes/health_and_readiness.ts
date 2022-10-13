@@ -42,11 +42,12 @@ export class HealthAndReadinessSubsystem {
         subsystem: name,
         msg: `Subsystem ${name} initialised as unhealthy`,
       }
-      // This is an antipattern
+      // This is an antipattern - health should start true, set initialised to false instead
       this.logger.event({ level: "warn" }, obj)
     }
 
     if (!initialised) {
+      // Normal...
       let obj = {
         object_type: "SubsystemInitialisedNotInitialised",
         subsystem: name,
@@ -85,7 +86,8 @@ export class HealthAndReadinessSubsystem {
         this.logger.event({}, obj)
       }
       if (!value) {
-        // This would be a strange thing to do...
+        // This would be a strange thing to do... would expect it to go unhealthy instead
+        // otherwise we have potential race conditions setting initialised to true/false
         let obj = {
           object_type: "SubsystemInitialisationDeteriorated",
           subsystem: this.name,

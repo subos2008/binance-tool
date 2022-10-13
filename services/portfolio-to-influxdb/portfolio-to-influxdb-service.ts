@@ -6,7 +6,7 @@
  */
 
 import { strict as assert } from "assert"
-const service_name = "event-persistance"
+const service_name = "portfolio-to-influxdb"
 
 require("dotenv").config()
 

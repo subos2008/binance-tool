@@ -43,7 +43,7 @@ BigNumber.prototype.valueOf = function () {
 import { SendMessage } from "../../../../classes/send_message/publish"
 import { OrderExecutionTracker } from "../orders-to-amqp/spot-order-execution-tracker"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { SpotPortfolio } from "../../../../interfaces/portfolio"
+import { Balance, SpotPortfolio } from "../../../../interfaces/portfolio"
 import { Binance as BinanceType } from "binance-api-node"
 import Binance from "binance-api-node"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
@@ -71,10 +71,9 @@ const service_is_healthy = health_and_readiness.addSubsystem({
 })
 
 process.on("unhandledRejection", (err) => {
-  logger.error({ err })
-  Sentry.captureException(err)
-  send_message(`UnhandledPromiseRejection: ${err}`)
+  logger.exception({}, err)
   service_is_healthy.healthy(false)
+  send_message(`UnhandledPromiseRejection: ${err}`)
 })
 
 export class BinancePortfolioToAMQP {
@@ -87,6 +86,7 @@ export class BinancePortfolioToAMQP {
   portfolio_snapshot: PortfolioSnapshot
   price_getter: CurrentAllPricesGetter
   portfolio_utils: SpotPortfolioUtils
+  update_timeout: NodeJS.Timeout | null = null
 
   constructor({
     send_message,
@@ -144,11 +144,12 @@ export class BinancePortfolioToAMQP {
       await this.publisher.connect()
     } catch (err: any) {
       this.logger.error(`Error connecting to AMQP: ${err}`)
+      this.logger.exception({}, err)
       return
     }
 
     setInterval(this.update_portfolio_from_exchange.bind(this), 1000 * 60 * 60 * 6)
-    await this.update_portfolio_from_exchange()
+    this.update_portfolio_from_exchange_after_delay()
 
     this.order_execution_tracker.main()
   }
@@ -166,16 +167,24 @@ export class BinancePortfolioToAMQP {
     await this.report_portfolio(portfolio)
   }
 
+  // resets delay when called, allows us to just update once at the end if there
+  // is a series of orders
+  update_portfolio_from_exchange_after_delay() {
+    let seconds = 30
+    if (this.update_timeout) clearTimeout(this.update_timeout)
+    this.update_timeout = setTimeout(this.update_portfolio_from_exchange.bind(this), 1000 * seconds)
+  }
+
   async order_filled(data: BinanceOrderData): Promise<void> {
     this.logger.info(`Binance: ${data.side} order on ${data.symbol} filled.`)
-    await this.update_portfolio_from_exchange()
+    this.update_portfolio_from_exchange_after_delay()
   }
 
   async get_prices_from_exchange() {
     try {
       return await this.price_getter.prices()
     } catch (err) {
-      Sentry.captureException(err)
+      logger.exception({}, err)
       throw err
     }
   }
@@ -183,19 +192,20 @@ export class BinancePortfolioToAMQP {
   async report_portfolio(_portfolio: SpotPortfolio) {
     try {
       let portfolio = await this.decorate_portfolio(_portfolio, quote_currency)
-      if (!portfolio) {
-        this.logger.info(`no portfolio, skipping`)
-        return
-      }
+      // if (!portfolio) {
+      //   this.logger.info(`No portfolio, skipping.`)
+      //   this.logger.warn(`TODO: we still want to verify this with the exchange and publish an empty portfolio`)
+      //   return
+      // }
+      this.logger.warn(`TODO: needs testing with an empty portfolio`)
 
-      // This is just for the logfiles, we don't use this to send the event
       try {
+        // This is just for the logfiles, we don't use this to send the event
         let msg = `B: ${portfolio.btc_value}, U: ${portfolio.usd_value}`
         try {
           msg += " as " + this.portfolio_utils.balances_to_string(portfolio, "BTC")
         } catch (err) {
-          Sentry.captureException(err)
-          this.logger.error({ err })
+          this.logger.exception({}, err)
         }
         if (portfolio.prices) {
           try {
@@ -207,14 +217,59 @@ export class BinancePortfolioToAMQP {
         this.logger.info(msg)
       } catch (err) {
         // Not fatal, we just used it for logging anyway
-        Sentry.captureException(err)
-        this.logger.error({ err })
+        this.logger.exception({}, err)
       }
 
-      await this.publisher.publish(portfolio)
+      try {
+        await this.publisher.publish(portfolio)
+      } catch (err) {
+        this.logger.exception({}, err)
+      }
+
+      try {
+        if (portfolio.prices) {
+          let trigger = new BigNumber("50")
+          let balance: Balance | undefined = this.portfolio_utils.balance_for_asset({ asset: "BNB", portfolio })
+          let bnb_balance = new BigNumber(balance ? balance.free : 0)
+          let bnb_balance_in_usd = this.portfolio_utils.convert_base_to_quote_currency({
+            base_quantity: bnb_balance,
+            base_currency: "BNB",
+            quote_currency: "BUSD",
+            prices: portfolio.prices,
+          })
+          if (bnb_balance_in_usd.isLessThan(trigger))
+            this.send_message(`Free BNB balance in BUSD fell below ${trigger.toString()}`)
+        }
+      } catch (err) {
+        logger.exception({}, err)
+      }
+
+      try {
+        if (portfolio.prices) {
+          let quote_amount = new BigNumber(10)
+          let quote_currency = "BUSD"
+          let free_balances = this.portfolio_utils.get_balances_with_free_greater_than({
+            portfolio,
+            quote_currency,
+            quote_amount,
+            prices: portfolio.prices,
+            base_assets_to_ignore: [quote_currency, "BNB"],
+          })
+          if (free_balances.length > 0) {
+            let string =
+              `⚠️ Unexpected assets with free balances gt ${quote_amount.toFixed()} ${quote_currency}: [` +
+              free_balances.map((b) => `${b.asset}: ${b.quote_amount?.dp(0).toFixed()}`).join(", ") +
+              "]"
+            this.send_message(string)
+          } else {
+            this.send_message(`✅ no unexpected free balance.`)
+          }
+        }
+      } catch (err) {
+        this.logger.exception({}, err)
+      }
     } catch (err) {
-      Sentry.captureException(err)
-      this.logger.error({ err })
+      logger.exception({}, err)
     }
   }
 
@@ -249,19 +304,17 @@ async function main() {
     let portfolio_to_amqp = new BinancePortfolioToAMQP({ send_message, logger, health_and_readiness })
     await portfolio_to_amqp.start()
   } catch (err: any) {
-    Sentry.captureException(err)
-    logger.error(`Error connecting to exchange: ${err}`)
-    logger.error({ err })
-    logger.error(`Error connecting to exchange: ${err.stack}`)
     service_is_healthy.healthy(false) // it seems service isn't exiting on soft exit, but add this to make sure
+    logger.exception({}, err)
+    logger.error(`Error connecting to exchange: ${err}`)
+    logger.error(`Error connecting to exchange: ${err.stack}`)
     return
   }
 }
 
 main().catch((err) => {
-  Sentry.captureException(err)
+  logger.exception({}, err)
   logger.error(`Error in main loop: ${err}`)
-  logger.error({ err })
   logger.error(`Error in main loop: ${err.stack}`)
 })
 

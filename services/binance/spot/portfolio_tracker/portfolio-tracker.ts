@@ -32,8 +32,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { SendMessage } from "../../../../classes/send_message/publish"
-import { PortfolioUtils } from "../../../../classes/utils/portfolio-utils"
-import { Portfolio, Balance } from "../../../../interfaces/portfolio"
+import { Portfolio, Balance, SpotPortfolio } from "../../../../interfaces/portfolio"
 import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
 import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { SendDatadogMetrics } from "./send-datadog-metrics"
@@ -41,6 +40,7 @@ import { SendMessageFunc } from "../../../../interfaces/send-message"
 import express from "express"
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { BunyanServiceLogger } from "../../../../lib/service-logger"
+import { SpotPortfolioUtils } from "../../../../classes/utils/spot-portfolio-utils"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
@@ -64,7 +64,7 @@ class PortfolioTracker implements MasterPortfolioClass {
   send_message: SendMessageFunc
   logger: ServiceLogger
   ee: any
-  portfolios: { [exchange: string]: Portfolio } = {}
+  portfolios: { [exchange: string]: SpotPortfolio } = {}
   exchanges: { [exchange: string]: PortfolioBitchClass } = {}
   metrics: SendDatadogMetrics
 
@@ -81,7 +81,7 @@ class PortfolioTracker implements MasterPortfolioClass {
     portfolio,
   }: {
     exchange_identifier: ExchangeIdentifier
-    portfolio: Portfolio
+    portfolio: SpotPortfolio
   }) {
     // TODO: account not used in ExchangeIdentifier: default (default added so this appears in greps)
     this.portfolios[exchange_identifier.exchange] = portfolio
@@ -175,7 +175,7 @@ class PortfolioTracker implements MasterPortfolioClass {
     }
   }
 
-  async collapse_and_decorate_exchange_balances() {
+  async collapse_and_decorate_exchange_balances(): Promise<SpotPortfolio | undefined> {
     if (!this.portfolios) {
       this.logger.warn(`No portfolios present in portfilio-tracker`)
       return
@@ -185,7 +185,7 @@ class PortfolioTracker implements MasterPortfolioClass {
     return this.decorate_portfolio(this.portfolios[exchanges[0]])
   }
 
-  async decorate_portfolio(portfolio: Portfolio): Promise<Portfolio> {
+  async decorate_portfolio(portfolio: SpotPortfolio): Promise<SpotPortfolio> {
     portfolio = portfolio_utils.add_quote_value_to_portfolio_balances({
       // TODO: convert to list
       portfolio,
@@ -209,7 +209,7 @@ class PortfolioTracker implements MasterPortfolioClass {
   }
 }
 
-const portfolio_utils: PortfolioUtils = new PortfolioUtils({ logger })
+const portfolio_utils: SpotPortfolioUtils = new SpotPortfolioUtils({ logger })
 
 async function main() {
   const execSync = require("child_process").execSync

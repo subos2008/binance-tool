@@ -16,7 +16,7 @@ import { SpotPositionObject_V2 } from "../../classes/spot/abstractions/spot-posi
 import { Balance, Prices } from "../../interfaces/portfolio"
 import { PortfolioSnapshot } from "../../classes/utils/portfolio-snapshot"
 import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-price-getter"
-import { PortfolioUtils } from "../../classes/utils/portfolio-utils"
+import { SpotPortfolioUtils } from "../../classes/utils/spot-portfolio-utils"
 
 export class PortfolioVsPositions {
   ee: Binance
@@ -31,7 +31,7 @@ export class PortfolioVsPositions {
   positions_snapshot: PositionsSnapshot
   quote_asset: string
   prices_getter: BinancePriceGetter
-  portfolio_utils: PortfolioUtils
+  portfolio_utils: SpotPortfolioUtils
   max_quote_amount_drift_allowed: BigNumber
   base_asset_ignore_list: string[]
 
@@ -69,7 +69,7 @@ export class PortfolioVsPositions {
     this.prices_getter = prices_getter
     this.max_quote_amount_drift_allowed = max_quote_amount_drift_allowed
     this.base_asset_ignore_list = base_asset_ignore_list
-    this.portfolio_utils = new PortfolioUtils({ logger })
+    this.portfolio_utils = new SpotPortfolioUtils({ logger })
     this.portfolio_snapshot = new PortfolioSnapshot({
       logger,
       exchange_info_getter: this.exchange_info_getter,

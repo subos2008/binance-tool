@@ -43,7 +43,7 @@ BigNumber.prototype.valueOf = function () {
 import { SendMessage } from "../../../../classes/send_message/publish"
 import { OrderExecutionTracker } from "../orders-to-amqp/spot-order-execution-tracker"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { Portfolio, SpotPortfolio } from "../../../../interfaces/portfolio"
+import { SpotPortfolio } from "../../../../interfaces/portfolio"
 import { Binance as BinanceType } from "binance-api-node"
 import Binance from "binance-api-node"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
@@ -60,7 +60,7 @@ import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/bin
 import { SpotPortfolioUtils } from "../../../../classes/utils/spot-portfolio-utils"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
-logger.event({}, { object_type: "ServiceStarting" })
+logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()

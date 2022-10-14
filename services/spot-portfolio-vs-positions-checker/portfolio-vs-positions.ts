@@ -62,7 +62,6 @@ export class PortfolioVsPositions {
     this.logger = logger
     this.send_message = send_message
     this.quote_asset = quote_asset
-    this.send_message("service re-starting")
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
     this.health_and_readiness = health_and_readiness
     this.spot_positions_query = spot_positions_query

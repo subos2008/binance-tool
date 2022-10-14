@@ -144,7 +144,6 @@ class Edge70SignalsService {
     this.ee = ee
     this.logger = logger
     this.send_message = send_message
-    this.send_message("service re-starting", { edge })
     this.direction_persistance = direction_persistance
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
     this.health_and_readiness = health_and_readiness

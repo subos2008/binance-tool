@@ -1,5 +1,8 @@
 import { strict as assert } from "assert"
 
+// AGI has been delisted but is still set as tradeable
+let base_assets_to_ignore = ["AGI"]
+
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
@@ -10,7 +13,6 @@ BigNumber.prototype.valueOf = function () {
 import { Balance, Balance_with_quote_value, Portfolio, Prices } from "../../interfaces/portfolio"
 import { AssetBalance, Binance as BinanceType, ExchangeInfo } from "binance-api-node"
 import Binance from "binance-api-node"
-import { RedisClient } from "redis"
 import { ServiceLogger } from "../../interfaces/logger"
 import { BinanceExchangeInfoGetter } from "../exchanges/binance/exchange-info-getter"
 
@@ -41,13 +43,16 @@ export class PortfolioSnapshot {
   }
 
   async take_snapshot(): Promise<Balance[]> {
-    let response = await this.ee.accountInfo()
     let exchange_info: ExchangeInfo = await this.exchange_info_getter.get_exchange_info()
     let symbols = exchange_info.symbols.filter((s) => s.isSpotTradingAllowed)
     let asset_exists_in_exchange_info = (base_asset: string): boolean => {
       return symbols.find((s) => s.baseAsset == base_asset) ? true : false
     }
-    let balances = response.balances.filter((b) => asset_exists_in_exchange_info(b.asset))
+
+    let response = await this.ee.accountInfo()
+    let balances = response.balances
+    balances = balances.filter((b) => asset_exists_in_exchange_info(b.asset))
+    balances = balances.filter((b) => !base_assets_to_ignore.includes(b.asset))
     this.balances = balances
     return this.balances
   }

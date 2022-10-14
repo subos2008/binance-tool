@@ -22,3 +22,9 @@ Convert stops into orders
 1. consecutive win 
 1. consecutive loss
 
+## Desired Metrics
+
+1. Timeline of returns on positions based on when they were entered (not closed)
+    * i.e. are positions entered earlier in the market big wins vs the mid / tail end of the bull run?
+
+... perhaps we do a realised returns view. .. We can keep the edge performance events and at the end (or when the position is closed) we submit a metric timestamped at the start/end timestamp of the position? For wins only perhaps and the metric is the percentage change (ROI)

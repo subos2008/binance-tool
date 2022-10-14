@@ -37,6 +37,7 @@ export class PortfolioUtils {
     prices: Prices
   }) {
     if (base_currency === quote_currency) return base_quantity
+    if (base_quantity.isZero()) return new BigNumber("0")
 
     let pair = `${base_currency}${quote_currency}`
     if (pair in prices) {

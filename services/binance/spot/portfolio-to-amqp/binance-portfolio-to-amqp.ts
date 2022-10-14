@@ -155,13 +155,14 @@ export class BinancePortfolioToAMQP {
   }
 
   async update_portfolio_from_exchange() {
+    let prices = await this.get_prices_from_exchange()
     let portfolio: SpotPortfolio = {
       object_type: "SpotPortfolio",
       version: 1,
       timestamp_ms: Date.now(),
       exchange_identifier: this.exchange_identifier,
-      prices: await this.get_prices_from_exchange(),
-      balances: await this.portfolio_snapshot.take_snapshot(),
+      prices,
+      balances: await this.portfolio_snapshot.take_snapshot({ prices }),
     }
 
     await this.report_portfolio(portfolio)

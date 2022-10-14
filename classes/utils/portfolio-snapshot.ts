@@ -13,8 +13,10 @@ BigNumber.prototype.valueOf = function () {
 import { Balance, Balance_with_quote_value, Portfolio, Prices } from "../../interfaces/portfolio"
 import { AssetBalance, Binance as BinanceType, ExchangeInfo } from "binance-api-node"
 import Binance from "binance-api-node"
+import { Symbol } from "binance-api-node"
 import { ServiceLogger } from "../../interfaces/logger"
 import { BinanceExchangeInfoGetter } from "../exchanges/binance/exchange-info-getter"
+import { is_too_small_to_trade } from "../../lib/utils"
 
 export class PortfolioSnapshot {
   logger: ServiceLogger
@@ -42,17 +44,37 @@ export class PortfolioSnapshot {
     })
   }
 
-  async take_snapshot(): Promise<Balance[]> {
+  /**
+   *
+   * @param param0 prices: if present we will not return any assets where the holding is below MIN_NOTIONAL, i.e. too small to trade
+   * @returns
+   */
+  async take_snapshot({ prices }: { prices?: Prices } = {}): Promise<Balance[]> {
     let exchange_info: ExchangeInfo = await this.exchange_info_getter.get_exchange_info()
     let symbols = exchange_info.symbols.filter((s) => s.isSpotTradingAllowed)
     let asset_exists_in_exchange_info = (base_asset: string): boolean => {
       return symbols.find((s) => s.baseAsset == base_asset) ? true : false
     }
 
+    let has_markets_where_balance_is_large_enough_to_trade = (balance: AssetBalance): boolean => {
+      if (!prices) return true
+      let markets_for_base_asset = symbols.filter((s) => s.baseAsset == balance.asset)
+      let is_market_tradeable = (market: Symbol) => {
+        return !is_too_small_to_trade({
+          price: new BigNumber(prices[market.symbol]),
+          volume: new BigNumber(balance.free).plus(balance.locked),
+          exchange_info,
+          symbol: market.symbol,
+        })
+      }
+      return markets_for_base_asset.find(is_market_tradeable) ? true : false
+    }
+
     let response = await this.ee.accountInfo()
     let balances = response.balances
     balances = balances.filter((b) => asset_exists_in_exchange_info(b.asset))
     balances = balances.filter((b) => !base_assets_to_ignore.includes(b.asset))
+    if (prices) balances = balances.filter((b) => has_markets_where_balance_is_large_enough_to_trade(b))
     this.balances = balances
     return this.balances
   }

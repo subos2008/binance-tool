@@ -107,7 +107,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
   async update_portfolio_from_exchange() {
     // TODO: refresh prices but maybe cache them? If at daily close we enter lots of positions it would be good not to call this repeatedly
     this.portfolio.prices = await this.get_prices_from_exchange()
-    this.portfolio.balances = await this.portfolio_snapshot.take_snapshot()
+    this.portfolio.balances = await this.portfolio_snapshot.take_snapshot({ prices: this.portfolio.prices })
     this.master.set_portfolio_for_exchange({
       exchange_identifier: this.exchange_identifier,
       portfolio: this.portfolio,

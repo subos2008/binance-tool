@@ -197,7 +197,10 @@ export class BinancePortfolioToAMQP {
       //   this.logger.warn(`TODO: we still want to verify this with the exchange and publish an empty portfolio`)
       //   return
       // }
-      this.logger.warn(`TODO: needs testing with an empty portfolio`)
+      this.logger.event(
+        { level: "info" },
+        { object_type: "TODO", msg: `report_portfolio() needs testing with an empty portfolio` }
+      )
 
       try {
         // This is just for the logfiles, we don't use this to send the event

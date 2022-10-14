@@ -23,7 +23,7 @@ import { MyEventNameType } from "../../../../classes/amqp/message-routing"
 import { SendMessageEvent } from "../../../../classes/send_message/publish"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
-logger.event({}, { object_type: "ServiceStarting" })
+logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const service_is_healthy = health_and_readiness.addSubsystem({

@@ -33,7 +33,7 @@ import { SendMessageFunc } from "../../../../interfaces/send-message"
 import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
-logger.event({}, { object_type: "ServiceStarting" })
+logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()

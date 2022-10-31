@@ -140,7 +140,7 @@ export class TradeAbstractionService {
       { level: "warn" },
       { object_type: "TODO", msg: `Position entry is not atomic with check for existing position` }
     )
-    
+
     let existing_spot_position_size: BigNumber = await this.positions.exisiting_position_size({
       base_asset: cmd.base_asset,
       edge,
@@ -190,7 +190,11 @@ export class TradeAbstractionService {
     assert.equal(cmd.action, "close")
     let { quote_asset } = this
 
-    this.logger.warn(`Position exit is not atomic with check for existing position`)
+    this.logger.event(
+      { level: "info" },
+      { object_type: "TODO", msg: `Position exit is not atomic with check for existing position` }
+    )
+
     try {
       let result: TradeAbstractionCloseResult = await this.spot_ee.close_position(cmd, { quote_asset })
       return result

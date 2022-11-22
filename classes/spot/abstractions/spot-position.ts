@@ -110,7 +110,7 @@ export class SpotPosition {
 
   // adjust the position according to the order, create a new position if current size is zero
   async add_order_to_position({ generic_order_data }: { generic_order_data: GenericOrderData }) {
-    let { baseAsset, side, totalBaseTradeQuantity } = generic_order_data
+    let { baseAsset, side, totalBaseTradeQuantity, orderType, order_id } = generic_order_data
     let tags = { base_asset: baseAsset }
     if (baseAsset !== this.baseAsset) {
       throw new Error(
@@ -125,13 +125,17 @@ export class SpotPosition {
         generic_order_data,
       ])
       if (num_added === 0) {
-        this.logger.info(tags, `Order ${generic_order_data.order_id} already added to position, skipping...`)
+        this.logger.event(tags, {
+          object_type: "OrderDeduplication",
+          msg: `Skipping adding ${orderType} ${side} order ${order_id} to ${baseAsset} position - already added.`,
+        })
         return
       }
-      this.logger.info(
-        tags,
-        `Added Order ${generic_order_data.order_id} ${generic_order_data.orderType}:${generic_order_data.side} to ${baseAsset} position`
-      )
+
+      this.logger.event(tags, {
+        object_type: "OrderAddedToPosition",
+        msg: `Added ${orderType} ${side} order to position for ${baseAsset}`,
+      })
 
       // TODO: when we add this to redis we could use a hash keyed by order number to prevent duplicate entries?
       let base_change =

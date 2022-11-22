@@ -33,7 +33,7 @@ import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { AMQP_BinanceOrderDataListener } from "../../../../classes/exchanges/binance/amqp-binance-order-data-listener"
 import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
 import { SendMessage } from "../../../../classes/send_message/publish"
-import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
+import { get_redis_client } from "../../../../lib/redis-v4"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 import { SpotPositionPublisher } from "./spot-position-publisher"
 import { ServiceLogger } from "../../../../interfaces/logger"
@@ -53,16 +53,12 @@ const service_is_healthy = health_and_readiness.addSubsystem({
   initialised: true,
 })
 
-
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
   send_message(`UnhandledPromiseRejection: ${err}`)
   service_is_healthy.healthy(false)
 })
-
-set_redis_logger(logger)
-const redis = get_redis_client()
 
 let order_execution_tracker: AMQP_BinanceOrderDataListener | null = null
 
@@ -164,6 +160,8 @@ async function main() {
     )
     return result
   }
+
+  const redis = await get_redis_client(logger, health_and_readiness)
   const spot_positions_persistance: SpotPositionsPersistence = new RedisSpotPositionsPersistence({ logger, redis })
   const spot_positions_query = new SpotPositionsQuery({
     logger,

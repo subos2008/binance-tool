@@ -9,7 +9,7 @@ import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import { ServiceLogger } from "../../interfaces/logger"
 import { Binance } from "binance-api-node"
-import { RedisClient } from "redis"
+import { RedisClientType } from "redis-v4"
 import { PositionsSnapshot } from "./lib/positions-snapshot"
 import { SpotPositionsQuery } from "../../classes/spot/abstractions/spot-positions-query"
 import { SpotPositionObject_V2 } from "../../classes/spot/abstractions/spot-position"
@@ -52,7 +52,7 @@ export class PortfolioVsPositions {
     send_message: SendMessageFunc
     health_and_readiness: HealthAndReadiness
     spot_positions_query: SpotPositionsQuery
-    redis: RedisClient
+    redis: RedisClientType
     quote_asset: string
     prices_getter: BinancePriceGetter
     max_quote_amount_drift_allowed: BigNumber
@@ -175,7 +175,7 @@ export class PortfolioVsPositions {
         this.send_message(msg)
       } else {
         this.send_message(
-          `⚠️ ${base_asset} balance lower than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}`
+          `⚠️ ${base_asset} balance lower than expected: expected ${expected} ${base_asset}, actual ${actual} ${base_asset}. This position would not be able to close or exit on a short signal.`
         )
       }
     }

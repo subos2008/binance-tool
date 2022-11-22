@@ -271,7 +271,7 @@ export class SpotEdgeToExecutorMapper {
       this.send_message(msg, tags)
     }
 
-    let oco_order_id: OrderId | null = null
+    let oco_order_id: OrderId | undefined
     try {
       /** Cancel oco order if there is one */
       oco_order_id = await this.positions_persistance.get_oco_order(spot_position_identifier)

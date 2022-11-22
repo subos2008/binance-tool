@@ -19,7 +19,7 @@ import { SpotPositionsPersistence, SpotPositionInitialisationData } from "../int
 import { Logger } from "../../../../interfaces/logger"
 
 import { RedisSpotPositionsState } from "./low-level/redis-spot-positions-state-v3"
-import { RedisClient } from "redis"
+import { RedisClientType } from "redis-v4"
 import { SpotPositionIdentifier_V3 } from "../../abstractions/position-identifier"
 import { SpotPositionObject } from "../../abstractions/spot-position"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
@@ -29,7 +29,7 @@ export class RedisSpotPositionsPersistence implements SpotPositionsPersistence {
   logger: Logger
   state: RedisSpotPositionsState
 
-  constructor({ logger, redis }: { logger: Logger; redis: RedisClient }) {
+  constructor({ logger, redis }: { logger: Logger; redis: RedisClientType }) {
     this.logger = logger
     this.state = new RedisSpotPositionsState({ logger, redis })
   }
@@ -86,7 +86,7 @@ export class RedisSpotPositionsPersistence implements SpotPositionsPersistence {
   }
 
   /** this means filled orders that we should use to update the position state/info */
-  async add_orders(pi: SpotPositionIdentifier_V3, orders: GenericOrderData[]): Promise<void> {
+  async add_orders(pi: SpotPositionIdentifier_V3, orders: GenericOrderData[]): Promise<number> {
     return this.state.add_orders(pi, orders)
   }
 
@@ -108,7 +108,7 @@ export class RedisSpotPositionsPersistence implements SpotPositionsPersistence {
   async set_oco_order(pi: SpotPositionIdentifier_V3, order_id: OrderId): Promise<void> {
     return this.state.set_oco_order(pi, order_id)
   }
-  async get_oco_order(pi: SpotPositionIdentifier_V3): Promise<OrderId> {
+  async get_oco_order(pi: SpotPositionIdentifier_V3): Promise<OrderId | undefined> {
     return this.state.get_oco_order(pi)
   }
 }

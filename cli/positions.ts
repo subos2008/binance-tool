@@ -23,7 +23,6 @@ import { RedisSpotPositionsPersistence } from "../classes/spot/persistence/redis
 import { HealthAndReadiness } from "../classes/health_and_readiness"
 import { SendMessageFunc } from "../interfaces/send-message"
 
-
 const LoggerClass = require("../lib/faux_logger")
 const logger: Logger = new LoggerClass({ silent: false })
 
@@ -32,13 +31,12 @@ const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
 
 import { RedisClient } from "redis"
-import { get_redis_client, set_redis_logger } from "../lib/redis"
-set_redis_logger(logger)
-const redis: RedisClient = get_redis_client()
+import { get_redis_client } from "../lib/redis-v4"
 
 // if(!redis.connected) throw new Error(`Redis not connected`)
 
 import { BigNumber } from "bignumber.js"
+import { RedisClientType } from "redis-v4"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -49,8 +47,6 @@ const yargs = require("yargs")
 const c = require("ansi-colors")
 
 require("dotenv").config()
-
-const positions_persistance: SpotPositionsPersistence = new RedisSpotPositionsPersistence({ logger, redis })
 
 async function main() {
   yargs
@@ -182,6 +178,9 @@ async function list_positions({
   account: string
 }) {
   if (exchange_type !== "spot") throw new Error(`Not implemented`)
+  const redis: RedisClientType = await get_redis_client(logger, health_and_readiness)
+  const positions_persistance: SpotPositionsPersistence = new RedisSpotPositionsPersistence({ logger, redis })
+
   const spot_positions_query = new SpotPositionsQuery({
     logger,
     positions_persistance,
@@ -253,11 +252,13 @@ async function fixinate() {
   //     }
   //   }
   // }
-  redis.quit()
+  // redis.quit()
 }
 
 async function delete_position(argv: any) {
   let position_identifier = argv // sorry Mum
+  const redis: RedisClientType = await get_redis_client(logger, health_and_readiness)
+  const positions_persistance: SpotPositionsPersistence = new RedisSpotPositionsPersistence({ logger, redis })
   await positions_persistance.delete_position(position_identifier)
   redis.quit()
 }
@@ -279,6 +280,8 @@ async function describe_position({
 
   const exchange_identifier: ExchangeIdentifier_V3 = { exchange, type: exchange_type, account, version: "v3" }
   let query: SpotPositionsQuery_V3 = { exchange_identifier, base_asset: symbol }
+  const redis: RedisClientType = await get_redis_client(logger, health_and_readiness)
+  const positions_persistance: SpotPositionsPersistence = new RedisSpotPositionsPersistence({ logger, redis })
   const spot_positions_query = new SpotPositionsQuery({
     logger,
     positions_persistance,

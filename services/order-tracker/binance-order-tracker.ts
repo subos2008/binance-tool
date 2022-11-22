@@ -12,7 +12,7 @@ Sentry.configureScope(function (scope: any) {
 
 const service_name = "order-tracker"
 
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
+import { get_redis_client } from "../../lib/redis-v4"
 const BinanceFoo = require("binance-api-node").default
 import { Binance } from "binance-api-node"
 import { OrderExecutionTracker } from "../binance/spot/orders-to-amqp/spot-order-execution-tracker"
@@ -164,8 +164,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  set_redis_logger(logger)
-  let redis = get_redis_client()
+  let redis = await get_redis_client(logger, health_and_readiness)
 
   let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
   let order_callbacks = new MyOrderCallbacks({ logger, send_message, order_context_persistence })

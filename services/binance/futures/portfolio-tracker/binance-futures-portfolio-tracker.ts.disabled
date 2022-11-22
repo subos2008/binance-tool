@@ -50,9 +50,8 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
-set_redis_logger(logger)
-let redis = get_redis_client()
+import { get_redis_client } from "../../../../lib/redis-v4"
+// let redis = get_redis_client(logger,HealthAndReadiness)
 
 import {
   FuturesBinanceOrderData,

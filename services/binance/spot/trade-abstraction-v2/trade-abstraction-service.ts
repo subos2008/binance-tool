@@ -6,7 +6,6 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { disallowed_base_assets_for_entry } from "../../../../lib/stable-coins"
-import Sentry from "../../../../lib/sentry"
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
@@ -24,7 +23,7 @@ import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/i
 import { RedisSpotPositionsPersistence } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
-import { RedisClient } from "redis"
+import { RedisClientType } from "redis-v4"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-message"
 
@@ -49,7 +48,7 @@ export class TradeAbstractionService {
     quote_asset: string
     ee: ExecutionEngine
     send_message: SendMessageFunc
-    redis: RedisClient
+    redis: RedisClientType
   }) {
     assert(logger)
     this.logger = logger

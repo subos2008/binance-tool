@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function () {
 
 import Sentry from "../../../../../lib/sentry"
 
-import { RedisClient } from "redis"
+import { RedisClientType } from "redis-v4"
 import { SpotPositionIdentifier_V3, AuthorisedEdgeType } from "../../../abstractions/position-identifier"
 import { SpotPositionObject } from "../../../abstractions/spot-position"
 import { GenericOrderData } from "../../../../../types/exchange_neutral/generic_order_data"
@@ -30,36 +30,13 @@ function from_sats(input: string | BigNumber) {
 const key_base = "positions-v3"
 export class RedisSpotPositionsState {
   logger: Logger
-  redis: RedisClient
-  setAsync: any
-  getAsync: any
-  delAsync: any
-  msetnxAsync: any
-  msetAsync: any
-  mgetAsync: any
-  incrbyAsync: any
-  decrbyAsync: any
-  keysAsync: any
-  smembersAsync: any
-  saddAsync: any
+  redis: RedisClientType
 
-  constructor({ logger, redis }: { logger: Logger; redis: RedisClient }) {
+  constructor({ logger, redis }: { logger: Logger; redis: RedisClientType }) {
     assert(logger)
     this.logger = logger
     assert(redis)
     this.redis = redis
-
-    this.setAsync = promisify(this.redis.set).bind(this.redis)
-    this.getAsync = promisify(this.redis.get).bind(this.redis)
-    this.delAsync = promisify(this.redis.del).bind(this.redis)
-    this.msetnxAsync = promisify(this.redis.msetnx).bind(this.redis)
-    this.msetAsync = promisify(this.redis.mset).bind(this.redis)
-    this.mgetAsync = promisify(this.redis.mget).bind(this.redis)
-    this.incrbyAsync = promisify(this.redis.incrby).bind(this.redis)
-    this.decrbyAsync = promisify(this.redis.decrby).bind(this.redis)
-    this.keysAsync = promisify(this.redis.keys).bind(this.redis)
-    this.smembersAsync = promisify(this.redis.smembers).bind(this.redis)
-    this.saddAsync = promisify(this.redis.sadd).bind(this.redis)
   }
 
   private prefix(pi: SpotPositionIdentifier_V3) {
@@ -90,7 +67,9 @@ export class RedisSpotPositionsState {
     { position_size }: { position_size: BigNumber }
   ): Promise<void> {
     try {
-      await this.msetAsync(this.name_to_key(pi, { name: "position_size" }), to_sats(position_size.toFixed()))
+      let key = this.name_to_key(pi, { name: "position_size" })
+      let value = to_sats(position_size.toFixed())
+      await this.redis.set(key, value)
     } catch (err) {
       console.error(err)
       Sentry.withScope(function (scope) {
@@ -106,7 +85,7 @@ export class RedisSpotPositionsState {
 
   async get_sats_key(pi: SpotPositionIdentifier_V3, { key_name }: { key_name: string }): Promise<BigNumber> {
     const key = this.name_to_key(pi, { name: key_name })
-    const sats_or_null = await this.getAsync(key)
+    const sats_or_null = await this.redis.get(key)
     if (!sats_or_null) throw new Error(`${key} missing from position`)
     return new BigNumber(from_sats(sats_or_null))
   }
@@ -114,10 +93,20 @@ export class RedisSpotPositionsState {
   async get_string_key(
     pi: SpotPositionIdentifier_V3,
     { key_name, null_allowed }: { key_name: string; null_allowed: boolean }
+  ): Promise<string | null> {
+    const key = this.name_to_key(pi, { name: key_name })
+    const value = await this.redis.get(key)
+    if (!value && !null_allowed) throw new Error(`${key} missing from position`)
+    return value
+  }
+
+  async get_string_key_no_null(
+    pi: SpotPositionIdentifier_V3,
+    { key_name }: { key_name: string }
   ): Promise<string> {
     const key = this.name_to_key(pi, { name: key_name })
-    const value = await this.getAsync(key)
-    if (!value && !null_allowed) throw new Error(`${key} missing from position`)
+    const value = await this.redis.get(key)
+    if (!value) throw new Error(`${key} missing from position`)
     return value
   }
 
@@ -127,13 +116,13 @@ export class RedisSpotPositionsState {
     value: string
   ): Promise<void> {
     const key = this.name_to_key(pi, { name: key_name })
-    await this.setAsync(key, value)
+    await this.redis.set(key, value)
     console.log(`Set ${key} to ${value}`)
   }
 
   async get_number_key(pi: SpotPositionIdentifier_V3, { key_name }: { key_name: string }): Promise<number> {
     const key = this.name_to_key(pi, { name: key_name })
-    const value = await this.getAsync(key)
+    const value = await this.redis.get(key)
     if (!value) throw new Error(`${key} missing from position`)
     return Number(value)
   }
@@ -156,7 +145,7 @@ export class RedisSpotPositionsState {
   }
 
   async get_initial_entry_quote_asset(pi: SpotPositionIdentifier_V3): Promise<string> {
-    return this.get_string_key(pi, { key_name: "initial_entry_quote_asset", null_allowed: false })
+    return this.get_string_key_no_null(pi, { key_name: "initial_entry_quote_asset" })
   }
 
   // ms
@@ -169,11 +158,11 @@ export class RedisSpotPositionsState {
   }
 
   async get_edge(pi: SpotPositionIdentifier_V3): Promise<string> {
-    return this.get_string_key(pi, { key_name: "edge", null_allowed: false })
+    return this.get_string_key_no_null(pi, { key_name: "edge" })
   }
 
   private async get_object_set_key(pi: SpotPositionIdentifier_V3, { key_name }: { key_name: string }) {
-    let objects_as_strings: string[] = await this.smembersAsync(this.name_to_key(pi, { name: key_name }))
+    let objects_as_strings: string[] = await this.redis.sMembers(this.name_to_key(pi, { name: key_name }))
     let objects = objects_as_strings.map((s) => JSON.parse(s))
     return objects
   }
@@ -181,12 +170,13 @@ export class RedisSpotPositionsState {
   private async add_objects_to_set_key(
     pi: SpotPositionIdentifier_V3,
     { key_name, new_objects }: { key_name: string; new_objects: any[] }
-  ): Promise<void> {
+  ): Promise<number> {
     let strings: string[] = new_objects.map((o) => JSON.stringify(o, Object.keys(o).sort()))
-    await this.saddAsync(this.name_to_key(pi, { name: key_name }), strings)
+    let num_added = await this.redis.sAdd(this.name_to_key(pi, { name: key_name }), strings)
+    return num_added
   }
 
-  async add_orders(pi: SpotPositionIdentifier_V3, orders: GenericOrderData[]): Promise<void> {
+  async add_orders(pi: SpotPositionIdentifier_V3, orders: GenericOrderData[]): Promise<number> {
     return this.add_objects_to_set_key(pi, { key_name: "orders", new_objects: orders })
   }
 
@@ -261,23 +251,24 @@ export class RedisSpotPositionsState {
 
     try {
       assert(initial_quote_invested.isPositive())
-      await this.add_orders(pi, orders)
-      await this.msetAsync(
+      let p_orders = this.add_orders(pi, orders)
+      let p_mset = this.redis.mSet([
         this.name_to_key(pi, { name: "initial_entry_timestamp" }),
-        initial_entry_timestamp,
+        initial_entry_timestamp.toString(),
         this.name_to_key(pi, { name: "initial_entry_position_size" }),
         to_sats(position_size.toFixed()),
         this.name_to_key(pi, { name: "position_size" }),
         to_sats(position_size.toFixed()),
         this.name_to_key(pi, { name: "initial_quote_invested" }),
-        to_sats(initial_quote_invested?.toFixed()),
+        to_sats(initial_quote_invested.toFixed()),
         this.name_to_key(pi, { name: "initial_entry_price" }),
-        to_sats(initial_entry_price?.toFixed()),
+        to_sats(initial_entry_price.toFixed()),
         this.name_to_key(pi, { name: "initial_entry_quote_asset" }),
         initial_entry_quote_asset,
         this.name_to_key(pi, { name: "edge" }),
-        edge
-      )
+        edge,
+      ])
+      await Promise.all([p_orders, p_mset])
     } catch (err) {
       console.error(err)
       Sentry.withScope(function (scope) {
@@ -293,7 +284,7 @@ export class RedisSpotPositionsState {
 
   async _patch_initial_entry_quote_asset(pi: SpotPositionIdentifier_V3, { initial_entry_quote_asset }: any) {
     try {
-      await this.msetAsync(this.name_to_key(pi, { name: "initial_entry_quote_asset" }), initial_entry_quote_asset)
+      await this.redis.set(this.name_to_key(pi, { name: "initial_entry_quote_asset" }), initial_entry_quote_asset)
     } catch (err) {
       console.error(err)
       Sentry.withScope(function (scope) {
@@ -308,7 +299,7 @@ export class RedisSpotPositionsState {
 
   async _patch_initial_entry_timestamp(pi: SpotPositionIdentifier_V3, { initial_entry_timestamp }: any) {
     try {
-      await this.msetAsync(this.name_to_key(pi, { name: "initial_entry_timestamp" }), initial_entry_timestamp)
+      await this.redis.set(this.name_to_key(pi, { name: "initial_entry_timestamp" }), initial_entry_timestamp)
     } catch (err) {
       console.error(err)
       Sentry.withScope(function (scope) {
@@ -327,7 +318,8 @@ export class RedisSpotPositionsState {
   ): Promise<void> {
     try {
       let before = await this.get_position_size(pi)
-      await this.incrbyAsync(this.name_to_key(pi, { name: "position_size" }), to_sats(base_change.toFixed()))
+      let key = this.name_to_key(pi, { name: "position_size" })
+      await this.redis.incrBy(key, Number(to_sats(base_change.toFixed())))
       this.logger.debug(`adjust_position_size_by before: ${before} after: ${await this.get_position_size(pi)}`)
     } catch (err) {
       console.error(err)
@@ -348,7 +340,8 @@ export class RedisSpotPositionsState {
 
   async get_stop_order(pi: SpotPositionIdentifier_V3): Promise<OrderId | undefined> {
     try {
-      return this.get_string_key(pi, { key_name: "stop_order_id", null_allowed: true })
+      let foo = await this.get_string_key(pi, { key_name: "stop_order_id", null_allowed: true })
+      return foo || undefined
     } catch (err) {
       return
     }
@@ -358,16 +351,14 @@ export class RedisSpotPositionsState {
     return this.set_string_key(pi, { key_name: "oco_order_id" }, order_id.toString())
   }
 
-  async get_oco_order(pi: SpotPositionIdentifier_V3): Promise<OrderId> {
-    return this.get_string_key(pi, { key_name: "oco_order_id", null_allowed: true })
+  async get_oco_order(pi: SpotPositionIdentifier_V3): Promise<OrderId | undefined> {
+    return (await this.get_string_key(pi, { key_name: "oco_order_id", null_allowed: true })) || undefined
   }
 
   async delete_position(pi: SpotPositionIdentifier_V3) {
     try {
-      let keys = await this.keysAsync(`${this.prefix(pi)}:*`)
-      for (let key of keys) {
-        await this.delAsync(key)
-      }
+      let keys = await this.redis.keys(`${this.prefix(pi)}:*`)
+      await this.redis.del(keys)
     } catch (err) {
       console.error(err)
       Sentry.withScope(function (scope) {
@@ -382,7 +373,7 @@ export class RedisSpotPositionsState {
   }
 
   async open_positions(): Promise<SpotPositionIdentifier_V3[]> {
-    const keys: string[] = await this.keysAsync(`${key_base}:*:sats_position_size`)
+    const keys: string[] = await this.redis.keys(`${key_base}:*:sats_position_size`)
     this.logger.debug(`Loaded ${keys.length} matching keys from redis`)
     return keys.map((key: string) => {
       //`${key_base}:spot:${exchange}:${account}:${base_asset}:${pi.edge}`

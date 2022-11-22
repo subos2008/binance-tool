@@ -125,14 +125,14 @@ export class SpotPosition {
     if (num_added === 0) {
       this.logger.event(tags, {
         object_type: "OrderDeduplication",
-        msg: `Skipping adding ${orderType} ${side} order ${order_id} to ${baseAsset} position - already added.`,
+        msg: `Skipping adding ${orderType} ${side} order id ${order_id} to ${baseAsset} position - already added.`,
       })
       return
     }
 
     this.logger.event(tags, {
       object_type: "OrderAddedToPosition",
-      msg: `Added ${orderType} ${side} order to position for ${baseAsset}`,
+      msg: `Added ${orderType} ${side} order id ${order_id} to ${baseAsset} position`,
     })
 
     if ((await this.position_size()).isZero()) {
@@ -167,7 +167,7 @@ export class SpotPosition {
       object_subtype: "SingleEntryExit", // simple trades with one entry order and one exit order
       version: 1,
 
-      msg: `${base_asset} postion opened`,
+      msg: `${base_asset} position opened`,
 
       edge: o.edge,
       exchange_identifier: this.position_identifier.exchange_identifier,
@@ -234,7 +234,7 @@ export class SpotPosition {
       exchange_identifier: this.position_identifier.exchange_identifier,
       base_asset,
 
-      msg: `${base_asset} postion closed ${pct_changed}`,
+      msg: `${base_asset} position closed ${pct_changed}`,
 
       /** When the entry signal fired */
       // entry_signal_source: string, // bert, service name etc

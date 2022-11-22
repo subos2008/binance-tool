@@ -1,5 +1,5 @@
 import { Telegraf, Context, NarrowedContext, Types } from "telegraf"
-import { Logger } from "../../interfaces/logger"
+import { Logger, ServiceLogger } from "../../interfaces/logger"
 import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
 import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/position-identifier"
 import { Commands_Futures } from "./commands/futures"
@@ -51,12 +51,12 @@ if (TAS_URL === undefined) {
  */
 export class Commands {
   spot_tas_client: TradeAbstractionServiceClient
-  logger: Logger
+  logger: ServiceLogger
 
   // commands
   futures: Commands_Futures
 
-  constructor({ bot, logger }: { bot: Telegraf; logger: Logger }) {
+  constructor({ bot, logger }: { bot: Telegraf; logger: ServiceLogger }) {
     this.logger = logger
     this.spot_tas_client = new TradeAbstractionServiceClient({ logger, TAS_URL })
     // Set the bot response

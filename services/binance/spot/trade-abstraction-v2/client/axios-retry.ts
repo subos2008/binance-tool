@@ -1,11 +1,6 @@
-import Sentry from "../../../../../lib/sentry"
-Sentry.configureScope(function (scope: any) {
-  scope.setTag("class", "TradeAbstractionServiceClient")
-})
-
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"
 import JSONBigNumber from "./JSONBigNumber"
-import { Logger } from "../../../../../interfaces/logger"
+import { ServiceLogger } from "../../../../../interfaces/logger"
 
 const default_retry_ms = 11 * 1000
 function getMillisToSleep(retryHeaderString: string | undefined): number {
@@ -26,10 +21,10 @@ function sleep(ms: number) {
 }
 
 export class AxiosRetry {
-  logger: Logger
+  logger: ServiceLogger
 
   // Let TAS_URL be undefined because we check it here
-  constructor({ logger }: { logger: Logger }) {
+  constructor({ logger }: { logger: ServiceLogger }) {
     this.logger = logger
   }
 
@@ -61,8 +56,7 @@ export class AxiosRetry {
 
       return response
     } catch (err) {
-      Sentry.captureException(err)
-      this.logger.error({ err })
+      this.logger.exception({}, err)
       throw err
     }
   }

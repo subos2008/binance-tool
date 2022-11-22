@@ -12,7 +12,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
-import { Logger } from "../../../../../interfaces/logger"
+import { ServiceLogger } from "../../../../../interfaces/logger"
 import {
   TradeAbstractionOpenLongCommand_OCO_Exit,
   TradeAbstractionOpenLongCommand_StopLimitExit,
@@ -26,9 +26,15 @@ import {
 
 export class SendDatadogMetrics {
   dogstatsd: StatsD
-  logger: Logger
+  logger: ServiceLogger
 
-  constructor({ exchange_identifier, logger }: { exchange_identifier: ExchangeIdentifier_V3; logger: Logger }) {
+  constructor({
+    exchange_identifier,
+    logger,
+  }: {
+    exchange_identifier: ExchangeIdentifier_V3
+    logger: ServiceLogger
+  }) {
     this.logger = logger
     this.dogstatsd = new StatsD({
       errorHandler: dogstatsderrorhandler,
@@ -56,9 +62,8 @@ export class SendDatadogMetrics {
           // console.log("Successfully sent", bytes, "bytes to DogStatsD")
         }
       })
-    } catch (e) {
-      this.logger.warn(`Failed to submit metrics to DogStatsD`)
-      Sentry.captureException(e)
+    } catch (err) {
+      this.logger.exception({}, err, `Failed to submit metrics to DogStatsD`)
     }
   }
 
@@ -78,9 +83,8 @@ export class SendDatadogMetrics {
           // console.log("Successfully sent", bytes, "bytes to DogStatsD")
         }
       })
-    } catch (e) {
-      this.logger.warn(`Failed to submit metrics to DogStatsD`)
-      Sentry.captureException(e)
+    } catch (err) {
+      this.logger.exception({}, err, `Failed to submit metrics to DogStatsD`)
     }
   }
 
@@ -98,9 +102,8 @@ export class SendDatadogMetrics {
           // console.log("Successfully sent", bytes, "bytes to DogStatsD")
         }
       })
-    } catch (e) {
-      this.logger.warn(`Failed to submit metrics to DogStatsD`)
-      Sentry.captureException(e)
+    } catch (err) {
+      this.logger.exception({}, err, `Failed to submit metrics to DogStatsD`)
     }
   }
 
@@ -118,9 +121,8 @@ export class SendDatadogMetrics {
           // console.log("Successfully sent", bytes, "bytes to DogStatsD")
         }
       })
-    } catch (e) {
-      this.logger.warn(`Failed to submit metrics to DogStatsD`)
-      Sentry.captureException(e)
+    } catch (err) {
+      this.logger.exception({}, err, `Failed to submit metrics to DogStatsD`)
     }
   }
 

@@ -1,8 +1,8 @@
 import { strict as assert } from "assert"
-import { Request, Response } from "express"
+import { Request } from "express"
 import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "./interfaces/short"
-import { Logger } from "../../../../interfaces/logger"
+import { ServiceLogger } from "../../../../interfaces/logger"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 // import { Tags } from "hot-shots"
@@ -10,9 +10,9 @@ import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./int
 type Tags = { [key: string]: string }
 
 export class QueryParamsToCmdMapper {
-  logger: Logger
+  logger: ServiceLogger
 
-  constructor({ logger }: { logger: Logger }) {
+  constructor({ logger }: { logger: ServiceLogger }) {
     this.logger = logger
   }
 
@@ -82,6 +82,7 @@ export class QueryParamsToCmdMapper {
         quote_asset,
       }))
     } catch (err: any) {
+      this.logger.exception(tags, err)
       let result: TradeAbstractionCloseResult = {
         object_type: "TradeAbstractionCloseResult",
         version: 1,
@@ -95,11 +96,7 @@ export class QueryParamsToCmdMapper {
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
       }
-      this.logger.error(
-        `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
-      )
-      this.logger.error({ err })
-      this.logger.error({ ...tags, ...result })
+      this.logger.event({ ...tags, level: "error" }, result)
       return { result, tags }
     }
 
@@ -112,8 +109,7 @@ export class QueryParamsToCmdMapper {
       trigger_price,
       signal_timestamp_ms,
     }
-    this.logger.info({ ...tags, ...result })
-
+    this.logger.event(tags, result)
     return { result, tags }
   }
 
@@ -147,6 +143,7 @@ export class QueryParamsToCmdMapper {
         quote_asset,
       }))
     } catch (err: any) {
+      this.logger.exception(tags, err)
       let result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
         version: 1,
@@ -161,11 +158,7 @@ export class QueryParamsToCmdMapper {
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
       }
-      this.logger.error(
-        `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
-      )
-      this.logger.error({ err })
-      this.logger.error({ ...tags, ...result })
+      this.logger.event({ ...tags, level: "error" }, result)
       return { result, tags }
     }
 
@@ -178,7 +171,7 @@ export class QueryParamsToCmdMapper {
       trigger_price,
       signal_timestamp_ms,
     }
-    this.logger.info({ ...tags, ...result })
+    this.logger.event(tags, result)
     return { result, tags }
   }
 
@@ -212,6 +205,7 @@ export class QueryParamsToCmdMapper {
         quote_asset,
       }))
     } catch (err: any) {
+      this.logger.exception(tags, err)
       let result: TradeAbstractionOpenShortResult = {
         object_type: "TradeAbstractionOpenShortResult",
         version: 1,
@@ -226,11 +220,7 @@ export class QueryParamsToCmdMapper {
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
       }
-      this.logger.error(
-        `400 due to bad inputs '${req.query.edge}' attempting to open ${req.query.base_asset}: ${err.message}`
-      )
-      this.logger.error({ err })
-      this.logger.error({ ...tags, ...result })
+      this.logger.event({ ...tags, level: "error" }, result)
       return { result, tags }
     }
 
@@ -244,7 +234,7 @@ export class QueryParamsToCmdMapper {
       signal_timestamp_ms,
       quote_asset,
     }
-    this.logger.info({ ...tags, ...result })
+    this.logger.event(tags, result)
     return { result, tags }
   }
 }

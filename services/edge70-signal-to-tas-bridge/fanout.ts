@@ -1,7 +1,7 @@
 import { strict as assert } from "assert"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
-import { Logger } from "../../interfaces/logger"
+import { Logger, ServiceLogger } from "../../interfaces/logger"
 import Sentry from "../../lib/sentry"
 import { Edge70SignalProcessor } from "./interfaces"
 import { Edge70ForwarderToEdge70Spot } from "./forwarder-to-edge70-spot"
@@ -14,7 +14,7 @@ if (TAS_URL === undefined) {
 
 export class Edge70SignalFanout implements Edge70SignalProcessor {
   send_message: Function
-  logger: Logger
+  logger: ServiceLogger
   event_name: MyEventNameType
   tas_client: TradeAbstractionServiceClient
   edge70_spot: Edge70SignalProcessor
@@ -25,7 +25,7 @@ export class Edge70SignalFanout implements Edge70SignalProcessor {
     event_name,
   }: {
     send_message: (msg: string) => void
-    logger: Logger
+    logger: ServiceLogger
     event_name: MyEventNameType
   }) {
     assert(logger)

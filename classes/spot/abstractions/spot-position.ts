@@ -112,32 +112,33 @@ export class SpotPosition {
   async add_order_to_position({ generic_order_data }: { generic_order_data: GenericOrderData }) {
     let { baseAsset, side, totalBaseTradeQuantity, orderType, order_id } = generic_order_data
     let tags = { base_asset: baseAsset }
+
     if (baseAsset !== this.baseAsset) {
       throw new Error(
         `Unexpected base_asset ${baseAsset} vs ${this.baseAsset} in call to Position.add_order_to_position`
       )
     }
+
+    let num_added = await this.spot_positions_persistance.add_orders(this.position_identifier, [
+      generic_order_data,
+    ])
+    if (num_added === 0) {
+      this.logger.event(tags, {
+        object_type: "OrderDeduplication",
+        msg: `Skipping adding ${orderType} ${side} order ${order_id} to ${baseAsset} position - already added.`,
+      })
+      return
+    }
+
+    this.logger.event(tags, {
+      object_type: "OrderAddedToPosition",
+      msg: `Added ${orderType} ${side} order to position for ${baseAsset}`,
+    })
+
     if ((await this.position_size()).isZero()) {
       let i = genericOrderDataToSpotPositionInitialisationData(generic_order_data, await this.edge())
-      await this.spot_positions_persistance.initialise_position(this.position_identifier, i) // interestingly this would create long and short positions automatically
+      await this.spot_positions_persistance.initialise_position(this.position_identifier, i)
     } else {
-      let num_added = await this.spot_positions_persistance.add_orders(this.position_identifier, [
-        generic_order_data,
-      ])
-      if (num_added === 0) {
-        this.logger.event(tags, {
-          object_type: "OrderDeduplication",
-          msg: `Skipping adding ${orderType} ${side} order ${order_id} to ${baseAsset} position - already added.`,
-        })
-        return
-      }
-
-      this.logger.event(tags, {
-        object_type: "OrderAddedToPosition",
-        msg: `Added ${orderType} ${side} order to position for ${baseAsset}`,
-      })
-
-      // TODO: when we add this to redis we could use a hash keyed by order number to prevent duplicate entries?
       let base_change =
         side === "BUY" ? new BigNumber(totalBaseTradeQuantity) : new BigNumber(totalBaseTradeQuantity).negated()
       await this.spot_positions_persistance.adjust_position_size_by(this.position_identifier, {

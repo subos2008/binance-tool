@@ -193,10 +193,34 @@ export class SpotPositionsExecution_StopLimitExit {
       } at ${stop_price.toFixed()}`
       this.logger.exception(tags, err)
       this.send_message(msg, tags)
-      this.logger.error(tags, { err })
       this.logger.error(tags, "ERROR: this position has no stop and will not be dumped")
-      // TODO: this should dump the position
-      throw err
+      // TODO: are there any 429s on this dump of position?
+      this.logger.error(tags, `Failed to create OCO order, dumping position`)
+      let market_sell_cmd: SpotMarketSellCommand = {
+        order_context,
+        market_identifier,
+        base_amount: executed_base_quantity,
+      }
+
+      // TODO: this could throw. Where is our logic if the dump fails? fatal message, record fail in return
+      await this.ee.market_sell(market_sell_cmd)
+
+      let spot_long_result: TradeAbstractionOpenLongResult = {
+        object_type: "TradeAbstractionOpenLongResult",
+        version: 1,
+        status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS",
+        http_status: 418,
+        msg: `${prefix}: ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`,
+        edge,
+        base_asset,
+        quote_asset,
+        executed_base_quantity: "0",
+        executed_quote_quantity: "0",
+        created_stop_order: false,
+        created_take_profit_order: false,
+      }
+      this.logger.event(tags, spot_long_result)
+      return spot_long_result
     }
 
     let spot_long_result: TradeAbstractionOpenLongResult = {

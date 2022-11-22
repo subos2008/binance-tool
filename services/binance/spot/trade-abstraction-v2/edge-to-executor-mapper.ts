@@ -9,7 +9,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../../../interfaces/logger"
+import { ServiceLogger } from "../../../../interfaces/logger"
 import { MarketIdentifier_V4 } from "../../../../events/shared/market-identifier"
 import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
@@ -28,7 +28,7 @@ import {
 import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
 import { FixedPositionSizer } from "../../../../edges/position-sizer/fixed-position-sizer"
 import { BinanceSpotExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
-import { SendMessageFunc } from "../../../../interfaces/send-message"
+import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-message"
 import { PositionSizer } from "../../../../interfaces/position-sizer"
 
 /**
@@ -49,7 +49,7 @@ export interface SpotPositionExecutionCloseResult {
 }
 
 export class SpotEdgeToExecutorMapper {
-  logger: Logger
+  logger: ServiceLogger
   ee: BinanceSpotExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
@@ -67,7 +67,7 @@ export class SpotEdgeToExecutorMapper {
     send_message,
     price_getter,
   }: {
-    logger: Logger
+    logger: ServiceLogger
     ee: BinanceSpotExecutionEngine
     positions_persistance: SpotPositionsPersistence
     send_message: SendMessageFunc
@@ -188,8 +188,7 @@ export class SpotEdgeToExecutorMapper {
           throw new Error(msg)
       }
     } catch (err: any) {
-      this.logger.error(tags, { err })
-      Sentry.captureException(err)
+      this.logger.exception(tags, err)
       let spot_long_result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
         version: 1,
@@ -202,7 +201,7 @@ export class SpotEdgeToExecutorMapper {
         err,
         execution_timestamp_ms: Date.now(),
       }
-      this.logger.error(spot_long_result)
+      this.logger.event({ ...tags, level: "error" }, spot_long_result)
       return spot_long_result
     }
   }
@@ -212,6 +211,7 @@ export class SpotEdgeToExecutorMapper {
     { quote_asset }: { quote_asset: string }
   ): Promise<TradeAbstractionCloseResult> {
     let { edge, base_asset, action } = cmd
+    let tags: ContextTags = { edge, base_asset }
     let prefix: string = `Closing ${edge}:${base_asset} spot position:`
 
     let execution_timestamp_ms = +Date.now()
@@ -230,7 +230,7 @@ export class SpotEdgeToExecutorMapper {
         signal_to_execution_slippage_ms,
         action,
       }
-      this.logger.info(spot_long_result)
+      this.logger.event(tags, spot_long_result)
       return spot_long_result
     }
 
@@ -255,22 +255,20 @@ export class SpotEdgeToExecutorMapper {
       )
 
       if (stop_order_id) {
-        this.logger.info({ edge }, `${prefix} cancelling stop order ${stop_order_id} on ${symbol}`)
+        this.logger.info(tags, `${prefix} cancelling stop order ${stop_order_id} on ${symbol}`)
         await this.ee.cancel_order({
           order_id: stop_order_id,
           symbol,
         })
       } else {
         let msg = `${prefix} No stop order found`
-        this.logger.info(msg)
-        this.send_message(msg, { edge })
+        this.logger.info(tags, msg)
       }
     } catch (err) {
       let msg = `Failed to cancel stop order on ${symbol} - was it cancelled manually?`
-      this.logger.warn(msg)
-      this.logger.warn({ err })
-      Sentry.captureException(err)
-      this.send_message(msg, { edge })
+      this.logger.warn(tags, msg)
+      this.logger.exception(tags, err)
+      this.send_message(msg, tags)
     }
 
     let oco_order_id: OrderId | null = null
@@ -279,22 +277,20 @@ export class SpotEdgeToExecutorMapper {
       oco_order_id = await this.positions_persistance.get_oco_order(spot_position_identifier)
 
       if (oco_order_id) {
-        this.logger.info({ edge }, `${prefix} cancelling oco order ${oco_order_id} on ${symbol}`)
+        this.logger.info(tags, `${prefix} cancelling oco order ${oco_order_id} on ${symbol}`)
         await this.ee.cancel_oco_order({
           order_id: oco_order_id,
           symbol,
         })
       } else {
         let msg = `${prefix} No oco order found`
-        this.logger.info(msg)
-        this.send_message(msg, { edge })
+        this.logger.info(tags, msg)
       }
     } catch (err) {
       let msg = `Failed to cancel oco order ${oco_order_id} on ${symbol} - was it cancelled manually?`
-      this.logger.warn(msg)
-      this.logger.warn({ err })
-      Sentry.captureException(err)
-      this.send_message(msg, { edge })
+      this.logger.warn(tags, msg)
+      this.logger.exception(tags, err)
+      this.send_message(msg, tags)
     }
 
     // Continue even if the attempt to cancel the stop/oco orders fails
@@ -325,10 +321,8 @@ export class SpotEdgeToExecutorMapper {
       return obj
     } catch (err) {
       let msg = `Failed to exit position on ${symbol}`
-      this.logger.error(msg)
-      this.logger.error({ err })
-      Sentry.captureException(err)
-      this.send_message(msg, { edge })
+      this.logger.exception(tags, err, msg)
+      this.send_message(msg, tags)
       throw err
     }
   }

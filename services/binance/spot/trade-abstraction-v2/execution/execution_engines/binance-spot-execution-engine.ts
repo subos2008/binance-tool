@@ -1,5 +1,5 @@
 import { AlgoUtils } from "./_internal/binance_algo_utils_v2"
-import { Logger } from "../../../../../../interfaces/logger"
+import { ServiceLogger } from "../../../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { MarketIdentifier_V4 } from "../../../../../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../../../../../events/shared/exchange-identifier"
@@ -30,6 +30,7 @@ import { OrderContextPersistence } from "../../../../../../classes/persistent_st
 import { OrderContext_V1 } from "../../../../../../interfaces/orders/order-context"
 import { BinanceStyleSpotPrices } from "../../../../../../classes/spot/abstractions/position-identifier"
 import { SendDatadogMetrics } from "../send-datadog-metrics"
+import { ContextTags } from "../../../../../../interfaces/send-message"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)
@@ -49,7 +50,7 @@ function sleep(ms: number) {
 
 export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   utils: AlgoUtils
-  logger: Logger
+  logger: ServiceLogger
   ei_getter: BinanceExchangeInfoGetter
   order_context_persistence: OrderContextPersistence
   metrics: SendDatadogMetrics
@@ -58,7 +59,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     logger,
     order_context_persistence,
   }: {
-    logger: Logger
+    logger: ServiceLogger
     order_context_persistence: OrderContextPersistence
   }) {
     assert(logger)
@@ -146,7 +147,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   //   throw new Error(`Something bad happened executing market_buy_by_quote_quantity`)
   // }
 
-  async execute_with_429_retries<T>(func: () => Promise<T>): Promise<T> {
+  async execute_with_429_retries<T>(tags: ContextTags, func: () => Promise<T>): Promise<T> {
     let allowed_retries = 3
     do {
       try {
@@ -156,9 +157,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
         allowed_retries = allowed_retries - 1
         if (allowed_retries <= 0) throw err
         if (err.message.match(/Too many new orders/ || err.code === -1015)) {
-          Sentry.captureException(err)
-          this.logger.warn({ err })
-          this.logger.warn(`429 from Binance, sleeping and retrying`)
+          this.logger.exception(tags, err, `429 from Binance, sleeping and retrying`)
         } else {
           throw err
         }
@@ -215,11 +214,10 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
           execution_timestamp_ms: result.transactTime,
         }
       }
-      this.logger.info(spot_long_result)
+      this.logger.event(tags, spot_long_result)
       return spot_long_result
     } catch (err: any) {
-      Sentry.captureException(err)
-      this.logger.error({ err })
+      this.logger.exception(tags, err)
 
       // TODO: can we do a more clean/complete job of catching exceptions from Binance?
       if (err.message.match(/Too many new orders/ || err.code === -1015)) {
@@ -235,7 +233,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
           execution_timestamp_ms: Date.now(),
           retry_after_seconds: 11,
         }
-        this.logger.info(spot_long_result)
+        this.logger.event(tags, spot_long_result)
         return spot_long_result
       } else if (err.message.match(/Account has insufficient balance for requested action/)) {
         let spot_long_result: SpotExecutionEngineBuyResult = {
@@ -248,7 +246,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
           http_status: 402, // 402: Payment Required
           execution_timestamp_ms: Date.now(),
         }
-        this.logger.info(spot_long_result)
+        this.logger.event(tags, spot_long_result)
         return spot_long_result
       } else {
         let spot_long_result: SpotExecutionEngineBuyResult = {
@@ -262,7 +260,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
           status: "INTERNAL_SERVER_ERROR",
           http_status: 500,
         }
-        this.logger.error(spot_long_result)
+        this.logger.event({ ...tags, level: "error" }, spot_long_result)
         return spot_long_result
       }
     }
@@ -272,15 +270,9 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   // TODO: add 429 try/catch logic
   // TODO: port to return SpotExecutionEngineBuyResult
   async stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<SpotStopMarketSellResult> {
-    try {
-      // TODO: move into the EE
-      // TODO: doesn't work with exceptions
-      this.metrics.stop_market_sell_request(cmd)
-    } catch (err) {
-      Sentry.captureException(err)
-      this.logger.error({ err })
-    }
+    this.metrics.stop_market_sell_request(cmd)
 
+    let tags: ContextTags = { edge: cmd.order_context.edge, base_asset: cmd.market_identifier.base_asset }
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let args = {
       exchange_info: await this.get_exchange_info(),
@@ -293,7 +285,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     let call = this.utils.munge_and_create_stop_loss_limit_sell_order.bind(this.utils, args)
     // NB: this can throw 429's as it has a limited number of retries
     // TODO: add a try/catch around this function making loud complaints about FAILED_TO_CREATE_EXIT_ORDERS
-    let order: Order = await this.execute_with_429_retries(call)
+    let order: Order = await this.execute_with_429_retries(tags, call)
     if (!order?.clientOrderId) {
       throw new Error(`Failed to create stop order`)
     }
@@ -304,8 +296,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
       // TODO: doesn't work with exceptions
       this.metrics.stop_market_sell_result(result)
     } catch (err) {
-      Sentry.captureException(err)
-      this.logger.error({ err })
+      this.logger.exception(tags, err)
     }
     return result
   }
@@ -343,6 +334,11 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   // TODO: port to return SpotExecutionEngineBuyResult
   async market_sell(cmd: SpotMarketSellCommand): Promise<Order> {
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
+    let tags: ContextTags = {
+      edge: cmd.order_context.edge,
+      base_asset: cmd.market_identifier.base_asset,
+      symbol: cmd.market_identifier.symbol,
+    }
     let order: Order | undefined = await this.utils.create_market_sell_order({
       base_amount: cmd.base_amount,
       pair: cmd.market_identifier.symbol,
@@ -353,8 +349,8 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
       return order
     }
     let msg = `Failed to create market sell order for ${cmd.market_identifier.symbol}`
-    this.logger.warn(msg)
-    this.logger.info(order)
+    this.logger.warn(tags, msg)
+    this.logger.info(tags, order)
     throw new Error(msg)
   }
 
@@ -362,7 +358,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   // TODO: port to return SpotExecutionEngineBuyResult
   async oco_sell_order(cmd: SpotOCOSellCommand): Promise<void> {
     let { base_asset, symbol } = cmd.market_identifier
-    let tags = { base_asset, symbol }
+    let tags = { base_asset, symbol, edge: cmd.order_context.edge }
 
     this.logger.event(tags, cmd)
     let { stop_ClientOrderId, take_profit_ClientOrderId, oco_list_ClientOrderId } = cmd
@@ -383,7 +379,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
 
     // NB: this can throw 429's as it has a limited number of retries
     // TODO: add a try/catch around this function making loud complaints about FAILED_TO_CREATE_EXIT_ORDERS
-    let order: OcoOrder | undefined = await this.execute_with_429_retries(call)
+    let order: OcoOrder | undefined = await this.execute_with_429_retries(tags, call)
 
     this.logger.event(tags, { object_type: "BinanceOrder", ...order })
     if (order && order.listClientOrderId) {
@@ -391,8 +387,8 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
       return
     }
     let msg = `Failed to create oco sell order for ${cmd.market_identifier.symbol}`
-    this.logger.warn(msg)
-    this.logger.info(order)
+    this.logger.warn(tags, msg)
+    this.logger.info(tags, order)
     throw new Error(msg)
   }
 

@@ -9,7 +9,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../../../../interfaces/logger"
+import { Logger, ServiceLogger } from "../../../../../interfaces/logger"
 import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identifier"
 import { SpotPositionsPersistence } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import {
@@ -44,7 +44,7 @@ import { PositionSizer } from "../../../../../interfaces/position-sizer"
  * fixed at instantiation
  */
 export class SpotPositionsExecution_BuyLimit {
-  logger: Logger
+  logger: ServiceLogger
   ee: BinanceSpotExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
@@ -60,7 +60,7 @@ export class SpotPositionsExecution_BuyLimit {
     position_sizer,
     price_getter,
   }: {
-    logger: Logger
+    logger: ServiceLogger
     ee: BinanceSpotExecutionEngine
     positions_persistance: SpotPositionsPersistence
     send_message: SendMessageFunc
@@ -93,8 +93,7 @@ export class SpotPositionsExecution_BuyLimit {
     try {
       this.metrics.buy_limit_request(args)
     } catch (err) {
-      Sentry.captureException(err)
-      this.logger.error({ err })
+      this.logger.exception(tags, err)
     }
 
     let prefix = `${edge}:${base_asset} open spot long: `
@@ -135,8 +134,7 @@ export class SpotPositionsExecution_BuyLimit {
       try {
         this.metrics.buy_limit_result(buy_result, { base_asset, quote_asset, edge })
       } catch (err) {
-        Sentry.captureException(err)
-        this.logger.error({ err })
+        this.logger.exception(tags, err)
       }
 
       if (buy_result.status !== "FILLED") {
@@ -148,7 +146,7 @@ export class SpotPositionsExecution_BuyLimit {
           base_asset,
           quote_asset,
         }
-        this.logger.warn(result)
+        this.logger.event({ ...tags, level: "warn" }, result)
         return result
       }
 
@@ -173,11 +171,10 @@ export class SpotPositionsExecution_BuyLimit {
         created_stop_order: false,
         created_take_profit_order: false,
       }
-      this.logger.info(spot_long_result)
+      this.logger.event(tags, spot_long_result)
       return spot_long_result
     } catch (err: any) {
-      Sentry.captureException(err)
-      this.logger.error({ err })
+      this.logger.exception(tags, err)
       let msg = `${prefix}: INTERNAL_SERVER_ERROR opening spot position using ${
         args.quote_asset
       }: ${err.toString()}`
@@ -193,11 +190,8 @@ export class SpotPositionsExecution_BuyLimit {
         http_status: 500,
         execution_timestamp_ms: Date.now(),
       }
-      this.logger.error(spot_long_result)
-      this.send_message(msg, {
-        edge: args.edge,
-        base_asset: args.base_asset,
-      })
+      this.logger.event(tags, spot_long_result)
+      this.send_message(msg, tags)
 
       return spot_long_result
     }

@@ -12,14 +12,13 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
-import { Logger } from "../../../../interfaces/logger"
+import { ServiceLogger } from "../../../../interfaces/logger"
 import { TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { TradeAbstractionCloseResult } from "./interfaces/close"
-import Sentry from "../../../../lib/sentry"
 
 export class SendDatadogMetrics {
   dogstatsd: StatsD
-  logger: Logger
+  logger: ServiceLogger
 
   constructor({
     service_name,
@@ -28,7 +27,7 @@ export class SendDatadogMetrics {
   }: {
     service_name: string
     exchange_identifier: ExchangeIdentifier_V3
-    logger: Logger
+    logger: ServiceLogger
   }) {
     this.logger = logger
     this.dogstatsd = new StatsD({
@@ -52,9 +51,8 @@ export class SendDatadogMetrics {
           // console.log("Successfully sent", bytes, "bytes to DogStatsD")
         }
       })
-    } catch (e) {
-      this.logger.warn(`Failed to submit metrics to DogStatsD`)
-      Sentry.captureException(e)
+    } catch (err) {
+      this.logger.exception({}, err, `Failed to submit metrics to DogStatsD`)
     }
   }
 
@@ -65,7 +63,7 @@ export class SendDatadogMetrics {
   }: {
     cmd_received_timestamp_ms: number
     signal_timestamp_ms: number
-    tags: Tags
+    tags: { [key: string]: string }
   }) {
     try {
       let signal_to_cmd_received_slippage_ms = Number(
@@ -78,8 +76,7 @@ export class SendDatadogMetrics {
         tags
       )
     } catch (err) {
-      this.logger.warn({ ...tags, err }, `Failed to submit metric to DogStatsD`)
-      Sentry.captureException(err)
+      this.logger.exception(tags, err, `Failed to submit metric to DogStatsD`)
     }
   }
 
@@ -90,7 +87,9 @@ export class SendDatadogMetrics {
   }: {
     result: TradeAbstractionOpenLongResult
     cmd_received_timestamp_ms: number
-    tags: Tags
+    tags: {
+      [key: string]: string
+    }
   }) {
     try {
       // TODO: add command_recieved_to_execution_slippage
@@ -108,8 +107,7 @@ export class SendDatadogMetrics {
         .toFixed(0)
       this.dogstatsd.distribution(".execution_time_ms", Number(execution_time_ms), undefined, tags)
     } catch (err) {
-      this.logger.warn({ ...tags, err }, `Failed to submit metrics to DogStatsD`)
-      Sentry.captureException(err)
+      this.logger.exception(tags, err, `Failed to submit metrics to DogStatsD`)
     }
   }
 
@@ -120,7 +118,9 @@ export class SendDatadogMetrics {
   }: {
     result: TradeAbstractionCloseResult
     cmd_received_timestamp_ms: number
-    tags: Tags
+    tags: {
+      [key: string]: string
+    }
   }) {
     try {
       this.dogstatsd.increment(".trading_abstraction_close_result", tags)
@@ -137,8 +137,7 @@ export class SendDatadogMetrics {
         .toFixed(0)
       this.dogstatsd.distribution(".execution_time_ms", Number(execution_time_ms), undefined, tags)
     } catch (err) {
-      this.logger.warn({ ...tags, err }, `Failed to submit metrics to DogStatsD`)
-      Sentry.captureException(err)
+      this.logger.exception(tags, err, `Failed to submit metrics to DogStatsD`)
     }
   }
 }

@@ -5,12 +5,11 @@
 import { strict as assert } from "assert"
 import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
-import { Logger } from "../../interfaces/logger"
+import { ServiceLogger } from "../../interfaces/logger"
 import Sentry from "../../lib/sentry"
 import { TradeAbstractionOpenLongResult } from "../binance/spot/trade-abstraction-v2/interfaces/long"
 import { TradeAbstractionCloseResult } from "../binance/spot/trade-abstraction-v2/interfaces/close"
 import { Edge70SignalProcessor } from "./interfaces"
-import { AuthorisedEdgeType } from "../../classes/spot/abstractions/position-identifier"
 import { Edge70Signal } from "../edge70-signals/interfaces/edge70-signal"
 
 const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
@@ -20,7 +19,7 @@ if (TAS_URL === undefined) {
 
 export class Edge70ForwarderToEdge70Spot implements Edge70SignalProcessor {
   send_message: Function
-  logger: Logger
+  logger: ServiceLogger
   event_name: MyEventNameType
   tas_client: TradeAbstractionServiceClient
   forward_short_signals_as_close_position: boolean
@@ -32,7 +31,7 @@ export class Edge70ForwarderToEdge70Spot implements Edge70SignalProcessor {
     forward_short_signals_as_close_position,
   }: {
     send_message: (msg: string) => void
-    logger: Logger
+    logger: ServiceLogger
     event_name: MyEventNameType
     forward_short_signals_as_close_position: boolean
   }) {
@@ -49,7 +48,7 @@ export class Edge70ForwarderToEdge70Spot implements Edge70SignalProcessor {
     assert.equal(signal.object_type, "Edge70Signal")
     assert.equal(signal.edge, "edge70")
     let edge = "edge70"
-    
+
     let { base_asset } = signal.market_identifier
     if (!base_asset) {
       throw new Error(`base_asset not specified in market_identifier: ${JSON.stringify(signal.market_identifier)}`)

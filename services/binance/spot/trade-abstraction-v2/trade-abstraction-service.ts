@@ -7,7 +7,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { disallowed_base_assets_for_entry } from "../../../../lib/stable-coins"
 import Sentry from "../../../../lib/sentry"
-import { Logger } from "../../../../interfaces/logger"
+import { ServiceLogger } from "../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { SpotPositionsQuery } from "../../../../classes/spot/abstractions/spot-positions-query"
 import {
@@ -26,13 +26,13 @@ import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/bin
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
 import { RedisClient } from "redis"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
-import { SendMessageFunc } from "../../../../interfaces/send-message"
+import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-message"
 
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands
  */
 export class TradeAbstractionService {
-  logger: Logger
+  logger: ServiceLogger
   send_message: SendMessageFunc
   quote_asset: string
   private positions: SpotPositionsQuery // query state of existing open positions
@@ -45,7 +45,7 @@ export class TradeAbstractionService {
     send_message,
     redis,
   }: {
-    logger: Logger
+    logger: ServiceLogger
     quote_asset: string
     ee: ExecutionEngine
     send_message: SendMessageFunc
@@ -89,18 +89,18 @@ export class TradeAbstractionService {
   // or signal_long
   // Spot so we can only be long or no-position
   async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
-    this.logger.info(cmd)
+    cmd.quote_asset = this.quote_asset
+    let tags = { edge: cmd.edge, base_asset: cmd.base_asset, quote_asset: cmd.quote_asset }
+    this.logger.event(tags, cmd)
+
     assert.equal(cmd.direction, "long")
     assert.equal(cmd.action, "open")
-    cmd.quote_asset = this.quote_asset
 
     let { direction } = cmd
 
-    let tags = { edge: cmd.edge, base_asset: cmd.base_asset, quote_asset: cmd.quote_asset }
-
     if (!is_authorised_edge(cmd.edge)) {
       let err = new Error(`UnauthorisedEdge ${cmd.edge}`)
-      this.logger.warn({ err })
+      this.logger.exception(tags, err)
       let obj: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
         version: 1,
@@ -112,13 +112,13 @@ export class TradeAbstractionService {
         msg: err.message,
         err,
       }
-      this.logger.info(obj)
+      this.logger.event(tags, obj)
       return obj
     }
 
     if (disallowed_base_assets_for_entry.includes(cmd.base_asset)) {
       let err = new Error(`Opening ${direction} position in ${cmd.base_asset} is explicity disallowed`)
-      this.logger.warn({ err })
+      this.logger.exception(tags, err)
       let obj: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
         version: 1,
@@ -130,7 +130,7 @@ export class TradeAbstractionService {
         msg: err.message,
         err,
       }
-      this.logger.info(obj)
+      this.logger.event(tags, obj)
       return obj
     }
 
@@ -157,7 +157,7 @@ export class TradeAbstractionService {
         http_status: 409,
         msg: `TradeAbstractionOpenLongResult: ${edge}${cmd.base_asset}: ALREADY_IN_POSITION`,
       }
-      this.logger.info(spot_long_result)
+      this.logger.event(tags, spot_long_result)
       return spot_long_result
     }
 
@@ -189,6 +189,7 @@ export class TradeAbstractionService {
   async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {
     assert.equal(cmd.action, "close")
     let { quote_asset } = this
+    let tags: ContextTags = { quote_asset, base_asset: cmd.base_asset, edge: cmd.edge }
 
     this.logger.event(
       { level: "info" },
@@ -199,8 +200,7 @@ export class TradeAbstractionService {
       let result: TradeAbstractionCloseResult = await this.spot_ee.close_position(cmd, { quote_asset })
       return result
     } catch (err) {
-      Sentry.captureException(err)
-      this.logger.error({ err })
+      this.logger.exception(tags, err)
       throw err
     }
   }

@@ -16,11 +16,10 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-import { Logger } from "../../../../interfaces/logger"
-import { Logger as LoggerClass } from "../../../../lib/faux_logger"
-const logger: Logger = new LoggerClass({ silent: false })
+import { BunyanServiceLogger } from "../../../../lib/service-logger"
 
-logger.info({ hello: "world" }, "Service starting")
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -48,6 +47,7 @@ const expressWinston = require("express-winston")
 var app = express()
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
+import { ServiceLogger } from "../../../../interfaces/logger"
 const health_and_readiness = new HealthAndReadiness({ logger })
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 const service_is_healthy = health_and_readiness.addSubsystem({

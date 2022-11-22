@@ -5,16 +5,9 @@ import { strict as assert } from "assert"
 
 require("dotenv").config()
 
-import { Logger } from "./../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false })
-
 const service_name = "position-performance"
 
 const update_interval_seconds: number = Number(process.env.UPDATE_INTERVAL_SECONDS) || 2 * 60 * 60
-
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
-set_redis_logger(logger)
-const redis = get_redis_client()
 
 import BigNumber from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -34,6 +27,12 @@ import { CurrentAllPricesGetter } from "../../interfaces/exchanges/generic/price
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import express from "express"
+import { get_redis_client, set_redis_logger } from "../../lib/redis"
+import { ServiceLogger } from "../../interfaces/logger"
+import { BunyanServiceLogger } from "../../lib/service-logger"
+
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
@@ -43,7 +42,6 @@ const service_is_healthy: HealthAndReadinessSubsystem = health_and_readiness.add
   initialised: true,
 })
 
-
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
@@ -51,9 +49,12 @@ process.on("unhandledRejection", (err) => {
   service_is_healthy.healthy(false)
 })
 
+set_redis_logger(logger)
+const redis = get_redis_client()
+
 export class PositionPerformance {
   send_message: SendMessageFunc
-  logger: Logger
+  logger: ServiceLogger
   spot_positions_persistance: SpotPositionsPersistence
   spot_positions_query: SpotPositionsQuery
   ee: CurrentAllPricesGetter
@@ -68,7 +69,7 @@ export class PositionPerformance {
     health_and_readiness,
   }: {
     send_message: SendMessageFunc
-    logger: Logger
+    logger: ServiceLogger
     spot_positions_persistance: SpotPositionsPersistence
     spot_positions_query: SpotPositionsQuery
     ee: CurrentAllPricesGetter

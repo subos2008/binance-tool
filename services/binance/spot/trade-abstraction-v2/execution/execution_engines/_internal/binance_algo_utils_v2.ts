@@ -9,7 +9,7 @@ BigNumber.DEBUG = true // Prevent NaN
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
-import { Logger } from "../../../../../../../interfaces/logger"
+import { Logger, ServiceLogger } from "../../../../../../../interfaces/logger"
 import { TradingRules } from "../../../../../../../lib/trading_rules"
 import Sentry from "../../../../../../../lib/sentry"
 import {
@@ -26,10 +26,10 @@ import {
 import { Binance as BinanceType } from "binance-api-node"
 
 export class AlgoUtils {
-  logger: Logger
+  logger: ServiceLogger
   ee: BinanceType
 
-  constructor({ logger, ee }: { logger: Logger; ee: BinanceType }) {
+  constructor({ logger, ee }: { logger: ServiceLogger; ee: BinanceType }) {
     assert(logger)
     this.logger = logger
     assert(ee)
@@ -174,6 +174,8 @@ export class AlgoUtils {
     clientOrderId: string
     timeInForce?: TimeInForce_LT
   }) {
+    let tags = { symbol: pair }
+
     assert(pair && price && base_amount)
     assert(BigNumber.isBigNumber(base_amount))
     assert(BigNumber.isBigNumber(price))
@@ -193,14 +195,14 @@ export class AlgoUtils {
         timeInForce,
         newOrderRespType: "RESULT",
       }
-      this.logger.info(`${pair} Creating LIMIT BUY ORDER for ${quantity} at ${price_string}`)
+      this.logger.info(tags, `${pair} Creating LIMIT BUY ORDER for ${quantity} at ${price_string}`)
       let response = await this.ee.order(args)
-      this.logger.info(JSON.stringify({ ...response, object_type: "BinanceOrder" }))
-      this.logger.info(`order id: ${response.clientOrderId}`)
+      this.logger.info(tags, JSON.stringify({ ...response, object_type: "BinanceOrder" }))
+      this.logger.info(tags, `order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (err) {
-      Sentry.captureException(err)
+      this.logger.exception(tags, err)
       throw err
     }
   }
@@ -248,6 +250,7 @@ export class AlgoUtils {
     price: BigNumber
     clientOrderId: string
   }) {
+    let tags = { symbol: pair }
     assert(pair && price && base_amount)
     assert(BigNumber.isBigNumber(base_amount))
     assert(BigNumber.isBigNumber(price))
@@ -263,15 +266,14 @@ export class AlgoUtils {
         price: price.toFixed(),
         newClientOrderId: clientOrderId,
       }
-      this.logger.info(`${pair} Creating LIMIT SELL ORDER for ${quantity} at ${price.toFixed()}`)
+      this.logger.info(tags, `${pair} Creating LIMIT SELL ORDER for ${quantity} at ${price.toFixed()}`)
       let response = await this.ee.order(args)
-      this.logger.info(`order id: ${response.clientOrderId}`)
+      this.logger.info(tags, `order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (err: any) {
       console.error(`Sell error: ${err.body}`)
-      console.error(err)
-      Sentry.captureException(err)
+      this.logger.exception(tags, err)
       throw err
     }
   }
@@ -297,6 +299,7 @@ export class AlgoUtils {
     take_profit_ClientOrderId: string
     oco_list_ClientOrderId: string
   }) {
+    let tags = { symbol: pair }
     assert(pair && target_price && base_amount && stop_price && limit_price)
     assert(BigNumber.isBigNumber(base_amount))
     assert(BigNumber.isBigNumber(target_price))
@@ -343,7 +346,7 @@ export class AlgoUtils {
         limitClientOrderId: take_profit_ClientOrderId,
         stopClientOrderId: stop_ClientOrderId,
       }
-      this.logger.info(
+      this.logger.info(tags,
         `${pair} Creating OCO ORDER for ${quantity} at target ${target_price.toFixed()} stop triggered at ${stop_price.toFixed()}`
       )
       //   export interface OcoOrder {
@@ -364,8 +367,8 @@ export class AlgoUtils {
       Sentry.captureException(err, {
         tags: context,
       })
+      this.logger.exception(tags, err)
       this.logger.error(context, `OCO error: ${err.body}`)
-      this.logger.error({ err })
       throw err
     }
   }
@@ -385,19 +388,22 @@ export class AlgoUtils {
     limit_price: BigNumber
     clientOrderId: string
   }): Promise<Order> {
+    let tags = { symbol: pair }
     assert(pair && stop_price && base_amount && stop_price && limit_price)
     assert(BigNumber.isBigNumber(base_amount))
     assert(BigNumber.isBigNumber(stop_price))
     assert(BigNumber.isBigNumber(limit_price))
     if (stop_price.isEqualTo(limit_price)) {
       this.logger.warn(
+        tags,
         `WARNING: stop loss orders with limit and stop price the same will not fill in fast moving markets`
       )
     }
     if (limit_price.isEqualTo(0)) {
-      this.logger.warn(`WARNING: stop loss orders with limit price of 0: munging not tested`)
+      this.logger.warn(tags, `WARNING: stop loss orders with limit price of 0: munging not tested`)
     }
     this.logger.info(
+      tags,
       `Pre-munge: ${pair} Creating STOP_LOSS_LIMIT SELL ORDER for ${base_amount.toFixed()} at ${limit_price.toFixed()} triggered at ${stop_price.toFixed()}`
     )
     try {
@@ -416,15 +422,15 @@ export class AlgoUtils {
         newClientOrderId: clientOrderId,
       }
       this.logger.info(
+        tags,
         `${pair} Creating STOP_LOSS_LIMIT SELL ORDER for ${quantity} at ${limit_price.toFixed()} triggered at ${stop_price.toFixed()}`
       )
       let response = await this.ee.order(args)
-      this.logger.info(`order id: ${response.clientOrderId}`)
+      this.logger.info(tags, `order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (err: any) {
-      Sentry.captureException(err)
-      this.logger.error({ err })
+      this.logger.exception(tags, err)
       throw err
     }
   }
@@ -438,6 +444,7 @@ export class AlgoUtils {
     pair: string
     clientOrderId: string
   }) {
+    let tags = { symbol: pair }
     assert(pair)
     assert(base_amount)
     assert(BigNumber.isBigNumber(base_amount))
@@ -451,16 +458,14 @@ export class AlgoUtils {
         quantity,
         newClientOrderId: clientOrderId,
       }
-      this.logger.info(`Creating MARKET BUY ORDER for ${quantity} ${pair}`)
+      this.logger.info(tags, `Creating MARKET BUY ORDER for ${quantity} ${pair}`)
       let response = await this.ee.order(args)
-      this.logger.info(`order id: ${response.clientOrderId}`)
+      this.logger.info(tags, `order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (err: any) {
-      Sentry.captureException(err)
-      // .body? Really?
-      console.error(`Market Buy error: ${err.body}`)
-      console.error(err)
+      this.logger.exception(tags, err)
+      console.error(`MARKET BUY error: ${err.body}`) // .body? Really?
       throw err
     }
   }
@@ -474,6 +479,7 @@ export class AlgoUtils {
     pair: string
     clientOrderId: string
   }) {
+    let tags = { symbol: pair }
     assert(pair)
     assert(quote_amount)
     assert(BigNumber.isBigNumber(quote_amount))
@@ -487,16 +493,14 @@ export class AlgoUtils {
         quoteOrderQty,
         newClientOrderId: clientOrderId,
       }
-      this.logger.info(`Creating MARKET BUY ORDER for quoteOrderQty ${quoteOrderQty} ${pair}`)
+      this.logger.info(tags, `Creating MARKET BUY ORDER for quoteOrderQty ${quoteOrderQty} ${pair}`)
       let response = await this.ee.order(args)
-      this.logger.info(`order id: ${response.clientOrderId}`)
+      this.logger.info(tags, `order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (err: any) {
-      Sentry.captureException(err)
-      // .body? Really?
-      console.error(`Market buy error: ${err.body}`)
-      console.error(err)
+      this.logger.exception(tags, err)
+      console.error(`MARKET BUY error: ${err.body}`) // .body? Really?
       throw err
     }
   }
@@ -510,6 +514,7 @@ export class AlgoUtils {
     pair: string
     clientOrderId: string
   }) {
+    let tags = { symbol: pair }
     assert(pair)
     assert(base_amount)
     assert(BigNumber.isBigNumber(base_amount))
@@ -524,16 +529,14 @@ export class AlgoUtils {
         newClientOrderId: clientOrderId,
         newOrderRespType: "RESULT",
       }
-      this.logger.info(`Creating MARKET SELL ORDER for ${quantity} ${pair}`)
+      this.logger.info(tags, `Creating MARKET SELL ORDER for ${quantity} ${pair}`)
       let response = await this.ee.order(args)
-      this.logger.info(`order id: ${response.clientOrderId}`)
+      this.logger.info(tags, `order id: ${response.clientOrderId}`)
       assert.equal(response.clientOrderId, clientOrderId)
       return response
     } catch (err: any) {
-      Sentry.captureException(err)
-      // .body? Really?
-      console.error(`Market sell error: ${err.body}`)
-      console.error(err)
+      this.logger.exception(tags, err)
+      console.error(`MARKET SELL error: ${err.body}`) // .body? Really?
       throw err
     }
   }

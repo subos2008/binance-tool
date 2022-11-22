@@ -1,10 +1,8 @@
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"
-import { Logger } from "../../../../../interfaces/logger"
+import { ServiceLogger } from "../../../../../interfaces/logger"
 import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "../interfaces/long"
 import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "../interfaces/short"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "../interfaces/close"
-
-const JSONBigNumber = require("./JSONBigNumber")
 import { URL } from "url"
 
 import {
@@ -19,11 +17,11 @@ Sentry.configureScope(function (scope: any) {
 })
 
 export class TradeAbstractionServiceClient {
-  logger: Logger
+  logger: ServiceLogger
   TAS_URL: string
 
   // Let TAS_URL be undefined because we check it here
-  constructor({ logger, TAS_URL }: { logger: Logger; TAS_URL: string | undefined }) {
+  constructor({ logger, TAS_URL }: { logger: ServiceLogger; TAS_URL: string | undefined }) {
     this.logger = logger
 
     if (TAS_URL === undefined) {
@@ -38,8 +36,7 @@ export class TradeAbstractionServiceClient {
 
   async get_exchange_identifier(): Promise<ExchangeIdentifier_V3> {
     let response = await this.get(new URL("/exchange_identifier", this.TAS_URL).toString())
-    this.logger.info(`Returned exchange_identifier:`)
-    this.logger.event({}, response.data)
+    // this.logger.event({}, response.data) // exchange_identifier
     return response.data
   }
 
@@ -59,7 +56,7 @@ export class TradeAbstractionServiceClient {
     let tas_response = response.data as TradeAbstractionCloseResult
     if (tas_response?.object_type !== "TradeAbstractionCloseResult") {
       let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionCloseResult`)
-      this.logger.error({ err })
+      this.logger.exception({}, err)
       Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
     }
     return tas_response
@@ -71,7 +68,7 @@ export class TradeAbstractionServiceClient {
     let tas_response = response.data as TradeAbstractionOpenLongResult
     if (tas_response?.object_type !== "TradeAbstractionOpenLongResult") {
       let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenLongResult`)
-      this.logger.error({ err })
+      this.logger.exception({}, err)
       Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
     }
     return tas_response
@@ -83,8 +80,8 @@ export class TradeAbstractionServiceClient {
     let tas_response = response.data as TradeAbstractionOpenShortResult
     if (tas_response?.object_type !== "TradeAbstractionOpenShortResult") {
       let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenShortResult`)
+      this.logger.exception({}, err)
       Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
-      this.logger.error({ err })
     }
     return tas_response
   }

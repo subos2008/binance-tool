@@ -16,12 +16,11 @@ Sentry.configureScope(function (scope: any) {
 
 var service_is_healthy: boolean = true
 
-import { Logger } from "./../../lib/faux_logger"
-const logger: Logger = new Logger({ silent: false })
-
 import express, { Request, Response } from "express"
 import { Telegraf } from "telegraf"
 import { Commands } from "./commands"
+import { BunyanServiceLogger } from "../../lib/service-logger"
+import { ServiceLogger } from "../../interfaces/logger"
 
 const token = process.env.TELEGRAM_KEY
 if (token === undefined) {
@@ -32,6 +31,9 @@ const TAS_URL = process.env.SPOT_TRADE_ABSTRACTION_SERVICE_URL
 if (TAS_URL === undefined) {
   throw new Error("SPOT_TRADE_ABSTRACTION_SERVICE_URL must be provided!")
 }
+
+const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
+logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
 
 var app = express()
 var bodyParser = require("body-parser")

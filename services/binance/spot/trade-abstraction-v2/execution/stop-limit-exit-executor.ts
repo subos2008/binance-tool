@@ -9,7 +9,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { Logger } from "../../../../../interfaces/logger"
+import { Logger, ServiceLogger } from "../../../../../interfaces/logger"
 import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identifier"
 import { SpotPositionsPersistence } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
@@ -19,7 +19,11 @@ import {
 } from "../../../../../classes/spot/abstractions/position-identifier"
 import { OrderId } from "../../../../../classes/persistent_state/interface/order-context-persistence"
 import { TradeAbstractionOpenLongCommand_StopLimitExit, TradeAbstractionOpenLongResult } from "../interfaces/long"
-import { SpotStopMarketSellCommand, TradeContext } from "../../../../../interfaces/exchanges/spot-execution-engine"
+import {
+  SpotMarketSellCommand,
+  SpotStopMarketSellCommand,
+  TradeContext,
+} from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
 import { SpotPositionsExecution_BuyLimit } from "./buy-limit-executor"
@@ -41,7 +45,7 @@ import { PositionSizer } from "../../../../../interfaces/position-sizer"
  * fixed at instantiation
  */
 export class SpotPositionsExecution_StopLimitExit {
-  logger: Logger
+  logger: ServiceLogger
   ee: BinanceSpotExecutionEngine
   send_message: SendMessageFunc
   position_sizer: PositionSizer
@@ -57,7 +61,7 @@ export class SpotPositionsExecution_StopLimitExit {
     position_sizer,
     price_getter,
   }: {
-    logger: Logger
+    logger: ServiceLogger
     ee: BinanceSpotExecutionEngine
     positions_persistance: SpotPositionsPersistence
     send_message: SendMessageFunc
@@ -108,7 +112,7 @@ export class SpotPositionsExecution_StopLimitExit {
   }
 
   /* Open both does [eventually] the order execution/tracking, sizing, and maintains redis */
-
+  // TODO: there is no wrapping exception (500) on this function - if it throws it will throw!
   async open_position(
     args: TradeAbstractionOpenLongCommand_StopLimitExit
   ): Promise<TradeAbstractionOpenLongResult> {
@@ -165,6 +169,14 @@ export class SpotPositionsExecution_StopLimitExit {
     this.logger.event(tags, stop_cmd)
 
     try {
+      this.logger.event(
+        { level: "warn", ...tags },
+        {
+          object_type: "TODO",
+          msg: `e60: can throw instead of returning enum status result. it also won't exit (dump the position) if the stop creation fails`,
+        }
+      )
+
       let stop_result = await this.ee.stop_market_sell(stop_cmd)
       stop_order_id = stop_result.order_id
       stop_price = stop_result.stop_price
@@ -173,21 +185,13 @@ export class SpotPositionsExecution_StopLimitExit {
         base_asset: args.base_asset,
         edge: args.edge,
       }
-
-      this.logger.event(
-        { level: "warn", ...tags },
-        {
-          object_type: "TODO",
-          msg: `e60: can throw instead of returning enum status result. it also won't exit if the stop creation fails`,
-        }
-      )
-
       await this.positions_persistance.set_stop_order(spot_position_identifier, stop_order_id.toString())
     } catch (err) {
       Sentry.captureException(err)
       let msg = `Failed to create stop limit order for ${args.edge}:${args.base_asset} on ${
         stop_cmd.market_identifier.symbol
       } at ${stop_price.toFixed()}`
+      this.logger.exception(tags, err)
       this.send_message(msg, tags)
       this.logger.error(tags, { err })
       this.logger.error(tags, "ERROR: this position has no stop and will not be dumped")

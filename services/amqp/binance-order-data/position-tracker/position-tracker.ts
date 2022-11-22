@@ -106,11 +106,6 @@ export class SpotPositionTracker {
     let position = await this.load_position_for_order(generic_order_data)
     await position.add_order_to_position({ generic_order_data }) // this would have created it if it didn't exist - from the order data
 
-    this.logger.event(tags, {
-      object_type: "OrderAddedToPosition",
-      msg: `Added ${orderType} ${side} order to position for ${baseAsset}`,
-    })
-
     if (!averageExecutionPrice) {
       throw new Error(`averageExecutionPrice not defined, unable to publish SpotPositionOpenedEvent`)
     }
@@ -174,11 +169,6 @@ export class SpotPositionTracker {
     // TODO: the code in autoexits that calls MarketUtils could call onto a position. Would be good on a position
     // to have one call to move the stops on all orders up at once. Position.move_all_stops_to(stop_price)
     await position.add_order_to_position({ generic_order_data })
-
-    this.logger.event(tags, {
-      object_type: "OrderAddedToPosition",
-      msg: `Added ${orderType} ${side} order to position for ${baseAsset}`,
-    })
 
     if (!averageExecutionPrice) {
       // TODO: set sentry context after unpacking the order (withScope)

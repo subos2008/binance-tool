@@ -30,7 +30,7 @@ import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import express from "express"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
-import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
+import { get_redis_client } from "../../../../lib/redis-v4"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
@@ -146,8 +146,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  set_redis_logger(logger)
-  let redis = get_redis_client()
+  let redis = await get_redis_client(logger, health_and_readiness)
   let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
 
   order_execution_tracker = new AMQP_BinanceOrderDataListener({

@@ -82,7 +82,7 @@ process.on("unhandledRejection", (err) => {
 })
 
 import { FuturesPortfolio } from "../../../../interfaces/portfolio"
-import { BinancePortfolioTracker } from "./binance-futures-portfolio-tracker"
+import { BinancePortfolioTracker } from "./binance-futures-portfolio-tracker.ts.disabled"
 import { ExchangeIdentifier } from "../../../../events/shared/exchange-identifier"
 import { PortfolioUtils } from "./futures-portfolio-utils"
 import express from "express"

@@ -31,9 +31,9 @@ BigNumber.prototype.valueOf = function () {
 import { SendMessage } from "../../../../classes/send_message/publish"
 import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
-import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
+import { get_redis_client } from "../../../../lib/redis-v4"
 import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
-import { RedisClient } from "redis"
+import { RedisClientType } from "redis-v4"
 import { TradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
 import { SendDatadogMetrics } from "./send-datadog-metrics"
@@ -88,161 +88,167 @@ app.use(
   })
 ) // for parsing application/x-www-form-urlencoded
 
-set_redis_logger(logger)
-let redis: RedisClient = get_redis_client()
+async function main() {
+  let redis: RedisClientType = await get_redis_client(logger, health_and_readiness)
+  const order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
+  const ee = new ExecutionEngine({ logger, order_context_persistence })
+  const exchange_identifier = ee.get_exchange_identifier()
+  const metrics = new SendDatadogMetrics({ service_name, logger, exchange_identifier })
 
-const order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
-const ee = new ExecutionEngine({ logger, order_context_persistence })
-const exchange_identifier = ee.get_exchange_identifier()
+  let tas: TradeAbstractionService = new TradeAbstractionService({
+    logger,
+    quote_asset /* global */,
+    ee,
+    send_message,
+    redis,
+  })
 
-const metrics = new SendDatadogMetrics({ service_name, logger, exchange_identifier })
+  let mapper = new QueryParamsToCmdMapper({ logger })
 
-let tas: TradeAbstractionService = new TradeAbstractionService({
-  logger,
-  quote_asset /* global */,
-  ee,
-  send_message,
-  redis,
-})
-
-let mapper = new QueryParamsToCmdMapper({ logger })
-
-metrics.service_started()
-
-app.get("/exchange_identifier", async function (req: Request, res: Response, next: NextFunction) {
-  try {
-    res.status(200).json(await tas.get_exchange_identifier())
-  } catch (err) {
-    res.status(500)
-    next(err)
-  }
-})
-
-app.get("/prices", async function (req: Request, res: Response, next: NextFunction) {
-  try {
-    res.status(200).json(await tas.prices())
-  } catch (err) {
-    res.status(500)
-    next(err)
-  }
-})
-
-app.get("/positions", async function (req: Request, res: Response, next: NextFunction) {
-  try {
-    res.status(200).json(await tas.open_positions())
-  } catch (err) {
-    res.status(500)
-    next(err)
-  }
-})
-
-// TODO: long is a lot more evolved than close
-app.get("/close", async function (req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    let cmd_received_timestamp_ms = +Date.now()
-
-    let { result: mapper_result, tags } = mapper.close(req, {
-      cmd_received_timestamp_ms,
-      quote_asset,
-      exchange_identifier,
-    })
-
-    if (mapper_result.object_type === "TradeAbstractionCloseResult") {
-      res.status(mapper_result.http_status).json(mapper_result)
-      return
+  app.get("/exchange_identifier", async function (req: Request, res: Response, next: NextFunction) {
+    try {
+      res.status(200).json(await tas.get_exchange_identifier())
+    } catch (err) {
+      res.status(500)
+      next(err)
     }
+  })
 
-    if (mapper_result.object_type === "TradeAbstractionCloseCommand") {
-      let cmd: TradeAbstractionCloseCommand = mapper_result
-      let cmd_result: TradeAbstractionCloseResult = await tas.close(cmd)
-      tags.status = cmd_result.status
-
-      let { signal_timestamp_ms } = cmd
-
-      metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
-      metrics.trading_abstraction_close_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
-
-      // TODO - 429's for /close
-      // if (cmd_result.http_status === 429) {
-      //   res.setHeader('Retry-After', cmd_result.retry_after_seconds)
-      // }
-
-      res.status(cmd_result.http_status).json(cmd_result)
-
-      send_message(cmd_result.msg, tags)
-
-      if (cmd_result.http_status === 500) {
-        let msg: string = `TradeAbstractionCloseResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
-        logger.error(cmd_result, msg) // TODO: Tags?
-        Sentry.captureException(new Error(msg)) // TODO: Tags?
-      }
-      return
+  app.get("/prices", async function (req: Request, res: Response, next: NextFunction) {
+    try {
+      res.status(200).json(await tas.prices())
+    } catch (err) {
+      res.status(500)
+      next(err)
     }
+  })
 
-    throw new Error(`Unexpected object_type: ${(mapper_result as any).object_type}`)
-  } catch (err: any) {
-    Sentry.captureException(err)
-    logger.error(`Internal Server Error: ${err}`)
-    logger.error({ err })
-    res.status(500).json({ msg: "Internal Server Error" })
-    next(err)
-  }
-})
-
-app.get("/long", async function (req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    let cmd_received_timestamp_ms = +Date.now()
-
-    let { result: mapper_result, tags } = mapper.long(req, {
-      cmd_received_timestamp_ms,
-      quote_asset,
-      exchange_identifier,
-    })
-
-    if (mapper_result.object_type === "TradeAbstractionOpenLongResult") {
-      res.status(mapper_result.http_status).json(mapper_result)
-      return
+  app.get("/positions", async function (req: Request, res: Response, next: NextFunction) {
+    try {
+      res.status(200).json(await tas.open_positions())
+    } catch (err) {
+      res.status(500)
+      next(err)
     }
+  })
 
-    if (mapper_result.object_type === "TradeAbstractionOpenLongCommand") {
-      let cmd: TradeAbstractionOpenLongCommand = mapper_result
-      let cmd_result: TradeAbstractionOpenLongResult = await tas.long(cmd)
-      tags.status = cmd_result.status
+  // TODO: long is a lot more evolved than close
+  app.get("/close", async function (req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      let cmd_received_timestamp_ms = +Date.now()
 
-      let { signal_timestamp_ms } = cmd
+      let { result: mapper_result, tags } = mapper.close(req, {
+        cmd_received_timestamp_ms,
+        quote_asset,
+        exchange_identifier,
+      })
 
-      metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
-      metrics.trading_abstraction_open_spot_long_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
-
-      if (cmd_result.http_status === 429) {
-        res.setHeader("Retry-After", cmd_result.retry_after_seconds)
+      if (mapper_result.object_type === "TradeAbstractionCloseResult") {
+        res.status(mapper_result.http_status).json(mapper_result)
+        return
       }
 
-      res.status(cmd_result.http_status).json(cmd_result)
+      if (mapper_result.object_type === "TradeAbstractionCloseCommand") {
+        let cmd: TradeAbstractionCloseCommand = mapper_result
+        let cmd_result: TradeAbstractionCloseResult = await tas.close(cmd)
+        tags.status = cmd_result.status
 
-      send_message(cmd_result.msg, tags)
+        let { signal_timestamp_ms } = cmd
 
-      if (cmd_result.http_status === 500) {
-        let msg: string = `TradeAbstractionOpenLongResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
-        logger.error(cmd_result, msg) // TODO: Tags?
-        Sentry.captureException(new Error(msg)) // TODO: Tags?
+        metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
+        metrics.trading_abstraction_close_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
+
+        // TODO - 429's for /close
+        // if (cmd_result.http_status === 429) {
+        //   res.setHeader('Retry-After', cmd_result.retry_after_seconds)
+        // }
+
+        res.status(cmd_result.http_status).json(cmd_result)
+
+        send_message(cmd_result.msg, tags)
+
+        if (cmd_result.http_status === 500) {
+          let msg: string = `TradeAbstractionCloseResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
+          logger.error(cmd_result, msg) // TODO: Tags?
+          Sentry.captureException(new Error(msg)) // TODO: Tags?
+        }
+        return
       }
-      return
+
+      throw new Error(`Unexpected object_type: ${(mapper_result as any).object_type}`)
+    } catch (err: any) {
+      Sentry.captureException(err)
+      logger.error(`Internal Server Error: ${err}`)
+      logger.error({ err })
+      res.status(500).json({ msg: "Internal Server Error" })
+      next(err)
     }
+  })
 
-    throw new Error(`Unexpected object_type: ${(mapper_result as any).object_type}`)
-  } catch (err: any) {
-    logger.error(`Internal Server Error: ${err}`)
-    logger.error({ err })
-    res.status(500).json({ msg: "Internal Server Error" })
-    next(err)
-  }
+  app.get("/long", async function (req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      let cmd_received_timestamp_ms = +Date.now()
+
+      let { result: mapper_result, tags } = mapper.long(req, {
+        cmd_received_timestamp_ms,
+        quote_asset,
+        exchange_identifier,
+      })
+
+      if (mapper_result.object_type === "TradeAbstractionOpenLongResult") {
+        res.status(mapper_result.http_status).json(mapper_result)
+        return
+      }
+
+      if (mapper_result.object_type === "TradeAbstractionOpenLongCommand") {
+        let cmd: TradeAbstractionOpenLongCommand = mapper_result
+        let cmd_result: TradeAbstractionOpenLongResult = await tas.long(cmd)
+        tags.status = cmd_result.status
+
+        let { signal_timestamp_ms } = cmd
+
+        metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
+        metrics.trading_abstraction_open_spot_long_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
+
+        if (cmd_result.http_status === 429) {
+          res.setHeader("Retry-After", cmd_result.retry_after_seconds)
+        }
+
+        res.status(cmd_result.http_status).json(cmd_result)
+
+        send_message(cmd_result.msg, tags)
+
+        if (cmd_result.http_status === 500) {
+          let msg: string = `TradeAbstractionOpenLongResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
+          logger.error(cmd_result, msg) // TODO: Tags?
+          Sentry.captureException(new Error(msg)) // TODO: Tags?
+        }
+        return
+      }
+
+      throw new Error(`Unexpected object_type: ${(mapper_result as any).object_type}`)
+    } catch (err: any) {
+      logger.error(`Internal Server Error: ${err}`)
+      logger.error({ err })
+      res.status(500).json({ msg: "Internal Server Error" })
+      next(err)
+    }
+  })
+
+  /**
+   * "/short" is equivalent to "/close" for spot exchanges
+   *
+   */
+
+  metrics.service_started()
+}
+
+main().catch((err) => {
+  logger.error(`Error in main loop: ${err}`)
+  logger.exception({}, err)
+  service_is_healthy.healthy(false)
+  throw err
 })
-
-/**
- * "/short" is equivalent to "/close" for spot exchanges
- *
- */
 
 // Finally, start our server
 // $  npm install -g localtunnel && lt --port 3000

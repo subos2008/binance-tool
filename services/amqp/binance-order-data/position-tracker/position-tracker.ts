@@ -8,7 +8,7 @@ BigNumber.prototype.valueOf = function () {
 import Sentry from "../../../../lib/sentry"
 import { strict as assert } from "assert"
 
-import { RedisClient } from "redis"
+import { RedisClientType } from "redis-v4"
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { GenericOrderData } from "../../../../types/exchange_neutral/generic_order_data"
@@ -61,7 +61,7 @@ export class SpotPositionTracker {
   }: {
     send_message: SendMessageFunc
     logger: ServiceLogger
-    redis: RedisClient
+    redis: RedisClientType
     close_position_check_func: check_func
     spot_positions_query: SpotPositionsQuery
     spot_positions_persistance: SpotPositionsPersistence

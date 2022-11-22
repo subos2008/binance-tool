@@ -90,7 +90,9 @@ export interface SpotPositionsPersistence {
     pi: SpotPositionIdentifier_V3,
     { base_change }: { base_change: BigNumber }
   ): Promise<void>
-  add_orders(pi: SpotPositionIdentifier_V3, orders: GenericOrderData[]): Promise<void>
+
+  /* returns the number of orders added */
+  add_orders(pi: SpotPositionIdentifier_V3, orders: GenericOrderData[]): Promise<number>
 
   /**
    * this is a bit hacky because we assume there is only one stop order,
@@ -101,5 +103,5 @@ export interface SpotPositionsPersistence {
   get_stop_order(pi: SpotPositionIdentifier_V3): Promise<OrderId | undefined>
   /** end the edge61 variant */
   set_oco_order(pi: SpotPositionIdentifier_V3, order_id: OrderId): Promise<void>
-  get_oco_order(pi: SpotPositionIdentifier_V3): Promise<OrderId>
+  get_oco_order(pi: SpotPositionIdentifier_V3): Promise<OrderId | undefined>
 }

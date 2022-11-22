@@ -27,7 +27,7 @@ import { CurrentAllPricesGetter } from "../../interfaces/exchanges/generic/price
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/health_and_readiness"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import express from "express"
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
+import { get_redis_client } from "../../lib/redis-v4"
 import { ServiceLogger } from "../../interfaces/logger"
 import { BunyanServiceLogger } from "../../lib/service-logger"
 
@@ -48,9 +48,6 @@ process.on("unhandledRejection", (err) => {
   send_message(`UnhandledPromiseRejection: ${err}`)
   service_is_healthy.healthy(false)
 })
-
-set_redis_logger(logger)
-const redis = get_redis_client()
 
 export class PositionPerformance {
   send_message: SendMessageFunc
@@ -169,6 +166,7 @@ if (TAS_URL === undefined) {
 }
 
 async function main() {
+  const redis = await get_redis_client(logger, health_and_readiness)
   const spot_positions_persistance: SpotPositionsPersistence = new RedisSpotPositionsPersistence({ logger, redis })
   const ee = new TradeAbstractionServiceClient({ logger, TAS_URL })
 

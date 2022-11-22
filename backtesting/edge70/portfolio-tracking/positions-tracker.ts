@@ -13,7 +13,7 @@ import {
 import { HealthAndReadiness } from "../../../classes/health_and_readiness"
 import { SpotPositionsPersistence } from "../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { SpotPositionsQuery } from "../../../classes/spot/abstractions/spot-positions-query"
-import { RedisClient } from "redis"
+import { RedisClientType } from "redis-v4"
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
 import {
   SpotPositionCallbacks,
@@ -53,7 +53,7 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
   }: {
     send_message: SendMessageFunc
     logger: ServiceLogger
-    redis: RedisClient
+    redis: RedisClientType
     spot_positions_query: SpotPositionsQuery
     spot_positions_persistance: SpotPositionsPersistence
     health_and_readiness: HealthAndReadiness

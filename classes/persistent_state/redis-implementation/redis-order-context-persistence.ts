@@ -1,4 +1,4 @@
-import { RedisClient } from "redis"
+import { RedisClientType } from "redis-v4"
 import { Logger } from "../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { promisify } from "util"
@@ -14,11 +14,11 @@ type OrderId = string
 
 export class RedisOrderContextPersistence implements OrderContextPersistence, OrderContextPersistence_V2 {
   logger: Logger
-  redis: RedisClient
+  redis: RedisClientType
   getAsync: any
   setAsync: any
 
-  constructor({ logger, redis }: { logger: Logger; redis: RedisClient }) {
+  constructor({ logger, redis }: { logger: Logger; redis: RedisClientType }) {
     assert(logger)
     this.logger = logger
     assert(redis)

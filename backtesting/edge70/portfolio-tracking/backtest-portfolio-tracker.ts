@@ -13,7 +13,6 @@ import { HealthAndReadiness } from "../../../classes/health_and_readiness"
 import { PositionSizer } from "../../../interfaces/position-sizer"
 import { BacktesterSpotPostionsTracker } from "./positions-tracker"
 import { ContextTags, SendMessageFunc } from "../../../interfaces/send-message"
-import { RedisClient } from "redis-mock"
 import { SpotPositionsQuery } from "../../../classes/spot/abstractions/spot-positions-query"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
 import { RedisSpotPositionsPersistence } from "../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
@@ -31,6 +30,7 @@ import { ExchangeInfoGetter } from "../../../interfaces/exchanges/binance/exchan
 import { Edge70Parameters } from "../../../services/edge70-signals/interfaces/edge70-signal"
 import { BacktestParameters } from "../edge70-mega-backtester"
 import { DirectionPersistenceMock } from "../direction-persistance-mock"
+import { RedisClientType } from "redis-v4"
 
 /* convert Edge70Signals to Orders and throw them to PositionsTracker - with mock_redis */
 
@@ -72,7 +72,7 @@ export class BacktestPortfolioTracker {
     edge70_parameters: Edge70Parameters
     backtest_parameters: BacktestParameters
     position_sizer: PositionSizer
-    redis: RedisClient
+    redis: RedisClientType
     exchange_identifier: ExchangeIdentifier_V3
     quote_asset: string
     prices_getter: CurrentAllPricesGetter

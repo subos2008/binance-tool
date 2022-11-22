@@ -11,8 +11,8 @@ import Sentry from "../../lib/sentry"
 
 import { strict as assert } from "assert"
 import express from "express"
-import { get_redis_client, set_redis_logger } from "../../lib/redis"
-import { RedisClient } from "redis"
+import { get_redis_client } from "../../lib/redis-v4"
+import { RedisClientType } from "redis-v4"
 import { HealthAndReadiness } from "../../classes/health_and_readiness"
 import { ExchangeIdentifier_V4, ei_v4_to_v3 } from "../../events/shared/exchange-identifier"
 import { SendMessageFunc } from "../../interfaces/send-message"
@@ -70,8 +70,7 @@ async function main() {
   let exchange_identifier: ExchangeIdentifier_V4 = { version: 4, exchange: "binance", exchange_type: "spot" }
 
   try {
-    let redis: RedisClient = get_redis_client()
-    set_redis_logger(logger)
+    let redis: RedisClientType = await get_redis_client(logger, health_and_readiness)
     let positions_persistance = new RedisSpotPositionsPersistence({ logger, redis })
     let spot_positions_query = new SpotPositionsQuery({
       logger,

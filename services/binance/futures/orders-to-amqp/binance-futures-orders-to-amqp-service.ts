@@ -35,7 +35,7 @@ import express from "express"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 import { BinanceFuturesOrdersToAMQP } from "./binance-futures-orders-to-amqp"
-import { get_redis_client, set_redis_logger } from "../../../../lib/redis"
+import { get_redis_client } from "../../../../lib/redis-v4"
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
@@ -44,7 +44,6 @@ const service_is_healthy = health_and_readiness.addSubsystem({
   healthy: true,
   initialised: true,
 })
-
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN
@@ -71,8 +70,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  set_redis_logger(logger)
-  let redis = get_redis_client()
+  let redis = await get_redis_client(logger, health_and_readiness)
 
   try {
     let portfolio_to_amqp = new BinanceFuturesOrdersToAMQP({

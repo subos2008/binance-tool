@@ -116,7 +116,7 @@ export class SpotPositionsExecution_StopLimitExit {
     let { edge_percentage_stop, edge_percentage_buy_limit } = args
     let tags = { edge, base_asset, quote_asset }
 
-    this.logger.info(tags, { object_type: "SpotPositionExecutionOpenRequest", ...args })
+    this.logger.event(tags, { object_type: "SpotPositionExecutionOpenRequest", ...args })
 
     let prefix = `${edge}:${base_asset} open spot long: `
 
@@ -162,7 +162,7 @@ export class SpotPositionsExecution_StopLimitExit {
       base_amount: executed_base_quantity,
       trigger_price: stop_price,
     }
-    this.logger.info(tags, stop_cmd)
+    this.logger.event(tags, stop_cmd)
 
     try {
       let stop_result = await this.ee.stop_market_sell(stop_cmd)
@@ -213,7 +213,7 @@ export class SpotPositionsExecution_StopLimitExit {
       created_take_profit_order: false,
       created_stop_order: true,
     }
-    this.logger.info(spot_long_result)
+    this.logger.event(tags, spot_long_result)
     return spot_long_result
   }
 }

@@ -1,6 +1,8 @@
 #!./node_modules/.bin/ts-node
 /* eslint-disable no-console */
 
+import "./tracer" // must come before importing any instrumented module.
+
 /**
  * Event/message listener
  */

@@ -58,6 +58,7 @@ spec:
             - name: SENTRY_DSN
               value: "https://d58e2a72040a48689a2e1933aa2e45da@o369902.ingest.sentry.io/6171400"
 {{- include "telegram.vars" . | nindent 12 }}
+{{- include "datadog.vars" . | nindent 12 }}
 {{- include "amqp.vars" . | nindent 12 }}
 {{- include "binance-spot-tas.vars" . | nindent 12 }}
 {{- include "binance-futures-tas.vars" . | nindent 12 }}

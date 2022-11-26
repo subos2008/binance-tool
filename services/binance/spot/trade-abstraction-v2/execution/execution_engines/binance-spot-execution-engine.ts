@@ -169,10 +169,10 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
 
   // TODO: copy 429 code from here
   async limit_buy(cmd: SpotLimitBuyCommand, trade_context: TradeContext): Promise<SpotExecutionEngineBuyResult> {
-    let { base_asset, symbol } = cmd.market_identifier
-    let tags = { base_asset, symbol }
     let { market_identifier, order_context } = cmd
-    let prefix = `${cmd.market_identifier.symbol} SpotExecutionEngineBuyResult`
+    let { base_asset, symbol } = market_identifier
+    let tags = { base_asset, symbol }
+    let prefix = `${symbol} SpotExecutionEngineBuyResult`
 
     try {
       this.logger.event(tags, cmd)

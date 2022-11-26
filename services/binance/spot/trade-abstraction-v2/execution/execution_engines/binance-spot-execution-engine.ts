@@ -171,11 +171,13 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   async limit_buy(cmd: SpotLimitBuyCommand, trade_context: TradeContext): Promise<SpotExecutionEngineBuyResult> {
     let { base_asset, symbol } = cmd.market_identifier
     let tags = { base_asset, symbol }
-    this.logger.event(tags, cmd)
     let { market_identifier, order_context } = cmd
-    let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let prefix = `${cmd.market_identifier.symbol} SpotExecutionEngineBuyResult`
+
     try {
+      this.logger.event(tags, cmd)
+      let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
+      this.logger.info(tags, `Generated clientOrderId: ${clientOrderId}`)
       let result: Order
       result = await this.utils.create_limit_buy_order({
         exchange_info: await this.get_exchange_info(),
@@ -233,13 +235,13 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
           execution_timestamp_ms: Date.now(),
           retry_after_seconds: 11,
         }
-        this.logger.event(tags, spot_long_result)
+        this.logger.event({ ...tags, level: "warn" }, spot_long_result)
         return spot_long_result
       } else if (err.message.match(/Account has insufficient balance for requested action/)) {
         let spot_long_result: SpotExecutionEngineBuyResult = {
           object_type: "SpotExecutionEngineBuyResult",
           version: 2,
-          msg: `${prefix}: ${err.message}`,
+          msg: `${prefix}: ${err.message}, code: ${err.code}`,
           market_identifier,
           order_context,
           status: "INSUFFICIENT_BALANCE",

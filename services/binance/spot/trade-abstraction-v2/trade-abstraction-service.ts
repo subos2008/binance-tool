@@ -89,98 +89,118 @@ export class TradeAbstractionService {
   // Spot so we can only be long or no-position
   async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
     cmd.quote_asset = this.quote_asset
-    let tags = { edge: cmd.edge, base_asset: cmd.base_asset, quote_asset: cmd.quote_asset }
-    this.logger.event(tags, cmd)
+    let { edge, base_asset, quote_asset } = cmd
+    let tags = { edge, base_asset, quote_asset }
+    try {
+      this.logger.event(tags, cmd)
 
-    assert.equal(cmd.direction, "long")
-    assert.equal(cmd.action, "open")
+      assert.equal(cmd.direction, "long")
+      assert.equal(cmd.action, "open")
 
-    let { direction } = cmd
+      let { direction } = cmd
 
-    if (!is_authorised_edge(cmd.edge)) {
-      let err = new Error(`UnauthorisedEdge ${cmd.edge}`)
-      this.logger.exception(tags, err)
-      let obj: TradeAbstractionOpenLongResult = {
-        object_type: "TradeAbstractionOpenLongResult",
-        version: 1,
-        base_asset: cmd.base_asset,
-        quote_asset: this.quote_asset,
-        edge: cmd.edge,
-        status: "UNAUTHORISED",
-        http_status: 403,
-        msg: err.message,
-        err,
+      if (!is_authorised_edge(cmd.edge)) {
+        let err = new Error(`UnauthorisedEdge ${cmd.edge}`)
+        this.logger.exception(tags, err)
+        let obj: TradeAbstractionOpenLongResult = {
+          object_type: "TradeAbstractionOpenLongResult",
+          version: 1,
+          base_asset: cmd.base_asset,
+          quote_asset: this.quote_asset,
+          edge: cmd.edge,
+          status: "UNAUTHORISED",
+          http_status: 403,
+          msg: err.message,
+          err,
+        }
+        this.logger.event(tags, obj)
+        return obj
       }
-      this.logger.event(tags, obj)
-      return obj
-    }
 
-    if (disallowed_base_assets_for_entry.includes(cmd.base_asset)) {
-      let err = new Error(`Opening ${direction} position in ${cmd.base_asset} is explicity disallowed`)
-      this.logger.exception(tags, err)
-      let obj: TradeAbstractionOpenLongResult = {
-        object_type: "TradeAbstractionOpenLongResult",
-        version: 1,
-        base_asset: cmd.base_asset,
-        quote_asset: this.quote_asset,
-        edge: cmd.edge,
-        status: "UNAUTHORISED",
-        http_status: 403,
-        msg: err.message,
-        err,
+      if (disallowed_base_assets_for_entry.includes(cmd.base_asset)) {
+        let err = new Error(`Opening ${direction} position in ${cmd.base_asset} is explicity disallowed`)
+        this.logger.exception(tags, err)
+        let obj: TradeAbstractionOpenLongResult = {
+          object_type: "TradeAbstractionOpenLongResult",
+          version: 1,
+          base_asset: cmd.base_asset,
+          quote_asset: this.quote_asset,
+          edge: cmd.edge,
+          status: "UNAUTHORISED",
+          http_status: 403,
+          msg: err.message,
+          err,
+        }
+        this.logger.event(tags, obj)
+        return obj
       }
-      this.logger.event(tags, obj)
-      return obj
-    }
 
-    let edge: AuthorisedEdgeType = check_edge(cmd.edge)
+      let edge: AuthorisedEdgeType = check_edge(cmd.edge)
 
-    this.logger.event(
-      { level: "warn" },
-      { object_type: "TODO", msg: `Position entry is not atomic with check for existing position` }
-    )
+      this.logger.event(
+        { level: "warn" },
+        { object_type: "TODO", msg: `Position entry is not atomic with check for existing position` }
+      )
 
-    let existing_spot_position_size: BigNumber = await this.positions.exisiting_position_size({
-      base_asset: cmd.base_asset,
-      edge,
-    })
+      let existing_spot_position_size: BigNumber = await this.positions.exisiting_position_size({
+        base_asset: cmd.base_asset,
+        edge,
+      })
 
-    if (existing_spot_position_size.isGreaterThan(0)) {
+      if (existing_spot_position_size.isGreaterThan(0)) {
+        let spot_long_result: TradeAbstractionOpenLongResult = {
+          object_type: "TradeAbstractionOpenLongResult",
+          version: 1,
+          base_asset: cmd.base_asset,
+          quote_asset: this.quote_asset,
+          edge,
+          status: "ALREADY_IN_POSITION",
+          http_status: 409,
+          msg: `TradeAbstractionOpenLongResult: ${edge}${cmd.base_asset}: ALREADY_IN_POSITION`,
+        }
+        this.logger.event(tags, spot_long_result)
+        return spot_long_result
+      }
+
+      let result: TradeAbstractionOpenLongResult = await this.spot_ee.open_position(cmd)
+      if (
+        result.status != "INTERNAL_SERVER_ERROR" &&
+        result.status != "ENTRY_FAILED_TO_FILL" &&
+        result.status != "UNAUTHORISED" &&
+        result.status != "ALREADY_IN_POSITION" &&
+        result.status != "TRADING_IN_ASSET_PROHIBITED" &&
+        result.status != "INSUFFICIENT_BALANCE" &&
+        result.status != "BAD_INPUTS" &&
+        result.status != "TOO_MANY_REQUESTS"
+      ) {
+        result.created_stop_order = result.stop_order_id ? true : false
+        result.created_take_profit_order = result.take_profit_order_id ? true : false
+      }
+
+      let { execution_timestamp_ms } = result
+      result.signal_to_execution_slippage_ms = execution_timestamp_ms
+        ? new BigNumber(execution_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
+        : undefined
+
+      return result
+    } catch (err: any) {
+      this.logger.exception(tags, err)
       let spot_long_result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
         version: 1,
-        base_asset: cmd.base_asset,
-        quote_asset: this.quote_asset,
+        base_asset,
+        quote_asset,
         edge,
-        status: "ALREADY_IN_POSITION",
-        http_status: 409,
-        msg: `TradeAbstractionOpenLongResult: ${edge}${cmd.base_asset}: ALREADY_IN_POSITION`,
+        status: "INTERNAL_SERVER_ERROR",
+        http_status: 500,
+        msg: err.message,
+        err,
+        execution_timestamp_ms: Date.now(),
       }
-      this.logger.event(tags, spot_long_result)
+      this.logger.error(tags, `Exception caught in TradeAbstractionService::long!`)
+      this.logger.event({ ...tags, level: "error" }, spot_long_result)
       return spot_long_result
     }
-
-    let result: TradeAbstractionOpenLongResult = await this.spot_ee.open_position(cmd)
-    if (
-      result.status != "INTERNAL_SERVER_ERROR" &&
-      result.status != "ENTRY_FAILED_TO_FILL" &&
-      result.status != "UNAUTHORISED" &&
-      result.status != "ALREADY_IN_POSITION" &&
-      result.status != "TRADING_IN_ASSET_PROHIBITED" &&
-      result.status != "INSUFFICIENT_BALANCE" &&
-      result.status != "BAD_INPUTS" &&
-      result.status != "TOO_MANY_REQUESTS"
-    ) {
-      result.created_stop_order = result.stop_order_id ? true : false
-      result.created_take_profit_order = result.take_profit_order_id ? true : false
-    }
-
-    let { execution_timestamp_ms } = result
-    result.signal_to_execution_slippage_ms = execution_timestamp_ms
-      ? new BigNumber(execution_timestamp_ms).minus(cmd.signal_timestamp_ms).toFixed()
-      : undefined
-
-    return result
   }
 
   // or signal_short or signal_exit/close

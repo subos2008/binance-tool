@@ -109,8 +109,9 @@ export class Commands {
   }
 
   async spot(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
+    let [command, edge_unchecked, base_asset] = args
+    let tags = { edge: edge_unchecked, base_asset }
     try {
-      let [command, edge_unchecked, base_asset] = args
       base_asset = base_asset.toUpperCase()
       let valid_commands = ["long", "close"]
       if (!valid_commands.includes(command)) {
@@ -146,9 +147,9 @@ export class Commands {
         ctx.reply(`Spot long close on ${edge}:${base_asset}: ${result.status}`)
       }
     } catch (err: any) {
-      this.logger.error({ err }, `Looks like command failed: ${err.message}`)
+      this.logger.exception(tags, err, `Looks like command failed: ${err.message}`)
       Sentry.captureException(err)
-      ctx.reply(`Looks like it failed, see log for error`)
+      ctx.reply(`Looks like it failed: ${err.message}`)
     }
     // ctx.replyWithHTML("<i>Are you sure?</i>")
   }

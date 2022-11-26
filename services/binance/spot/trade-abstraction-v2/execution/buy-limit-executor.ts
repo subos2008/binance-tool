@@ -130,6 +130,8 @@ export class SpotPositionsExecution_BuyLimit {
       }
       this.logger.event(tags, cmd)
 
+      this.logger.info(tags, `I am getting fucking bored`)
+
       let buy_result: SpotExecutionEngineBuyResult = await this.ee.limit_buy(cmd, trade_context)
 
       this.logger.info(tags, `Made it past await this.ee.limit_buy`)

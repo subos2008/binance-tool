@@ -118,11 +118,13 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     order_context: OrderContext_V1
   ): Promise<{ clientOrderId: string }> {
     let clientOrderId = randomUUID()
+    this.logger.debug({}, `Generated clientOrderId: ${clientOrderId}`)
     await this.order_context_persistence.set_order_context_for_order({
       exchange_identifier: this.get_exchange_identifier(),
       order_id: clientOrderId,
       order_context,
     })
+    this.logger.debug({}, `Stored clientOrderId: ${clientOrderId}`)
     return { clientOrderId }
   }
 

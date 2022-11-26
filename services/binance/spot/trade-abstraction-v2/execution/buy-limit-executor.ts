@@ -132,6 +132,8 @@ export class SpotPositionsExecution_BuyLimit {
 
       let buy_result: SpotExecutionEngineBuyResult = await this.ee.limit_buy(cmd, trade_context)
 
+      this.logger.info(tags, `Made it past await this.ee.limit_buy`)
+
       try {
         this.metrics.buy_limit_result(buy_result, { base_asset, quote_asset, edge })
       } catch (err) {

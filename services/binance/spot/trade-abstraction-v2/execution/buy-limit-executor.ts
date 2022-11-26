@@ -128,6 +128,7 @@ export class SpotPositionsExecution_BuyLimit {
         limit_price: buy_limit_price,
         timeInForce: "IOC",
       }
+      this.logger.event(tags, cmd)
 
       let buy_result: SpotExecutionEngineBuyResult = await this.ee.limit_buy(cmd, trade_context)
 

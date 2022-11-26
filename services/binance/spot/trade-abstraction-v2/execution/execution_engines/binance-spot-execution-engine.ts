@@ -177,7 +177,11 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     let prefix = `${symbol} SpotExecutionEngineBuyResult`
 
     try {
+      this.logger.debug(`fucking start`)
+
       this.logger.event(tags, cmd)
+      this.logger.debug(`fucking about to`)
+
       let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
       this.logger.info(tags, `Generated clientOrderId: ${clientOrderId}`)
       let result: Order
@@ -221,6 +225,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
       this.logger.event(tags, spot_long_result)
       return spot_long_result
     } catch (err: any) {
+      this.logger.debug(`fucking titwank`)
       this.logger.exception(tags, err)
 
       // TODO: can we do a more clean/complete job of catching exceptions from Binance?

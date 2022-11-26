@@ -177,10 +177,10 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     let prefix = `${symbol} SpotExecutionEngineBuyResult`
 
     try {
-      this.logger.debug(`fucking start`)
+      this.logger.info(`fucking start`)
 
       this.logger.event(tags, cmd)
-      this.logger.debug(`fucking about to`)
+      this.logger.info(`fucking about to`)
 
       let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
       this.logger.info(tags, `Generated clientOrderId: ${clientOrderId}`)

@@ -155,9 +155,12 @@ async function main() {
 
         let { signal_timestamp_ms } = cmd
 
-        metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
-        metrics.trading_abstraction_close_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
-
+        try {
+          metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
+          metrics.trading_abstraction_close_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
+        } catch (err) {
+          logger.exception(tags, err)
+        }
         // TODO - 429's for /close
         // if (cmd_result.http_status === 429) {
         //   res.setHeader('Retry-After', cmd_result.retry_after_seconds)
@@ -207,8 +210,16 @@ async function main() {
 
         let { signal_timestamp_ms } = cmd
 
-        metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
-        metrics.trading_abstraction_open_spot_long_result({ result: cmd_result, tags, cmd_received_timestamp_ms })
+        try {
+          metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
+          metrics.trading_abstraction_open_spot_long_result({
+            result: cmd_result,
+            tags,
+            cmd_received_timestamp_ms,
+          })
+        } catch (err) {
+          logger.exception(tags, err)
+        }
 
         if (cmd_result.http_status === 429) {
           res.setHeader("Retry-After", cmd_result.retry_after_seconds)
@@ -228,8 +239,8 @@ async function main() {
 
       throw new Error(`Unexpected object_type: ${(mapper_result as any).object_type}`)
     } catch (err: any) {
-      logger.error(`Internal Server Error: ${err}`)
-      logger.error({ err })
+      logger.error({}, `Internal Server Error: ${err}`)
+      logger.exception({}, err)
       res.status(500).json({ msg: "Internal Server Error" })
       next(err)
     }
@@ -240,7 +251,11 @@ async function main() {
    *
    */
 
-  metrics.service_started()
+  try {
+    metrics.service_started()
+  } catch (err) {
+    logger.exception({}, err)
+  }
 }
 
 main().catch((err) => {

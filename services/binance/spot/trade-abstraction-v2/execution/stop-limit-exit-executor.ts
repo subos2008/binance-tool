@@ -116,9 +116,9 @@ export class SpotPositionsExecution_StopLimitExit {
   async open_position(
     args: TradeAbstractionOpenLongCommand_StopLimitExit
   ): Promise<TradeAbstractionOpenLongResult> {
-    let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
+    let { trigger_price: trigger_price_string, edge, base_asset, quote_asset, trade_id } = args
     let { edge_percentage_stop, edge_percentage_buy_limit } = args
-    let tags = { edge, base_asset, quote_asset }
+    let tags = { edge, base_asset, quote_asset, trade_id }
 
     this.logger.event(tags, { object_type: "SpotPositionExecutionOpenRequest", ...args })
 
@@ -212,6 +212,7 @@ export class SpotPositionsExecution_StopLimitExit {
         http_status: 418,
         msg: `${prefix}: ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`,
         edge,
+        trade_id,
         base_asset,
         quote_asset,
         executed_base_quantity: "0",
@@ -229,6 +230,7 @@ export class SpotPositionsExecution_StopLimitExit {
       base_asset,
       quote_asset,
       edge,
+      trade_id,
       executed_quote_quantity: executed_quote_quantity.toFixed(),
       executed_base_quantity: executed_base_quantity.toFixed(),
       stop_order_id,

@@ -133,7 +133,7 @@ export class SpotEdgeToExecutorMapper {
   //     stop_price: BigNumber
   //   }
   async open_position(args: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
-    let { edge, quote_asset, base_asset } = args
+    let { edge, quote_asset, base_asset, trade_id } = args
     let tags = { edge, quote_asset, base_asset }
     try {
       args.edge = check_edge(args.edge)
@@ -195,6 +195,7 @@ export class SpotEdgeToExecutorMapper {
         base_asset: args.base_asset,
         quote_asset: args.quote_asset,
         edge: args.edge,
+        trade_id,
         status: "INTERNAL_SERVER_ERROR",
         http_status: 500,
         msg: err.message,

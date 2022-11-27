@@ -5,6 +5,7 @@ import { AuthorisedEdgeType, check_edge } from "../../classes/spot/abstractions/
 import { Commands_Futures } from "./commands/futures"
 import Sentry from "../../lib/sentry"
 import {
+  generate_trade_id,
   TradeAbstractionOpenLongCommand,
   TradeAbstractionOpenLongResult,
 } from "../binance/spot/trade-abstraction-v2/interfaces/long"
@@ -120,6 +121,7 @@ export class Commands {
       }
 
       if (command == "long") {
+        const direction = "long"
         let edge: AuthorisedEdgeType
         try {
           edge = check_edge(edge_unchecked)
@@ -130,11 +132,13 @@ export class Commands {
           return
         }
         let signal_timestamp_ms = Date.now()
+        let trade_id = generate_trade_id({edge, base_asset, direction, signal_timestamp_ms})
         let result: TradeAbstractionOpenLongResult = await this.spot_tas_client.long({
           object_type: "TradeAbstractionOpenLongCommand",
           base_asset,
           edge,
-          direction: "long",
+          trade_id,
+          direction,
           signal_timestamp_ms,
           action: "open",
         })

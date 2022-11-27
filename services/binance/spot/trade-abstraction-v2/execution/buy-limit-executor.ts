@@ -28,7 +28,7 @@ import {
 } from "../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
 import { BinanceSpotExecutionEngine } from "./execution_engines/binance-spot-execution-engine"
-import { SendMessageFunc } from "../../../../../interfaces/send-message"
+import { ContextTags, SendMessageFunc } from "../../../../../interfaces/send-message"
 import { PositionSizer } from "../../../../../interfaces/position-sizer"
 
 /* END Edge specific code */
@@ -87,8 +87,8 @@ export class SpotPositionsExecution_BuyLimit {
   async buy_limit_entry(
     args: TradeAbstractionOpenLongCommand_OCO_Exit | TradeAbstractionOpenLongCommand_StopLimitExit
   ): Promise<TradeAbstractionOpenLongResult> {
-    let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
-    let tags = { edge, base_asset, quote_asset }
+    let { trigger_price: trigger_price_string, edge, base_asset, quote_asset, trade_id } = args
+    let tags: ContextTags = { edge, base_asset, quote_asset, trade_id }
 
     try {
       this.metrics.buy_limit_request(args)
@@ -148,6 +148,7 @@ export class SpotPositionsExecution_BuyLimit {
           object_type: "TradeAbstractionOpenLongResult",
           version: 1,
           edge,
+          trade_id,
           base_asset,
           quote_asset,
         }
@@ -165,6 +166,7 @@ export class SpotPositionsExecution_BuyLimit {
         version: 1,
         msg,
         edge,
+        trade_id,
         base_asset,
         quote_asset,
         executed_quote_quantity: executed_quote_quantity.toFixed(),
@@ -189,6 +191,7 @@ export class SpotPositionsExecution_BuyLimit {
         msg,
         err,
         edge,
+        trade_id,
         base_asset,
         quote_asset,
         status: "INTERNAL_SERVER_ERROR",

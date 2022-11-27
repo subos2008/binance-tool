@@ -69,7 +69,7 @@ export class TradeAbstractionServiceClient {
   }
 
   async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
-    let tags = { edge: cmd.edge, base_asset: cmd.base_asset }
+    let tags = { edge: cmd.edge, base_asset: cmd.base_asset, trade_id: cmd.trade_id }
     try {
       let response = await this.get(new URL("/long", this.TAS_URL).toString(), cmd)
       this.logger.info(response)

@@ -89,15 +89,13 @@ export class TradeAbstractionService {
   // Spot so we can only be long or no-position
   async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
     cmd.quote_asset = this.quote_asset
-    let { edge, base_asset, quote_asset } = cmd
+    let { edge, base_asset, quote_asset, trade_id, direction } = cmd
     let tags = { edge, base_asset, quote_asset }
     try {
       this.logger.event(tags, cmd)
 
       assert.equal(cmd.direction, "long")
       assert.equal(cmd.action, "open")
-
-      let { direction } = cmd
 
       if (!is_authorised_edge(cmd.edge)) {
         let err = new Error(`UnauthorisedEdge ${cmd.edge}`)
@@ -108,6 +106,7 @@ export class TradeAbstractionService {
           base_asset: cmd.base_asset,
           quote_asset: this.quote_asset,
           edge: cmd.edge,
+          trade_id,
           status: "UNAUTHORISED",
           http_status: 403,
           msg: err.message,
@@ -126,6 +125,7 @@ export class TradeAbstractionService {
           base_asset: cmd.base_asset,
           quote_asset: this.quote_asset,
           edge: cmd.edge,
+          trade_id,
           status: "UNAUTHORISED",
           http_status: 403,
           msg: err.message,
@@ -154,6 +154,7 @@ export class TradeAbstractionService {
           base_asset: cmd.base_asset,
           quote_asset: this.quote_asset,
           edge,
+          trade_id,
           status: "ALREADY_IN_POSITION",
           http_status: 409,
           msg: `TradeAbstractionOpenLongResult: ${edge}${cmd.base_asset}: ALREADY_IN_POSITION`,
@@ -191,6 +192,7 @@ export class TradeAbstractionService {
         base_asset,
         quote_asset,
         edge,
+        trade_id,
         status: "INTERNAL_SERVER_ERROR",
         http_status: 500,
         msg: err.message,

@@ -1,4 +1,6 @@
 import BigNumber from "bignumber.js"
+import { randomUUID } from "node:crypto"
+
 export interface TradeAbstractionOpenLongCommand {
   object_type: "TradeAbstractionOpenLongCommand"
   base_asset: string
@@ -8,6 +10,16 @@ export interface TradeAbstractionOpenLongCommand {
   action: "open"
   trigger_price?: string
   signal_timestamp_ms: number
+  trade_id: string
+}
+
+export function generate_trade_id(args: {
+  base_asset: string
+  edge: string
+  direction: "long" | "short"
+  signal_timestamp_ms: number
+}): string {
+  return `${args.edge}-${args.base_asset}-${args.direction}-` + randomUUID()
 }
 
 export interface TradeAbstractionOpenLongCommand_StopLimitExit {
@@ -18,6 +30,7 @@ export interface TradeAbstractionOpenLongCommand_StopLimitExit {
   action: "open"
   trigger_price?: string
   signal_timestamp_ms: number
+  trade_id: string
   edge_percentage_stop: BigNumber
   edge_percentage_buy_limit: BigNumber
 }
@@ -30,6 +43,7 @@ export interface TradeAbstractionOpenLongCommand_OCO_Exit {
   action: "open"
   trigger_price?: string
   signal_timestamp_ms: number
+  trade_id: string
   edge_percentage_stop: BigNumber
   edge_percentage_stop_limit: BigNumber
   edge_percentage_take_profit: BigNumber
@@ -42,6 +56,7 @@ interface TradeAbstractionOpenSpotLongResult_SUCCESS {
   base_asset: string
   quote_asset: string
   edge: string
+  trade_id: string
 
   status: "SUCCESS" // full or partial entry, all good
   msg: string // human readable summary
@@ -73,6 +88,7 @@ interface TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR {
   base_asset: string
   quote_asset?: string
   edge: string
+  trade_id: string
 
   status: "INTERNAL_SERVER_ERROR" // exception caught
   http_status: 500
@@ -91,6 +107,8 @@ interface TradeAbstractionOpenSpotLongResult_BAD_INPUTS {
   base_asset?: string
   quote_asset?: string
   edge?: string
+  // trade_id: string // we were generating the id from the inputs
+
   direction?: string
   action?: string
 
@@ -111,6 +129,7 @@ interface TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL {
   base_asset: string
   quote_asset?: string
   edge: string
+  trade_id: string
 
   status: "ENTRY_FAILED_TO_FILL" // limit buy didn't manage to fill
   http_status: 200 // 200: Success... but not 201, so not actually created
@@ -132,6 +151,7 @@ export interface TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS {
   base_asset: string
   quote_asset?: string
   edge: string
+  trade_id: string
 
   status: "TOO_MANY_REQUESTS" // exception caught
   http_status: 429
@@ -152,6 +172,7 @@ interface TradeAbstractionOpenSpotLongResult_UNAUTHORISED {
   base_asset: string
   quote_asset?: string
   edge: string
+  trade_id: string
 
   status: "UNAUTHORISED" // atm means edge not recognised
   http_status: 403
@@ -170,6 +191,7 @@ interface TradeAbstractionOpenSpotLongResult_TRADING_IN_ASSET_PROHIBITED {
   base_asset: string
   quote_asset?: string
   edge: string
+  trade_id: string
 
   status: "TRADING_IN_ASSET_PROHIBITED" // some assets like stable coins we refuse to enter
   http_status: 403 // Double check this is correct when online sometime
@@ -188,6 +210,7 @@ interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION {
   base_asset: string
   quote_asset?: string
   edge: string
+  trade_id: string
 
   status: "ALREADY_IN_POSITION" // Didn't enter because already in this position
   http_status: 409 // 409: Conflict
@@ -208,6 +231,7 @@ interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE {
   base_asset: string
   quote_asset?: string
   edge: string
+  trade_id: string
 
   status: "INSUFFICIENT_BALANCE"
   http_status: 402 // 402: Payment Required
@@ -228,6 +252,7 @@ interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDER
   base_asset: string
   quote_asset?: string
   edge: string
+  trade_id: string
 
   status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
   http_status: 418 // 418: Help What Should I be

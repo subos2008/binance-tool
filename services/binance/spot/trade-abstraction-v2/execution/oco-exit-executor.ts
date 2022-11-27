@@ -22,10 +22,10 @@ import {
   SpotMarketSellCommand,
   SpotOCOSellCommand,
 } from "../../../../../interfaces/exchanges/spot-execution-engine"
-import { OrderContext_V1 } from "../../../../../interfaces/orders/order-context"
+import { OrderContext_V1, OrderContext_V2 } from "../../../../../interfaces/orders/order-context"
 import { SpotPositionsExecution_BuyLimit } from "./buy-limit-executor"
 import { BinanceSpotExecutionEngine } from "./execution_engines/binance-spot-execution-engine"
-import { SendMessageFunc } from "../../../../../interfaces/send-message"
+import { SendMessageFunc, TradeContextTags } from "../../../../../interfaces/send-message"
 import { PositionSizer } from "../../../../../interfaces/position-sizer"
 
 /* END Edge specific code */
@@ -93,7 +93,7 @@ export class SpotPositionsExecution_OCOExit {
 
   async open_position(args: TradeAbstractionOpenLongCommand_OCO_Exit): Promise<TradeAbstractionOpenLongResult> {
     let { trigger_price: trigger_price_string, edge, base_asset, quote_asset, trade_id } = args
-    let tags = { edge, base_asset, quote_asset, trade_id }
+    let tags: TradeContextTags = { edge, base_asset, quote_asset, trade_id }
     try {
       let { edge_percentage_stop, edge_percentage_stop_limit, edge_percentage_take_profit } = args
 
@@ -122,7 +122,7 @@ export class SpotPositionsExecution_OCOExit {
 
       /** ENTRY completed  */
 
-      let order_context: OrderContext_V1 = { edge, object_type: "OrderContext", version: 1 }
+      let order_context: OrderContext_V2 = { edge, object_type: "OrderContext", version: 1, trade_id }
       let stop_price_factor = new BigNumber(100).minus(edge_percentage_stop).div(100)
       let stop_price = trigger_price.times(stop_price_factor)
       let stop_limit_price_factor = new BigNumber(100).minus(edge_percentage_stop_limit).div(100)
@@ -236,10 +236,10 @@ export class SpotPositionsExecution_OCOExit {
       this.logger.event({ ...tags, level: "error" }, spot_long_result)
       Sentry.captureException(err)
       this.logger.exception(tags, err)
-      this.send_message(`FAILED opening spot position ${args.edge}:${args.base_asset} using ${args.quote_asset}`, {
-        edge: args.edge,
-        base_asset: args.base_asset,
-      })
+      this.send_message(
+        `FAILED opening spot position ${args.edge}:${args.base_asset} using ${args.quote_asset}`,
+        tags
+      )
       return spot_long_result
     }
   }

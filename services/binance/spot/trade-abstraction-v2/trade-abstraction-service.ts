@@ -25,7 +25,7 @@ import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/bin
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
 import { RedisClientType } from "redis-v4"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
-import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-message"
+import { ContextTags, SendMessageFunc, TradeContextTags } from "../../../../interfaces/send-message"
 
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands
@@ -90,7 +90,7 @@ export class TradeAbstractionService {
   async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
     cmd.quote_asset = this.quote_asset
     let { edge, base_asset, quote_asset, trade_id, direction } = cmd
-    let tags = { edge, base_asset, quote_asset }
+    let tags: TradeContextTags = { edge, base_asset, quote_asset, trade_id }
     try {
       this.logger.event(tags, cmd)
 
@@ -138,7 +138,7 @@ export class TradeAbstractionService {
       let edge: AuthorisedEdgeType = check_edge(cmd.edge)
 
       this.logger.event(
-        { level: "warn" },
+        { ...tags, level: "warn" },
         { object_type: "TODO", msg: `Position entry is not atomic with check for existing position` }
       )
 
@@ -213,7 +213,7 @@ export class TradeAbstractionService {
     let tags: ContextTags = { quote_asset, base_asset: cmd.base_asset, edge: cmd.edge }
 
     this.logger.event(
-      { level: "info" },
+      { ...tags, level: "info" },
       { object_type: "TODO", msg: `Position exit is not atomic with check for existing position` }
     )
 

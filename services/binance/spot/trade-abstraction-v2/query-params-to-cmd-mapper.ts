@@ -1,13 +1,11 @@
 import { strict as assert } from "assert"
 import { Request } from "express"
-import {
-  TradeAbstractionOpenLongCommand,
-  TradeAbstractionOpenLongResult,
-} from "./interfaces/long"
+import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "./interfaces/short"
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
+import { ContextTags } from "../../../../interfaces/send-message"
 // import { Tags } from "hot-shots"
 
 type Tags = { [key: string]: string }
@@ -38,6 +36,7 @@ export class QueryParamsToCmdMapper {
     tags.edge = edge
 
     assert(typeof trade_id == "string", new Error(`InputChecking: typeof trade_id unexpected`))
+    assert(trade_id !== "", new Error(`InputChecking: trade_id was the empty string`))
     tags.trade_id = trade_id
 
     assert(

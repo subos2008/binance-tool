@@ -101,7 +101,7 @@ export class SpotPositionsExecution_BuyLimit {
       let { edge_percentage_buy_limit } = args
 
       let market_identifier: MarketIdentifier_V4 = this.get_market_identifier_for({ ...args, quote_asset })
-      let trade_context: TradeContext = { base_asset, quote_asset, edge }
+      let trade_context: TradeContext = { base_asset, quote_asset, edge, trade_id }
       let trigger_price: BigNumber | undefined
       if (trigger_price_string) {
         trigger_price = new BigNumber(trigger_price_string)

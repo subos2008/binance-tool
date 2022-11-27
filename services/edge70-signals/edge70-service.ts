@@ -202,10 +202,13 @@ class Edge70SignalsService {
           Sentry.captureException(err) // this is unexpected now, 429?
           throw err
         } else {
-          this.logger.event(tags, {
-            object_type: `EdgeInitialization`,
-            msg: `Loaded ${initial_candles.length} candles for ${symbol}`,
-          })
+          this.logger.event(
+            { ...tags, level: "debug" },
+            {
+              object_type: `EdgeInitialization`,
+              msg: `Loaded ${initial_candles.length} candles for ${symbol}`,
+            }
+          )
         }
 
         // chop off the most recent candle as the code above gives us a partial candle at the end

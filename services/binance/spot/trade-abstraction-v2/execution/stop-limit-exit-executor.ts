@@ -137,7 +137,7 @@ export class SpotPositionsExecution_StopLimitExit {
      * TODO: trading rules
      */
 
-    let trade_context: TradeContext = { base_asset, quote_asset, edge }
+    let trade_context: TradeContext = { base_asset, quote_asset, edge, trade_id }
 
     let buy_result: TradeAbstractionOpenLongResult = await this.limit_buy_executor.buy_limit_entry(args)
 

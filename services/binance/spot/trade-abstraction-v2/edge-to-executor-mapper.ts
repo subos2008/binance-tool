@@ -28,7 +28,7 @@ import {
 import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
 import { FixedPositionSizer } from "../../../../edges/position-sizer/fixed-position-sizer"
 import { BinanceSpotExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
-import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-message"
+import { ContextTags, SendMessageFunc, TradeContextTags } from "../../../../interfaces/send-message"
 import { PositionSizer } from "../../../../interfaces/position-sizer"
 
 /**
@@ -134,7 +134,7 @@ export class SpotEdgeToExecutorMapper {
   //   }
   async open_position(args: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
     let { edge, quote_asset, base_asset, trade_id } = args
-    let tags = { edge, quote_asset, base_asset }
+    let tags: TradeContextTags = { edge, quote_asset, base_asset, trade_id }
     try {
       args.edge = check_edge(args.edge)
       let { edge, quote_asset } = args

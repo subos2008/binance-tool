@@ -12,6 +12,7 @@ import {
 import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
 import Sentry from "../../../../../lib/sentry"
 import { AxiosRetry } from "./axios-retry"
+import { TradeContextTags } from "../../../../../interfaces/send-message"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("class", "TradeAbstractionServiceClient")
 })
@@ -58,7 +59,7 @@ export class TradeAbstractionServiceClient {
       let tas_response = response.data as TradeAbstractionCloseResult
       if (tas_response?.object_type !== "TradeAbstractionCloseResult") {
         let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionCloseResult`)
-        this.logger.exception({}, err)
+        this.logger.exception(tags, err)
         Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
       }
       return tas_response
@@ -69,14 +70,14 @@ export class TradeAbstractionServiceClient {
   }
 
   async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
-    let tags = { edge: cmd.edge, base_asset: cmd.base_asset, trade_id: cmd.trade_id }
+    let tags: TradeContextTags = { edge: cmd.edge, base_asset: cmd.base_asset, trade_id: cmd.trade_id }
     try {
       let response = await this.get(new URL("/long", this.TAS_URL).toString(), cmd)
       this.logger.info(response)
       let tas_response = response.data as TradeAbstractionOpenLongResult
       if (tas_response?.object_type !== "TradeAbstractionOpenLongResult") {
         let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenLongResult`)
-        this.logger.exception({}, err)
+        this.logger.exception(tags, err)
         Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
       }
       return tas_response
@@ -94,7 +95,7 @@ export class TradeAbstractionServiceClient {
       let tas_response = response.data as TradeAbstractionOpenShortResult
       if (tas_response?.object_type !== "TradeAbstractionOpenShortResult") {
         let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenShortResult`)
-        this.logger.exception({}, err)
+        this.logger.exception(tags, err)
         Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
       }
       return tas_response

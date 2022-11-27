@@ -5,7 +5,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { OrderContext_V1 } from "../orders/order-context"
+import { OrderContext_V1, OrderContext_V2 } from "../orders/order-context"
 import { OrderId } from "../../classes/persistent_state/interface/order-context-persistence"
 import { MarketIdentifier_V4 } from "../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
@@ -27,7 +27,7 @@ export interface SpotLimitBuyCommand {
 }
 
 export interface SpotMarketSellCommand {
-  order_context: OrderContext_V1
+  order_context: OrderContext_V1 | OrderContext_V2 // /close doesn't know the trade_id yet
   market_identifier: MarketIdentifier_V4
   base_amount: BigNumber
 }
@@ -36,6 +36,7 @@ export interface TradeContext {
   base_asset: string
   quote_asset?: string
   edge: string
+  trade_id: string
 }
 
 export interface SpotStopMarketSellCommand {

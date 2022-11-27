@@ -27,10 +27,10 @@ import {
   SpotStopMarketSellResult,
 } from "../../../../../../interfaces/exchanges/spot-execution-engine"
 import { OrderContextPersistence } from "../../../../../../classes/persistent_state/interface/order-context-persistence"
-import { OrderContext_V1 } from "../../../../../../interfaces/orders/order-context"
+import { OrderContext_V1, OrderContext_V2 } from "../../../../../../interfaces/orders/order-context"
 import { BinanceStyleSpotPrices } from "../../../../../../classes/spot/abstractions/position-identifier"
 import { SendDatadogMetrics } from "../send-datadog-metrics"
-import { ContextTags } from "../../../../../../interfaces/send-message"
+import { ContextTags, TradeContextTags } from "../../../../../../interfaces/send-message"
 
 // Binance Keys
 assert(process.env.BINANCE_API_KEY)
@@ -115,9 +115,15 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   }
 
   async store_order_context_and_generate_clientOrderId(
-    order_context: OrderContext_V1
+    order_context: OrderContext_V1 | OrderContext_V2
   ): Promise<{ clientOrderId: string }> {
-    let tags = { edge: order_context.edge }
+    let { edge } = order_context
+    let trade_id: string | undefined
+    let tags: ContextTags = { edge }
+    if ("trade_id" in order_context) {
+      trade_id = order_context.trade_id
+      tags.trade_id = trade_id
+    }
     this.logger.info(tags, `About to generate clientOrderId...`)
     this.logger.debug(tags, `Oh debug appears btw.`)
     let clientOrderId = randomUUID()
@@ -180,8 +186,9 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   // TODO: copy 429 code from here
   async limit_buy(cmd: SpotLimitBuyCommand, trade_context: TradeContext): Promise<SpotExecutionEngineBuyResult> {
     let { market_identifier, order_context } = cmd
+    let { trade_id, edge } = trade_context
     let { base_asset, symbol } = market_identifier
-    let tags = { base_asset, symbol }
+    let tags: TradeContextTags = { base_asset, symbol, edge, trade_id }
     let prefix = `${symbol} SpotExecutionEngineBuyResult`
 
     try {
@@ -190,7 +197,10 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
       this.logger.event(tags, cmd)
       this.logger.info(`fucking about to`)
 
-      let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
+      let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId({
+        ...cmd.order_context,
+        trade_id: trade_context.trade_id,
+      })
       this.logger.info(tags, `Generated clientOrderId: ${clientOrderId}`)
       let result: Order
       result = await this.utils.create_limit_buy_order({
@@ -287,10 +297,21 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   // TODO: add 429 try/catch logic
   // TODO: port to return SpotExecutionEngineBuyResult
   async stop_market_sell(cmd: SpotStopMarketSellCommand): Promise<SpotStopMarketSellResult> {
-    this.metrics.stop_market_sell_request(cmd)
+    let { edge } = cmd.order_context
+    let { base_asset } = cmd.market_identifier
+    let { trade_id } = cmd.trade_context
+    let tags: TradeContextTags = { edge, base_asset, trade_id }
 
-    let tags: ContextTags = { edge: cmd.order_context.edge, base_asset: cmd.market_identifier.base_asset }
-    let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
+    try {
+      this.metrics.stop_market_sell_request(cmd)
+    } catch (err) {
+      this.logger.exception(tags, err)
+    }
+
+    let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId({
+      ...cmd.order_context,
+      trade_id,
+    })
     let args = {
       exchange_info: await this.get_exchange_info(),
       pair: cmd.market_identifier.symbol,
@@ -350,11 +371,17 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   // TODO: add 429 try/catch logic
   // TODO: port to return SpotExecutionEngineBuyResult
   async market_sell(cmd: SpotMarketSellCommand): Promise<Order> {
+    let trade_id: string | undefined
+
+    // Called from /close where we don't know the trade_id yet
+    if ("trade_id" in cmd.order_context) trade_id = cmd.order_context.trade_id
+
     let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId(cmd.order_context)
     let tags: ContextTags = {
       edge: cmd.order_context.edge,
       base_asset: cmd.market_identifier.base_asset,
       symbol: cmd.market_identifier.symbol,
+      trade_id,
     }
     let order: Order | undefined = await this.utils.create_market_sell_order({
       base_amount: cmd.base_amount,

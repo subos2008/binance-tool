@@ -117,15 +117,23 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   async store_order_context_and_generate_clientOrderId(
     order_context: OrderContext_V1
   ): Promise<{ clientOrderId: string }> {
+    let tags = { edge: order_context.edge }
+    this.logger.info(tags, `About to generate clientOrderId...`)
+    this.logger.debug(tags, `Oh debug appears btw.`)
     let clientOrderId = randomUUID()
-    this.logger.debug({}, `Generated clientOrderId: ${clientOrderId}`)
-    await this.order_context_persistence.set_order_context_for_order({
-      exchange_identifier: this.get_exchange_identifier(),
-      order_id: clientOrderId,
-      order_context,
-    })
-    this.logger.debug({}, `Stored clientOrderId: ${clientOrderId}`)
-    return { clientOrderId }
+    this.logger.info(tags, `Generated clientOrderId: ${clientOrderId}`)
+    try {
+      await this.order_context_persistence.set_order_context_for_order({
+        exchange_identifier: this.get_exchange_identifier(),
+        order_id: clientOrderId,
+        order_context,
+      })
+      this.logger.info(tags, `Stored clientOrderId: ${clientOrderId}`)
+      return { clientOrderId }
+    } catch (err) {
+      this.logger.exception(tags, err, `Failed to store clientOrderId: ${clientOrderId}`)
+      throw err
+    }
   }
 
   // async market_buy_by_quote_quantity(

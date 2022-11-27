@@ -28,16 +28,19 @@ export class QueryParamsToCmdMapper {
     signal_timestamp_ms: number
     trigger_price: string | undefined
     tags: Tags
-    trade_id: string
+    trade_id?: string
   } {
     let { edge, base_asset, trigger_price, signal_timestamp_ms: signal_timestamp_ms_string, trade_id } = req.query
 
     assert(typeof edge == "string", new Error(`InputChecking: typeof edge unexpected`))
     tags.edge = edge
 
-    assert(typeof trade_id == "string", new Error(`InputChecking: typeof trade_id unexpected`))
-    assert(trade_id !== "", new Error(`InputChecking: trade_id was the empty string`))
-    tags.trade_id = trade_id
+    // only get this on longs at the moment, needs sourcing for short and close
+    if (typeof trade_id == "string") {
+      assert(typeof trade_id == "string", new Error(`InputChecking: typeof trade_id unexpected`))
+      assert(trade_id !== "", new Error(`InputChecking: trade_id was the empty string`))
+      tags.trade_id = trade_id
+    }
 
     assert(
       typeof trigger_price == "string" || typeof trigger_price == "undefined",

@@ -1,7 +1,6 @@
 import { RedisClientType } from "redis-v4"
 import { Logger } from "../../../interfaces/logger"
 import { strict as assert } from "assert"
-import { promisify } from "util"
 import {
   ExchangeIdentifier_V3,
   exchange_identifier_to_redis_key_snippet,
@@ -15,17 +14,12 @@ type OrderId = string
 export class RedisOrderContextPersistence implements OrderContextPersistence, OrderContextPersistence_V2 {
   logger: Logger
   redis: RedisClientType
-  getAsync: any
-  setAsync: any
 
   constructor({ logger, redis }: { logger: Logger; redis: RedisClientType }) {
     assert(logger)
     this.logger = logger
     assert(redis)
     this.redis = redis
-
-    this.getAsync = promisify(this.redis.get).bind(this.redis)
-    this.setAsync = promisify(this.redis.set).bind(this.redis)
   }
 
   private _key(exchange_identifier: ExchangeIdentifier_V3, order_id: OrderId): string {
@@ -42,7 +36,7 @@ export class RedisOrderContextPersistence implements OrderContextPersistence, Or
     if (!order_id) {
       throw new Error(`null order_id in set_order_context_for_order: order_id: '${order_id}', context: ${json}`)
     }
-    await this.setAsync(this._key(exchange_identifier, order_id), json)
+    await this.redis.set(this._key(exchange_identifier, order_id), json)
   }
 
   async get_order_context_for_order(args: {
@@ -54,7 +48,7 @@ export class RedisOrderContextPersistence implements OrderContextPersistence, Or
       // I think there was a bug where this would happen a while ago
       if (!order_id) throw new Error(`null order_id in get_order_context_for_order: ${order_id}`)
 
-      let json = await this.getAsync(this._key(exchange_identifier, order_id))
+      let json = await this.redis.get(this._key(exchange_identifier, order_id))
       if (!json) throw new Error(`No OrderContext found for order ${order_id}`)
 
       let order_context: OrderContext_V1 | OrderContext_V2 = JSON.parse(json)

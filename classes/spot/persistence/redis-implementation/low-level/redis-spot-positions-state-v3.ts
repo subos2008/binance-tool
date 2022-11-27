@@ -1,6 +1,4 @@
 import { strict as assert } from "assert"
-const { promisify } = require("util")
-
 import { Logger } from "../../../../../interfaces/logger"
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN

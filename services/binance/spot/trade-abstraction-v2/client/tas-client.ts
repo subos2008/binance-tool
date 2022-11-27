@@ -51,39 +51,57 @@ export class TradeAbstractionServiceClient {
   }
 
   async close(cmd: TradeAbstractionCloseCommand): Promise<TradeAbstractionCloseResult> {
-    let response = await this.get(new URL("/close", this.TAS_URL).toString(), cmd)
-    this.logger.info(response)
-    let tas_response = response.data as TradeAbstractionCloseResult
-    if (tas_response?.object_type !== "TradeAbstractionCloseResult") {
-      let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionCloseResult`)
-      this.logger.exception({}, err)
-      Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
+    let tags = { edge: cmd.edge, base_asset: cmd.base_asset }
+    try {
+      let response = await this.get(new URL("/close", this.TAS_URL).toString(), cmd)
+      this.logger.info(response)
+      let tas_response = response.data as TradeAbstractionCloseResult
+      if (tas_response?.object_type !== "TradeAbstractionCloseResult") {
+        let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionCloseResult`)
+        this.logger.exception({}, err)
+        Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
+      }
+      return tas_response
+    } catch (err) {
+      this.logger.exception(tags, err)
+      throw err
     }
-    return tas_response
   }
 
   async long(cmd: TradeAbstractionOpenLongCommand): Promise<TradeAbstractionOpenLongResult> {
-    let response = await this.get(new URL("/long", this.TAS_URL).toString(), cmd)
-    this.logger.info(response)
-    let tas_response = response.data as TradeAbstractionOpenLongResult
-    if (tas_response?.object_type !== "TradeAbstractionOpenLongResult") {
-      let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenLongResult`)
-      this.logger.exception({}, err)
-      Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
+    let tags = { edge: cmd.edge, base_asset: cmd.base_asset }
+    try {
+      let response = await this.get(new URL("/long", this.TAS_URL).toString(), cmd)
+      this.logger.info(response)
+      let tas_response = response.data as TradeAbstractionOpenLongResult
+      if (tas_response?.object_type !== "TradeAbstractionOpenLongResult") {
+        let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenLongResult`)
+        this.logger.exception({}, err)
+        Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
+      }
+      return tas_response
+    } catch (err) {
+      this.logger.exception(tags, err)
+      throw err
     }
-    return tas_response
   }
 
   async short(cmd: TradeAbstractionOpenShortCommand): Promise<TradeAbstractionOpenShortResult> {
-    let response = await this.get(new URL("/short", this.TAS_URL).toString(), cmd)
-    this.logger.info(response)
-    let tas_response = response.data as TradeAbstractionOpenShortResult
-    if (tas_response?.object_type !== "TradeAbstractionOpenShortResult") {
-      let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenShortResult`)
-      this.logger.exception({}, err)
-      Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
+    let tags = { edge: cmd.edge, base_asset: cmd.base_asset }
+    try {
+      let response = await this.get(new URL("/short", this.TAS_URL).toString(), cmd)
+      this.logger.info(response)
+      let tas_response = response.data as TradeAbstractionOpenShortResult
+      if (tas_response?.object_type !== "TradeAbstractionOpenShortResult") {
+        let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenShortResult`)
+        this.logger.exception({}, err)
+        Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
+      }
+      return tas_response
+    } catch (err) {
+      this.logger.exception(tags, err)
+      throw err
     }
-    return tas_response
   }
 
   private async get(endpoint: string, params?: string | object): Promise<AxiosResponse<any, any>> {

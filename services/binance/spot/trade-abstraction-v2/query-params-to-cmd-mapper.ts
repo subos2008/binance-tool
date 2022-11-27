@@ -1,6 +1,9 @@
 import { strict as assert } from "assert"
 import { Request } from "express"
-import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
+import {
+  TradeAbstractionOpenLongCommand,
+  TradeAbstractionOpenLongResult,
+} from "./interfaces/long"
 import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "./interfaces/short"
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
@@ -27,11 +30,15 @@ export class QueryParamsToCmdMapper {
     signal_timestamp_ms: number
     trigger_price: string | undefined
     tags: Tags
+    trade_id: string
   } {
-    let { edge, base_asset, trigger_price, signal_timestamp_ms: signal_timestamp_ms_string } = req.query
+    let { edge, base_asset, trigger_price, signal_timestamp_ms: signal_timestamp_ms_string, trade_id } = req.query
 
     assert(typeof edge == "string", new Error(`InputChecking: typeof edge unexpected`))
     tags.edge = edge
+
+    assert(typeof trade_id == "string", new Error(`InputChecking: typeof trade_id unexpected`))
+    tags.trade_id = trade_id
 
     assert(
       typeof trigger_price == "string" || typeof trigger_price == "undefined",
@@ -51,7 +58,7 @@ export class QueryParamsToCmdMapper {
 
     let signal_timestamp_ms = Number(signal_timestamp_ms_string)
 
-    return { edge, base_asset, signal_timestamp_ms, trigger_price, tags }
+    return { edge, base_asset, signal_timestamp_ms, trigger_price, tags, trade_id }
   }
 
   close(
@@ -136,9 +143,9 @@ export class QueryParamsToCmdMapper {
     }
 
     /* input checking */
-    let edge, base_asset, signal_timestamp_ms, trigger_price
+    let edge, base_asset, signal_timestamp_ms, trigger_price, trade_id
     try {
-      ;({ edge, base_asset, signal_timestamp_ms, trigger_price } = this.check_inputs(req, tags, {
+      ;({ edge, base_asset, signal_timestamp_ms, trigger_price, trade_id } = this.check_inputs(req, tags, {
         cmd_received_timestamp_ms,
         quote_asset,
       }))
@@ -165,6 +172,7 @@ export class QueryParamsToCmdMapper {
     let result: TradeAbstractionOpenLongCommand = {
       object_type: "TradeAbstractionOpenLongCommand",
       edge,
+      trade_id,
       direction,
       action,
       base_asset,

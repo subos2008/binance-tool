@@ -7,7 +7,10 @@ import { MyEventNameType } from "../../classes/amqp/message-routing"
 import { TradeAbstractionServiceClient } from "../binance/spot/trade-abstraction-v2/client/tas-client"
 import { ServiceLogger } from "../../interfaces/logger"
 import Sentry from "../../lib/sentry"
-import { TradeAbstractionOpenLongResult } from "../binance/spot/trade-abstraction-v2/interfaces/long"
+import {
+  generate_trade_id,
+  TradeAbstractionOpenLongResult,
+} from "../binance/spot/trade-abstraction-v2/interfaces/long"
 import { TradeAbstractionCloseResult } from "../binance/spot/trade-abstraction-v2/interfaces/close"
 import { Edge70SignalProcessor } from "./interfaces"
 import { Edge70Signal } from "../edge70-signals/interfaces/edge70-signal"
@@ -48,21 +51,24 @@ export class Edge70ForwarderToEdge70Spot implements Edge70SignalProcessor {
     assert.equal(signal.object_type, "Edge70Signal")
     assert.equal(signal.edge, "edge70")
     let edge = "edge70"
+    let { direction, signal_timestamp_ms } = signal.signal
 
     let { base_asset } = signal.market_identifier
     if (!base_asset) {
       throw new Error(`base_asset not specified in market_identifier: ${JSON.stringify(signal.market_identifier)}`)
     }
-    let tags = { base_asset, edge }
+    let tags = { base_asset, edge, direction }
 
     let result: TradeAbstractionOpenLongResult | TradeAbstractionCloseResult
-    switch (signal.signal.direction) {
+    switch (direction) {
       case "long":
+        let trade_id = generate_trade_id({ ...tags,direction, signal_timestamp_ms }) // will want to maybe move this later
         this.logger.info(tags, `long signal, attempting to open ${edge} spot long position on ${base_asset}`)
         result = await this.tas_client.long({
           object_type: "TradeAbstractionOpenLongCommand",
           base_asset,
           edge,
+          trade_id,
           direction: "long",
           action: "open",
           trigger_price: signal.signal.signal_price,

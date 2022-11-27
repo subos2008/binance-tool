@@ -92,8 +92,8 @@ export class SpotPositionsExecution_OCOExit {
   }
 
   async open_position(args: TradeAbstractionOpenLongCommand_OCO_Exit): Promise<TradeAbstractionOpenLongResult> {
-    let { trigger_price: trigger_price_string, edge, base_asset, quote_asset } = args
-    let tags = { edge, base_asset, quote_asset }
+    let { trigger_price: trigger_price_string, edge, base_asset, quote_asset, trade_id } = args
+    let tags = { edge, base_asset, quote_asset, trade_id }
     try {
       let { edge_percentage_stop, edge_percentage_stop_limit, edge_percentage_take_profit } = args
 
@@ -184,6 +184,7 @@ export class SpotPositionsExecution_OCOExit {
           http_status: 418,
           msg: `${prefix}: ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`,
           edge,
+          trade_id,
           base_asset,
           quote_asset,
           executed_base_quantity: "0",
@@ -201,6 +202,7 @@ export class SpotPositionsExecution_OCOExit {
         base_asset,
         quote_asset,
         edge,
+        trade_id,
         executed_quote_quantity,
         executed_base_quantity,
         oco_order_id: oco_list_ClientOrderId,
@@ -224,6 +226,7 @@ export class SpotPositionsExecution_OCOExit {
         version: 1,
         base_asset,
         edge,
+        trade_id,
         status: "INTERNAL_SERVER_ERROR",
         http_status: 500,
         msg: `INTERNAL_SERVER_ERROR: ${err.message}`,

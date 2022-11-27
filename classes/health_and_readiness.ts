@@ -36,13 +36,16 @@ export class HealthAndReadinessSubsystem {
     this._initialised = initialised
 
     if (!healthy) {
+      /*
+       * Initialising as unhealthy is an antipattern - race conditions can happen -
+       * health should start true, set initialised to false instead
+       */
       let obj = {
         level: "warn",
         object_type: "SubsystemInitialisedNotHealthy",
         subsystem: name,
         msg: `Subsystem ${name} initialised as unhealthy`,
       }
-      // This is an antipattern - health should start true, set initialised to false instead
       this.logger.event({ level: "warn" }, obj)
     }
 
@@ -53,7 +56,7 @@ export class HealthAndReadinessSubsystem {
         subsystem: name,
         msg: `Subsystem ${name} initialised as not initialised`,
       }
-      this.logger.event({}, obj)
+      this.logger.event({ level: "debug" }, obj)
     }
   }
 

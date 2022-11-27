@@ -7,7 +7,7 @@ import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"
 import JSONBigNumber from "./JSONBigNumber"
 import { Logger } from "../../../../../interfaces/logger"
 
-const default_retry_ms = 11 * 1000
+const default_retry_ms = 11 * 1000 // I think this is 11 because some binance rate limit resets at 10s
 function getMillisToSleep(retryHeaderString: string | undefined): number {
   if (!retryHeaderString) {
     console.warn(`429 with no retry-after header, using default wait of ${default_retry_ms} ms`)
@@ -36,7 +36,7 @@ export class AxiosRetry {
   async get(endpoint: string, params?: string | object): Promise<AxiosResponse<any, any>> {
     try {
       const options: AxiosRequestConfig = {
-        timeout: 10 * 1000, // ms, 1000 = 1 second
+        timeout: 63 * 1000, // ms, 1000 = 1 second. WTF was this set at 10 seconds?
         headers: {},
         transformResponse: (res: string) => {
           // Do your own parsing here if needed ie JSON.parse(res);

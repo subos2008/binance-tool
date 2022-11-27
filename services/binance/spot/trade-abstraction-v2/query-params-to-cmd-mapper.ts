@@ -30,14 +30,22 @@ export class QueryParamsToCmdMapper {
     tags: Tags
     trade_id?: string
   } {
-    let { edge, base_asset, trigger_price, signal_timestamp_ms: signal_timestamp_ms_string, trade_id } = req.query
+    let {
+      edge,
+      base_asset,
+      trigger_price,
+      signal_timestamp_ms: signal_timestamp_ms_string,
+      trade_id: trade_id_input,
+    } = req.query
 
     assert(typeof edge == "string", new Error(`InputChecking: typeof edge unexpected`))
     tags.edge = edge
 
     // only get this on longs at the moment, needs sourcing for short and close
-    if (typeof trade_id == "string") {
-      assert(typeof trade_id == "string", new Error(`InputChecking: typeof trade_id unexpected`))
+    let trade_id: string | undefined
+    if (typeof trade_id_input == "string") {
+      trade_id = trade_id_input
+      // assert(typeof trade_id_input == "string", new Error(`InputChecking: typeof trade_id unexpected`))
       assert(trade_id !== "", new Error(`InputChecking: trade_id was the empty string`))
       tags.trade_id = trade_id
     }
@@ -170,6 +178,8 @@ export class QueryParamsToCmdMapper {
       this.logger.event({ ...tags, level: "error" }, result)
       return { result, tags }
     }
+
+    assert(typeof trade_id == "string", new Error(`InputChecking: typeof trade_id unexpected`))
 
     let result: TradeAbstractionOpenLongCommand = {
       object_type: "TradeAbstractionOpenLongCommand",

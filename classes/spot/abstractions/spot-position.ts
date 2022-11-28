@@ -227,6 +227,7 @@ export class SpotPosition {
         : `${percentage_quote_change}%` || `(undefined)`
     let obj: SpotPositionClosed = {
       object_type: "SpotPositionClosed",
+      object_class: "event",
       object_subtype, //: "SingleEntryExit", // simple trades with one entry order and one exit order
       version: 1,
 

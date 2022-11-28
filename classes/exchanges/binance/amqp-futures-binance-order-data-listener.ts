@@ -77,7 +77,7 @@ export class AMQP_FuturesBinanceOrderDataListener implements TypedMessageProcess
     let tags = i
     try {
       channel.ack(amqp_event)
-      this.logger.event(tags, i)
+      this.logger.object(tags, i)
       await this.processBinanceOrderDataMessage(i)
     } catch (err: any) {
       this.logger.error({ err })

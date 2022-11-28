@@ -35,7 +35,11 @@ export class BinanceExchangeInfoGetter implements ExchangeInfoGetter {
 
     logger.event(
       { exchange: "binance", exchange_type: "spot" },
-      { object_type: "BinanceExchangeInfoCacheMiss", msg: `exchange_info not cached, reloading` }
+      {
+        object_type: "BinanceExchangeInfoCacheMiss",
+        object_class: "event",
+        msg: `exchange_info not cached, reloading`,
+      }
     )
 
     try {
@@ -83,7 +87,11 @@ export class BinanceFuturesExchangeInfoGetter {
 
     logger.event(
       { exchange: "binance", exchange_type: "futures" },
-      { object_type: "BinanceFuturesExchangeInfoCacheMiss", msg: `exchange_info not cached, reloading` }
+      {
+        object_type: "BinanceFuturesExchangeInfoCacheMiss",
+        object_class: "event",
+        msg: `exchange_info not cached, reloading`,
+      }
     )
 
     try {

@@ -48,7 +48,7 @@ import * as bunyan from "bunyan"
 
 import Sentry from "./sentry"
 
-import { Command, Lifecycle, LoggableEvent, Logger, Result, ServiceLogger, TODO } from "../interfaces/logger"
+import { Command, Lifecycle, LoggableEvent, Logger, PureEvent, Result, ServiceLogger, TODO } from "../interfaces/logger"
 import { ContextTags } from "../interfaces/send-message"
 
 export class BunyanServiceLogger implements ServiceLogger, Logger {
@@ -211,7 +211,31 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
     }
   }
 
-  event(tags: ContextTags, event: LoggableEvent) {
+  object(tags: ContextTags, event: LoggableEvent) {
+    if (this.full_trace) console.trace(`BunyanServiceLogger.event call stack trace`)
+    if (!this.silent) {
+      try {
+        // Used in the backtester where we want readable logs
+        if (this.events_as_msg) {
+          if (event.msg) {
+            this.bunyan.info(tags, `[${event.object_type}] ${event.msg}`)
+          } else {
+            console.trace(`[${event.object_type}] missing @msg attribute`)
+            this.bunyan.info({ ...tags, ...event })
+          }
+          return
+        }
+
+        // Default case handling
+        this.call_bunyan_by_level_name(tags.level || "info", { ...tags, ...event }, event.msg)
+      } catch (err) {
+        console.error(err)
+        Sentry.captureException(err)
+      }
+    }
+  }
+
+  event(tags: ContextTags, event: PureEvent) {
     if (this.full_trace) console.trace(`BunyanServiceLogger.event call stack trace`)
     if (!this.silent) {
       try {

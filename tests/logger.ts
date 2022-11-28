@@ -7,4 +7,7 @@ let logger: ServiceLogger = new BunyanServiceLogger()
 
 // logger.info({ base_asset: "INFO" }, `Hello from .info with tags!`)
 
-logger.event({ base_asset: "EVENT" }, { object_type: "TEST_EVENT", msg: `Hello from .info with tags!` })
+logger.event(
+  { base_asset: "EVENT" },
+  { object_type: "TEST_EVENT", object_class: "event", msg: `Hello from .info with tags!` }
+)

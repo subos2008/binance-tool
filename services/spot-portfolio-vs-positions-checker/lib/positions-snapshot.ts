@@ -58,7 +58,7 @@ export class PositionsSnapshot {
     }
 
     let msg = this.positions.map((p) => `${p.base_asset}: ${p.position_size}`).join(", ")
-    this.logger.event({}, { object_type: `PositionsSnapshot`, msg: `[${msg}]` })
+    // this.logger.event({}, { object_type: `PositionsSnapshot`, msg: `[${msg}]` })
     return this.positions
   }
 

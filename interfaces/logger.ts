@@ -46,6 +46,7 @@ export interface ServiceLogger {
   debug(tags: Object, ...message: any[]): void
   silly(tags: Object, ...message: any[]): void
   exception(tags: ContextTags, err: unknown, msg?: string): void
+  object(tags: ContextTags, event: LoggableEvent): void
   event(tags: ContextTags, event: PureEvent): void
   todo(tags: ContextTags, msg: string): void
 

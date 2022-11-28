@@ -90,7 +90,7 @@ class Edge70MessageProcessor implements TypedMessageProcessor<Edge70Signal> {
   async process_message(signal: Edge70Signal, channel: Channel, amqp_message: Message) {
     let tags: ContextTags = signal
     try {
-      this.logger.event(tags, signal)
+      this.logger.object(tags, signal)
 
       // TODO: move this lower when the TAS is refactored
       channel.ack(amqp_message)

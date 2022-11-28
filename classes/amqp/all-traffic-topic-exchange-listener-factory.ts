@@ -120,6 +120,7 @@ export class AllTrafficTopicExchangeListenerFactory {
 
         let obj = {
           object_type: "AMQPListenerStarted",
+          object_class: "event" as "event",
           exchange_type,
           exchange_name,
           routing_key,

@@ -114,14 +114,14 @@ class MyOrderCallbacks implements OrderCallbacks {
     let exchange_info = this.exchange_info
     if (data.side == "BUY") {
       data.msg = `BUY order on ${data.symbol} filled (edge: ${edge}).`
-      this.logger.event(tags, data)
+      this.logger.object(tags, data)
       this.position_tracker.buy_order_filled({
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
       })
     }
     if (data.side == "SELL") {
       data.msg = `SELL order on ${data.symbol} filled (edge: ${edge}).`
-      this.logger.event(tags, data)
+      this.logger.object(tags, data)
       this.position_tracker.sell_order_filled({
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
       })

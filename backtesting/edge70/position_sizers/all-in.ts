@@ -36,10 +36,7 @@ export class BacktesterAllInPositionSizer implements PositionSizer {
   }): Promise<BigNumber> {
     let tags = { base_asset, quote_asset, edge, direction }
 
-    this.logger.event(tags, {
-      object_type: `AllInPositionSizer`,
-      msg: `Someone is being silly and using the AllInPositionSizer...`,
-    })
+    this.logger.warn(tags, `Someone is being silly and using the AllInPositionSizer...`)
 
     this.bank.balances().cash
     return this.bank.balances().cash

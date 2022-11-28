@@ -167,6 +167,7 @@ class Edge70SignalsService {
       {},
       {
         object_type: `EdgeInitialization`,
+        object_class: "event",
         msg: `Target markets: ${base_assets.join(", ")}`,
       }
     )
@@ -206,6 +207,7 @@ class Edge70SignalsService {
             { ...tags, level: "debug" },
             {
               object_type: `EdgeInitialization`,
+              object_class: "event",
               msg: `Loaded ${initial_candles.length} candles for ${symbol}`,
             }
           )
@@ -237,6 +239,7 @@ class Edge70SignalsService {
         })
         this.logger.event(tags, {
           object_type: "EdgeInitialization",
+          object_class: "event",
           msg: `Setup edge for ${symbol} with ${initial_candles.length} initial candles`,
         })
 
@@ -270,13 +273,18 @@ class Edge70SignalsService {
     let valid_symbols = Object.keys(this.edges)
     this.logger.event(
       {},
-      { object_type: "EdgeInitialization", msg: `Edges initialised for ${valid_symbols.length} symbols.` }
+      {
+        object_type: "EdgeInitialization",
+        object_class: "event",
+        msg: `Edges initialised for ${valid_symbols.length} symbols.`,
+      }
     )
     this.send_message(`initialised for ${valid_symbols.length} symbols.`, { edge })
     this.logger.event(
       {},
       {
         object_type: "MarketDirectionInitialiser",
+        object_class: "event",
         msg: `${
           symbols_with_direction_uninitialised.length
         } symbols with uninitialised market direction: ${symbols_with_direction_uninitialised.join(", ")})`,

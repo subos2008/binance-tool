@@ -100,7 +100,7 @@ class EventLogger implements TypedMessageProcessor<SpotPortfolio> {
     const name = `balance`
 
     let tags: ContextTags = { exchange, exchange_type: account_type }
-    this.logger.event(tags, msg)
+    this.logger.debug(tags, `Submitting SpotPortfolio to InfluxDB`)
     try {
       let usd_value = msg.usd_value
       let btc_value = msg.btc_value

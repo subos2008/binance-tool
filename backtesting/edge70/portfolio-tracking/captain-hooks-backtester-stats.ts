@@ -204,19 +204,19 @@ export class CaptainHooksBacktesterStats implements BacktesterStatsHooks {
 
   async summary() {
     if (!this.current) {
-      this.logger.event({}, { object_type: `HooksSummaryNoData`, msg: `No Data.` })
+      this.logger.object({}, { object_type: `HooksSummaryNoData`, msg: `No Data.` })
       return
     }
 
-    this.logger.event({}, this.summary_positions_opened_closed())
-    this.logger.event({}, await this.loan_summary())
-    this.logger.event({}, await this.net_worth_summary())
-    this.logger.event({}, await this.net_worth_delta_summary())
-    this.logger.event({}, await this.max_total_assets_summary())
-    this.logger.event({}, await this.pct_portfolio_invested_summary())
-    this.logger.event({}, await this.open_positions_count_summary())
+    this.logger.object({}, this.summary_positions_opened_closed())
+    this.logger.object({}, await this.loan_summary())
+    this.logger.object({}, await this.net_worth_summary())
+    this.logger.object({}, await this.net_worth_delta_summary())
+    this.logger.object({}, await this.max_total_assets_summary())
+    this.logger.object({}, await this.pct_portfolio_invested_summary())
+    this.logger.object({}, await this.open_positions_count_summary())
 
-    this.logger.event({}, { object_type: `BacktestID`, msg: this.backtest_run_id })
+    this.logger.object({}, { object_type: `BacktestID`, msg: this.backtest_run_id })
 
     // let msg: string[] = [
     //   `Net Worth \$${strings.total_assets_value(portfolio)} X% cash y% invested`,

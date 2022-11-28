@@ -66,9 +66,6 @@ export class PositionsSnapshot {
         throw new Error(`Positions with size 0 in PositionsSnapshot`)
       }
     }
-
-    let msg = this.positions.map((p) => `${p.base_asset}: ${p.position_size}`).join(", ")
-    this.logger.event({}, { object_type: `PositionsSnapshot`, msg: `[${msg}]` })
   }
 
   async get_positions_quote_values(args: { quote_asset: string }): Promise<PositionWithQuoteValue[]> {

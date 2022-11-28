@@ -368,6 +368,7 @@ class Edge70MegaBacktester {
         })
         this.logger.event(tags, {
           object_type: "EdgeMarketInitialization",
+          object_class: "event",
           msg: `Setup edge for ${symbol} with ${initial_candles.length} initial candles`,
         })
         // TODO: get klines via the TAS so we can do rate limiting

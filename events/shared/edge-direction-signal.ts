@@ -5,6 +5,7 @@ import { MarketIdentifier_V4, MarketIdentifier_V5 } from "./market-identifier"
 /** For edges that signal flip-flop long/short */
 export interface EdgeDirectionSignal {
   object_type: "EdgeDirectionSignal"
+  object_class: "event"
   version: 1
   edge: string
   msg?: string

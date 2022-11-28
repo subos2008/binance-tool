@@ -140,6 +140,7 @@ export class SpotPortfolioUtils {
     try {
       let event = {
         object_type: "FreeBalancesReport",
+        object_class: "event" as "event",
         all: all.map((p) => `${p.asset}: ${p.quote_amount?.toFixed()}`).join(", "),
         filtered: filtered.map((p) => `${p.asset}: ${p.quote_amount?.toFixed()}`).join(", "),
       }
@@ -160,7 +161,6 @@ export class SpotPortfolioUtils {
     portfolio: SpotPortfolio
     quote_currency: string
   }): { portfolio: SpotPortfolio; unprocessed_balances: string[] } {
-    
     if (portfolio?.quote_values_added?.includes(quote_currency)) {
       return { portfolio, unprocessed_balances: [] }
     }
@@ -168,7 +168,7 @@ export class SpotPortfolioUtils {
     portfolio.quote_values_added = [...(portfolio.quote_values_added || []), quote_currency]
 
     let unprocessed_balances: string[] = []
-    
+
     if (!portfolio.balances) return { portfolio, unprocessed_balances } // NOP on stupid requests, could also throw
     if (!portfolio.prices)
       throw new Error("Cannot add_quote_value_to_portfolio_balances when portfolio has no prices")

@@ -15,7 +15,7 @@ export class BacktesterFixedPositionSizer implements PositionSizer {
   constructor({ logger }: { logger: ServiceLogger }) {
     assert(logger)
     this.logger = logger
-    this.logger.event({}, { object_type: `[PositionSizer]`, msg: `Using ${this.id_slug()}` })
+    this.logger.object({}, { object_type: `PositionSizer`, msg: `Using ${this.id_slug()}` })
   }
 
   id_slug(): string {
@@ -37,7 +37,7 @@ export class BacktesterFixedPositionSizer implements PositionSizer {
 
     let { amount } = this
 
-    this.logger.event(tags, {
+    this.logger.object(tags, {
       object_type: `FixedPositionSizer`,
       msg: `position fixed at ${amount} ${quote_asset}`,
     })

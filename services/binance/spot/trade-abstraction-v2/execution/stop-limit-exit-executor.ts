@@ -160,13 +160,14 @@ export class SpotPositionsExecution_StopLimitExit {
     let stop_order_id: OrderId | undefined
     let stop_cmd: SpotStopMarketSellCommand = {
       object_type: "SpotStopMarketSellCommand",
+      object_class: "command",
       order_context,
       market_identifier,
       trade_context,
       base_amount: executed_base_quantity,
       trigger_price: stop_price,
     }
-    this.logger.event(tags, stop_cmd)
+    this.logger.command(tags, stop_cmd, "created")
 
     try {
       this.logger.todo(

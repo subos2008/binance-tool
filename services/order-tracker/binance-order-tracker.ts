@@ -96,7 +96,7 @@ class MyOrderCallbacks {
   }
 
   async order_created(data: BinanceOrderData): Promise<void> {
-    this.logger.event({}, data)
+    this.logger.object({}, data)
     let { edge } = await this.get_order_context_for_order(data)
     let price: string = data.price ? new BigNumber(data.price).toFixed() : "(null)"
     let stopPrice: string = data.stopPrice ? new BigNumber(data.stopPrice).toFixed() : "(null)"

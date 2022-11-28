@@ -9,9 +9,13 @@ import { ServiceLogger } from "../../interfaces/logger"
 import Sentry from "../../lib/sentry"
 import {
   generate_trade_id,
+  TradeAbstractionOpenLongCommand,
   TradeAbstractionOpenLongResult,
 } from "../binance/spot/trade-abstraction-v2/interfaces/long"
-import { TradeAbstractionCloseResult } from "../binance/spot/trade-abstraction-v2/interfaces/close"
+import {
+  TradeAbstractionCloseCommand,
+  TradeAbstractionCloseResult,
+} from "../binance/spot/trade-abstraction-v2/interfaces/close"
 import { Edge70SignalProcessor } from "./interfaces"
 import { Edge70Signal } from "../edge70-signals/interfaces/edge70-signal"
 
@@ -47,7 +51,7 @@ export class Edge70ForwarderToEdge70Spot implements Edge70SignalProcessor {
     this.forward_short_signals_as_close_position = forward_short_signals_as_close_position
   }
 
-  async process_signal(signal: Edge70Signal) {
+  async process_signal(signal: Edge70Signal): Promise<void> {
     assert.equal(signal.object_type, "Edge70Signal")
     assert.equal(signal.edge, "edge70")
     let edge = "edge70"
@@ -64,7 +68,7 @@ export class Edge70ForwarderToEdge70Spot implements Edge70SignalProcessor {
       case "long":
         let trade_id = generate_trade_id({ ...tags, direction, signal_timestamp_ms }) // will want to maybe move this later
         this.logger.info(tags, `long signal, attempting to open ${edge} spot long position on ${base_asset}`)
-        result = await this.tas_client.long({
+        let cmd: TradeAbstractionOpenLongCommand = {
           object_type: "TradeAbstractionOpenLongCommand",
           object_class: "command",
           base_asset,
@@ -74,7 +78,10 @@ export class Edge70ForwarderToEdge70Spot implements Edge70SignalProcessor {
           action: "open",
           trigger_price: signal.signal.signal_price,
           signal_timestamp_ms: signal.signal.signal_timestamp_ms,
-        })
+        }
+        this.logger.command(tags, cmd, "created")
+        result = await this.tas_client.long(cmd)
+        this.logger.result(tags, result, "consumed") // NOP
         break
       case "short":
         if (this.forward_short_signals_as_close_position) {
@@ -83,14 +90,18 @@ export class Edge70ForwarderToEdge70Spot implements Edge70SignalProcessor {
               tags,
               `short signal, attempting to close any ${edge} spot long position on ${base_asset}`
             )
-            result = await this.tas_client.close({
+            let cmd: TradeAbstractionCloseCommand = {
               object_type: "TradeAbstractionCloseCommand",
+              object_class: "command",
               version: 1,
               base_asset,
               edge,
               action: "close",
               signal_timestamp_ms: signal.signal.signal_timestamp_ms,
-            })
+            }
+            this.logger.command(tags, cmd, "created")
+            result = await this.tas_client.close(cmd)
+            this.logger.result(tags, result, "consumed") // NOP
           } catch (err: any) {
             /**
              * There are probably valid cases for this - like these was no long position open

@@ -126,8 +126,9 @@ export class MarketDirectionInitialiser implements Edge70SignalCallbacks {
 
       let direction = await this.direction_persistance.get_direction(base_asset)
       let success: boolean = direction === "long" || direction === "short"
-      let event = {
+      const event = {
         object_type: "MarketDirectionInitialiserResult",
+        object_class: "event" as "event",
         success,
         direction,
         symbol,

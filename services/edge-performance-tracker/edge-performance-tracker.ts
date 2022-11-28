@@ -47,7 +47,6 @@ const service_is_healthy = health_and_readiness.addSubsystem({
   initialised: true,
 })
 
-
 process.on("unhandledRejection", (err) => {
   logger.error({ err })
   Sentry.captureException(err)
@@ -106,7 +105,7 @@ class EventLogger implements TypedMessageProcessor<SpotPositionClosed> {
 
       channel.ack(amqp_event)
 
-      this.logger.event(tags, i)
+      this.logger.debug(tags, `Ingesting new SpotPositionClosed event for ${i.edge}:${i.base_asset}`)
 
       let { edge, percentage_quote_change, base_asset, abs_quote_change } = i
       let loss = percentage_quote_change ? percentage_quote_change < 0 : undefined

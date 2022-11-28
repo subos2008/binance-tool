@@ -42,6 +42,7 @@ export interface TradeContext {
 
 export interface SpotStopMarketSellCommand {
   object_type: "SpotStopMarketSellCommand"
+  object_class: "command"
   order_context: OrderContext_V1
   market_identifier: MarketIdentifier_V4
   trade_context: TradeContext

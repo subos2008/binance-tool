@@ -214,6 +214,7 @@ export class Edge70Signals {
           { ...tags, level: "warn" },
           {
             object_type: "EdgeResultPriceSignalBothDirections",
+            object_class: "event",
             msg: `${symbol}: price signalled both directions - persistent market direction not updated`,
           }
         )
@@ -227,6 +228,7 @@ export class Edge70Signals {
           { ...tags, level: "info" },
           {
             object_type: "EdgeResultNoPriceSignal",
+            object_class: "event",
             msg: `${symbol}: No price signal: LONG - ${debug_string_long} SHORT - ${debug_string_short}`,
           }
         )
@@ -239,6 +241,7 @@ export class Edge70Signals {
           { ...tags, level: "warn" },
           {
             object_type: "EdgeResultNoDirection",
+            object_class: "event",
             msg: `${symbol}: No stored direction and no new direction, edge case while waiting for market to initialise? Warning just so we check this case...skipping`,
           }
         )
@@ -253,10 +256,10 @@ export class Edge70Signals {
         throw new Error(`null direction not expected in Direction change filter`)
       }
 
-      /** 
-       * Direction change filter (and key refresh) 
-       * 
-       * It is very important that we call set_direction() every time we ingest a candle as direction 
+      /**
+       * Direction change filter (and key refresh)
+       *
+       * It is very important that we call set_direction() every time we ingest a candle as direction
        * keys have an expiry time; to prevent old keys
        */
       let previous_direction = await this.direction_persistance.set_direction(base_asset, direction)

@@ -19,12 +19,20 @@ export class SendMessage {
   }
 
   async send_message(ack_func: () => void, service_name: string, message: string, tags: ContextTags = {}) {
-    let event = { object_type: "SendMessage", msg: message || "(null)", service_name }
+    let event = {
+      object_type: "SendMessage",
+      object_class: "event" as "event",
+      msg: message || "(null)",
+      service_name,
+    }
     this.logger.event(tags, event)
 
     /* Check for blank message */
     if (!message) {
-      this.logger.event({ ...tags, level: "error" }, { ...event, object_type: "BlankSendMessage" })
+      this.logger.event(
+        { ...tags, level: "error" },
+        { ...event, object_type: "BlankSendMessage", object_class: "event" }
+      )
       ack_func()
       return
     }
@@ -35,7 +43,7 @@ export class SendMessage {
       // 4096
       let m1 = message.slice(0, split_index)
       let remainder = message.slice(split_index)
-      this.logger.event(tags, {
+      this.logger.object(tags, {
         object_type: "SplitSendMessage",
         msg: `Split messge, M1 size ${m1.length}, remainder ${remainder.length}`,
       })

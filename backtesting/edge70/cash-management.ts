@@ -51,6 +51,7 @@ export class BacktesterCashManagement implements BankOfBacktesting {
       {},
       {
         object_type: "BankLoanRequest",
+        object_class: 'event',
         msg: `Took loan of ${loan_amount.toFixed(1)}, total loan now ${this.loan.toFixed(
           1
         )}, remaining ${this.loan_available.toFixed(1)}`,

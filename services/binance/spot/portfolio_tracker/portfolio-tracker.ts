@@ -107,16 +107,15 @@ class PortfolioTracker implements MasterPortfolioClass {
         let length = portfolio.balances.length
         let msg = `B: ${portfolio.btc_value}, U: ${portfolio.usd_value}, #${length}`
         try {
-          msg += " as " + portfolio_utils.balances_to_string(portfolio, "BTC")
+          msg += " as " + portfolio_utils.balances_to_string(portfolio, "BUSD")
         } catch (err) {
-          Sentry.captureException(err)
-          logger.error({ err })
+          this.logger.exception({}, err)
         }
         if (portfolio.prices) {
           try {
             msg += ` BTCUSDT: ${new BigNumber(portfolio.prices["BTCUSDT"]).dp(0).toFixed()}`
-          } catch (e) {
-            /* just ignore */
+          } catch (err) {
+            this.logger.exception({}, err)
           }
         }
         this.send_message(msg)

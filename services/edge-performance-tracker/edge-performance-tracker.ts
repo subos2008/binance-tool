@@ -37,7 +37,7 @@ import { ServiceLogger } from "../../interfaces/logger"
 import { BunyanServiceLogger } from "../../lib/service-logger"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
-logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
+logger.event({}, { object_class: "event", object_type: "ServiceStarting", msg: "Service starting" })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()

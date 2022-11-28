@@ -92,7 +92,7 @@ export class TradeAbstractionService {
     let { edge, base_asset, quote_asset, trade_id, direction } = cmd
     let tags: TradeContextTags = { edge, base_asset, quote_asset, trade_id }
     try {
-      this.logger.event(tags, cmd)
+      this.logger.command(tags, cmd, "received")
 
       assert.equal(cmd.direction, "long")
       assert.equal(cmd.action, "open")
@@ -102,6 +102,7 @@ export class TradeAbstractionService {
         this.logger.exception(tags, err)
         let obj: TradeAbstractionOpenLongResult = {
           object_type: "TradeAbstractionOpenLongResult",
+          object_class: "result",
           version: 1,
           base_asset: cmd.base_asset,
           quote_asset: this.quote_asset,
@@ -112,7 +113,7 @@ export class TradeAbstractionService {
           msg: err.message,
           err,
         }
-        this.logger.event(tags, obj)
+        this.logger.result(tags, obj, "created")
         return obj
       }
 
@@ -121,6 +122,7 @@ export class TradeAbstractionService {
         this.logger.exception(tags, err)
         let obj: TradeAbstractionOpenLongResult = {
           object_type: "TradeAbstractionOpenLongResult",
+          object_class: "result",
           version: 1,
           base_asset: cmd.base_asset,
           quote_asset: this.quote_asset,
@@ -131,16 +133,13 @@ export class TradeAbstractionService {
           msg: err.message,
           err,
         }
-        this.logger.event(tags, obj)
+        this.logger.result(tags, obj, "created")
         return obj
       }
 
       let edge: AuthorisedEdgeType = check_edge(cmd.edge)
 
-      this.logger.event(
-        { ...tags, level: "warn" },
-        { object_type: "TODO", msg: `Position entry is not atomic with check for existing position` }
-      )
+      this.logger.todo({ ...tags, level: "warn" }, `Position entry is not atomic with check for existing position`)
 
       let existing_spot_position_size: BigNumber = await this.positions.exisiting_position_size({
         base_asset: cmd.base_asset,
@@ -150,6 +149,7 @@ export class TradeAbstractionService {
       if (existing_spot_position_size.isGreaterThan(0)) {
         let spot_long_result: TradeAbstractionOpenLongResult = {
           object_type: "TradeAbstractionOpenLongResult",
+          object_class: "result",
           version: 1,
           base_asset: cmd.base_asset,
           quote_asset: this.quote_asset,
@@ -159,7 +159,7 @@ export class TradeAbstractionService {
           http_status: 409,
           msg: `TradeAbstractionOpenLongResult: ${edge}${cmd.base_asset}: ALREADY_IN_POSITION`,
         }
-        this.logger.event(tags, spot_long_result)
+        this.logger.result(tags, spot_long_result, "created")
         return spot_long_result
       }
 
@@ -188,6 +188,7 @@ export class TradeAbstractionService {
       this.logger.exception(tags, err)
       let spot_long_result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
+        object_class: "result",
         version: 1,
         base_asset,
         quote_asset,
@@ -200,7 +201,7 @@ export class TradeAbstractionService {
         execution_timestamp_ms: Date.now(),
       }
       this.logger.error(tags, `Exception caught in TradeAbstractionService::long!`)
-      this.logger.event({ ...tags, level: "error" }, spot_long_result)
+      this.logger.result({ ...tags, level: "error" }, spot_long_result, "created")
       return spot_long_result
     }
   }
@@ -212,10 +213,7 @@ export class TradeAbstractionService {
     let { quote_asset } = this
     let tags: ContextTags = { quote_asset, base_asset: cmd.base_asset, edge: cmd.edge }
 
-    this.logger.event(
-      { ...tags, level: "info" },
-      { object_type: "TODO", msg: `Position exit is not atomic with check for existing position` }
-    )
+    this.logger.todo(tags, `Position exit is not atomic with check for existing position`)
 
     try {
       let result: TradeAbstractionCloseResult = await this.spot_ee.close_position(cmd, { quote_asset })

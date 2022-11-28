@@ -1,0 +1,144 @@
+backtesting/edge70/cash-management.ts(52,7): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/edge70-mega-backtester.ts(369,33): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/portfolio-tracking/captain-hooks-backtester-stats.ts(207,29): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/portfolio-tracking/captain-hooks-backtester-stats.ts(211,27): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/portfolio-tracking/captain-hooks-backtester-stats.ts(212,27): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/portfolio-tracking/captain-hooks-backtester-stats.ts(213,27): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/portfolio-tracking/captain-hooks-backtester-stats.ts(214,27): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/portfolio-tracking/captain-hooks-backtester-stats.ts(215,27): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/portfolio-tracking/captain-hooks-backtester-stats.ts(216,27): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/portfolio-tracking/captain-hooks-backtester-stats.ts(217,27): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/portfolio-tracking/captain-hooks-backtester-stats.ts(219,27): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/portfolio-tracking/lib/backtest-trade-execution.ts(113,31): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/position_sizers/all-in.ts(39,29): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/position_sizers/fixed.ts(18,27): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+backtesting/edge70/position_sizers/fixed.ts(40,29): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+classes/amqp/all-traffic-topic-exchange-listener-factory.ts(130,31): error TS2345: Argument of type '{ object_type: string; exchange_type: string; exchange_name: string; routing_key: string; queue_name: string; headers: { "x-queue-type": string; }; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; exchange_type: string; exchange_name: string; routing_key: string; queue_name: string; headers: { "x-queue-type": string; }; msg: string; }' but required in type 'PureEvent'.
+classes/amqp/listener-factory-v2.ts(78,58): error TS2345: Argument of type '{ object_type: string; msg: string; Body: any; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; Body: any; }' but required in type 'PureEvent'.
+classes/amqp/listener-factory-v2.ts(185,31): error TS2345: Argument of type '{ object_type: string; exchange_type: "topic"; exchange_name: string; event_name: MyEventNameType; routing_key: string; queue_name: string; headers: { [name: string]: string; }; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; exchange_type: "topic"; exchange_name: string; event_name: MyEventNameType; routing_key: string; queue_name: string; headers: { [name: string]: string; }; msg: string; }' but required in type 'PureEvent'.
+classes/exchanges/binance/amqp-binance-order-data-listener.ts(104,33): error TS2345: Argument of type 'BinanceOrderData' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'BinanceOrderData' but required in type 'PureEvent'.
+classes/exchanges/binance/amqp-futures-binance-order-data-listener.ts(80,31): error TS2345: Argument of type 'FuturesBinanceOrderData' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'FuturesBinanceOrderData' but required in type 'PureEvent'.
+classes/spot/abstractions/positions-snapshot.ts(71,27): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+classes/utils/spot-portfolio-utils.ts(146,29): error TS2345: Argument of type '{ object_type: string; all: string; filtered: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; all: string; filtered: string; }' but required in type 'PureEvent'.
+services/amqp/binance-order-data/position-tracker/binance-spot-position-tracker.ts(117,31): error TS2345: Argument of type 'BinanceOrderData' is not assignable to parameter of type 'PureEvent'.
+services/amqp/binance-order-data/position-tracker/binance-spot-position-tracker.ts(124,31): error TS2345: Argument of type 'BinanceOrderData' is not assignable to parameter of type 'PureEvent'.
+services/amqp/binance-order-data/position-tracker/position-tracker.ts(200,33): error TS2345: Argument of type 'SpotPositionClosed' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'SpotPositionClosed' but required in type 'PureEvent'.
+services/amqp/send-message/telegram/send-message.ts(23,29): error TS2345: Argument of type '{ object_type: string; msg: string; service_name: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; service_name: string; }' but required in type 'PureEvent'.
+services/amqp/send-message/telegram/send-message.ts(27,54): error TS2345: Argument of type '{ object_type: string; msg: string; service_name: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; service_name: string; }' but required in type 'PureEvent'.
+services/amqp/send-message/telegram/send-message.ts(38,31): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+services/binance/spot/portfolio-to-amqp/binance-portfolio-to-amqp.ts(203,9): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/edge-to-executor-mapper.ts(192,11): error TS2322: Type '{ object_type: "TradeAbstractionOpenLongResult"; version: 1; base_asset: string; quote_asset: string | undefined; edge: string; trade_id: string; status: "INTERNAL_SERVER_ERROR"; http_status: 500; msg: any; err: any; execution_timestamp_ms: number; }' is not assignable to type 'TradeAbstractionOpenLongResult'.
+  Property 'object_class' is missing in type '{ object_type: "TradeAbstractionOpenLongResult"; version: 1; base_asset: string; quote_asset: string | undefined; edge: string; trade_id: string; status: "INTERNAL_SERVER_ERROR"; http_status: 500; msg: any; err: any; execution_timestamp_ms: number; }' but required in type 'TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR'.
+services/binance/spot/trade-abstraction-v2/edge-to-executor-mapper.ts(205,54): error TS2345: Argument of type 'TradeAbstractionOpenLongResult' is not assignable to parameter of type 'PureEvent'.
+  Type 'TradeAbstractionOpenSpotLongResult_SUCCESS' is not assignable to type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/edge-to-executor-mapper.ts(234,31): error TS2345: Argument of type 'TradeAbstractionCloseResult_NOT_FOUND' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'TradeAbstractionCloseResult_NOT_FOUND' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/buy-limit-executor.ts(131,31): error TS2345: Argument of type 'SpotLimitBuyCommand' is not assignable to parameter of type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/buy-limit-executor.ts(156,55): error TS2345: Argument of type 'TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR | TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL | TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS | TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE' is not assignable to parameter of type 'PureEvent'.
+  Type 'TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR' is not assignable to type 'PureEvent'.
+    Types of property 'object_class' are incompatible.
+      Type '"result"' is not assignable to type '"event"'.
+services/binance/spot/trade-abstraction-v2/execution/buy-limit-executor.ts(183,31): error TS2345: Argument of type 'TradeAbstractionOpenSpotLongResult_SUCCESS' is not assignable to parameter of type 'PureEvent'.
+  Types of property 'object_class' are incompatible.
+    Type '"result"' is not assignable to type '"event"'.
+services/binance/spot/trade-abstraction-v2/execution/buy-limit-executor.ts(204,31): error TS2345: Argument of type 'TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR' is not assignable to parameter of type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/execution_engines/binance-spot-execution-engine.ts(197,31): error TS2345: Argument of type 'SpotLimitBuyCommand' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'SpotLimitBuyCommand' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/execution_engines/binance-spot-execution-engine.ts(214,31): error TS2345: Argument of type '{ clientOrderId: string; cummulativeQuoteQty: string; executedQty: string; fills?: OrderFill[] | undefined; icebergQty?: string | undefined; isIsolated?: boolean | undefined; ... 14 more ...; object_type: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ clientOrderId: string; cummulativeQuoteQty: string; executedQty: string; fills?: OrderFill[] | undefined; icebergQty?: string | undefined; isIsolated?: boolean | undefined; ... 14 more ...; object_type: string; }' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/execution_engines/binance-spot-execution-engine.ts(243,31): error TS2345: Argument of type 'SpotExecutionEngineBuyResult_FILLED | SpotExecutionEngineBuyResult_ENTRY_FAILED_TO_FILL' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'SpotExecutionEngineBuyResult_FILLED' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/execution_engines/binance-spot-execution-engine.ts(263,55): error TS2345: Argument of type 'SpotExecutionEngineBuyResult_TOO_MANY_REQUESTS' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'SpotExecutionEngineBuyResult_TOO_MANY_REQUESTS' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/execution_engines/binance-spot-execution-engine.ts(276,33): error TS2345: Argument of type 'SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/execution_engines/binance-spot-execution-engine.ts(290,56): error TS2345: Argument of type 'SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/execution_engines/binance-spot-execution-engine.ts(407,29): error TS2345: Argument of type 'SpotOCOSellCommand' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'SpotOCOSellCommand' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/execution_engines/binance-spot-execution-engine.ts(428,29): error TS2345: Argument of type '{ orderListId: number; contingencyType: OcoOrderType; listStatusType: ListStatusType_LT; listOrderStatus: ListOrderStatus_LT; ... 5 more ...; object_type: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ orderListId: number; contingencyType: OcoOrderType; listStatusType: ListStatusType_LT; listOrderStatus: ListOrderStatus_LT; ... 5 more ...; object_type: string; }' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/oco-exit-executor.ts(163,31): error TS2345: Argument of type 'SpotOCOSellCommand' is not assignable to parameter of type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/oco-exit-executor.ts(196,33): error TS2345: Argument of type 'TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS' is not assignable to parameter of type 'PureEvent'.
+  Types of property 'object_class' are incompatible.
+    Type '"result"' is not assignable to type '"event"'.
+services/binance/spot/trade-abstraction-v2/execution/oco-exit-executor.ts(223,31): error TS2345: Argument of type 'TradeAbstractionOpenSpotLongResult_SUCCESS' is not assignable to parameter of type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/oco-exit-executor.ts(239,54): error TS2345: Argument of type 'TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR' is not assignable to parameter of type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/execution/stop-limit-exit-executor.ts(169,29): error TS2345: Argument of type 'SpotStopMarketSellCommand' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'SpotStopMarketSellCommand' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/query-params-to-cmd-mapper.ts(116,54): error TS2345: Argument of type 'TradeAbstractionCloseResult_BAD_INPUTS' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'TradeAbstractionCloseResult_BAD_INPUTS' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/query-params-to-cmd-mapper.ts(129,29): error TS2345: Argument of type 'TradeAbstractionCloseCommand' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'TradeAbstractionCloseCommand' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/query-params-to-cmd-mapper.ts(179,54): error TS2345: Argument of type 'TradeAbstractionOpenSpotLongResult_BAD_INPUTS' is not assignable to parameter of type 'PureEvent'.
+  Types of property 'object_class' are incompatible.
+    Type '"result"' is not assignable to type '"event"'.
+services/binance/spot/trade-abstraction-v2/query-params-to-cmd-mapper.ts(196,29): error TS2345: Argument of type 'TradeAbstractionOpenLongCommand' is not assignable to parameter of type 'PureEvent'.
+  Types of property 'object_class' are incompatible.
+    Type '"command"' is not assignable to type '"event"'.
+services/binance/spot/trade-abstraction-v2/query-params-to-cmd-mapper.ts(245,54): error TS2345: Argument of type 'TradeAbstractionOpenShortResult_BAD_INPUTS' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'TradeAbstractionOpenShortResult_BAD_INPUTS' but required in type 'PureEvent'.
+services/binance/spot/trade-abstraction-v2/query-params-to-cmd-mapper.ts(259,29): error TS2345: Argument of type 'TradeAbstractionOpenShortCommand' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'TradeAbstractionOpenShortCommand' but required in type 'PureEvent'.
+services/edge-performance-tracker/edge-performance-tracker.ts(109,31): error TS2345: Argument of type 'SpotPositionClosed' is not assignable to parameter of type 'PureEvent'.
+services/edge70-signal-to-tas-bridge/edge-signal-to-tas-bridge.ts(93,31): error TS2345: Argument of type 'Edge70Signal' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'Edge70Signal' but required in type 'PureEvent'.
+services/edge70-signals/edge70-service.ts(168,7): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+services/edge70-signals/edge70-service.ts(207,13): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+services/edge70-signals/edge70-service.ts(238,33): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+services/edge70-signals/edge70-service.ts(273,7): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+services/edge70-signals/edge70-service.ts(278,7): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+services/edge70-signals/market-direction-initialiser.ts(137,73): error TS2345: Argument of type '{ object_type: string; success: boolean; direction: Direction | null; symbol: string; base_asset: string; num_candles_history_to_check: number; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; success: boolean; direction: Direction | null; symbol: string; base_asset: string; num_candles_history_to_check: number; }' but required in type 'PureEvent'.
+services/edge70-signals/publisher.ts(101,31): error TS2345: Argument of type 'Edge70Signal' is not assignable to parameter of type 'PureEvent'.
+services/edge70-signals/publisher.ts(147,29): error TS2345: Argument of type 'EdgeDirectionSignal' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'EdgeDirectionSignal' but required in type 'PureEvent'.
+services/edge70-signals/signals.ts(215,11): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+services/edge70-signals/signals.ts(228,11): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+services/edge70-signals/signals.ts(240,11): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+services/order-tracker/binance-order-tracker.ts(99,27): error TS2345: Argument of type 'BinanceOrderData' is not assignable to parameter of type 'PureEvent'.
+services/portfolio-to-influxdb/portfolio-to-influxdb-service.ts(103,29): error TS2345: Argument of type 'SpotPortfolio' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type 'SpotPortfolio' but required in type 'PureEvent'.
+services/spot-portfolio-vs-positions-checker/lib/positions-snapshot.ts(61,27): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+tests/logger.ts(10,39): error TS2345: Argument of type '{ object_type: string; msg: string; }' is not assignable to parameter of type 'PureEvent'.
+  Property 'object_class' is missing in type '{ object_type: string; msg: string; }' but required in type 'PureEvent'.
+
+real	0m12.216s
+user	0m16.628s
+sys	0m0.919s

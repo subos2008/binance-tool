@@ -2,6 +2,7 @@ import { SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstracti
 
 interface CloseResult_BASE {
   object_type: "TradeAbstractionCloseResult"
+  object_class: "result"
   version: 1
   action: "close"
   msg: string // human readable text for this object
@@ -13,7 +14,7 @@ interface CloseResult_BASE {
   signal_to_execution_slippage_ms?: number
 }
 
-interface TradeAbstractionCloseResult_INTERNAL_SERVER_ERROR extends CloseResult_BASE {
+export interface TradeAbstractionCloseResult_INTERNAL_SERVER_ERROR extends CloseResult_BASE {
   base_asset: string
   edge: string
   status: "INTERNAL_SERVER_ERROR" // exception caught
@@ -74,6 +75,7 @@ export type TradeAbstractionCloseResult =
 
 export interface TradeAbstractionCloseCommand {
   object_type: "TradeAbstractionCloseCommand"
+  object_class: "command"
   version: 1
   base_asset: string
   edge: string

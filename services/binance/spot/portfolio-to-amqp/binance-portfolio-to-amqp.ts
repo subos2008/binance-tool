@@ -60,7 +60,7 @@ import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/bin
 import { SpotPortfolioUtils } from "../../../../classes/utils/spot-portfolio-utils"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
-logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
+logger.event({}, { object_class: "event", object_type: "ServiceStarting", msg: "Service starting" })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
@@ -198,10 +198,7 @@ export class BinancePortfolioToAMQP {
       //   this.logger.warn(`TODO: we still want to verify this with the exchange and publish an empty portfolio`)
       //   return
       // }
-      this.logger.event(
-        { level: "info" },
-        { object_type: "TODO", msg: `report_portfolio() needs testing with an empty portfolio` }
-      )
+      this.logger.todo({}, `report_portfolio() needs testing with an empty portfolio`)
 
       try {
         // This is just for the logfiles, we don't use this to send the event

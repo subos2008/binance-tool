@@ -120,7 +120,7 @@ export class SpotPositionsExecution_StopLimitExit {
     let { edge_percentage_stop, edge_percentage_buy_limit } = args
     let tags = { edge, base_asset, quote_asset, trade_id }
 
-    this.logger.event(tags, { object_type: "SpotPositionExecutionOpenRequest", ...args })
+    this.logger.command(tags, args, "received")
 
     let prefix = `${edge}:${base_asset} open spot long: `
 
@@ -169,12 +169,9 @@ export class SpotPositionsExecution_StopLimitExit {
     this.logger.event(tags, stop_cmd)
 
     try {
-      this.logger.event(
+      this.logger.todo(
         { level: "warn", ...tags },
-        {
-          object_type: "TODO",
-          msg: `e60: can throw instead of returning enum status result. it also won't exit (dump the position) if the stop creation fails`,
-        }
+        `e60: can throw instead of returning enum status result. it also won't exit (dump the position) if the stop creation fails`
       )
 
       let stop_result = await this.ee.stop_market_sell(stop_cmd)
@@ -207,6 +204,7 @@ export class SpotPositionsExecution_StopLimitExit {
 
       let spot_long_result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
+        object_class: "result",
         version: 1,
         status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS",
         http_status: 418,
@@ -220,12 +218,13 @@ export class SpotPositionsExecution_StopLimitExit {
         created_stop_order: false,
         created_take_profit_order: false,
       }
-      this.logger.event(tags, spot_long_result)
+      this.logger.result(tags, spot_long_result, "created")
       return spot_long_result
     }
 
     let spot_long_result: TradeAbstractionOpenLongResult = {
       object_type: "TradeAbstractionOpenLongResult",
+      object_class: "result",
       version: 1,
       base_asset,
       quote_asset,
@@ -243,7 +242,7 @@ export class SpotPositionsExecution_StopLimitExit {
       created_take_profit_order: false,
       created_stop_order: true,
     }
-    this.logger.event(tags, spot_long_result)
+    this.logger.result(tags, spot_long_result, "created")
     return spot_long_result
   }
 }

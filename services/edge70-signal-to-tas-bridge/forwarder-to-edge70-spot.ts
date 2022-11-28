@@ -62,10 +62,11 @@ export class Edge70ForwarderToEdge70Spot implements Edge70SignalProcessor {
     let result: TradeAbstractionOpenLongResult | TradeAbstractionCloseResult
     switch (direction) {
       case "long":
-        let trade_id = generate_trade_id({ ...tags,direction, signal_timestamp_ms }) // will want to maybe move this later
+        let trade_id = generate_trade_id({ ...tags, direction, signal_timestamp_ms }) // will want to maybe move this later
         this.logger.info(tags, `long signal, attempting to open ${edge} spot long position on ${base_asset}`)
         result = await this.tas_client.long({
           object_type: "TradeAbstractionOpenLongCommand",
+          object_class: "command",
           base_asset,
           edge,
           trade_id,

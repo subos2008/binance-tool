@@ -33,7 +33,7 @@ if (TAS_URL === undefined) {
 }
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
-logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
+logger.event({}, { object_class: "event", object_type: "ServiceStarting", msg: "Service starting" })
 
 var app = express()
 var bodyParser = require("body-parser")

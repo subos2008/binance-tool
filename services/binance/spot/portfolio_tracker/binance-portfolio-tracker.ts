@@ -51,7 +51,7 @@ import { ServiceLogger } from "../../../../interfaces/logger"
 import { BunyanServiceLogger } from "../../../../lib/service-logger"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
-logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
+logger.event({}, { object_class: "event", object_type: "ServiceStarting", msg: "Service starting" })
 
 export class BinancePortfolioTracker implements PortfolioBitchClass {
   send_message: Function

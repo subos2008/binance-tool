@@ -19,7 +19,7 @@ Sentry.configureScope(function (scope: any) {
 import { BunyanServiceLogger } from "../../../../lib/service-logger"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
-logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
+logger.event({}, { object_class: "event", object_type: "ServiceStarting", msg: "Service starting" })
 
 import { BigNumber } from "bignumber.js"
 BigNumber.DEBUG = true // Prevent NaN

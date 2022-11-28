@@ -122,13 +122,14 @@ export class SpotPositionsExecution_BuyLimit {
 
       let cmd: SpotLimitBuyCommand = {
         object_type: "SpotLimitBuyCommand",
+        object_class: 'command',
         order_context,
         market_identifier,
         base_amount,
         limit_price: buy_limit_price,
         timeInForce: "IOC",
       }
-      this.logger.event(tags, cmd)
+      this.logger.command(tags, cmd, "created")
 
       this.logger.info(tags, `I am getting fucking bored`)
 
@@ -145,6 +146,7 @@ export class SpotPositionsExecution_BuyLimit {
       if (buy_result.status !== "FILLED") {
         let result: TradeAbstractionOpenLongResult = {
           ...buy_result,
+          object_class: "result",
           object_type: "TradeAbstractionOpenLongResult",
           version: 1,
           edge,
@@ -152,7 +154,7 @@ export class SpotPositionsExecution_BuyLimit {
           base_asset,
           quote_asset,
         }
-        this.logger.event({ ...tags, level: "warn" }, result)
+        this.logger.result({ ...tags, level: "warn" }, result, "created")
         return result
       }
 
@@ -162,6 +164,7 @@ export class SpotPositionsExecution_BuyLimit {
         args.base_asset
       } bought ${executed_quote_quantity.toFixed()} ${quote_asset} worth.  Entry slippage allowed ${edge_percentage_buy_limit}%, target buy was ${quote_amount.toFixed()}`
       let spot_long_result: TradeAbstractionOpenLongResult = {
+        object_class: "result",
         object_type: "TradeAbstractionOpenLongResult",
         version: 1,
         msg,
@@ -178,7 +181,7 @@ export class SpotPositionsExecution_BuyLimit {
         created_stop_order: false,
         created_take_profit_order: false,
       }
-      this.logger.event(tags, spot_long_result)
+      this.logger.result(tags, spot_long_result, "created")
       return spot_long_result
     } catch (err: any) {
       this.logger.exception(tags, err)
@@ -186,6 +189,7 @@ export class SpotPositionsExecution_BuyLimit {
         args.quote_asset
       }: ${err.toString()}`
       let spot_long_result: TradeAbstractionOpenLongResult = {
+        object_class: "result",
         object_type: "TradeAbstractionOpenLongResult",
         version: 1,
         msg,
@@ -198,7 +202,7 @@ export class SpotPositionsExecution_BuyLimit {
         http_status: 500,
         execution_timestamp_ms: Date.now(),
       }
-      this.logger.event(tags, spot_long_result)
+      this.logger.result(tags, spot_long_result, "created")
       this.send_message(msg, tags)
 
       return spot_long_result

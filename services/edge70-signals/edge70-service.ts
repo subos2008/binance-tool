@@ -46,7 +46,7 @@ import { BinancePriceGetter } from "../../interfaces/exchanges/binance/binance-p
 const tas_quote_asset = config.binance.spot.tas_quote_asset
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false, level: "debug" })
-logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
+logger.event({}, { object_class: "event", object_type: "ServiceStarting", msg: "Service starting" })
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms))

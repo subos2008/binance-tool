@@ -192,11 +192,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     let prefix = `${symbol} SpotExecutionEngineBuyResult`
 
     try {
-      this.logger.info(`fucking start`)
-
-      this.logger.event(tags, cmd)
-      this.logger.info(`fucking about to`)
-
+      this.logger.command(tags, cmd, "received")
       let { clientOrderId } = await this.store_order_context_and_generate_clientOrderId({
         ...cmd.order_context,
         trade_id: trade_context.trade_id,
@@ -211,12 +207,14 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
         clientOrderId,
         timeInForce: "IOC",
       })
-      this.logger.event(tags, { object_type: "BinanceOrder", ...result })
+      this.logger.command(tags, cmd, "consumed")
+      this.logger.event(tags, { object_type: "BinanceOrder", object_class: "event", ...result })
       let spot_long_result: SpotExecutionEngineBuyResult
       let executed_base_quantity = new BigNumber(result.executedQty)
       if (executed_base_quantity.isZero()) {
         spot_long_result = {
           object_type: "SpotExecutionEngineBuyResult",
+          object_class: "result",
           version: 2,
           market_identifier,
           trade_context,
@@ -228,6 +226,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
       } else {
         spot_long_result = {
           object_type: "SpotExecutionEngineBuyResult",
+          object_class: "result",
           version: 2,
           msg: `${prefix}: FILLED`,
           market_identifier,
@@ -240,16 +239,16 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
           execution_timestamp_ms: result.transactTime,
         }
       }
-      this.logger.event(tags, spot_long_result)
+      this.logger.result(tags, spot_long_result, "created")
       return spot_long_result
     } catch (err: any) {
-      this.logger.debug(`fucking titwank`)
       this.logger.exception(tags, err)
 
       // TODO: can we do a more clean/complete job of catching exceptions from Binance?
       if (err.message.match(/Too many new orders/ || err.code === -1015)) {
         let spot_long_result: SpotExecutionEngineBuyResult = {
           object_type: "SpotExecutionEngineBuyResult",
+          object_class: "result",
           version: 2,
           msg: `${prefix}:  ${err.message}`,
           err,
@@ -260,11 +259,12 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
           execution_timestamp_ms: Date.now(),
           retry_after_seconds: 11,
         }
-        this.logger.event({ ...tags, level: "warn" }, spot_long_result)
+        this.logger.result({ ...tags, level: "warn" }, spot_long_result, "created")
         return spot_long_result
       } else if (err.message.match(/Account has insufficient balance for requested action/)) {
         let spot_long_result: SpotExecutionEngineBuyResult = {
           object_type: "SpotExecutionEngineBuyResult",
+          object_class: "result",
           version: 2,
           msg: `${prefix}: ${err.message}, code: ${err.code}`,
           market_identifier,
@@ -273,11 +273,12 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
           http_status: 402, // 402: Payment Required
           execution_timestamp_ms: Date.now(),
         }
-        this.logger.event(tags, spot_long_result)
+        this.logger.result(tags, spot_long_result, "created")
         return spot_long_result
       } else {
         let spot_long_result: SpotExecutionEngineBuyResult = {
           object_type: "SpotExecutionEngineBuyResult",
+          object_class: "result",
           version: 2,
           err,
           msg: `${prefix}: INTERNAL_SERVER_ERROR: ${err.message}`,
@@ -287,7 +288,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
           status: "INTERNAL_SERVER_ERROR",
           http_status: 500,
         }
-        this.logger.event({ ...tags, level: "error" }, spot_long_result)
+        this.logger.result({ ...tags, level: "error" }, spot_long_result, "created")
         return spot_long_result
       }
     }
@@ -404,7 +405,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     let { base_asset, symbol } = cmd.market_identifier
     let tags = { base_asset, symbol, edge: cmd.order_context.edge }
 
-    this.logger.event(tags, cmd)
+    this.logger.command(tags, cmd, "received")
     let { stop_ClientOrderId, take_profit_ClientOrderId, oco_list_ClientOrderId } = cmd
 
     let args = {
@@ -425,7 +426,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     // TODO: add a try/catch around this function making loud complaints about FAILED_TO_CREATE_EXIT_ORDERS
     let order: OcoOrder | undefined = await this.execute_with_429_retries(tags, call)
 
-    this.logger.event(tags, { object_type: "BinanceOrder", ...order })
+    this.logger.event(tags, { object_type: "BinanceOrder", object_class: "event", ...order })
     if (order && order.listClientOrderId) {
       // looks like success
       return

@@ -150,6 +150,7 @@ export class SpotPositionsExecution_OCOExit {
 
       let oco_cmd: SpotOCOSellCommand = {
         object_type: "SpotOCOSellCommand",
+        object_class: 'command',
         order_context,
         market_identifier,
         base_amount,
@@ -160,7 +161,7 @@ export class SpotPositionsExecution_OCOExit {
         take_profit_ClientOrderId,
         oco_list_ClientOrderId,
       }
-      this.logger.event(tags, oco_cmd)
+      this.logger.command(tags, oco_cmd, "created")
 
       try {
         let oco_result = await this.ee.oco_sell_order(oco_cmd)
@@ -179,6 +180,7 @@ export class SpotPositionsExecution_OCOExit {
 
         let spot_long_result: TradeAbstractionOpenLongResult = {
           object_type: "TradeAbstractionOpenLongResult",
+          object_class: "result",
           version: 1,
           status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS",
           http_status: 418,
@@ -192,12 +194,13 @@ export class SpotPositionsExecution_OCOExit {
           created_stop_order: false,
           created_take_profit_order: false,
         }
-        this.logger.event(tags, spot_long_result)
+        this.logger.result(tags, spot_long_result, "created")
         return spot_long_result
       }
 
       let spot_long_result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
+        object_class: "result",
         version: 1,
         base_asset,
         quote_asset,
@@ -218,11 +221,12 @@ export class SpotPositionsExecution_OCOExit {
         msg: `${prefix}: SUCCESS`,
         execution_timestamp_ms,
       }
-      this.logger.event(tags, spot_long_result) // This was logger.object before
+      this.logger.result(tags, spot_long_result, "created")
       return spot_long_result
     } catch (err: any) {
       let spot_long_result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
+        object_class: "result",
         version: 1,
         base_asset,
         edge,
@@ -233,7 +237,7 @@ export class SpotPositionsExecution_OCOExit {
         err,
         execution_timestamp_ms: Date.now(),
       }
-      this.logger.event({ ...tags, level: "error" }, spot_long_result)
+      this.logger.result({ ...tags, level: "error" }, spot_long_result, "created")
       Sentry.captureException(err)
       this.logger.exception(tags, err)
       this.send_message(

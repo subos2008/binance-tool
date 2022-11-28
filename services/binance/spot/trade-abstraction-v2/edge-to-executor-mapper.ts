@@ -22,6 +22,7 @@ import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from 
 import {
   TradeAbstractionCloseCommand,
   TradeAbstractionCloseResult,
+  TradeAbstractionCloseResult_INTERNAL_SERVER_ERROR,
   TradeAbstractionCloseResult_NOT_FOUND,
   TradeAbstractionCloseResult_SUCCESS,
 } from "./interfaces/close"
@@ -151,21 +152,21 @@ export class SpotEdgeToExecutorMapper {
 
       switch (args.edge) {
         case "edge60":
-          return this.stop_limit_executor.open_position({
+          return await this.stop_limit_executor.open_position({
             ...args,
             quote_asset,
             edge_percentage_stop: new BigNumber(7),
             edge_percentage_buy_limit: new BigNumber(0.5), // when we had this higher it executed with a 4% slippage
           })
         case "edge70":
-          return this.stop_limit_executor.open_position({
+          return await this.stop_limit_executor.open_position({
             ...args,
             quote_asset,
             edge_percentage_stop: new BigNumber(15), // We see significantly better bull performance with this and not much difference in a bear
             edge_percentage_buy_limit: new BigNumber(0.5), // when we had this higher it executed with a 4% slippage
           })
         case "edge61":
-          return this.oco_executor.open_position({
+          return await this.oco_executor.open_position({
             ...args,
             quote_asset,
             edge_percentage_stop: new BigNumber(5),
@@ -174,7 +175,7 @@ export class SpotEdgeToExecutorMapper {
             edge_percentage_buy_limit: new BigNumber(0.5),
           })
         case "edge62":
-          return this.oco_executor.open_position({
+          return await this.oco_executor.open_position({
             ...args,
             quote_asset,
             edge_percentage_stop: new BigNumber(7),
@@ -191,6 +192,7 @@ export class SpotEdgeToExecutorMapper {
       this.logger.exception(tags, err)
       let spot_long_result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
+        object_class: "result",
         version: 1,
         base_asset: args.base_asset,
         quote_asset: args.quote_asset,
@@ -202,7 +204,7 @@ export class SpotEdgeToExecutorMapper {
         err,
         execution_timestamp_ms: Date.now(),
       }
-      this.logger.event({ ...tags, level: "error" }, spot_long_result)
+      this.logger.result({ ...tags, level: "error" }, spot_long_result, "created")
       return spot_long_result
     }
   }
@@ -221,6 +223,7 @@ export class SpotEdgeToExecutorMapper {
     if (!(await this.in_position({ base_asset, edge }))) {
       let spot_long_result: TradeAbstractionCloseResult_NOT_FOUND = {
         object_type: "TradeAbstractionCloseResult",
+        object_class: "result",
         version: 1,
         status: "NOT_FOUND",
         http_status: 404,
@@ -231,7 +234,7 @@ export class SpotEdgeToExecutorMapper {
         signal_to_execution_slippage_ms,
         action,
       }
-      this.logger.event(tags, spot_long_result)
+      this.logger.result(tags, spot_long_result, "created")
       return spot_long_result
     }
 
@@ -261,9 +264,6 @@ export class SpotEdgeToExecutorMapper {
           order_id: stop_order_id,
           symbol,
         })
-      } else {
-        let msg = `${prefix} No stop order found`
-        this.logger.info(tags, msg)
       }
     } catch (err) {
       let msg = `Failed to cancel stop order on ${symbol} - was it cancelled manually?`
@@ -283,9 +283,6 @@ export class SpotEdgeToExecutorMapper {
           order_id: oco_order_id,
           symbol,
         })
-      } else {
-        let msg = `${prefix} No oco order found`
-        this.logger.info(tags, msg)
       }
     } catch (err) {
       let msg = `Failed to cancel oco order ${oco_order_id} on ${symbol} - was it cancelled manually?`
@@ -305,6 +302,7 @@ export class SpotEdgeToExecutorMapper {
 
       let obj: TradeAbstractionCloseResult_SUCCESS = {
         object_type: "TradeAbstractionCloseResult",
+        object_class: "result",
         version: 1,
         status: "SUCCESS",
         http_status: 200,
@@ -319,12 +317,28 @@ export class SpotEdgeToExecutorMapper {
         // executed_base_quantity,
         // executed_price,
       }
+      this.logger.result(tags, obj, "created")
       return obj
-    } catch (err) {
-      let msg = `Failed to exit position on ${symbol}`
+    } catch (err: any) {
+      let msg = `Exception, failed to exit position on ${edge}:await ${symbol}`
       this.logger.exception(tags, err, msg)
       this.send_message(msg, tags)
-      throw err
+      let obj: TradeAbstractionCloseResult_INTERNAL_SERVER_ERROR = {
+        object_type: "TradeAbstractionCloseResult",
+        object_class: "result",
+        version: 1,
+        status: "INTERNAL_SERVER_ERROR",
+        http_status: 500,
+        err,
+        msg: `Spot Close ${edge}:${base_asset}:${symbol} INTERNAL_SERVER_ERROR: ${err.msg}`,
+        base_asset,
+        edge,
+        execution_timestamp_ms,
+        signal_to_execution_slippage_ms,
+        action,
+      }
+      this.logger.result({ ...tags, level: "error" }, obj, "created")
+      return obj
     }
   }
 }

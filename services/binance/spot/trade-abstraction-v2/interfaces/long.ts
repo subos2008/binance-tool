@@ -1,7 +1,8 @@
 import BigNumber from "bignumber.js"
 import { randomUUID } from "node:crypto"
+import { Command, Result } from "../../../../../interfaces/logger"
 
-export interface TradeAbstractionOpenLongCommand {
+export interface TradeAbstractionOpenLongCommand extends Command {
   object_type: "TradeAbstractionOpenLongCommand"
   base_asset: string
   quote_asset?: string // added by the TAS before it hits the EE
@@ -22,7 +23,7 @@ export function generate_trade_id(args: {
   return `${args.edge}-${args.base_asset}-${args.direction}-` + randomUUID()
 }
 
-export interface TradeAbstractionOpenLongCommand_StopLimitExit {
+export interface TradeAbstractionOpenLongCommand_StopLimitExit extends Command {
   base_asset: string
   quote_asset: string // added by the TAS before it hits the EE
   edge: string
@@ -35,7 +36,7 @@ export interface TradeAbstractionOpenLongCommand_StopLimitExit {
   edge_percentage_buy_limit: BigNumber
 }
 
-export interface TradeAbstractionOpenLongCommand_OCO_Exit {
+export interface TradeAbstractionOpenLongCommand_OCO_Exit extends Command {
   base_asset: string
   quote_asset: string // added by the TAS before it hits the EE
   edge: string
@@ -50,7 +51,7 @@ export interface TradeAbstractionOpenLongCommand_OCO_Exit {
   edge_percentage_buy_limit: BigNumber
 }
 
-interface TradeAbstractionOpenSpotLongResult_SUCCESS {
+interface TradeAbstractionOpenSpotLongResult_SUCCESS extends Result {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -82,7 +83,7 @@ interface TradeAbstractionOpenSpotLongResult_SUCCESS {
   oco_order_id?: string | number | undefined
 }
 
-interface TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR {
+interface TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR extends Result {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -101,7 +102,7 @@ interface TradeAbstractionOpenSpotLongResult_INTERNAL_SERVER_ERROR {
   signal_to_execution_slippage_ms?: string
 }
 
-interface TradeAbstractionOpenSpotLongResult_BAD_INPUTS {
+interface TradeAbstractionOpenSpotLongResult_BAD_INPUTS extends Result {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset?: string
@@ -123,7 +124,7 @@ interface TradeAbstractionOpenSpotLongResult_BAD_INPUTS {
   signal_to_execution_slippage_ms?: string
 }
 
-interface TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL {
+interface TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL extends Result {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -145,7 +146,7 @@ interface TradeAbstractionOpenSpotLongResult_ENTRY_FAILED_TO_FILL {
   signal_to_execution_slippage_ms?: string
 }
 
-export interface TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS {
+export interface TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS extends Result {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -166,7 +167,7 @@ export interface TradeAbstractionOpenSpotLongResult_TOO_MANY_REQUESTS {
   retry_after_seconds: number // can go to Retry-After header
 }
 
-interface TradeAbstractionOpenSpotLongResult_UNAUTHORISED {
+interface TradeAbstractionOpenSpotLongResult_UNAUTHORISED extends Result {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -185,7 +186,7 @@ interface TradeAbstractionOpenSpotLongResult_UNAUTHORISED {
   signal_to_execution_slippage_ms?: string
 }
 
-interface TradeAbstractionOpenSpotLongResult_TRADING_IN_ASSET_PROHIBITED {
+interface TradeAbstractionOpenSpotLongResult_TRADING_IN_ASSET_PROHIBITED extends Result {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -204,7 +205,7 @@ interface TradeAbstractionOpenSpotLongResult_TRADING_IN_ASSET_PROHIBITED {
   signal_to_execution_slippage_ms?: string
 }
 
-interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION {
+interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION extends Result {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -225,7 +226,7 @@ interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION {
 }
 
 console.warn(`What http_status do we want for INSUFFICIENT_BALANCE?`)
-interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE {
+interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE extends Result {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string
@@ -246,7 +247,7 @@ interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE {
 }
 
 console.warn(`What http_status do we want for ABORTED_FAILED_TO_CREATE_EXIT_ORDERS?`)
-interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS {
+interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS extends Result {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
   base_asset: string

@@ -19,6 +19,7 @@ export interface SpotMarketBuyByQuoteQuantityCommand {
 
 export interface SpotLimitBuyCommand {
   object_type: "SpotLimitBuyCommand"
+  object_class: "command"
   order_context: OrderContext_V1
   market_identifier: MarketIdentifier_V4
   base_amount: BigNumber
@@ -61,6 +62,7 @@ export interface SpotStopMarketSellResult {
 
 export interface SpotOCOSellCommand {
   object_type: "SpotOCOSellCommand"
+  object_class: "command"
   order_context: OrderContext_V1
   market_identifier: MarketIdentifier_V4
   base_amount: BigNumber
@@ -74,6 +76,7 @@ export interface SpotOCOSellCommand {
 
 interface SpotExecutionEngineBuyResult_FILLED {
   object_type: "SpotExecutionEngineBuyResult"
+  object_class: "result"
   version: 2
   market_identifier: MarketIdentifier_V4
   order_context: OrderContext_V1
@@ -88,6 +91,7 @@ interface SpotExecutionEngineBuyResult_FILLED {
 
 interface SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE {
   object_type: "SpotExecutionEngineBuyResult"
+  object_class: "result"
   version: 2
   market_identifier: MarketIdentifier_V4
   order_context: OrderContext_V1
@@ -99,6 +103,7 @@ interface SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE {
 
 interface SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR {
   object_type: "SpotExecutionEngineBuyResult"
+  object_class: "result"
   version: 2
   market_identifier: MarketIdentifier_V4
   order_context: OrderContext_V1
@@ -111,6 +116,7 @@ interface SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR {
 
 interface SpotExecutionEngineBuyResult_TOO_MANY_REQUESTS {
   object_type: "SpotExecutionEngineBuyResult"
+  object_class: "result"
   version: 2
   market_identifier: MarketIdentifier_V4
   order_context: OrderContext_V1
@@ -125,6 +131,7 @@ interface SpotExecutionEngineBuyResult_TOO_MANY_REQUESTS {
 
 interface SpotExecutionEngineBuyResult_ENTRY_FAILED_TO_FILL {
   object_type: "SpotExecutionEngineBuyResult"
+  object_class: "result"
   version: 2
 
   market_identifier: MarketIdentifier_V4

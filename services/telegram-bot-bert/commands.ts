@@ -9,7 +9,10 @@ import {
   TradeAbstractionOpenLongCommand,
   TradeAbstractionOpenLongResult,
 } from "../binance/spot/trade-abstraction-v2/interfaces/long"
-import { TradeAbstractionCloseResult } from "../binance/spot/trade-abstraction-v2/interfaces/close"
+import {
+  TradeAbstractionCloseCommand,
+  TradeAbstractionCloseResult,
+} from "../binance/spot/trade-abstraction-v2/interfaces/close"
 // Sentry.configureScope(function (scope: any) {
 //   scope.setTag("service", service_name)
 // })
@@ -121,59 +124,65 @@ export class Commands {
       }
 
       if (command == "long") {
-        const direction = "long"
-        let edge: AuthorisedEdgeType
-        try {
-          edge = check_edge(edge_unchecked)
-        } catch (err) {
-          this.logger.error({ err })
-          Sentry.captureException(err)
-          ctx.replyWithHTML(`Invalid format for edge '${edge_unchecked}', expected something like edgeNN`)
-          return
-        }
-        let signal_timestamp_ms = Date.now()
-        let trade_id = generate_trade_id({edge, base_asset, direction, signal_timestamp_ms})
-        let result: TradeAbstractionOpenLongResult = await this.spot_tas_client.long({
-          object_type: "TradeAbstractionOpenLongCommand",
-          base_asset,
-          edge,
-          trade_id,
-          direction,
-          signal_timestamp_ms,
-          action: "open",
-        })
-        ctx.reply(`Spot long entry on ${edge}:${base_asset}: ${result.status}`)
+        await this.open_spot_long(ctx, { base_asset, edge: edge_unchecked })
       }
 
       if (command == "close") {
-        let edge = edge_unchecked
-        let result = await this.close_spot_long(ctx, { asset: base_asset, edge })
-        ctx.reply(`Spot long close on ${edge}:${base_asset}: ${result.status}`)
+        await this.close_spot_long(ctx, { base_asset, edge: edge_unchecked })
       }
+
+      throw new Error(`Invalid command`)
     } catch (err: any) {
       this.logger.exception(tags, err, `Looks like command failed: ${err.message}`)
       Sentry.captureException(err)
       ctx.reply(`Looks like it failed: ${err.message}`)
     }
-    // ctx.replyWithHTML("<i>Are you sure?</i>")
+  }
+
+  async open_spot_long(
+    ctx: NarrowedContext<Context, Types.MountMap["text"]>,
+    { base_asset, edge }: { base_asset: string; edge: string }
+  ): Promise<void> {
+    const direction = "long"
+    let tags = { edge, base_asset, direction }
+    let signal_timestamp_ms = Date.now()
+    let trade_id = generate_trade_id({ edge, base_asset, direction, signal_timestamp_ms })
+    let cmd: TradeAbstractionOpenLongCommand = {
+      object_type: "TradeAbstractionOpenLongCommand",
+      object_class: "command",
+      base_asset,
+      edge,
+      trade_id,
+      direction,
+      signal_timestamp_ms,
+      action: "open",
+    }
+    this.logger.command(tags, cmd, "created")
+    let result: TradeAbstractionOpenLongResult = await this.spot_tas_client.long(cmd)
+    ctx.reply(`Spot long entry on ${edge}:${base_asset}: ${result.status}`)
+    this.logger.result(tags, result, "consumed")
   }
 
   async close_spot_long(
     ctx: NarrowedContext<Context, Types.MountMap["text"]>,
-    { asset, edge }: { asset: string; edge: string }
-  ): Promise<TradeAbstractionCloseResult> {
-    let msg = `${edge.toUpperCase()}: closing spot long on ${asset}`
+    { base_asset, edge }: { base_asset: string; edge: string }
+  ): Promise<void> {
+    let tags = { edge, base_asset }
+    let msg = `${edge.toUpperCase()}: closing spot long on ${base_asset}`
     ctx.reply(msg)
-    let result: TradeAbstractionCloseResult = await this.spot_tas_client.close({
+    let cmd: TradeAbstractionCloseCommand = {
       object_type: "TradeAbstractionCloseCommand",
+      object_class: "command",
       version: 1,
-      base_asset: asset,
+      base_asset,
       edge,
       action: "close",
       signal_timestamp_ms: Date.now(),
-    })
-    ctx.reply(`Spot long close on ${edge}:${asset}: ${result.status}`)
-    return result
+    }
+    this.logger.command(tags, cmd, "created")
+    let result: TradeAbstractionCloseResult = await this.spot_tas_client.close(cmd)
+    this.logger.result(tags, result, "consumed")
+    ctx.reply(`Spot long close on ${edge}:${base_asset}: ${result.status}`)
   }
 }
 

@@ -32,7 +32,7 @@ import { ServiceLogger } from "../../interfaces/logger"
 import { BunyanServiceLogger } from "../../lib/service-logger"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
-logger.event({}, { object_type: "ServiceStarting", msg: "Service starting" })
+logger.event({}, { object_class: "event", object_type: "ServiceStarting", msg: "Service starting" })
 
 const health_and_readiness = new HealthAndReadiness({ logger })
 const send_message: SendMessageFunc = new SendMessage({ service_name, logger, health_and_readiness }).build()
@@ -91,12 +91,9 @@ export class PositionPerformance {
 
   async list_positions() {
     // TODO: go via the TAS - we get prices from the TAS
-    this.logger.event(
+    this.logger.todo(
       { level: "warn" },
-      {
-        object_type: "TODO",
-        msg: `This implementation uses an initial_entry_price and not an average entry price`,
-      }
+      `This implementation uses an initial_entry_price and not an average entry price`
     )
 
     let positions: SpotPosition[] = []

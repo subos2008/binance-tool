@@ -35,10 +35,7 @@ export class DirectionPersistenceRedis implements DirectionPersistence {
       this.logger.info(`Direction change to ${direction} for ${base_asset}`)
     }
 
-    this.logger.event(
-      { level: "error" },
-      { object_type: "TODO", msg: `verify expiry time for direction keys is working correctly` }
-    )
+    this.logger.todo({ level: "error" }, `verify expiry time for direction keys is working correctly`)
 
     /* Always call set() as we will have expiry set on the keys so they disappear if a candle is missed */
     // EX is in seconds, we set 1 day plus an hours grace

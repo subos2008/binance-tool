@@ -1,12 +1,9 @@
 import { strict as assert } from "assert"
 import { Request } from "express"
 import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
-import { TradeAbstractionOpenShortCommand, TradeAbstractionOpenShortResult } from "./interfaces/short"
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
-import { ContextTags } from "../../../../interfaces/send-message"
-// import { Tags } from "hot-shots"
 
 type Tags = { [key: string]: string }
 
@@ -102,6 +99,7 @@ export class QueryParamsToCmdMapper {
       this.logger.exception(tags, err)
       let result: TradeAbstractionCloseResult = {
         object_type: "TradeAbstractionCloseResult",
+        object_class: "result",
         version: 1,
         base_asset,
         quote_asset,
@@ -113,12 +111,13 @@ export class QueryParamsToCmdMapper {
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
       }
-      this.logger.event({ ...tags, level: "error" }, result)
+      this.logger.result({ ...tags, level: "error" }, result, "created")
       return { result, tags }
     }
 
     let result: TradeAbstractionCloseCommand = {
       object_type: "TradeAbstractionCloseCommand",
+      object_class: "command",
       version: 1,
       edge,
       action,
@@ -126,7 +125,7 @@ export class QueryParamsToCmdMapper {
       trigger_price,
       signal_timestamp_ms,
     }
-    this.logger.event(tags, result)
+    this.logger.command(tags, result, "created")
     return { result, tags }
   }
 
@@ -163,6 +162,7 @@ export class QueryParamsToCmdMapper {
       this.logger.exception(tags, err)
       let result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
+        object_class: "result",
         version: 1,
         base_asset,
         quote_asset,
@@ -175,7 +175,7 @@ export class QueryParamsToCmdMapper {
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
       }
-      this.logger.event({ ...tags, level: "error" }, result)
+      this.logger.result({ ...tags, level: "error" }, result, "created")
       return { result, tags }
     }
 
@@ -183,6 +183,7 @@ export class QueryParamsToCmdMapper {
 
     let result: TradeAbstractionOpenLongCommand = {
       object_type: "TradeAbstractionOpenLongCommand",
+      object_class: "command",
       edge,
       trade_id,
       direction,
@@ -191,70 +192,7 @@ export class QueryParamsToCmdMapper {
       trigger_price,
       signal_timestamp_ms,
     }
-    this.logger.event(tags, result)
-    return { result, tags }
-  }
-
-  short(
-    req: Request,
-    {
-      cmd_received_timestamp_ms,
-      quote_asset,
-      exchange_identifier,
-    }: { cmd_received_timestamp_ms: number; quote_asset: string; exchange_identifier: ExchangeIdentifier_V3 }
-  ): {
-    result: TradeAbstractionOpenShortResult | TradeAbstractionOpenShortCommand
-    tags: { [key: string]: string }
-  } {
-    const direction = "short",
-      action = "open"
-
-    let tags: Tags = {
-      direction,
-      quote_asset,
-      action,
-      exchange_type: exchange_identifier.type,
-      exchange: exchange_identifier.exchange,
-    }
-
-    /* input checking */
-    let edge, base_asset, signal_timestamp_ms, trigger_price
-    try {
-      ;({ edge, base_asset, signal_timestamp_ms, trigger_price } = this.check_inputs(req, tags, {
-        cmd_received_timestamp_ms,
-        quote_asset,
-      }))
-    } catch (err: any) {
-      this.logger.exception(tags, err)
-      let result: TradeAbstractionOpenShortResult = {
-        object_type: "TradeAbstractionOpenShortResult",
-        version: 1,
-        base_asset,
-        quote_asset,
-        edge,
-        // direction,
-        // action,
-        status: "BAD_INPUTS",
-        http_status: 400,
-        msg: `TradeAbstractionOpenSpotShortResult: ${edge}${base_asset}: BAD_INPUTS`,
-        err,
-        execution_timestamp_ms: cmd_received_timestamp_ms,
-      }
-      this.logger.event({ ...tags, level: "error" }, result)
-      return { result, tags }
-    }
-
-    let result: TradeAbstractionOpenShortCommand = {
-      object_type: "TradeAbstractionOpenShortCommand",
-      edge,
-      direction,
-      action,
-      base_asset,
-      trigger_price,
-      signal_timestamp_ms,
-      quote_asset,
-    }
-    this.logger.event(tags, result)
+    this.logger.command(tags, result, "created")
     return { result, tags }
   }
 }

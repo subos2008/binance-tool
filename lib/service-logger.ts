@@ -48,7 +48,7 @@ import * as bunyan from "bunyan"
 
 import Sentry from "./sentry"
 
-import { LoggableEvent, Logger, ServiceLogger } from "../interfaces/logger"
+import { Command, Lifecycle, LoggableEvent, Logger, Result, ServiceLogger, TODO } from "../interfaces/logger"
 import { ContextTags } from "../interfaces/send-message"
 
 export class BunyanServiceLogger implements ServiceLogger, Logger {
@@ -232,6 +232,40 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
         console.error(err)
         Sentry.captureException(err)
       }
+    }
+  }
+
+  command(tags: ContextTags, event: Command, lifecycle: Lifecycle) {
+    if (this.full_trace) console.trace(`BunyanServiceLogger.command call stack trace`)
+    if (this.silent) return
+    try {
+      this.call_bunyan_by_level_name(tags.level || "info", { ...tags, ...event, lifecycle }, event.msg)
+    } catch (err) {
+      console.error(err)
+      Sentry.captureException(err)
+    }
+  }
+
+  result(tags: ContextTags, event: Result, lifecycle: Lifecycle) {
+    if (this.full_trace) console.trace(`BunyanServiceLogger.result call stack trace`)
+    if (this.silent) return
+    try {
+      this.call_bunyan_by_level_name(tags.level || "info", { ...tags, ...event, lifecycle }, event.msg)
+    } catch (err) {
+      console.error(err)
+      Sentry.captureException(err)
+    }
+  }
+
+  todo(tags: ContextTags, msg: string) {
+    if (this.full_trace) console.trace(`BunyanServiceLogger.todo call stack trace`)
+    if (this.silent) return
+    let event: TODO = { object_type: "TODO", msg }
+    try {
+      this.call_bunyan_by_level_name(tags.level || "info", { ...tags, ...event }, event.msg)
+    } catch (err) {
+      console.error(err)
+      Sentry.captureException(err)
     }
   }
 

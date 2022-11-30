@@ -254,7 +254,7 @@ export class BinancePortfolioToAMQP {
             quote_currency,
             quote_amount,
             prices: portfolio.prices,
-            base_assets_to_ignore: [quote_currency, "BNB"],
+            base_assets_to_ignore: [quote_currency, "BNB", "DNT"],
           })
           if (free_balances.length > 0) {
             let string =

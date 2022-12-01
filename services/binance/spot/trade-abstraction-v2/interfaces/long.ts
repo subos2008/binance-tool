@@ -225,7 +225,7 @@ interface TradeAbstractionOpenSpotLongResult_ALREADY_IN_POSITION extends Result 
   signal_to_execution_slippage_ms?: string
 }
 
-console.warn(`What http_status do we want for INSUFFICIENT_BALANCE?`)
+// console.warn(`What http_status do we want for INSUFFICIENT_BALANCE?`)
 interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE extends Result {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
@@ -246,7 +246,6 @@ interface TradeAbstractionOpenSpotLongResult_INSUFFICIENT_BALANCE extends Result
   signal_to_execution_slippage_ms?: string
 }
 
-console.warn(`What http_status do we want for ABORTED_FAILED_TO_CREATE_EXIT_ORDERS?`)
 interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDERS extends Result {
   object_type: "TradeAbstractionOpenLongResult"
   version: 1
@@ -256,7 +255,7 @@ interface TradeAbstractionOpenSpotLongResult_ABORTED_FAILED_TO_CREATE_EXIT_ORDER
   trade_id: string
 
   status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS" // exited (dumped) the postition as required exit orders couldn't be created
-  http_status: 418 // 418: Help What Should I be
+  http_status: 200 // Help What Should I be... Let's say 200, instead of 201. Processed but didn't create anything
 
   msg: string // if we catch an exception and return INTERNAL_SERVER_ERROR the message goes here
   err?: any // if we catch an exception and return INTERNAL_SERVER_ERROR the exception goes here

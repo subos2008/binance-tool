@@ -202,9 +202,9 @@ export class BinancePortfolioToAMQP {
 
       try {
         // This is just for the logfiles, we don't use this to send the event
-        let msg = `B: ${portfolio.btc_value}, U: ${portfolio.usd_value}`
+        let msg = `U: ${portfolio.usd_value}`
         try {
-          msg += " as " + this.portfolio_utils.balances_to_string(portfolio, "BTC")
+          msg += " as " + this.portfolio_utils.balances_to_string(portfolio, "BUSD")
         } catch (err) {
           this.logger.exception({}, err)
         }
@@ -276,18 +276,9 @@ export class BinancePortfolioToAMQP {
 
   async decorate_portfolio(portfolio: SpotPortfolio, quote_currency: string): Promise<SpotPortfolio> {
     portfolio = this.portfolio_utils.add_quote_value_to_portfolio_balances({
-      // TODO: convert to list
-      portfolio,
-      quote_currency: "BTC",
-    }).portfolio
-    portfolio = this.portfolio_utils.add_quote_value_to_portfolio_balances({
       portfolio,
       quote_currency,
     }).portfolio
-    portfolio.btc_value = this.portfolio_utils
-      .calculate_portfolio_value_in_quote_currency({ quote_currency: "BTC", portfolio })
-      .total // .dp(3)
-      .toFixed()
     if (!portfolio.prices) throw new Error(`No prices`)
     portfolio.usd_value = this.portfolio_utils
       .calculate_portfolio_value_in_quote_currency({ quote_currency, portfolio })

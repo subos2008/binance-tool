@@ -44,7 +44,6 @@ export interface Prices {
 export interface Portfolio {
   object_type: string
   usd_value?: string
-  btc_value?: string
   balances: Balance[]
   prices?: Prices
   positions?: { [name: string]: SpotPosition }
@@ -53,7 +52,6 @@ export interface Portfolio {
 export interface FuturesPortfolio {
   object_type: string
   usd_value?: string
-  btc_value?: string
   balances: FuturesBalance[]
   prices?: Prices
   positions?: { [name: string]: SpotPosition }
@@ -66,7 +64,6 @@ export interface SpotPortfolio {
   timestamp_ms: number
 
   usd_value?: string
-  btc_value?: string
   balances: Balance[]
   prices?: Prices
 

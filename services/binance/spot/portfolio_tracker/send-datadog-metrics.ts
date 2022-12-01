@@ -64,32 +64,6 @@ export class SendDatadogMetrics {
         )
       }
 
-      if (portfolio.btc_value) {
-        let tags: Tags = { exchange: exchange_identifier.exchange, exchange_type: exchange_identifier.type }
-        this.dogstatsd.gauge(
-          `.spot.holdings.total.btc_equiv`,
-          Number(portfolio.btc_value),
-          undefined,
-          tags,
-          function (err, bytes) {
-            if (err) {
-              console.error(
-                "Oh noes! There was an error submitting .portfolio.spot.holdings.${quote_asset} metrics to DogStatsD for ${edge}:${base_asset}:",
-                err
-              )
-              console.error(err)
-              Sentry.captureException(err)
-            } else {
-              // console.log(
-              //   "Successfully sent",
-              //   bytes,
-              //   "bytes .portfolio.spot.holdings.${quote_asset} to DogStatsD for ${edge}:${base_asset}"
-              // )
-            }
-          }
-        )
-      }
-
       // Submit individual metrics
       for (const balance of portfolio.balances) {
         let base_asset = balance.asset

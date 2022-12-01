@@ -103,13 +103,11 @@ class EventLogger implements TypedMessageProcessor<SpotPortfolio> {
     this.logger.debug(tags, `Submitting SpotPortfolio to InfluxDB`)
     try {
       let usd_value = msg.usd_value
-      let btc_value = msg.btc_value
       const point1 = new Point(name)
         .tag("exchange", exchange)
         .tag("account", account)
         .tag("account_type", account_type)
         .floatField("usd", usd_value)
-        .floatField("btc", btc_value)
       await influxdb.writePoint(point1)
       channel.ack(amqp_event)
     } catch (err) {

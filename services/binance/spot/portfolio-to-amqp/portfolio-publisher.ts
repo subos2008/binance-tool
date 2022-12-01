@@ -64,7 +64,6 @@ export class PortfolioPublisher {
       exchange_identifier: this.exchange_identifier,
       timestamp_ms: Date.now(),
       usd_value: event.usd_value,
-      btc_value: event.btc_value,
       balances: event.balances,
       prices: event.prices,
     }

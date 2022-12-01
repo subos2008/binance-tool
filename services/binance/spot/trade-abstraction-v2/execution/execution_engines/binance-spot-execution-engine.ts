@@ -124,8 +124,6 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
       trade_id = order_context.trade_id
       tags.trade_id = trade_id
     }
-    this.logger.info(tags, `About to generate clientOrderId...`)
-    this.logger.debug(tags, `Oh debug appears btw.`)
     let clientOrderId = randomUUID()
     this.logger.info(tags, `Generated clientOrderId: ${clientOrderId}`)
     try {
@@ -134,7 +132,6 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
         order_id: clientOrderId,
         order_context,
       })
-      this.logger.info(tags, `Stored clientOrderId: ${clientOrderId}`)
       return { clientOrderId }
     } catch (err) {
       this.logger.exception(tags, err, `Failed to store clientOrderId: ${clientOrderId}`)

@@ -19,6 +19,9 @@ export type GenericOrderType =
   | "LIMIT_MAKER" // direct binance mapping
 
 export type GenericOrderData = {
+  object_type: "GenericOrderData"
+  version: 1
+  msg: string
   // OG, created to map completed / filled orders to
   exchange_identifier: ExchangeIdentifier_V3
   order_id: string // as provided by the exchange - would always be clientOrderId for Binance

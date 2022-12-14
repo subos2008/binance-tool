@@ -4,6 +4,7 @@ export type MyEventNameType =
   | "Edge56EntrySignal"
   | "BinanceOrderData"
   | "FuturesBinanceOrderData"
+  | "GenericOrderData"
   | "Edge58EntrySignal"
   | "Edge60EntrySignal"
   | "Edge61EntrySignal"
@@ -69,6 +70,14 @@ export class MessageRouting {
       case "FuturesBinanceOrderData":
         return {
           routing_key: "futures-binance-order-data",
+          exchange_name: "binance-tool",
+          exchange_type: "topic",
+          durable: false,
+          headers: { "x-queue-type": "quorum" },
+        }
+      case "GenericOrderData":
+        return {
+          routing_key: "spot-generic-order-data",
           exchange_name: "binance-tool",
           exchange_type: "topic",
           durable: false,

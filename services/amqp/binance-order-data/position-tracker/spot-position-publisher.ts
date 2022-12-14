@@ -1,4 +1,4 @@
-import { GenericTopicPublisher } from "../../../../classes/amqp/generic-publishers"
+import { TypedGenericTopicPublisher } from "../../../../classes/amqp/typed-generic-publisher"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import {
   SpotPositionCallbacks,
@@ -9,19 +9,19 @@ import { Logger } from "../../../../interfaces/logger"
 
 export class SpotPositionPublisher implements SpotPositionCallbacks {
   logger: Logger
-  publisher_opened: GenericTopicPublisher
-  publisher_closed: GenericTopicPublisher
+  publisher_opened: TypedGenericTopicPublisher<SpotPositionOpenedEvent_V1>
+  publisher_closed: TypedGenericTopicPublisher<SpotPositionClosed>
   health_and_readiness: HealthAndReadiness
 
   constructor({ logger, health_and_readiness }: { logger: Logger; health_and_readiness: HealthAndReadiness }) {
     this.logger = logger
     this.health_and_readiness = health_and_readiness
-    this.publisher_opened = new GenericTopicPublisher({
+    this.publisher_opened = new TypedGenericTopicPublisher<SpotPositionOpenedEvent_V1>({
       logger,
       event_name: "SpotPositionOpened",
       health_and_readiness,
     })
-    this.publisher_closed = new GenericTopicPublisher({
+    this.publisher_closed = new TypedGenericTopicPublisher<SpotPositionClosed>({
       logger,
       event_name: "SpotPositionClosed",
       health_and_readiness,

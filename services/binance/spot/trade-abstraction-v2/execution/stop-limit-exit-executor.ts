@@ -208,7 +208,7 @@ export class SpotPositionsExecution_StopLimitExit {
         object_class: "result",
         version: 1,
         status: "ABORTED_FAILED_TO_CREATE_EXIT_ORDERS",
-        http_status: 418,
+        http_status: 200,
         msg: `${prefix}: ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`,
         edge,
         trade_id,
@@ -219,7 +219,11 @@ export class SpotPositionsExecution_StopLimitExit {
         created_stop_order: false,
         created_take_profit_order: false,
       }
-      this.logger.result(tags, spot_long_result, "created")
+      this.logger.todo(
+        { ...tags, level: "warn" },
+        `ABORTED_FAILED_TO_CREATE_EXIT_ORDERS doesn't record if position was dumped`
+      )
+      this.logger.result({ ...tags, level: "warn" }, spot_long_result, "created")
       return spot_long_result
     }
 

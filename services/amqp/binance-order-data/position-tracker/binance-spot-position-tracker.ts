@@ -88,6 +88,7 @@ class MyOrderCallbacks implements OrderCallbacks {
     this.send_message = send_message
     assert(position_tracker)
     this.position_tracker = position_tracker
+    this.logger.todo({}, `Using static exchange_info in position tracker`)
     this.exchange_info = exchange_info
     this.order_context_persistence = order_context_persistence
   }

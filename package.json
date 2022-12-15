@@ -8,6 +8,7 @@
     "nodemon": "./node_modules/.bin/nodemon -e js,ts ./node_modules/.bin/mocha -r ts-node/register ./test/test_*",
     "backtest_edge58": "./backtesting/edge58/backtest.ts 2>/dev/null | ./node_modules/.bin/bunyan -o simple",
     "jest": "jest --coverage",
+    "jest:debug": "jest --coverage --detectOpenHandles",
     "test:watch": "jest --watch"
   },
   "dependencies": {

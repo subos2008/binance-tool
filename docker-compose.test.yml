@@ -1,6 +1,10 @@
 version: "3.3"
 
 services:
+  jest:
+    build: .
+    command: yarn jest
+
   sut:
     build: .
     command: yarn test

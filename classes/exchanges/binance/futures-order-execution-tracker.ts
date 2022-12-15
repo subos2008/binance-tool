@@ -17,14 +17,11 @@ import Sentry from "../../../lib/sentry"
 import {
   AccountConfigUpdate,
   AccountUpdate,
-  BalanceUpdate,
   Binance,
   ExecutionReport,
   MarginCall,
   OrderUpdate,
   OutboundAccountInfo,
-  OutboundAccountPosition,
-  UserDataStreamEvent,
 } from "binance-api-node"
 import { AuthorisedEdgeType } from "../../spot/abstractions/position-identifier"
 import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"

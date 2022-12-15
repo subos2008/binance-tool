@@ -33,6 +33,22 @@ jobs:
             docker build . --file Dockerfile
           fi
 
+  jest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run tests
+        run: |
+          if [ -f docker-compose.test.yml ]; then
+            docker-compose --version
+            docker-compose --file docker-compose.test.yml build
+            docker-compose --file docker-compose.test.yml run jest
+          else
+            docker build . --file Dockerfile
+          fi
+
   compile:
     runs-on: ubuntu-latest
     steps:
@@ -93,7 +109,7 @@ jobs:
           docker push $IMAGE_ID:$(echo $GITHUB_SHA | head -c7)
 
   deploy-production:
-    needs: [compile, test, push]
+    needs: [compile, test, jest, push]
     if: ${{ github.ref == 'refs/heads/production' }}
     environment: te-production
 

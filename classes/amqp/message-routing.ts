@@ -59,7 +59,8 @@ export class MessageRouting {
           headers: { "x-queue-type": "quorum" },
         }
 
-      case "BinanceOrderData": // BinanceOrderDataPublisher
+      case "BinanceOrderData":
+        console.warn(`MessageRouting for depricated message: ${event_name}`)
         return {
           routing_key: "spot-binance-orders",
           exchange_name: "binance-tool",

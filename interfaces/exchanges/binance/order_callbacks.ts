@@ -27,7 +27,7 @@
 // }
 
 import { ExecutionReport, OrderRejectReason, OrderStatus_LT, OrderType_LT } from "binance-api-node"
-import { ExchangeIdentifier_V3, ExchangeType } from "../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4, ExchangeType } from "../../../events/shared/exchange-identifier"
 import { OrderContext_V1 } from "../../orders/order-context"
 
 // Where the fuck is executedQuoteQuant?
@@ -36,7 +36,7 @@ export interface BinanceOrderData /* extends ExecutionReport */ {
   version: 1
   msg?: string
 
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
   exchange_type: ExchangeType
   order_id: string
   order_is_is_client_order_id: boolean // Added by us: did we use newClientOrderId to set orderId
@@ -59,7 +59,7 @@ export interface BinanceOrderData /* extends ExecutionReport */ {
 export interface FuturesBinanceOrderData /* extends OrderUpdate */ {
   object_type: "FuturesBinanceOrderData"
   version: 1
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
   exchange_type: ExchangeType
   order_id: string
   order_is_is_client_order_id: boolean // Added by us: did we use newClientOrderId to set orderId

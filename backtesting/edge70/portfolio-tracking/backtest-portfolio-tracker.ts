@@ -14,7 +14,7 @@ import { PositionSizer } from "../../../interfaces/position-sizer"
 import { BacktesterSpotPostionsTracker } from "./positions-tracker"
 import { ContextTags, SendMessageFunc } from "../../../interfaces/send-message"
 import { SpotPositionsQuery } from "../../../classes/spot/abstractions/spot-positions-query"
-import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../events/shared/exchange-identifier"
 import { RedisSpotPositionsPersistence } from "../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { MarketIdentifier_V5_with_base_asset } from "../../../events/shared/market-identifier"
 import { RedisOrderContextPersistence } from "../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
@@ -39,7 +39,7 @@ export class BacktestPortfolioTracker {
   edge: "edge70" | "edge70-backtest"
   health_and_readiness: HealthAndReadiness
   position_sizer: PositionSizer
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
   quote_asset: string
   stop_factor: BigNumber
   prices_getter: CurrentAllPricesGetter
@@ -73,7 +73,7 @@ export class BacktestPortfolioTracker {
     backtest_parameters: BacktestParameters
     position_sizer: PositionSizer
     redis: RedisClientType
-    exchange_identifier: ExchangeIdentifier_V3
+    exchange_identifier: ExchangeIdentifier_V4
     quote_asset: string
     prices_getter: CurrentAllPricesGetter
     bank: BankOfBacktesting

@@ -20,8 +20,12 @@ export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info
       `No averageExecutionPrice for symbol ${i.symbol} found when converting Binance order to GenericOrder`
     )
 
+  let msg = ``
   let generic: GenericOrderData = {
-    exchange_identifier: { version: "v3", exchange: "binance", type: "spot", account: "default" },
+    object_type: "GenericOrderData",
+    version: 2,
+    msg,
+    exchange_identifier: { version: 4, exchange: "binance", exchange_type: "spot" },
     order_id: i.order_id,
     market_symbol: i.symbol,
     baseAsset: symbol_info.baseAsset,
@@ -32,7 +36,6 @@ export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info
     totalQuoteTradeQuantity: i.totalQuoteTradeQuantity,
     averageExecutionPrice: i.averageExecutionPrice,
     orderTime: i.orderTime,
-    // edge: i.edge,
   }
   if (i.orderStatus)
     generic.orderStatus = map_binance_order_status_to_generic_order_status(i.orderStatus as OrderStatus)

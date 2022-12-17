@@ -1,4 +1,4 @@
-import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../events/shared/exchange-identifier"
 
 export type GenericOrderStatus =
   | "CANCELED"
@@ -20,10 +20,10 @@ export type GenericOrderType =
 
 export type GenericOrderData = {
   object_type: "GenericOrderData"
-  version: 1
+  version: 2
   msg: string
   // OG, created to map completed / filled orders to
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
   order_id: string // as provided by the exchange - would always be clientOrderId for Binance
   market_symbol: string // pair etc - included but only use it to pass back to the exchange/ExchangeUtils as an opaque slug
   baseAsset: string

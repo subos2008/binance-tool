@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { TradeAbstractionCloseResult } from "./interfaces/close"
@@ -26,7 +26,7 @@ export class SendDatadogMetrics {
     logger,
   }: {
     service_name: string
-    exchange_identifier: ExchangeIdentifier_V3
+    exchange_identifier: ExchangeIdentifier_V4
     logger: ServiceLogger
   }) {
     this.logger = logger
@@ -34,7 +34,7 @@ export class SendDatadogMetrics {
       errorHandler: dogstatsderrorhandler,
       globalTags: {
         service_name,
-        exchange_type: exchange_identifier.type,
+        exchange_type: exchange_identifier.exchange_type,
         exchange: exchange_identifier.exchange,
       },
       prefix: "trading_engine.tas",

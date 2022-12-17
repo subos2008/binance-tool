@@ -38,8 +38,8 @@ export class RedisSpotPositionsState {
   }
 
   private prefix(pi: SpotPositionIdentifier_V3) {
-    assert.equal(pi.exchange_identifier.type, "spot")
-    let account = pi.exchange_identifier.account || "default"
+    assert.equal(pi.exchange_identifier.exchange_type, "spot")
+    let account = "default"
     /* This needs to match the regexp in open_positions() */
     return `${key_base}:spot:${pi.exchange_identifier.exchange}:${account}:${pi.base_asset}:${pi.edge}`
   }
@@ -73,7 +73,6 @@ export class RedisSpotPositionsState {
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.base_asset)
         scope.setTag("exchange", pi.exchange_identifier.exchange)
-        if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
         // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(err)
       })
@@ -272,7 +271,6 @@ export class RedisSpotPositionsState {
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.base_asset)
         scope.setTag("exchange", pi.exchange_identifier.exchange)
-        if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
         // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(err)
       })
@@ -288,7 +286,6 @@ export class RedisSpotPositionsState {
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.base_asset)
         scope.setTag("exchange", pi.exchange_identifier.exchange)
-        if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
         Sentry.captureException(err)
       })
       throw err
@@ -303,7 +300,6 @@ export class RedisSpotPositionsState {
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.base_asset)
         scope.setTag("exchange", pi.exchange_identifier.exchange)
-        if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
         Sentry.captureException(err)
       })
       throw err
@@ -324,7 +320,6 @@ export class RedisSpotPositionsState {
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.base_asset)
         scope.setTag("exchange", pi.exchange_identifier.exchange)
-        if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
         // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(err)
       })
@@ -362,7 +357,6 @@ export class RedisSpotPositionsState {
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", pi.base_asset)
         scope.setTag("exchange", pi.exchange_identifier?.exchange)
-        if (pi.exchange_identifier.account) scope.setTag("account", pi.exchange_identifier.account)
         // scope.setTag("redis.connected", this.redis.connected.toString());
         Sentry.captureException(err)
       })
@@ -378,7 +372,7 @@ export class RedisSpotPositionsState {
       let tuple = key.match(/:spot:([^:]+):([^:]+):([^:]+):([^:]+):sats_position_size/)
       if (!tuple) throw new Error(`Key '${key} did not match regexp`)
       let pi: SpotPositionIdentifier_V3 = {
-        exchange_identifier: { exchange: tuple[1], account: tuple[2], version: "v3", type: "spot" },
+        exchange_identifier: { exchange: tuple[1], version: 4, exchange_type: "spot" },
         base_asset: tuple[3],
         edge: tuple[4] as AuthorisedEdgeType,
       }

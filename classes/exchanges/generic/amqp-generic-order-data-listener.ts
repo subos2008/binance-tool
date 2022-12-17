@@ -104,7 +104,7 @@ export class AMQP_GenericOrderDataListener implements TypedMessageProcessor<Gene
       symbol,
       order_id,
       exchange: exchange_identifier.exchange,
-      exchange_type: exchange_identifier.type,
+      exchange_type: exchange_identifier.exchange_type,
     }
 
     try {

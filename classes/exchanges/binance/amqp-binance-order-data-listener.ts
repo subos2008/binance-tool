@@ -95,7 +95,7 @@ export class AMQP_BinanceOrderDataListener implements TypedMessageProcessor<Bina
       symbol,
       order_id,
       exchange: exchange_identifier.exchange,
-      exchange_type: exchange_identifier.type,
+      exchange_type: exchange_identifier.exchange_type,
     }
 
     try {

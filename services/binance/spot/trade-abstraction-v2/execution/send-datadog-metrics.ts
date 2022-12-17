@@ -11,7 +11,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../../events/shared/exchange-identifier"
 import { ServiceLogger } from "../../../../../interfaces/logger"
 import {
   TradeAbstractionOpenLongCommand_OCO_Exit,
@@ -32,14 +32,14 @@ export class SendDatadogMetrics {
     exchange_identifier,
     logger,
   }: {
-    exchange_identifier: ExchangeIdentifier_V3
+    exchange_identifier: ExchangeIdentifier_V4
     logger: ServiceLogger
   }) {
     this.logger = logger
     this.dogstatsd = new StatsD({
       errorHandler: dogstatsderrorhandler,
       globalTags: {
-        exchange_type: exchange_identifier.type,
+        exchange_type: exchange_identifier.exchange_type,
         exchange: exchange_identifier.exchange,
       },
       prefix: "trading_engine.tas.spot.binance.ee",

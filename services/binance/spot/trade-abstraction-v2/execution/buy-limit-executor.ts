@@ -10,7 +10,7 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { Logger, ServiceLogger } from "../../../../../interfaces/logger"
-import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identifier"
+import { MarketIdentifier_V4, MarketIdentifier_V5 } from "../../../../../events/shared/market-identifier"
 import { SpotPositionsPersistence } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import {
   TradeAbstractionOpenLongCommand_OCO_Exit,
@@ -80,7 +80,7 @@ export class SpotPositionsExecution_BuyLimit {
   }
 
   // Used when constructing orders
-  private get_market_identifier_for(args: { quote_asset: string; base_asset: string }): MarketIdentifier_V4 {
+  private get_market_identifier_for(args: { quote_asset: string; base_asset: string }): MarketIdentifier_V5 {
     return this.ee.get_market_identifier_for(args)
   }
 
@@ -100,7 +100,7 @@ export class SpotPositionsExecution_BuyLimit {
     try {
       let { edge_percentage_buy_limit } = args
 
-      let market_identifier: MarketIdentifier_V4 = this.get_market_identifier_for({ ...args, quote_asset })
+      let market_identifier: MarketIdentifier_V5 = this.get_market_identifier_for({ ...args, quote_asset })
       let trade_context: TradeContext = { base_asset, quote_asset, edge, trade_id }
       let trigger_price: BigNumber | undefined
       if (trigger_price_string) {

@@ -37,7 +37,7 @@ import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
 import { DateTime } from "luxon"
 import { RedisClient } from "redis"
 import { BacktestPortfolioTracker } from "./portfolio-tracking/backtest-portfolio-tracker"
-import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../events/shared/exchange-identifier"
 import { BunyanServiceLogger } from "../../lib/service-logger"
 import { ServiceLogger } from "../../interfaces/logger"
 import { MockPricesGetter } from "./mock-prices-getter"
@@ -475,13 +475,7 @@ async function main() {
     let redis = mock_redis.createClient()
 
     let exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
-    let i = exchange_info_getter.get_exchange_identifier()
-    let exchange_identifier: ExchangeIdentifier_V3 = {
-      ...i,
-      type: i.exchange_type,
-      account: "default",
-      version: "v3",
-    }
+    let exchange_identifier = exchange_info_getter.get_exchange_identifier()
 
     let bank = new BacktesterCashManagement({ logger, ...backtest_parameters.bank, dollar_loans: true })
 

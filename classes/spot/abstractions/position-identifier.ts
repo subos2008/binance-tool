@@ -1,4 +1,4 @@
-import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../events/shared/exchange-identifier"
 
 import Sentry from "../../../lib/sentry"
 
@@ -20,7 +20,7 @@ export function create_position_identifier_from_tuple({
   return {
     edge,
     base_asset: baseAsset,
-    exchange_identifier: { exchange, account, type: exchange_type, version: "v3" },
+    exchange_identifier: { exchange, exchange_type, version: 4 },
   }
 }
 
@@ -54,7 +54,7 @@ export function check_edge(edge: string | undefined): AuthorisedEdgeType {
   throw err
 }
 export interface SpotPositionIdentifier_V3 {
-  exchange_identifier: ExchangeIdentifier_V3 // yeah exchange, not market, for spot - but market for futures
+  exchange_identifier: ExchangeIdentifier_V4 // yeah exchange, not market, for spot - but market for futures
   edge: string
   base_asset: string
 }

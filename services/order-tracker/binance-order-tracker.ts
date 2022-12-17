@@ -174,7 +174,7 @@ async function main() {
     send_message,
     logger,
     order_callbacks,
-    exchange_identifier: { type: "spot", version: "v3", exchange: "binance", account: "default" },
+    exchange_identifier: { exchange_type: "spot", version: 4, exchange: "binance" },
   })
 
   spot_order_execution_tracker.main().catch((err: any) => {

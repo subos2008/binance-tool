@@ -16,7 +16,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { AuthorisedEdgeType } from "./position-identifier"
 import { GenericOrderData } from "../../../types/exchange_neutral/generic_order_data"
-import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../events/shared/exchange-identifier"
 
 type _shared_v1 = {
   /**
@@ -31,7 +31,7 @@ type _shared_v1 = {
 
   edge: AuthorisedEdgeType
 
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
   base_asset: string
 
   /** When the entry signal fired */

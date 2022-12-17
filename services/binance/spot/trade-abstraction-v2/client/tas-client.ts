@@ -8,7 +8,7 @@ import {
   BinanceStyleSpotPrices,
   SpotPositionIdentifier_V3,
 } from "../../../../../classes/spot/abstractions/position-identifier"
-import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../../events/shared/exchange-identifier"
 import Sentry from "../../../../../lib/sentry"
 import { AxiosRetry } from "./axios-retry"
 import { TradeContextTags } from "../../../../../interfaces/send-message"
@@ -34,7 +34,7 @@ export class TradeAbstractionServiceClient {
     this.TAS_URL = TAS_URL
   }
 
-  async get_exchange_identifier(): Promise<ExchangeIdentifier_V3> {
+  async get_exchange_identifier(): Promise<ExchangeIdentifier_V4> {
     let response = await this.get(new URL("/exchange_identifier", this.TAS_URL).toString())
     // this.logger.event({}, response.data) // exchange_identifier
     return response.data

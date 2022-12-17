@@ -25,8 +25,9 @@ export type ExchangeIdentifier_V4 = {
   // account: string // 'default' // we will want this eventually - PositionPersistence is ready for it
 }
 
-export function exchange_identifier_to_redis_key_snippet(exchange_identifier: ExchangeIdentifier_V3) {
-  return `${exchange_identifier.type}:${exchange_identifier.exchange}:${exchange_identifier.account}`
+export function exchange_identifier_to_redis_key_snippet(_exchange_identifier: ExchangeIdentifier_V4) {
+  let exchange_identifier = ei_v4_to_v3(_exchange_identifier)
+  return `${exchange_identifier.type}:${exchange_identifier.exchange}:default`
 }
 
 export function ei_v4_to_v3(ei: ExchangeIdentifier_V4): ExchangeIdentifier_V3 {

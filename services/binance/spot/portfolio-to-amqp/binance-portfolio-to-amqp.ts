@@ -26,11 +26,10 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-const exchange_identifier: ExchangeIdentifier_V3 = {
-  type: "spot",
-  version: "v3",
+const exchange_identifier: ExchangeIdentifier_V4 = {
+  exchange_type: "spot",
+  version: 4,
   exchange: "binance",
-  account: "default",
 }
 
 import { BigNumber } from "bignumber.js"
@@ -42,7 +41,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { SendMessage } from "../../../../classes/send_message/publish"
 import { OrderExecutionTracker } from "../orders-to-amqp/spot-order-execution-tracker"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { Balance, SpotPortfolio } from "../../../../interfaces/portfolio"
 import { Binance as BinanceType } from "binance-api-node"
 import Binance from "binance-api-node"
@@ -80,7 +79,7 @@ export class BinancePortfolioToAMQP {
   send_message: SendMessageFunc
   logger: ServiceLogger
   order_execution_tracker: OrderExecutionTracker
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
   publisher: PortfolioPublisher
   health_and_readiness: HealthAndReadiness
   portfolio_snapshot: PortfolioSnapshot
@@ -103,7 +102,7 @@ export class BinancePortfolioToAMQP {
 
     this.health_and_readiness = health_and_readiness
 
-    this.exchange_identifier = { exchange: "binance", account: "default", type: "spot", version: "v3" }
+    this.exchange_identifier = { exchange: "binance", exchange_type: "spot", version: 4 }
 
     this.portfolio_utils = new SpotPortfolioUtils({ logger })
 

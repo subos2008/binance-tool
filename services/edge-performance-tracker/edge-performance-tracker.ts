@@ -122,7 +122,7 @@ class EventLogger implements TypedMessageProcessor<SpotPositionClosed> {
         loss,
         base_asset,
         exchange: i.exchange_identifier.exchange,
-        exchange_type: i.exchange_identifier.type,
+        exchange_type: i.exchange_identifier.exchange_type,
         entry_timestamp_ms: i.initial_entry_timestamp_ms,
         exit_timestamp_ms: i.exit_timestamp_ms,
         days_in_position,

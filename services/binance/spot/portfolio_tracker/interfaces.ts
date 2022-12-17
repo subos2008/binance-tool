@@ -1,14 +1,16 @@
-import { ExchangeIdentifier } from "../../../../events/shared/exchange-identifier"
-import { Balance, Portfolio } from "../../../../interfaces/portfolio"
+import { ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
+import { Portfolio } from "../../../../interfaces/portfolio"
 
 export interface MasterPortfolioClass {
   set_portfolio_for_exchange({
     exchange_identifier,
     portfolio,
   }: {
-    exchange_identifier: ExchangeIdentifier
+    exchange_identifier: ExchangeIdentifier_V4
     portfolio: Portfolio
   }): Promise<void>
+
+  update_and_report_portfolio(): Promise<void>
 }
 
 export interface PortfolioBitchClass {

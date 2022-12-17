@@ -16,7 +16,7 @@ import { SendMessage } from "../classes/send_message/publish"
 import { SpotPositionsQuery } from "../classes/spot/abstractions/spot-positions-query"
 import { SpotPositionsPersistence } from "../classes/spot/persistence/interface/spot-positions-persistance"
 import { SpotPositionIdentifier_V3, SpotPositionsQuery_V3 } from "../classes/spot/abstractions/position-identifier"
-import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../events/shared/exchange-identifier"
 import { BinancePriceGetter } from "../interfaces/exchanges/binance/binance-price-getter"
 import { CurrentPriceGetter } from "../interfaces/exchanges/generic/price-getter"
 import { RedisSpotPositionsPersistence } from "../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
@@ -142,7 +142,7 @@ let price_getters: { [exchange: string]: CurrentPriceGetter } = {}
 function mint_price_getter({
   exchange_identifier,
 }: {
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
 }): CurrentPriceGetter {
   if (exchange_identifier.exchange === "binance") {
     const Binance = require("binance-api-node").default
@@ -159,7 +159,7 @@ async function get_current_price({
   exchange_identifier,
   market_symbol,
 }: {
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
   market_symbol: string
 }): Promise<BigNumber> {
   if (!(exchange_identifier.exchange in price_getters)) {
@@ -185,7 +185,7 @@ async function list_positions({
     logger,
     positions_persistance,
     send_message,
-    exchange_identifier: { exchange, type: exchange_type, account, version: "v3" },
+    exchange_identifier: { exchange, exchange_type, version: 4 },
   })
   console.warn(`This implementation uses an initial_entry_price and not an average entry price`)
   let open_positions: SpotPositionIdentifier_V3[] = await spot_positions_query.open_positions()
@@ -218,7 +218,7 @@ async function list_positions({
       let pi = position_identifier
       let ei = position_identifier.exchange_identifier
       console.log(
-        `${pi.base_asset}: ${price_change_string} (${ei.type}:${ei.exchange}:${ei.account}, edge ${pi.edge})`
+        `${pi.base_asset}: ${price_change_string} (${ei.exchange_type}:${ei.exchange}:default, edge ${pi.edge})`
       )
     } catch (err) {
       console.error(`Error processing info for ${position_identifier.base_asset}: ${err}`)
@@ -286,7 +286,7 @@ async function describe_position({
     logger,
     positions_persistance,
     send_message,
-    exchange_identifier: { exchange, type: exchange_type, account, version: "v3" },
+    exchange_identifier: { exchange, exchange_type, version: 4 },
   })
   let position_identifiers: SpotPositionIdentifier_V3[] = await spot_positions_query.query_open_positions(query)
   console.log(`position_identifiers:`)

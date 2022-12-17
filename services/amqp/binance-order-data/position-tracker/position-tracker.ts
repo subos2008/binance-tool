@@ -119,7 +119,6 @@ export class SpotPositionTracker {
       Sentry.withScope(function (scope) {
         scope.setTag("baseAsset", baseAsset)
         scope.setTag("exchange", exchange_identifier.exchange)
-        scope.setTag("account", exchange_identifier.account)
         Sentry.captureException(err)
       })
     }

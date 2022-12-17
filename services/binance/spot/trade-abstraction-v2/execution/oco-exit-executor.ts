@@ -10,9 +10,9 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { ServiceLogger } from "../../../../../interfaces/logger"
-import { MarketIdentifier_V4 } from "../../../../../events/shared/market-identifier"
+import { MarketIdentifier_V4, MarketIdentifier_V5, MarketIdentifier_V5_with_base_asset } from "../../../../../events/shared/market-identifier"
 import { SpotPositionsPersistence } from "../../../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { ExchangeIdentifier_V3 } from "../../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../../events/shared/exchange-identifier"
 import { SpotPositionIdentifier_V3 } from "../../../../../classes/spot/abstractions/position-identifier"
 import { TradeAbstractionOpenLongCommand_OCO_Exit, TradeAbstractionOpenLongResult } from "../interfaces/long"
 
@@ -83,11 +83,11 @@ export class SpotPositionsExecution_OCOExit {
   }
 
   // Used when constructing orders
-  private get_market_identifier_for(args: { quote_asset: string; base_asset: string }): MarketIdentifier_V4 {
+  private get_market_identifier_for(args: { quote_asset: string; base_asset: string }): MarketIdentifier_V5_with_base_asset {
     return this.ee.get_market_identifier_for(args)
   }
 
-  private get_exchange_identifier(): ExchangeIdentifier_V3 {
+  private get_exchange_identifier(): ExchangeIdentifier_V4 {
     return this.ee.get_exchange_identifier()
   }
 
@@ -99,7 +99,7 @@ export class SpotPositionsExecution_OCOExit {
 
       let prefix = `${edge}:${base_asset} open spot long: `
 
-      let market_identifier: MarketIdentifier_V4 = this.get_market_identifier_for({ ...args, quote_asset })
+      let market_identifier: MarketIdentifier_V5_with_base_asset = this.get_market_identifier_for({ ...args, quote_asset })
       let trigger_price: BigNumber | undefined
       if (trigger_price_string) {
         trigger_price = new BigNumber(trigger_price_string)

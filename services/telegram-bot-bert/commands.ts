@@ -103,7 +103,7 @@ export class Commands {
     let msg = postions
       .map(
         (pi) =>
-          `${pi.exchange_identifier.exchange} ${pi.exchange_identifier.type}  ${
+          `${pi.exchange_identifier.exchange} ${pi.exchange_identifier.exchange_type}  ${
             pi.edge
           }:${pi.base_asset.toUpperCase()}`
       )

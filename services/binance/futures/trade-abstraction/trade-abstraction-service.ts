@@ -18,7 +18,7 @@ import {
 } from "../../../../classes/spot/abstractions/position-identifier"
 import { FuturesEdgeToExecutorMapper } from "./edge-to-executor-mapper"
 import { FixedPositionSizer } from "../../../../edges/position-sizer/fixed-position-sizer"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { BinanceFuturesExecutionEngine } from "./execution/execution_engines/binance-futures-execution-engine"
 import { BinanceFuturesPriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
@@ -71,7 +71,7 @@ export class FuturesTradeAbstractionService {
     })
   }
 
-  get_exchange_identifier(): ExchangeIdentifier_V3 {
+  get_exchange_identifier(): ExchangeIdentifier_V4 {
     return this.ee.get_exchange_identifier()
   }
 

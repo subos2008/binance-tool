@@ -2,7 +2,7 @@ import { strict as assert } from "assert"
 import { Request } from "express"
 import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
 import { ServiceLogger } from "../../../../interfaces/logger"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 
 type Tags = { [key: string]: string }
@@ -74,7 +74,7 @@ export class QueryParamsToCmdMapper {
       cmd_received_timestamp_ms,
       quote_asset,
       exchange_identifier,
-    }: { cmd_received_timestamp_ms: number; quote_asset: string; exchange_identifier: ExchangeIdentifier_V3 }
+    }: { cmd_received_timestamp_ms: number; quote_asset: string; exchange_identifier: ExchangeIdentifier_V4 }
   ): {
     result: TradeAbstractionCloseResult | TradeAbstractionCloseCommand
     tags: { [key: string]: string }
@@ -84,7 +84,7 @@ export class QueryParamsToCmdMapper {
     let tags: Tags = {
       quote_asset,
       action,
-      exchange_type: exchange_identifier.type,
+      exchange_type: exchange_identifier.exchange_type,
       exchange: exchange_identifier.exchange,
     }
 
@@ -135,7 +135,7 @@ export class QueryParamsToCmdMapper {
       cmd_received_timestamp_ms,
       quote_asset,
       exchange_identifier,
-    }: { cmd_received_timestamp_ms: number; quote_asset: string; exchange_identifier: ExchangeIdentifier_V3 }
+    }: { cmd_received_timestamp_ms: number; quote_asset: string; exchange_identifier: ExchangeIdentifier_V4 }
   ): {
     result: TradeAbstractionOpenLongResult | TradeAbstractionOpenLongCommand
     tags: { [key: string]: string }
@@ -147,7 +147,7 @@ export class QueryParamsToCmdMapper {
       direction,
       quote_asset,
       action,
-      exchange_type: exchange_identifier.type,
+      exchange_type: exchange_identifier.exchange_type,
       exchange: exchange_identifier.exchange,
     }
 

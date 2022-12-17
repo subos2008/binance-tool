@@ -32,7 +32,7 @@ const logger: Logger = new Logger({ silent: false })
 
 import { SendMessage } from "../../../../classes/send_message/publish"
 import express from "express"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 import { BinanceFuturesOrdersToAMQP } from "./binance-futures-orders-to-amqp"
 import { get_redis_client } from "../../../../lib/redis-v4"
@@ -59,11 +59,10 @@ process.on("unhandledRejection", (err) => {
   service_is_healthy.healthy(false)
 })
 
-const exchange_identifier: ExchangeIdentifier_V3 = {
-  version: "v3",
+const exchange_identifier: ExchangeIdentifier_V4 = {
+  version: 4,
   exchange: "binance",
-  account: "default",
-  type: "futures",
+  exchange_type: "futures",
 }
 
 async function main() {

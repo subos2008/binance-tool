@@ -117,6 +117,9 @@ export class BacktestTradeExecution {
     let totalQuoteTradeQuantity = position_size.toFixed()
     let totalBaseTradeQuantity = new BigNumber(totalQuoteTradeQuantity).dividedBy(signal_price).toFixed(8)
     let generic_order_data: GenericOrderData = {
+      object_type: "GenericOrderData",
+      version: 2,
+      msg: `msg TODO`,
       exchange_identifier,
       market_symbol: symbol,
       side: "BUY",
@@ -154,6 +157,9 @@ export class BacktestTradeExecution {
       order_context,
     })
     let generic_order_data: GenericOrderData = {
+      object_type: "GenericOrderData",
+      version: 2,
+      msg: `msg TODO`,
       exchange_identifier,
       market_symbol: symbol,
       side: "SELL",

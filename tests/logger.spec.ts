@@ -24,8 +24,8 @@ describe("logger behaviour", () => {
       expect(stdoutData.object_class).toBe("event")
       lr.close() // needed?
       lr.removeAllListeners() // needed?
-      testApp.disconnect() // needed?
-      testApp.kill("SIGINT") // needed?
+      // testApp.disconnect() // needed?
+      // testApp.kill("SIGINT") // needed?
     })
   })
 })

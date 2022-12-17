@@ -43,7 +43,7 @@ BigNumber.prototype.valueOf = function () {
 
 import { OrderExecutionTracker } from "../orders-to-amqp/spot-order-execution-tracker"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { Portfolio } from "../../../../interfaces/portfolio"
 import { PortfolioSnapshot } from "../../../../classes/utils/portfolio-snapshot"
 import { BinanceExchangeInfoGetter } from "../../../../classes/exchanges/binance/exchange-info-getter"
@@ -59,7 +59,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
   ee: BinanceType
   master: MasterPortfolioClass
   order_execution_tracker: OrderExecutionTracker
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
   portfolio: Portfolio = { balances: [], object_type: "Portfolio" }
   portfolio_snapshot: PortfolioSnapshot
 
@@ -77,7 +77,7 @@ export class BinancePortfolioTracker implements PortfolioBitchClass {
     assert(send_message)
     this.master = master
     this.send_message = send_message
-    this.exchange_identifier = { exchange: "binance", account: "default", type: "spot", version: "v3" }
+    this.exchange_identifier = { exchange: "binance", exchange_type: "spot", version: 4 }
     if (!process.env.BINANCE_API_KEY) throw new Error(`Missing BINANCE_API_KEY in ENV`)
     if (!process.env.BINANCE_API_SECRET) throw new Error(`Missing BINANCE_API_SECRET in ENV`)
     this.ee = Binance({

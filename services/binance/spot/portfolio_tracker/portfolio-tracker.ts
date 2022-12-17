@@ -34,7 +34,7 @@ import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { SendMessage } from "../../../../classes/send_message/publish"
 import { Portfolio, Balance, SpotPortfolio } from "../../../../interfaces/portfolio"
 import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
-import { ExchangeIdentifier, ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier, ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { SendDatadogMetrics } from "./send-datadog-metrics"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 import express from "express"
@@ -80,7 +80,7 @@ class PortfolioTracker implements MasterPortfolioClass {
     exchange_identifier,
     portfolio,
   }: {
-    exchange_identifier: ExchangeIdentifier
+    exchange_identifier: ExchangeIdentifier_V4
     portfolio: SpotPortfolio
   }) {
     // TODO: account not used in ExchangeIdentifier: default (default added so this appears in greps)
@@ -205,7 +205,7 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  let portfolio_tracker = new PortfolioTracker({ logger, send_message })
+  let portfolio_tracker:MasterPortfolioClass = new PortfolioTracker({ logger, send_message })
   let binance = new BinancePortfolioTracker({ send_message, logger, master: portfolio_tracker })
   binance.start()
   await binance.update_portfolio_from_exchange() // automatically triggers report_current_portfolio

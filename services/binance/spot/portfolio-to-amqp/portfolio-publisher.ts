@@ -21,7 +21,7 @@ BigNumber.prototype.valueOf = function () {
 import { Connection } from "amqplib"
 import { GenericTopicPublisher } from "../../../../classes/amqp/generic-publishers"
 import { MyEventNameType } from "../../../../classes/amqp/message-routing"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { Portfolio, SpotPortfolio } from "../../../../interfaces/portfolio"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 
@@ -33,7 +33,7 @@ export class PortfolioPublisher {
   channel: any
   pub: GenericTopicPublisher
   event_name: MyEventNameType
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
 
   constructor({
     logger,
@@ -44,7 +44,7 @@ export class PortfolioPublisher {
     logger: Logger
     event_name: MyEventNameType
     health_and_readiness: HealthAndReadiness
-    exchange_identifier: ExchangeIdentifier_V3
+    exchange_identifier: ExchangeIdentifier_V4
   }) {
     this.logger = logger
     this.event_name = event_name

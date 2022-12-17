@@ -4,7 +4,7 @@ import Sentry from "../../../lib/sentry"
 
 import { Logger } from "../../../interfaces/logger"
 import { SpotPositionsPersistence } from "../persistence/interface/spot-positions-persistance"
-import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../events/shared/exchange-identifier"
 import { SpotPositionIdentifier_V3, SpotPositionsQuery_V3 } from "./position-identifier"
 import { SpotPosition } from "./spot-position"
 import { SendMessageFunc } from "../../../interfaces/send-message"
@@ -20,7 +20,7 @@ import { SendMessageFunc } from "../../../interfaces/send-message"
 export class SpotPositionsQuery {
   logger: Logger
   send_message: SendMessageFunc
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
   positions_persistance: SpotPositionsPersistence
 
   constructor({
@@ -32,7 +32,7 @@ export class SpotPositionsQuery {
     logger: Logger
     positions_persistance: SpotPositionsPersistence
     send_message: SendMessageFunc
-    exchange_identifier: ExchangeIdentifier_V3
+    exchange_identifier: ExchangeIdentifier_V4
   }) {
     assert(logger)
     this.logger = logger
@@ -57,7 +57,7 @@ export class SpotPositionsQuery {
     })
   }
 
-  get_exchange_identifier(): ExchangeIdentifier_V3 {
+  get_exchange_identifier(): ExchangeIdentifier_V4 {
     return this.exchange_identifier
   }
 

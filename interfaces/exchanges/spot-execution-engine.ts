@@ -7,13 +7,13 @@ BigNumber.prototype.valueOf = function () {
 
 import { OrderContext_V1, OrderContext_V2 } from "../orders/order-context"
 import { OrderId } from "../../classes/persistent_state/interface/order-context-persistence"
-import { MarketIdentifier_V4 } from "../../events/shared/market-identifier"
+import { MarketIdentifier_V5 } from "../../events/shared/market-identifier"
 import { ExchangeIdentifier_V3 } from "../../events/shared/exchange-identifier"
 import { BinanceStyleSpotPrices } from "../../classes/spot/abstractions/position-identifier"
 
 export interface SpotMarketBuyByQuoteQuantityCommand {
   order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V4
+  market_identifier: MarketIdentifier_V5
   quote_amount: BigNumber
 }
 
@@ -21,7 +21,7 @@ export interface SpotLimitBuyCommand {
   object_type: "SpotLimitBuyCommand"
   object_class: "command"
   order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V4
+  market_identifier: MarketIdentifier_V5
   base_amount: BigNumber
   limit_price: BigNumber
   timeInForce: "IOC"
@@ -29,7 +29,7 @@ export interface SpotLimitBuyCommand {
 
 export interface SpotMarketSellCommand {
   order_context: OrderContext_V1 | OrderContext_V2 // /close doesn't know the trade_id yet
-  market_identifier: MarketIdentifier_V4
+  market_identifier: MarketIdentifier_V5
   base_amount: BigNumber
 }
 
@@ -44,7 +44,7 @@ export interface SpotStopMarketSellCommand {
   object_type: "SpotStopMarketSellCommand"
   object_class: "command"
   order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V4
+  market_identifier: MarketIdentifier_V5
   trade_context: TradeContext
   base_amount: BigNumber
   trigger_price: BigNumber
@@ -55,7 +55,7 @@ export interface SpotStopMarketSellResult {
   order_id: OrderId
   stop_price: BigNumber
   // order_context: OrderContext_V1
-  // market_identifier: MarketIdentifier_V4
+  // market_identifier: MarketIdentifier_V5
   trade_context: TradeContext
   // base_amount: BigNumber
   // trigger_price: BigNumber
@@ -65,7 +65,7 @@ export interface SpotOCOSellCommand {
   object_type: "SpotOCOSellCommand"
   object_class: "command"
   order_context: OrderContext_V1
-  market_identifier: MarketIdentifier_V4
+  market_identifier: MarketIdentifier_V5
   base_amount: BigNumber
   take_profit_price: BigNumber
   stop_price: BigNumber
@@ -79,7 +79,7 @@ interface SpotExecutionEngineBuyResult_FILLED {
   object_type: "SpotExecutionEngineBuyResult"
   object_class: "result"
   version: 2
-  market_identifier: MarketIdentifier_V4
+  market_identifier: MarketIdentifier_V5
   order_context: OrderContext_V1
   status: "FILLED"
   http_status: 201
@@ -94,7 +94,7 @@ interface SpotExecutionEngineBuyResult_INSUFFICIENT_BALANCE {
   object_type: "SpotExecutionEngineBuyResult"
   object_class: "result"
   version: 2
-  market_identifier: MarketIdentifier_V4
+  market_identifier: MarketIdentifier_V5
   order_context: OrderContext_V1
   msg: string
   status: "INSUFFICIENT_BALANCE"
@@ -106,7 +106,7 @@ interface SpotExecutionEngineBuyResult_INTERNAL_SERVER_ERROR {
   object_type: "SpotExecutionEngineBuyResult"
   object_class: "result"
   version: 2
-  market_identifier: MarketIdentifier_V4
+  market_identifier: MarketIdentifier_V5
   order_context: OrderContext_V1
   status: "INTERNAL_SERVER_ERROR" // exception caught
   http_status: 500
@@ -119,7 +119,7 @@ interface SpotExecutionEngineBuyResult_TOO_MANY_REQUESTS {
   object_type: "SpotExecutionEngineBuyResult"
   object_class: "result"
   version: 2
-  market_identifier: MarketIdentifier_V4
+  market_identifier: MarketIdentifier_V5
   order_context: OrderContext_V1
   status: "TOO_MANY_REQUESTS" // exception caught
   http_status: 429
@@ -135,7 +135,7 @@ interface SpotExecutionEngineBuyResult_ENTRY_FAILED_TO_FILL {
   object_class: "result"
   version: 2
 
-  market_identifier: MarketIdentifier_V4
+  market_identifier: MarketIdentifier_V5
 
   trade_context: TradeContext
 
@@ -163,7 +163,7 @@ export interface SpotExecutionEngine {
   }: {
     quote_asset: string
     base_asset: string
-  }): MarketIdentifier_V4
+  }): MarketIdentifier_V5
 
   base_asset_for_symbol(symbol: string): Promise<string>
 

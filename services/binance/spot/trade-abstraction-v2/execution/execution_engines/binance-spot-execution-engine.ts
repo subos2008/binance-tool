@@ -1,8 +1,12 @@
 import { AlgoUtils } from "./_internal/binance_algo_utils_v2"
 import { ServiceLogger } from "../../../../../../interfaces/logger"
 import { strict as assert } from "assert"
-import { MarketIdentifier_V4 } from "../../../../../../events/shared/market-identifier"
-import { ExchangeIdentifier_V3 } from "../../../../../../events/shared/exchange-identifier"
+import {
+  MarketIdentifier_V4,
+  MarketIdentifier_V5,
+  MarketIdentifier_V5_with_base_asset,
+} from "../../../../../../events/shared/market-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../../../events/shared/exchange-identifier"
 import binance, { CancelOrderResult, OcoOrder, Order, TimeInForce_LT } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
 import { BinanceExchangeInfoGetter } from "../../../../../../classes/exchanges/binance/exchange-info-getter"
@@ -71,12 +75,11 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     this.metrics = new SendDatadogMetrics({ logger, exchange_identifier })
   }
 
-  get_exchange_identifier(): ExchangeIdentifier_V3 {
+  get_exchange_identifier(): ExchangeIdentifier_V4 {
     return {
-      version: "v3",
+      version: 4,
       exchange: "binance",
-      type: "spot",
-      account: "default",
+      exchange_type: "spot",
     }
   }
 
@@ -95,10 +98,10 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   }: {
     quote_asset: string
     base_asset: string
-  }): MarketIdentifier_V4 {
+  }): MarketIdentifier_V5_with_base_asset {
     return {
       object_type: "MarketIdentifier",
-      version: 4,
+      version: 5,
       exchange_identifier: this.get_exchange_identifier(),
       symbol: `${base_asset.toUpperCase()}${quote_asset.toUpperCase()}`,
       base_asset,

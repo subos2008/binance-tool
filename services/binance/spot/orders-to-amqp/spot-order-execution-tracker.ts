@@ -19,7 +19,7 @@ import {
   OutboundAccountInfo,
   OutboundAccountPosition,
 } from "binance-api-node"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 
 export class OrderExecutionTracker {
   send_message: Function
@@ -28,7 +28,7 @@ export class OrderExecutionTracker {
   closeUserWebsocket: Function | undefined
   order_callbacks: OrderCallbacks | undefined
   print_all_trades: boolean = false
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
 
   // All numbers are expected to be passed in as strings
   constructor({
@@ -44,7 +44,7 @@ export class OrderExecutionTracker {
     logger: Logger
     order_callbacks?: OrderCallbacks
     print_all_trades?: boolean
-    exchange_identifier: ExchangeIdentifier_V3
+    exchange_identifier: ExchangeIdentifier_V4
   }) {
     assert(logger)
     this.logger = logger
@@ -103,7 +103,7 @@ export class OrderExecutionTracker {
       }
     }
 
-    switch (this.exchange_identifier.type) {
+    switch (this.exchange_identifier.exchange_type) {
       case "spot":
         this.closeUserWebsocket = await this.ee.ws.user(
           async (
@@ -117,7 +117,7 @@ export class OrderExecutionTracker {
         )
         break
       default:
-        throw new Error(`Unknown exchange type: ${this.exchange_identifier.type}`)
+        throw new Error(`Unknown exchange type: ${this.exchange_identifier.exchange_type}`)
     }
   }
 
@@ -164,7 +164,7 @@ export class OrderExecutionTracker {
         object_type: "BinanceOrderData",
         version: 1,
         exchange_identifier: this.exchange_identifier,
-        exchange_type: this.exchange_identifier.type,
+        exchange_type: this.exchange_identifier.exchange_type,
         order_id,
         order_is_is_client_order_id,
       }

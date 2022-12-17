@@ -7,8 +7,8 @@ BigNumber.prototype.valueOf = function () {
 import Sentry from "../../../../../../lib/sentry"
 import { Logger } from "../../../../../../interfaces/logger"
 import { strict as assert } from "assert"
-import { MarketIdentifier_V4 } from "../../../../../../events/shared/market-identifier"
-import { ExchangeIdentifier_V3 } from "../../../../../../events/shared/exchange-identifier"
+import { MarketIdentifier_V4, MarketIdentifier_V5 } from "../../../../../../events/shared/market-identifier"
+import { ExchangeIdentifier_V4 } from "../../../../../../events/shared/exchange-identifier"
 import binance, { FuturesOrder, NewFuturesOrder, OrderSide, OrderType } from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
 import { BinanceFuturesExchangeInfoGetter } from "../../../../../../classes/exchanges/binance/exchange-info-getter"
@@ -60,7 +60,7 @@ export interface TradeAbstractionOpenLongCommand_OCO_Exit {
 
 export interface LimitSellByQuoteQuantityCommand {
   order_context: OrderContext_V2
-  market_identifier: MarketIdentifier_V4
+  market_identifier: MarketIdentifier_V5
   quote_amount: BigNumber
   sell_limit_price: BigNumber
   take_profit_price: BigNumber
@@ -92,12 +92,11 @@ export class BinanceFuturesExecutionEngine {
     this.munger = new BinanceMunger()
   }
 
-  get_exchange_identifier(): ExchangeIdentifier_V3 {
+  get_exchange_identifier(): ExchangeIdentifier_V4 {
     return {
-      version: "v3",
+      version: 4,
       exchange: "binance",
-      type: "futures",
-      account: "default",
+      exchange_type: "futures",
     }
   }
 
@@ -120,7 +119,7 @@ export class BinanceFuturesExecutionEngine {
   }: {
     quote_asset: string
     base_asset: string
-  }): Promise<MarketIdentifier_V4> {
+  }): Promise<MarketIdentifier_V5> {
     let exchange_info = await this.get_exchange_info()
     let symbols = exchange_info.symbols
     let match = symbols.find(
@@ -133,9 +132,9 @@ export class BinanceFuturesExecutionEngine {
     }
     let symbol = match.symbol
 
-    let result: MarketIdentifier_V4 = {
+    let result: MarketIdentifier_V5 = {
       object_type: "MarketIdentifier",
-      version: 4,
+      version: 5,
       exchange_identifier: this.get_exchange_identifier(),
       symbol,
       base_asset,
@@ -511,7 +510,7 @@ export class BinanceFuturesExecutionEngine {
         // https://binance-docs.github.io/apidocs/futures/en/#new-order-trade
         let call = ee.futuresOrder.bind(ee, stop_order_cmd)
         let stop_order: FuturesOrder = await this.execute_with_429_retries(call)
-        this.logger.event(tags,{ object_type: "BinanceFuturesOrder", ...stop_order })
+        this.logger.event(tags, { object_type: "BinanceFuturesOrder", ...stop_order })
         created_stop_order = true
       }
 
@@ -537,12 +536,12 @@ export class BinanceFuturesExecutionEngine {
           closePosition: "true",
           newOrderRespType: "RESULT",
         }
-        this.logger.event(tags,{ object_type: "BinanceNewFuturesOrder", ...take_profit_order_cmd })
+        this.logger.event(tags, { object_type: "BinanceNewFuturesOrder", ...take_profit_order_cmd })
         this.logger.info(`Creating ${symbol} ${type} ${side} ORDER (closePosition)}`)
         // https://binance-docs.github.io/apidocs/futures/en/#new-order-trade
         let call = ee.futuresOrder.bind(ee, take_profit_order_cmd)
         let take_profit_order: FuturesOrder = await this.execute_with_429_retries(call)
-        this.logger.event(tags,{ object_type: "BinanceFuturesOrder", ...take_profit_order })
+        this.logger.event(tags, { object_type: "BinanceFuturesOrder", ...take_profit_order })
         created_take_profit_order = true
       }
 
@@ -564,7 +563,7 @@ export class BinanceFuturesExecutionEngine {
         created_take_profit_order,
       }
 
-      this.logger.event(tags,result)
+      this.logger.event(tags, result)
       return result
     } catch (err) {
       let msg = `TODO: close position and return ABORTED_FAILED_TO_CREATE_EXIT_ORDERS`

@@ -76,7 +76,7 @@ async function main() {
       logger,
       positions_persistance,
       send_message,
-      exchange_identifier: ei_v4_to_v3(exchange_identifier),
+      exchange_identifier,
     })
     let prices_getter = new BinancePriceGetter({ logger, ee })
     let service = new PortfolioVsPositions({

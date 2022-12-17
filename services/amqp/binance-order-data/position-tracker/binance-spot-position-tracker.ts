@@ -168,12 +168,7 @@ async function main() {
     logger,
     positions_persistance: spot_positions_persistance,
     send_message,
-    exchange_identifier: {
-      ...exchange_identifier,
-      account,
-      version: "v3",
-      type: exchange_identifier.exchange_type,
-    },
+    exchange_identifier,
   })
 
   let spot_position_publisher = new SpotPositionPublisher({

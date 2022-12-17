@@ -24,22 +24,21 @@ BigNumber.prototype.valueOf = function () {
 
 import { OrderExecutionTracker } from "./spot-order-execution-tracker"
 import { BinanceOrderData } from "../../../../interfaces/exchanges/binance/order_callbacks"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { BinanceOrderDataPublisher } from "./binance-order-data-publisher"
 
-const exchange_identifier: ExchangeIdentifier_V3 = {
+const exchange_identifier: ExchangeIdentifier_V4 = {
   exchange: "binance",
-  account: "default",
-  type: "spot",
-  version: "v3",
+  exchange_type: "spot",
+  version: 4,
 }
 
 export class BinanceSpotOrdersToAMQP {
   logger: Logger
   ee: BinanceType
   order_execution_tracker: OrderExecutionTracker
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
   health_and_readiness: HealthAndReadiness
   publisher: BinanceOrderDataPublisher
 

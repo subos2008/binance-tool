@@ -10,9 +10,9 @@ BigNumber.prototype.valueOf = function () {
 }
 
 import { ServiceLogger } from "../../../../interfaces/logger"
-import { MarketIdentifier_V4 } from "../../../../events/shared/market-identifier"
+import { MarketIdentifier_V4, MarketIdentifier_V5, MarketIdentifier_V5_with_base_asset } from "../../../../events/shared/market-identifier"
 import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { check_edge, SpotPositionIdentifier_V3 } from "../../../../classes/spot/abstractions/position-identifier"
 import { OrderId } from "../../../../classes/persistent_state/interface/order-context-persistence"
 import { SpotPositionsExecution_StopLimitExit } from "./execution/stop-limit-exit-executor"
@@ -118,11 +118,11 @@ export class SpotEdgeToExecutorMapper {
   }
 
   // Used when constructing orders
-  private get_market_identifier_for(args: { quote_asset: string; base_asset: string }): MarketIdentifier_V4 {
+  private get_market_identifier_for(args: { quote_asset: string; base_asset: string }): MarketIdentifier_V5_with_base_asset {
     return this.ee.get_market_identifier_for(args)
   }
 
-  private get_exchange_identifier(): ExchangeIdentifier_V3 {
+  private get_exchange_identifier(): ExchangeIdentifier_V4 {
     return this.ee.get_exchange_identifier()
   }
 

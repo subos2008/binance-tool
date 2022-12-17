@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js"
 import { SpotPosition } from "../classes/spot/abstractions/spot-position"
-import { ExchangeIdentifier_V3 } from "../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../events/shared/exchange-identifier"
 // import { ExchangeIdentifier } from "../events/shared/exchange-identifier";
 
 export interface Balance {
@@ -60,7 +60,7 @@ export interface FuturesPortfolio {
 export interface SpotPortfolio {
   object_type: "SpotPortfolio"
   version: 1
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
   timestamp_ms: number
 
   usd_value?: string

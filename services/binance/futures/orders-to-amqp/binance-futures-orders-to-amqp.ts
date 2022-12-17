@@ -22,7 +22,7 @@ import {
   FuturesBinanceOrderData,
   FuturesOrderCallbacks,
 } from "../../../../interfaces/exchanges/binance/order_callbacks"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../../../classes/health_and_readiness"
 import { RedisClientType } from "redis-v4"
 import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
@@ -33,7 +33,7 @@ export class BinanceFuturesOrdersToAMQP implements FuturesOrderCallbacks {
   logger: Logger
   ee: BinanceType
   order_execution_tracker: FuturesOrderExecutionTracker
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
   publisher: BinanceFuturesOrderDataPublisher
 
   constructor({
@@ -47,7 +47,7 @@ export class BinanceFuturesOrdersToAMQP implements FuturesOrderCallbacks {
     logger: Logger
     health_and_readiness: HealthAndReadiness
     redis: RedisClientType
-    exchange_identifier: ExchangeIdentifier_V3
+    exchange_identifier: ExchangeIdentifier_V4
   }) {
     assert(logger)
     this.logger = logger

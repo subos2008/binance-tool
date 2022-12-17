@@ -24,7 +24,7 @@ import {
   OutboundAccountInfo,
 } from "binance-api-node"
 import { AuthorisedEdgeType } from "../../spot/abstractions/position-identifier"
-import { ExchangeIdentifier_V3 } from "../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../events/shared/exchange-identifier"
 import { OrderContextPersistence } from "../../persistent_state/interface/order-context-persistence"
 import { OrderContext_V1 } from "../../../interfaces/orders/order-context"
 
@@ -36,7 +36,7 @@ export class FuturesOrderExecutionTracker {
   order_callbacks: FuturesOrderCallbacks | undefined
   print_all_trades: boolean = false
   order_context_persistence: OrderContextPersistence | undefined
-  exchange_identifier: ExchangeIdentifier_V3
+  exchange_identifier: ExchangeIdentifier_V4
 
   // All numbers are expected to be passed in as strings
   constructor({
@@ -54,7 +54,7 @@ export class FuturesOrderExecutionTracker {
     order_callbacks: FuturesOrderCallbacks
     print_all_trades?: boolean
     order_context_persistence?: OrderContextPersistence
-    exchange_identifier: ExchangeIdentifier_V3
+    exchange_identifier: ExchangeIdentifier_V4
   }) {
     assert(logger)
     this.logger = logger
@@ -114,7 +114,7 @@ export class FuturesOrderExecutionTracker {
       }
     }
 
-    switch (this.exchange_identifier.type) {
+    switch (this.exchange_identifier.exchange_type) {
       case "futures":
         this.closeUserWebsocket = await this.ee.ws.futuresUser(
           async (
@@ -134,7 +134,7 @@ export class FuturesOrderExecutionTracker {
         )
         break
       default:
-        throw new Error(`Unknown exchange type: ${this.exchange_identifier.type}`)
+        throw new Error(`Unknown exchange type: ${this.exchange_identifier.exchange_type}`)
     }
   }
 
@@ -206,7 +206,7 @@ export class FuturesOrderExecutionTracker {
       object_type: "FuturesBinanceOrderData",
       version: 1,
       exchange_identifier: this.exchange_identifier,
-      exchange_type: this.exchange_identifier.type,
+      exchange_type: this.exchange_identifier.exchange_type,
       order_id,
       order_is_is_client_order_id,
       // isOrderWorking,

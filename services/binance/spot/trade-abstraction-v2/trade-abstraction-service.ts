@@ -18,7 +18,7 @@ import {
 } from "../../../../classes/spot/abstractions/position-identifier"
 import { SpotEdgeToExecutorMapper } from "./edge-to-executor-mapper"
 import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "./interfaces/long"
-import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { SpotPositionsPersistence } from "../../../../classes/spot/persistence/interface/spot-positions-persistance"
 import { RedisSpotPositionsPersistence } from "../../../../classes/spot/persistence/redis-implementation/redis-spot-positions-persistance-v3"
 import { BinancePriceGetter } from "../../../../interfaces/exchanges/binance/binance-price-getter"
@@ -77,7 +77,7 @@ export class TradeAbstractionService {
     })
   }
 
-  get_exchange_identifier(): ExchangeIdentifier_V3 {
+  get_exchange_identifier(): ExchangeIdentifier_V4 {
     return this.spot_ee.ee.get_exchange_identifier()
   }
 

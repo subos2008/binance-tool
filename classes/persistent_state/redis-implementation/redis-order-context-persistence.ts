@@ -3,6 +3,7 @@ import { Logger } from "../../../interfaces/logger"
 import { strict as assert } from "assert"
 import {
   ExchangeIdentifier_V3,
+  ExchangeIdentifier_V4,
   exchange_identifier_to_redis_key_snippet,
 } from "../../../events/shared/exchange-identifier"
 import { OrderContextPersistence, OrderContextPersistence_V2 } from "../interface/order-context-persistence"
@@ -22,12 +23,12 @@ export class RedisOrderContextPersistence implements OrderContextPersistence, Or
     this.redis = redis
   }
 
-  private _key(exchange_identifier: ExchangeIdentifier_V3, order_id: OrderId): string {
+  private _key(exchange_identifier: ExchangeIdentifier_V4, order_id: OrderId): string {
     return `OrderToEdgeMapper:${exchange_identifier_to_redis_key_snippet(exchange_identifier)}:${order_id}`
   }
 
   async set_order_context_for_order(args: {
-    exchange_identifier: ExchangeIdentifier_V3
+    exchange_identifier: ExchangeIdentifier_V4
     order_id: OrderId
     order_context: OrderContext_V2
   }): Promise<void> {
@@ -40,7 +41,7 @@ export class RedisOrderContextPersistence implements OrderContextPersistence, Or
   }
 
   async get_order_context_for_order(args: {
-    exchange_identifier: ExchangeIdentifier_V3
+    exchange_identifier: ExchangeIdentifier_V4
     order_id: OrderId
   }): Promise<OrderContext_V1 | OrderContext_V2> {
     let { order_id, exchange_identifier } = args

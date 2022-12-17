@@ -16,6 +16,7 @@ COPY interfaces /app/interfaces
 COPY observability /app/observability
 COPY types /app/types
 COPY test /app/test
+COPY tests /app/tests
 COPY events /app/events
 COPY edges /app/edges
 # COPY services-test-rig /app/services-test-rig

@@ -23,6 +23,7 @@ COPY edges /app/edges
 COPY chai-bignumber.d.ts /app/chai-bignumber.d.ts
 COPY tsconfig.json /app/tsconfig.json
 COPY config.ts /app/config.ts
+COPY jest.config.js /app/jest.config.js
 
 RUN ./node_modules/.bin/tsc
 

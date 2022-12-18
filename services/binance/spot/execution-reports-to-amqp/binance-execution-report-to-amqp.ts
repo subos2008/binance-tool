@@ -78,8 +78,6 @@ export class BinanceExecutionReportToAMQP implements ExecutionReportCallbacks {
       health_and_readiness,
       event_name: "BinanceExecutionReport",
     })
-
-    this.logger.todo({}, `process_execution_report only sees FILLED orders, partial fills / cancelled orders aren't represented`)
   }
 
   async start() {
@@ -87,9 +85,6 @@ export class BinanceExecutionReportToAMQP implements ExecutionReportCallbacks {
     this.listener.main()
   }
 
-  // What about partial fills?
-  // I think should should be a more raw interface - not using the callbacks interface but instead
-  // mapping and sending all messages, with an alert in the mapper when it sees anything it doesn't recognise
   async process_execution_report(er: ExecutionReport): Promise<void> {
     let ber: BinanceExecutionReport = {
       ...er,

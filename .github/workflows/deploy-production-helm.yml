@@ -171,3 +171,33 @@ jobs:
 
   #     - name: Deploy to Kubernetes
   #       run: helm upgrade --wait --timeout 10m --install "services" --namespace "binance-futures" --create-namespace ./k8/charts/binance-futures --set "image.tag=$(echo $GITHUB_SHA | head -c7)" #  --values $GITHUB_WORKSPACE/values.yaml
+  
+
+  deploy-production-binance-ingestion:
+    needs: [compile, test, push]
+    if: ${{ github.ref == 'refs/heads/production' }}
+    environment: te-production
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 1200 ${{ secrets.DIGITALOCEAN_CLUSTER_NAME }}
+
+      # - name: Save values.yaml
+      #   run: echo ${{ secrets.values_yaml }} | base64 --decode > $GITHUB_WORKSPACE/values.yaml
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.6.3
+
+      - name: Deploy to Kubernetes
+        run: helm upgrade --wait --timeout 10m --install "binance-spot-ingestion" --namespace "binance-ingestion" --create-namespace ./k8/charts/binance-spot-ingestion --set "image.tag=$(echo $GITHUB_SHA | head -c7)" #  --values $GITHUB_WORKSPACE/values.yaml

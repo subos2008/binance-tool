@@ -27,9 +27,23 @@
 // }
 
 import { ExecutionReport, OrderRejectReason, OrderStatus_LT, OrderType_LT } from "binance-api-node"
-import { ExchangeIdentifier_V3, ExchangeIdentifier_V4, ExchangeType } from "../../../events/shared/exchange-identifier"
+import { ExchangeIdentifier_V4, ExchangeType } from "../../../events/shared/exchange-identifier"
+import { PureEvent } from "../../logger"
 import { OrderContext_V1 } from "../../orders/order-context"
 
+// BinanceExecutionReport - very lightweight ingestion. Minimal modification possible for us to log and
+// queue events we ingest via the websocket.
+export interface BinanceExecutionReport extends ExecutionReport, PureEvent {
+  object_type: "BinanceExecutionReport"
+  exchange_identifier: ExchangeIdentifier_V4
+  version: 1
+}
+
+export interface ExecutionReportCallbacks {
+  process_execution_report(data: ExecutionReport): Promise<void>
+}
+
+// BinanceOrderData is Depricated in Favour of BinanceExecutionReport (local) or GenericOrderData/GenericOrderData
 // Where the fuck is executedQuoteQuant?
 export interface BinanceOrderData /* extends ExecutionReport */ {
   object_type: "BinanceOrderData"

@@ -1,0 +1,24 @@
+# Default values for mychart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+
+#
+# The default values yaml may be being used for production so beware
+# 
+image:
+  repository: "ghcr.io/subos2008/binance-tool/binance-tool"
+  tag: fail-if-not-explicit
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Used by the post deploy test
+service:
+  type: ClusterIP
+  port: 80
+
+redis:
+  database_number: "0" # production - not overriden during deploy so do not change

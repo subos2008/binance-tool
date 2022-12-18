@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: binance-execution-reports-to-amqp
+  labels:
+{{ include "mychart.labels" . | indent 4 }}
+    binance-tool/service: "binance-execution-reports-to-amqp"
+spec:
+  replicas: 2 # Binance Ingestion prioritises not missing events - queues need event de-duplication downstream
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "mychart.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "mychart.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        binance-tool/service: "binance-execution-reports-to-amqp"
+        tags.datadoghq.com/service: "binance-execution-reports-to-amqp"
+      annotations:
+        ad.datadoghq.com/tags: '{"service": "binance-execution-reports-to-amqp"}'
+        ad.datadoghq.com/service.logs: >-
+          [{
+            "source": "nodejs",
+            "service": "binance-execution-reports-to-amqp"
+          }]   
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+      containers:
+        - name: service
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["node", "./out/./services/binance/spot/execution-reports-to-amqp/service"]
+          resources:
+            requests:
+              memory: 100M
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 2 # Set as two to avoid SendMessage lazy connect killing services
+            httpGet:
+              path: /health
+              port: http
+          startupProbe: # First time this goes healthy livenessProbe is activated
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 6 # 6 * 10 = 1 minute
+            periodSeconds: 10
+          env:
+            - name: SENTRY_DSN
+              value: "https://39c6f58d63334b43bf0986cf24d863a5@o369902.ingest.sentry.io/6114372"
+{{- include "binance-spot-ro.vars" . | nindent 12 }}
+{{- include "datadog.vars" . | nindent 12 }}
+{{- include "telegram.vars" . | nindent 12 }}
+{{- include "amqp.vars" . | nindent 12 }}

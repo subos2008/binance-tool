@@ -1,8 +1,9 @@
 export type MyEventNameType =
   | "InternalConnectivityTestEvent"
+  | "BinanceOrderData" // Depricated
+  | "BinanceExecutionReport"
   | "SpotPortfolio"
   | "Edge56EntrySignal"
-  | "BinanceOrderData"
   | "FuturesBinanceOrderData"
   | "GenericOrderData"
   | "Edge58EntrySignal"
@@ -64,6 +65,14 @@ export class MessageRouting {
         return {
           routing_key: "spot-binance-orders",
           exchange_name: "binance-tool",
+          exchange_type: "topic",
+          durable: false, // This is about the exchange - needs to be re-created
+          headers: { "x-queue-type": "quorum" },
+        }
+      case "BinanceExecutionReport":
+        return {
+          routing_key: "binance.spot.BinanceExecutionReport",
+          exchange_name: "binance-tool", // TODO: change to binance / binance-internal / binance-ingestion
           exchange_type: "topic",
           durable: false, // This is about the exchange - needs to be re-created
           headers: { "x-queue-type": "quorum" },

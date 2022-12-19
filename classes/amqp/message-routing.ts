@@ -94,6 +94,14 @@ export class MessageRouting {
           durable: false,
           headers: { "x-queue-type": "quorum" },
         }
+      case "GenericOrderUpdate":
+        return {
+          routing_key: "generic.spot.GenericOrderUpdate",
+          exchange_name: "binance-tool",
+          exchange_type: "topic",
+          durable: false,
+          headers: { "x-queue-type": "quorum" },
+        }
       case "SpotPositionOpened":
         return {
           routing_key: "spot-positions",

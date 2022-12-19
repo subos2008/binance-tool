@@ -5,7 +5,7 @@ metadata:
   labels:
 {{ include "mychart.labels" . | indent 4 }}
 spec:
-  replicas: 2 # Binance Ingestion prioritises not missing events - queues need event de-duplication downstream
+  replicas: 1 # Binance Ingestion prioritises not missing events - queues need event de-duplication downstream
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "mychart.name" . }}

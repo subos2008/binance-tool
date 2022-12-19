@@ -79,7 +79,7 @@ export class BinanceExecutionReportToGenericOrderUpdate implements TypedMessageP
     this.exchange_info_getter = new BinanceExchangeInfoGetter({ ee: this.ee })
     this.publisher = new TypedGenericTopicPublisher<GenericOrderUpdate>({
       logger,
-      event_name: "GenericOrderData",
+      event_name: "GenericOrderUpdate",
       health_and_readiness,
     })
   }

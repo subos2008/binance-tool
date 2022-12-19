@@ -1,11 +1,12 @@
 export type MyEventNameType =
   | "InternalConnectivityTestEvent"
   | "BinanceOrderData" // Depricated
-  | "BinanceExecutionReport"
+  | "BinanceExecutionReport" // New
   | "SpotPortfolio"
   | "Edge56EntrySignal"
   | "FuturesBinanceOrderData"
-  | "GenericOrderData"
+  | "GenericOrderData" // Depricated
+  | "GenericOrderUpdate" // New
   | "Edge58EntrySignal"
   | "Edge60EntrySignal"
   | "Edge61EntrySignal"

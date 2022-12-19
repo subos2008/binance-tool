@@ -140,7 +140,8 @@ export class OrderExecutionTracker {
       } = _data
 
       let order_id: string, order_is_is_client_order_id: boolean
-      if (newClientOrderId) {
+      // For some reason Binance issues a new client order ID when an order is cancelled
+      if (newClientOrderId && orderStatus !== "CANCELED") {
         order_is_is_client_order_id = true
         order_id = newClientOrderId
         console.info(JSON.stringify(_data))

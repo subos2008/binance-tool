@@ -1,4 +1,6 @@
 import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../events/shared/exchange-identifier"
+import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
+import { OrderContext_V2 } from "../../interfaces/orders/order-context"
 
 export type GenericOrderStatus =
   | "CANCELED"
@@ -45,6 +47,30 @@ export type GenericOrderData = {
   // orderRejectReason?: string // we probably don't want rejected orders in generic streams
   // price?: string
   // quantity?: string
+}
+
+export type GenericOrderUpdate = {
+  object_type: "GenericOrderUpdate" // Parallel to Data, new version
+  version: 1
+  msg: string
+
+  timestamp_ms: number // timestamp, presume ms
+
+  exchange_identifier: ExchangeIdentifier_V4
+  market_identifier: MarketIdentifier_V5_with_base_asset
+
+  order_id: string // as provided by the exchange - would always be clientOrderId for Binance, or previous client id for cancelled orders on Binance?
+  side: "BUY" | "SELL"
+  order_type: GenericOrderType
+  order_status: GenericOrderStatus
+
+  total_base_trade_quantity: string // Not present in FTX
+  total_quote_trade_quantity: string // Not present in FTX
+
+  // average_execution_price needs adding back
+  // average_execution_price: string // Calculated for Binance, present in FTX orders
+
+  usd_equivalent_value?: string
 }
 
 export type GenericOrder = {

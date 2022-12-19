@@ -1,4 +1,4 @@
-import { BinanceOrderData } from "./order_callbacks"
+import { BinanceExecutionReport, BinanceOrderData } from "./order_callbacks"
 import { strict as assert } from "assert"
 import { ExchangeInfo, OrderStatus, OrderStatus_LT, QueryOrderResult } from "binance-api-node"
 import {
@@ -6,8 +6,12 @@ import {
   GenericOrderData,
   GenericOrderStatus,
   GenericOrderType,
+  GenericOrderUpdate,
 } from "../../../types/exchange_neutral/generic_order_data"
+
 import { BinanceExchangeInfoGetter } from "../../../classes/exchanges/binance/exchange-info-getter"
+import { MarketIdentifier_V5_with_base_asset } from "../../../events/shared/market-identifier"
+import { ExchangeIdentifier_V4 } from "../../../events/shared/exchange-identifier"
 
 export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info: ExchangeInfo): GenericOrderData {
   assert(i.orderStatus && i.orderStatus == "FILLED", `orderStatus (${i.orderStatus}) is not FILLED`)
@@ -39,6 +43,51 @@ export function fromCompletedBinanceOrderData(i: BinanceOrderData, exchange_info
   }
   if (i.orderStatus)
     generic.orderStatus = map_binance_order_status_to_generic_order_status(i.orderStatus as OrderStatus)
+  return generic
+}
+
+export async function fromBinanceExecutionReport(
+  i: BinanceExecutionReport,
+  exchange_info_getter: BinanceExchangeInfoGetter
+): Promise<GenericOrderUpdate> {
+  let exchange_info: ExchangeInfo = await exchange_info_getter.get_exchange_info()
+
+  let symbol_info = exchange_info.symbols.find((x) => x.symbol == i.symbol)
+  if (!symbol_info)
+    throw new Error(`No exchange_info for symbol ${i.symbol} found when converting Binance order to GenericOrder`)
+  // if (!i.averageExecutionPrice)
+  //   throw new Error(
+  //     `No averageExecutionPrice for symbol ${i.symbol} found when converting Binance order to GenericOrder`
+  //   )
+
+  let msg = ``
+  // For some reason the clientOrderId is changed when an order is cancelled
+  let order_id = i.orderStatus == "CANCELED" ? i.originalClientOrderId || i.newClientOrderId : i.newClientOrderId
+  let exchange_identifier: ExchangeIdentifier_V4 = { version: 4, exchange: "binance", exchange_type: "spot" }
+  let market_identifier: MarketIdentifier_V5_with_base_asset = {
+    symbol: i.symbol,
+    base_asset: symbol_info.baseAsset,
+    quote_asset: symbol_info.quoteAsset,
+    object_type: "MarketIdentifier",
+    version: 5,
+    exchange_identifier,
+  }
+  let generic: GenericOrderUpdate = {
+    object_type: "GenericOrderUpdate",
+    version: 1,
+    msg,
+    exchange_identifier,
+    market_identifier,
+    order_id,
+    order_status: map_binance_order_status_to_generic_order_status(i.orderStatus),
+
+    side: i.side,
+    order_type: map_binance_order_type_to_generic_order_type(i.orderType),
+    total_base_trade_quantity: i.totalTradeQuantity,
+    total_quote_trade_quantity: i.totalQuoteTradeQuantity,
+    // average_execution_price: i.averageExecutionPrice,
+    timestamp_ms: i.orderTime,
+  }
   return generic
 }
 

@@ -38,6 +38,7 @@ import { MyEventNameType } from "../../../../../../classes/amqp/message-routing"
 import { TypedMessageProcessor } from "../../../../../../classes/amqp/interfaces"
 import { TypedListenerFactory } from "../../../../../../classes/amqp/listener-factory-v2"
 import { Channel, Message } from "amqplib"
+import { ContextTags } from "../../../../../../interfaces/send-message"
 
 const exchange_identifier: ExchangeIdentifier_V4 = {
   exchange: "binance",
@@ -102,16 +103,23 @@ export class BinanceExecutionReportToGenericOrderUpdate implements TypedMessageP
   // I think should should be a more raw interface - not using the callbacks interface but instead
   // mapping and sending all messages, with an alert in the mapper when it sees anything it doesn't recognise
   async process_message(data: BinanceExecutionReport, channel: Channel, raw_amqp_message: Message) {
-    this.logger.info(`Binance: ${data.side} order on ${data.symbol} filled.`)
-    let generic_order_update: GenericOrderUpdate = await fromBinanceExecutionReport(
-      data,
-      this.exchange_info_getter
-    )
-    const options = {
-      // expiration: event_expiration_seconds,
-      persistent: true,
-      timestamp: Date.now(),
+    let tags: ContextTags = { symbol: data.symbol }
+    try {
+      this.logger.info(`Binance: ${data.side} order on ${data.symbol} filled.`)
+      let generic_order_update: GenericOrderUpdate = await fromBinanceExecutionReport(
+        data,
+        this.exchange_info_getter
+      )
+      tags["base_asset"] = generic_order_update.market_identifier.base_asset
+      const options = {
+        // expiration: event_expiration_seconds,
+        persistent: true,
+        timestamp: Date.now(),
+      }
+      await this.publisher.publish(generic_order_update, options)
+      channel.ack(raw_amqp_message)
+    } catch (err) {
+      this.logger.exception(tags, err)
     }
-    await this.publisher.publish(generic_order_update, options)
   }
 }

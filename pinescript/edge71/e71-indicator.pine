@@ -1,0 +1,31 @@
+//@version=5
+
+// This source code is proprietary, unlicenced. Copyright Ryan Cocks, all rights reserved.
+
+indicator(title="Edge 71", overlay=true)
+
+// START of INDICATOR
+
+// Config Days of lookback for high/low signal prices
+num_high_days = input.int(250, minval=1, title="Number of Days for Long (Close Breakout)")
+num_low_days = input.int(60, minval=1, title="Number of Days for Short (Close Breakout)")
+// lowest_body = math.min(ta.lowest(close, num_breakout_days)[1],ta.lowest(open, num_breakout_days)[1])
+// highest_body = math.max(ta.highest(close, num_breakout_days)[1],ta.highest(open, num_breakout_days)[1])
+
+lowest_low = ta.lowest(low, num_low_days)[1]
+highest_high = ta.highest(high, num_high_days)[1]
+
+long_entry_signal = high > highest_high
+short_entry_signal = low < lowest_low
+
+// debug
+plot(lowest_low)
+plot(highest_high)
+
+plotarrow(long_entry_signal?1:0, colorup = color.green)
+plotarrow(short_entry_signal?-1:0, colordown = color.red)
+// Indicator exit API
+// long_entry and short_entry: entry signal with filters applied
+
+// END of INDICATOR
+

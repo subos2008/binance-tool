@@ -1,5 +1,5 @@
-const CoinGecko = require("coingecko-api")
-const CoinGeckoClient = new CoinGecko()
+// const CoinGecko = require("coingecko-api")
+// const CoinGeckoClient = new CoinGecko()
 
 type Response = {
   success: Boolean
@@ -37,13 +37,13 @@ export type CoinGeckoMarketData = {
   // last_updated: '2021-05-13T08:41:24.449Z'
 }
 
-export class CoinGeckoAPI {
-  async get_top_market_data({ limit }: { limit: number }): Promise<CoinGeckoMarketData[]> {
-    let response: Response = await CoinGeckoClient.coins.markets({
-      order: CoinGecko.ORDER.MARKET_CAP_DESC,
-      per_page: limit,
-    })
-    if (!response.success) throw new Error(`Call to CoinGeckoClient.coins.markets failed`)
-    return response.data as CoinGeckoMarketData[]
-  }
-}
+// export class CoinGeckoAPI {
+//   async get_top_market_data({ limit }: { limit: number }): Promise<CoinGeckoMarketData[]> {
+//     let response: Response = await CoinGeckoClient.coins.markets({
+//       order: CoinGecko.ORDER.MARKET_CAP_DESC,
+//       per_page: limit,
+//     })
+//     if (!response.success) throw new Error(`Call to CoinGeckoClient.coins.markets failed`)
+//     return response.data as CoinGeckoMarketData[]
+//   }
+// }

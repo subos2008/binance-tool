@@ -28,7 +28,7 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
   signal_publisher: TypedGenericTopicPublisher<Edge70Signal>
   publisher_for_EdgeDirectionSignal: EdgeDirectionSignalPublisher
   health_and_readiness: HealthAndReadiness
-  market_data: MarketData | undefined
+  market_data: MarketData | undefined = undefined
 
   constructor({
     logger,
@@ -42,7 +42,7 @@ export class Edge70AMQPSignalPublisher implements Edge70SignalCallbacks {
     send_message: SendMessageFunc
     health_and_readiness: HealthAndReadiness
     edge70_parameters: Edge70Parameters
-    market_data: MarketData
+    market_data: MarketData | undefined
   }) {
     this.logger = logger
     this.edge = edge

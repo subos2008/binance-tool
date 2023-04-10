@@ -5,7 +5,8 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
+import { CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
+// import { CoinGeckoAPI, CoinGeckoMarketData } from "../../classes/utils/coin_gecko"
 import { MarketIdentifier_V5 } from "../../events/shared/market-identifier"
 import humanNumber from "human-number"
 
@@ -15,12 +16,12 @@ import humanNumber from "human-number"
 const num_coins_to_monitor = 300
 
 export class MarketData {
-  private _market_data: CoinGeckoMarketData[] | undefined
+  private _market_data: CoinGeckoMarketData[] | undefined = undefined
 
   async init() {
-    let cg = new CoinGeckoAPI()
-    // not all of these will be on Binance
-    this._market_data = await cg.get_top_market_data({ limit: num_coins_to_monitor })
+    // let cg = new CoinGeckoAPI()
+    // // not all of these will be on Binance
+    // this._market_data = await cg.get_top_market_data({ limit: num_coins_to_monitor })
   }
 
   /* Event decorators */

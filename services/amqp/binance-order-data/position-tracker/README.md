@@ -17,6 +17,7 @@ By watching buy orders and creating a new Position when it sees a buy order for 
 ## Data Stored
 
 Position:
+
 1. Entry timestamp
 1. Entry Price
 1. Position size
@@ -29,8 +30,8 @@ Position:
 
 # Separation of Concerns
 
-It would make sense to split exchange specific code from the code that stores the position information. 
+It would make sense to split exchange specific code from the code that stores the position information.
 
 This could be done at the order stream level by watching `order-tracker` events
 
-It could also be done by having exchange specific services that include generic code via callbacks. 
+It could also be done by having exchange specific services that include generic code via callbacks.

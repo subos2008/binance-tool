@@ -9,7 +9,7 @@ BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
 
-import "./tracer" // must come before importing any instrumented module.
+// import "./tracer" // must come before importing any instrumented module.
 
 import { strict as assert } from "assert"
 import express, { Request, Response } from "express"

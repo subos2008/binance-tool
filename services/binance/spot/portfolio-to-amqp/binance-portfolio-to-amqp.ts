@@ -70,9 +70,14 @@ const service_is_healthy = health_and_readiness.addSubsystem({
 })
 
 process.on("unhandledRejection", (err) => {
+  console.error(`UnhandledPromiseRejection`)
+  console.error(err)
+  console.error(`-----`)
   logger.exception({}, err)
+  console.error(`----`)
   service_is_healthy.healthy(false)
   send_message(`UnhandledPromiseRejection: ${err}`)
+
 })
 
 export class BinancePortfolioToAMQP {
@@ -150,7 +155,7 @@ export class BinancePortfolioToAMQP {
     setInterval(this.update_portfolio_from_exchange.bind(this), 1000 * 60 * 60 * 6)
     this.update_portfolio_from_exchange_after_delay()
 
-    this.order_execution_tracker.main()
+    this.order_execution_tracker.main().catch((err) => logger.exception({}, err))
   }
 
   async update_portfolio_from_exchange() {

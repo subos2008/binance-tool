@@ -16,13 +16,15 @@ import Binance from "binance-api-node"
 import { Symbol } from "binance-api-node"
 import { ServiceLogger } from "../../interfaces/logger"
 import { BinanceExchangeInfoGetter } from "../exchanges/binance/exchange-info-getter"
-import { is_too_small_to_trade } from "../../lib/utils"
+import { TooSmallToTrade } from "../../interfaces/exchanges/generic/too_small_to_trade"
+import { BinanceAlgoUtils } from "../../services/binance/spot/trade-abstraction-v2/execution/execution_engines/_internal/binance_algo_utils_v2"
 
 export class PortfolioSnapshot {
   logger: ServiceLogger
   ee: BinanceType
   balances: AssetBalance[] | undefined
   exchange_info_getter: BinanceExchangeInfoGetter
+  too_small_to_trade: TooSmallToTrade
 
   constructor({
     logger,
@@ -42,6 +44,7 @@ export class PortfolioSnapshot {
       apiKey: process.env.BINANCE_API_KEY,
       apiSecret: process.env.BINANCE_API_SECRET,
     })
+    this.too_small_to_trade = new BinanceAlgoUtils({ logger, ee: this.ee, exchange_info_getter })
   }
 
   /**
@@ -56,18 +59,32 @@ export class PortfolioSnapshot {
       return symbols.find((s) => s.baseAsset == base_asset) ? true : false
     }
 
-    let has_markets_where_balance_is_large_enough_to_trade = (balance: AssetBalance): boolean => {
+    async function findAsyncSequential<T>(
+      array: T[],
+      predicate: (t: T) => Promise<boolean>
+    ): Promise<T | undefined> {
+      for (const t of array) {
+        if (await predicate(t)) {
+          return t
+        }
+      }
+      return undefined
+    }
+
+    let has_markets_where_balance_is_large_enough_to_trade = async (balance: AssetBalance): Promise<boolean> => {
       if (!prices) return true
       let markets_for_base_asset = symbols.filter((s) => s.baseAsset == balance.asset)
-      let is_market_tradeable = (market: Symbol) => {
-        return !is_too_small_to_trade({
+
+      let is_market_tradeable = async (market: Symbol) => {
+        return !(await this.too_small_to_trade.is_too_small_to_trade({
           price: new BigNumber(prices[market.symbol]),
           volume: new BigNumber(balance.free).plus(balance.locked),
-          exchange_info,
           symbol: market.symbol,
-        })
+        }))
       }
-      return markets_for_base_asset.find(is_market_tradeable) ? true : false
+      // If there is at least one pair for this base_asset that's tradeable then return true
+      let market = await findAsyncSequential(markets_for_base_asset, is_market_tradeable)
+      return market ? true : false
     }
 
     let response = await this.ee.accountInfo()

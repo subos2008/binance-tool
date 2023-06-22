@@ -1,4 +1,4 @@
-import { AlgoUtils } from "./_internal/binance_algo_utils_v2"
+import { BinanceAlgoUtils } from "./_internal/binance_algo_utils_v2"
 import { ServiceLogger } from "../../../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import {
@@ -53,7 +53,7 @@ function sleep(ms: number) {
 }
 
 export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
-  utils: AlgoUtils
+  utils: BinanceAlgoUtils
   logger: ServiceLogger
   ei_getter: BinanceExchangeInfoGetter
   order_context_persistence: OrderContextPersistence
@@ -68,7 +68,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   }) {
     assert(logger)
     this.logger = logger
-    this.utils = new AlgoUtils({ logger, ee /* note global variable */ })
+    this.utils = new BinanceAlgoUtils({ logger, ee /* note global variable */ })
     this.ei_getter = new BinanceExchangeInfoGetter({ ee })
     this.order_context_persistence = order_context_persistence
     let exchange_identifier = this.get_exchange_identifier()

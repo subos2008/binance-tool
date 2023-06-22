@@ -169,6 +169,7 @@ async function main() {
     spot_positions_persistance,
     callbacks: spot_position_publisher,
     health_and_readiness,
+    exchange_info_getter
   })
 
   let order_context_persistence = new RedisOrderContextPersistence({ logger, redis })

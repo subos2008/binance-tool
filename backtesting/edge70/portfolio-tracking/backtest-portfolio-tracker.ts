@@ -111,6 +111,7 @@ export class BacktestPortfolioTracker {
       spot_positions_query,
       spot_positions_persistance: positions_persistance,
       health_and_readiness,
+      exchange_info_getter
     })
     this.trade_execution = new BacktestTradeExecution({
       logger,

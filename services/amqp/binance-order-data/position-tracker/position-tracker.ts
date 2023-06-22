@@ -29,6 +29,7 @@ import {
 import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
 import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-message"
 import { TooSmallToTrade } from "../../../../interfaces/exchanges/generic/too_small_to_trade"
+import { ExchangeInfoGetter } from "../../../../interfaces/exchanges/binance/exchange-info-getter"
 
 export type check_func = ({
   volume,
@@ -49,6 +50,7 @@ export class SpotPositionTracker {
   spot_positions_persistance: SpotPositionsPersistence
   callbacks: SpotPositionCallbacks
   health_and_readiness: HealthAndReadiness
+  exchange_info_getter: ExchangeInfoGetter
 
   constructor({
     send_message,
@@ -59,6 +61,7 @@ export class SpotPositionTracker {
     spot_positions_persistance,
     health_and_readiness,
     callbacks,
+    exchange_info_getter,
   }: {
     send_message: SendMessageFunc
     logger: ServiceLogger
@@ -68,6 +71,7 @@ export class SpotPositionTracker {
     spot_positions_persistance: SpotPositionsPersistence
     health_and_readiness: HealthAndReadiness
     callbacks: SpotPositionCallbacks
+    exchange_info_getter: ExchangeInfoGetter
   }) {
     this.logger = logger
     this.send_message = send_message
@@ -77,6 +81,7 @@ export class SpotPositionTracker {
     this.spot_positions_persistance = spot_positions_persistance
     this.health_and_readiness = health_and_readiness
     this.callbacks = callbacks
+    this.exchange_info_getter = exchange_info_getter
   }
 
   async get_order_context_for_order(data: GenericOrderData): Promise<OrderContext_V1 | { edge: undefined }> {
@@ -185,6 +190,7 @@ export class SpotPositionTracker {
         symbol: market_symbol,
         volume: await position.position_size(),
         price: new BigNumber(averageExecutionPrice),
+        exchange_info_getter: this.exchange_info_getter,
       })
     ) {
       try {

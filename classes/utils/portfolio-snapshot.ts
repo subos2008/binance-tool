@@ -80,6 +80,7 @@ export class PortfolioSnapshot {
           price: new BigNumber(prices[market.symbol]),
           volume: new BigNumber(balance.free).plus(balance.locked),
           symbol: market.symbol,
+          exchange_info_getter: this.exchange_info_getter
         }))
       }
       // If there is at least one pair for this base_asset that's tradeable then return true

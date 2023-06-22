@@ -22,6 +22,7 @@ import {
 } from "../../../classes/spot/abstractions/spot-position-callbacks"
 import { ServiceLogger } from "../../../interfaces/logger"
 import { TooSmallToTrade } from "../../../interfaces/exchanges/generic/too_small_to_trade"
+import { ExchangeInfoGetter } from "../../../interfaces/exchanges/binance/exchange-info-getter"
 
 class FakePositionsSizeChecker implements TooSmallToTrade {
  async is_too_small_to_trade({
@@ -53,6 +54,7 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
     spot_positions_query,
     spot_positions_persistance,
     health_and_readiness,
+    exchange_info_getter
   }: {
     send_message: SendMessageFunc
     logger: ServiceLogger
@@ -60,6 +62,7 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
     spot_positions_query: SpotPositionsQuery
     spot_positions_persistance: SpotPositionsPersistence
     health_and_readiness: HealthAndReadiness
+    exchange_info_getter: ExchangeInfoGetter
   }) {
     this.logger = logger
     this.spot_positions_query = spot_positions_query
@@ -73,6 +76,7 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
       spot_positions_persistance,
       health_and_readiness,
       callbacks: this,
+      exchange_info_getter
     })
   }
 

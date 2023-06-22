@@ -266,8 +266,8 @@ export class Edge70Signals {
       tags.previous_direction = previous_direction || "(null)"
 
       let changed_direction: boolean = direction !== previous_direction
-      try {
-        this.metrics.ingest_market_direction({
+      this.metrics
+        .ingest_market_direction({
           edge,
           direction,
           previous_direction: previous_direction || "(null)",
@@ -279,9 +279,7 @@ export class Edge70Signals {
           exchange: this.market_identifier.exchange_identifier.exchange,
           exchange_type: this.market_identifier.exchange_identifier.exchange_type,
         })
-      } catch (err) {
-        this.logger.exception(tags, err)
-      }
+        .catch((err) => this.logger.exception(tags, err))
 
       if (previous_direction === null) {
         let msg = `possible ${direction} signal on ${base_asset} - check manually if this is a trend reversal.`

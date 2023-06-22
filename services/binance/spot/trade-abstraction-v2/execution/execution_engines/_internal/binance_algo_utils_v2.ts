@@ -9,7 +9,7 @@ BigNumber.DEBUG = true // Prevent NaN
 BigNumber.prototype.valueOf = function () {
   throw Error("BigNumber .valueOf called!")
 }
-import { Logger, ServiceLogger } from "../../../../../../../interfaces/logger"
+import { ServiceLogger } from "../../../../../../../interfaces/logger"
 import { TradingRules } from "../../../../../../../lib/trading_rules"
 import Sentry from "../../../../../../../lib/sentry"
 import {
@@ -21,142 +21,70 @@ import {
   Order,
   OrderSide,
   OrderType,
+  SymbolFilter,
+  SymbolLotSizeFilter,
+  SymbolMinNotionalFilter,
+  SymbolPriceFilter,
   TimeInForce_LT,
 } from "binance-api-node"
 import { Binance as BinanceType } from "binance-api-node"
+import { TooSmallToTrade } from "../../../../../../../interfaces/exchanges/generic/too_small_to_trade"
+import { BinanceExchangeInfoGetter } from "../../../../../../../classes/exchanges/binance/exchange-info-getter"
+import { StaticBinanceAlgoUtils } from "./static-binance_algo_utils_v2"
 
-export class AlgoUtils {
+export class BinanceAlgoUtils implements TooSmallToTrade {
   logger: ServiceLogger
   ee: BinanceType
+  exchange_info_getter: BinanceExchangeInfoGetter
 
-  constructor({ logger, ee }: { logger: ServiceLogger; ee: BinanceType }) {
+  constructor({
+    logger,
+    ee,
+    exchange_info_getter,
+  }: {
+    logger: ServiceLogger
+    ee: BinanceType
+    exchange_info_getter?: BinanceExchangeInfoGetter
+  }) {
     assert(logger)
     this.logger = logger
     assert(ee)
     this.ee = ee
+    this.exchange_info_getter = exchange_info_getter ? exchange_info_getter : new BinanceExchangeInfoGetter({ ee })
   }
 
-  munge_and_check_price({
-    exchange_info,
-    symbol,
+  async is_too_small_to_trade({
     price,
+    volume,
+    exchange_info_getter,
+    symbol,
   }: {
-    exchange_info: ExchangeInfo
+    exchange_info_getter: BinanceExchangeInfoGetter
     symbol: string
     price: BigNumber
-  }) {
-    return utils.munge_and_check_price({ exchange_info: exchange_info, symbol, price })
+    volume: BigNumber
+  }): Promise<boolean> {
+    let exchange_info = await exchange_info_getter.get_exchange_info()
+    try {
+      StaticBinanceAlgoUtils.check_notional({
+        exchange_info,
+        symbol,
+        price: StaticBinanceAlgoUtils.munge_and_check_price({ exchange_info, symbol, price }),
+        volume: StaticBinanceAlgoUtils.munge_and_check_quantity({ exchange_info, symbol, volume }),
+      })
+    } catch (e) {
+      return true
+    }
+    return false
   }
 
-  munge_amount_and_check_notionals({
-    exchange_info,
-    pair,
-    base_amount,
-    price,
-    buy_price,
-    stop_price,
-    target_price,
-    limit_price,
-  }: {
-    exchange_info: ExchangeInfo
-    pair: string
-    base_amount: BigNumber
-    price?: BigNumber
-    buy_price?: BigNumber
-    stop_price?: BigNumber
-    target_price?: BigNumber
-    limit_price?: BigNumber
-  }) {
-    assert(exchange_info)
-    assert(pair)
-    assert(base_amount)
-    base_amount = utils.munge_and_check_quantity({
-      exchange_info,
-      symbol: pair,
-      volume: base_amount,
-    })
-
-    // generic
-    if (typeof price !== "undefined") {
-      utils.check_notional({
-        price: price,
-        volume: base_amount,
-        exchange_info,
-        symbol: pair,
-      })
+  private get_symbol_filters({ exchange_info, symbol }: { exchange_info: ExchangeInfo; symbol: string }) {
+    let symbol_data = exchange_info.symbols.find((ei: any) => ei.symbol === symbol)
+    if (!symbol_data) {
+      // TODO: some kind of UnrecognisedPairError class?
+      throw new Error(`Could not find exchange info for ${symbol}`)
     }
-    if (typeof buy_price !== "undefined") {
-      utils.check_notional({
-        price: buy_price,
-        volume: base_amount,
-        exchange_info,
-        symbol: pair,
-      })
-    }
-    if (typeof stop_price !== "undefined") {
-      utils.check_notional({
-        price: stop_price,
-        volume: base_amount,
-        exchange_info,
-        symbol: pair,
-      })
-    }
-    if (typeof target_price !== "undefined") {
-      utils.check_notional({
-        price: target_price,
-        volume: base_amount,
-        exchange_info,
-        symbol: pair,
-      })
-    }
-    if (typeof limit_price !== "undefined") {
-      utils.check_notional({
-        price: limit_price,
-        volume: base_amount,
-        exchange_info,
-        symbol: pair,
-      })
-    }
-    return base_amount
-  }
-
-  calculate_percentages({
-    buy_price,
-    stop_price,
-    target_price,
-    trading_rules,
-  }: {
-    buy_price: BigNumber
-    stop_price: BigNumber
-    target_price: BigNumber
-    trading_rules: TradingRules
-  }) {
-    let stop_percentage, target_percentage, max_portfolio_percentage_allowed_in_this_trade
-    if (buy_price && stop_price) {
-      assert(buy_price.isGreaterThan(0))
-      stop_percentage = new BigNumber(buy_price).minus(stop_price).dividedBy(buy_price).times(100)
-      assert(stop_percentage.isFinite())
-      this.logger.info(`Stop percentage: ${stop_percentage.toFixed(2)}%`)
-    }
-    if (buy_price && target_price) {
-      target_percentage = new BigNumber(target_price).minus(buy_price).dividedBy(buy_price).times(100)
-      this.logger.info(`Target percentage: ${target_percentage.toFixed(2)}%`)
-    }
-    if (stop_percentage && target_percentage) {
-      let risk_reward_ratio = target_percentage.dividedBy(stop_percentage)
-      this.logger.info(`Risk/reward ratio: ${risk_reward_ratio.toFixed(1)}`)
-    }
-    if (stop_percentage && trading_rules && trading_rules.max_allowed_portfolio_loss_percentage_per_trade) {
-      max_portfolio_percentage_allowed_in_this_trade = new BigNumber(
-        trading_rules.max_allowed_portfolio_loss_percentage_per_trade
-      )
-        .dividedBy(stop_percentage)
-        .times(100)
-      this.logger.info(
-        `Max portfolio allowed in trade: ${max_portfolio_percentage_allowed_in_this_trade.toFixed(1)}%`
-      )
-    }
-    return max_portfolio_percentage_allowed_in_this_trade
+    return symbol_data.filters
   }
 
   async create_limit_buy_order({
@@ -180,8 +108,13 @@ export class AlgoUtils {
     assert(BigNumber.isBigNumber(base_amount))
     assert(BigNumber.isBigNumber(price))
     try {
-      price = this.munge_and_check_price({ exchange_info, symbol: pair, price })
-      base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, price })
+      price = StaticBinanceAlgoUtils.munge_and_check_price({ exchange_info, symbol: pair, price })
+      base_amount = StaticBinanceAlgoUtils.munge_amount_and_check_notionals({
+        exchange_info,
+        pair,
+        base_amount,
+        price,
+      })
       let price_string = price.toFixed()
       let quantity = base_amount.toFixed()
       let args: NewOrderSpot = {
@@ -221,8 +154,8 @@ export class AlgoUtils {
     price: BigNumber
     clientOrderId: string
   }) {
-    let munged_price = this.munge_and_check_price({ exchange_info, symbol: pair, price })
-    let munged_base_amount = this.munge_amount_and_check_notionals({
+    let munged_price = StaticBinanceAlgoUtils.munge_and_check_price({ exchange_info, symbol: pair, price })
+    let munged_base_amount = StaticBinanceAlgoUtils.munge_amount_and_check_notionals({
       exchange_info,
       pair,
       price: munged_price,
@@ -255,7 +188,12 @@ export class AlgoUtils {
     assert(BigNumber.isBigNumber(base_amount))
     assert(BigNumber.isBigNumber(price))
     try {
-      base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, price })
+      base_amount = StaticBinanceAlgoUtils.munge_amount_and_check_notionals({
+        exchange_info,
+        pair,
+        base_amount,
+        price,
+      })
       let quantity = base_amount.toFixed()
       let args: NewOrderSpot = {
         // useServerTime: true,
@@ -305,7 +243,7 @@ export class AlgoUtils {
     assert(BigNumber.isBigNumber(target_price))
     assert(BigNumber.isBigNumber(limit_price))
     try {
-      base_amount = this.munge_amount_and_check_notionals({
+      base_amount = StaticBinanceAlgoUtils.munge_amount_and_check_notionals({
         exchange_info,
         pair,
         base_amount,
@@ -313,9 +251,17 @@ export class AlgoUtils {
         limit_price,
         target_price,
       })
-      stop_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: stop_price })
-      limit_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: limit_price })
-      target_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: target_price })
+      stop_price = StaticBinanceAlgoUtils.munge_and_check_price({ exchange_info, symbol: pair, price: stop_price })
+      limit_price = StaticBinanceAlgoUtils.munge_and_check_price({
+        exchange_info,
+        symbol: pair,
+        price: limit_price,
+      })
+      target_price = StaticBinanceAlgoUtils.munge_and_check_price({
+        exchange_info,
+        symbol: pair,
+        price: target_price,
+      })
       let quantity = base_amount.toFixed()
       //   export interface NewOcoOrder {
       //     symbol: string;
@@ -346,7 +292,8 @@ export class AlgoUtils {
         limitClientOrderId: take_profit_ClientOrderId,
         stopClientOrderId: stop_ClientOrderId,
       }
-      this.logger.info(tags,
+      this.logger.info(
+        tags,
         `${pair} Creating OCO ORDER for ${quantity} at target ${target_price.toFixed()} stop triggered at ${stop_price.toFixed()}`
       )
       //   export interface OcoOrder {
@@ -407,9 +354,18 @@ export class AlgoUtils {
       `Pre-munge: ${pair} Creating STOP_LOSS_LIMIT SELL ORDER for ${base_amount.toFixed()} at ${limit_price.toFixed()} triggered at ${stop_price.toFixed()}`
     )
     try {
-      stop_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: stop_price })
-      limit_price = this.munge_and_check_price({ exchange_info, symbol: pair, price: limit_price })
-      base_amount = this.munge_amount_and_check_notionals({ exchange_info, pair, base_amount, stop_price })
+      stop_price = StaticBinanceAlgoUtils.munge_and_check_price({ exchange_info, symbol: pair, price: stop_price })
+      limit_price = StaticBinanceAlgoUtils.munge_and_check_price({
+        exchange_info,
+        symbol: pair,
+        price: limit_price,
+      })
+      base_amount = StaticBinanceAlgoUtils.munge_amount_and_check_notionals({
+        exchange_info,
+        pair,
+        base_amount,
+        stop_price,
+      })
       let quantity = base_amount.toFixed()
       let args: NewOrderSpot = {
         // useServerTime: true,

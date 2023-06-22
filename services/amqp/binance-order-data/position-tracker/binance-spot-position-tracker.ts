@@ -4,7 +4,6 @@
 import { strict as assert } from "assert"
 const service_name = "binance-position-tracker"
 import { fromCompletedBinanceOrderData } from "../../../../interfaces/exchanges/binance/spot-orders"
-import { is_too_small_to_trade } from "../../../../lib/utils"
 
 require("dotenv").config()
 
@@ -41,6 +40,8 @@ import { BunyanServiceLogger } from "../../../../lib/service-logger"
 import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
 import { RedisOrderContextPersistence } from "../../../../classes/persistent_state/redis-implementation/redis-order-context-persistence"
 import { OrderContextPersistence } from "../../../../classes/persistent_state/interface/order-context-persistence"
+import { TooSmallToTrade } from "../../../../interfaces/exchanges/generic/too_small_to_trade"
+import { BinanceAlgoUtils } from "../../../binance/spot/trade-abstraction-v2/execution/execution_engines/_internal/binance_algo_utils_v2"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 logger.event({}, { object_class: "event", object_type: "ServiceStarting", msg: "Service starting" })
@@ -116,14 +117,14 @@ class MyOrderCallbacks implements OrderCallbacks {
     if (data.side == "BUY") {
       data.msg = `BUY order on ${data.symbol} filled (edge: ${edge}).`
       this.logger.object(tags, data)
-      this.position_tracker.buy_order_filled({
+      await this.position_tracker.buy_order_filled({
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
       })
     }
     if (data.side == "SELL") {
       data.msg = `SELL order on ${data.symbol} filled (edge: ${edge}).`
       this.logger.object(tags, data)
-      this.position_tracker.sell_order_filled({
+      await this.position_tracker.sell_order_filled({
         generic_order_data: fromCompletedBinanceOrderData(data, exchange_info),
       })
     }
@@ -142,25 +143,7 @@ async function main() {
   const exchange_info_getter = new BinanceExchangeInfoGetter({ ee })
   let exchange_info = await exchange_info_getter.get_exchange_info() // TODO: should update this every now and then
   let exchange_identifier = exchange_info_getter.get_exchange_identifier()
-
-  // return true if the position size passed it would be considered an untradeably small balance on the exchange
-  let close_position_check_func = function ({
-    market_symbol,
-    volume,
-    price,
-  }: {
-    market_symbol: string
-    volume: BigNumber
-    price: BigNumber
-  }): boolean {
-    let result: boolean = is_too_small_to_trade({ symbol: market_symbol, volume, exchange_info, price })
-    console.log(
-      `Checking if ${volume.toFixed()} ${market_symbol} would be too small to trade (result=${
-        result ? "yes" : "no"
-      })`
-    )
-    return result
-  }
+  let too_small_to_trade: TooSmallToTrade = new BinanceAlgoUtils({ logger, ee, exchange_info_getter })
 
   const redis = await get_redis_client(logger, health_and_readiness)
   const spot_positions_persistance: SpotPositionsPersistence = new RedisSpotPositionsPersistence({ logger, redis })
@@ -181,7 +164,7 @@ async function main() {
     logger,
     send_message,
     redis,
-    close_position_check_func,
+    close_position_checker: too_small_to_trade,
     spot_positions_query,
     spot_positions_persistance,
     callbacks: spot_position_publisher,

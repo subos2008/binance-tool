@@ -21,20 +21,23 @@ import {
   SpotPositionOpenedEvent_V1,
 } from "../../../classes/spot/abstractions/spot-position-callbacks"
 import { ServiceLogger } from "../../../interfaces/logger"
+import { TooSmallToTrade } from "../../../interfaces/exchanges/generic/too_small_to_trade"
 
-// return true if the position size passed it would be considered an untradeably small balance on the exchange
-let close_position_check_func: check_func = function ({
-  market_symbol,
-  volume,
-  price,
-}: {
-  market_symbol: string
-  volume: BigNumber
-  price: BigNumber
-}): boolean {
-  let result: boolean = volume.isZero()
-  return result
+class FakePositionsSizeChecker implements TooSmallToTrade {
+ async is_too_small_to_trade({
+    price,
+    volume,
+    symbol,
+  }: {
+    symbol: string
+    price: BigNumber
+    volume: BigNumber
+  }): Promise<boolean> {
+    return volume.isZero()
+  }
 }
+
+let close_position_checker = new FakePositionsSizeChecker()
 
 export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
   logger: ServiceLogger
@@ -60,11 +63,12 @@ export class BacktesterSpotPostionsTracker implements SpotPositionCallbacks {
   }) {
     this.logger = logger
     this.spot_positions_query = spot_positions_query
+
     this.positions_tracker = new SpotPositionTracker({
       send_message,
       logger,
       redis,
-      close_position_check_func,
+      close_position_checker,
       spot_positions_query,
       spot_positions_persistance,
       health_and_readiness,

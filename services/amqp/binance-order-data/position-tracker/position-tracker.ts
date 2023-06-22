@@ -28,6 +28,7 @@ import {
 } from "../../../../classes/spot/abstractions/spot-position-callbacks"
 import { OrderContext_V1 } from "../../../../interfaces/orders/order-context"
 import { ContextTags, SendMessageFunc } from "../../../../interfaces/send-message"
+import { TooSmallToTrade } from "../../../../interfaces/exchanges/generic/too_small_to_trade"
 
 export type check_func = ({
   volume,
@@ -42,7 +43,7 @@ export type check_func = ({
 export class SpotPositionTracker {
   send_message: SendMessageFunc
   logger: ServiceLogger
-  close_position_check_func: check_func
+  close_position_checker: TooSmallToTrade
   order_context_persistence: OrderContextPersistence
   spot_positions_query: SpotPositionsQuery
   spot_positions_persistance: SpotPositionsPersistence
@@ -53,7 +54,7 @@ export class SpotPositionTracker {
     send_message,
     logger,
     redis,
-    close_position_check_func,
+    close_position_checker,
     spot_positions_query,
     spot_positions_persistance,
     health_and_readiness,
@@ -62,7 +63,7 @@ export class SpotPositionTracker {
     send_message: SendMessageFunc
     logger: ServiceLogger
     redis: RedisClientType
-    close_position_check_func: check_func
+    close_position_checker: TooSmallToTrade
     spot_positions_query: SpotPositionsQuery
     spot_positions_persistance: SpotPositionsPersistence
     health_and_readiness: HealthAndReadiness
@@ -71,8 +72,7 @@ export class SpotPositionTracker {
     this.logger = logger
     this.send_message = send_message
     this.spot_positions_query = spot_positions_query
-    assert(close_position_check_func, "close_position_check_func not set")
-    this.close_position_check_func = close_position_check_func
+    this.close_position_checker = close_position_checker
     this.order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
     this.spot_positions_persistance = spot_positions_persistance
     this.health_and_readiness = health_and_readiness
@@ -181,8 +181,8 @@ export class SpotPositionTracker {
     // 1.3 see if we should close the position
     // maybe this could be position.is_closed()
     if (
-      this.close_position_check_func({
-        market_symbol,
+      await this.close_position_checker.is_too_small_to_trade({
+        symbol: market_symbol,
         volume: await position.position_size(),
         price: new BigNumber(averageExecutionPrice),
       })

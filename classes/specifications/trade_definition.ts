@@ -1,9 +1,9 @@
 import { strict as assert } from "assert"
-const utils = require("../../lib/utils")
-
+import {StaticBinanceAlgoUtils} from "../../services/binance/spot/trade-abstraction-v2/execution/execution_engines/_internal/static-binance_algo_utils_v2"
 import BigNumber from "bignumber.js"
 import { TradingRules } from "../../lib/trading_rules"
 import { Logger } from "../../interfaces/logger"
+import { ExchangeInfo } from "binance-api-node"
 BigNumber.DEBUG = true // Prevent NaN
 // Prevent type coercion
 BigNumber.prototype.valueOf = function () {
@@ -17,22 +17,22 @@ class MungedPrices {
   stop_price: BigNumber | undefined
   target_price: BigNumber | undefined
 
-  constructor(exchange_info: Object, trade_definition: TradeDefinition) {
+  constructor(exchange_info: ExchangeInfo, trade_definition: TradeDefinition) {
     assert(exchange_info, `Not exchange_info passed to MungedPrices constructor`)
     if (trade_definition.unmunged.buy_price)
-      this.buy_price = utils.munge_and_check_price({
+      this.buy_price = StaticBinanceAlgoUtils.munge_and_check_price({
         exchange_info,
         symbol: trade_definition.pair,
         price: trade_definition.unmunged.buy_price,
       })
     if (trade_definition.unmunged.stop_price)
-      this.stop_price = utils.munge_and_check_price({
+      this.stop_price = StaticBinanceAlgoUtils.munge_and_check_price({
         exchange_info,
         symbol: trade_definition.pair,
         price: trade_definition.unmunged.stop_price,
       })
     if (trade_definition.unmunged.target_price)
-      this.target_price = utils.munge_and_check_price({
+      this.target_price = StaticBinanceAlgoUtils.munge_and_check_price({
         exchange_info,
         symbol: trade_definition.pair,
         price: trade_definition.unmunged.target_price,

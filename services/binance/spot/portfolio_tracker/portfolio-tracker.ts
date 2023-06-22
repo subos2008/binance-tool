@@ -34,7 +34,11 @@ import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { SendMessage } from "../../../../classes/send_message/publish"
 import { Portfolio, Balance, SpotPortfolio } from "../../../../interfaces/portfolio"
 import { BinancePortfolioTracker } from "./binance-portfolio-tracker"
-import { ExchangeIdentifier, ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
+import {
+  ExchangeIdentifier,
+  ExchangeIdentifier_V3,
+  ExchangeIdentifier_V4,
+} from "../../../../events/shared/exchange-identifier"
 import { SendDatadogMetrics } from "./send-datadog-metrics"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 import express from "express"
@@ -85,7 +89,7 @@ class PortfolioTracker implements MasterPortfolioClass {
   }) {
     // TODO: account not used in ExchangeIdentifier: default (default added so this appears in greps)
     this.portfolios[exchange_identifier.exchange] = portfolio
-    this.report_current_portfolio() // this line is going to be a problem when we have multiple exchanges
+    this.report_current_portfolio().catch((err) => console.error(err)) // this line is going to be a problem when we have multiple exchanges
   }
 
   async update_and_report_portfolio() {
@@ -194,7 +198,7 @@ class PortfolioTracker implements MasterPortfolioClass {
       .calculate_portfolio_value_in_quote_currency({ quote_currency: "BUSD", portfolio })
       .total.dp(0)
       .toFixed()
-    this.metrics.submit_portfolio_as_metrics({ portfolio, exchange_identifier })
+    this.metrics.submit_portfolio_as_metrics({ portfolio, exchange_identifier }).catch((err) => console.error(err))
     return portfolio
   }
 }
@@ -205,9 +209,9 @@ async function main() {
   const execSync = require("child_process").execSync
   execSync("date -u")
 
-  let portfolio_tracker:MasterPortfolioClass = new PortfolioTracker({ logger, send_message })
+  let portfolio_tracker: MasterPortfolioClass = new PortfolioTracker({ logger, send_message })
   let binance = new BinancePortfolioTracker({ send_message, logger, master: portfolio_tracker })
-  binance.start()
+  binance.start().catch((err) => console.error(err))
   await binance.update_portfolio_from_exchange() // automatically triggers report_current_portfolio
 
   setInterval(portfolio_tracker.update_and_report_portfolio.bind(portfolio_tracker), 1000 * 60 * 60 * 6)
@@ -228,7 +232,7 @@ function soft_exit(exit_code: number | null = null, reason: string) {
   logger.warn(`soft_exit called, exit_code: ${exit_code}`)
   if (exit_code) logger.warn(`soft_exit called with non-zero exit_code: ${exit_code}, reason: ${reason}`)
   if (exit_code) process.exitCode = exit_code
-  Sentry.close(500)
+  Sentry.close(500).catch((err) => console.error(err))
   // setTimeout(dump_keepalive, 10000); // note enabling this debug line will delay exit until it executes
 }
 

@@ -95,7 +95,7 @@ export class FuturesOrderExecutionTracker {
 
     const thunk: processor_func = async (data: OrderUpdate) => {
       try {
-        this.processOrderUpdate(data)
+        await this.processOrderUpdate(data)
       } catch (err) {
         Sentry.withScope(function (scope) {
           scope.setTag("operation", "processOrderUpdate")
@@ -128,7 +128,7 @@ export class FuturesOrderExecutionTracker {
           ) => {
             this.logger.info(data)
             if (data.eventType === "ORDER_TRADE_UPDATE") {
-              thunk(data)
+              await thunk(data)
             }
           }
         )

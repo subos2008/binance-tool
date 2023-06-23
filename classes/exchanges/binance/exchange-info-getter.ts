@@ -1,4 +1,4 @@
-import { Binance, ExchangeInfo } from "binance-api-node"
+import { Binance, ExchangeInfo, FuturesOrderType_LT } from "binance-api-node"
 import { ExchangeIdentifier_V4 } from "../../../events/shared/exchange-identifier"
 import { ExchangeInfoGetter } from "../../../interfaces/exchanges/binance/exchange-info-getter"
 import { BunyanServiceLogger } from "../../../lib/service-logger"
@@ -48,7 +48,9 @@ export class BinanceExchangeInfoGetter implements ExchangeInfoGetter {
       /* Keep maintianing a backup in case of 429's
        * Exceptions on this call probably are best avoided (unexpected in old code)
        */
-      this.exchange_info_promise.then((value) => (this.emergency_cache = value))
+      this.exchange_info_promise
+        .then((value) => (this.emergency_cache = value))
+        .catch((err) => logger.exception({}, err))
 
       setTimeout(() => {
         this.exchange_info_promise = null
@@ -71,16 +73,16 @@ export class BinanceExchangeInfoGetter implements ExchangeInfoGetter {
 
 export class BinanceFuturesExchangeInfoGetter {
   private ee: Binance
-  private exchange_info_promise: Promise<ExchangeInfo> | null | undefined
+  private exchange_info_promise: Promise<ExchangeInfo<FuturesOrderType_LT>> | null | undefined
   private minutes_to_cache_expiry: number = 24 * 60
-  private emergency_cache: ExchangeInfo | undefined
+  private emergency_cache: ExchangeInfo<FuturesOrderType_LT> | undefined
 
   constructor({ ee, minutes_to_cache_expiry }: { ee: Binance; minutes_to_cache_expiry?: number }) {
     this.ee = ee
     if (minutes_to_cache_expiry) this.minutes_to_cache_expiry = minutes_to_cache_expiry
   }
 
-  async get_exchange_info(): Promise<ExchangeInfo> {
+  async get_exchange_info(): Promise<ExchangeInfo<FuturesOrderType_LT>> {
     if (this.exchange_info_promise) {
       return this.exchange_info_promise
     }
@@ -100,7 +102,9 @@ export class BinanceFuturesExchangeInfoGetter {
       /* Keep maintianing a backup in case of 429's
        * Exceptions on this call probably are best avoided (unexpected in old code)
        */
-      this.exchange_info_promise.then((value) => (this.emergency_cache = value))
+      this.exchange_info_promise
+        .then((value) => (this.emergency_cache = value))
+        .catch((err) => logger.exception({}, err))
 
       setTimeout(() => {
         this.exchange_info_promise = null

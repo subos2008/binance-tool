@@ -130,11 +130,11 @@ export class StaticBinanceAlgoUtils {
     let filters = this.get_symbol_filters({ exchange_info, symbol })
     let ret = filters.find((eis: any) => eis.filterType === "NOTIONAL") as SymbolMinNotionalFilter | undefined
     if (!ret) throw new Error(`Return undefined getting filter for NOTIONAL`)
-    const { notional } = ret
+    const { minNotional } = ret
     let quote_volume = price.times(volume)
-    if (quote_volume.isLessThan(notional)) {
+    if (quote_volume.isLessThan(minNotional)) {
       throw new Error(
-        `does not meet minimum order value ${notional} (NOTIONAL) (Buy of ${volume} at ${price} = ${quote_volume}).`
+        `does not meet minimum order value ${minNotional} (NOTIONAL) (Buy of ${volume} at ${price} = ${quote_volume}).`
       )
     }
   }

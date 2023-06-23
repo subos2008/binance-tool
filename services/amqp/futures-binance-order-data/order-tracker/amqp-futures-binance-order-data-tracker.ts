@@ -69,15 +69,16 @@ class BinanceOrdersToSendMessageForwarder implements FuturesOrderCallbacks {
 
     if (data.orderType != "MARKET") {
       switch (data.orderType) {
-        case "STOP_LOSS_LIMIT":
-          // if (data.isOrderWorking) {
-          //   this.send_message(`Order triggered ${data.symbol} ${data.orderType} (edge: ${data.edge}).`)
-          // } else {
-          this.send_message(
-            `Order created ${data.symbol} ${data.orderType} at ${stopPrice} to ${price} (edge: ${data.edge}).`
-          )
-          // }
-          break
+        // Looks like STOP_LOSS_LIMIT doesn't exist on futures exchange 
+        // case "STOP_LOSS_LIMIT":
+        //   // if (data.isOrderWorking) {
+        //   //   this.send_message(`Order triggered ${data.symbol} ${data.orderType} (edge: ${data.edge}).`)
+        //   // } else {
+        //   this.send_message(
+        //     `Order created ${data.symbol} ${data.orderType} at ${stopPrice} to ${price} (edge: ${data.edge}).`
+        //   )
+        //   // }
+        //   break
         default:
           this.send_message(
             `Order created ${data.orderType} ${data.side} order on ${data.symbol} at ${price} (edge: ${data.edge}).`

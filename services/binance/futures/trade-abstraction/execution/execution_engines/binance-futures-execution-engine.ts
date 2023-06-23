@@ -9,7 +9,13 @@ import { Logger } from "../../../../../../interfaces/logger"
 import { strict as assert } from "assert"
 import { MarketIdentifier_V4, MarketIdentifier_V5 } from "../../../../../../events/shared/market-identifier"
 import { ExchangeIdentifier_V4 } from "../../../../../../events/shared/exchange-identifier"
-import binance, { FuturesOrder, NewFuturesOrder, OrderSide, OrderType } from "binance-api-node"
+import binance, {
+  FuturesOrder,
+  FuturesOrderType_LT,
+  NewFuturesOrder,
+  OrderSide,
+  OrderType,
+} from "binance-api-node"
 import { Binance, ExchangeInfo } from "binance-api-node"
 import { BinanceFuturesExchangeInfoGetter } from "../../../../../../classes/exchanges/binance/exchange-info-getter"
 import { randomUUID } from "crypto"
@@ -104,7 +110,7 @@ export class BinanceFuturesExecutionEngine {
     return ee
   }
 
-  async get_exchange_info(): Promise<ExchangeInfo> {
+  async get_exchange_info(): Promise<ExchangeInfo<FuturesOrderType_LT>> {
     return await this.ei_getter.get_exchange_info()
   }
 
@@ -289,7 +295,7 @@ export class BinanceFuturesExecutionEngine {
     /* docs: https://binance-docs.github.io/apidocs/futures/en/#new-order-trade */
 
     // munge limitPrice and quantity
-    let exchange_info: ExchangeInfo = await this.ei_getter.get_exchange_info()
+    let exchange_info = await this.ei_getter.get_exchange_info()
     let price = this.munger.munge_and_check_price({ exchange_info, price: cmd.sell_limit_price, symbol })
 
     let base_amount = cmd.quote_amount.dividedBy(cmd.sell_limit_price)
@@ -300,7 +306,7 @@ export class BinanceFuturesExecutionEngine {
       symbol,
       type,
       quantity: base_amount.toString(),
-      price: price.toNumber(),
+      price: price.toString(),
       newClientOrderId: clientOrderId,
       timeInForce: "IOC",
       newOrderRespType: "RESULT",
@@ -478,7 +484,7 @@ export class BinanceFuturesExecutionEngine {
       let prefix = `${cmd.market_identifier.symbol}: `
 
       // Create two orders - STOP_MARKET and TAKE_PROFIT_MARKET
-      let exchange_info: ExchangeInfo = await this.ei_getter.get_exchange_info()
+      let exchange_info = await this.ei_getter.get_exchange_info()
 
       /** TODO: Add STOP */
       let created_stop_order = false
@@ -493,7 +499,7 @@ export class BinanceFuturesExecutionEngine {
 
         let stopPrice = this.munger
           .munge_and_check_price({ exchange_info, symbol, price: cmd.stop_price })
-          .toNumber()
+          .toString()
 
         let type = OrderType.STOP_MARKET
         let stop_order_cmd: NewFuturesOrder = {
@@ -524,7 +530,7 @@ export class BinanceFuturesExecutionEngine {
 
         let stopPrice = this.munger
           .munge_and_check_price({ exchange_info, symbol, price: cmd.take_profit_price })
-          .toNumber()
+          .toString()
 
         let type = OrderType.TAKE_PROFIT_MARKET
         let take_profit_order_cmd: NewFuturesOrder = {

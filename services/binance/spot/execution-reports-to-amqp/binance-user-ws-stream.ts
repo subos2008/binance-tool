@@ -18,6 +18,7 @@ import {
   MarginCall,
   OutboundAccountInfo,
   OutboundAccountPosition,
+  UserDataStreamEvent,
 } from "binance-api-node"
 import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 
@@ -85,7 +86,7 @@ export class BinanceUserWSStream {
     const process_execution_report: processor_func = async (data: ExecutionReport) => {
       try {
         if (data.eventType === "executionReport") {
-          this.callbacks.process_execution_report(data)
+          await this.callbacks.process_execution_report(data)
         } else {
           this.logger.error({}, `Ignoring eventType: ${(data as any).eventType}`)
         }
@@ -108,11 +109,17 @@ export class BinanceUserWSStream {
       case "spot":
         this.closeUserWebsocket = await this.ee.ws.user(
           async (
-            data: OutboundAccountInfo | ExecutionReport | BalanceUpdate | OutboundAccountPosition | MarginCall
+            data:
+              | OutboundAccountInfo
+              | ExecutionReport
+              | BalanceUpdate
+              | OutboundAccountPosition
+              | MarginCall
+              | UserDataStreamEvent
           ) => {
             this.logger.info(data)
             if (data.eventType === "executionReport") {
-              process_execution_report(data)
+              await process_execution_report(data)
             }
           }
         )

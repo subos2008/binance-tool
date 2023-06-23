@@ -54,6 +54,15 @@ export class StaticBinanceAlgoUtils {
     return symbol_data.filters
   }
 
+  static get_symbol_order_types({ exchange_info, symbol }: { exchange_info: ExchangeInfo; symbol: string }) {
+    let symbol_data = exchange_info.symbols.find((ei: any) => ei.symbol === symbol)
+    if (!symbol_data) {
+      // TODO: some kind of UnrecognisedPairError class?
+      throw new Error(`Could not find exchange info for ${symbol}`)
+    }
+    return symbol_data.orderTypes
+  }
+
   static munge_and_check_quantity({
     exchange_info,
     symbol,

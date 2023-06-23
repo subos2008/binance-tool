@@ -2,7 +2,6 @@
 
 import { ServiceLogger } from "../interfaces/logger"
 import { BunyanServiceLogger } from "../lib/service-logger"
-import { BinanceAlgoUtils } from "../services/binance/spot/trade-abstraction-v2/execution/execution_engines/_internal/binance_algo_utils_v2"
 
 const logger: ServiceLogger = new BunyanServiceLogger({ silent: false })
 
@@ -26,6 +25,9 @@ async function main() {
 
   let filters = StaticBinanceAlgoUtils.get_symbol_filters({ exchange_info, symbol: "BTCUSDT" })
   console.log(filters)
+
+  let order_types = StaticBinanceAlgoUtils.get_symbol_order_types({ exchange_info, symbol: "BTCUSDT" })
+  console.log(order_types)
 }
 
 main().catch((err) => console.error(err))

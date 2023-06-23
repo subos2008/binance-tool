@@ -45,7 +45,7 @@ export class StaticBinanceAlgoUtils {
     this.exchange_info_getter = exchange_info_getter
   }
 
-  private static get_symbol_filters({ exchange_info, symbol }: { exchange_info: ExchangeInfo; symbol: string }) {
+  static get_symbol_filters({ exchange_info, symbol }: { exchange_info: ExchangeInfo; symbol: string }) {
     let symbol_data = exchange_info.symbols.find((ei: any) => ei.symbol === symbol)
     if (!symbol_data) {
       // TODO: some kind of UnrecognisedPairError class?
@@ -128,13 +128,13 @@ export class StaticBinanceAlgoUtils {
       return price // don't munge zero, special case for market buys
     }
     let filters = this.get_symbol_filters({ exchange_info, symbol })
-    let ret = filters.find((eis: any) => eis.filterType === "MIN_NOTIONAL") as SymbolMinNotionalFilter | undefined
-    if (!ret) throw new Error(`Return undefined getting filter for MIN_NOTIONAL`)
+    let ret = filters.find((eis: any) => eis.filterType === "NOTIONAL") as SymbolMinNotionalFilter | undefined
+    if (!ret) throw new Error(`Return undefined getting filter for NOTIONAL`)
     const { notional } = ret
     let quote_volume = price.times(volume)
     if (quote_volume.isLessThan(notional)) {
       throw new Error(
-        `does not meet minimum order value ${notional} (MIN_NOTIONAL) (Buy of ${volume} at ${price} = ${quote_volume}).`
+        `does not meet minimum order value ${notional} (NOTIONAL) (Buy of ${volume} at ${price} = ${quote_volume}).`
       )
     }
   }

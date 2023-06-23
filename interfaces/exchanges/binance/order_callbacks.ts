@@ -26,7 +26,13 @@
 //   totalQuoteTradeQuantity: string;
 // }
 
-import { ExecutionReport, OrderRejectReason, OrderStatus_LT, OrderType_LT } from "binance-api-node"
+import {
+  ExecutionReport,
+  FuturesOrderType_LT,
+  OrderRejectReason,
+  OrderStatus_LT,
+  OrderType_LT,
+} from "binance-api-node"
 import { ExchangeIdentifier_V4, ExchangeType } from "../../../events/shared/exchange-identifier"
 import { PureEvent } from "../../logger"
 import { OrderContext_V1 } from "../../orders/order-context"
@@ -58,7 +64,7 @@ export interface BinanceOrderData /* extends ExecutionReport */ {
   totalTradeQuantity: string // NB: we might rename this to totalBaseTradeQuantity in exchange_neutral
   symbol: string
   side: "BUY" | "SELL"
-  orderType: OrderType_LT
+  orderType: OrderType_LT | FuturesOrderType_LT // looks like the API wrapper incorrectly changed their type here to FuturesOrderType_LT
   isOrderWorking: boolean // for stop loss limits this is false on creation and true once triggered
   orderRejectReason: OrderRejectReason
   price: string
@@ -81,7 +87,7 @@ export interface FuturesBinanceOrderData /* extends OrderUpdate */ {
   totalTradeQuantity: string // NB: we might rename this to totalBaseTradeQuantity in exchange_neutral
   symbol: string
   side: "BUY" | "SELL"
-  orderType: OrderType_LT
+  orderType: FuturesOrderType_LT
   // isOrderWorking: boolean // for stop loss limits this is false on creation and true once triggered
   // orderRejectReason: OrderRejectReason
   price: string

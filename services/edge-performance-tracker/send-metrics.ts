@@ -9,7 +9,7 @@ export class SendMetrics {
 
   constructor({ logger }: { logger: ServiceLogger }) {
     this.logger = logger
-    this.metrics = new InfluxDBMetrics({ logger, prefix: "trading_engine.edge_performance" })
+    this.metrics = new InfluxDBMetrics({ logger, prefix: "trading_engine.edge_performance", global_tags: {} })
   }
 
   async ingest_event(event: SpotEdgePerformanceEvent) {

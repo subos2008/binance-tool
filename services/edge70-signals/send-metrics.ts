@@ -9,10 +9,10 @@ export class SendMetrics {
 
   constructor({ logger }: { logger: ServiceLogger }) {
     this.logger = logger
-    this.metrics = new InfluxDBMetrics({ logger, prefix: "trading_engine.edge_signals" })
+    this.metrics = new InfluxDBMetrics({ logger, prefix: "edges.signals", global_tags: {} })
   }
 
-  async ingest_market_direction(event: MarketDirection) {
+  async ingest_market_direction(event: MarketDirection): Promise<void> {
     let {
       edge,
       exchange,

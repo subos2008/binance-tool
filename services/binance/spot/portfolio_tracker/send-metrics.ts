@@ -10,7 +10,7 @@ export class SendMetrics {
 
   constructor({ logger }: { logger: ServiceLogger }) {
     this.logger = logger
-    this.metrics = new InfluxDBMetrics({ logger, prefix: "trading_engine.portfolio" })
+    this.metrics = new InfluxDBMetrics({ logger, prefix: "trading_engine.portfolio", global_tags: {} })
   }
 
   async submit_portfolio_as_metrics({

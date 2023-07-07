@@ -41,33 +41,33 @@ export class InfluxDBMetrics implements SubmitMetrics {
     return `${this.prefix}.${metric_name}`
   }
 
-  async gauge({
-    metric_name,
-    values,
-    tags,
-  }: {
-    metric_name: string
-    values: MetricValue[]
-    tags: { [tag_name: string]: string }
-  }) {
-    try {
-      metric_name = this.build_metric_name(metric_name)
-      let point1 = new Point(metric_name)
+  // async gauge({
+  //   metric_name,
+  //   values,
+  //   tags,
+  // }: {
+  //   metric_name: string
+  //   values: MetricValue[]
+  //   tags: { [tag_name: string]: string }
+  // }) {
+  //   try {
+  //     metric_name = this.build_metric_name(metric_name)
+  //     let point1 = new Point(metric_name)
 
-      for (let key in tags) {
-        point1 = point1.tag(key, tags[key])
-      }
+  //     for (let key in tags) {
+  //       point1 = point1.tag(key, tags[key])
+  //     }
 
-      /* All values are type float by typescript */
-      // could use map for this...
-      for (let float_value of values.filter((v) => v.type == "float")) {
-        point1.floatField(float_value.name, float_value.value)
-      }
-      this.writeApi.writePoint(point1)
-    } catch (err) {
-      this.logger.exception(tags, err, `Error "${err}" uploading ${metric_name} to influxdb.`)
-    }
-  }
+  //     /* All values are type float by typescript */
+  //     // could use map for this...
+  //     for (let float_value of values.filter((v) => v.type == "float")) {
+  //       point1.floatField(float_value.name, float_value.value)
+  //     }
+  //     this.writeApi.writePoint(point1)
+  //   } catch (err) {
+  //     this.logger.exception(tags, err, `Error "${err}" uploading ${metric_name} to influxdb.`)
+  //   }
+  // }
 
   async increment_by_1({ metric_name, tags }: { metric_name: string; tags: { [tag_name: string]: string } }) {
     metric_name = this.build_metric_name(metric_name)
@@ -103,6 +103,9 @@ export class InfluxDBMetrics implements SubmitMetrics {
       // could use map for this...
       for (let float_value of values.filter((v) => v.type == "float")) {
         point1.floatField(float_value.name, float_value.value)
+      }
+      for (let float_value of values.filter((v) => v.type == "uint")) {
+        point1.uintField(float_value.name, float_value.value)
       }
       this.writeApi.writePoint(point1)
     } catch (err) {

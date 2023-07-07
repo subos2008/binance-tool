@@ -27,7 +27,7 @@ export class SendMetrics {
 
       if (portfolio.usd_value) {
         let tags: MetricTags = { exchange: exchange_identifier.exchange, exchange_type: exchange_identifier.type }
-        await this.metrics.gauge({
+        await this.metrics.metric({
           metric_name: `.spot.holdings.total`,
           values: [{ name: "usd_equiv", type: "float", value: portfolio.usd_value }],
           tags,
@@ -48,7 +48,7 @@ export class SendMetrics {
           // let account = exchange_identifier.account
           let tags: MetricTags = { base_asset, quote_asset /*exchange, account*/ }
 
-          await this.metrics.gauge({
+          await this.metrics.metric({
             metric_name: `.spot.holdings`,
             values: [{ name: quote_asset, type: "float", value: quote_amount }],
             tags,

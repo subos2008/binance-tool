@@ -9,7 +9,7 @@
 
 export type MetricValue = {
   name: string
-  type: "float" // implement other types in influx handler when expanding this list
+  type: "float" | "uint" // implement other types in influx handler when expanding this list
   value: string
 }
 
@@ -18,7 +18,7 @@ export type MetricTags = {
 }
 
 export type SubmitMetrics = {
-  gauge(args: { metric_name: string; values: MetricValue[]; tags: { [tag_name: string]: string } }): Promise<void>
+  // gauge(args: { metric_name: string; values: MetricValue[]; tags: { [tag_name: string]: string } }): Promise<void>
 
   /* More closely matches InfluxDB's way of doing things */
   metric(args: { metric_name: string; values: MetricValue[]; tags: { [tag_name: string]: string } }): Promise<void>

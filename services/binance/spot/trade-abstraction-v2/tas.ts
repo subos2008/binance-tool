@@ -36,7 +36,7 @@ import { RedisOrderContextPersistence } from "../../../../classes/persistent_sta
 import { RedisClientType } from "redis-v4"
 import { TradeAbstractionService } from "./trade-abstraction-service"
 import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execution_engines/binance-spot-execution-engine"
-import { SendDatadogMetrics } from "./send-datadog-metrics"
+import { SendMetrics } from "./send-metrics"
 import { QueryParamsToCmdMapper } from "./query-params-to-cmd-mapper"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 
@@ -93,7 +93,7 @@ async function main() {
   const order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
   const ee = new ExecutionEngine({ logger, order_context_persistence })
   const exchange_identifier = ee.get_exchange_identifier()
-  const metrics = new SendDatadogMetrics({ service_name, logger, exchange_identifier })
+  const metrics = new SendMetrics({ service_name, logger, exchange_identifier })
 
   let tas: TradeAbstractionService = new TradeAbstractionService({
     logger,

@@ -15,7 +15,7 @@ import { InfluxDBMetrics } from "../../../../lib/metrics/influxdb_metrics"
 export class SendMetrics {
   metrics: SubmitMetrics
   logger: ServiceLogger
-  global_tags: MetricTags
+  globa_tags: MetricTags
 
   constructor({
     service_name,
@@ -27,18 +27,22 @@ export class SendMetrics {
     logger: ServiceLogger
   }) {
     this.logger = logger
-    this.global_tags = {
+    this.globa_tags = {
       service_name,
       exchange_type: exchange_identifier.exchange_type,
       exchange: exchange_identifier.exchange,
     }
-    this.metrics = new InfluxDBMetrics({ logger, prefix: "trading_engine.tas" })
+    this.metrics = new InfluxDBMetrics({
+      logger,
+      prefix: "trading_engine.tas",
+      global_tags: this.globa_tags,
+    })
   }
 
   service_started() {
     this.metrics
-      .increment_by_1({ metric_name: `service_started`, tags: this.global_tags })
-      .catch((err) => this.logger.exception(this.global_tags, err, `Failed to submit metrics to DogStatsD`))
+      .increment_by_1({ metric_name: `service_started`, tags: {} })
+      .catch((err) => this.logger.exception(this.globa_tags, err, `Failed to submit metrics to DogStatsD`))
   }
 
   signal_to_cmd_received_slippage_ms({
@@ -55,7 +59,6 @@ export class SendMetrics {
         .minus(signal_timestamp_ms)
         .toFixed()
 
-      tags = Object.assign({}, this.global_tags, tags)
       this.metrics
         .metric({
           metric_name: "cmd_received",

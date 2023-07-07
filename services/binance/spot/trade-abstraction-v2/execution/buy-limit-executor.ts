@@ -17,7 +17,7 @@ import {
   TradeAbstractionOpenLongCommand_StopLimitExit,
   TradeAbstractionOpenLongResult,
 } from "../interfaces/long"
-import { SendDatadogMetrics } from "./send-datadog-metrics"
+import { SendMetrics } from "./send-metrics"
 
 /* Edge specific code */
 import { CurrentPriceGetter } from "../../../../../interfaces/exchanges/generic/price-getter"
@@ -50,7 +50,7 @@ export class SpotPositionsExecution_BuyLimit {
   position_sizer: PositionSizer
   positions_persistance: SpotPositionsPersistence
   price_getter: CurrentPriceGetter
-  metrics: SendDatadogMetrics
+  metrics: SendMetrics
 
   constructor({
     logger,
@@ -76,7 +76,7 @@ export class SpotPositionsExecution_BuyLimit {
     this.position_sizer = position_sizer
     this.price_getter = price_getter
     let exchange_identifier = this.ee.get_exchange_identifier()
-    this.metrics = new SendDatadogMetrics({ logger, exchange_identifier })
+    this.metrics = new SendMetrics({ logger, exchange_identifier })
   }
 
   // Used when constructing orders

@@ -33,7 +33,7 @@ import {
 import { OrderContextPersistence } from "../../../../../../classes/persistent_state/interface/order-context-persistence"
 import { OrderContext_V1, OrderContext_V2 } from "../../../../../../interfaces/orders/order-context"
 import { BinanceStyleSpotPrices } from "../../../../../../classes/spot/abstractions/position-identifier"
-import { SendDatadogMetrics } from "../send-datadog-metrics"
+import { SendMetrics } from "../send-metrics"
 import { ContextTags, TradeContextTags } from "../../../../../../interfaces/send-message"
 
 // Binance Keys
@@ -57,7 +57,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
   logger: ServiceLogger
   ei_getter: BinanceExchangeInfoGetter
   order_context_persistence: OrderContextPersistence
-  metrics: SendDatadogMetrics
+  metrics: SendMetrics
 
   constructor({
     logger,
@@ -72,7 +72,7 @@ export class BinanceSpotExecutionEngine /*implements SpotExecutionEngine*/ {
     this.ei_getter = new BinanceExchangeInfoGetter({ ee })
     this.order_context_persistence = order_context_persistence
     let exchange_identifier = this.get_exchange_identifier()
-    this.metrics = new SendDatadogMetrics({ logger, exchange_identifier })
+    this.metrics = new SendMetrics({ logger, exchange_identifier })
   }
 
   get_exchange_identifier(): ExchangeIdentifier_V4 {

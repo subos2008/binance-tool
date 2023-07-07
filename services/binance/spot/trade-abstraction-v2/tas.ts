@@ -7,7 +7,6 @@
 import { config } from "../../../../config"
 const quote_asset = config.binance.spot.tas_quote_asset.toUpperCase()
 
-import { strict as assert } from "assert"
 require("dotenv").config()
 const service_name = "spot-trade-abstraction"
 

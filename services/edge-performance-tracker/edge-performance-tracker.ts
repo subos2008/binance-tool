@@ -28,7 +28,7 @@ import { get_redis_client } from "../../lib/redis-v4"
 import { RedisClientType } from "redis-v4"
 import { UploadToMongoDB } from "./upload-for-tableau-via-mongodb"
 import { SpotEdgePerformanceEvent } from "./interfaces"
-import { SendDatadogMetrics } from "./send-datadog-metrics"
+import { SendMetrics } from "./send-metrics"
 import { SendMessage } from "../../classes/send_message/publish"
 import { ContextTags, SendMessageFunc } from "../../interfaces/send-message"
 import { TypedMessageProcessor } from "../../classes/amqp/interfaces"
@@ -61,7 +61,7 @@ class EventLogger implements TypedMessageProcessor<SpotPositionClosed> {
   health_and_readiness: HealthAndReadiness
   persistence: RedisEdgePerformancePersistence
   mongodb_uploader: UploadToMongoDB
-  metrics: SendDatadogMetrics
+  metrics: SendMetrics
   constructor({
     send_message,
     logger,
@@ -80,7 +80,7 @@ class EventLogger implements TypedMessageProcessor<SpotPositionClosed> {
     this.health_and_readiness = health_and_readiness
     this.persistence = persistence
     this.mongodb_uploader = new UploadToMongoDB()
-    this.metrics = new SendDatadogMetrics()
+    this.metrics = new SendMetrics({ logger })
   }
 
   async start() {
@@ -89,7 +89,7 @@ class EventLogger implements TypedMessageProcessor<SpotPositionClosed> {
 
   async register_message_processors() {
     let listener_factory = new TypedListenerFactory({ logger })
-    listener_factory.build_listener<SpotPositionClosed>({
+    await listener_factory.build_listener<SpotPositionClosed>({
       event_name: this.event_name,
       message_processor: this,
       health_and_readiness,
@@ -183,7 +183,7 @@ async function main() {
   })
 
   let foo = new EventLogger({ logger, send_message, health_and_readiness, persistence })
-  foo.start()
+  await foo.start()
 }
 
 main().catch((err) => {

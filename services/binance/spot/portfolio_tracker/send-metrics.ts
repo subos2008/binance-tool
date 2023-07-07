@@ -1,8 +1,6 @@
 import { ExchangeIdentifier_V3 } from "../../../../events/shared/exchange-identifier"
 import { Portfolio } from "../../../../interfaces/portfolio"
 import { ServiceLogger } from "../../../../interfaces/logger"
-
-import Sentry from "../../../../lib/sentry"
 import { MetricTags, SubmitMetrics } from "../../../../interfaces/metrics"
 import { InfluxDBMetrics } from "../../../../lib/metrics/influxdb_metrics"
 
@@ -12,9 +10,7 @@ export class SendMetrics {
 
   constructor({ logger }: { logger: ServiceLogger }) {
     this.logger = logger
-    this.metrics = new InfluxDBMetrics({logger,
-      prefix: "trading_engine.portfolio",
-    })
+    this.metrics = new InfluxDBMetrics({ logger, prefix: "trading_engine.portfolio" })
   }
 
   async submit_portfolio_as_metrics({
@@ -60,8 +56,7 @@ export class SendMetrics {
         }
       }
     } catch (err) {
-      Sentry.captureException(err)
-      console.error(err)
+      this.logger.exception({}, err)
     }
   }
 }

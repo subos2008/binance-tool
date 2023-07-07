@@ -36,6 +36,11 @@ export class InfluxDBMetrics implements SubmitMetrics {
     )
   }
 
+  private build_metric_name(metric_name: string): string {
+    metric_name.replace(/^\.+/, "") // Remove leading '.'s
+    return `${this.prefix}.${metric_name}`
+  }
+
   async gauge({
     metric_name,
     values,
@@ -46,6 +51,7 @@ export class InfluxDBMetrics implements SubmitMetrics {
     tags: { [tag_name: string]: string }
   }) {
     try {
+      metric_name = this.build_metric_name(metric_name)
       let point1 = new Point(metric_name)
 
       for (let key in tags) {
@@ -64,6 +70,7 @@ export class InfluxDBMetrics implements SubmitMetrics {
   }
 
   async increment_by_1({ metric_name, tags }: { metric_name: string; tags: { [tag_name: string]: string } }) {
+    metric_name = this.build_metric_name(metric_name)
     let point1 = new Point(metric_name)
 
     for (let key in tags) {
@@ -73,5 +80,33 @@ export class InfluxDBMetrics implements SubmitMetrics {
     /** Sum all the counts in a timeframe to see the 'count'... */
     point1.intField("count", 1)
     this.writeApi.writePoint(point1)
+  }
+
+  async metric({
+    metric_name,
+    values,
+    tags,
+  }: {
+    metric_name: string
+    values: MetricValue[]
+    tags: { [tag_name: string]: string }
+  }) {
+    try {
+      metric_name = this.build_metric_name(metric_name)
+      let point1 = new Point(metric_name)
+
+      for (let key in tags) {
+        point1 = point1.tag(key, tags[key])
+      }
+
+      /* All values are type float by typescript */
+      // could use map for this...
+      for (let float_value of values.filter((v) => v.type == "float")) {
+        point1.floatField(float_value.name, float_value.value)
+      }
+      this.writeApi.writePoint(point1)
+    } catch (err) {
+      this.logger.exception(tags, err, `Error "${err}" uploading ${metric_name} to influxdb.`)
+    }
   }
 }

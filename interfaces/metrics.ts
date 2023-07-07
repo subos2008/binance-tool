@@ -20,6 +20,9 @@ export type MetricTags = {
 export type SubmitMetrics = {
   gauge(args: { metric_name: string; values: MetricValue[]; tags: { [tag_name: string]: string } }): Promise<void>
 
+  /* More closely matches InfluxDB's way of doing things */
+  metric(args: { metric_name: string; values: MetricValue[]; tags: { [tag_name: string]: string } }): Promise<void>
+
   increment_by_1({
     metric_name,
     tags,

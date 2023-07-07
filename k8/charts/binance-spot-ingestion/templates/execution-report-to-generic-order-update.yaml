@@ -56,6 +56,6 @@ spec:
             - name: SENTRY_DSN
               value: "https://b411a42ab0234ac493f54d470b18d1d2@o369902.ingest.sentry.io/4504357563924480"
 {{- include "binance-spot-ro.vars" . | nindent 12 }}
-{{- include "datadog.vars" . | nindent 12 }}
+{{- include "influxdb.vars" . | nindent 12 }}
 {{- include "telegram.vars" . | nindent 12 }}
 {{- include "amqp.vars" . | nindent 12 }}

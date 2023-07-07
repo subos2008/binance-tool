@@ -146,3 +146,4 @@ Environment variables
     fieldRef:
       fieldPath: metadata.labels['tags.datadoghq.com/service']
 {{- end -}}
+

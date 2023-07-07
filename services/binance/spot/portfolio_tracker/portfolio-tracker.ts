@@ -39,7 +39,7 @@ import {
   ExchangeIdentifier_V3,
   ExchangeIdentifier_V4,
 } from "../../../../events/shared/exchange-identifier"
-import { SendDatadogMetrics } from "./send-datadog-metrics"
+import { SendMetrics } from "./send-metrics"
 import { SendMessageFunc } from "../../../../interfaces/send-message"
 import express from "express"
 import { ServiceLogger } from "../../../../interfaces/logger"
@@ -70,14 +70,14 @@ class PortfolioTracker implements MasterPortfolioClass {
   ee: any
   portfolios: { [exchange: string]: SpotPortfolio } = {}
   exchanges: { [exchange: string]: PortfolioBitchClass } = {}
-  metrics: SendDatadogMetrics
+  metrics: SendMetrics
 
   constructor({ send_message, logger }: { send_message: SendMessageFunc; logger: ServiceLogger }) {
     assert(logger)
     this.logger = logger
     assert(send_message)
     this.send_message = send_message
-    this.metrics = new SendDatadogMetrics({ logger })
+    this.metrics = new SendMetrics({ logger })
   }
 
   async set_portfolio_for_exchange({

@@ -6,7 +6,7 @@ export class InfluxDBMetrics implements SubmitMetrics {
   logger: ServiceLogger
   prefix: string
   global_tags: MetricTags
-  writeApi: WriteApi
+  writeApi: WriteApi | undefined
 
   constructor({
     logger,
@@ -23,25 +23,27 @@ export class InfluxDBMetrics implements SubmitMetrics {
 
     const INFLUXDB_TOKEN = process.env.INFLUXDB_TOKEN
     if (!INFLUXDB_TOKEN) {
-      throw new Error(`INFLUXDB_TOKEN not defined`)
+      this.logger.exception({}, new Error(`INFLUXDB_TOKEN not defined`))
     }
     const INFLUXDB_HOST = process.env.INFLUXDB_HOST
     if (!INFLUXDB_HOST) {
-      throw new Error(`INFLUXDB_HOST not defined`)
+      this.logger.exception({}, new Error(`INFLUXDB_HOST not defined`))
     }
     const INFLUXDB_ORG_ID = process.env.INFLUXDB_ORG_ID
     if (!INFLUXDB_ORG_ID) {
-      throw new Error(`INFLUXDB_ORG_ID not defined`)
+      this.logger.exception({}, new Error(`INFLUXDB_ORG_ID not defined`))
     }
     const INFLUXDB_BUCKET = process.env.INFLUXDB_BUCKET
     if (!INFLUXDB_BUCKET) {
-      throw new Error(`INFLUXDB_BUCKET not defined`)
+      this.logger.exception({}, new Error(`INFLUXDB_BUCKET not defined`))
     }
-    this.writeApi = new InfluxDB({ url: INFLUXDB_HOST, token: INFLUXDB_TOKEN }).getWriteApi(
-      INFLUXDB_ORG_ID,
-      INFLUXDB_BUCKET,
-      "s"
-    )
+    if (INFLUXDB_HOST && INFLUXDB_TOKEN && INFLUXDB_ORG_ID && INFLUXDB_BUCKET) {
+      this.writeApi = new InfluxDB({ url: INFLUXDB_HOST, token: INFLUXDB_TOKEN }).getWriteApi(
+        INFLUXDB_ORG_ID,
+        INFLUXDB_BUCKET,
+        "s"
+      )
+    }
   }
 
   private build_metric_name(metric_name: string): string {
@@ -78,6 +80,10 @@ export class InfluxDBMetrics implements SubmitMetrics {
   // }
 
   async increment_by_1({ metric_name, tags }: { metric_name: string; tags: { [tag_name: string]: string } }) {
+    if (!this.writeApi) {
+      this.logger.warn(`Failed to submit metric, not configured`)
+      return
+    }
     metric_name = this.build_metric_name(metric_name)
     let point1 = new Point(metric_name)
 
@@ -103,6 +109,10 @@ export class InfluxDBMetrics implements SubmitMetrics {
     values: MetricValue[]
     tags: { [tag_name: string]: string }
   }) {
+    if (!this.writeApi) {
+      this.logger.warn(`Failed to submit metric, not configured`)
+      return
+    }
     try {
       metric_name = this.build_metric_name(metric_name)
       let point1 = new Point(metric_name)

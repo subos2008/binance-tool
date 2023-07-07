@@ -66,8 +66,8 @@ export class Commands {
     // Set the bot response
     // Order is important
     bot.help((ctx) => ctx.replyWithHTML(help_text))
-    bot.command("hi", (ctx) => {
-      ctx.reply("Yep, I'm here!")
+    bot.command("hi", async (ctx) => {
+      await ctx.reply("Yep, I'm here!")
       console.info(JSON.stringify(ctx))
     })
     // bot.command("spot", Commands.spot)
@@ -83,21 +83,23 @@ export class Commands {
         await this.spot(ctx, args.slice(1))
       } else if (args[0] == "/positions") {
         await this.list_positions(ctx, args.slice(1))
+      } else if (args[0] == "/move-stop") {
+        await this.move_stop(ctx, args.slice(1))
       } else if (args[0] == "/futures") {
         await this.futures.futures(ctx)
       } else {
         // Not a command - just people speaking in a channel
-        ctx.reply(`Unrecognised: ${ctx.message.text}`)
+        // await  ctx.reply(`Unrecognised: ${ctx.message.text}`)
       }
     } catch (err) {
-      ctx.reply(`Internal error 🤪`)
+      await ctx.reply(`Internal error 🤪`)
     }
   }
 
   async list_positions(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
     let postions = await this.spot_tas_client.positions()
     if (postions.length == 0) {
-      ctx.reply(`No open positions.`)
+      await ctx.reply(`No open positions.`)
       return
     }
     let msg = postions
@@ -109,8 +111,26 @@ export class Commands {
       )
       .join("\n")
 
-    ctx.reply(msg)
+    await ctx.reply(msg)
   }
+
+  // async move_stop(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
+  //   let postions = await this.spot_tas_client.positions()
+  //   if (postions.length == 0) {
+  //     ctx.reply(`No open positions.`)
+  //     return
+  //   }
+  //   let msg = postions
+  //     .map(
+  //       (pi) =>
+  //         `${pi.exchange_identifier.exchange} ${pi.exchange_identifier.exchange_type}  ${
+  //           pi.edge
+  //         }:${pi.base_asset.toUpperCase()}`
+  //     )
+  //     .join("\n")
+
+  //   await ctx.reply(msg)
+  // }
 
   async spot(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
     let [command, edge_unchecked, base_asset] = args
@@ -119,7 +139,9 @@ export class Commands {
       base_asset = base_asset.toUpperCase()
       let valid_commands = ["long", "close"]
       if (!valid_commands.includes(command)) {
-        ctx.replyWithHTML(`Invalid command for /spot '${command}, valid commands are ${valid_commands.join(", ")}`)
+        await ctx.replyWithHTML(
+          `Invalid command for /spot '${command}, valid commands are ${valid_commands.join(", ")}`
+        )
         return
       }
 
@@ -135,7 +157,7 @@ export class Commands {
     } catch (err: any) {
       this.logger.exception(tags, err, `Looks like command failed: ${err.message}`)
       Sentry.captureException(err)
-      ctx.reply(`Looks like it failed: ${err.message}`)
+      await ctx.reply(`Looks like it failed: ${err.message}`)
     }
   }
 
@@ -159,7 +181,7 @@ export class Commands {
     }
     this.logger.command(tags, cmd, "created")
     let result: TradeAbstractionOpenLongResult = await this.spot_tas_client.long(cmd)
-    ctx.reply(`Spot long entry on ${edge}:${base_asset}: ${result.status}`)
+    await ctx.reply(`Spot long entry on ${edge}:${base_asset}: ${result.status}`)
     this.logger.result(tags, result, "consumed")
   }
 
@@ -169,7 +191,7 @@ export class Commands {
   ): Promise<void> {
     let tags = { edge, base_asset }
     let msg = `${edge.toUpperCase()}: closing spot long on ${base_asset}`
-    ctx.reply(msg)
+    await ctx.reply(msg)
     let cmd: TradeAbstractionCloseCommand = {
       object_type: "TradeAbstractionCloseCommand",
       object_class: "command",
@@ -182,7 +204,7 @@ export class Commands {
     this.logger.command(tags, cmd, "created")
     let result: TradeAbstractionCloseResult = await this.spot_tas_client.close(cmd)
     this.logger.result(tags, result, "consumed")
-    ctx.reply(`Spot long close on ${edge}:${base_asset}: ${result.status}`)
+    await ctx.reply(`Spot long close on ${edge}:${base_asset}: ${result.status}`)
   }
 }
 

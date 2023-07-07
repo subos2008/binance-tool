@@ -15,8 +15,6 @@ Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-var service_is_healthy: boolean = true
-
 import express, { Request, Response } from "express"
 import { Telegraf } from "telegraf"
 import { Commands } from "./commands"
@@ -99,16 +97,18 @@ const secretPath = `/telegraf/bert/${bot.secretPathComponent()}`
 // bot.telegram.setWebhook(`https://bert.ryancocks.net${secretPath}`)
 // app.use(bot.webhookCallback(secretPath))
 
-bot.launch({
-  dropPendingUpdates: true,
-  webhook: {
-    hookPath: secretPath,
-    domain: "bert.ryancocks.net", // required
-    port: Number(process.env.PORT),
-    cb: app, // Express integration,
-    // tlsOptions: {}, // ... hmm, how do I force https? https is done by the ingress
-  },
-})
+bot
+  .launch({
+    dropPendingUpdates: true,
+    webhook: {
+      hookPath: secretPath,
+      domain: "bert.ryancocks.net", // required
+      port: Number(process.env.PORT),
+      cb: app, // Express integration,
+      // tlsOptions: {}, // ... hmm, how do I force https? https is done by the ingress
+    },
+  })
+  .catch((err) => logger.exception({}, err))
 
 // Finally, start our server
 // $  npm install -g localtunnel && lt --port 3000

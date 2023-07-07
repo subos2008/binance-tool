@@ -70,6 +70,7 @@ export class InfluxDBMetrics implements SubmitMetrics {
       point1 = point1.tag(key, tags[key])
     }
 
+    /** Sum all the counts in a timeframe to see the 'count'... */
     point1.intField("count", 1)
     this.writeApi.writePoint(point1)
   }

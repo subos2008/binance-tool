@@ -59,6 +59,6 @@ spec:
               value: "https://f999d04298a34caa82c13839699a266f@o369902.ingest.sentry.io/5735251"
 {{- include "telegram.vars" . | nindent 12 }}
 {{- include "binance.vars" . | nindent 12 }}
-{{- include "datadog.vars" . | nindent 12 }}
+{{- include "influxdb.vars" . | nindent 12 }}
 {{- include "amqp.vars" . | nindent 12 }}
 {{- include "redis.vars" . | nindent 12 }}

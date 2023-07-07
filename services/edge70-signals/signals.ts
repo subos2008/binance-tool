@@ -28,7 +28,8 @@ import { HealthAndReadiness, HealthAndReadinessSubsystem } from "../../classes/h
 import { MarketIdentifier_V5_with_base_asset } from "../../events/shared/market-identifier"
 import { SendMessageFunc } from "../../interfaces/send-message"
 import { Direction, DirectionPersistence } from "./interfaces/direction-persistance"
-import { SendInfluxDBMetrics } from "./send-influxdb-metrics"
+import { InfluxDBMetrics } from "../../lib/metrics/influxdb_metrics"
+import { SendMetrics } from "./send-metrics"
 
 /* Instantiated per asset; each exchange symbol has its own instance of this class */
 export class Edge70Signals {
@@ -46,7 +47,7 @@ export class Edge70Signals {
   price_history_candles_long: LimitedLengthCandlesHistory
   price_history_candles_short: LimitedLengthCandlesHistory
 
-  metrics: SendInfluxDBMetrics
+  metrics: SendMetrics
 
   constructor({
     logger,
@@ -78,10 +79,12 @@ export class Edge70Signals {
     this.callbacks = callbacks
     this.edge70_parameters = edge70_parameters
     this.direction_persistance = direction_persistance
-    if (edge) this.edge = edge
+    if (edge) {
+      this.edge = edge
+    }
     this.health_and_readiness = health_and_readiness
 
-    this.metrics = new SendInfluxDBMetrics({ logger })
+    this.metrics = new SendMetrics({ logger })
 
     this.price_history_candles_long = new LimitedLengthCandlesHistory({
       length: edge70_parameters.candles_of_price_history.long,

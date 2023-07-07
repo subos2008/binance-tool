@@ -1,17 +1,25 @@
 import { ServiceLogger } from "../../interfaces/logger"
-import { MetricValue, SubmitMetrics } from "../../interfaces/metrics"
-
-import { StatsD, Tags } from "hot-shots"
+import { MetricTags, MetricValue, SubmitMetrics } from "../../interfaces/metrics"
 import { InfluxDB, Point, WriteApi } from "@influxdata/influxdb-client"
 
 export class InfluxDBMetrics implements SubmitMetrics {
   logger: ServiceLogger
   prefix: string
+  global_tags: MetricTags
   writeApi: WriteApi
 
-  constructor({ logger, prefix }: { logger: ServiceLogger; prefix: string }) {
+  constructor({
+    logger,
+    prefix,
+    global_tags,
+  }: {
+    logger: ServiceLogger
+    prefix: string
+    global_tags: MetricTags
+  }) {
     this.logger = logger
     this.prefix = prefix
+    this.global_tags = global_tags
 
     const INFLUXDB_TOKEN = process.env.INFLUXDB_TOKEN
     if (!INFLUXDB_TOKEN) {
@@ -73,6 +81,10 @@ export class InfluxDBMetrics implements SubmitMetrics {
     metric_name = this.build_metric_name(metric_name)
     let point1 = new Point(metric_name)
 
+    for (let key in this.global_tags) {
+      point1 = point1.tag(key, tags[key])
+    }
+
     for (let key in tags) {
       point1 = point1.tag(key, tags[key])
     }
@@ -94,6 +106,10 @@ export class InfluxDBMetrics implements SubmitMetrics {
     try {
       metric_name = this.build_metric_name(metric_name)
       let point1 = new Point(metric_name)
+
+      for (let key in this.global_tags) {
+        point1 = point1.tag(key, tags[key])
+      }
 
       for (let key in tags) {
         point1 = point1.tag(key, tags[key])

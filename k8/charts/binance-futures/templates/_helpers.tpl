@@ -147,3 +147,20 @@ Environment variables
       fieldPath: metadata.labels['tags.datadoghq.com/service']
 {{- end -}}
 
+{{- define "influxdb.vars" -}}
+- name: INFLUXDB_HOST
+  valueFrom:
+    secretKeyRef:
+      key: INFLUXDB_HOST
+      name: influxdb
+- name: INFLUXDB_TOKEN
+  valueFrom:
+    secretKeyRef:
+      key: INFLUXDB_TOKEN
+      name: influxdb
+- name: INFLUXDB_ORG_ID
+  valueFrom:
+    secretKeyRef:
+      key: INFLUXDB_ORG_ID
+      name: influxdb
+{{- end -}}

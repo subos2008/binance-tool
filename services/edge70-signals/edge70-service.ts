@@ -155,6 +155,7 @@ class Edge70SignalsService {
   }
 
   async run() {
+    send_message(`Running Edge70 with configuration: ${JSON.stringify(edge70_parameters)}`)
     let base_assets_generator = new BaseAssetsList({
       logger: this.logger,
       exchange_info_getter: this.exchange_info_getter,

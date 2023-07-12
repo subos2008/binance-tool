@@ -16,6 +16,7 @@ export interface ContextTags {
   level?: "warn" | "error" | "debug" | "info" | "fatal"
   trade_id?: string
   status?: string // used for result status in some places
+  action?: string // used in cmd / result
 }
 
 export interface TradeContextTags extends ContextTags {

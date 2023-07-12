@@ -33,7 +33,7 @@ export class InfluxDBMetrics implements SubmitMetrics {
     if (!INFLUXDB_ORG_ID) {
       this.logger.exception({}, new Error(`INFLUXDB_ORG_ID not defined`))
     }
-    const INFLUXDB_BUCKET = process.env.INFLUXDB_BUCKET
+    const INFLUXDB_BUCKET = process.env.INFLUXDB_BUCKET || "binance-tool"
     if (!INFLUXDB_BUCKET) {
       this.logger.exception({}, new Error(`INFLUXDB_BUCKET not defined`))
     }

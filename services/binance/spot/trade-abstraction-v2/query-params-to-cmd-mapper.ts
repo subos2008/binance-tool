@@ -15,57 +15,61 @@ export class QueryParamsToCmdMapper {
   }
 
   /* You have to catch exceptions in the calling code */
-  check_inputs(
-    req: Request,
-    tags: Tags,
-    { cmd_received_timestamp_ms, quote_asset }: { cmd_received_timestamp_ms: number; quote_asset: string }
-  ): {
-    edge: string
-    base_asset: string
-    signal_timestamp_ms: number
-    trigger_price: string | undefined
-    tags: Tags
-    trade_id?: string
-  } {
-    let {
-      edge,
-      base_asset,
-      trigger_price,
-      signal_timestamp_ms: signal_timestamp_ms_string,
-      trade_id: trade_id_input,
-    } = req.query
 
-    assert(typeof edge == "string", new Error(`InputChecking: typeof edge unexpected`))
-    tags.edge = edge
-
-    // only get this on longs at the moment, needs sourcing for short and close
-    let trade_id: string | undefined
-    if (typeof trade_id_input == "string") {
-      trade_id = trade_id_input
-      // assert(typeof trade_id_input == "string", new Error(`InputChecking: typeof trade_id unexpected`))
-      assert(trade_id !== "", new Error(`InputChecking: trade_id was the empty string`))
-      tags.trade_id = trade_id
-    }
-
+  get_param_must_be_non_empty_string_OR_THROW(req: Request, param_name: string): string {
+    let value = req.query[param_name]
+    assert(typeof value == "string", new Error(`InputChecking: typeof ${param_name} unexpected`))
+    assert(!value, new Error(`InputChecking: ${param_name} is the empty string`))
+    return value
+  }
+  get_OPTIONAL_param_must_be_non_empty_string(req: Request, param_name: string): string | undefined {
+    let value = req.query[param_name]
+    if (!value) return
     assert(
-      typeof trigger_price == "string" || typeof trigger_price == "undefined",
-      new Error(`InputChecking: typeof trigger_price unexpected: ${typeof trigger_price}`)
+      typeof value == "string",
+      new Error(`InputChecking: typeof ${param_name} unexpected, got ${typeof value}`)
     )
-    assert(typeof base_asset == "string", new Error(`InputChecking: typeof base_asset unexpected`))
-    tags.base_asset = base_asset
+    return value
+  }
 
+  get_base_asset(req: Request): string {
+    return this.get_param_must_be_non_empty_string_OR_THROW(req, "base_asset")
+  }
+  get_edge(req: Request): string {
+    return this.get_param_must_be_non_empty_string_OR_THROW(req, "edge")
+  }
+
+  get_trade_id(req: Request): string | undefined {
+    return this.get_OPTIONAL_param_must_be_non_empty_string(req, "trade_id")
+  }
+
+  get_new_stop_price(req: Request): string {
+    return this.get_param_must_be_non_empty_string_OR_THROW(req, "new_stop_price")
+  }
+  get_trigger_price(req: Request): string {
+    return this.get_param_must_be_non_empty_string_OR_THROW(req, "trigger_price")
+  }
+  get_signal_timestamp_ms(req: Request): number {
+    let signal_timestamp_ms_string = this.get_OPTIONAL_param_must_be_non_empty_string(req, "signal_timestamp_ms")
     if (typeof signal_timestamp_ms_string == "undefined") {
-      signal_timestamp_ms_string = Date.now().toString()
+      return Date.now()
+    }
+    if (typeof signal_timestamp_ms_string == "string") {
+      return Number(signal_timestamp_ms_string)
+    }
+    if (typeof signal_timestamp_ms_string == "number") {
+      return Number(signal_timestamp_ms_string)
     }
 
-    assert(
-      typeof signal_timestamp_ms_string == "string",
-      new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms_string}`)
-    )
+    throw new Error(`InputChecking: typeof signal_timestamp_ms unexpected: ${typeof signal_timestamp_ms_string}`)
+  }
 
-    let signal_timestamp_ms = Number(signal_timestamp_ms_string)
-
-    return { edge, base_asset, signal_timestamp_ms, trigger_price, tags, trade_id }
+  get_trade_context(req: Request): {
+    base_asset: string
+    edge: string
+    trade_id?: string // Not known and needs looking up except when passed for opening trades
+  } {
+    return { base_asset: this.get_base_asset(req), edge: this.get_edge(req), trade_id: this.get_trade_id(req) }
   }
 
   close(
@@ -89,25 +93,23 @@ export class QueryParamsToCmdMapper {
     }
 
     /* input checking */
-    let edge, base_asset, signal_timestamp_ms, trigger_price
+    let edge: string, base_asset: string, signal_timestamp_ms: number, trigger_price: string
     try {
-      ;({ edge, base_asset, signal_timestamp_ms, trigger_price } = this.check_inputs(req, tags, {
-        cmd_received_timestamp_ms,
-        quote_asset,
-      }))
+      edge = this.get_edge(req)
+      base_asset = this.get_base_asset(req)
+      signal_timestamp_ms = this.get_signal_timestamp_ms(req)
+      trigger_price = this.get_trigger_price(req)
     } catch (err: any) {
       this.logger.exception(tags, err)
       let result: TradeAbstractionCloseResult = {
         object_type: "TradeAbstractionCloseResult",
         object_class: "result",
         version: 1,
-        base_asset,
         quote_asset,
-        edge,
         action,
         status: "BAD_INPUTS",
         http_status: 400,
-        msg: `TradeAbstractionCloseResult: ${edge}${base_asset}: BAD_INPUTS`,
+        msg: `TradeAbstractionCloseResult: BAD_INPUTS`,
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
       }
@@ -152,26 +154,29 @@ export class QueryParamsToCmdMapper {
     }
 
     /* input checking */
-    let edge, base_asset, signal_timestamp_ms, trigger_price, trade_id
+    let edge: string,
+      base_asset: string,
+      signal_timestamp_ms: number,
+      trigger_price: string,
+      trade_id: string | undefined
     try {
-      ;({ edge, base_asset, signal_timestamp_ms, trigger_price, trade_id } = this.check_inputs(req, tags, {
-        cmd_received_timestamp_ms,
-        quote_asset,
-      }))
+      edge = this.get_edge(req)
+      base_asset = this.get_base_asset(req)
+      signal_timestamp_ms = this.get_signal_timestamp_ms(req)
+      trigger_price = this.get_trigger_price(req)
+      trade_id = this.get_trade_id(req)
     } catch (err: any) {
       this.logger.exception(tags, err)
       let result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
         object_class: "result",
         version: 1,
-        base_asset,
         quote_asset,
-        edge,
         direction,
         action,
         status: "BAD_INPUTS",
         http_status: 400,
-        msg: `TradeAbstractionOpenLongResult: ${edge}${base_asset}: BAD_INPUTS`,
+        msg: `TradeAbstractionOpenLongResult: BAD_INPUTS`,
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
       }
@@ -191,6 +196,62 @@ export class QueryParamsToCmdMapper {
       base_asset,
       trigger_price,
       signal_timestamp_ms,
+    }
+    this.logger.command(tags, result, "created")
+    return { result, tags }
+  }
+
+  move_stop(
+    req: Request,
+    {
+      cmd_received_timestamp_ms,
+      quote_asset,
+      exchange_identifier,
+    }: { cmd_received_timestamp_ms: number; quote_asset: string; exchange_identifier: ExchangeIdentifier_V4 }
+  ): {
+    result: TradeAbstractionMoveStopResult | TradeAbstractionMoveStopCommand
+    tags: { [key: string]: string }
+  } {
+    const action = "move_stop"
+
+    let tags: Tags = {
+      quote_asset,
+      action,
+      exchange_type: exchange_identifier.exchange_type,
+      exchange: exchange_identifier.exchange,
+    }
+
+    /* input checking */
+    let edge: string, signal_timestamp_ms: number, new_stop_price: string, trade_context: TradeContext_with_optional_trade_id
+    try {
+      edge = this.get_edge(req)
+      signal_timestamp_ms = this.get_signal_timestamp_ms(req)
+      new_stop_price = this.get_new_stop_price(req)
+      trade_context = this.get_trade_context(req)
+    } catch (err: any) {
+      this.logger.exception(tags, err)
+      let result: TradeAbstractionMoveStopResult = {
+        object_type: "TradeAbstractionMoveStopResult",
+        object_class: "result",
+        version: 1,
+        action,
+        status: "BAD_INPUTS",
+        http_status: 400,
+        msg: `TradeAbstractionOpenLongResult: BAD_INPUTS`,
+        err,
+        execution_timestamp_ms: cmd_received_timestamp_ms,
+      }
+      this.logger.result({ ...tags, level: "error" }, result, "created")
+      return { result, tags }
+    }
+
+    let result: TradeAbstractionMoveStopCommand = {
+      object_type: "TradeAbstractionMoveStopCommand",
+      object_class: "command",
+      action,
+      new_stop_price,
+      signal_timestamp_ms,
+      trade_context
     }
     this.logger.command(tags, result, "created")
     return { result, tags }

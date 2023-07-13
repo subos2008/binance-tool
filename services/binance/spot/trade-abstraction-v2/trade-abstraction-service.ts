@@ -26,6 +26,7 @@ import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execu
 import { RedisClientType } from "redis-v4"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 import { ContextTags, SendMessageFunc, TradeContextTags } from "../../../../interfaces/send-message"
+import { OrderContextPersistence_V2 } from "../../../../classes/persistent_state/interface/order-context-persistence"
 
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands
@@ -43,12 +44,14 @@ export class TradeAbstractionService {
     ee,
     send_message,
     redis,
+    order_context_persistence,
   }: {
     logger: ServiceLogger
     quote_asset: string
     ee: ExecutionEngine
     send_message: SendMessageFunc
     redis: RedisClientType
+    order_context_persistence: OrderContextPersistence_V2
   }) {
     assert(logger)
     this.logger = logger
@@ -71,6 +74,7 @@ export class TradeAbstractionService {
     this.spot_ee = new SpotEdgeToExecutorMapper({
       logger,
       positions_persistance,
+      order_context_persistence,
       ee,
       send_message,
       price_getter,

@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios"
 import { ServiceLogger } from "../../../../../interfaces/logger"
+import { TradeAbstractionMoveStopCommand, TradeAbstractionMoveStopResult } from "../interfaces/move_stop"
 import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from "../interfaces/long"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "../interfaces/close"
 import { URL } from "url"
@@ -11,7 +12,7 @@ import {
 import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../../events/shared/exchange-identifier"
 import Sentry from "../../../../../lib/sentry"
 import { AxiosRetry } from "./axios-retry"
-import { TradeContextTags } from "../../../../../interfaces/send-message"
+import { ContextTags, TradeContextTags } from "../../../../../interfaces/send-message"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("class", "TradeAbstractionServiceClient")
 })
@@ -76,6 +77,27 @@ export class TradeAbstractionServiceClient {
       let tas_response = response.data as TradeAbstractionOpenLongResult
       if (tas_response?.object_type !== "TradeAbstractionOpenLongResult") {
         let err = new Error(`Unexpected result, expected object_type 'TradeAbstractionOpenLongResult`)
+        this.logger.exception(tags, err)
+        Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
+      }
+      return tas_response
+    } catch (err) {
+      this.logger.exception(tags, err)
+      throw err
+    }
+  }
+
+  async move_stop(cmd: TradeAbstractionMoveStopCommand): Promise<TradeAbstractionMoveStopResult> {
+    let { base_asset, edge } = cmd.trade_context
+    let tags: ContextTags = { base_asset, edge }
+    try {
+      let response = await this.get(new URL("/move_stop", this.TAS_URL).toString(), cmd)
+      this.logger.info(response)
+      let tas_response = response.data as TradeAbstractionMoveStopResult
+      if (tas_response?.object_type !== "TradeAbstractionMoveStopResult") {
+        let err = new Error(
+          `Unexpected result, expected object_type 'TradeAbstractionMoveStopResult' got '${tas_response?.object_type}'`
+        )
         this.logger.exception(tags, err)
         Sentry.captureException(err, { contexts: { tas_response: { tas_response } } })
       }

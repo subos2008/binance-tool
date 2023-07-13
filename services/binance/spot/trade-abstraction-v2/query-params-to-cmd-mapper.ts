@@ -4,6 +4,8 @@ import { TradeAbstractionOpenLongCommand, TradeAbstractionOpenLongResult } from 
 import { ServiceLogger } from "../../../../interfaces/logger"
 import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
+import { TradeAbstractionMoveStopCommand, TradeAbstractionMoveStopResult } from "./interfaces/move_stop"
+import { TradeContext, TradeContext_with_optional_trade_id } from "../../../../interfaces/exchanges/spot-execution-engine"
 
 type Tags = { [key: string]: string }
 

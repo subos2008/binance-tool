@@ -40,6 +40,13 @@ export interface TradeContext {
   trade_id: string
 }
 
+export interface TradeContext_with_optional_trade_id {
+  base_asset: string
+  quote_asset?: string
+  edge: string
+  trade_id?: string
+}
+
 export interface SpotStopMarketSellCommand {
   object_type: "SpotStopMarketSellCommand"
   object_class: "command"

@@ -152,7 +152,7 @@ export class BinancePortfolioToAMQP {
       return
     }
 
-    setInterval(this.update_portfolio_from_exchange.bind(this), 1000 * 60 * 60 * 6)
+    setInterval(this.update_portfolio_from_exchange.bind(this), 1000 * 60 * 60 * 1)
     this.update_portfolio_from_exchange_after_delay()
 
     this.order_execution_tracker.main().catch((err) => logger.exception({}, err))

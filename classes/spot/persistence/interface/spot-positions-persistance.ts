@@ -101,6 +101,8 @@ export interface SpotPositionsPersistence {
    */
   set_stop_order(pi: SpotPositionIdentifier_V3, order_id: OrderId): Promise<void>
   get_stop_order(pi: SpotPositionIdentifier_V3): Promise<OrderId | undefined>
+  set_stop_price(pi: SpotPositionIdentifier_V3, stop_price: BigNumber): Promise<void>
+  get_stop_price(pi: SpotPositionIdentifier_V3): Promise<BigNumber | undefined>
   /** end the edge61 variant */
   set_oco_order(pi: SpotPositionIdentifier_V3, order_id: OrderId): Promise<void>
   get_oco_order(pi: SpotPositionIdentifier_V3): Promise<OrderId | undefined>

@@ -437,6 +437,10 @@ export class SpotEdgeToExecutorMapper {
             if (trade_id) tags = { ...tags, trade_id }
           }
 
+          if (!trade_id) {
+            throw new Error(`Aborting move_stop as unable to determine trade_id`)
+          }
+
           this.logger.info(tags, `${prefix} cancelling stop order ${stop_order_id} on ${symbol}`)
           await this.ee.cancel_order({
             order_id: stop_order_id,
@@ -455,6 +459,7 @@ export class SpotEdgeToExecutorMapper {
       }
 
       // Don't get here if the attempt to cancel the stop/oco orders fails
+      
       if (!trade_id) {
         throw new Error(`Aborting move_stop as unable to determine trade_id`)
       }

@@ -5,7 +5,10 @@ import { ServiceLogger } from "../../../../interfaces/logger"
 import { ExchangeIdentifier_V3, ExchangeIdentifier_V4 } from "../../../../events/shared/exchange-identifier"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 import { TradeAbstractionMoveStopCommand, TradeAbstractionMoveStopResult } from "./interfaces/move_stop"
-import { TradeContext, TradeContext_with_optional_trade_id } from "../../../../interfaces/exchanges/spot-execution-engine"
+import {
+  TradeContext,
+  TradeContext_with_optional_trade_id,
+} from "../../../../interfaces/exchanges/spot-execution-engine"
 
 type Tags = { [key: string]: string }
 
@@ -224,7 +227,10 @@ export class QueryParamsToCmdMapper {
     }
 
     /* input checking */
-    let edge: string, signal_timestamp_ms: number, new_stop_price: string, trade_context: TradeContext_with_optional_trade_id
+    let edge: string,
+      signal_timestamp_ms: number = 0,
+      new_stop_price: string,
+      trade_context: TradeContext_with_optional_trade_id
     try {
       edge = this.get_edge(req)
       signal_timestamp_ms = this.get_signal_timestamp_ms(req)
@@ -242,6 +248,7 @@ export class QueryParamsToCmdMapper {
         msg: `TradeAbstractionOpenLongResult: BAD_INPUTS`,
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
+        signal_timestamp_ms,
       }
       this.logger.result({ ...tags, level: "error" }, result, "created")
       return { result, tags }
@@ -253,7 +260,7 @@ export class QueryParamsToCmdMapper {
       action,
       new_stop_price,
       signal_timestamp_ms,
-      trade_context
+      trade_context,
     }
     this.logger.command(tags, result, "created")
     return { result, tags }

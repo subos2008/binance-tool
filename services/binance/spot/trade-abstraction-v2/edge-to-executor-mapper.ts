@@ -369,7 +369,7 @@ export class SpotEdgeToExecutorMapper {
     cmd: TradeAbstractionMoveStopCommand,
     { quote_asset }: { quote_asset: string }
   ): Promise<TradeAbstractionMoveStopResult> {
-    let { action, trade_context } = cmd
+    let { action, trade_context, signal_timestamp_ms } = cmd
     let { edge, base_asset, trade_id } = trade_context
     let tags: ContextTags = { ...trade_context, action }
     let prefix: string = `Closing ${edge}:${base_asset} spot position:`
@@ -378,7 +378,7 @@ export class SpotEdgeToExecutorMapper {
       if (!(await this.in_position({ base_asset, edge }))) {
         let execution_timestamp_ms = +Date.now()
         let signal_to_execution_slippage_ms = execution_timestamp_ms - cmd.signal_timestamp_ms
-        let spot_long_result: TradeAbstractionMoveStopResult_NOT_FOUND = {
+        let result: TradeAbstractionMoveStopResult_NOT_FOUND = {
           object_type: "TradeAbstractionMoveStopResult",
           object_class: "result",
           version: 1,
@@ -389,9 +389,10 @@ export class SpotEdgeToExecutorMapper {
           execution_timestamp_ms,
           signal_to_execution_slippage_ms,
           action,
+          signal_timestamp_ms,
         }
-        this.logger.result(tags, spot_long_result, "created")
-        return spot_long_result
+        this.logger.result(tags, result, "created")
+        return result
       }
 
       /**
@@ -494,6 +495,7 @@ export class SpotEdgeToExecutorMapper {
         execution_timestamp_ms,
         signal_to_execution_slippage_ms: signal_to_execution_slippage_ms.toString(),
         action,
+        signal_timestamp_ms,
       }
       this.logger.result(tags, obj, "created")
       return obj
@@ -515,6 +517,7 @@ export class SpotEdgeToExecutorMapper {
         execution_timestamp_ms,
         signal_to_execution_slippage_ms,
         action,
+        signal_timestamp_ms,
       }
       this.logger.result({ ...tags, level: "error" }, obj, "created")
       return obj

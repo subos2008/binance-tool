@@ -17,6 +17,7 @@ export interface TradeAbstractionMoveStopCommand extends Command {
 
 export interface MoveStopResultBase extends Result {
   signal_timestamp_ms: number
+  msg: string // human readable summary
 }
 
 export interface TradeAbstractionMoveStopResult_SUCCESS extends MoveStopResultBase {

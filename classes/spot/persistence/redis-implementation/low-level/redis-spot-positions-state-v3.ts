@@ -340,6 +340,19 @@ export class RedisSpotPositionsState {
     }
   }
 
+  async set_stop_price(pi: SpotPositionIdentifier_V3, stop_price: BigNumber) {
+    return this.set_string_key(pi, { key_name: "stop_order_price" }, stop_price.toString())
+  }
+
+  async get_stop_price(pi: SpotPositionIdentifier_V3): Promise<BigNumber | undefined> {
+    try {
+      let foo = await this.get_string_key(pi, { key_name: "stop_order_price", null_allowed: true })
+      return foo ? new BigNumber(foo) : undefined
+    } catch (err) {
+      return
+    }
+  }
+
   async set_oco_order(pi: SpotPositionIdentifier_V3, order_id: OrderId) {
     return this.set_string_key(pi, { key_name: "oco_order_id" }, order_id.toString())
   }

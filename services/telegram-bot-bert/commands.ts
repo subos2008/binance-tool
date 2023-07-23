@@ -13,6 +13,10 @@ import {
   TradeAbstractionCloseCommand,
   TradeAbstractionCloseResult,
 } from "../binance/spot/trade-abstraction-v2/interfaces/close"
+import {
+  TradeAbstractionMoveStopCommand,
+  TradeAbstractionMoveStopResult,
+} from "../binance/spot/trade-abstraction-v2/interfaces/move_stop"
 // Sentry.configureScope(function (scope: any) {
 //   scope.setTag("service", service_name)
 // })
@@ -24,17 +28,21 @@ All trades are vs USD, the backend decides which USD evivalent asset to use, cou
 
 To enter a long spot position:
 
-  /spot long [edgeNN] LINK [STOP_PRICE]
+  /spot long [edgeNN] BTC [STOP_PRICE]
 
 To close an open long spot position:
 
-  /spot close [edgeNN] LINK 
+  /spot close [edgeNN] BTC 
+
+To move the stop limit on an open position:
+
+  /spot move-stop [edgeNN] [BTC] [new stop price] 
 
 Futures positions:
 
-  /futures short [edgeNN] LINK
-  /futures short [edgeNN] LINK
-  /futures close [edgeNN] LINK (Not implemented?)
+  /futures short [edgeNN] BTC
+  /futures short [edgeNN] BTC
+  /futures close [edgeNN] BTC (Not implemented?)
 
 To view open spot positions:
 
@@ -66,8 +74,8 @@ export class Commands {
     // Set the bot response
     // Order is important
     bot.help((ctx) => ctx.replyWithHTML(help_text))
-    bot.command("hi", (ctx) => {
-      ctx.reply("Yep, I'm here!")
+    bot.command("hi", async (ctx) => {
+      await ctx.reply("Yep, I'm here!")
       console.info(JSON.stringify(ctx))
     })
     // bot.command("spot", Commands.spot)
@@ -87,17 +95,17 @@ export class Commands {
         await this.futures.futures(ctx)
       } else {
         // Not a command - just people speaking in a channel
-        ctx.reply(`Unrecognised: ${ctx.message.text}`)
+        // await  ctx.reply(`Unrecognised: ${ctx.message.text}`)
       }
     } catch (err) {
-      ctx.reply(`Internal error 🤪`)
+      await ctx.reply(`Internal error 🤪`)
     }
   }
 
   async list_positions(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
     let postions = await this.spot_tas_client.positions()
     if (postions.length == 0) {
-      ctx.reply(`No open positions.`)
+      await ctx.reply(`No open positions.`)
       return
     }
     let msg = postions
@@ -109,17 +117,47 @@ export class Commands {
       )
       .join("\n")
 
-    ctx.reply(msg)
+    await ctx.reply(msg)
+  }
+
+  async move_spot_stop(
+    ctx: NarrowedContext<Context, Types.MountMap["text"]>,
+    args: { base_asset: string; edge: string; new_stop_price: string }
+  ) {
+    let { edge, base_asset, new_stop_price } = args
+    let tags = { edge, base_asset }
+    let signal_timestamp_ms = Date.now()
+    let cmd: TradeAbstractionMoveStopCommand = {
+      object_type: "TradeAbstractionMoveStopCommand",
+      object_class: "command",
+      trade_context: { edge, base_asset },
+      signal_timestamp_ms,
+      action: "move_stop",
+      new_stop_price,
+    }
+    this.logger.command(tags, cmd, "created")
+    let result: TradeAbstractionMoveStopResult = await this.spot_tas_client.move_stop(cmd)
+    await ctx.reply(`Spot move stop on ${edge}:${base_asset}: ${result.status}`)
+    this.logger.result(tags, result, "consumed")
   }
 
   async spot(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
-    let [command, edge_unchecked, base_asset] = args
+    let command = args.shift()
+    let edge_unchecked = args.shift()
+    let base_asset = args.shift()
+
+    if (!command) throw new Error(`Invalid command`)
+    if (!edge_unchecked) throw new Error(`Invalid command`)
+    if (!base_asset) throw new Error(`Invalid command`)
+
     let tags = { edge: edge_unchecked, base_asset }
     try {
       base_asset = base_asset.toUpperCase()
-      let valid_commands = ["long", "close"]
+      let valid_commands = ["long", "close", "move-stop"]
       if (!valid_commands.includes(command)) {
-        ctx.replyWithHTML(`Invalid command for /spot '${command}, valid commands are ${valid_commands.join(", ")}`)
+        await ctx.replyWithHTML(
+          `Invalid command for /spot '${command}, valid commands are ${valid_commands.join(", ")}`
+        )
         return
       }
 
@@ -131,11 +169,17 @@ export class Commands {
         await this.close_spot_long(ctx, { base_asset, edge: edge_unchecked })
       }
 
+      if (command == "move-stop") {
+        let new_stop_price = args.shift()
+        if (!new_stop_price) throw new Error(`Invalid command`)
+        await this.move_spot_stop(ctx, { base_asset, edge: edge_unchecked, new_stop_price })
+      }
+
       throw new Error(`Invalid command`)
     } catch (err: any) {
       this.logger.exception(tags, err, `Looks like command failed: ${err.message}`)
       Sentry.captureException(err)
-      ctx.reply(`Looks like it failed: ${err.message}`)
+      await ctx.reply(`Looks like it failed: ${err.message}`)
     }
   }
 
@@ -159,7 +203,7 @@ export class Commands {
     }
     this.logger.command(tags, cmd, "created")
     let result: TradeAbstractionOpenLongResult = await this.spot_tas_client.long(cmd)
-    ctx.reply(`Spot long entry on ${edge}:${base_asset}: ${result.status}`)
+    await ctx.reply(`Spot long entry on ${edge}:${base_asset}: ${result.status}`)
     this.logger.result(tags, result, "consumed")
   }
 
@@ -169,7 +213,7 @@ export class Commands {
   ): Promise<void> {
     let tags = { edge, base_asset }
     let msg = `${edge.toUpperCase()}: closing spot long on ${base_asset}`
-    ctx.reply(msg)
+    await ctx.reply(msg)
     let cmd: TradeAbstractionCloseCommand = {
       object_type: "TradeAbstractionCloseCommand",
       object_class: "command",
@@ -182,7 +226,7 @@ export class Commands {
     this.logger.command(tags, cmd, "created")
     let result: TradeAbstractionCloseResult = await this.spot_tas_client.close(cmd)
     this.logger.result(tags, result, "consumed")
-    ctx.reply(`Spot long close on ${edge}:${base_asset}: ${result.status}`)
+    await ctx.reply(`Spot long close on ${edge}:${base_asset}: ${result.status}`)
   }
 }
 

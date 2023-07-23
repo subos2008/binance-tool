@@ -1,8 +1,8 @@
-import { ServiceLogger } from "../../interfaces/logger"
-import { MetricTags, MetricValue, SubmitMetrics } from "../../interfaces/metrics"
+import { Command, LoggableEvent, Result, ServiceLogger } from "../../interfaces/logger"
+import { EventMetrics, MetricTags, MetricValue, SubmitMetrics } from "../../interfaces/metrics"
 import { InfluxDB, Point, WriteApi } from "@influxdata/influxdb-client"
 
-export class InfluxDBMetrics implements SubmitMetrics {
+export class InfluxDBMetrics implements SubmitMetrics, EventMetrics {
   logger: ServiceLogger
   prefix: string
   global_tags: MetricTags
@@ -88,7 +88,7 @@ export class InfluxDBMetrics implements SubmitMetrics {
     let point1 = new Point(metric_name)
 
     for (let key in this.global_tags) {
-      point1 = point1.tag(key, tags[key])
+      point1 = point1.tag(key, this.global_tags[key])
     }
 
     for (let key in tags) {
@@ -118,7 +118,7 @@ export class InfluxDBMetrics implements SubmitMetrics {
       let point1 = new Point(metric_name)
 
       for (let key in this.global_tags) {
-        point1 = point1.tag(key, tags[key])
+        point1 = point1.tag(key, this.global_tags[key])
       }
 
       for (let key in tags) {
@@ -136,6 +136,30 @@ export class InfluxDBMetrics implements SubmitMetrics {
       this.writeApi.writePoint(point1)
     } catch (err) {
       this.logger.exception(tags, err, `Error "${err}" uploading ${metric_name} to influxdb.`)
+    }
+  }
+
+  async result({ event }: { event: Result }) {
+    if (!this.writeApi) {
+      this.logger.warn(`Failed to submit metric, not configured`)
+      return
+    }
+    let metric_name = `logger.loggable_event`
+    try {
+      metric_name = this.build_metric_name(metric_name)
+      let point1 = new Point(metric_name)
+
+      for (let key in this.global_tags) {
+        point1 = point1.tag(key, this.global_tags[key])
+      }
+
+      point1 = point1.tag("object_type", event.object_type)
+      point1 = point1.tag("object_class", event.object_class)
+      point1 = point1.stringField("status", event.status)
+
+      this.writeApi.writePoint(point1)
+    } catch (err) {
+      this.logger.exception({}, err, `Error "${err}" uploading ${metric_name} to influxdb.`)
     }
   }
 }

@@ -26,6 +26,12 @@ import { BinanceSpotExecutionEngine as ExecutionEngine } from "./execution/execu
 import { RedisClientType } from "redis-v4"
 import { TradeAbstractionCloseCommand, TradeAbstractionCloseResult } from "./interfaces/close"
 import { ContextTags, SendMessageFunc, TradeContextTags } from "../../../../interfaces/send-message"
+import { OrderContextPersistence_V2 } from "../../../../classes/persistent_state/interface/order-context-persistence"
+import {
+  TradeAbstractionMoveStopCommand,
+  TradeAbstractionMoveStopResult,
+  TradeAbstractionMoveStopResult_NOT_FOUND,
+} from "./interfaces/move_stop"
 
 /**
  * Convert "go long" / "go short" signals into ExecutionEngine commands
@@ -43,12 +49,14 @@ export class TradeAbstractionService {
     ee,
     send_message,
     redis,
+    order_context_persistence,
   }: {
     logger: ServiceLogger
     quote_asset: string
     ee: ExecutionEngine
     send_message: SendMessageFunc
     redis: RedisClientType
+    order_context_persistence: OrderContextPersistence_V2
   }) {
     assert(logger)
     this.logger = logger
@@ -71,6 +79,7 @@ export class TradeAbstractionService {
     this.spot_ee = new SpotEdgeToExecutorMapper({
       logger,
       positions_persistance,
+      order_context_persistence,
       ee,
       send_message,
       price_getter,
@@ -200,7 +209,6 @@ export class TradeAbstractionService {
         err,
         execution_timestamp_ms: Date.now(),
       }
-      this.logger.error(tags, `Exception caught in TradeAbstractionService::long!`)
       this.logger.result({ ...tags, level: "error" }, spot_long_result, "created")
       return spot_long_result
     }
@@ -226,5 +234,57 @@ export class TradeAbstractionService {
 
   async open_positions(): Promise<SpotPositionIdentifier_V3[]> {
     return this.positions.open_positions()
+  }
+
+  // or signal_long
+  // Spot so we can only be long or no-position
+  async move_stop(cmd: TradeAbstractionMoveStopCommand): Promise<TradeAbstractionMoveStopResult> {
+    cmd.trade_context.quote_asset = this.quote_asset
+    let { signal_timestamp_ms, trade_context, action } = cmd
+    let { edge, base_asset, quote_asset, trade_id } = cmd.trade_context
+    if (!trade_id) {
+      throw new Error(`trade_id not defined in TradeAbstractionMoveStopCommand.trade_context`)
+    }
+    let tags: TradeContextTags = { edge, base_asset, quote_asset, trade_id }
+    try {
+      this.logger.command(tags, cmd, "received")
+
+      assert.equal(cmd.action, "move_stop")
+
+      let result: TradeAbstractionMoveStopResult = await this.spot_ee.move_stop(cmd, { quote_asset })
+      if (
+        result.status != "INTERNAL_SERVER_ERROR" &&
+        result.status != "UNAUTHORISED" &&
+        result.status != "NOT_FOUND" &&
+        result.status != "BAD_INPUTS" &&
+        result.status != "TOO_MANY_REQUESTS"
+      ) {
+        result.created_stop_order = result.stop_order_id ? true : false
+      }
+
+      let { execution_timestamp_ms } = result
+      result.signal_to_execution_slippage_ms = execution_timestamp_ms
+        ? execution_timestamp_ms - cmd.signal_timestamp_ms
+        : undefined
+
+      return result
+    } catch (err: any) {
+      this.logger.exception(tags, err)
+      let result: TradeAbstractionMoveStopResult = {
+        object_type: "TradeAbstractionMoveStopResult",
+        object_class: "result",
+        version: 1,
+        trade_context,
+        status: "INTERNAL_SERVER_ERROR",
+        http_status: 500,
+        msg: err.message,
+        err,
+        execution_timestamp_ms: Date.now(),
+        signal_timestamp_ms,
+        action,
+      }
+      this.logger.result({ ...tags, level: "error" }, result, "created")
+      return result
+    }
   }
 }

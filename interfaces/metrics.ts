@@ -7,6 +7,8 @@
  * This is why we have MetricValue and values - InfluxDB can have multiple values (with names) per metric
  */
 
+import { Command, LoggableEvent, Result } from "./logger"
+
 export type MetricValue = {
   name: string
   type: "float" | "uint" // implement other types in influx handler when expanding this list
@@ -30,4 +32,8 @@ export type SubmitMetrics = {
     metric_name: string
     tags: { [tag_name: string]: string }
   }): Promise<void>
+}
+
+export type EventMetrics = {
+  result({ event }: { event: Result }): Promise<void>
 }

@@ -47,6 +47,12 @@ var app = express()
 
 import { HealthAndReadiness } from "../../../../classes/health_and_readiness"
 import { ServiceLogger } from "../../../../interfaces/logger"
+import { OrderContextPersistence_V2 } from "../../../../classes/persistent_state/interface/order-context-persistence"
+import {
+  TradeAbstractionMoveStopCommand,
+  TradeAbstractionMoveStopResult,
+  TradeAbstractionMoveStopResult_NOT_FOUND,
+} from "./interfaces/move_stop"
 const health_and_readiness = new HealthAndReadiness({ logger })
 app.get("/health", health_and_readiness.health_handler.bind(health_and_readiness))
 const service_is_healthy = health_and_readiness.addSubsystem({
@@ -89,7 +95,7 @@ app.use(
 
 async function main() {
   let redis: RedisClientType = await get_redis_client(logger, health_and_readiness)
-  const order_context_persistence = new RedisOrderContextPersistence({ logger, redis })
+  const order_context_persistence: OrderContextPersistence_V2 = new RedisOrderContextPersistence({ logger, redis })
   const ee = new ExecutionEngine({ logger, order_context_persistence })
   const exchange_identifier = ee.get_exchange_identifier()
   const metrics = new SendMetrics({ service_name, logger, exchange_identifier })
@@ -100,6 +106,7 @@ async function main() {
     ee,
     send_message,
     redis,
+    order_context_persistence,
   })
 
   let mapper = new QueryParamsToCmdMapper({ logger })
@@ -230,6 +237,65 @@ async function main() {
 
         if (cmd_result.http_status === 500) {
           let msg: string = `TradeAbstractionOpenLongResult: ${cmd_result.edge}:${cmd_result.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
+          logger.error(cmd_result, msg) // TODO: Tags?
+          Sentry.captureException(new Error(msg)) // TODO: Tags?
+        }
+        return
+      }
+
+      throw new Error(`Unexpected object_type: ${(mapper_result as any).object_type}`)
+    } catch (err: any) {
+      logger.error({}, `Internal Server Error: ${err}`)
+      logger.exception({}, err)
+      res.status(500).json({ msg: "Internal Server Error" })
+      next(err)
+    }
+  })
+
+  app.get("/move_stop", async function (req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      let cmd_received_timestamp_ms = +Date.now()
+
+      let { result: mapper_result, tags } = mapper.move_stop(req, {
+        cmd_received_timestamp_ms,
+        quote_asset,
+        exchange_identifier,
+      })
+
+      if (mapper_result.object_type === "TradeAbstractionMoveStopResult") {
+        res.status(mapper_result.http_status).json(mapper_result)
+        return
+      }
+
+      if (mapper_result.object_type === "TradeAbstractionMoveStopCommand") {
+        let cmd: TradeAbstractionMoveStopCommand = mapper_result as TradeAbstractionMoveStopCommand
+        let cmd_result: TradeAbstractionMoveStopResult = await tas.move_stop(cmd)
+        tags.status = cmd_result.status
+
+        let { signal_timestamp_ms } = cmd
+
+        try {
+          metrics.signal_to_cmd_received_slippage_ms({ tags, signal_timestamp_ms, cmd_received_timestamp_ms })
+        } catch (err) {
+          logger.exception(tags, err)
+        }
+
+        try {
+          logger.result({}, cmd_result, "forwarded")
+        } catch (err) {
+          logger.exception(tags, err)
+        }
+
+        if (cmd_result.http_status === 429) {
+          res.setHeader("Retry-After", cmd_result.retry_after_seconds)
+        }
+
+        res.status(cmd_result.http_status).json(cmd_result)
+
+        send_message(cmd_result.msg, tags)
+
+        if (cmd_result.http_status === 500) {
+          let msg: string = `TradeAbstractionMoveStopResult: ${cmd_result.trade_context.edge}:${cmd_result.trade_context.base_asset}: ${cmd_result.status}: ${cmd_result.msg}`
           logger.error(cmd_result, msg) // TODO: Tags?
           Sentry.captureException(new Error(msg)) // TODO: Tags?
         }

@@ -8,19 +8,19 @@ const service_name = "telegram-bot-bert"
 // As this is an exposed ingress service, prevent stack traces in express renders
 process.env.NODE_ENV = "production"
 process.env.PORT = "80"
+const telegram_users_who_can_use_bot: string[] = ["slyph", "MehranRezghi"]
 
 import Sentry from "../../lib/sentry"
 Sentry.configureScope(function (scope: any) {
   scope.setTag("service", service_name)
 })
 
-var service_is_healthy: boolean = true
-
 import express, { Request, Response } from "express"
 import { Telegraf } from "telegraf"
 import { Commands } from "./commands"
 import { BunyanServiceLogger } from "../../lib/service-logger"
 import { ServiceLogger } from "../../interfaces/logger"
+import { User } from "telegraf/typings/core/types/typegram"
 
 const token = process.env.TELEGRAM_KEY
 if (token === undefined) {
@@ -74,10 +74,10 @@ bot.use((ctx, next) => {
 // Register authorisation middleware
 // How to implement? We can null message and not call next(), return instead
 bot.use((ctx, next) => {
-  let user = ctx.from
+  let user: User | undefined = ctx.from
   console.log(`message from ${user}`)
-  // if(['slyph'].includes(user as string))
-  return next().then(() => {})
+  if (!user?.username) throw new Error(`username is not defined in ctx.from`)
+  if (!telegram_users_who_can_use_bot.includes(user.username)) return next().then(() => {})
 })
 
 // Need to get this working with bot.launch
@@ -97,16 +97,18 @@ const secretPath = `/telegraf/bert/${bot.secretPathComponent()}`
 // bot.telegram.setWebhook(`https://bert.ryancocks.net${secretPath}`)
 // app.use(bot.webhookCallback(secretPath))
 
-bot.launch({
-  dropPendingUpdates: true,
-  webhook: {
-    hookPath: secretPath,
-    domain: "bert.ryancocks.net", // required
-    port: Number(process.env.PORT),
-    cb: app, // Express integration,
-    // tlsOptions: {}, // ... hmm, how do I force https? https is done by the ingress
-  },
-})
+bot
+  .launch({
+    dropPendingUpdates: true,
+    webhook: {
+      hookPath: secretPath,
+      domain: "bert.ryancocks.net", // required
+      port: Number(process.env.PORT),
+      cb: app, // Express integration,
+      // tlsOptions: {}, // ... hmm, how do I force https? https is done by the ingress
+    },
+  })
+  .catch((err) => logger.exception({}, err))
 
 // Finally, start our server
 // $  npm install -g localtunnel && lt --port 3000

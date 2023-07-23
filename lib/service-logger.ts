@@ -48,14 +48,25 @@ import * as bunyan from "bunyan"
 
 import Sentry from "./sentry"
 
-import { Command, Lifecycle, LoggableEvent, Logger, PureEvent, Result, ServiceLogger, TODO } from "../interfaces/logger"
+import {
+  Command,
+  Lifecycle,
+  LoggableEvent,
+  Logger,
+  PureEvent,
+  Result,
+  ServiceLogger,
+  TODO,
+} from "../interfaces/logger"
 import { ContextTags } from "../interfaces/send-message"
+import { EventMetrics } from "../interfaces/metrics"
 
 export class BunyanServiceLogger implements ServiceLogger, Logger {
   silent: boolean
   bunyan: bunyan
   events_as_msg: boolean = false
   full_trace: boolean = false
+  event_metrics: EventMetrics | undefined
 
   /**
    * @param {boolean} events_as_msg - Suppress printing of entire events and just print .msg. Used in the backtester where we want readable logs
@@ -67,12 +78,14 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
       level,
       events_as_msg,
       full_trace,
+      event_metrics,
     }: {
       silent: boolean
       template?: object
       level?: bunyan.LogLevel
       events_as_msg?: boolean
       full_trace?: boolean
+      event_metrics?: EventMetrics
     } = {
       silent: false,
       template: {},
@@ -81,6 +94,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
     if (events_as_msg) this.events_as_msg = events_as_msg
     if (full_trace) this.full_trace = full_trace
     if (!template) template = {}
+    this.event_metrics = event_metrics
     this.silent = silent
     let params = {
       name: "bunyan_stream_name", // Required
@@ -278,6 +292,9 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
     } catch (err) {
       console.error(err)
       Sentry.captureException(err)
+    }
+    if (this.event_metrics) {
+      this.event_metrics.result({ event }).catch((err) => this.exception(tags, err))
     }
   }
 

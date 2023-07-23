@@ -24,6 +24,7 @@ export interface Command extends LoggableEvent {
 
 export interface Result extends LoggableEvent {
   object_class: "result"
+  status: string
 }
 
 export interface PureEvent extends LoggableEvent {

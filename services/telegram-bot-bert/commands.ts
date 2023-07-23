@@ -142,7 +142,14 @@ export class Commands {
   }
 
   async spot(ctx: NarrowedContext<Context, Types.MountMap["text"]>, args: string[]) {
-    let [command, edge_unchecked, base_asset, new_stop_price] = args
+    let command = args.shift()
+    let edge_unchecked = args.shift()
+    let base_asset = args.shift()
+
+    if (!command) throw new Error(`Invalid command`)
+    if (!edge_unchecked) throw new Error(`Invalid command`)
+    if (!base_asset) throw new Error(`Invalid command`)
+
     let tags = { edge: edge_unchecked, base_asset }
     try {
       base_asset = base_asset.toUpperCase()
@@ -163,6 +170,8 @@ export class Commands {
       }
 
       if (command == "move-stop") {
+        let new_stop_price = args.shift()
+        if (!new_stop_price) throw new Error(`Invalid command`)
         await this.move_spot_stop(ctx, { base_asset, edge: edge_unchecked, new_stop_price })
       }
 

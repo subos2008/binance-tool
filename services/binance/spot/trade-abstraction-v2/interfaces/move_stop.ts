@@ -15,7 +15,11 @@ export interface TradeAbstractionMoveStopCommand extends Command {
   signal_timestamp_ms: number
 }
 
-export interface TradeAbstractionMoveStopResult_SUCCESS extends Result {
+export interface MoveStopResultBase extends Result {
+  signal_timestamp_ms: number
+}
+
+export interface TradeAbstractionMoveStopResult_SUCCESS extends MoveStopResultBase {
   object_type: "TradeAbstractionMoveStopResult"
   version: 1
   action: "move_stop"
@@ -34,7 +38,7 @@ export interface TradeAbstractionMoveStopResult_SUCCESS extends Result {
   stop_price?: string
 }
 
-export interface TradeAbstractionMoveStopResult_INTERNAL_SERVER_ERROR extends Result {
+export interface TradeAbstractionMoveStopResult_INTERNAL_SERVER_ERROR extends MoveStopResultBase {
   object_type: "TradeAbstractionMoveStopResult"
   version: 1
   trade_context: TradeContext_with_optional_trade_id
@@ -52,7 +56,7 @@ export interface TradeAbstractionMoveStopResult_INTERNAL_SERVER_ERROR extends Re
   signal_to_execution_slippage_ms?: number
 }
 
-interface TradeAbstractionMoveStopResult_BAD_INPUTS extends Result {
+interface TradeAbstractionMoveStopResult_BAD_INPUTS extends MoveStopResultBase {
   object_type: "TradeAbstractionMoveStopResult"
   version: 1
   // trade_context: TradeContext // tricky to get on BAD_INPUTS
@@ -70,7 +74,7 @@ interface TradeAbstractionMoveStopResult_BAD_INPUTS extends Result {
   signal_to_execution_slippage_ms?: string
 }
 
-export interface TradeAbstractionMoveStopResult_TOO_MANY_REQUESTS extends Result {
+export interface TradeAbstractionMoveStopResult_TOO_MANY_REQUESTS extends MoveStopResultBase {
   object_type: "TradeAbstractionMoveStopResult"
   version: 1
   trade_context: TradeContext_with_optional_trade_id
@@ -88,7 +92,7 @@ export interface TradeAbstractionMoveStopResult_TOO_MANY_REQUESTS extends Result
   retry_after_seconds: number // can go to Retry-After header
 }
 
-interface TradeAbstractionMoveStopResult_UNAUTHORISED extends Result {
+interface TradeAbstractionMoveStopResult_UNAUTHORISED extends MoveStopResultBase {
   object_type: "TradeAbstractionMoveStopResult"
   version: 1
   trade_context: TradeContext_with_optional_trade_id
@@ -103,7 +107,7 @@ interface TradeAbstractionMoveStopResult_UNAUTHORISED extends Result {
   signal_to_execution_slippage_ms?: string
 }
 
-export interface TradeAbstractionMoveStopResult_NOT_FOUND extends Result {
+export interface TradeAbstractionMoveStopResult_NOT_FOUND extends MoveStopResultBase {
   version: 1
   action: "move_stop"
   trade_context: TradeContext_with_optional_trade_id

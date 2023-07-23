@@ -88,7 +88,7 @@ export class InfluxDBMetrics implements SubmitMetrics, EventMetrics {
     let point1 = new Point(metric_name)
 
     for (let key in this.global_tags) {
-      point1 = point1.tag(key, tags[key])
+      point1 = point1.tag(key, this.global_tags[key])
     }
 
     for (let key in tags) {
@@ -118,7 +118,7 @@ export class InfluxDBMetrics implements SubmitMetrics, EventMetrics {
       let point1 = new Point(metric_name)
 
       for (let key in this.global_tags) {
-        point1 = point1.tag(key, tags[key])
+        point1 = point1.tag(key, this.global_tags[key])
       }
 
       for (let key in tags) {

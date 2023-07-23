@@ -193,6 +193,7 @@ export class SpotPositionsExecution_StopLimitExit {
         edge: args.edge,
       }
       await this.positions_persistance.set_stop_order(spot_position_identifier, stop_order_id.toString())
+      await this.positions_persistance.set_stop_price(spot_position_identifier, stop_price)
     } catch (err) {
       Sentry.captureException(err)
       let msg = `Failed to create stop limit order for ${args.edge}:${args.base_asset} on ${

@@ -77,6 +77,20 @@ export class QueryParamsToCmdMapper {
     edge: string
     trade_id?: string // Not known and needs looking up except when passed for opening trades
   } {
+    /** 
+     * We are moving to having a TradeContext in objects instead of having all these 
+     * values at the top level.
+     */
+    if ("trade_context" in req.query) {
+      let json = req.query["trade_context"]?.toString()
+      if (json) {
+        let trade_context: TradeContext = JSON.parse(json)
+        // TODO: this code path has less input validation
+        return trade_context
+      }
+    }
+
+    /* Handle the OG case of all values at the top of the object */
     return { base_asset: this.get_base_asset(req), edge: this.get_edge(req), trade_id: this.get_trade_id(req) }
   }
 

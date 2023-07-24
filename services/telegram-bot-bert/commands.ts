@@ -137,7 +137,7 @@ export class Commands {
     }
     this.logger.command(tags, cmd, "created")
     let result: TradeAbstractionMoveStopResult = await this.spot_tas_client.move_stop(cmd)
-    await ctx.reply(`Spot move stop on ${edge}:${base_asset}: ${result.status}`)
+    await ctx.reply(`Spot move stop on ${edge}:${base_asset}: ${result.status}: ${result.msg}`)
     this.logger.result(tags, result, "consumed")
   }
 
@@ -199,7 +199,7 @@ export class Commands {
     }
     this.logger.command(tags, cmd, "created")
     let result: TradeAbstractionOpenLongResult = await this.spot_tas_client.long(cmd)
-    await ctx.reply(`Spot long entry on ${edge}:${base_asset}: ${result.status}`)
+    await ctx.reply(`Spot long entry on ${edge}:${base_asset}: ${result.status}: ${result.msg}`)
     this.logger.result(tags, result, "consumed")
   }
 
@@ -222,7 +222,7 @@ export class Commands {
     this.logger.command(tags, cmd, "created")
     let result: TradeAbstractionCloseResult = await this.spot_tas_client.close(cmd)
     this.logger.result(tags, result, "consumed")
-    await ctx.reply(`Spot long close on ${edge}:${base_asset}: ${result.status}`)
+    await ctx.reply(`Spot long close on ${edge}:${base_asset}: ${result.status}: ${result.msg}`)
   }
 }
 

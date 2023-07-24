@@ -264,7 +264,7 @@ export class QueryParamsToCmdMapper {
       trade_context = this.get_trade_context(req)
     } catch (err: any) {
       let inputs = JSON.stringify(req.query)
-      let msg = `Result: BAD_INPUTS (got: ${inputs})`
+      let msg = `Result: BAD_INPUTS (got: ${inputs}): ${err.msg}`
       this.logger.exception(tags, err, msg)
       let result: TradeAbstractionMoveStopResult = {
         object_type: "TradeAbstractionMoveStopResult",

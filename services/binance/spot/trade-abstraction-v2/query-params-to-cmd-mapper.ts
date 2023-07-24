@@ -81,7 +81,7 @@ export class QueryParamsToCmdMapper {
      * We are moving to having a TradeContext in objects instead of having all these
      * values at the top level.
      */
-    if ("trade_context" in req.query) {
+    if (req.query["trade_context"]) {
       let json = req.query["trade_context"]?.toString()
       this.logger.info(`Got trade_context: ${json}`)
       if (json) {

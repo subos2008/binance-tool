@@ -163,19 +163,15 @@ export class Commands {
 
       if (command == "long") {
         await this.open_spot_long(ctx, { base_asset, edge: edge_unchecked })
-      }
-
-      if (command == "close") {
+      } else if (command == "close") {
         await this.close_spot_long(ctx, { base_asset, edge: edge_unchecked })
-      }
-
-      if (command == "move-stop") {
+      } else if (command == "move-stop") {
         let new_stop_price = args.shift()
-        if (!new_stop_price) throw new Error(`Invalid command`)
+        if (!new_stop_price) throw new Error(`Invalid command: new_stop_price missing`)
         await this.move_spot_stop(ctx, { base_asset, edge: edge_unchecked, new_stop_price })
+      } else {
+        throw new Error(`Invalid command: ${command}`)
       }
-
-      throw new Error(`Invalid command`)
     } catch (err: any) {
       this.logger.exception(tags, err, `Looks like command failed: ${err.message}`)
       Sentry.captureException(err)

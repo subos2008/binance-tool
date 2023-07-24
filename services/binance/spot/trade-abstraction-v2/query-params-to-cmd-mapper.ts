@@ -255,12 +255,10 @@ export class QueryParamsToCmdMapper {
     }
 
     /* input checking */
-    let edge: string,
-      signal_timestamp_ms: number = 0,
+    let signal_timestamp_ms: number = 0,
       new_stop_price: string,
       trade_context: TradeContext_with_optional_trade_id
     try {
-      edge = this.get_edge(req)
       signal_timestamp_ms = this.get_signal_timestamp_ms(req)
       new_stop_price = this.get_new_stop_price(req)
       trade_context = this.get_trade_context(req)

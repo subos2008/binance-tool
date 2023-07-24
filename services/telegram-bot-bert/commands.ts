@@ -170,7 +170,7 @@ export class Commands {
         if (!new_stop_price) throw new Error(`Invalid command: new_stop_price missing`)
         await this.move_spot_stop(ctx, { base_asset, edge: edge_unchecked, new_stop_price })
       } else {
-        throw new Error(`Invalid command: ${command}`)
+        throw new Error(`Unknown command: ${command}`)
       }
     } catch (err: any) {
       this.logger.exception(tags, err, `Looks like command failed: ${err.message}`)

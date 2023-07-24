@@ -83,14 +83,18 @@ export class QueryParamsToCmdMapper {
      */
     if (req.query["trade_context"]) {
       let json = req.query["trade_context"]?.toString()
-      this.logger.info(`Got trade_context: ${json}`)
+      this.logger.info(`QueryParamsToCmdMapper: Got trade_context: ${json}`)
       if (json) {
         let trade_context: TradeContext = JSON.parse(json)
-        if(!trade_context.edge) throw new Error(`edge missing in trade_context`)
-        if(!trade_context.base_asset) throw new Error(`base_asset missing in trade_context`)
+        if (!trade_context.edge) throw new Error(`edge missing in trade_context`)
+        if (!trade_context.base_asset) throw new Error(`base_asset missing in trade_context`)
         // TODO: this code path has less input validation
         return trade_context
       }
+    } else {
+      this.logger.info(
+        `QueryParamsToCmdMapper: No trade_context, looking in object top level for base_asset and edge`
+      )
     }
 
     /* Handle the OG case of all values at the top of the object */

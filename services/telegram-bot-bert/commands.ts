@@ -146,9 +146,9 @@ export class Commands {
     let edge_unchecked = args.shift()
     let base_asset = args.shift()
 
-    if (!command) throw new Error(`Invalid command`)
-    if (!edge_unchecked) throw new Error(`Invalid command`)
-    if (!base_asset) throw new Error(`Invalid command`)
+    if (!command) throw new Error(`Missing command`)
+    if (!edge_unchecked) throw new Error(`Missing edge`)
+    if (!base_asset) throw new Error(`Missing base_asset`)
 
     let tags = { edge: edge_unchecked, base_asset }
     try {

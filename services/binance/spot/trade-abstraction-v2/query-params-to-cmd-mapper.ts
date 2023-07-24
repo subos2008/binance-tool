@@ -27,7 +27,7 @@ export class QueryParamsToCmdMapper {
       typeof value == "string",
       new Error(`InputChecking: typeof ${param_name} unexpected, got ${typeof value}`)
     )
-    assert(!value, new Error(`InputChecking: ${param_name} is the empty string: '${value}'`))
+    assert(value, new Error(`InputChecking: ${param_name} is the empty string: '${value}'`))
     return value
   }
   get_OPTIONAL_param_must_be_non_empty_string(req: Request, param_name: string): string | undefined {

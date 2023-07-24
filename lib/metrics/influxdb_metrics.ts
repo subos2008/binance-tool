@@ -21,6 +21,8 @@ export class InfluxDBMetrics implements SubmitMetrics, EventMetrics {
     this.prefix = prefix
     this.global_tags = global_tags
 
+    logger.set_event_metrics(this)
+
     const INFLUXDB_TOKEN = process.env.INFLUXDB_TOKEN
     if (!INFLUXDB_TOKEN) {
       this.logger.exception({}, new Error(`INFLUXDB_TOKEN not defined`))

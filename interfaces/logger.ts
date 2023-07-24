@@ -1,5 +1,6 @@
 // NB: made it mandatory to supply a tags object as the first arg,
 
+import { EventMetrics } from "./metrics"
 import { ContextTags } from "./send-message"
 
 // Depricated
@@ -54,4 +55,7 @@ export interface ServiceLogger {
   /* Special objects that get created and consumed */
   command(tags: ContextTags, event: Command, lifecycle: Lifecycle): void
   result(tags: ContextTags, event: Result, lifecycle: Lifecycle): void
+
+  /* Log Events as metrics */
+  set_event_metrics(event_metrics: EventMetrics): void
 }

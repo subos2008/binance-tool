@@ -23,7 +23,10 @@ export class QueryParamsToCmdMapper {
 
   get_param_must_be_non_empty_string_OR_THROW(req: Request, param_name: string): string {
     let value = req.query[param_name]
-    assert(typeof value == "string", new Error(`InputChecking: typeof ${param_name} unexpected, got ${typeof value}`))
+    assert(
+      typeof value == "string",
+      new Error(`InputChecking: typeof ${param_name} unexpected, got ${typeof value}`)
+    )
     assert(!value, new Error(`InputChecking: ${param_name} is the empty string`))
     return value
   }
@@ -106,6 +109,7 @@ export class QueryParamsToCmdMapper {
       trigger_price = this.get_trigger_price(req)
     } catch (err: any) {
       this.logger.exception(tags, err)
+      let inputs = JSON.stringify(req.query)
       let result: TradeAbstractionCloseResult = {
         object_type: "TradeAbstractionCloseResult",
         object_class: "result",
@@ -114,7 +118,7 @@ export class QueryParamsToCmdMapper {
         action,
         status: "BAD_INPUTS",
         http_status: 400,
-        msg: `TradeAbstractionCloseResult: BAD_INPUTS`,
+        msg: `TradeAbstractionCloseResult: BAD_INPUTS (got: ${inputs})`,
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
       }
@@ -172,6 +176,7 @@ export class QueryParamsToCmdMapper {
       trade_id = this.get_trade_id(req)
     } catch (err: any) {
       this.logger.exception(tags, err)
+      let inputs = JSON.stringify(req.query)
       let result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
         object_class: "result",
@@ -181,7 +186,7 @@ export class QueryParamsToCmdMapper {
         action,
         status: "BAD_INPUTS",
         http_status: 400,
-        msg: `TradeAbstractionOpenLongResult: BAD_INPUTS`,
+        msg: `TradeAbstractionOpenLongResult: BAD_INPUTS (got: ${inputs})`,
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
       }
@@ -238,6 +243,7 @@ export class QueryParamsToCmdMapper {
       trade_context = this.get_trade_context(req)
     } catch (err: any) {
       this.logger.exception(tags, err)
+      let inputs = JSON.stringify(req.query)
       let result: TradeAbstractionMoveStopResult = {
         object_type: "TradeAbstractionMoveStopResult",
         object_class: "result",
@@ -245,7 +251,7 @@ export class QueryParamsToCmdMapper {
         action,
         status: "BAD_INPUTS",
         http_status: 400,
-        msg: `TradeAbstractionOpenLongResult: BAD_INPUTS`,
+        msg: `TradeAbstractionOpenLongResult: BAD_INPUTS (got: ${inputs})`,
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
         signal_timestamp_ms,

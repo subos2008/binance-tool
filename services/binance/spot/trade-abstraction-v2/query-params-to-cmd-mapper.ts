@@ -108,8 +108,9 @@ export class QueryParamsToCmdMapper {
       signal_timestamp_ms = this.get_signal_timestamp_ms(req)
       trigger_price = this.get_trigger_price(req)
     } catch (err: any) {
-      this.logger.exception(tags, err)
       let inputs = JSON.stringify(req.query)
+      let msg = `Result: BAD_INPUTS (got: ${inputs})`
+      this.logger.exception(tags, err, msg)
       let result: TradeAbstractionCloseResult = {
         object_type: "TradeAbstractionCloseResult",
         object_class: "result",
@@ -118,7 +119,7 @@ export class QueryParamsToCmdMapper {
         action,
         status: "BAD_INPUTS",
         http_status: 400,
-        msg: `TradeAbstractionCloseResult: BAD_INPUTS (got: ${inputs})`,
+        msg,
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
       }
@@ -175,8 +176,9 @@ export class QueryParamsToCmdMapper {
       trigger_price = this.get_trigger_price(req)
       trade_id = this.get_trade_id(req)
     } catch (err: any) {
-      this.logger.exception(tags, err)
       let inputs = JSON.stringify(req.query)
+      let msg = `Result: BAD_INPUTS (got: ${inputs})`
+      this.logger.exception(tags, err, msg)
       let result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",
         object_class: "result",
@@ -186,7 +188,7 @@ export class QueryParamsToCmdMapper {
         action,
         status: "BAD_INPUTS",
         http_status: 400,
-        msg: `TradeAbstractionOpenLongResult: BAD_INPUTS (got: ${inputs})`,
+        msg,
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
       }
@@ -242,8 +244,9 @@ export class QueryParamsToCmdMapper {
       new_stop_price = this.get_new_stop_price(req)
       trade_context = this.get_trade_context(req)
     } catch (err: any) {
-      this.logger.exception(tags, err)
       let inputs = JSON.stringify(req.query)
+      let msg = `Result: BAD_INPUTS (got: ${inputs})`
+      this.logger.exception(tags, err, msg)
       let result: TradeAbstractionMoveStopResult = {
         object_type: "TradeAbstractionMoveStopResult",
         object_class: "result",
@@ -251,7 +254,7 @@ export class QueryParamsToCmdMapper {
         action,
         status: "BAD_INPUTS",
         http_status: 400,
-        msg: `TradeAbstractionOpenLongResult: BAD_INPUTS (got: ${inputs})`,
+        msg,
         err,
         execution_timestamp_ms: cmd_received_timestamp_ms,
         signal_timestamp_ms,

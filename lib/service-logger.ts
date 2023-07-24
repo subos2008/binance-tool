@@ -124,6 +124,10 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
     this.bunyan = bunyan.createLogger({ ...params, ...template })
   }
 
+  set_event_metrics(event_metrics: EventMetrics) {
+    this.event_metrics = event_metrics
+  }
+
   info(obj: Object, ...params: any[]) {
     if (this.full_trace && this.bunyan.info()) console.trace(`BunyanServiceLogger.info`)
     if ((obj as any).object_type) {

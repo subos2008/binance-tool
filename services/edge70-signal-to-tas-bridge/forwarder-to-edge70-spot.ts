@@ -98,6 +98,7 @@ export class Edge70ForwarderToEdge70Spot implements Edge70SignalProcessor {
               edge,
               action: "close",
               signal_timestamp_ms: signal.signal.signal_timestamp_ms,
+              trigger_price: signal.signal.signal_price,
             }
             this.logger.command(tags, cmd, "created")
             result = await this.tas_client.close(cmd)

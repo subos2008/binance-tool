@@ -181,6 +181,13 @@ export class Edge70Signals {
     let tags: Tags = { symbol, base_asset, edge }
     if (this.set_log_time_to_candle_time) tags.time = new Date(candle.closeTime).toISOString()
 
+    /* Price metrics */
+    let { exchange_type, exchange } = this.market_identifier.exchange_identifier
+    let { quote_asset } = this.market_identifier
+    this.metrics
+      .candle_close_price({ base_asset, exchange_type, exchange, quote_asset }, new BigNumber(candle.close))
+      .catch((err) => this.logger.exception(tags, err))
+
     try {
       /* start code with finally block */
 

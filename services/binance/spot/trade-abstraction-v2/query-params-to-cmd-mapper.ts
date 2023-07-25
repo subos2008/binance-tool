@@ -54,8 +54,8 @@ export class QueryParamsToCmdMapper {
   get_new_stop_price(req: Request): string {
     return this.get_param_must_be_non_empty_string_OR_THROW(req, "new_stop_price")
   }
-  get_trigger_price(req: Request): string {
-    return this.get_param_must_be_non_empty_string_OR_THROW(req, "trigger_price")
+  get_trigger_price(req: Request): string | undefined {
+    return this.get_OPTIONAL_param_must_be_non_empty_string(req, "trigger_price")
   }
   get_signal_timestamp_ms(req: Request): number {
     let signal_timestamp_ms_string = this.get_OPTIONAL_param_must_be_non_empty_string(req, "signal_timestamp_ms")
@@ -122,7 +122,7 @@ export class QueryParamsToCmdMapper {
     }
 
     /* input checking */
-    let edge: string, base_asset: string, signal_timestamp_ms: number, trigger_price: string
+    let edge: string, base_asset: string, signal_timestamp_ms: number, trigger_price: string | undefined
     try {
       edge = this.get_edge(req)
       base_asset = this.get_base_asset(req)
@@ -188,7 +188,7 @@ export class QueryParamsToCmdMapper {
     let edge: string,
       base_asset: string,
       signal_timestamp_ms: number,
-      trigger_price: string,
+      trigger_price: string | undefined,
       trade_id: string | undefined
     try {
       edge = this.get_edge(req)

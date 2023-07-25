@@ -1,4 +1,4 @@
-import { Command, LoggableEvent, Result, ServiceLogger } from "../../interfaces/logger"
+import { Command, Lifecycle, LoggableEvent, Result, ServiceLogger } from "../../interfaces/logger"
 import { EventMetrics, MetricTags, MetricValue, SubmitMetrics } from "../../interfaces/metrics"
 import { InfluxDB, Point, WriteApi } from "@influxdata/influxdb-client"
 
@@ -142,12 +142,12 @@ export class InfluxDBMetrics implements SubmitMetrics, EventMetrics {
     }
   }
 
-  async result({ event }: { event: Result }) {
+  async result({ event, lifecycle }: { event: Result; lifecycle: Lifecycle }) {
     if (!this.writeApi) {
       this.logger.warn(`Failed to submit metric, not configured`)
       return
     }
-    let metric_name = `logger.loggable_event`
+    let metric_name = `logger.loggable_event.${event.object_type}`
     try {
       metric_name = this.build_metric_name(metric_name)
       let point1 = new Point(metric_name)
@@ -158,7 +158,10 @@ export class InfluxDBMetrics implements SubmitMetrics, EventMetrics {
 
       point1 = point1.tag("object_type", event.object_type)
       point1 = point1.tag("object_class", event.object_class)
+      point1 = point1.tag("status", event.status)
+      point1 = point1.tag("lifecycle", lifecycle)
       point1 = point1.stringField("status", event.status)
+      point1 = point1.uintField("count", 1)
 
       this.writeApi.writePoint(point1)
     } catch (err) {

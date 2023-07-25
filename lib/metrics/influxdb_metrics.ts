@@ -4,7 +4,7 @@ import { InfluxDB, Point, WriteApi } from "@influxdata/influxdb-client"
 
 export class InfluxDBMetrics implements SubmitMetrics, EventMetrics {
   logger: ServiceLogger
-  prefix: string
+  prefix: string | undefined
   global_tags: MetricTags
   writeApi: WriteApi | undefined
 
@@ -14,7 +14,7 @@ export class InfluxDBMetrics implements SubmitMetrics, EventMetrics {
     global_tags,
   }: {
     logger: ServiceLogger
-    prefix: string
+    prefix?: string
     global_tags: MetricTags
   }) {
     this.logger = logger
@@ -50,7 +50,8 @@ export class InfluxDBMetrics implements SubmitMetrics, EventMetrics {
 
   private build_metric_name(metric_name: string): string {
     metric_name.replace(/^\.+/, "") // Remove leading '.'s
-    return `${this.prefix}.${metric_name}`
+    if (this.prefix) return `${this.prefix}.${metric_name}`
+    return metric_name
   }
 
   // async gauge({

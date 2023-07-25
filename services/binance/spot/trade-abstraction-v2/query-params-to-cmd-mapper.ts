@@ -130,7 +130,7 @@ export class QueryParamsToCmdMapper {
       trigger_price = this.get_trigger_price(req)
     } catch (err: any) {
       let inputs = JSON.stringify(req.query)
-      let msg = `Result: BAD_INPUTS (got: ${inputs})`
+      let msg = `Result: BAD_INPUTS (got: ${inputs}): ${err.message}`
       this.logger.exception(tags, err, msg)
       let result: TradeAbstractionCloseResult = {
         object_type: "TradeAbstractionCloseResult",
@@ -198,7 +198,7 @@ export class QueryParamsToCmdMapper {
       trade_id = this.get_trade_id(req)
     } catch (err: any) {
       let inputs = JSON.stringify(req.query)
-      let msg = `Result: BAD_INPUTS (got: ${inputs})`
+      let msg = `Result: BAD_INPUTS (got: ${inputs}): ${err.message}`
       this.logger.exception(tags, err, msg)
       let result: TradeAbstractionOpenLongResult = {
         object_type: "TradeAbstractionOpenLongResult",

@@ -298,7 +298,7 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
       Sentry.captureException(err)
     }
     if (this.event_metrics) {
-      this.event_metrics.result({ event }).catch((err) => this.exception(tags, err))
+      this.event_metrics.result({ event, lifecycle }).catch((err) => this.exception(tags, err))
     }
   }
 

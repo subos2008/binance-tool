@@ -353,7 +353,7 @@ export class SpotEdgeToExecutorMapper {
         status: "INTERNAL_SERVER_ERROR",
         http_status: 500,
         err,
-        msg: `Spot Close ${edge}:${base_asset}:${symbol} INTERNAL_SERVER_ERROR: ${err.msg}`,
+        msg: `Spot Close ${edge}:${base_asset}:${symbol} INTERNAL_SERVER_ERROR: ${err.message}`,
         base_asset,
         edge,
         execution_timestamp_ms,

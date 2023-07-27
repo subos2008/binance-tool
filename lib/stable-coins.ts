@@ -3,7 +3,22 @@ export let fiat: string[] = ["EUR", "USD", "GBP", "JPY", "CHF", "CAD", "AUD", "N
 
 export let non_volatile_coins: string[] = ["EGLD"]
 
-let delisted_coins = ["EZ", "QSP", "BRD", "NXS", "NAV", "MDA", "SPARTA"]
+let delisted_coins = [
+  "EZ",
+  "QSP",
+  "BRD",
+  "NXS",
+  "NAV",
+  "MDA",
+  "SPARTA",
+  "API3",
+  "BLZ",
+  "GHST",
+  "NEXO",
+  "STPT",
+  "WIN",
+]
+
 let mehran = [
   "USDC",
   "UST",

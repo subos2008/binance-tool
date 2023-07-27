@@ -144,9 +144,23 @@ class MyOrderCallbacks {
       : "(null)"
     let executedAmount = new BigNumber(data.totalTradeQuantity).isZero() ? 0 : data.totalTradeQuantity
     let { edge } = await this.get_order_context_for_order(data)
+    let tags = { edge, symbol: data.symbol }
     this.send_message(
       `${data.symbol} ${data.orderType} ${data.side} EXPIRED at ${price}/${averageExecutionPrice}, executed amount ${executedAmount} (edge: ${edge})`
     )
+    if (data.orderType === "STOP_LOSS_LIMIT") {
+      /* This is unusual but can happen when the market gets closed. ie. coin isn't delisted but a particular market gets
+      too illiquid and gets closed down */
+      let msg = `⛔️ ${edge}:${data.symbol} STOP_LOSS_LIMIT order expired - this likely means the market has been closed down. You may need to exit the position manually.`
+      this.logger.exception(
+        tags,
+        new Error(
+          `⛔️ ${edge}:${data.symbol} STOP_LOSS_LIMIT order expired - this likely means the market has been closed down. You may need to exit the position manually.`
+        )
+      )
+      this.logger.fatal(tags, msg)
+      this.send_message(msg)
+    }
   }
 }
 

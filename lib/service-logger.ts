@@ -221,7 +221,14 @@ export class BunyanServiceLogger implements ServiceLogger, Logger {
     try {
       let _err = err as any
       this.bunyan.error({ object_type: "Exception", ...tags, msg, msg2: msg, err: _err })
-      Sentry.captureException(err)
+      Sentry.withScope(function (scope) {
+        if (tags.level === "warn") scope.setLevel("warning")
+        let string_tags = tags as { [tag: string]: string | boolean }
+        for (let tag in string_tags) {
+          scope.setTag(tag, string_tags[tag])
+        }
+        Sentry.captureException(err)
+      })
     } catch (err) {
       console.error(`Failed to log exception:`)
       console.error(err)

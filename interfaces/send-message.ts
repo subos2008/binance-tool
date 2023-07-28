@@ -17,6 +17,7 @@ export interface ContextTags {
   trade_id?: string
   status?: string // used for result status in some places
   action?: string // used in cmd / result
+  // [string]: string
 }
 
 export interface TradeContextTags extends ContextTags {

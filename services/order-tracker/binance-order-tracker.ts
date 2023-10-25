@@ -151,11 +151,11 @@ class MyOrderCallbacks {
     if (data.orderType === "STOP_LOSS_LIMIT") {
       /* This is unusual but can happen when the market gets closed. ie. coin isn't delisted but a particular market gets
       too illiquid and gets closed down */
-      let msg = `⛔️ ${edge}:${data.symbol} STOP_LOSS_LIMIT order expired - this likely means the market has been closed down. You may need to exit the position manually.`
+      let msg = `⛔️ ${edge}:${data.symbol} STOP_LOSS_LIMIT order expired - this likely means the market has been closed down. You may need to exit the position manually.It could also mean the order was manually cancelled.`
       this.logger.exception(
         tags,
         new Error(
-          `⛔️ ${edge}:${data.symbol} STOP_LOSS_LIMIT order expired - this likely means the market has been closed down. You may need to exit the position manually.`
+          `⛔️ ${edge}:${data.symbol} STOP_LOSS_LIMIT order expired - this likely means the market has been closed down. You may need to exit the position manually.It could also mean the order was manually cancelled.`
         )
       )
       this.logger.fatal(tags, msg)

@@ -29,6 +29,16 @@ As of tag `binance-spot-production-k8-stable` however it does work reliably. We 
 
 Source: https://app.diagrams.net/#G1yHn7t_QV53LrDXwxD5D7ez7qk3UdO8_a
 
+Also see the OneNote "Trading Engine" workbook.
+
+## Architectural Deep Dives
+
+There are *a lot* of edge cases with real-time trading systems.
+
+See the [Missives](docs/missives/) directory for deep dives into specific issues:
+
+  - [Consecutive Trade Entry Signals](docs/missives/consecutive-trade-entry-signals.md) - what to do when you get an Entry signal that doesn't follow an Exit signal.
+
 ## Services
 
 All in `/services/`. See the k8 chart for deployment.

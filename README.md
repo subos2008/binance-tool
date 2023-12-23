@@ -23,7 +23,7 @@ It uses events and is moving towards event based logging so observability is pre
 
 Data storage is in Redis, even things which really shouldn't be in redis. Most of the stuff stored in redis needs axing out and putting in a document or relational database.
 
-As of tag `binance-spot-production-k8-stable` however it does work reliably. We shut down Binance trading at that tag and now I want to port it to serverless because the Kubernetes cost overhead was stupidly high for a few low load microservices.
+As of tag `binance-spot-production-k8-stable` however it does work reliably. We shut down Binance trading at that tag and now I want to port it to serverless because the Kubernetes cost overhead was stupidly high for a few low-load microservices.
 
 ![Architecture](docs/diagrams/binance_spot_architecture.drawio.svg)
 
@@ -33,11 +33,9 @@ Source: https://app.diagrams.net/#G1yHn7t_QV53LrDXwxD5D7ez7qk3UdO8_a
 
 All in `/services/`. See the k8 chart for deployment.
 
-### TAS - Trade Abstraction Service
+### Ingestion
 
-#### trade-abstraction-v2
-
-An HTTP endpoint that wraps Binance Spot. The idea is it abstracts everything, you send it `/long` or `/close` or `/short` and it does the rest. However this means it has code to map edge names to executors for those edges as well as code to wrap Binance at the low level (429 retires, etc) and everything in between. While trying to be generic enough that other exchanges could be dropped in and supported. Allowing us theoretically to trade Edge70 on Binance, FTX, etc - and stocks and commodities - all using a similar API. Obviously it turned out it sucked.
+`execution-reports-to-amqp` and `binance-orders-to-amqp` these listen to the exchange on web sockets and get that info into queues asap. Simple, redundant, services with the singular goal of not missing anything important from the exchange WebSockets even if a rolling update is happening.
 
 ### Edge Signals
 
@@ -45,9 +43,18 @@ An HTTP endpoint that wraps Binance Spot. The idea is it abstracts everything, y
 
 Listens to the candle data streamed from the exchange and generates buy/sell signals. (long/short/close)
 
-### Ingestion Services
+### TAS - Trade Abstraction Service
 
-`execution-reports-to-amqp` and `binance-orders-to-amqp` these listen to the exchange on web sockets and get that info into queues asap. Simple, redundant services with the singular goal of not missing a candle even if a rolloing update is happening when the end of day candles are published.
+The worst part of the code. Deals with interacting with the actual exchange. Needs moving to something declarative, see designs in OneNote for proposed new architecture.
+
+#### trade-abstraction-v2
+
+An HTTP endpoint that wraps Binance Spot. The idea is it abstracts everything, you send it `/long` or `/close` or `/short` and it does the rest. However this means it has code to map edge names to executors for those edges as well as code to wrap Binance at the low level (429 retires, etc) and everything in between. While trying to be generic enough that other exchanges could be dropped in and supported. Allowing us theoretically to trade Edge70 on Binance, FTX, etc - and stocks and commodities - all using a similar API. Obviously it turned into a horrible mess.
+
+### User Alerts
+
+Popped on a queue that's delivered to Telegram. See `services/amqp/send-message`
+
 
 ## Setup
 

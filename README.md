@@ -2,6 +2,8 @@
 
 A cluster of k8 microservices that watch exchange's websocket streams and report to telegram.
 
+2023-12-24: This is a complex repo.  It can trade an edge (not a profitable one) on Binance. However, there is much code and complex architecture the wants refactoring. As a result we have gone green-fields and created a new [trading-engine repo](https://github.com/subos2008/trading-engine) for future development here: https://github.com/subos2008/trading-engine
+
 # Services
 
   * Trend following edges that will watch price action and automatically enter and exit positions.

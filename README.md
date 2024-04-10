@@ -113,7 +113,7 @@ An HTTP endpoint that wraps Binance Spot. The idea is it abstracts everything, y
 
 There is a `docker-compose` setup. You can experiment with `run-docker-tests.sh` and `run-docker-cluster.sh` to launch local Docker clusters to test the code.
 
-Setting up a local `.env` using [./dot-env-template] is a good first configuration step.
+Setting up a local `.env` using [./dot-env-template](./dot-env-template) is a good first configuration step.
 
 ### Infrastructure 
 

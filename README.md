@@ -1,8 +1,16 @@
 # Binance Tool
 
-A cluster of k8 microservices that watch exchange's websocket streams and report to telegram.
+A cluster of microservices that watch exchange's websocket price streams and automatically trade based on 'edges'.
 
-2023-12-24: This is a complex repo.  It can trade an edge (not a profitable one) on Binance. However, there is much code and complex architecture the wants refactoring. As a result we have gone green-fields and created a new [trading-engine repo](https://github.com/subos2008/trading-engine) for future development here: https://github.com/subos2008/trading-engine
+Over time this has grown into a bit of a behemoth and it's difficut to make profitable trading systems for crypto due to the large stop values needed. The included edge (services/edge70-signals) would have been profitable over prior bullmarkets but mainly because it had outsized returns on one or two symbols that it held rather than being profitable throughout. Portfolio gets eaten away at in during the chop between bull markets.
+
+# User Interface
+
+There is no UI apart from telegram. This is kind of intentional as I didn't want to open any ingress for attack vectors.
+
+# Observability
+
+JSON logging is used throughout and the system can be observed very well via Datadog. There are custom events and JSON logs that provide full coverage of all the interesting actions the trading engine performs.
 
 # Services
 

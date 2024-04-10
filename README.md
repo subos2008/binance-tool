@@ -1,6 +1,12 @@
 # Binance Tool
 
-A cluster of k8 microservices that watch exchange's websocket streams and report to telegram.
+A cluster of microservices that watch exchange's websocket price streams and automatically trade based on 'edges'.
+
+Over time this has grown into a bit of a behemoth and it's difficut to make profitable trading systems for crypto due to the large stop values needed. The included edge (services/edge70-signals) would have been profitable over prior bullmarkets but mainly because it had outsized returns on one or two symbols that it held rather than being profitable throughout. Portfolio gets eaten away at in during the chop between bull markets.
+
+# Observability
+
+JSON logging is used throughout and the system can be observed very well via Datadog. There are custom events and JSON logs that provide full coverage of all the interesting actions the trading engine performs.
 
 # Services
 
@@ -15,26 +21,47 @@ Position sizing is currently fixed position size.
 
 `Trading Engine` in ClickUp contains the backlog for this repo.
 
+1. `position-sizer` - position sizing and risk are managed by a set of trading rules that define things like risk per trade and maxium open portfolio risk.
+2. `edge-*` - these are the edges that watch the price action and give entry and exit signals
+3. ...
+
 ## Setup
+
+## Local Development and Testing
+
+There is a `docker-compose` setup. You can experiment with `run-docker-tests.sh` and `run-docker-cluster.sh` to launch local Docker clusters to test the code.
+
+
+### Infrastructure 
+
+Kubernetes is expected - you can use any providers k8 setup. Once you have k8 setup investigate the infrastructure repo, flux/kustomize ready at https://github.com/subos2008/binance-tool/trading-engine-infrastructure/ (I haven't made this public yet, ping me if it interests you)
 
 Slowly moving to terraform and github actions for the cluster setup. Production was set up from the
 command line and the staging cluster setup is slowly being done via tf.
 
+### Secrets
+
 Adding secrets can be done with the scripts in `./k8/setup/` if you have a `.env` with the values in.
 
-You will need to add the `user` and `exchange` to AMQP that is used by some of these services.
+### Storage and Event Queues
 
-`redis` also needs to be available. There is a repo with the infrastructure flux/kustomize ready https://github.com/subos2008/binance-tool/trading-engine-infrastructure/
+You will need to add the `user` and `exchange` to AMQP (RabbitMQ) that is used by some of the services.
+
+`redis` also needs to be available. There is a repo with the 
+
+### Deployment
+
+Deployment is into Kubernetes via a Helm chart and GitHub actions.
 
 Deployment and config is done via a helm chart you can find in `./k8/charts/services/`. Note some values are hard coded like Sentry DSNs. Also check the helper file for the ENV setup constructs. Services are in `k8/charts/services/templates`
 
-At the time of writing many services connect directly to binnace to pull in ws streams. Some of the more generic services listen to AMQP but it's a work in progress. Services are being renamed as 'spot` version in preparation for second versions that can trade long/shot on futures exchanges. All the current code makes spot specific assumptions.
+At the time of writing many services connect directly to Binance to pull in ws streams. Some of the more generic services listen to AMQP but it's a work in progress. Services are being renamed as `spot` versions in preparation for second versions that can trade long/shot on futures exchanges. Much of the current code makes spot specific assumptions.
 
 There is no UI apart from telegram.
 
 # Connecting
 
-In general there is no ingress. There is one for the telegram bot webhooks.
+In general there is no ingress. There is one for the telegram bot webhooks. There are a few commands for entering and exiting positions and listing open positions available via the telegram bot.
 
 kubectl port-forward --namespace persistent-state svc/bitnami-redis-master 6379:6379
 

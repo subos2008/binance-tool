@@ -56,6 +56,8 @@ Data storage is in Redis, even things which really shouldn't be in redis. Most o
 
 The code around trade execution has more layers than it needs to in an attempt to make something that can interface with multiple exchanges. Despite being a bit of a jungle it is good at the important bits like retrying exiting a trade, handling getting rate limited by the Binance API during execution, etc.
 
+We use BigNumber throughout to avoid floating point inaccuracies.
+
 ### Risk Management
 
 Arguably the most important aspect of any trading system. Position sizing and risk management are done inside the trading engine and can't be interfered with by the end user.

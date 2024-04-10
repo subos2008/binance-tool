@@ -1,35 +1,48 @@
 # Binance Tool
 
+## Project Status
+
+*I'm not sure I would use this code to actually trade any more but it might be an interesting study for someone looking to deep dive into the kind of edge cases real-time trading systems need to deal with.*
+
+I opened up the code largely to build up my portfolio of what I share publically.
+
+`Trading Engine` in ClickUp contains the backlog for this repo. (private)
+
+## Intro
+
 A cluster of microservices that watch exchange's websocket price streams and automatically trade based on 'edges'.
 
 Over time this has grown into a bit of a behemoth and it's difficut to make profitable trading systems for crypto due to the large stop values needed. The included edge (services/edge70-signals) would have been profitable over prior bullmarkets but mainly because it had outsized returns on one or two symbols that it held rather than being profitable throughout. Portfolio gets eaten away at in during the chop between bull markets.
 
-# User Interface
+## User Interface
 
-There is no UI apart from telegram. This is kind of intentional as I didn't want to open any ingress for attack vectors.
+## Telegram Bot
+
+Bert, our resident telegram bot, has a few commands. You can add the telegram bot to a group if you want to grant access to others or message it directly. For security the command set is a simple enter/exit/list symbols. Position sizing is done by the backend and can't be overridden manually.
+
+## Grafana Dashboards
+
+Portfolio value and data on individual holdings is set to InfluxDB. This allows you to connect Grafana or another dashboard frontend and see how your portfolio is performing. There is an example dashboard used for backtesting in [./grafana]
+
+## CLI
+
+There is also `./cli/*` and `proxy-redis.sh`.
 
 # Observability
 
 JSON logging is used throughout and the system can be observed very well via Datadog. There are custom events and JSON logs that provide full coverage of all the interesting actions the trading engine performs.
 
-# Services
-
-  * Trend following edges that will watch price action and automatically enter and exit positions.
-  * Positions services that watch the user's orders on the exchange and tracks open positions in redis.
-  * Edge performance services that print to telegram stats when positions close
-  * There is an event storage generic service that stores events in S3. 
-
-See the commercial bot `cornix` also, that implements a lot of what we are targetting here.
-
-Position sizing is currently fixed position size.
-
-`Trading Engine` in ClickUp contains the backlog for this repo.
+Logs of all events are persisted in `s3` and `MongoDB`. Almost everything of interest that the system does is logged as an event.
 
 # Architecture
 
-Been trying to keep it clean but it's still messy. 
+Been trying to keep it clean but it's still messy. In particular the code around trade execution has more layers than it needs to in an attempt to make something that can interface with multiple exchanges.
 
-It uses events and is moving towards event based logging so observability is pretty good. 
+We try and use the exchange as the source of truth where possible and there are services that will check and report on inconsistencies between the open trades we expect and the holdings on the exchange.
+
+AMQP is used between services where things are async to improve fault tolerance. There's a REST interface for position entry/exit that is used by the edge signals code. Position sizing and risk management is done inside the trading engine and can't be interfered with by the end user.
+
+The design is event-driven and all events are logged so observability is pretty good. 
 
 Data storage is in Redis, even things which really shouldn't be in redis. Most of the stuff stored in redis needs axing out and putting in a document or relational database.
 
@@ -43,7 +56,7 @@ Also see the OneNote "Trading Engine" workbook.
 
 ## Architectural Deep Dives
 
-There are *a lot* of edge cases with real-time trading systems.
+There are *a lot* of interesting edge cases with real-time trading systems.
 
 See the [Missives](docs/missives/) directory for deep dives into specific issues:
 
@@ -52,6 +65,19 @@ See the [Missives](docs/missives/) directory for deep dives into specific issues
 ## Services
 
 All in `/services/`. See the k8 chart for deployment.
+
+1. `binance-orders-to-amqp` - we run a couple of these and they spead accross instances for relaibility. These connect to the exchange and watch the activity on your account. They forward everything they see to an AMQP message bus for processing. Message deduplication is done by AMQP.
+1. `position-sizer` - position sizing and risk are managed by a set of trading rules that define things like risk per trade and maxium open portfolio risk.
+2. `edge-*` - these are the edges that watch the price action and give entry and exit signals
+  1. `edge-signal-to-tas-bridge` - a clunky design decision - maps edge specific things like which order tyes (LIMIT or MARKET) are used to enter trades and how much slippage is allowed, etc.
+3. `bert` - your friendly telegram bot, keeps you updated on everything the system is doing and allows you to enter and exit trades manually.
+1. `event-logger` - we queue messages to be delivered to the user via AMQP. This means if we hit the telegram rate limit - which we can on crypto markets as there's a lot of price correlation - we don't loose any messages.
+1. `portfolio-to-influxdb` - updates InfluxDB timeseries database every time the portfolio changes. Also logs USD equiv values every few hours.
+1. `order-tracker`, `portfolio-tracker` and `position-tracker` - take order data off AMQP and updates the portfolio state. c.f. `binance-orders-to-amqp`
+1. `position-performance` - gives regular updates on the performance of open positions.
+1. `spot-trade-abstraction` - the Trade Abstraction Service (TAS)
+
+
 
 ### Ingestion
 
@@ -78,24 +104,37 @@ Popped on a queue that's delivered to Telegram. See `services/amqp/send-message`
 
 ## Setup
 
-Slowly moving to terraform and github actions for the cluster setup. Production was set up from the
-command line and the staging cluster setup is slowly being done via tf.
+## Local Development and Testing
 
-Adding secrets can be done with the scripts in `./k8/setup/` if you have a `.env` with the values in.
+There is a `docker-compose` setup. You can experiment with `run-docker-tests.sh` and `run-docker-cluster.sh` to launch local Docker clusters to test the code.
 
-You will need to add the `user` and `exchange` to AMQP that is used by some of these services.
+Setting up a local `.env` using [./dot-env-template] is a good first configuration step.
 
-`redis` also needs to be available. There is a repo with the infrastructure flux/kustomize ready https://github.com/subos2008/binance-tool/trading-engine-infrastructure/
+### Infrastructure 
+
+A Kubernetes cluster is expected to be setup in advance. You can use any provider. Once you have k8 setup investigate the infrastructure repo, flux/kustomize ready at https://github.com/subos2008/binance-tool/trading-engine-infrastructure/ (I haven't made this public yet, ping me if it interests you)
+
+### Secrets
+
+Adding secrets to the k8 cluster can be done with the scripts in `./k8/setup/` if you have a `.env` with the values in. Use [./dot-env-template](./dot-env-template).
+
+### Storage and Event Queues
+
+You will need to add the `user` and `exchange` to AMQP (RabbitMQ) that is used by some of the services.
+
+`redis` also needs to be available. There is a repo with the 
+
+### Deployment
+
+Deployment is into Kubernetes via a Helm chart and GitHub actions.
 
 Deployment and config is done via a helm chart you can find in `./k8/charts/services/`. Note some values are hard coded like Sentry DSNs. Also check the helper file for the ENV setup constructs. Services are in `k8/charts/services/templates`
 
-At the time of writing many services connect directly to binnace to pull in ws streams. Some of the more generic services listen to AMQP but it's a work in progress. Services are being renamed as 'spot` version in preparation for second versions that can trade long/shot on futures exchanges. All the current code makes spot specific assumptions.
-
-There is no UI apart from telegram.
+At the time of writing many services connect directly to Binance to pull in ws streams. Some of the more generic services listen to AMQP but it's a work in progress. Services are being renamed as `spot` versions in preparation for second versions that can trade long/shot on futures exchanges. Much of the current code makes spot specific assumptions.
 
 # Connecting
 
-In general there is no ingress. There is one for the telegram bot webhooks.
+In general there is no ingress. There is one for the telegram bot webhooks. There are a few commands for entering and exiting positions and listing open positions available via the telegram bot.
 
 kubectl port-forward --namespace persistent-state svc/bitnami-redis-master 6379:6379
 

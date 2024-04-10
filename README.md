@@ -117,7 +117,7 @@ Setting up a local `.env` using [./dot-env-template](./dot-env-template) is a go
 
 ### Infrastructure 
 
-A Kubernetes cluster is expected to be setup in advance. You can use any provider. Once you have k8 setup investigate the infrastructure repo, flux/kustomize ready at https://github.com/subos2008/binance-tool/trading-engine-infrastructure/ (I haven't made this public yet, ping me if it interests you)
+A Kubernetes cluster is expected to be setup in advance. You can use any provider. Once you have k8 setup investigate the infrastructure repo, flux/kustomize ready at https://github.com/subos2008/trading-engine-infrastructure/ (This adds Redis and Datadog's agent to a Kubernetes cluster using Flux)
 
 ### Secrets
 
